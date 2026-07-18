@@ -7,6 +7,8 @@
 - 帮助文档内置：按 `F1` 打开喂饭级使用指南（16+ 章，可全文搜索）
 - 界面 8 语言：中文 / English / العربية / Français / Русский / Español / 日本語 / 한국어（含 RTL 镜像）
 
+<img width="1920" height="1030" alt="12cb4dfebed73f442b9dd5a6020264c3" src="https://github.com/user-attachments/assets/66ccab03-2c81-4e3e-ac77-40017416ffc4" />
+
 ## 快速开始
 
 ```bash
