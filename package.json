@@ -1,0 +1,119 @@
+{
+  "name": "mazz-editor",
+  "productName": "Mazz Editor",
+  "version": "0.1.0",
+  "description": "榨干 Electron 的一站式超级编辑器 —— 文档/代码/创作 全闭环",
+  "main": "main/main.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.js && node scripts/build-sample-plugins.js",
+    "dev": "node scripts/build.js && node scripts/build-sample-plugins.js && electron . --inspect=9229",
+    "start": "electron .",
+    "test": "node tests/run.js",
+    "smoke": "node tests/e2e/smoke.js",
+    "dist": "node scripts/build.js && electron-builder"
+  },
+  "build": {
+    "appId": "com.mazz.editor",
+    "productName": "Mazz Editor",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main/",
+      "preload/",
+      "renderer/",
+      "resources/",
+      "package.json"
+    ],
+    "protocols": [
+      {
+        "name": "mazz",
+        "schemes": [
+          "mazz"
+        ]
+      }
+    ],
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown Document",
+        "role": "Editor"
+      },
+      {
+        "ext": "markdown",
+        "name": "Markdown Document",
+        "role": "Editor"
+      },
+      {
+        "ext": "txt",
+        "name": "Text Document",
+        "role": "Editor"
+      },
+      {
+        "ext": "mazz",
+        "name": "Mazz Workspace File",
+        "role": "Editor"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "resources/icons/app.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "resources/icons/app.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office",
+      "icon": "resources/icons/app.png"
+    }
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "bonjour-service": "^1.4.3",
+    "chokidar": "^3.6.0",
+    "docx": "^9.7.1",
+    "echarts": "^6.1.0",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.12.0",
+    "monaco-editor": "^0.55.1",
+    "node-forge": "^1.4.0",
+    "node-pty": "^1.1.0",
+    "perfect-freehand": "^1.2.3",
+    "pptxgenjs": "^4.0.1",
+    "prosemirror-tables": "^1.8.5",
+    "tesseract.js": "^7.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.0",
+    "jsdom": "^25.0.1",
+    "markdown-it": "^14.1.0",
+    "prosemirror-commands": "^1.6.2",
+    "prosemirror-history": "^1.4.1",
+    "prosemirror-inputrules": "^1.4.0",
+    "prosemirror-keymap": "^1.2.2",
+    "prosemirror-markdown": "^1.13.1",
+    "prosemirror-model": "^1.24.1",
+    "prosemirror-schema-list": "^1.5.0",
+    "prosemirror-state": "^1.4.3",
+    "prosemirror-transform": "^1.10.2",
+    "prosemirror-view": "^1.37.0"
+  }
+}
