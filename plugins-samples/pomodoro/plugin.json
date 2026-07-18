@@ -1,0 +1,8 @@
+{
+  "id": "pomodoro",
+  "name": "番茄钟",
+  "version": "1.0.0",
+  "description": "25 分钟专注 + 5 分钟休息的番茄工作法计时器，结束系统通知",
+  "author": "Mazz",
+  "main": "main.js"
+}
