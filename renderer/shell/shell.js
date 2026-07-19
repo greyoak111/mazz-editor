@@ -62,10 +62,11 @@ const SAVE_FORMATS = {
 };
 const CODE_EXTS = ['js', 'ts', 'py', 'css', 'html', 'json', 'sh', 'xml', 'yml', 'txt'];
 
-function saveFiltersFor(inst) {
+export function saveFiltersFor(inst, tabTitle = '') {
   let formats;
   if (inst.name === 'code') {
-    const cur = (inst.state.title.match(/\.([a-z0-9]+)$/i)?.[1] || 'js').toLowerCase();
+    // 从标签标题取当前扩展名（inst.state 只有 container，无 title）
+    const cur = ((tabTitle || '').match(/\.([a-z0-9]+)$/i)?.[1] || 'js').toLowerCase();
     const exts = [cur, ...CODE_EXTS.filter(e => e !== cur)];
     formats = exts.map(e => [`${e.toUpperCase()} 文件`, [e]]);
   } else {
@@ -364,7 +365,7 @@ export class Shell {
     if (saveAs || !target) {
       target = await window.mazz.invoke('dialog:saveFile', {
         defaultPath: (tab.filePath || tab.title).replace(/\.[^.]*$/, '') + defaultExt(inst.name),
-        filters: saveFiltersFor(inst),
+        filters: saveFiltersFor(inst, tab.title),
       });
       if (!target) return false;
       tab.filePath = target;
