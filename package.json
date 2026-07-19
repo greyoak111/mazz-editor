@@ -8,12 +8,10 @@
   "scripts": {
     "build": "node scripts/build.js && node scripts/build-sample-plugins.js",
     "dev": "node scripts/build.js && node scripts/build-sample-plugins.js && electron . --inspect=9229",
-    "start": "electron-forge start",
+    "start": "electron .",
     "test": "node tests/run.js",
     "smoke": "node tests/e2e/smoke.js",
-    "dist": "node scripts/build.js && electron-builder",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "dist": "node scripts/build.js && electron-builder"
   },
   "build": {
     "appId": "com.mazz.editor",
@@ -102,6 +100,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "electron": "^33.4.11",
     "esbuild": "^0.24.0",
     "jsdom": "^25.0.1",
     "markdown-it": "^14.1.0",
@@ -114,7 +113,6 @@
     "prosemirror-schema-list": "^1.5.0",
     "prosemirror-state": "^1.4.3",
     "prosemirror-transform": "^1.10.2",
-    "prosemirror-view": "^1.37.0",
-    "electron-prebuilt-compile": "33.4.11"
+    "prosemirror-view": "^1.37.0"
   }
 }
