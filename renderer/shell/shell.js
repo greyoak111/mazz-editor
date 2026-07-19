@@ -48,6 +48,31 @@ const LANG_BY_EXT = {
 function defaultExt(moduleId) {
   return { text: '.txt', mindmap: '.mindmap', draw: '.mazzdraw' }[moduleId] || '.md';
 }
+
+/** 保存格式目录：各模块的可选格式（第一项 = 默认格式；另存为对话框全格式下拉） */
+const SAVE_FORMATS = {
+  markdown: [['Markdown 文档', ['md', 'markdown']], ['Word 文档', ['docx']], ['HTML 网页', ['html']], ['纯文本', ['txt']]],
+  text: [['纯文本', ['txt']], ['Markdown 文档', ['md']]],
+  sheet: [['Mazz 表格', ['mazzsheet']], ['Excel 工作簿', ['xlsx']], ['CSV 逗号分隔', ['csv']], ['TSV 制表分隔', ['tsv']]],
+  slide: [['Mazz 演示', ['mazzslide']], ['PowerPoint 演示文稿', ['pptx']]],
+  mindmap: [['思维导图', ['mindmap']], ['Markdown 大纲', ['md']], ['纯文本大纲', ['txt']]],
+  draw: [['画板文档', ['mazzdraw']], ['PNG 图片', ['png']]],
+  notes: [['Markdown 笔记', ['md']], ['纯文本', ['txt']]],
+  math: [['纯文本', ['txt']], ['Markdown', ['md']]],
+};
+const CODE_EXTS = ['js', 'ts', 'py', 'css', 'html', 'json', 'sh', 'xml', 'yml', 'txt'];
+
+function saveFiltersFor(inst) {
+  let formats;
+  if (inst.name === 'code') {
+    const cur = (inst.state.title.match(/\.([a-z0-9]+)$/i)?.[1] || 'js').toLowerCase();
+    const exts = [cur, ...CODE_EXTS.filter(e => e !== cur)];
+    formats = exts.map(e => [`${e.toUpperCase()} 文件`, [e]]);
+  } else {
+    formats = SAVE_FORMATS[inst.name] || [['文档', [defaultExt(inst.name).slice(1)]]];
+  }
+  return [...formats.map(([name, extensions]) => ({ name, extensions })), { name: '所有文件', extensions: ['*'] }];
+}
 function safeGet(fn) { try { return fn(); } catch { return null; } }
 
 export class Shell {
@@ -339,14 +364,30 @@ export class Shell {
     if (saveAs || !target) {
       target = await window.mazz.invoke('dialog:saveFile', {
         defaultPath: (tab.filePath || tab.title).replace(/\.[^.]*$/, '') + defaultExt(inst.name),
+        filters: saveFiltersFor(inst),
       });
       if (!target) return false;
       tab.filePath = target;
       this.tabs.setTitle(tab.id, target.split(/[\\/]/).pop());
     }
-    const content = inst.def.getContent(inst.state);
+    // 按目标扩展名转换内容（exportAs 契约；无则回落 getContent 原文）
+    const ext = (target.match(/\.[^.]+$/)?.[0] || '').toLowerCase();
     try {
-      await window.mazz.invoke('fs:writeFile', { path: target, content });
+      let wrote = false;
+      if (typeof inst.def.exportAs === 'function') {
+        const out = await inst.def.exportAs(ext, inst.state);
+        if (out?.base64 != null) {
+          await window.mazz.invoke('fs:writeFileBase64', { path: target, base64: out.base64 });
+          wrote = true;
+        } else if (out?.text != null) {
+          await window.mazz.invoke('fs:writeFile', { path: target, content: out.text });
+          wrote = true;
+        }
+      }
+      if (!wrote) {
+        const content = inst.def.getContent(inst.state);
+        await window.mazz.invoke('fs:writeFile', { path: target, content });
+      }
     } catch (e) { toast(`保存失败：${e.message}`); return false; }
     this.tabs.setDirty(tab.id, false);
     snapshots.untrack(tab.id);

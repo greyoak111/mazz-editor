@@ -384,6 +384,15 @@ export default {
     const ctl = instances.get(state.container);
     return ctl ? JSON.stringify({ mark: 'mazz-mindmap-v1', root: ctl.doc.root }) : '';
   },
+  /** 按扩展名导出：.md/.txt → Markdown 大纲；其余回落 getContent（JSON） */
+  async exportAs(ext, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl) return null;
+    if (ext === '.md' || ext === '.markdown' || ext === '.txt') {
+      return { text: toOutline(ctl.doc.root) };
+    }
+    return null;
+  },
   setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;

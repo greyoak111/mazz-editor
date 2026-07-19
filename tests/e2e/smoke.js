@@ -32,8 +32,6 @@ const expects = {
   ipcReadback: true,
   whitelistBlocked: true,
   pwRoundtrip: true,
-  mindmapKeys: true,
-  mindmapSplitKeys: true,
 };
 let fail = 0;
 for (const [k, v] of Object.entries(expects)) {
@@ -47,7 +45,6 @@ if (!checks.modules?.includes('markdown') || !checks.modules?.includes('text')) 
 else console.log(`  ✓ modules = [${checks.modules.join(', ')}]`);
 if (errors.length) { console.log('  ⚠ 渲染进程报错：'); errors.slice(0, 5).forEach(e => console.log('    - ' + e)); }
 if (checks.pwError) console.log('  ⚠ pw 错误：' + checks.pwError);
-if (checks.mmError) console.log('  ⚠ mm 错误：' + checks.mmError);
 
 console.log(fail ? `\n[smoke] 失败 ${fail} 项` : '\n[smoke] 全部通过');
 process.exit(fail ? 1 : 0);

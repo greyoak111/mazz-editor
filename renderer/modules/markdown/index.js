@@ -490,6 +490,26 @@ export default {
     const ctl = instances.get(state.container);
     return ctl ? ctl.getMarkdown() : '';
   },
+  /** 按扩展名导出：.docx → base64，.html → 渲染网页文本；其余回落 getContent */
+  async exportAs(ext, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl) return null;
+    if (ext === '.docx') {
+      const styleMap = await window.mazz.invoke('settings:get', { key: 'word.styleMap' }).catch(() => null) || {};
+      const buf = await exportDocx(ctl.view.state.doc, { setup: ctl.pageSetup, styleMap });
+      const bytes = new Uint8Array(buf);
+      let s = '';
+      for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      return { base64: btoa(s) };
+    }
+    if (ext === '.html' || ext === '.htm') {
+      const { renderHelpMd } = await import('../../help/index.js');
+      const title = (state.title || '文档').replace(/\.[^.]*$/, '');
+      const body = renderHelpMd(ctl.getMarkdown());
+      return { text: `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>${title}</title><style>body{max-width:760px;margin:0 auto;padding:36px 24px;font-family:Georgia,"Noto Serif SC",serif;line-height:1.8;color:#2c2c2a}h1,h2{border-bottom:1px solid #ddd;padding-bottom:6px}code{background:#f2f1ec;padding:1px 5px;border-radius:4px}pre{background:#f7f6f3;padding:12px 16px;border-radius:8px;overflow-x:auto}blockquote{border-left:3px solid #ccc;padding-left:12px;color:#777}table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:5px 10px}</style></head><body>${body}</body></html>` };
+    }
+    return null;
+  },
   setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;

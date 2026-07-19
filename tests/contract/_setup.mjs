@@ -22,8 +22,7 @@ if (!dom.window.navigator.clipboard) {
 
 globalThis.window = dom.window;
 globalThis.document = dom.window.document;
-// Node 21+ 的 navigator 是只读 getter，直接赋值会抛 TypeError，必须用 defineProperty 覆盖
-Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, configurable: true, writable: true });
+globalThis.navigator = dom.window.navigator;
 globalThis.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
 globalThis.requestAnimationFrame = dom.window.requestAnimationFrame?.bind(dom.window) || ((cb) => setTimeout(cb, 0));
 globalThis.cancelAnimationFrame = dom.window.cancelAnimationFrame?.bind(dom.window) || clearTimeout;

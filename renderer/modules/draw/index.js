@@ -543,6 +543,14 @@ export default {
     const ctl = instances.get(state.container);
     return ctl ? ctl.serialize() : '';
   },
+  /** 按扩展名导出：.png → 当前帧 PNG base64；其余回落 getContent（无 canvas 环境安全回落） */
+  async exportAs(ext, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl || ext !== '.png') return null;
+    try {
+      return { base64: ctl.frameToDataUrl().split(',')[1] };
+    } catch { return null; }
+  },
   setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;

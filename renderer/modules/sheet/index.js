@@ -326,6 +326,7 @@ function insertStruct(ctl, kind, delta) {
 export default {
   displayName: '表格',
   icon: '📊',
+  _forTests: { instances },
 
   create(container) {
     const ctl = createSheet(container);
@@ -351,6 +352,44 @@ export default {
     const ctl = instances.get(state.container);
     if (!ctl) return '';
     return JSON.stringify({ mark: FILE_MARK, ...ctl.wb.serialize() });
+  },
+  /** 按扩展名导出：.csv/.tsv → 文本，.xlsx → base64；其余回落 getContent */
+  async exportAs(ext, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl) return null;
+    const sheet = ctl.wb.sheets[ctl.wb.active];
+    if (!sheet) return null;
+    if (ext === '.csv' || ext === '.tsv') {
+      // 有效范围（跳过尾部空行空列）
+      let mr = -1, mc = -1;
+      for (const [k, cell] of sheet.cells) {
+        if (cell && (cell.v != null || cell.f)) {
+          const [r, c] = k.split(',').map(Number);
+          mr = Math.max(mr, r); mc = Math.max(mc, c);
+        }
+      }
+      if (mr < 0) return { text: '' };
+      const rows = [];
+      for (let r = 1; r <= mr; r++) { // 坐标系为 1-based
+        const line = [];
+        for (let c = 1; c <= mc; c++) {
+          const v = sheet.computed(r, c);
+          line.push(v == null ? '' : String(v));
+        }
+        rows.push(line);
+      }
+      const { toDelimited } = await import('./io.js');
+      return { text: toDelimited(rows, ext === '.csv' ? ',' : '\t') };
+    }
+    if (ext === '.xlsx') {
+      const io = await import('./io.js');
+      const buf = await io.exportXlsx(ctl.wb);
+      const bytes = new Uint8Array(buf);
+      let s = '';
+      for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      return { base64: btoa(s) };
+    }
+    return null;
   },
   setContent(data, state) {
     const ctl = instances.get(state.container);

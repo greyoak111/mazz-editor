@@ -22,6 +22,7 @@ const files = [
   'tests/contract/help.test.mjs',
   'tests/contract/ui-theme.test.mjs',
   'tests/contract/i18n.test.mjs',
+  'tests/contract/save-formats.test.mjs',
   'tests/roundtrip/docx.test.mjs',
   'tests/roundtrip/xlsx.test.mjs',
   'tests/roundtrip/pptx.test.mjs',

@@ -341,6 +341,17 @@ export default {
     const ctl = instances.get(state.container);
     return ctl ? ctl.outlineEl.value : '';
   },
+  /** 按扩展名导出：.pptx → base64；其余回落 getContent（大纲文本） */
+  async exportAs(ext, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl || ext !== '.pptx') return null;
+    const { exportPptx } = await import('./pptx.js');
+    const buf = await exportPptx(ctl.slides, ctl.theme);
+    const bytes = new Uint8Array(buf);
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    return { base64: btoa(s) };
+  },
   setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;

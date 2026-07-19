@@ -218,6 +218,15 @@ export default {
     const ctl = instances.get(state.container);
     return JSON.stringify({ mark: 'mazz-notes-v1', path: ctl?.currentPath || null });
   },
+  /** 按扩展名导出：.md/.txt → 当前笔记正文；其余回落 getContent */
+  async exportAs(ext, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl) return null;
+    if (ext === '.md' || ext === '.markdown' || ext === '.txt') {
+      return { text: markdownModule.getContent(ctl.edState) };
+    }
+    return null;
+  },
   setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;
