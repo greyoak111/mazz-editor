@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <title>快速笔记</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      display: flex; flex-direction: column; background: #1e293b; color: #e2e8f0;
+    }
+    @media (prefers-color-scheme: light) { body { background: #ffffff; color: #1e293b; } .bar { border-color: #e2e8f0 !important; } }
+    .bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; font-size: 12px; opacity: .75; border-bottom: 1px solid #334155;
+      -webkit-app-region: drag; user-select: none;
+    }
+    .bar b { color: #818cf8; }
+    textarea {
+      flex: 1; resize: none; border: 0; outline: 0; padding: 12px 14px;
+      background: transparent; color: inherit; font-size: 14px; line-height: 1.65;
+      font-family: inherit;
+    }
+    .hint { padding: 6px 12px; font-size: 11px; opacity: .55; display: flex; justify-content: space-between; user-select: none; }
+    .saved { color: #4ade80; opacity: 0; transition: opacity .3s; }
+    .saved.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="bar"><span><b>◆</b> 快速笔记</span><span>Ctrl+Enter 保存 · Esc 关闭</span></div>
+  <textarea id="ta" placeholder="想到什么就写什么，追加到每日笔记…" spellcheck="true"></textarea>
+  <div class="hint"><span id="target"></span><span class="saved" id="saved">✓ 已保存</span></div>
+  <script>
+    const ta = document.getElementById('ta');
+    const saved = document.getElementById('saved');
+    ta.focus();
+    window.mazzNote?.onFocus(({ initialText } = {}) => {
+      ta.focus();
+      if (initialText && !ta.value) ta.value = initialText;
+    });
+    async function save() {
+      const text = ta.value.trim();
+      if (!text) return;
+      try {
+        await window.mazzNote.save(text);
+        ta.value = '';
+        saved.classList.add('show');
+        setTimeout(() => saved.classList.remove('show'), 1200);
+      } catch (e) { console.error(e); }
+    }
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); save(); }
+      if (e.key === 'Escape') window.mazzNote?.close();
+    });
+  </script>
+</body>
+</html>

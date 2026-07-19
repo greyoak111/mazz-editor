@@ -1,0 +1,115 @@
+/* renderer/styles/themes.css —— 五主题（CSS 变量驱动），nativeTheme 跟随由 shell 切换 data-theme */
+:root {
+  --font-ui: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", Consolas, "Sarasa Mono SC", monospace;
+  --font-doc: "Charter", "Source Han Serif SC", "Noto Serif CJK SC", Georgia, serif;
+}
+
+/* 1. 纸白（light 默认） */
+[data-theme="paper"] {
+  --bg: #f7f6f3; --bg-elev: #ffffff; --bg-hover: #ecebe6; --bg-active: #e3e1da;
+  --fg: #2c2c2a; --fg-dim: #83817a; --border: #e0ded8;
+  --accent: #4f46e5; --accent-soft: #e0e7ff; --accent-fg: #ffffff;
+  --danger: #dc2626; --warn: #d97706; --ok: #16a34a;
+  --shadow: 0 8px 30px rgba(0,0,0,.10);
+  --doc-bg: #ffffff;
+}
+/* 2. 墨黑（dark 默认） */
+[data-theme="ink"] {
+  --bg: #16181d; --bg-elev: #1e2128; --bg-hover: #262a33; --bg-active: #2e3340;
+  --fg: #e2e4e9; --fg-dim: #7d828e; --border: #2c313c;
+  --accent: #818cf8; --accent-soft: #312e5f; --accent-fg: #ffffff;
+  --danger: #f87171; --warn: #fbbf24; --ok: #4ade80;
+  --shadow: 0 8px 30px rgba(0,0,0,.45);
+  --doc-bg: #1b1e24;
+}
+/* 3. 靛夜 */
+[data-theme="indigo"] {
+  --bg: #101226; --bg-elev: #191b36; --bg-hover: #22244a; --bg-active: #2c2f5e;
+  --fg: #dcdff5; --fg-dim: #7a7ea8; --border: #2a2d55;
+  --accent: #7dd3fc; --accent-soft: #0c4a6e; --accent-fg: #082f49;
+  --danger: #fb7185; --warn: #fcd34d; --ok: #34d399;
+  --shadow: 0 8px 30px rgba(0,0,10,.5);
+  --doc-bg: #151733;
+}
+/* 4. 苔绿 */
+[data-theme="moss"] {
+  --bg: #1a211c; --bg-elev: #222b25; --bg-hover: #2b362f; --bg-active: #35443b;
+  --fg: #dce8df; --fg-dim: #7e938a; --border: #30403a;
+  --accent: #86c5a0; --accent-soft: #234a37; --accent-fg: #0d211a;
+  --danger: #ef8888; --warn: #e8c468; --ok: #7dd8a8;
+  --shadow: 0 8px 30px rgba(0,10,5,.5);
+  --doc-bg: #202a24;
+}
+/* 5. 暖沙 */
+[data-theme="sand"] {
+  --bg: #f4ede1; --bg-elev: #fbf7ee; --bg-hover: #ece2d0; --bg-active: #e2d4bc;
+  --fg: #41392c; --fg-dim: #96897a; --border: #e2d7c3;
+  --accent: #b45309; --accent-soft: #fde8cd; --accent-fg: #ffffff;
+  --danger: #c2410c; --warn: #a16207; --ok: #4d7c0f;
+  --shadow: 0 8px 30px rgba(80,60,20,.12);
+  --doc-bg: #fdfaf3;
+}
+
+/* 6. 构成（苏式构成主义：纸米 × 构成红 × 粗黑边 × 硬阴影 × 斜切几何） */
+[data-theme="construct"] {
+  --bg: #f0e6d2; --bg-elev: #f8f0dd; --bg-hover: #e8dbc0; --bg-active: #dccfae;
+  --fg: #1a1a1a; --fg-dim: #6b6255; --border: #1a1a1a;
+  --accent: #c8211b; --accent-soft: #f3d8c2; --accent-fg: #f8f0dd;
+  --danger: #c8211b; --warn: #b8860b; --ok: #3d6b35;
+  --shadow: 5px 5px 0 #1a1a1a;
+  --doc-bg: #f8f0dd;
+  /* 模块自定义变量双套对齐 */
+  --acc: #c8211b; --bd: #1a1a1a; --bd2: #d8c9a6; --card: #f8f0dd;
+  --mut: #6b6255; --faint: #9a8f7c; --sh: rgba(26,26,26,.18);
+}
+/* 构成主义：全局硬边 */
+[data-theme="construct"] .ribbon , [data-theme="custom"] .ribbon { background: linear-gradient(135deg, var(--bg) 0%, var(--bg-hover) 72%, var(--bg-active) 100%); border-bottom: 2px solid var(--border); }
+[data-theme="construct"] .ribbon-tabs , [data-theme="custom"] .ribbon-tabs { border-bottom: 0; }
+[data-theme="construct"] .ribbon-tab , [data-theme="custom"] .ribbon-tab { border: 1.5px solid transparent; border-radius: 0; font-weight: 600; }
+[data-theme="construct"] .ribbon-tab.on , [data-theme="custom"] .ribbon-tab.on {
+  color: var(--card); background: var(--accent); border: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+  clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+}
+[data-theme="construct"] .ribbon-help-btn , [data-theme="custom"] .ribbon-help-btn { color: var(--accent); }
+[data-theme="construct"] .titlebar , [data-theme="custom"] .titlebar { background: linear-gradient(100deg, var(--border) 0%, var(--border) 62%, var(--accent) 62.2%, color-mix(in srgb, var(--accent) 82%, #000) 100%); color: var(--bg); border-bottom: 2px solid var(--border); }
+[data-theme="construct"] .titlebar .tb-title, [data-theme="custom"] .titlebar .tb-title, [data-theme="construct"] .titlebar .tb-btn, [data-theme="custom"] .titlebar .tb-btn, [data-theme="construct"] .titlebar .tb-logo , [data-theme="custom"] .titlebar .tb-logo { color: var(--bg); }
+[data-theme="construct"] .sidebar , [data-theme="custom"] .sidebar { background: var(--bg); border-right: 2px solid var(--border); }
+[data-theme="construct"] .sidebar-head , [data-theme="custom"] .sidebar-head { color: var(--border); font-weight: 700; letter-spacing: 2px; }
+[data-theme="construct"] .statusbar , [data-theme="custom"] .statusbar { background: var(--border); color: var(--bd2); border-top: 2px solid var(--border); }
+[data-theme="construct"] .statusbar .sb-item , [data-theme="custom"] .statusbar .sb-item { color: var(--bd2); }
+/* 按钮：2px 黑边 + 硬阴影 + 按下位移 */
+[data-theme="construct"] .rb-btn , [data-theme="custom"] .rb-btn {
+  border: 1.5px solid var(--border); border-radius: 0; background: var(--card); color: var(--border);
+  box-shadow: 2px 2px 0 var(--border); font-weight: 600;
+}
+[data-theme="construct"] .rb-btn:hover , [data-theme="custom"] .rb-btn:hover { background: var(--bg-active); }
+[data-theme="construct"] .rb-btn:active , [data-theme="custom"] .rb-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--border); }
+[data-theme="construct"] .rb-btn.ghost , [data-theme="custom"] .rb-btn.ghost { box-shadow: none; }
+[data-theme="construct"] .rb-group::after , [data-theme="custom"] .rb-group::after { color: var(--mut); font-weight: 700; }
+/* 标签页：斜切角硬边 */
+[data-theme="construct"] .tab , [data-theme="custom"] .tab { border: 1.5px solid var(--border); border-bottom: 0; border-radius: 0; background: var(--bg-hover); clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); }
+[data-theme="construct"] .tab.on , [data-theme="custom"] .tab.on { background: var(--card); border-bottom: 2px solid var(--accent); }
+/* 模态/菜单/面板：加粗黑边硬阴影 */
+[data-theme="construct"] .mazz-palette, [data-theme="custom"] .mazz-palette, [data-theme="construct"] .mazz-menu, [data-theme="custom"] .mazz-menu, [data-theme="construct"] .help-dialog, [data-theme="custom"] .help-dialog,
+[data-theme="construct"] .pk-drop, [data-theme="custom"] .pk-drop, [data-theme="construct"] .bm-folder, [data-theme="custom"] .bm-folder, [data-theme="construct"] .draw-tool-strip , [data-theme="custom"] .draw-tool-strip {
+  border: 2px solid var(--border) !important; border-radius: 0 !important; box-shadow: 5px 5px 0 var(--border) !important;
+}
+/* 欢迎页：大色块 */
+[data-theme="construct"] .welcome , [data-theme="custom"] .welcome { background:
+  linear-gradient(115deg, transparent 0%, transparent 78%, color-mix(in srgb, var(--accent) 16%, transparent) 78.2%, color-mix(in srgb, var(--accent) 16%, transparent) 100%),
+  repeating-linear-gradient(-45deg, transparent 0 26px, color-mix(in srgb, var(--border) 4%, transparent) 26px 28px), var(--bg); }
+[data-theme="construct"] .w-card , [data-theme="custom"] .w-card {
+  border: 2px solid var(--border); border-radius: 0; background: var(--card); box-shadow: 4px 4px 0 var(--border);
+}
+[data-theme="construct"] .w-card:hover , [data-theme="custom"] .w-card:hover { background: var(--accent); color: var(--card); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--border); }
+[data-theme="construct"] .w-card:hover .d , [data-theme="custom"] .w-card:hover .d { color: var(--accent-soft); }
+/* 输入件 */
+[data-theme="construct"] input, [data-theme="custom"] input, [data-theme="construct"] .rb-input, [data-theme="custom"] .rb-input, [data-theme="construct"] .rb-select, [data-theme="custom"] .rb-select, [data-theme="construct"] textarea , [data-theme="custom"] textarea {
+  border: 1.5px solid var(--border) !important; border-radius: 0 !important; background: var(--card); color: var(--border);
+}
+[data-theme="construct"] input:focus, [data-theme="custom"] input:focus, [data-theme="construct"] .rb-input:focus, [data-theme="custom"] .rb-input:focus, [data-theme="construct"] textarea:focus , [data-theme="custom"] textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+/* 编辑器纸张暖化 */
+[data-theme="construct"] .pm-page , [data-theme="custom"] .pm-page { background: var(--doc-bg); border: 1.5px solid var(--border); box-shadow: 4px 4px 0 color-mix(in srgb, var(--border) 25%, transparent); }
+/* 滚动条 */
+[data-theme="construct"] ::-webkit-scrollbar-thumb, [data-theme="custom"] ::-webkit-scrollbar-thumb , [data-theme="custom"] ::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--bg); }

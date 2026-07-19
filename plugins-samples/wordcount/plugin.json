@@ -1,0 +1,8 @@
+{
+  "id": "wordcount",
+  "name": "字数统计",
+  "version": "1.0.0",
+  "description": "实时统计当前 Markdown 文档的汉字、单词、字符、行数与预计阅读时长",
+  "author": "Mazz",
+  "main": "main.js"
+}
