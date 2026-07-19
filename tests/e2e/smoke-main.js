@@ -116,6 +116,47 @@ app.whenReady().then(async () => {
         const gone = !(await window.mazz.invoke('pw:list')).some(x => x.id === id);
         out.pwRoundtrip = !!(found && found.password === 'p@ss' && gone);
       } catch (e) { out.pwRoundtrip = false; out.pwError = String(e).slice(0, 200); }
+
+      // 思维导图键盘路由 e2e：点选根节点 → Tab 建子节点 → Delete 删除
+      try {
+        await window.MazzCommands.execute('file.newMindmap');
+        await new Promise(r => setTimeout(r, 900));
+        const count = () => document.querySelectorAll('.mm-node').length;
+        const n0 = count();
+        const rootNode = document.querySelector('.mm-node');
+        rootNode.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+        await new Promise(r => setTimeout(r, 400));
+        const n1 = count();
+        // 编辑态退出
+        const ed = document.querySelector('.mm-editor');
+        if (ed) ed.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await new Promise(r => setTimeout(r, 150));
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
+        await new Promise(r => setTimeout(r, 300));
+        const n2 = count();
+        out.mindmapKeys = n1 > n0 && n2 < n1;
+      } catch (e) { out.mindmapKeys = false; out.mmError = String(e).slice(0, 200); }
+
+      // 分屏场景：markdown + mindmap 双窗格，切来切去后导图键盘仍可用
+      try {
+        await window.MazzCommands.execute('file.new');
+        await new Promise(r => setTimeout(r, 700));
+        await window.MazzCommands.execute('view.splitRight');
+        await new Promise(r => setTimeout(r, 400));
+        await window.MazzCommands.execute('file.newMindmap');
+        await new Promise(r => setTimeout(r, 900));
+        // 模拟：先点 markdown 窗格，再点导图画布节点，再按 Tab
+        const mmNode = document.querySelector('.mm-node');
+        mmNode.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        const count = () => document.querySelectorAll('.mm-node').length;
+        const n0 = count();
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+        await new Promise(r => setTimeout(r, 400));
+        out.mindmapSplitKeys = count() > n0;
+      } catch (e) { out.mindmapSplitKeys = false; out.mmsError = String(e).slice(0, 200); }
       return out;
     })()`);
     Object.assign(results.checks, r1);

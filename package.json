@@ -24,7 +24,8 @@
       "preload/",
       "renderer/",
       "resources/",
-      "package.json"
+      "package.json",
+      "samples/"
     ],
     "protocols": [
       {
@@ -61,7 +62,8 @@
         "nsis",
         "portable"
       ],
-      "icon": "resources/icons/app.png"
+      "icon": "resources/icons/app.png",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -78,7 +80,8 @@
       ],
       "category": "Office",
       "icon": "resources/icons/app.png"
-    }
+    },
+    "npmRebuild": false
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",
