@@ -98,6 +98,9 @@ function createMath(container) {
 
   async function run(code) {
     if (!code.trim()) return;
+    // 计算器习惯：结尾单等号剥离（100+200= → 100+200；不影响 ==/>=/<=/!= 比较与 x=1 赋值）
+    code = code.trim();
+    if (/[^=!<>+\-*/%&|^~\s]=$/.test(code)) code = code.slice(0, -1);
     append('»', code, 'in');
     ctl.history.unshift(code);
     ctl.hIdx = -1;

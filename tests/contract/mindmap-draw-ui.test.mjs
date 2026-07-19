@@ -70,6 +70,44 @@ describe('思维导图 UI', () => {
     assert.equal(ctl.doc.root.children.length, before, '应删除');
     container.remove();
   });
+
+  test('键盘路由：document 级 keydown 按当前实例响应（Tab/Enter/Delete/方向键）', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const state = mindmapModule.create(container);
+    await tick();
+    const ctl = mindmapModule._forTests.instances.get(container);
+    mindmapModule.activate(container, state); // current = ctl
+    ctl.selected = ctl.doc.root.id;
+    ctl.editing = null;
+    const before = ctl.doc.root.children.length;
+    // Tab → 子节点（document 冒泡，无需画布焦点）
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    assert.equal(ctl.doc.root.children.length, before + 1, 'Tab 应建子节点');
+    assert.ok(ctl.editing, '新节点进入编辑');
+    // 编辑提交后 Enter → 同级
+    container.querySelector('.mm-editor').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    ctl.editing = null;
+    ctl.selected = ctl.doc.root.children[before].id;
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    assert.equal(ctl.doc.root.children.length, before + 2, 'Enter 应建同级节点');
+    container.querySelector('.mm-editor').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    // Delete → 删除
+    ctl.editing = null;
+    ctl.selected = ctl.doc.root.children[before + 1].id;
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
+    assert.equal(ctl.doc.root.children.length, before + 1, 'Delete 应删除');
+    // 方向键导航
+    ctl.selected = null;
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    assert.ok(ctl.selected, '方向键应能选中');
+    // 切走（current 变化）后不再响应
+    mindmapModule.deactivate(container);
+    const n = ctl.doc.root.children.length;
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    assert.equal(ctl.doc.root.children.length, n, 'deactivate 后 Tab 不应生效');
+    container.remove();
+  });
 });
 
 describe('画板 UI', () => {

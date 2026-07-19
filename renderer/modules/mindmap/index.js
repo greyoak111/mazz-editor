@@ -28,7 +28,7 @@ function createMindmap(container) {
   const root = document.createElement('div');
   root.className = 'mm-root';
   root.innerHTML = `
-    <div class="mm-canvas-wrap" tabindex="0">
+    <div class="mm-canvas-wrap" tabindex="-1">
       <svg class="mm-svg"><g class="mm-viewport"></g></svg>
       <input class="mm-editor" style="display:none" spellcheck="false" />
       <div class="mm-hint">双击节点编辑 · Tab 子节点 · Enter 同级 · Del 删除 · 拖拽重排 · 滚轮缩放</div>
@@ -214,6 +214,7 @@ function createMindmap(container) {
   function onNodeMouseDown(e, box) {
     e.stopPropagation();
     if (e.button !== 0) return;
+    wrap.focus({ preventScroll: true }); // 画布拿焦点（否则快捷键收不到）
     ctl.selected = box.node.id;
     render();
     drag = { type: 'node', id: box.node.id, sx: e.clientX, sy: e.clientY, moved: false };
@@ -221,13 +222,14 @@ function createMindmap(container) {
 
   wrap.addEventListener('mousedown', (e) => {
     if (e.target === svg || e.target === viewport) {
+      wrap.focus({ preventScroll: true });
       drag = { type: 'pan', sx: e.clientX, sy: e.clientY, cam: { ...ctl.cam } };
       ctl.selected = null;
       render();
     }
   });
   window.addEventListener('mousemove', (e) => {
-    if (!drag) return;
+    if (!drag || current !== ctl) return; // 只响应本实例发起的拖拽（分屏/多标签隔离）
     if (drag.type === 'pan') {
       ctl.cam.x = drag.cam.x + (e.clientX - drag.sx);
       ctl.cam.y = drag.cam.y + (e.clientY - drag.sy);
@@ -246,7 +248,7 @@ function createMindmap(container) {
     }
   });
   window.addEventListener('mouseup', () => {
-    if (!drag) return;
+    if (!drag || current !== ctl) return;
     if (drag.type === 'node' && drag.moved && drag.target) {
       mutate(() => moveNode(ctl.doc.root, drag.id, drag.target));
     }
@@ -268,8 +270,10 @@ function createMindmap(container) {
     if (e.target === svg || e.target === viewport) fitView();
   });
 
-  wrap.addEventListener('keydown', (e) => {
-    if (ctl.editing) return;
+  // 键盘路由挂 document（画布无需焦点亦可响应），按当前实例隔离——分屏/多标签互不打架
+  document.addEventListener('keydown', (e) => {
+    if (current !== ctl || ctl.editing) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // 组合键交给全局 keymap/命令表
     const id = ctl.selected;
     if (e.key === 'Tab' && id) { e.preventDefault(); addChildOf(id); }
     else if (e.key === 'Enter' && id) { e.preventDefault(); addSiblingOf(id); }

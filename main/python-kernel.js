@@ -23,7 +23,12 @@ while True:
         b64, marker = line.split(' ', 1)
         code = base64.b64decode(b64.encode()).decode('utf-8')
         try:
-            exec(compile(code, '<mazz>', 'exec'), _g)
+            try:
+                # 优先 single 模式（REPL 语义：表达式语句自动打印结果）
+                exec(compile(code, '<mazz>', 'single'), _g)
+            except SyntaxError:
+                # 多语句代码退回 exec 模式
+                exec(compile(code, '<mazz>', 'exec'), _g)
         except BaseException:
             traceback.print_exc()
         sys.stdout.write(marker + '\\n')
