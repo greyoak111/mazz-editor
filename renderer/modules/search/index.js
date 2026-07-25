@@ -1,5 +1,6 @@
 // renderer/modules/search/index.js —— 全局搜索：IndexedDB 全文索引 + 正则/类型过滤 + 结果直达
 import { contextKeys } from '../../core/contextkey-service.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { toast } from '../../shell/shell.js';
 import { SearchIndex, listTextFiles, highlightLine } from './indexer.js';
 
@@ -18,10 +19,27 @@ function createSearch(container) {
       <select class="rb-select gs-type">
         <option value="all">全部类型</option>
         <option value="doc">文档 (.md/.txt)</option>
-        <option value="sheet">表格 (.csv)</option>
+        <option value="sheet">表格 (.csv/.mazzsheet)</option>
+        <option value="mindmap">导图 (.mazzmap)</option>
+        <option value="slide">演示 (.mazzslide)</option>
+        <option value="draw">画板 (.mazzdraw)</option>
         <option value="code">代码</option>
       </select>
+      <select class="rb-select gs-scope" title="搜索范围">
+        <option value="both">文件名+内容</option><option value="name">仅文件名</option><option value="content">仅内容</option>
+      </select>
+      <button class="rb-btn" data-a="replace-mode" title="查找替换">⇄ 替换</button>
       <button class="rb-btn" data-a="rebuild" title="重建全文索引">↻ 重建索引</button>
+    </div>
+    <div class="gs-bar gs-replace-bar" style="display:none">
+      <input class="gs-replace-input" placeholder="替换为…（留空 = 删除匹配）" spellcheck="false" />
+      <select class="rb-select gs-range" title="替换范围">
+        <option value="ws">全部（整个工作区）</option><option value="folder">指定文件夹…</option><option value="file">仅当前文件</option>
+      </select>
+      <button class="rb-btn" data-a="replace-preview" title="预览全部命中后再决定">预览替换</button>
+      <button class="rb-btn" data-a="replace-seq" title="一处一处依次替换（可逐个跳过）">逐个替换</button>
+      <button class="rb-btn" data-a="replace-all" title="确认后一键全部写回" style="color:var(--danger)">全部替换</button>
+      <button class="rb-btn" data-a="replace-toggle" title="收起替换">收起</button>
     </div>
     <div class="gs-meta">索引准备中…</div>
     <div class="gs-results"><div class="gs-empty">输入关键词开始全局搜索</div></div>`;
@@ -31,6 +49,7 @@ function createSearch(container) {
   const regexEl = root.querySelector('.gs-regex');
   const caseEl = root.querySelector('.gs-case');
   const typeEl = root.querySelector('.gs-type');
+  const scopeEl = root.querySelector('.gs-scope');
   const metaEl = root.querySelector('.gs-meta');
   const resultsEl = root.querySelector('.gs-results');
 
@@ -54,7 +73,7 @@ function createSearch(container) {
   }
 
   function opts() {
-    return { regex: regexEl.checked, caseSensitive: caseEl.checked, type: typeEl.value };
+    return { regex: regexEl.checked, caseSensitive: caseEl.checked, type: typeEl.value, scope: scopeEl.value };
   }
 
   function runQuery() {
@@ -83,18 +102,25 @@ function createSearch(container) {
           <span class="gs-file-path">${r.path}</span>
         </div>
         ${r.hits.map(h => `
-          <div class="gs-hit" data-path="${r.path.replace(/"/g, '&quot;')}">
-            <span class="gs-ln">${h.ln}</span>${highlightLine(h.text, q, o)}
+          <div class="gs-hit" data-path="${r.path.replace(/"/g, '&quot;')}" data-ln="${h.ln || 0}">
+            <span class="gs-ln">${h.ln || '名'}</span><span class="gs-hit-t">${highlightLine(h.text, q, o)}</span>
+            <button class="gs-peek" data-peek="${r.path.replace(/"/g, '&quot;')}" title="小窗预览并直接编辑">✎</button>
           </div>`).join('')}
       </div>`).join('');
-    resultsEl.querySelectorAll('[data-path]').forEach(el =>
-      el.addEventListener('click', () => openHit(el.dataset.path)));
+    resultsEl.querySelectorAll('.gs-hit[data-path]').forEach(el =>
+      el.addEventListener('click', () => openHit(el.dataset.path, +el.dataset.ln || 0)));
+    resultsEl.querySelectorAll('.gs-file-head[data-path]').forEach(el =>
+      el.addEventListener('click', () => openHit(el.dataset.path, 0)));
   }
 
-  /** 打开命中文件并尝试预填查找词直达匹配 */
-  async function openHit(path) {
+  /** 打开命中文件并直达匹配位置（纯文本按行跳；文档预填查找词） */
+  async function openHit(path, ln = 0) {
     try { await window.MazzCommands.execute('file.openPath', { path }); }
     catch { toast('打开失败：' + path); return; }
+    if (ln > 0 && /\.txt$/i.test(path)) {
+      setTimeout(() => window.__activeTextCtl?.jumpToLine?.(ln), 400);
+      return;
+    }
     const q = ctl.lastQuery;
     if (!q || regexEl.checked) return; // 正则模式不预填（查找条是普通搜索）
     setTimeout(() => {
@@ -109,6 +135,57 @@ function createSearch(container) {
     }, 350);
   }
 
+  // 命中行小窗预览：显示上下文，可直接编辑保存并实时回写
+  async function peekEdit(path) {
+    let text = '';
+    try { text = await window.mazz.invoke('fs:readFile', { path }); }
+    catch (e) { toast('读取失败：' + e.message); return; }
+    const { modal } = await import('../../shell/shell.js');
+    const name = path.split(/[\\/]/).pop();
+    const m = modal(`预览编辑：${name}`);
+    m.el.classList.add('gs-peek-modal');
+    m.body.innerHTML = `
+      <div style="min-width:min(680px,86vw)">
+        <div style="font-size:11.5px;color:var(--fg-dim);margin-bottom:6px">${path}</div>
+        <textarea class="gs-peek-text rb-input" rows="14" spellcheck="false"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <span style="font-size:11.5px;color:var(--fg-dim)">保存立即写回源文件并刷新索引</span>
+          <div style="display:flex;gap:8px">
+            <button class="rb-btn" id="peek-open" style="flex-direction:row">在编辑器中打开</button>
+            <button class="rb-btn" id="peek-save" style="flex-direction:row;background:var(--accent);color:var(--accent-fg)">保存</button>
+          </div>
+        </div>
+      </div>`;
+    const ta = m.body.querySelector('.gs-peek-text');
+    ta.value = text;
+    // 定位到首个命中行
+    const q = ctl.lastQuery;
+    if (q) {
+      const idx = text.indexOf(q);
+      if (idx >= 0) { ta.focus(); ta.setSelectionRange(idx, idx + q.length); }
+    }
+    m.body.querySelector('#peek-save').addEventListener('click', async () => {
+      try {
+        await window.mazz.invoke('fs:writeFile', { path, content: ta.value });
+        toast('已保存并写回源文件');
+        // 打开中的标签同步重载（脏标签不覆盖）
+        const openTab = window.MazzShell?.tabs?.tabs?.find?.(t => t.filePath === path);
+        if (openTab) window.MazzShell.reloadTabFromDisk?.(openTab).catch(() => {});
+        await rebuildIndex(true);
+        runQuery();
+        m.close();
+      } catch (e) { toast('保存失败：' + e.message); }
+    });
+    m.body.querySelector('#peek-open').addEventListener('click', () => {
+      m.close();
+      openHit(path);
+    });
+  }
+  resultsEl.addEventListener('click', (e) => {
+    const peek = e.target.closest('.gs-peek');
+    if (peek) { e.stopPropagation(); peekEdit(peek.dataset.peek); }
+  });
+
   // 事件：输入防抖 + Enter 立即
   let debounce = null;
   inputEl.addEventListener('input', () => {
@@ -120,6 +197,90 @@ function createSearch(container) {
     e.stopPropagation();
   });
   [regexEl, caseEl, typeEl].forEach(el => el.addEventListener('change', runQuery));
+  // —— 查找替换（v42 波次二） ——
+  const replaceBar = root.querySelector('.gs-replace-bar');
+  const rangeEl = root.querySelector('.gs-range');
+  const replaceInputEl = root.querySelector('.gs-replace-input');
+  root.querySelector('[data-a=replace-mode]').addEventListener('click', () => {
+    const open = replaceBar.style.display !== 'none';
+    replaceBar.style.display = open ? 'none' : '';
+    if (!open) replaceInputEl.focus();
+  });
+  root.querySelector('[data-a=replace-toggle]').addEventListener('click', () => { replaceBar.style.display = 'none'; });
+
+  async function rangePaths() {
+    const r = rangeEl.value;
+    if (r === 'ws') return null;
+    if (r === 'file') {
+      const tab = window.MazzShell?.tabs?.active;
+      if (!tab?.filePath) { toast('当前标签没有已保存的文件'); return []; }
+      return [tab.filePath];
+    }
+    // 指定文件夹
+    const { listDirRec } = await import('./replace.js').catch(() => ({}));
+    const ws = await ctl.getWorkspace?.() || await window.mazz.invoke('workspace:get');
+    const sub = await import('../../shell/shell.js').then(async ({ inputModal }) =>
+      inputModal('限定到哪个文件夹？（工作区相对路径，留空=根）', ''));
+    if (sub == null) return false; // 取消
+    const p = sub.trim() ? (ws + '/' + sub.trim().replace(/^\/+|\/+$/g, '')) : ws;
+    return [p];
+  }
+
+  root.querySelector('[data-a=replace-preview]').addEventListener('click', async () => {
+    const q = inputEl.value.trim();
+    if (!q) { toast('先输入搜索词'); return; }
+    const paths = await rangePaths();
+    if (paths === false) return;
+    const { collectHits, previewReplace, applyReplace } = await import('./replace.js');
+    const groups = collectHits(ctl.index, q, { ...opts(), scope: opts().scope === 'both' ? 'content' : opts().scope, rangePaths: paths });
+    if (!groups.length) { toast('没有命中'); return; }
+    previewReplace(groups, {
+      onConfirm: async (keep) => {
+        const r = await applyReplace(ctl.index, keep, q, replaceInputEl.value, { ...opts(), shell: window.MazzShell });
+        toast(`替换完成：${r.files} 个文件 ${r.count} 处${r.skipped.length ? '；跳过 ' + r.skipped.join('、') : ''}`);
+        await rebuildIndex(true);
+        runQuery();
+      },
+    });
+  });
+  // 全部替换：真直连（确认对话框报数后即写回，预览按钮留给想逐项排除的人）
+  const doReplaceAll = async () => {
+    const q = inputEl.value.trim();
+    if (!q) { toast('先输入搜索词'); return; }
+    const paths = await rangePaths();
+    if (paths === false) return;
+    const { collectHits, applyReplace } = await import('./replace.js');
+    const groups = collectHits(ctl.index, q, { ...opts(), scope: opts().scope === 'both' ? 'content' : opts().scope, rangePaths: paths });
+    const total = groups.reduce((a, g) => a + g.hits.filter(h => h.ln > 0).length, 0);
+    if (!total) { toast('没有命中'); return; }
+    const ok = await window.mazz.invoke('dialog:confirm', {
+      title: '全部替换', message: `将「${q}」全部替换为「${replaceInputEl.value}」？\n${groups.length} 个文件 · ${total} 处命中`, buttons: ['全部替换', '取消'],
+    }).catch(() => 1);
+    if (ok !== 0) return;
+    const r = await applyReplace(ctl.index, groups, q, replaceInputEl.value, { ...opts(), shell: window.MazzShell });
+    toast(`替换完成：${r.files} 个文件 ${r.count} 处${r.skipped.length ? '；跳过 ' + r.skipped.join('、') : ''}`);
+    await rebuildIndex(true);
+    runQuery();
+  };
+  root.querySelector('[data-a=replace-all]').addEventListener('click', doReplaceAll);
+  root.querySelector('[data-a=replace-seq]').addEventListener('click', async () => {
+    const q = inputEl.value.trim();
+    if (!q) { toast('先输入搜索词'); return; }
+    const paths = await rangePaths();
+    if (paths === false) return;
+    const { collectHits, replaceSequential } = await import('./replace.js');
+    const groups = collectHits(ctl.index, q, { ...opts(), scope: opts().scope === 'both' ? 'content' : opts().scope, rangePaths: paths });
+    if (!groups.length) { toast('没有命中'); return; }
+    replaceSequential(ctl.index, groups, q, replaceInputEl.value, {
+      ...opts(), shell: window.MazzShell,
+      onDone: async (n, skipped) => {
+        toast(`逐个替换结束：已替换 ${n} 处${skipped?.length ? '；跳过 ' + skipped.join('、') : ''}`);
+        await rebuildIndex(true);
+        runQuery();
+      },
+    });
+  });
+
   root.querySelector('[data-a=rebuild]').addEventListener('click', async () => {
     await rebuildIndex(true);
     runQuery();
@@ -184,7 +345,7 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="搜索">
-      <button class="rb-btn" data-command="search.focus"><i class="ico">🔎</i><span>聚焦搜索框</span></button>
+      <button class="rb-btn" data-command="search.focus"><i class="ico">${iconHtml('🔎')}</i><span>聚焦搜索框</span></button>
       <button class="rb-btn" data-command="search.rebuild"><i class="ico">↻</i><span>重建索引</span></button>
     </div>`,
   bindToolbar(panel) {

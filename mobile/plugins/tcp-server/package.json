@@ -1,0 +1,15 @@
+{
+  "name": "mazz-tcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "极薄 TCP 服务器插件：仅搬运字节，协议全部在 JS 层（供移动端当局域网同步主机）",
+  "main": "src/index.js",
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  }
+}

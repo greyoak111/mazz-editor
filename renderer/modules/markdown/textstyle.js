@@ -123,7 +123,7 @@ export const fontStyleSerializer = {
 
 // ==================== 块级样式（对齐/缩进/行距/段距） ====================
 export const BLOCK_ATTRS = Object.fromEntries(
-  ['align', 'indent', 'lineHeight', 'spacingBefore', 'spacingAfter'].map(k => [k, { default: null }]));
+  ['align', 'indent', 'lineHeight', 'spacingBefore', 'spacingAfter', 'dropCap'].map(k => [k, { default: null }]));
 
 export function blockNodeSpec(baseSpec, tagFn) {
   const resolveTag = (node) => typeof tagFn === 'function' ? tagFn(node) : tagFn;
@@ -133,12 +133,22 @@ export function blockNodeSpec(baseSpec, tagFn) {
     toDOM: (node) => {
       const a = node.attrs || {};
       const style = [];
-      if (a.align) style.push(`text-align:${a.align}`);
+      if (a.align === 'justify') {
+        // 两端对齐：inter-ideograph 让中文也生效（否则中文行间看不出效果）
+        style.push('text-align:justify', 'text-justify:inter-ideograph');
+      } else if (a.align === 'distributed') {
+        // 分散对齐：distributed 不是合法 CSS 值（直接被丢弃＝用户看到的「无效」）；
+        // 正确组合：justify + 末行也 justify + text-justify 拉伸
+        style.push('text-align:justify', 'text-align-last:justify', 'text-justify:distribute');
+      } else if (a.align) style.push(`text-align:${a.align}`);
       if (a.indent) style.push(`text-indent:${a.indent}em`);
       if (a.lineHeight) style.push(`line-height:${a.lineHeight}`);
       if (a.spacingBefore) style.push(`margin-top:${a.spacingBefore}em`);
       if (a.spacingAfter) style.push(`margin-bottom:${a.spacingAfter}em`);
-      return [resolveTag(node), style.length ? { style: style.join(';') } : {}, 0];
+      const attrs = {};
+      if (style.length) attrs.style = style.join(';');
+      if (a.dropCap) attrs.class = 'pm-dropcap';
+      return [resolveTag(node), attrs, 0];
     },
     parseDOM: (baseSpec.parseDOM || []).map(rule => ({
       ...rule,
@@ -156,6 +166,7 @@ export function blockNodeSpec(baseSpec, tagFn) {
           lineHeight: parseFloat(s.lineHeight) || null,
           spacingBefore: parseFloat(s.marginTop) || null,
           spacingAfter: parseFloat(s.marginBottom) || null,
+          dropCap: dom.classList?.contains('pm-dropcap') ? true : null,
         };
       },
     })),
@@ -204,18 +215,19 @@ export function injectBlockHintsToMd(doc, mdText) {
   const hintLines = [];
   const hasStyled = blocks.some(n => {
     const a = n.attrs || {};
-    return a.align || a.indent || a.lineHeight || a.spacingBefore || a.spacingAfter;
+    return a.align || a.indent || a.lineHeight || a.spacingBefore || a.spacingAfter || a.dropCap;
   });
   if (!hasStyled) return mdText;
   for (const n of blocks) {
     const a = n.attrs || {};
-    if (a.align || a.indent || a.lineHeight || a.spacingBefore || a.spacingAfter) {
+    if (a.align || a.indent || a.lineHeight || a.spacingBefore || a.spacingAfter || a.dropCap) {
       const attrs = {};
       if (a.align) attrs.align = a.align;
       if (a.indent) attrs.indent = a.indent;
       if (a.lineHeight) attrs.lineHeight = a.lineHeight;
       if (a.spacingBefore) attrs.spacingBefore = a.spacingBefore;
       if (a.spacingAfter) attrs.spacingAfter = a.spacingAfter;
+      if (a.dropCap) attrs.dropCap = true;
       hintLines.push(`<!--block-style:${JSON.stringify(attrs)}-->`);
     }
   }

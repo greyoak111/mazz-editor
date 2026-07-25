@@ -162,6 +162,40 @@ export async function applyImageTheme() {
   document.documentElement.dataset.theme = 'custom';
   await window.mazz.invoke('settings:set', { key: 'theme', value: 'custom' }).catch(() => {});
   await window.mazz.invoke('settings:set', { key: 'ui.customThemeVars', value: vars }).catch(() => {});
+  // 广播外部窗格跟随（子窗 setTheme('custom') → restoreImageTheme 读 settings 注入）——此前漏广播，旧窗格停留在旧主题
+  window.mazz?.invoke('theme:broadcast', { id: 'custom' }).catch(() => {});
+  // 落盘到工作区 themes/（用户可命名，此后出现在主题包列表里）——v42 需求
+  try {
+    const { inputModal } = await import('./shell/shell.js');
+    const name = await inputModal('主题命名（存到 themes/ 文件夹，可在主题列表复用）', p.split(/[\\/]/).pop().replace(/\.\w+$/, '') + '主题');
+    if (name?.trim()) {
+      const { savePack } = await import('./lib/theme-store.js');
+      const { wsPath } = await import('./lib/ws-path.js');
+      const dir = await wsPath('/themes');
+      await window.mazz.invoke('fs:mkdir', { path: dir }).catch(() => {});
+      const safe = name.trim().replace(/[\\/:*?"<>|]/g, '-');
+      // 键名对齐主题包规范（VAR_KEYS 全量 22 键 kebab-case；图片主题为浅色基底）
+      // 主套 15 键 + 模块第二套（acc/bd/bd2/card/mut/faint/sh）+ structure 结构镜像——缺一样，重载后构成主义就缺腿
+      const packVars = {
+        bg: vars.bg, 'bg-elev': vars.bgElev, 'bg-hover': vars.bgHover, 'bg-active': vars.bgActive,
+        fg: vars.fg, 'fg-dim': vars.fgDim, border: vars.border,
+        accent: vars.accent, 'accent-soft': vars.accentSoft, 'accent-fg': vars.accentFg,
+        danger: vars.danger, warn: vars.warn, ok: vars.ok,
+        shadow: `5px 5px 0 ${vars.border}`, 'doc-bg': vars.docBg,
+        acc: vars.acc, bd: vars.bd, bd2: vars.bd2, card: vars.card,
+        mut: vars.mut, faint: vars.faint, sh: vars.sh,
+      };
+      const pack = {
+        name: name.trim(),
+        base: 'paper',
+        structure: 'custom', // 结构镜像：重载时把构成主义骨架（硬边/斜切/投影）一并套上
+        vars: packVars,
+      };
+      await window.mazz.invoke('fs:writeFile', { path: `${dir}/${safe}.json`, content: JSON.stringify(pack, null, 2) });
+      toast(`主题已生成并存储到 themes/${safe}.json`);
+      return true;
+    }
+  } catch {}
   toast('已生成自定义主题（构成主义配色）');
   return true;
 }

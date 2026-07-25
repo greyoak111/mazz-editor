@@ -1,5 +1,6 @@
 // renderer/modules/slide/index.js —— 演示模块（slide.js）：大纲 → 成稿，画布双编辑，PptxGenJS 编译
 import { parseOutline, serializeOutline, markdownToOutline } from './outline.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { SLIDE_THEMES, themeById } from './themes.js';
 import { renderSlideHTML } from './render.js';
 import { Presenter } from './present.js';
@@ -54,6 +55,7 @@ function createSlide(container) {
     get theme() { return themeById(ctl.themeId); },
     sync: () => syncFromOutline(),
     render: () => renderAll(),
+    __active: true,
   };
 
   function syncFromOutline() {
@@ -71,9 +73,10 @@ function createSlide(container) {
 
   function renderAll() {
     const s = ctl.slides[ctl.current];
-    ctl.stageEl.innerHTML = s ? renderSlideHTML(s, ctl.theme, { scale: 1, canvasMode: ctl.canvasMode }) : '';
+    ctl.stageEl.innerHTML = s ? renderSlideHTML(s, ctl.theme, { scale: ctl.stageZoom || 1, canvasMode: ctl.canvasMode }) : '';
     bindCanvasEvents();
     renderStyleBar();
+    renderZoomCtl();
     ctl.thumbsEl.innerHTML = '';
     ctl.slides.forEach((sl, i) => {
       const t = document.createElement('div');
@@ -82,6 +85,26 @@ function createSlide(container) {
       t.addEventListener('click', () => { ctl.current = i; renderAll(); });
       ctl.thumbsEl.appendChild(t);
     });
+  }
+
+  // ==================== 单页缩放（滚轮 + 角落控件；独立于全局窗格缩放） ====================
+  ctl.stageEl.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    ctl.stageZoom = Math.min(2.5, Math.max(0.3, (ctl.stageZoom || 1) * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+    renderAll();
+  }, { passive: false });
+  function renderZoomCtl() {
+    const bar = document.createElement('div');
+    bar.className = 'sl-zoomctl';
+    bar.innerHTML = `
+      <button data-z="out" title="缩小">－</button>
+      <span>${Math.round((ctl.stageZoom || 1) * 100)}%</span>
+      <button data-z="in" title="放大">＋</button>
+      <button data-z="reset" title="复位 100%">1:1</button>`;
+    bar.querySelector('[data-z=in]').addEventListener('click', () => { ctl.stageZoom = Math.min(2.5, (ctl.stageZoom || 1) * 1.25); renderAll(); });
+    bar.querySelector('[data-z=out]').addEventListener('click', () => { ctl.stageZoom = Math.max(0.3, (ctl.stageZoom || 1) / 1.25); renderAll(); });
+    bar.querySelector('[data-z=reset]').addEventListener('click', () => { ctl.stageZoom = 1; renderAll(); });
+    ctl.stageEl.appendChild(bar);
   }
 
   // ==================== 画布编辑 v1 ====================
@@ -129,8 +152,15 @@ function createSlide(container) {
             }).then(async (path) => {
               if (!path) { ctl.tool = null; renderAll(); return; }
               if (window.mazz?.isElectron) {
+                // 大图落盘：复制进 .mazz/assets，元素只存文件路径（base64 塞大纲会卡爆整个模块）
                 const b64 = await window.mazz.invoke('fs:readFileBase64', { path });
-                el.src = 'data:image/png;base64,' + b64;
+                const ws = await window.mazz.invoke('workspace:get');
+                const dir = `${ws}/.mazz/assets`;
+                await window.mazz.invoke('fs:mkdir', { path: dir });
+                const ext = path.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+                const dest = `${dir}/slide_${Date.now()}.${ext}`;
+                await window.mazz.invoke('fs:writeFileBase64', { path: dest, base64: b64 });
+                el.src = 'file://' + dest;
               } else el.src = path;
               addEl(el);
             });
@@ -203,7 +233,7 @@ function createSlide(container) {
       });
     });
 
-    // 选中元素高亮 + 缩放手柄
+    // 选中元素高亮 + 缩放/旋转手柄
     if (ctl.selEl >= 0) {
       const el = slideEl.querySelector(`[data-el="${ctl.selEl}"]`);
       if (el) {
@@ -211,6 +241,36 @@ function createSlide(container) {
         const h = document.createElement('div');
         h.className = 'sl-handle';
         el.appendChild(h);
+        // 旋转手柄（顶部圆点，拖拽旋转；Shift 吸附 15°）
+        const rot = document.createElement('div');
+        rot.className = 'sl-rotate';
+        rot.textContent = '⟳';
+        rot.title = '拖拽旋转（Shift 吸附 15°）';
+        el.appendChild(rot);
+        const selData = ctl.slides[ctl.current].elements[ctl.selEl];
+        rot.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const slideRect = slideEl.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          const cx = elRect.left + elRect.width / 2, cy = elRect.top + elRect.height / 2;
+          const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+          const origRotate = selData.rotate || 0;
+          const move = (ev) => {
+            const a = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+            let deg = origRotate + (a - startAngle);
+            if (ev.shiftKey) deg = Math.round(deg / 15) * 15;
+            selData.rotate = Math.round(((deg % 360) + 360) % 360);
+            renderAll();
+          };
+          const up = () => {
+            window.removeEventListener('mousemove', move);
+            window.removeEventListener('mouseup', up);
+            syncElementsToOutline();
+          };
+          window.addEventListener('mousemove', move);
+          window.addEventListener('mouseup', up);
+        });
       }
     }
   }
@@ -308,6 +368,28 @@ function createSlide(container) {
     }
   });
 
+  // 右键选单：页面操作（演示此前没有右键逻辑）
+  root.addEventListener('contextmenu', async (e) => {
+    if (e.target.closest('.sl-stylebar') || e.target.closest('.sl-zoomctl')) return;
+    e.preventDefault();
+    const { showDomMenu } = await import('../../lib/dom-menu.js');
+    const onEl = !!e.target.closest('[data-el]');
+    showDomMenu([
+      { label: '新建页面', fn: () => window.MazzCommands.execute('slide.add') },
+      { label: ctl.canvasMode ? '退出画布模式' : '进入画布模式', fn: () => window.MazzCommands.execute('slide.canvasMode') },
+      { label: '添加文本框', fn: () => window.MazzCommands.execute('slide.addText') },
+      { label: '添加图片', fn: () => window.MazzCommands.execute('slide.addImage') },
+      '-',
+      ...(onEl ? [
+        { label: '复制元素', fn: () => { if (ctl.selEl >= 0) { const el = ctl.slides[ctl.current].elements[ctl.selEl]; const copy = { ...el, style: { ...(el.style || {}) }, x: el.x + 3, y: el.y + 3 }; ctl.slides[ctl.current].elements.push(copy); ctl.selEl = ctl.slides[ctl.current].elements.length - 1; ctl.syncToOutline(); ctl.render(); } } },
+        { label: '删除元素', fn: () => ctl.deleteSelected() },
+        '-',
+      ] : []),
+      { label: '放映（F5）', fn: () => window.MazzCommands.execute('slide.present') },
+      { label: '导出 PPTX', fn: () => window.MazzCommands.execute('slide.exportPptx') },
+    ], e.clientX, e.clientY);
+  });
+
   // 初始内容
   ctl.outlineEl.value = `<!--theme:ink-->\n` + serializeOutline(ctl.slides);
   renderAll();
@@ -324,6 +406,7 @@ export default {
   create(container) {
     const ctl = createSlide(container);
     instances.set(container, ctl);
+    window.__activeSlideCtl = ctl; // 打印预览/桥接取数
     return { container };
   },
   activate(container) {
@@ -392,13 +475,14 @@ export default {
       <button class="rb-btn" data-command="slide.addText"><i class="ico">T</i><span>文本框</span></button>
       <button class="rb-btn" data-command="slide.addRect"><i class="ico">▭</i><span>矩形</span></button>
       <button class="rb-btn" data-command="slide.addEllipse"><i class="ico">◯</i><span>椭圆</span></button>
-      <button class="rb-btn" data-command="slide.addImage"><i class="ico">🖼</i><span>图片</span></button>
+      <button class="rb-btn" data-command="slide.addImage"><i class="ico">${iconHtml('🖼')}</i><span>图片</span></button>
       <div id="sl-bg-picker"></div>
     </div>
     <div class="rb-group" data-label="放映">
       <button class="rb-btn" data-command="slide.present"><i class="ico">▶</i><span>放映</span></button>
-      <button class="rb-btn" data-command="slide.presentPv"><i class="ico">🖥</i><span>演讲者</span></button>
-      <button class="rb-btn" data-command="slide.exportPptx"><i class="ico">📦</i><span>导出pptx</span></button>
+      <button class="rb-btn" data-command="slide.presentPv"><i class="ico">${iconHtml('🖥')}</i><span>演讲者</span></button>
+      <button class="rb-btn" data-command="slide.exportPptx"><i class="ico">${iconHtml('📦')}</i><span>导出pptx</span></button>
+      <button class="rb-btn" data-command="slide.printPreview"><i class="ico">${iconHtml('🖨')}</i><span>打印/导PDF</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

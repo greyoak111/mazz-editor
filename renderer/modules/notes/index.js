@@ -1,5 +1,6 @@
 // renderer/modules/notes/index.js —— 笔记管理：[[双链]] 笔记库 + 反向链接 + 关系图谱 + 每日笔记
 import { contextKeys } from '../../core/contextkey-service.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { toast } from '../../shell/shell.js';
 import markdownModule from '../markdown/index.js';
 import * as lib from './library.js';
@@ -25,7 +26,8 @@ function createNotes(container) {
     <div class="notes-main">
       <div class="notes-side">
         <div class="notes-side-head">
-          <input class="notes-filter" placeholder="筛选笔记…" spellcheck="false">
+          <button class="rb-btn" data-a="foldside" title="折叠/展开笔记列表" style="min-width:26px;padding:2px 6px">◀</button>
+          <input class="notes-filter" placeholder="筛选笔记…" spellcheck="false" style="min-width:0;flex:1">
           <button class="rb-btn" data-a="refresh" title="重建笔记索引" style="min-width:30px">↻</button>
         </div>
         <div class="notes-list"></div>
@@ -43,6 +45,13 @@ function createNotes(container) {
   const edHost = root.querySelector('.notes-ed-host');
   const listEl = root.querySelector('.notes-list');
   const filterEl = root.querySelector('.notes-filter');
+  // 笔记列表折叠（窄屏给编辑器让位；列表本体已配滚动条）
+  const sideEl = root.querySelector('.notes-side');
+  root.querySelector('[data-a=foldside]').addEventListener('click', (e) => {
+    const folded = sideEl.classList.toggle('folded');
+    e.currentTarget.textContent = folded ? '▶' : '◀';
+    e.currentTarget.title = folded ? '展开笔记列表' : '折叠笔记列表';
+  });
   const blWrap = root.querySelector('.notes-backlinks');
   const blList = root.querySelector('.bl-list');
   const graphWrap = root.querySelector('.notes-graph');
@@ -94,7 +103,7 @@ function createNotes(container) {
     markdownModule.setContent(content, edState);
     ctl.lastContent = markdownModule.getContent(edState);
     ctl.dirty = false;
-    window.MazzHost?.setTabTitle(container, '📓 ' + ctl.currentName);
+    window.MazzHost?.setTabTitle(container, ctl.currentName);
     setMode('editor');
     renderList();
     renderBacklinks();
@@ -125,7 +134,7 @@ function createNotes(container) {
     const others = items.filter(e => !e.path.includes(DAILY_DIR));
     const itemHtml = (e) => `
       <div class="notes-item${e.path === ctl.currentPath ? ' on' : ''}" data-path="${e.path.replace(/"/g, '&quot;')}" title="${e.path.replace(/"/g, '&quot;')}">
-        <span class="n-name">${e.path.includes(DAILY_DIR) ? '📅 ' : '📄 '}${e.name}</span>
+        <span class="n-name">${iconHtml(e.path.includes(DAILY_DIR) ? '📅' : '📄')} ${e.name}</span>
       </div>`;
     listEl.innerHTML =
       (daily.length ? `<div class="notes-sect">每日笔记</div>` + daily.map(itemHtml).join('') : '')
@@ -249,8 +258,8 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="笔记">
-      <button class="rb-btn" data-command="notes.daily"><i class="ico">📅</i><span>每日笔记</span></button>
-      <button class="rb-btn" data-command="notes.toggleGraph"><i class="ico">🕸</i><span>图谱</span></button>
+      <button class="rb-btn" data-command="notes.daily"><i class="ico">${iconHtml('📅')}</i><span>每日笔记</span></button>
+      <button class="rb-btn" data-command="notes.toggleGraph"><i class="ico">${iconHtml('🕸')}</i><span>图谱</span></button>
       <button class="rb-btn" data-command="notes.refresh"><i class="ico">↻</i><span>重建索引</span></button>
     </div>`,
   bindToolbar(panel) {

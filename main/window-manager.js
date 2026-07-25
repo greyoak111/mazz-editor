@@ -38,6 +38,7 @@ class WindowManager {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false,
         spellcheck: true, webviewTag: true, // 隐私浏览器模块需要 webview
+        plugins: true, // 内置 PDFium：查看器模块渲染 PDF
       },
     });
     this.main = win;
@@ -104,7 +105,7 @@ class WindowManager {
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false,
-        spellcheck: true, webviewTag: true,
+        spellcheck: true, webviewTag: true, plugins: true,
       },
     });
     this.children.add(win);

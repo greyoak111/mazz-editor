@@ -169,7 +169,8 @@ export class PaneTree {
   }
 
   // ==================== 标签迁移 ====================
-  moveTabToPane(tabId, targetLeaf) {
+  /** keepEmpty=true：拖拽分屏场景保留被掏空的源窗格（VS Code 行为；否则单签窗格拖出即被收缩，分屏等于没分） */
+  moveTabToPane(tabId, targetLeaf, { keepEmpty = false } = {}) {
     const from = this.paneOfTab(tabId);
     if (!from || from === targetLeaf) return;
     const tab = from.tabs.get(tabId);
@@ -188,7 +189,8 @@ export class PaneTree {
     targetLeaf.tabs.render();
     from.refreshEmpty();
     targetLeaf.refreshEmpty();
-    this.onLeafEmpty(from);
+    if (keepEmpty) this.syncKeys();
+    else this.onLeafEmpty(from);
   }
 
   /** 活动标签移到下一个窗格（活动窗格为空时，自动找最近有标签的窗格） */
@@ -245,8 +247,9 @@ export class PaneTree {
 
   /** 隔条拖拽改大小（用户要求 3） */
   bindDivider(divider, node, wrap, a, b) {
-    divider.addEventListener('mousedown', (e) => {
+    divider.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      try { divider.setPointerCapture?.(e.pointerId); } catch {} // 触屏拖拽不丢捕获
       const horizontal = node.direction === 'row';
       const rect = wrap.getBoundingClientRect();
       const total = horizontal ? rect.width : rect.height;
@@ -259,13 +262,15 @@ export class PaneTree {
         b.style.flex = `${node.sizes[1]} 1 0`;
       };
       const up = () => {
-        window.removeEventListener('mousemove', move);
-        window.removeEventListener('mouseup', up);
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
         document.body.classList.remove('pane-resizing');
       };
       document.body.classList.add('pane-resizing');
-      window.addEventListener('mousemove', move);
-      window.addEventListener('mouseup', up);
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
     });
   }
 

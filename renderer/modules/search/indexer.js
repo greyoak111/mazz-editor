@@ -63,10 +63,14 @@ export function createMemoryStore() {
 export const TYPE_GROUPS = {
   all: null,
   doc: ['.md', '.txt', '.markdown'],
-  sheet: ['.csv', '.tsv'],
+  sheet: ['.csv', '.tsv', '.mazzsheet'],
+  mindmap: ['.mazzmap', '.mm', '.opml'],
+  slide: ['.mazzslide'],
+  draw: ['.mazzdraw'],
   code: ['.js', '.ts', '.py', '.json', '.css', '.html', '.java', '.c', '.cpp', '.h', '.sh', '.mazzcode'],
 };
-const INDEXABLE = new Set(['.md', '.txt', '.markdown', '.csv', '.tsv', '.js', '.ts', '.py', '.json', '.css', '.html', '.java', '.c', '.cpp', '.h', '.sh', '.mazzcode']);
+// 自创格式（导图/演示/画板均为 JSON 文本，节点文字可搜）——类型细分的前提是全入库
+const INDEXABLE = new Set(['.md', '.txt', '.markdown', '.csv', '.tsv', '.mazzsheet', '.mazzmap', '.mm', '.opml', '.mazzslide', '.mazzdraw', '.js', '.ts', '.py', '.json', '.css', '.html', '.java', '.c', '.cpp', '.h', '.sh', '.mazzcode']);
 
 function extOf(p) {
   const m = /\.[a-z0-9]+$/i.exec(p);
@@ -132,7 +136,7 @@ export class SearchIndex {
   }
 
   /** 查询：普通（contains）/正则；返回按文件分组的命中 */
-  query(q, { regex = false, caseSensitive = false, type = 'all', maxFileHits = 3, maxFiles = 100 } = {}) {
+  query(q, { regex = false, caseSensitive = false, type = 'all', scope = 'both', maxFileHits = 3, maxFiles = 100 } = {}) {
     if (!q && !regex) return { results: [], total: 0 };
     let matcher;
     try {
@@ -145,13 +149,24 @@ export class SearchIndex {
     let total = 0;
     for (const e of this.mem.values()) {
       if (exts && !exts.includes(e.ext)) continue;
-      const lines = e.content.split('\n');
       const hits = [];
-      for (let i = 0; i < lines.length && hits.length < maxFileHits; i++) {
+      // 文件名匹配（scope: name | both）
+      if (scope !== 'content') {
         matcher.lastIndex = 0;
-        if (matcher.test(lines[i])) {
-          hits.push({ ln: i + 1, text: lines[i].slice(0, 300) });
+        if (matcher.test(e.name)) {
+          hits.push({ ln: 0, text: '（文件名匹配）' });
           total++;
+        }
+      }
+      // 内容匹配（scope: content | both）
+      if (scope !== 'name') {
+        const lines = e.content.split('\n');
+        for (let i = 0; i < lines.length && hits.length < maxFileHits; i++) {
+          matcher.lastIndex = 0;
+          if (matcher.test(lines[i])) {
+            hits.push({ ln: i + 1, text: lines[i].slice(0, 300) });
+            total++;
+          }
         }
       }
       if (hits.length) results.push({ path: e.path, name: e.name, hits });

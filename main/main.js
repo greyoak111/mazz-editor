@@ -3,10 +3,18 @@
 'use strict';
 const {
   app, Menu, dialog, clipboard, nativeTheme, Notification,
-  shell, powerSaveBlocker, powerMonitor, session, safeStorage,
+  shell, powerSaveBlocker, powerMonitor, session, safeStorage, BrowserWindow, desktopCapturer,
 } = require('electron');
 const fs = require('fs');
 const path = require('path');
+
+// Windows 任务栏/开始菜单图标与分组归属（不设会回落成 Electron 默认图标）
+app.setAppUserModelId('com.mazz.editor');
+
+// 站点级进程隔离：webview 同站点多标签页会被 Chromium 合并进同一 site instance（同渲染进程），
+// 关掉其中一个 webview 就把共享进程拖垮——另一个同站标签页「页面还在显示但点击/滚动全死」
+// （B站/知乎跳新标签页再关闭返回的稳定僵死总根）。site-per-process 强制每站点独立进程，关一不拖一。
+app.commandLine.appendSwitch('site-per-process');
 
 const Store = require('./store');
 const IpcBus = require('./ipc-bus');
@@ -18,6 +26,9 @@ const FileWatcher = require('./file-watcher');
 const SearxService = require('./searx');
 const TranslateService = require('./translate');
 const LanSync = require('./lansync');
+const ShareService = require('./share');
+const Importer = require('./importer');
+const StartMenuApps = require('./startmenu');
 const Updater = require('./updater');
 const BrowserSession = require('./browser-session');
 const TerminalService = require('./terminal');
@@ -28,9 +39,12 @@ const PROTOCOL = 'mazz';
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) { app.quit(); return; }
 
+// E2E 测试隔离钩子（仅显式注入环境变量时生效；正常启动零影响）
+if (process.env.MAZZ_E2E_USER_DATA) app.setPath('userData', process.env.MAZZ_E2E_USER_DATA);
+
 const store = new Store(path.join(app.getPath('userData'), 'mazz-settings.json'), {
   recentFiles: [],
-  workspace: path.join(app.getPath('documents'), 'MazzWorkspace'),
+  workspace: process.env.MAZZ_E2E_WORKSPACE || path.join(app.getPath('documents'), 'MazzWorkspace'),
   closeBehavior: 'ask', // ask | quit | tray
   themeSource: 'system',
   spellcheckEnabled: true,
@@ -47,19 +61,44 @@ const tray = new TrayService({
 const globalShortcuts = new GlobalShortcuts({ windowManager: wm, store });
 
 let pendingOpenFiles = []; // 主实例未就绪前收到的文件参数
+let pendingImports = [];   // 主实例未就绪前收到的 --import 导入参数
+
+// —— 跨进程路径统一为正斜杠：渲染层一律按 '/' 运算（Node fs 在 Windows 正反斜杠通吃）——
+const toSlash = (p) => (typeof p === 'string' ? p.replace(/\\/g, '/') : p);
+const toSlashDeep = (v) => Array.isArray(v) ? v.map(toSlashDeep)
+  : (v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, toSlashDeep(x)])) : toSlash(v));
+
+// 文件监听器实例（whenReady 时创建；删除/改名前需先解锁，否则 Windows 下目录被 ReadDirectoryChangesW 句柄锁死）
+let watcher = null;
+/** 删除/移动前解锁监视句柄（Windows 下被监视的目录无法改名/删除） */
+async function unlockWatch(paths) {
+  const list = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
+  if (!list.length || !watcher?.watcher) return;
+  try { await watcher.watcher.unwatch(list); } catch {}
+}
+
+// 开始菜单已装软件扫描（模块级：registerChannels 与 ShareService 共用）
+const startMenuApps = new StartMenuApps({ store });
 
 function extractOpenFiles(argv) {
-  return (argv || []).slice(1).filter(a => {
-    if (a.startsWith('-') || a.startsWith(PROTOCOL + '://')) return false;
-    try { return fs.existsSync(a) && fs.statSync(a).isFile(); } catch { return false; }
-  }).map(a => path.resolve(a));
+  const args = (argv || []).slice(1);
+  const out = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--import') { i++; continue; } // --import 的载荷是导入任务，不是打开目标
+    if (a.startsWith('-') || a.startsWith(PROTOCOL + '://')) continue;
+    try { if (fs.existsSync(a) && fs.statSync(a).isFile()) out.push(path.resolve(a)); } catch {}
+  }
+  return out;
 }
 
 app.on('second-instance', (_e, argv) => {
   const files = extractOpenFiles(argv);
+  const imports = Importer.extractImportPaths(argv);
   if (wm.main) { wm.main.show(); wm.main.focus(); }
   else wm.createMain();
   files.forEach(f => wm.broadcast('file:open', { path: f }));
+  if (imports.length) wm.broadcast('file:import', { paths: imports });
 });
 
 // ---------- mazz:// 自定义协议（笔记互链跳转 / 浏览器模块唤回主窗）----------
@@ -100,24 +139,44 @@ function registerChannels() {
   // —— 文件系统 ——
   bus.handle('fs:readFile', async ({ path: p, encoding }) => fs.readFileSync(p, encoding || 'utf8'));
   bus.handle('fs:readFileBase64', async ({ path: p }) => fs.readFileSync(p).toString('base64'));
-  bus.handle('fs:writeFileBase64', async ({ path: p, base64 }) => {
+  // Windows 原子写：rename 遇 EPERM/EACCES/EBUSY（目标被外部程序占用/杀软扫描）退化为覆盖拷贝，重试两轮后仍败则报人话
+  const writeAtomic = (p, data, encoding) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });
     const tmp = p + '.mazztmp';
-    fs.writeFileSync(tmp, Buffer.from(base64, 'base64'));
-    fs.renameSync(tmp, p);
+    fs.writeFileSync(tmp, data, encoding);
+    let lastErr = null;
+    for (let i = 0; i < 3; i++) {
+      try { fs.renameSync(tmp, p); return; }
+      catch (e) {
+        lastErr = e;
+        if (process.platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(e.code)) throw e;
+        try { fs.copyFileSync(tmp, p); try { fs.unlinkSync(tmp); } catch {} return; } catch (e2) { lastErr = e2; }
+        // 短暂等待杀软/索引器释放
+        const until = Date.now() + 200 * (i + 1); while (Date.now() < until) {}
+      }
+    }
+    try { fs.unlinkSync(tmp); } catch {}
+    throw new Error(`写入失败：目标文件被占用（可能正被外部程序打开，请关闭后重试）。${lastErr?.code || ''}`);
+  };
+  bus.handle('fs:writeFileBase64', async ({ path: p, base64 }) => {
+    writeAtomic(p, Buffer.from(base64, 'base64'));
     return true;
   });
   bus.handle('fs:writeFile', async ({ path: p, content, encoding }) => {
-    fs.mkdirSync(path.dirname(p), { recursive: true });
-    const tmp = p + '.mazztmp';
-    fs.writeFileSync(tmp, content, encoding || 'utf8');
-    fs.renameSync(tmp, p); // 原子写
+    writeAtomic(p, content, encoding || 'utf8');
     return true;
   });
   bus.handle('fs:listDir', async ({ path: p }) => {
+    // 目录不存在视同空目录（v33：factory-genres/创作产出/themes 未建时不再抛错刷屏）
+    if (!fs.existsSync(p)) return [];
     const entries = fs.readdirSync(p, { withFileTypes: true });
     return entries.filter(e => !e.name.startsWith('.'))
-      .map(e => ({ name: e.name, isDir: e.isDirectory(), path: path.join(p, e.name) }))
+      .map(e => {
+        // 附带时间戳（排序选单需要；stat 失败置 0 不影响主流程）
+        let mtimeMs = 0, ctimeMs = 0;
+        try { const st = fs.statSync(path.join(p, e.name)); mtimeMs = st.mtimeMs; ctimeMs = st.birthtimeMs || st.ctimeMs; } catch {}
+        return { name: e.name, isDir: e.isDirectory(), path: toSlash(path.join(p, e.name)), mtimeMs, ctimeMs };
+      })
       .sort((a, b) => (b.isDir - a.isDir) || a.name.localeCompare(b.name, 'zh-CN'));
   });
   bus.handle('fs:stat', async ({ path: p }) => {
@@ -125,33 +184,83 @@ function registerChannels() {
     catch { return { exists: false }; }
   });
   bus.handle('fs:mkdir', async ({ path: p }) => { fs.mkdirSync(p, { recursive: true }); return true; });
-  bus.handle('fs:rename', async ({ from, to }) => { fs.renameSync(from, to); return true; });
-  bus.handle('fs:delete', async ({ path: p }) => { await shell.trashItem(p); return true; }); // 进回收站
+  bus.handle('fs:rename', async ({ from, to }) => {
+    await unlockWatch(from); // 被监视的目录在 Windows 下无法改名
+    fs.renameSync(from, to);
+    return true;
+  });
+  bus.handle('fs:delete', async ({ path: p }) => {
+    await unlockWatch(p); // 被监视的目录在 Windows 下无法删除
+    // Windows trashItem 要求本地反斜杠路径；渲染层统一正斜杠，直接传会静默失败（v33 实测）
+    const norm = path.normalize(p);
+    // 确定性广播：chokidar 对 trashItem 挪走的 unlink 可能哑火（Linux 实测），
+    // 虚空标签清扫不能只靠监听器——主进程删完就官宣
+    const announce = () => wm.broadcast('file:changed', { event: 'unlink', path: toSlash(p), at: Date.now() });
+    // trashItem 串行重试：多层目录被 chokidar 句柄/杀软占用时会 Operation was aborted
+    let lastErr = null;
+    for (let i = 0; i < 3; i++) {
+      try { await shell.trashItem(norm); announce(); return { ok: true, trashed: true }; }
+      catch (e) { lastErr = e; await new Promise(r => setTimeout(r, 300 * (i + 1))); }
+    }
+    // 回收站持续失败 → 全量卸监视释放句柄，永久删除兜底（用户已在界面确认过删除），事后恢复监视
+    try { if (watcher?.suspend) await watcher.suspend(); } catch {}
+    try {
+      fs.rmSync(norm, { recursive: true, force: true, maxRetries: 4, retryDelay: 250 });
+    } finally {
+      try { if (watcher?.resume) await watcher.resume(); } catch {}
+    }
+    announce();
+    return { ok: true, trashed: false, reason: String(lastErr || '').slice(0, 160) };
+  }); // 进回收站
 
   // —— 原生对话框 ——
   bus.handle('dialog:openFile', async ({ filters, multi }) => {
     const r = await dialog.showOpenDialog(wm.main, {
       properties: multi ? ['openFile', 'multiSelections'] : ['openFile'],
       filters: filters || [
-        { name: 'Mazz 全部支持', extensions: ['md', 'markdown', 'txt', 'mazz', 'csv', 'tsv', 'mazzsheet', 'xlsx'] },
-        { name: '文档', extensions: ['md', 'markdown', 'txt', 'mazz'] },
+        { name: 'Mazz 全部支持', extensions: ['md', 'markdown', 'txt', 'mazz', 'csv', 'tsv', 'mazzsheet', 'xlsx', 'docx', 'pptx', 'mazzslide', 'mindmap', 'mazzdraw', 'js', 'ts', 'py', 'css', 'html', 'json', 'sh', 'xml', 'yml', 'yaml', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif', 'pdf',
+          'mp4', 'webm', 'ogv', 'ogg', 'mov', 'm4v', 'mkv', 'mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus'] },
+        { name: '文档', extensions: ['md', 'markdown', 'txt', 'mazz', 'docx'] },
         { name: '表格', extensions: ['csv', 'tsv', 'mazzsheet', 'xlsx'] },
+        { name: '演示', extensions: ['mazzslide', 'pptx'] },
+        { name: '代码', extensions: ['js', 'ts', 'py', 'css', 'html', 'json', 'sh', 'xml', 'yml', 'yaml'] },
+        { name: '图片与PDF', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif', 'pdf'] },
+        { name: '音视频', extensions: ['mp4', 'webm', 'ogv', 'ogg', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus'] },
         { name: '所有文件', extensions: ['*'] },
       ],
     });
     if (r.canceled) return null;
-    return multi ? r.filePaths : r.filePaths[0];
+    return multi ? r.filePaths.map(toSlash) : toSlash(r.filePaths[0]);
   });
+  bus.handle('dialog:openImport', async () => {
+    const r = await dialog.showOpenDialog(wm.main, {
+      properties: ['openFile', 'openDirectory', 'multiSelections'],
+      filters: [{ name: '所有文件', extensions: ['*'] }],
+    });
+    return r.canceled ? [] : r.filePaths.map(toSlash);
+  });
+  bus.handle('import:external', async ({ sources }) => {
+    const ws = store.get('workspace');
+    if (!ws) return { imported: [], skipped: sources || [], workspace: null, error: 'no-workspace' };
+    return toSlashDeep(Importer.importExternal(toSlash(ws), sources || []));
+  });
+  bus.handle('apps:quickLaunch', async ({ refresh } = {}) => startMenuApps.quickLaunch({ refresh }));
+  bus.handle('apps:launch', async ({ exe, args }) => startMenuApps.launch({ exe, args }));
+  bus.handle('explorermenu:status', async () => Importer.explorerMenuStatus());
+  bus.handle('explorermenu:register', async () =>
+    Importer.registerExplorerMenu(process.execPath, { appPath: app.isPackaged ? null : app.getAppPath() }));
+  bus.handle('explorermenu:unregister', async () => Importer.unregisterExplorerMenu());
+
   bus.handle('dialog:saveFile', async ({ defaultPath, filters }) => {
     const r = await dialog.showSaveDialog(wm.main, {
       defaultPath,
       filters: filters || [{ name: 'Markdown', extensions: ['md'] }, { name: '所有文件', extensions: ['*'] }],
     });
-    return r.canceled ? null : r.filePath;
+    return r.canceled ? null : toSlash(r.filePath);
   });
   bus.handle('dialog:openFolder', async () => {
     const r = await dialog.showOpenDialog(wm.main, { properties: ['openDirectory'] });
-    return r.canceled ? null : r.filePaths[0];
+    return r.canceled ? null : toSlash(r.filePaths[0]);
   });
   bus.handle('dialog:confirm', async ({ title, message, detail, buttons }) => {
     const r = await dialog.showMessageBox(wm.main, {
@@ -162,13 +271,172 @@ function registerChannels() {
   });
 
   // —— 最近文件 ——
-  bus.handle('recent:list', async () => store.get('recentFiles', []));
+  bus.handle('recent:list', async () => (store.get('recentFiles', []) || []).map(toSlash));
   bus.handle('recent:add', async ({ path: p }) => { addRecent(p); return true; });
   bus.handle('recent:clear', async () => { store.set('recentFiles', []); app.clearRecentDocuments(); tray.refreshMenu(); return true; });
 
   // —— 工作区 / 设置 ——
   bus.handle('settings:get', async ({ key }) => store.get(key));
   bus.handle('settings:set', async ({ key, value }) => { store.set(key, value); return true; });
+
+  // —— 智能创作 · pandoc 通道（文风素材 docx 提取 + 连写产出多格式导出） ——
+  // 设计：pandoc 未安装不报错轰炸，available=false 由渲染层静默降级
+  const { spawn: spawnPandoc } = require('child_process');
+  const pandocCache = { checked: false, path: null };
+  const findPandoc = () => new Promise((resolve) => {
+    if (pandocCache.checked) return resolve(pandocCache.path);
+    const candidates = ['pandoc',
+      'C:\\Program Files\\Pandoc\\pandoc.exe', 'C:\\Program Files (x86)\\Pandoc\\pandoc.exe',
+      '/usr/bin/pandoc', '/usr/local/bin/pandoc', '/opt/homebrew/bin/pandoc'];
+    const tryOne = (i) => {
+      if (i >= candidates.length) { pandocCache.checked = true; pandocCache.path = null; return resolve(null); }
+      const p = spawnPandoc(candidates[i], ['--version'], { windowsHide: true });
+      p.on('error', () => tryOne(i + 1));
+      p.on('close', (code) => {
+        if (code === 0) { pandocCache.checked = true; pandocCache.path = candidates[i]; resolve(candidates[i]); }
+        else tryOne(i + 1);
+      });
+    };
+    tryOne(0);
+  });
+  const runPandoc = (args, inputText) => new Promise(async (resolve, reject) => {
+    const bin = await findPandoc();
+    if (!bin) return reject(new Error('未检测到 pandoc（安装 pandoc.org 后可用 docx/epub 等格式）'));
+    const p = spawnPandoc(bin, args, { windowsHide: true });
+    let out = '', err = '';
+    p.stdout.on('data', (d) => { out += d.toString('utf8'); });
+    p.stderr.on('data', (d) => { err += d.toString('utf8'); });
+    p.on('error', reject);
+    p.on('close', (code) => code === 0 ? resolve(out) : reject(new Error(err.slice(0, 300) || `pandoc 退出码 ${code}`)));
+    if (inputText != null) { p.stdin.write(inputText, 'utf8'); }
+    p.stdin.end();
+  });
+  // —— 智能创作 · AI 代理（渲染进程直连 DeepSeek/Kimi 会被浏览器 CORS 拦截，必须主进程转发） ——
+  // 错误透传：HTTP 状态码 + 响应体摘要，让用户看到 401/404/模型名错误等真实原因而非笼统的 Failed to fetch
+  const { net } = require('electron');
+  const aiHeaders = (apiKey) => ({
+    'Content-Type': 'application/json',
+    ...(apiKey ? { Authorization: 'Bearer ' + apiKey } : {}),
+  });
+  const aiUrl = (baseURL) => String(baseURL || '').replace(/\/+$/, '') + '/v1/chat/completions';
+  const aiReadError = async (resp) => {
+    const text = await resp.text().catch(() => '');
+    let msg = text.slice(0, 400);
+    try { msg = JSON.parse(text).error?.message || msg; } catch {}
+    return `HTTP ${resp.status}：${msg}`;
+  };
+  // 响应文本提取：兼容字符串 content / 分段数组 content / 推理模型 reasoning_content 兜底
+  const aiExtractText = (m) => {
+    if (!m) return '';
+    const c = m.content;
+    if (typeof c === 'string' && c.trim()) return c;
+    if (Array.isArray(c)) {
+      const t = c.map((p) => (typeof p === 'string' ? p : (p?.text || ''))).join('');
+      if (t.trim()) return t;
+    }
+    if (typeof m.reasoning_content === 'string' && m.reasoning_content.trim()) return m.reasoning_content;
+    return typeof c === 'string' ? c : '';
+  };
+  bus.handle('factory:aiChat', async ({ baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192 }) => {
+    // messages 直通（多模态：content 数组含 image_url）；否则 system/user 组装
+    const msgs = messages || [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }];
+    const resp = await net.fetch(aiUrl(baseURL), {
+      method: 'POST', headers: aiHeaders(apiKey),
+      body: JSON.stringify({ model, messages: msgs, temperature, max_tokens: maxTokens, stream: false }),
+    });
+    if (!resp.ok) throw new Error(await aiReadError(resp));
+    const data = await resp.json();
+    if (data.error) throw new Error('API 报错：' + String(data.error.message || JSON.stringify(data.error)).slice(0, 300));
+    const text = aiExtractText(data.choices?.[0]?.message);
+    if (!text || !text.trim()) {
+      const fr = data.choices?.[0]?.finish_reason || '未知';
+      throw new Error(`AI 返回为空（finish_reason=${fr}；原始片段：${JSON.stringify(data).slice(0, 200)}）`);
+    }
+    return text.trim();
+  });
+  // 模型列表：GET /v1/models（渲染层拉取会被 CORS 拦，主进程代理）
+  bus.handle('factory:aiModels', async ({ baseURL, apiKey }) => {
+    const url = String(baseURL || '').replace(/\/+$/, '') + '/models';
+    const resp = await net.fetch(url, { headers: apiKey ? { Authorization: 'Bearer ' + apiKey } : {} });
+    if (!resp.ok) throw new Error(await aiReadError(resp));
+    return await resp.json();
+  });
+  // 流式：SSE 逐 delta 广播 factory:aiChunk {requestId, delta}，结束推 done，出错推 error
+  bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }) => {
+    const push = (payload) => { if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'factory:aiChunk', { requestId, ...payload }); };
+    try {
+      const resp = await net.fetch(aiUrl(baseURL), {
+        method: 'POST', headers: aiHeaders(apiKey),
+        body: JSON.stringify({
+          model,
+          messages: [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }],
+          temperature, max_tokens: maxTokens, stream: true,
+        }),
+      });
+      if (!resp.ok) { push({ error: await aiReadError(resp) }); return { ok: false }; }
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder('utf-8');
+      let buf = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          const t = line.trim();
+          if (!t.startsWith('data:')) continue;
+          const data = t.slice(5).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const delta = JSON.parse(data).choices?.[0]?.delta?.content;
+            if (delta) push({ delta });
+          } catch {}
+        }
+      }
+      push({ done: true });
+      return { ok: true };
+    } catch (e) {
+      push({ error: e.message || String(e) });
+      return { ok: false };
+    }
+  });
+
+  // —— 系统集成：开机自启（默认关闭）+ 桌面快捷方式 ——
+  bus.handle('app:getAutoLaunch', async () => app.getLoginItemSettings().openAtLogin);
+  bus.handle('app:setAutoLaunch', async ({ enabled }) => {
+    app.setLoginItemSettings({ openAtLogin: !!enabled });
+    return !!enabled;
+  });
+  bus.handle('app:createDesktopShortcut', async () => {
+    if (process.platform !== 'win32') throw new Error('当前平台暂不支持（仅 Windows）');
+    const desktop = app.getPath('desktop');
+    const lnkPath = path.join(desktop, 'Mazz Editor.lnk');
+    const target = process.execPath;
+    const args = app.isPackaged ? '' : ` "${app.getAppPath()}"`;
+    const ps = `$s=(New-Object -ComObject WScript.Shell).CreateShortcut('${lnkPath.replace(/'/g, "''")}');$s.TargetPath='${target.replace(/'/g, "''")}';$s.Arguments='${args}';$s.WorkingDirectory='${path.dirname(target).replace(/'/g, "''")}';$s.IconLocation='${(app.isPackaged ? target : path.join(app.getAppPath(), 'resources', 'icons', 'app.ico')).replace(/'/g, "''")},0';$s.Description='Mazz Editor';$s.Save()`;
+    await new Promise((resolve, reject) => {
+      require('child_process').execFile('powershell', ['-NoProfile', '-Command', ps], { windowsHide: true }, (e, so, se) =>
+        e ? reject(new Error(String(se || e.message).slice(0, 200))) : resolve());
+    });
+    return fs.existsSync(lnkPath);
+  });
+
+  bus.handle('factory:pandocAvailable', async () => !!(await findPandoc()));
+  // 提取文件纯文本（docx/odt/rtf/html/epub → plain；txt/md 渲染层自读）
+  bus.handle('factory:extractText', async ({ path: srcPath }) => {
+    if (!srcPath || typeof srcPath !== 'string') throw new Error('缺 path');
+    return await runPandoc([toSlash(srcPath), '-t', 'plain', '--wrap=none']);
+  });
+  // markdown 文本 → 指定格式导出到目标路径（返回输出路径）
+  bus.handle('factory:pandocExport', async ({ markdown, to, outPath, title }) => {
+    if (!outPath || typeof outPath !== 'string') throw new Error('缺 outPath');
+    const args = ['-f', 'markdown', '-t', to === 'docx' ? 'docx' : to, '-o', toSlash(outPath)];
+    if (title) args.push('--metadata', `title=${title}`);
+    if (to === 'epub') args.push('--metadata', 'lang=zh-CN');
+    await runPandoc(args, String(markdown ?? ''));
+    return toSlash(outPath);
+  });
 
   // —— 密码管理器（safeStorage 系统级加密：Windows DPAPI / macOS Keychain / Linux keyring） ——
   // 红线：密文落盘，明文只在主进程内存中瞬时存在；渲染进程拿不到加密密钥
@@ -185,6 +453,19 @@ function registerChannels() {
     } catch { return ''; }
   };
   bus.handle('pw:available', async () => safeStorage.isEncryptionAvailable());
+  // —— 通用密钥存储（safeStorage 加密落盘，API Key 等通用机密专用）——
+  bus.handle('secret:set', async ({ key, value }) => {
+    const secrets = store.get('secrets', {});
+    if (value == null || value === '') delete secrets[key];
+    else secrets[key] = pwEncrypt(value);
+    store.set('secrets', secrets);
+    return true;
+  });
+  bus.handle('secret:get', async ({ key }) => {
+    const secrets = store.get('secrets', {});
+    if (!secrets[key]) return null;
+    return pwDecrypt(secrets[key]);
+  });
   bus.handle('pw:list', async () =>
     (store.get('passwords', [])).map(e => ({
       id: e.id, site: e.site, username: e.username, note: e.note,
@@ -215,20 +496,75 @@ function registerChannels() {
     const ws = store.get('workspace');
     fs.mkdirSync(ws, { recursive: true });
     fs.mkdirSync(path.join(ws, '\u6BCF\u65E5\u7B14\u8BB0'), { recursive: true });
-    return ws;
+    return toSlash(ws);
+  });
+
+  // —— 多工作区：列表 + 当前 + 增删 + 切换（思源笔记本制；切换时 watcher 跟随） ——
+  const wsList = () => {
+    const cur = store.get('workspace');
+    const list = store.get('workspaces', []);
+    if (!list.find(w => w.path === cur)) list.unshift({ path: cur, name: cur.split(/[\\/]/).pop() || '工作区' });
+    return { current: toSlash(cur), list: list.map(w => ({ path: toSlash(w.path), name: w.name })) };
+  };
+  bus.handle('workspace:list', async () => wsList());
+  bus.handle('workspace:add', async ({ path: p, name }) => {
+    if (!p || !fs.existsSync(p)) throw new Error('目录不存在');
+    const list = store.get('workspaces', []);
+    if (!list.find(w => w.path === p)) list.push({ path: p, name: name?.trim() || p.split(/[\\/]/).pop() });
+    store.set('workspaces', list);
+    return wsList();
+  });
+  bus.handle('workspace:remove', async ({ path: p }) => {
+    if (p === store.get('workspace')) throw new Error('不能移除当前工作区（先切换到别的）');
+    store.set('workspaces', store.get('workspaces', []).filter(w => w.path !== p));
+    return wsList();
+  });
+  bus.handle('workspace:rename', async ({ path: p, name }) => {
+    const list = store.get('workspaces', []);
+    const w = list.find(x => x.path === p);
+    if (w) {
+      w.name = name?.trim() || w.name;
+    } else {
+      // 当前工作区可能只是 wsList 临时 unshift 的“未登记”项——改名必须落登记簿，否则静默无效（E2E 实抓）
+      list.push({ path: p, name: name?.trim() || p.split(/[\\/]/).pop() });
+    }
+    store.set('workspaces', list);
+    // 广播刷新：侧栏下拉只在 workspace:changed 时重渲染（此前漏广播，改名后下拉不同步——E2E 边边角角批实抓）
+    if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'workspace:changed', { path: toSlash(store.get('workspace')) });
+    return wsList();
+  });
+  bus.handle('workspace:setCurrent', async ({ path: p }) => {
+    if (!p || !fs.existsSync(p)) throw new Error('目录不存在');
+    store.set('workspace', p);
+    // watcher 跟随：重挂全部监听（旧目录文件变化不再打扰）
+    try { watcher.watcher?.close(); watcher.watcher = null; watcher.watched?.clear?.(); } catch {}
+    if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'workspace:changed', { path: toSlash(p) });
+    return toSlash(p);
   });
 
   // —— 窗口 ——
-  bus.handle('window:minimize', async () => wm.main?.minimize());
+  bus.handle('window:minimize', async () => {
+    if (wm.main?.isFullScreen()) wm.main.setFullScreen(false); // 全屏态先退出（系统覆盖层会吃自绘钮）
+    wm.main?.minimize();
+  });
   bus.handle('window:toggleMaximize', async () => {
     if (!wm.main) return false;
+    if (wm.main.isFullScreen()) { wm.main.setFullScreen(false); return true; } // 全屏下「最大化」= 退出全屏
     wm.main.isMaximized() ? wm.main.unmaximize() : wm.main.maximize();
     return wm.main.isMaximized();
   });
-  bus.handle('window:close', async () => wm.main?.close());
+  bus.handle('window:isFullScreen', async () => !!wm.main?.isFullScreen());
+  bus.handle('window:close', async () => {
+    if (wm.main?.isFullScreen()) wm.main.setFullScreen(false); // 先退全屏再关，避免覆盖层吃事件
+    wm.main?.close();
+  });
   bus.handle('window:setTitle', async ({ title }) => wm.main?.setTitle(title));
   bus.handle('window:isMaximized', async () => !!wm.main?.isMaximized());
-  bus.handle('window:toggleFullScreen', async () => wm.main?.setFullScreen(!wm.main.isFullScreen()));
+  bus.handle('window:toggleFullScreen', async () => {
+    if (!wm.main) return;
+    wm.main.setFullScreen(!wm.main.isFullScreen());
+  });
+
   // 分窗：开新窗口并交接标签快照
   bus.handle('window:openChild', async ({ handoff }) => {
     const child = wm.createChild();
@@ -238,6 +574,41 @@ function registerChannels() {
         child.webContents.send('mazz:event', { channel: 'window:handoff', payload: handoff });
       }, 600);
     });
+    return true;
+  });
+  // 已存在子窗口清单（「移到已有外部窗格」选单用）
+  bus.handle('window:listChildren', async () => {
+    const out = [];
+    for (const child of wm.children) {
+      if (!child.isDestroyed()) out.push({ id: child.id, title: child.getTitle?.() || '' });
+    }
+    return out;
+  });
+  // 屏幕坐标命中的子窗口（拖标签进既有外部窗格的判定）
+  bus.handle('window:childAt', async ({ x, y }) => {
+    for (const child of wm.children) {
+      if (child.isDestroyed()) continue;
+      const b = child.getBounds();
+      if (x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height) return { id: child.id };
+    }
+    return null;
+  });
+  // 标签快照转发到既有子窗口（不新建窗口）
+  bus.handle('window:toChild', async ({ winId, handoff }) => {
+    for (const child of wm.children) {
+      if (child.id === winId && !child.isDestroyed()) {
+        child.show(); child.focus();
+        child.webContents.send('mazz:event', { channel: 'window:handoff', payload: handoff });
+        return true;
+      }
+    }
+    return false;
+  });
+  // 主题广播：主窗换主题 → 全部子窗口跟随（v33 外部窗格不同步根因）
+  bus.handle('theme:broadcast', async ({ id }) => {
+    for (const child of wm.children) {
+      if (!child.isDestroyed()) child.webContents.send('mazz:event', { channel: 'theme:changed', payload: { id } });
+    }
     return true;
   });
   // 移回主窗口：子窗标签快照转发主窗
@@ -268,6 +639,73 @@ function registerChannels() {
       });
     });
   });
+  // —— 屏幕录制：源枚举 + getDisplayMedia 许可队列（模块级共享，hookDisplayMedia 消费）——
+  bus.handle('rec:sources', async () => {
+    const list = await desktopCapturer.getSources({ types: ['window', 'screen'], thumbnailSize: { width: 320, height: 200 } });
+    const out = list.map(s => ({ id: s.id, name: s.name, thumb: s.thumbnail.isEmpty() ? null : s.thumbnail.toDataURL() }));
+    // Chromium desktopCapturer 枚举排除本进程窗口（防递归自指）——自录走 capturePage 专用通道，
+    // 虚拟源置顶注入，让「录自己」成为可选项（全局内录选不到本软件的总根）
+    try {
+      if (wm.main && !wm.main.isDestroyed()) {
+        const img = await wm.main.webContents.capturePage();
+        const size = img.getSize();
+        out.unshift({ id: 'mazz:self', name: `◆ Mazz 本软件窗口（自录 ${size.width}×${size.height}）`, thumb: img.resize({ width: 320 }).toDataURL() });
+      }
+    } catch {}
+    return out;
+  });
+  // 自录抓帧：capturePage 周期帧（渲染端合成进录制画布）
+  bus.handle('rec:selfFrame', async () => {
+    try {
+      if (!wm.main || wm.main.isDestroyed()) return null;
+      const img = await wm.main.webContents.capturePage();
+      return img.toPNG().toString('base64');
+    } catch { return null; }
+  });
+  bus.handle('rec:useSource', async ({ id }) => { recQueueShared.push(id); return true; });
+  // getDisplayMedia 许可处理器挂到主窗会话（窗口创建后由 hookDisplayMedia 安装）
+
+  // —— 打印预览输出：离屏窗体加载分页 HTML，按精确纸张/四边距打印或导 PDF ——
+  bus.handle('print:html', async ({ html, setup = {}, toPdf, defaultPath }) => {
+    const mm2in = (mm) => (mm || 0) / 25.4;
+    const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });
+    // 大文档必须走临时文件：data: URL 有长度上限（字多的 csv/长文档直接 ERR_FAILED 崩掉离屏窗=「报错再起不能」总根）
+    let tmpHtml = null;
+    try {
+      try {
+        const os = require('os');
+        tmpHtml = path.join(os.tmpdir(), 'mazz-print-' + Date.now().toString(36) + '.html');
+        fs.writeFileSync(tmpHtml, html || '<html></html>', 'utf8');
+        await win.loadFile(tmpHtml);
+      } catch {
+        await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html || '<html></html>'));
+      }
+      await new Promise(r => setTimeout(r, 400));
+      const mg = setup.margins && typeof setup.margins === 'object' ? setup.margins : { top: setup.margin ?? 25, right: setup.margin ?? 25, bottom: setup.margin ?? 25, left: setup.margin ?? 25 };
+      const opts = {
+        printBackground: true,
+        landscape: setup.orientation === 'landscape',
+        pageSize: setup.size || 'A4',
+        margins: { marginType: 'custom', top: mm2in(mg.top), bottom: mm2in(mg.bottom), left: mm2in(mg.left), right: mm2in(mg.right) },
+      };
+      if (toPdf) {
+        const data = await win.webContents.printToPDF(opts);
+        let p = defaultPath;
+        if (!p) {
+          const r = await dialog.showSaveDialog(wm.main, { defaultPath: '文档.pdf', filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+          if (r.canceled) return null;
+          p = r.filePath;
+        }
+        fs.writeFileSync(p, data);
+        return toSlash(p);
+      }
+      return await new Promise((resolve) => win.webContents.print(opts, (ok, reason) => resolve({ ok, reason })));
+    } finally {
+      win.destroy();
+      if (tmpHtml) { try { fs.rmSync(tmpHtml, { force: true }); } catch {} } // 临时打印文件随清理
+    }
+  });
+
   bus.handle('print:toPDF', async ({ savePath, pageSize }) => {
     if (!wm.main) return null;
     const data = await wm.main.webContents.printToPDF({ printBackground: true, pageSize: pageSize || 'A4' });
@@ -281,7 +719,7 @@ function registerChannels() {
     }
     fs.writeFileSync(target, data);
     shell.showItemInFolder(target);
-    return target;
+    return toSlash(target);
   });
 
   // —— 多格式剪贴板 ——
@@ -312,6 +750,10 @@ function registerChannels() {
 
   // —— shell ——
   bus.handle('shell:showItemInFolder', async ({ path: p }) => { shell.showItemInFolder(p); return true; });
+  bus.handle('shell:openPath', async ({ path: p }) => {
+    const r = await shell.openPath(p); // 系统默认程序打开（查看器降级用）
+    return r === '' ? true : r; // 非空字符串 = 错误描述
+  });
   bus.handle('shell:openExternal', async ({ url }) => { await shell.openExternal(url); return true; });
 
   // —— 拼写检查 ——
@@ -335,8 +777,8 @@ function registerChannels() {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const stamp = new Date().toTimeString().slice(0, 5);
     fs.appendFileSync(file, `\n- ${stamp} ${String(text).replace(/\n/g, '\n  ')}\n`);
-    wm.broadcast('file:changed', { event: 'change', path: file, at: Date.now() });
-    return file;
+    wm.broadcast('file:changed', { event: 'change', path: toSlash(file), at: Date.now() });
+    return toSlash(file);
   });
   bus.handle('quicknote:close', async () => { wm.quickNote?.hide(); return true; });
 
@@ -458,6 +900,21 @@ function hookCertificateErrors() {
   });
 }
 
+// 屏幕录制许可：主窗创建后安装 getDisplayMedia 处理器（registerChannels 里的 recQueue 闭环在此消费）
+let recQueueShared = [];
+function hookDisplayMedia() {
+  const ses = wm.main?.webContents?.session;
+  if (!ses) return;
+  ses.setDisplayMediaRequestHandler((req, cb) => {
+    const id = recQueueShared.shift();
+    if (!id) return cb({ video: true, audio: 'loopback' });
+    desktopCapturer.getSources({ types: ['window', 'screen'] }).then(list => {
+      const src = list.find(s => s.id === id) || list[0];
+      cb({ video: src, audio: 'loopback' });
+    }).catch(() => cb({ video: true, audio: 'loopback' }));
+  });
+}
+
 // 编辑器右键原生菜单：拼写建议置顶（Electron 内置 spellchecker）+ 编辑角色 + 命令注册表模型
 let editorMenuModel = { items: [] };
 function hookEditorContextMenu() {
@@ -541,9 +998,13 @@ app.whenReady().then(() => {
   bus.start();
   registerChannels();
   new CrashRecovery({ app, bus });
-  const watcher = new FileWatcher({ bus, windowManager: wm });
+  watcher = new FileWatcher({ bus, windowManager: wm });
 
   wm.createMain();
+  // 全屏进出广播（必须在建窗后挂：registerChannels 时 wm.main 还没出生）
+  wm.main.on('enter-full-screen', () => wm.broadcast('window:fullscreen', { on: true }));
+  wm.main.on('leave-full-screen', () => wm.broadcast('window:fullscreen', { on: false }));
+  hookDisplayMedia(); // getDisplayMedia 许可（全局内录）
   // 默认搜索实例持久化（证书白名单/实例识别依赖 store 中有值）
   if (!store.get('searx')) store.set('searx', { url: 'https://107.174.37.27', user: 'mazz', pass: '737037sxf' });
   hookCertificateErrors();
@@ -556,9 +1017,31 @@ app.whenReady().then(() => {
   new TranslateService({ bus, store });
   // —— 局域网同步 + 自动更新入口 ——
   new LanSync({ bus, store, workspace: () => store.get('workspace') });
+  new ShareService({ bus, store, startMenuApps });
   new Updater({ bus, store, version: require('../package.json').version });
   const bs = new BrowserSession({ session: browserSess, bus });
   bs.hookWindow(wm.main);
+
+  // —— 投稿会话（persist:mazz-author）：电子书站登录态下载 → 自动存工作区书库并入库 ——
+  try {
+    const authorSess = session.fromPartition('persist:mazz-author');
+    const EBOOK_EXTS = ['epub', 'mobi', 'azw3', 'azw', 'pdf', 'txt', 'cbz', 'fb2'];
+    authorSess.on('will-download', (_e, item) => {
+      const name = item.getFilename() || 'download';
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      if (!EBOOK_EXTS.includes(ext)) return; // 非电子书格式走系统默认下载
+      const dir = path.join(store.get('workspace'), '书库');
+      fs.mkdirSync(dir, { recursive: true });
+      let dest = path.join(dir, name);
+      for (let i = 1; fs.existsSync(dest); i++) dest = path.join(dir, name.replace(/(\.\w+)$/, ` (${i})$1`));
+      item.setSavePath(dest);
+      item.once('done', (_ev, state) => {
+        if (state === 'completed' && wm.main && !wm.main.isDestroyed()) {
+          bus.send(wm.main, 'library:download', { path: toSlash(dest), name });
+        }
+      });
+    });
+  } catch (e) { console.warn('[author-sess]', e.message); }
 
   // —— 集成终端：node-pty 终端池 ——
   const terminal = new TerminalService({ bus, windowManager: wm });
@@ -579,6 +1062,22 @@ app.whenReady().then(() => {
     // 主实例就绪后回放待打开文件（文件关联双击冷启动）
     pendingOpenFiles.forEach(f => wm.broadcast('file:open', { path: f }));
     pendingOpenFiles = [];
+    if (pendingImports.length) { wm.broadcast('file:import', { paths: pendingImports }); pendingImports = []; }
+    // 右键菜单陈旧自愈：老版本注册的命令缺 --import（文件变打开、文件夹无反应），静默重注册
+    // 增强：未注册（被清理/从未装）也要注册——否则"导入到 Mazz 工作区"永远只能打开
+    if (process.platform === 'win32') {
+      (async () => {
+        try {
+          const appPath = app.isPackaged ? null : app.getAppPath();
+          const st = await Importer.explorerMenuStatus({ appPath });
+          const need = !st.registered || st.stale || (st.registered && appPath && !(st.raw || '').includes('--import'));
+          if (need) {
+            const r = await Importer.registerExplorerMenu(process.execPath, { appPath });
+            console.log('[importer] 右键菜单自愈重注册:', r.ok ? 'ok' : r.reason, '（失败请在 设置→系统集成 手动注册）');
+          }
+        } catch (e) { console.warn('[importer] 自愈检测失败:', e.message); }
+      })();
+    }
     tray.refreshMenu();
   });
 
@@ -590,6 +1089,7 @@ app.whenReady().then(() => {
 
 // 文件关联双击（Windows/Linux 冷启动：参数带文件路径）
 pendingOpenFiles = extractOpenFiles(process.argv);
+pendingImports = Importer.extractImportPaths(process.argv);
 
 // 未捕获异常不杀进程
 process.on('uncaughtException', (e) => console.error('[main] uncaught:', e));

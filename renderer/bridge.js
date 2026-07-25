@@ -1,6 +1,94 @@
 // renderer/bridge.js —— 无感桥接引擎：9 种内置桥接的注册中心（阶段一：引擎 + 示例桥接）
 // 公共能力：桥接通知条 3s 自消失、插件可注册新桥接
-import { toast } from './shell/shell.js';
+import { toast, modal } from './shell/shell.js';
+import { bus } from './core/events.js';
+
+// ==================== 桥接目标文件（桥接/ 文件夹 + 同窗更新 + 自选文件名） ====================
+// 规则：首次桥接弹出目标选择（自动新建到 桥接/、选工作区已有同类型文件、或自定新名）；
+// 之后同一窗格的桥接内容全部更新到该文件，直到窗格关闭
+const bridgeTargets = new Map(); // `${tabId}:${ext}` -> path
+bus.on('tab:requestClose', (id) => {
+  for (const k of [...bridgeTargets.keys()]) if (k.startsWith(id + ':')) bridgeTargets.delete(k);
+});
+
+async function listWsFilesByExt(ext) {
+  const out = [];
+  const walk = async (dir, depth) => {
+    if (depth > 3) return;
+    const entries = await window.mazz.invoke('fs:listDir', { path: dir }).catch(() => []);
+    for (const e of entries) {
+      if (e.isDir) {
+        if (e.name.startsWith('.')) continue;
+        await walk(e.path, depth + 1);
+      } else if (e.name.toLowerCase().endsWith(ext)) out.push(e.path);
+    }
+  };
+  const ws = await window.mazz.invoke('workspace:get');
+  await walk(ws, 0);
+  return out;
+}
+
+/** 首次桥接的目标选择器：自动新建 / 选已有文件 / 自定新名 */
+async function pickBridgeTarget(tabId, ext, defaultName) {
+  const key = `${tabId}:${ext}`;
+  if (bridgeTargets.has(key)) return bridgeTargets.get(key);
+  const ws = await window.mazz.invoke('workspace:get');
+  const existing = await listWsFilesByExt(ext);
+  return new Promise((resolve) => {
+    const m = modal('桥接目标文件');
+    m.body.innerHTML = `
+      <div style="min-width:420px;max-width:560px">
+        <div style="font-size:12.5px;color:#83817a;margin-bottom:10px">本窗格后续桥接内容将持续更新到同一文件（关闭窗格后失效）。选择目标：</div>
+        <div class="bt-opt" data-v="__auto__" style="padding:9px 12px;border:1px solid var(--acc,#4f46e5);border-radius:8px;margin-bottom:8px;cursor:pointer;background:color-mix(in srgb, var(--acc,#4f46e5) 6%, transparent)">
+          ✨ 自动新建到「桥接/」（推荐）：桥接/${defaultName}${ext}</div>
+        ${existing.slice(0, 12).map(f => `
+          <div class="bt-opt" data-v="${f}" style="padding:8px 12px;border:1px solid var(--bd,#e0ded8);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12.5px">📄 ${f.replace(ws + '/', '')}</div>`).join('')}
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <input id="bt-name" class="rb-input" style="flex:1" placeholder="或自定新文件名（不含后缀）" spellcheck="false">
+          <button id="bt-new" class="rb-btn" style="flex-direction:row">新建到 桥接/</button>
+        </div>
+      </div>`;
+    m.body.querySelectorAll('.bt-opt').forEach(el => el.addEventListener('click', () => {
+      const v = el.dataset.v;
+      m.close();
+      const path = v === '__auto__' ? `${ws}/桥接/${defaultName}${ext}` : v;
+      bridgeTargets.set(key, path);
+      resolve(path);
+    }));
+    m.body.querySelector('#bt-new').addEventListener('click', () => {
+      const name = (m.body.querySelector('#bt-name').value.trim() || defaultName).replace(/[\\/:*?"<>|]/g, '-');
+      m.close();
+      const path = `${ws}/桥接/${name}${ext}`;
+      bridgeTargets.set(key, path);
+      resolve(path);
+    });
+    m.el.addEventListener('mousedown', (e) => { if (e.target === m.el) resolve(null); }, true);
+  });
+}
+
+/** 桥接目标文件：合并式更新（不是覆盖）——已有内容保留，新内容接续其后 */
+async function upsertBridgeFile(tabId, ext, defaultName, content) {
+  const path = await pickBridgeTarget(tabId, ext, defaultName);
+  if (!path) return null;
+  await window.mazz.invoke('fs:mkdir', { path: path.split('/').slice(0, -1).join('/') }).catch(() => {});
+  let merged = content;
+  try {
+    const old = await window.mazz.invoke('fs:readFile', { path }).catch(() => '');
+    if (old?.trim()) {
+      if (ext === '.mazzslide') {
+        // 演示大纲：新页续在末尾（--- 分页）
+        merged = old.replace(/\s*$/, '') + '\n---\n' + content.replace(/^\s+/, '');
+      } else {
+        // Markdown：分隔线续接
+        merged = old.replace(/\s*$/, '') + '\n\n---\n\n' + content.replace(/^\s+/, '');
+      }
+    }
+  } catch {}
+  await window.mazz.invoke('fs:writeFile', { path, content: merged });
+  // 打开目标窗格必须带上合并后的内容（只给 filePath 模块会用默认空内容，桥接了个寂寞）
+  window.MazzHost?.openTab(ext === '.mazzslide' ? 'slide' : 'markdown', { title: path.split('/').pop(), filePath: path, content: merged });
+  return path;
+}
 
 class BridgeEngine {
   constructor() {
@@ -90,13 +178,13 @@ print(df.describe())
   },
 });
 
-// #2 编程 → 文稿：选中代码块 → 高亮块 + 解释占位
+// #2 编程 → 文稿：选中代码块 → 高亮块 + 解释占位（桥接目标：桥接/ 统一文件）
 bridges.register({
   id: 'code.toMarkdown', from: 'code', label: '选中代码 → 文稿（高亮块+解释占位）',
-  async run({ text, language }) {
+  async run({ text, language, sourceTabId }) {
     if (!text?.trim()) throw new Error('无选中代码');
     const md = `## 代码片段\n\n\`\`\`${language || ''}\n${text}\n\`\`\`\n\n> 说明：（待补充）\n`;
-    window.MazzHost?.openTab('markdown', { title: '代码片段.md', content: md });
+    return upsertBridgeFile(sourceTabId, '.md', '代码片段', md);
   },
 });
 
@@ -153,10 +241,10 @@ bridges.register({
   },
 });
 
-// #5 绘画 → 文稿：当前帧 PNG 存 .mazz/assets 并插入文档光标
+// #5 绘画 → 文稿：当前帧 PNG 插入桥接文档（桥接/ 统一文件）
 bridges.register({
   id: 'draw.toDoc', from: 'draw', label: '画板帧 → PNG 插入文档',
-  async run({ ctl }) {
+  async run({ ctl, sourceTabId }) {
     const dataUrl = ctl?.frameToDataUrl?.();
     if (!dataUrl) throw new Error('画板未就绪');
     const ws = await window.mazz.invoke('workspace:get');
@@ -164,8 +252,44 @@ bridges.register({
     await window.mazz.invoke('fs:mkdir', { path: dir });
     const file = `${dir}/draw_${Date.now()}.png`;
     await window.mazz.invoke('fs:writeFileBase64', { path: file, base64: dataUrl.split(',')[1] });
-    document.execCommand('insertText', false, `\n![画板](${file})\n`);
-    return file;
+    const md = `# 画板插图\n\n![画板](${file})\n`;
+    return upsertBridgeFile(sourceTabId, '.md', '画板插图', md);
+  },
+});
+
+// #6.6 导图 → 文稿/演示：整图 PNG 无缝流转
+bridges.register({
+  id: 'mm.toDoc', from: 'mindmap', label: '导图 → PNG 插入文稿',
+  async run({ ctl, sourceTabId }) {
+    const dataUrl = await ctl.renderToDataUrl();
+    const ws = await window.mazz.invoke('workspace:get');
+    const dir = `${ws}/.mazz/assets`;
+    await window.mazz.invoke('fs:mkdir', { path: dir });
+    const file = `${dir}/mm_${Date.now()}.png`;
+    await window.mazz.invoke('fs:writeFileBase64', { path: file, base64: dataUrl.split(',')[1] });
+    const md = `# 思维导图\n\n![导图](${file})\n`;
+    return upsertBridgeFile(sourceTabId, '.md', '思维导图', md);
+  },
+});
+bridges.register({
+  id: 'mm.toSlide', from: 'mindmap', label: '导图 → PNG 插入演示页',
+  async run({ ctl, sourceTabId }) {
+    const dataUrl = await ctl.renderToDataUrl();
+    const elements = [{ type: 'image', src: dataUrl, x: 12, y: 12, w: 76, h: 76 }];
+    const content = `# 思维导图\n<!--canvas:${JSON.stringify(elements)}-->\n`;
+    return upsertBridgeFile(sourceTabId, '.mazzslide', '思维导图', content);
+  },
+});
+
+// #6.5 绘画 → 演示：当前帧 PNG 直接插入演示页画布
+bridges.register({
+  id: 'draw.toSlide', from: 'draw', label: '画板帧 → 插入演示页',
+  async run({ ctl, sourceTabId }) {
+    const dataUrl = ctl?.frameToDataUrl?.();
+    if (!dataUrl) throw new Error('画板未就绪');
+    const elements = [{ type: 'image', src: dataUrl, x: 15, y: 15, w: 70, h: 70 }];
+    const content = `# 画板插图\n<!--canvas:${JSON.stringify(elements)}-->\n`;
+    return upsertBridgeFile(sourceTabId, '.mazzslide', '画板插图', content);
   },
 });
 
@@ -194,6 +318,8 @@ bridges.register({
     const entry = `> ${text.trim().replace(/\n+/g, '\n> ')}\n\n—— 《${book}》${where ? ' · ' + where : ''} · ${new Date().toLocaleString('zh-CN')}\n\n`;
     await window.mazz.invoke('fs:writeFile', { path: file, content: head + entry });
     window.MazzNotes?.invalidate?.();
+    // 桥接原则：完成即打开目标模块窗格（带内容）
+    window.MazzHost?.openTab('markdown', { title: file.split('/').pop(), filePath: file, content: head + entry });
     return file;
   },
 });
@@ -211,7 +337,7 @@ export function registerBridgeCommands(MazzCommands) {
       if (!ctl?.editor) return;
       const sel = ctl.editor.getSelection();
       const text = sel.isEmpty() ? '' : ctl.editor.getModel().getValueInRange(sel);
-      await bridges.execute('code.toMarkdown', { text, language: ctl.language });
+      await bridges.execute('code.toMarkdown', { text, language: ctl.language, sourceTabId: window.MazzShell?.tabs?.activeId });
     },
   });
   MazzCommands.register('bridge.terminalToSheet', {
@@ -258,8 +384,32 @@ export function registerBridgeCommands(MazzCommands) {
     title: '画板帧插入文档（绘画 → 文稿）', icon: '🖼', group: '桥接', when: "module=='draw'",
     run: async () => {
       try {
-        const file = await bridges.execute('draw.toDoc', { ctl: window.__activeDrawCtl });
+        const file = await bridges.execute('draw.toDoc', { ctl: window.__activeDrawCtl, sourceTabId: window.MazzShell?.tabs?.activeId });
         toast('⚡ 桥接：PNG 已插入文档（' + file.split(/[\\/]/).pop() + '）');
+      } catch (e) { toast(e.message); }
+    },
+  });
+  MazzCommands.register('bridge.mmToDoc', {
+    title: '导图转 PNG 插入文稿（导图 → 文稿）', icon: '📝', group: '桥接', when: "module=='mindmap'",
+    run: async () => {
+      const ctl = window.__activeMindmapCtl;
+      if (!ctl) return;
+      try { await bridges.execute('mm.toDoc', { ctl, sourceTabId: window.MazzShell?.tabs?.activeId }); } catch (e) { toast(e.message); }
+    },
+  });
+  MazzCommands.register('bridge.mmToSlide', {
+    title: '导图转 PNG 插入演示页（导图 → 演示）', icon: '📽', group: '桥接', when: "module=='mindmap'",
+    run: async () => {
+      const ctl = window.__activeMindmapCtl;
+      if (!ctl) return;
+      try { await bridges.execute('mm.toSlide', { ctl, sourceTabId: window.MazzShell?.tabs?.activeId }); } catch (e) { toast(e.message); }
+    },
+  });
+  MazzCommands.register('bridge.drawToSlide', {
+    title: '画板帧插入演示页（绘画 → 演示）', icon: '📽', group: '桥接', when: "module=='draw'",
+    run: async () => {
+      try {
+        await bridges.execute('draw.toSlide', { ctl: window.__activeDrawCtl, sourceTabId: window.MazzShell?.tabs?.activeId });
       } catch (e) { toast(e.message); }
     },
   });
@@ -274,8 +424,10 @@ export function registerBridgeCommands(MazzCommands) {
   MazzCommands.register('bridge.libToNote', {
     title: '摘录到书摘笔记（书库 → 笔记）', icon: '✍', group: '桥接', when: "module=='library'",
     run: async () => {
-      const text = (window.getSelection()?.toString() || '').trim();
+      // 选区三级真源：实时 selection → clip 按钮捕获的 __libClipText → library 模块缓存 _lastSel
+      // （点按钮/菜单必然折叠选区，只读实时 selection 必空=「无法摘录」总根）
       const ctl = window.__activeLibraryCtl;
+      const text = (window.getSelection()?.toString() || '').trim() || window.__libClipText || ctl?._lastSel || '';
       try {
         const file = await bridges.execute('lib.toNote', {
           text,

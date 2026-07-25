@@ -1,5 +1,6 @@
 // renderer/shell/shell.js —— 外壳总装配：一切操作皆命令的调度中枢
 import { bus } from '../core/events.js';
+import { iconHtml } from '../lib/svg-icons.js';
 import { commands } from '../core/command-registry.js';
 import { keymap } from '../core/keymap-service.js';
 import { menus } from '../core/menu-service.js';
@@ -11,6 +12,7 @@ import { createTitlebar } from './titlebar.js';
 import { Ribbon } from './ribbon.js';
 import { Tabs } from './tabs.js';
 import { PaneTree } from './panes.js';
+import { installPaneZoom, setPaneZoomListener, paneZoomOf, resetAllPaneZooms } from './pane-zoom.js';
 import { FileTree } from './file-tree.js';
 import { SidebarCtl } from './sidebar-ctl.js';
 import { t, onLanguageChange } from '../i18n/index.js';
@@ -27,15 +29,21 @@ for (let i = 0; i < 10; i++) {
 const THEMES = [
   { id: 'paper', name: '纸白' }, { id: 'ink', name: '墨黑' }, { id: 'indigo', name: '靛夜' },
   { id: 'moss', name: '苔绿' }, { id: 'sand', name: '暖沙' }, { id: 'construct', name: '构成' },
+  { id: 'genshin', name: '星辉' },
   { id: 'custom', name: '图片自定义' },
 ];
 const EXT_MODULE = {
+  png: 'viewer', jpg: 'viewer', jpeg: 'viewer', gif: 'viewer', webp: 'viewer', svg: 'viewer',
+  bmp: 'viewer', avif: 'viewer', ico: 'viewer', pdf: 'viewer',
+  mp4: 'viewer', webm: 'viewer', ogv: 'viewer', ogg: 'viewer', mov: 'viewer', m4v: 'viewer', mkv: 'viewer',
+  avi: 'viewer', wmv: 'viewer', flv: 'viewer', mts: 'viewer', m2ts: 'viewer', mpg: 'viewer', mpeg: 'viewer', '3gp': 'viewer',
+  mp3: 'viewer', wav: 'viewer', oga: 'viewer', m4a: 'viewer', aac: 'viewer', flac: 'viewer', opus: 'viewer',
   md: 'markdown', markdown: 'markdown', mazz: 'markdown', txt: 'text',
   csv: 'sheet', mazzsheet: 'sheet', tsv: 'sheet',
   xlsx: 'sheet', // 二进制通道
   docx: 'markdown', // 二进制通道 → mammoth 导入
-  mazzslide: 'slide',
-  mindmap: 'mindmap', mazzdraw: 'draw',
+  mazzslide: 'slide', pptx: 'slide', // pptx 二进制 → 大纲导入
+  mindmap: 'mindmap', mazzdraw: 'draw', opml: 'mindmap', mm: 'mindmap', xmind: 'mindmap',
   js: 'code', mjs: 'code', cjs: 'code', ts: 'code', tsx: 'code', jsx: 'code',
   json: 'code', css: 'code', html: 'code', py: 'code', sh: 'code',
   yml: 'code', yaml: 'code', xml: 'code',
@@ -78,6 +86,9 @@ function safeGet(fn) { try { return fn(); } catch { return null; } }
 
 export class Shell {
   constructor(root) {
+    // bundle 会把 core 拆到不同 chunk，window.MazzModules 指向的可能是个空副本（E2E 实锤）；
+    // 经壳暴露应用真正在用的 registry，测试与桥接以它为准
+    if (typeof window !== 'undefined') window.MazzModulesReal = modules;
     this.root = root;
     this.workspace = null;
     this.zoom = 1;
@@ -99,10 +110,24 @@ export class Shell {
       onOpenFile: (p) => commands.execute('file.openPath', { path: p }),
       onNewFile: () => commands.execute('fileTree.newFile'),
       onNewFolder: () => commands.execute('fileTree.newFolder'),
-      getWorkspace: async () => this.workspace,
+      // 活取主进程当前工作区（缓存会害死切换：workspace:setCurrent 后 this.workspace 是旧值）
+      getWorkspace: async () => {
+        const ws = await window.mazz.invoke('workspace:get').catch(() => null);
+        if (ws) this.workspace = ws;
+        return this.workspace;
+      },
+    });
+    this.fileTree.defaults = { NEW_FILE_TYPES, NEW_FILE_DEFAULTS, BINARY_EXTS, makeBinaryDoc };
+    // 右侧工具坞（智能创作/打开方式集中地；Ribbon 启动，可拖拽/拉伸/缩放）
+    import('./side-dock.js').then(({ SideDock }) => {
+      this.sideDock = new SideDock(this);
     });
     this.sidebarCtl = new SidebarCtl(this.sidebar);
     this.sidebarCtl.init();
+    // 侧栏多页签面板（思源工作区：文档/大纲/书签/标签/反链）
+    import('./sidebar-panels.js').then(({ SidebarPanels }) => {
+      this.sidebarPanels = new SidebarPanels({ sidebar: this.sidebar, fileTree: this.fileTree, shell: this });
+    });
     // 语言切换：欢迎页重建（其余界面随打开/渲染时自动用新语言）
     onLanguageChange(() => {
       document.querySelector('.welcome')?.remove();
@@ -118,6 +143,7 @@ export class Shell {
         if (!tabId) return;
         this.tabs.setDirty(tabId, true);
         snapshots.markDirty(tabId);
+        bus.emit('doc:changed', { tabId });
       },
       setStatus: (container, text) => {
         const tabId = this.containerTab.get(container);
@@ -126,7 +152,18 @@ export class Shell {
       openTab: (moduleId, opts) => this.openTab(moduleId, opts),
       setTabTitle: (container, title) => {
         const tabId = this.containerTab.get(container);
-        if (tabId) this.tabs.setTitle(tabId, title);
+        if (tabId) {
+          const pane = this.paneTree.paneOfTab(tabId);
+          (pane ? pane.tabs : this.tabs).setTitle(tabId, title);
+        }
+      },
+      // 切歌/导航后同步标签路径（此前 tab.filePath 停在旧文件：已开判定失效+切回复活播错片）
+      setTabFilePath: (container, filePath) => {
+        const tabId = this.containerTab.get(container);
+        if (!tabId) return;
+        const pane = this.paneTree.paneOfTab(tabId);
+        const t = (pane ? pane.tabs : this.tabs).get(tabId);
+        if (t) { t.filePath = filePath; this.syncTitle(); }
       },
       toast,
     };
@@ -156,7 +193,13 @@ export class Shell {
         { command: 'file.newLibrary', icon: '📚', label: '书库' },
         { command: 'file.newText', icon: '🄣', label: '纯文本' },
         { command: 'file.open', icon: '📂', label: '打开' },
+        { command: 'file.openViewer', icon: '🖼', label: '查看器' },
+        { command: 'file.openWithSystem', icon: '🚀', label: '外部打开' },
+        { command: 'file.import', icon: '📥', label: '导入' },
         { command: 'file.openWorkspace', icon: '🗂', label: '工作区' },
+      ]);
+      this.ribbon.group('面板', [
+        { command: 'factory.toggleDock', icon: '🧰', label: '工具坞' },
       ]);
       this.ribbon.group('保存', [
         { command: 'file.save', icon: '💾', label: '保存' },
@@ -165,8 +208,25 @@ export class Shell {
       this.ribbon.group('输出', [
         { command: 'file.print', icon: '🖨', label: '打印' },
         { command: 'file.exportPDF', icon: '📄', label: '导出PDF' },
+        { command: 'file.share', icon: '📤', label: '发送' },
       ]);
     }, 10);
+    this.ribbon.addPage('factory', '智能创作', () => {
+      this.ribbon.group('创作', [
+        { command: 'factory.toggleDock', icon: '🔥', label: '智能创作' },
+        { command: 'factory.copyMantra', icon: '📋', label: '复制模板' },
+        { command: 'factory.generate', icon: '⚡', label: '直接生成' },
+      ]);
+      this.ribbon.group('任务', [
+        { command: 'factory.runAll', icon: '▶', label: '全部启动' },
+        { command: 'factory.newGenre', icon: '✚', label: '新建模板' },
+        { command: 'factory.provider', icon: '⚙', label: 'AI 设置' },
+      ]);
+      this.ribbon.group('工具', [
+        { command: 'dock.openWith', icon: '📂', label: '打开方式' },
+        { command: 'dock.tools', icon: '🧰', label: '全部工具' },
+      ]);
+    }, 15);
     this.ribbon.addPage('view', '视图', () => {
       this.ribbon.group('面板', [
         { command: 'view.toggleSidebar', icon: '🗀', label: '目录树' },
@@ -176,6 +236,7 @@ export class Shell {
         { command: 'view.cycleTheme', icon: '🎨', label: '换主题' },
         { command: 'view.focusMode', icon: '🎯', label: '专注' },
         { command: 'view.fullScreen', icon: '⛶', label: '全屏' },
+        { command: 'annotate.toggle', icon: '✍', label: '批注' },
       ]);
       this.ribbon.group('缩放', [
         { command: 'view.zoomIn', icon: '＋', label: '放大' },
@@ -188,8 +249,263 @@ export class Shell {
   // ==================== 窗格（分屏树） ====================
   get tabs() { return this.paneTree.tabs; }
 
-  splitRight() { this.paneTree.splitActive('row'); }
-  splitDown() { this.paneTree.splitActive('column'); }
+  splitRight() { this.splitAndMove('row'); }
+  splitDown() { this.splitAndMove('column'); }
+
+  /** 分屏并把当前标签送到新窗格（右/下），免去再拖拽 */
+  splitAndMove(direction) {
+    const srcLeaf = this.paneTree.active;
+    const tab = srcLeaf?.tabs.active;
+    const newLeaf = this.paneTree.splitActive(direction);
+    if (tab && newLeaf) {
+      this.paneTree.moveTabToPane(tab.id, newLeaf);
+    }
+  }
+
+  /** 全局内录对话框：源多选 + 音频开关 + 变速 + 启停 */
+  async openScreenRecorderDialog() {
+    if (!window.mazz?.isElectron) { toast('全局内录仅桌面版可用'); return; }
+    if (this._screenRec) { this._screenRec.stop(); this._screenRec = null; toast('已停止，文件保存到工作区 录制/'); return; }
+    let sources = [];
+    try { sources = await window.mazz.invoke('rec:sources'); }
+    catch (e) { toast('录制源枚举失败：' + e.message); return; }
+    if (!sources.length) { toast('没有可用的录制源（检查系统录屏权限后重试）'); return; }
+    const m = modal('全局内录');
+    const picked = new Set(sources[0] ? [sources[0].id] : []);
+    m.body.innerHTML = `
+      <div style="min-width:560px;max-width:720px">
+        <div style="font-size:12.5px;color:#83817a;margin-bottom:8px">选择录制源（可多选平铺合成）：</div>
+        <div class="rec-srcs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;max-height:280px;overflow-y:auto">
+          ${sources.map(s => `
+            <div class="rec-src ${picked.has(s.id) ? 'on' : ''}" data-id="${s.id}" style="border:2px solid ${picked.has(s.id) ? 'var(--acc,#4f46e5)' : 'var(--bd,#e0ded8)'};border-radius:8px;padding:5px;cursor:pointer;text-align:center">
+              ${s.thumb ? `<img src="${s.thumb}" style="width:100%;border-radius:5px">` : '<div style="height:80px;display:grid;place-items:center;color:#999">无预览</div>'}
+              <div style="font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</div>
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;margin-top:12px;font-size:12.5px;flex-wrap:wrap">
+          <label><input type="checkbox" id="rec-sys" checked> 系统内音</label>
+          <label><input type="checkbox" id="rec-mic"> 麦克风</label>
+          <label><input type="checkbox" id="rec-sub" checked> 字幕轨（语音识别存 .srt）</label>
+          <label>变速 <select id="rec-speed" class="rb-select"><option value="1">原速</option><option value="3" selected>3 倍速</option><option value="10">10 倍速</option><option value="6">6 倍速</option></select></label>
+          <label>格式 <select id="rec-fmt" class="rb-select"><option value="webm">webm（即存即播）</option><option value="mp4">mp4（H.264，录完转码）</option></select></label>
+          <span style="flex:1"></span>
+          <button id="rec-go" class="rb-btn" style="flex-direction:row;background:var(--acc,#4f46e5);color:#fff">● 开始录制</button>
+        </div>
+        <div style="font-size:11.5px;color:#a3a19a;margin-top:8px">默认保存到工作区「录制/」；mp4 经本地转码产出真 H.264（首次需加载转码内核）</div>
+      </div>`;
+    m.body.querySelectorAll('.rec-src').forEach(el => el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      if (picked.has(id)) { picked.delete(id); el.style.borderColor = 'var(--bd,#e0ded8)'; }
+      else { picked.add(id); el.style.borderColor = 'var(--acc,#4f46e5)'; }
+    }));
+    m.body.querySelector('#rec-go').addEventListener('click', async () => {
+      if (!picked.size) { toast('先选择录制源'); return; }
+      const chosen = sources.filter(s => picked.has(s.id));
+      for (const s of chosen) await window.mazz.invoke('rec:useSource', { id: s.id });
+      const { startScreenRecorder } = await import('../lib/recorder.js');
+      const r = await startScreenRecorder({
+        sources: chosen,
+        speed: +m.body.querySelector('#rec-speed').value,
+        sysAudio: m.body.querySelector('#rec-sys').checked,
+        micAudio: m.body.querySelector('#rec-mic').checked,
+        outFormat: m.body.querySelector('#rec-fmt')?.value || 'webm',
+        subtitle: m.body.querySelector('#rec-sub')?.checked ?? true,
+        name: '全局内录',
+      });
+      if (!r) { toast('启动失败'); return; }
+      this._screenRec = r;
+      toast('内录中… 再次执行「全局内录」命令停止');
+      m.close();
+    });
+  }
+
+  /** 页签拖拽分屏：拖到【鼠标下的那个窗格】的四区边缘 → 该窗格内低可视预览 + 定向分屏
+   *  要点：
+   *  1) 区域按目标窗格（elementFromPoint 命中的 .pane）计算，不是整个容器——多窗格下每个窗格都能各自分屏
+   *  2) 标签栏区域不产生分屏区（拖标签进别的窗格标签栏 = 直接移签，不被分屏吞掉）
+   *  3) webview（浏览器窗格）会吞掉 HTML5 拖拽事件：拖签期间给每个 .editor-area 盖透明盾牌保证事件可达 */
+  installSplitPreview() {
+    let overlay = null, zone = null, zoneLeaf = null;
+    // 提示色跟随当前 UI 主题（不再死紫）：showOverlay 时实时取主题 accent 转 rgba
+    // v45 再就业：平面填色 → 边沿→中心渐隐（先急剧后舒缓），覆盖比例不变
+    const zoneColors = () => {
+      const c = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4f46e5';
+      const m = /^#([0-9a-f]{6})$/i.exec(c);
+      const rgb = m ? (() => { const n = parseInt(m[1], 16); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; })() : '79, 70, 229';
+      return { rgb, border: `rgba(${rgb}, 0.55)` };
+    };
+    // 渐隐曲线：0% 强 → 16% 陡降 → 42% 缓释 → 100% 全隐（先急剧后舒缓）
+    const zoneGradient = (z, rgb) => {
+      const stops = `rgba(${rgb}, 0.40) 0%, rgba(${rgb}, 0.24) 16%, rgba(${rgb}, 0.10) 42%, rgba(${rgb}, 0.03) 72%, rgba(${rgb}, 0) 100%`;
+      const dir = { left: 'to right', right: 'to left', up: 'to bottom', down: 'to top' }[z] || 'to right';
+      return `linear-gradient(${dir}, ${stops})`;
+    };
+
+    const leafAt = (x, y) => {
+      const paneEl = document.elementFromPoint(x, y)?.closest?.('.pane');
+      if (!paneEl) return null;
+      return this.paneTree.leaves().find(l => l.el === paneEl) || null;
+    };
+    // 区域判定：相对目标窗格四区
+    const zoneIn = (leaf, x, y) => {
+      const r = leaf.el.getBoundingClientRect();
+      const fx = (x - r.left) / r.width, fy = (y - r.top) / r.height;
+      if (fx < 0 || fx > 1 || fy < 0 || fy > 1) return null;
+      if (fx < 1 / 3) return 'left';
+      if (fx > 2 / 3) return 'right';
+      if (fy < 1 / 3) return 'up';
+      if (fy > 2 / 3) return 'down';
+      return null;
+    };
+    const showOverlay = (leaf, z) => {
+      const zc = zoneColors();
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.style.cssText = `position:fixed;pointer-events:none;z-index:60;border-radius:6px;transition:all .08s ease`;
+        document.body.appendChild(overlay);
+      }
+      overlay.style.background = zoneGradient(z, zc.rgb); // 每次换区都重算（方向随区变）
+      // 边框只留画面边沿那一条锚线；中心侧零边界（用户实锤：整圈虚线框让渐隐尽头挂了一条线）
+      overlay.style.border = 'none';
+      overlay.style.borderRadius = '0';
+      overlay.style[({ left: 'borderRight', right: 'borderLeft', up: 'borderBottom', down: 'borderTop' })[z] || 'borderRight'] = `1.5px solid ${zc.border}`;
+      const r = leaf.el.getBoundingClientRect();
+      const rect = { left: r.left, top: r.top, width: r.width / 3, height: r.height / 3 };
+      if (z === 'left') Object.assign(rect, { width: r.width / 3, height: r.height });
+      else if (z === 'right') Object.assign(rect, { left: r.left + r.width * 2 / 3, width: r.width / 3, height: r.height });
+      else if (z === 'up') Object.assign(rect, { width: r.width, height: r.height / 3 });
+      else Object.assign(rect, { top: r.top + r.height * 2 / 3, width: r.width, height: r.height / 3 });
+      overlay.style.left = rect.left + 'px';
+      overlay.style.top = rect.top + 'px';
+      overlay.style.width = rect.width + 'px';
+      overlay.style.height = rect.height + 'px';
+    };
+    const hideOverlay = () => { overlay?.remove(); overlay = null; zone = null; zoneLeaf = null; };
+    const shields = (on) => document.body.classList.toggle('tab-dragging', on);
+
+    document.addEventListener('dragstart', (e) => {
+      if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) shields(true);
+    }, true);
+    // 捕获相：模块内部（如编辑器拖拽插图区）stopPropagation 也截不到这里——
+    // 此前 dragover 走冒泡相，多窗格下被模块内层截停，分区永 null=拖不了分屏（灾难现场病根）
+    document.addEventListener('dragover', (e) => {
+      if (!e.dataTransfer?.types?.includes('mazz/tab')) return;
+      // 标签栏：放行（交给窗格的移签 drop），不做分屏
+      if (e.target.closest?.('.tabbar')) { if (zone) hideOverlay(); return; }
+      const leaf = leafAt(e.clientX, e.clientY);
+      const z = leaf && zoneIn(leaf, e.clientX, e.clientY);
+      if (leaf && z) { zone = z; zoneLeaf = leaf; showOverlay(leaf, z); e.preventDefault(); }
+      else if (zone) hideOverlay();
+    }, true);
+    document.addEventListener('drop', (e) => {
+      const tabId = e.dataTransfer?.getData('mazz/tab');
+      const z = zone, leaf = zoneLeaf;
+      hideOverlay();
+      shields(false);
+      if (!tabId || !z || !leaf) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.splitWithTab(tabId, z, leaf);
+    }, true);
+    document.addEventListener('dragend', () => { hideOverlay(); shields(false); });
+  }
+
+  /** 外部文件拖入：主界面/外部窗格自动打开（支持格式走 EXT_MODULE 路由） */
+  installFileDrop() {
+    const ROUTE = EXT_MODULE;
+    document.addEventListener('dragover', (e) => {
+      if (e.dataTransfer?.types?.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+    });
+    document.addEventListener('drop', async (e) => {
+      const files = [...(e.dataTransfer?.files || [])];
+      if (!files.length) return;
+      // 落在自带拖放语义的模块里（编辑器拖图插入等）→ 让位给模块，全局打开不抢
+      if (e.target.closest?.('.ProseMirror, [data-file-drop]')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const OPENABLE = new Set(Object.keys(ROUTE).concat(['epub', 'cbz', 'mobi', 'azw3', 'opml', 'mm', 'xmind']));
+      let opened = 0, skipped = [];
+      for (const f of files) {
+        const ext = (f.name.split('.').pop() || '').toLowerCase();
+        if (!OPENABLE.has(ext)) { skipped.push(f.name); continue; }
+        // Electron 32+：File.path 已移除，必须 webUtils.getPathForFile
+        const realPath = window.mazz?.isElectron ? (window.mazz.getPathForFile?.(f) || '') : '';
+        if (realPath) { await this.openFile(realPath); opened++; }
+        else if (window.mazz?.isElectron) skipped.push(f.name);
+      }
+      if (opened) toast(`已打开 ${opened} 个文件`);
+      if (skipped.length) toast(`不支持或未取到路径：${skipped.slice(0, 3).join('、')}${skipped.length > 3 ? ' 等' : ''}`);
+    }, true);
+  }
+
+  /** 定向分屏：拖到目标窗格某侧 1/3 → 在该侧新建窗格放拖来的签，目标窗格原标签一律不动（VS Code 行为） */
+  splitWithTab(tabId, zone, leaf = null) {
+    const dir = zone === 'right' || zone === 'left' ? 'row' : 'column';
+    const targetLeaf = leaf || this.paneTree.active || this.paneTree.leaves()[0];
+    this.paneTree.setActive(targetLeaf);
+    const newLeaf = this.paneTree.split(targetLeaf, dir);
+    if (!newLeaf) return;
+    if (zone === 'left' || zone === 'up') {
+      // split 固定 {a: 原 leaf, b: 新 leaf}；左/上分需要新格在前——交换分支顺序
+      const branch = this.paneTree.findParent(this.paneTree.root, newLeaf);
+      if (branch && branch.b === newLeaf) {
+        branch.a = newLeaf;
+        branch.b = targetLeaf;
+        this.paneTree.render();
+      }
+    }
+    this.paneTree.moveTabToPane(tabId, newLeaf, { keepEmpty: true });
+    toast(zone === 'right' ? '已向右分屏' : zone === 'down' ? '已向下分屏' : zone === 'left' ? '已向左分屏' : '已向上分屏');
+  }
+
+  /** 磁盘内容重载到标签（外部编辑回传；脏标签只提示不覆盖） */
+  async reloadTabFromDisk(tab) {
+    const RELOADABLE = new Set(['markdown', 'text', 'sheet', 'slide', 'mindmap', 'code', 'notes', 'draw']);
+    const inst = modules.instances.get(tab.id);
+    if (!inst || !RELOADABLE.has(inst.name)) return;
+    if (tab.dirty) {
+      toast(`「${tab.title}」在外部被修改，这边有未保存改动——请先保存或放弃改动`);
+      return;
+    }
+    try {
+      const ext = tab.filePath.split('.').pop().toLowerCase();
+      let content;
+      if (ext === 'xlsx' || ext === 'docx' || ext === 'pptx') {
+        const b64 = await window.mazz.invoke('fs:readFileBase64', { path: tab.filePath });
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        if (ext === 'pptx') {
+          const { pptxToOutline } = await import('../modules/slide/pptx-import.js');
+          content = await pptxToOutline(bytes.buffer);
+        } else {
+          content = ext === 'xlsx' ? { __xlsx: bytes.buffer } : { __docx: bytes.buffer };
+        }
+      } else {
+        content = await window.mazz.invoke('fs:readFile', { path: tab.filePath });
+      }
+      // 自己保存触发的 watcher：内容一致则跳过
+      try { if (inst.def.getContent(inst.state) === content) return; } catch {}
+      inst.def.setContent(content, inst.state);
+      this.tabs.setDirty(tab.id, false);
+      toast(`「${tab.title}」已同步外部修改`);
+    } catch (e) { console.warn('[reload]', e.message); }
+  }
+
+  /** 外部文件/文件夹导入工作区（递归复制 + 重名避让） */
+  async importExternal(paths) {
+    try {
+      const r = await window.mazz.invoke('import:external', { sources: paths });
+      if (r.error === 'no-workspace') { toast('尚未设置工作区'); return; }
+      const n = r.imported?.length || 0;
+      if (n) {
+        await this.fileTree.refresh();
+        toast(`已导入 ${n} 项到工作区${r.skipped?.length ? `（${r.skipped.length} 项跳过）` : ''}`);
+      } else {
+        toast('没有可导入的内容');
+      }
+    } catch (e) { toast('导入失败：' + e.message); }
+  }
   joinPanes() {
     if (this.paneTree.leaves().length <= 1) return;
     this.paneTree.joinAll();
@@ -218,6 +534,13 @@ export class Shell {
     this.setTheme(theme);
     await this.fileTree.refresh();
     this.syncAppMenu();
+    installPaneZoom(); // Ctrl+滚轮 / 双指捏合：模块窗格内容缩放（固定 UI 除外）
+    this.installSplitPreview();
+    this.installFileDrop(); // 页签拖拽分屏：区域预览 + 定向分屏
+    setPaneZoomListener((area, z) => {
+      // 正在缩放哪个窗格就显示哪个（缩放操作即焦点）
+      this.statusbar.setZoom(this.zoom * z);
+    });
     snapshots.start();
     await this.checkRecovery();
     // 浏览器预览分窗：localStorage 交接 + 跨标签页「移回主窗口」（storage 事件）
@@ -243,6 +566,28 @@ export class Shell {
   }
 
   setTheme(id) {
+    // 主窗换主题 → 广播子窗口跟随（v33 外部窗格主题不同步修复；pack/图片自定义一并覆盖）
+    if (contextKeys.get('windowRole') !== 'child' && id) {
+      window.mazz?.invoke('theme:broadcast', { id }).catch(() => {});
+    }
+    if (id?.startsWith('pack:')) {
+      // 自定义主题包（工作区 themes/ 下的 JSON）：注入后切换
+      import('../lib/theme-store.js').then(async ({ listPacks, applyPack }) => {
+        const packId = id.slice(5);
+        const packs = await listPacks();
+        const pack = packs.find(p => p.id === packId);
+        if (!pack) {
+          document.documentElement.dataset.theme = 'paper';
+          this.statusbar.setTheme('纸白');
+          toast('主题包不存在（可能已被删除）——已回退纸白');
+          return;
+        }
+        applyPack(packId, pack);
+        this.statusbar.setTheme(pack.name);
+      });
+      window.mazz?.invoke('settings:set', { key: 'theme', value: id }).catch(() => {});
+      return;
+    }
     document.documentElement.dataset.theme = id;
     if (id === 'custom') {
       // 图片自定义主题：确保变量已注入（无注入则提示并退回构成）
@@ -259,6 +604,16 @@ export class Shell {
     window.mazz?.invoke('settings:set', { key: 'theme', value: id }).catch(() => {});
   }
 
+  /** 全部主题：自带（固定命名，不可删改）+ 工作区自定义主题包 */
+  async allThemes() {
+    const { listPacks } = await import('../lib/theme-store.js');
+    const packs = await listPacks().catch(() => []);
+    return [
+      ...THEMES.map(t => ({ ...t, builtin: true })),
+      ...packs.map(p => ({ id: 'pack:' + p.id, name: p.name, builtin: false })),
+    ];
+  }
+
   // ==================== 欢迎页 ====================
   showWelcome() {
     if (document.querySelector('.welcome')) return;
@@ -268,21 +623,21 @@ export class Shell {
       <h1>◆ <b>Mazz</b> Editor</h1>
       <div>${t('一站式超级编辑器 · 一切操作皆命令 · Ctrl+Shift+P 唤起命令面板')}</div>
       <div class="w-grid">
-        <button class="w-card" data-cmd="file.new"><div class="t">＋ ${t('新建文档')}</div><div class="d">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>
-        <button class="w-card" data-cmd="file.newSheet"><div class="t">📊 ${t('新建表格')}</div><div class="d">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>
-        <button class="w-card" data-cmd="file.newSlide"><div class="t">📽 ${t('新建演示')}</div><div class="d">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>
-        <button class="w-card" data-cmd="file.newBrowser"><div class="t">🌐 ${t('隐私浏览器')}</div><div class="d">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>
-        <button class="w-card" data-cmd="file.newCode"><div class="t">💻 ${t('新建代码')}</div><div class="d">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>
-        <button class="w-card" data-cmd="file.newMath"><div class="t">🧮 ${t('计算 REPL')}</div><div class="d">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>
-        <button class="w-card" data-cmd="file.newNotes"><div class="t">📓 ${t('笔记库')}</div><div class="d">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>
-        <button class="w-card" data-cmd="file.newSearch"><div class="t">🔎 ${t('全局搜索')}</div><div class="d">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>
-        <button class="w-card" data-cmd="file.newMindmap"><div class="t">🧠 ${t('思维导图')}</div><div class="d">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>
-        <button class="w-card" data-cmd="file.newDraw"><div class="t">🎨 ${t('画板')}</div><div class="d">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>
-        <button class="w-card" data-cmd="file.newLibrary"><div class="t">📚 ${t('书库')}</div><div class="d">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>
-        <button class="w-card" data-cmd="file.newText"><div class="t">🄣 ${t('新建纯文本')}</div><div class="d">${t('即开即用')}<br>${t('TXT 读写')}</div></button>
-        <button class="w-card" data-cmd="file.open"><div class="t">📂 ${t('打开文件')}</div><div class="d">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>
-        <button class="w-card" data-cmd="help.open"><div class="t">❓ ${t('使用指南')}</div><div class="d">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>
-        <button class="w-card" data-cmd="app.openSettings"><div class="t">⚙ ${t('设置')}</div><div class="d">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>
+          <button class="w-card" data-cmd="file.new"><div class="t">${iconHtml('＋')} ${t('新建文档')}</div><div class="d">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>
+          <button class="w-card" data-cmd="file.newSheet"><div class="t">${iconHtml('📊')} ${t('新建表格')}</div><div class="d">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>
+          <button class="w-card" data-cmd="file.newSlide"><div class="t">${iconHtml('📽')} ${t('新建演示')}</div><div class="d">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>
+          <button class="w-card" data-cmd="file.newBrowser"><div class="t">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class="d">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>
+          <button class="w-card" data-cmd="file.newCode"><div class="t">${iconHtml('💻')} ${t('新建代码')}</div><div class="d">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>
+          <button class="w-card" data-cmd="file.newMath"><div class="t">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class="d">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>
+          <button class="w-card" data-cmd="file.newNotes"><div class="t">${iconHtml('📓')} ${t('笔记库')}</div><div class="d">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>
+          <button class="w-card" data-cmd="file.newSearch"><div class="t">${iconHtml('🔎')} ${t('全局搜索')}</div><div class="d">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>
+          <button class="w-card" data-cmd="file.newMindmap"><div class="t">${iconHtml('🧠')} ${t('思维导图')}</div><div class="d">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>
+          <button class="w-card" data-cmd="file.newDraw"><div class="t">${iconHtml('🎨')} ${t('画板')}</div><div class="d">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>
+          <button class="w-card" data-cmd="file.newLibrary"><div class="t">${iconHtml('📚')} ${t('书库')}</div><div class="d">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>
+          <button class="w-card" data-cmd="file.newText"><div class="t">${iconHtml('🄣')} ${t('新建纯文本')}</div><div class="d">${t('即开即用')}<br>${t('TXT 读写')}</div></button>
+          <button class="w-card" data-cmd="file.open"><div class="t">${iconHtml('📂')} ${t('打开文件')}</div><div class="d">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>
+          <button class="w-card" data-cmd="help.open"><div class="t">${iconHtml('❓')} ${t('使用指南')}</div><div class="d">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>
+          <button class="w-card" data-cmd="app.openSettings"><div class="t">${iconHtml('⚙')} ${t('设置')}</div><div class="d">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>
       </div>
       <div style="margin-top:6px;font-size:11.5px">${t('托盘常驻 Ctrl+Alt+M 唤起 · Ctrl+Alt+N 快速笔记')}</div>`;
     w.querySelectorAll('[data-cmd]').forEach(b =>
@@ -305,10 +660,12 @@ export class Shell {
     const inst = modules.attach(tab.id, moduleId, tab.view, content ? content : null);
     this.containerTab.set(tab.view, tab.id);
     tab.forceClose = false;
-    snapshots.track(tab.id, () => ({
-      filePath, moduleId,
-      content: safeGet(() => inst.def.getContent(inst.state)),
-    }));
+    if (!inst.def.readOnly) {
+      snapshots.track(tab.id, () => ({
+        filePath, moduleId,
+        content: safeGet(() => inst.def.getContent(inst.state)),
+      }));
+    }
     this.rebuildModuleRibbon(tab);
     this.paneTree.paneOfTab(tab.id)?.refreshEmpty();
     return { tab, inst };
@@ -324,22 +681,175 @@ export class Shell {
       this.ribbon.addPage('module', `${def.displayName} · 开始`, (panel) => {
         panel.innerHTML = def.toolbarHTML;
         def.bindToolbar?.(panel);
+        this.appendBridgeGroup(panel, def.name); // 桥接入口进对应模块 Ribbon（不再藏在命令面板）
+        this.appendQuickLaunch(panel, def.name, tab);
       }, 0);
     }
     this.ribbon.renderTabs();
   }
 
+  /** 「桥接」组：按模块列出可用桥接命令（画板/导图/文稿/表格/代码/书库） */
+  appendBridgeGroup(panel, moduleId) {
+    const BRIDGE_RIBBON = {
+      markdown: ['bridge.mdToPptx', 'slide.compileFromMarkdown', 'markdown.toMindmap', 'bridge.mdToDraw'],
+      sheet: ['bridge.sheetToPandas'],
+      code: ['bridge.codeToMarkdown', 'bridge.terminalToSheet'],
+      draw: ['bridge.drawToDoc', 'bridge.drawToSlide'],
+      mindmap: ['bridge.mmToDoc', 'bridge.mmToSlide'],
+      library: ['bridge.libToNote'],
+    };
+    const ids = BRIDGE_RIBBON[moduleId];
+    if (!ids?.length) return;
+    const g = document.createElement('div');
+    g.className = 'rb-group';
+    g.dataset.label = '桥接';
+    for (const id of ids) {
+      const cmd = commands.get(id);
+      if (!cmd) continue;
+      const btn = document.createElement('button');
+      btn.className = 'rb-btn';
+      btn.innerHTML = `<i class="ico">${iconHtml(cmd.icon || '⚡')}</i><span>${cmd.title}</span>`;
+      btn.title = cmd.title;
+      btn.addEventListener('click', () => commands.execute(id));
+      g.appendChild(btn);
+    }
+    if (g.children.length) panel.appendChild(g);
+  }
+
+  /** 「外部打开」组：按模块类型列出系统已安装的对应软件（开始菜单扫描，7 天缓存） */
+  async appendQuickLaunch(panel, moduleId, tab) {
+    if (!window.mazz?.isElectron) return;
+    const category = ({ markdown: 'word', text: 'word', sheet: 'excel', slide: 'powerpoint', code: 'code', draw: 'draw' })[moduleId];
+    if (!category) return;
+    const { apps } = await window.mazz.invoke('apps:quickLaunch', {}).catch(() => ({ apps: [] }));
+    const mine = (apps || []).filter(a => a.category === category);
+    if (!panel.isConnected) return; // 页面已被换走
+    // 合并用户自定义应用（手动寻路 + 自定义命名）
+    const { listCustomApps, editCustomAppDialog, appIconHtml } = await import('../lib/custom-apps.js');
+    const customs = await listCustomApps(category);
+    const all = [...mine, ...customs];
+    const g = document.createElement('div');
+    g.className = 'rb-group';
+    g.dataset.label = '外部打开';
+    for (const app of all) {
+      const btn = document.createElement('button');
+      btn.className = 'rb-btn';
+      btn.innerHTML = `<i class="ico">${appIconHtml(app)}</i><span style="max-width:none">${app.name}</span>`;
+      btn.title = `用 ${app.name} 打开当前文件${app.custom ? '（自定义应用，右键编辑/删除）' : ''}`;
+      if (app.custom) {
+        btn.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          editCustomAppDialog({ category, existing: app, onSaved: () => this.ribbon?.showPage?.(this.ribbon.activePage) });
+        });
+      }
+      btn.addEventListener('click', async () => {
+        // 先把未保存内容落盘，确保外部软件读到最新
+        if (tab.dirty && tab.filePath) {
+          toast('正在保存当前内容…');
+          await this.saveTab(tab).catch(() => {});
+        }
+        if (!tab.filePath) { toast('当前标签没有已保存的文件'); return; }
+        // 自创格式 → 转换为目标软件可读的原生格式（xlsx/pptx/png），回传时自动转回
+        let launchPath = tab.filePath;
+        try {
+          const { prepareForExternalOpen } = await import('../lib/extern-convert.js');
+          const prep = await prepareForExternalOpen(tab, modules.instances.get(tab.id), app);
+          launchPath = prep.launchPath;
+          if (prep.converted) toast(`已转换为 .${prep.outExt} 供 ${app.name} 打开`);
+        } catch (e) { toast('格式转换失败：' + e.message); return; }
+        const r = await window.mazz.invoke('apps:launch', { exe: app.exe, args: [launchPath] }).catch(() => ({ ok: false }));
+        toast(r.ok ? `已用 ${app.name} 打开（外部保存后这边自动同步）` : `拉起 ${app.name} 失败`);
+      });
+      g.appendChild(btn);
+    }
+    // 手动添加入口（所有外部打开的兜底：手动寻路 + 自定义命名）
+    const addBtn = document.createElement('button');
+    addBtn.className = 'rb-btn';
+    addBtn.innerHTML = `<i class="ico">${iconHtml('✚')}</i><span style="max-width:none">添加应用…</span>`;
+    addBtn.title = '手动寻路添加外部应用（可自定义显示名称）';
+    addBtn.addEventListener('click', () => {
+      editCustomAppDialog({ category, onSaved: () => this.ribbon?.showPage?.(this.ribbon.activePage) });
+    });
+    g.appendChild(addBtn);
+    panel.appendChild(g);
+  }
+
   async openFile(filePath) {
     const ext = filePath.split('.').pop().toLowerCase();
     const moduleId = EXT_MODULE[ext] || 'text';
+    // epub/cbz/mobi/azw3：进书库入库打开（原来是当文本打开成乱码）
+    if (ext === 'epub' || ext === 'cbz' || ext === 'mobi' || ext === 'azw3') {
+      const name0 = filePath.split(/[\\/]/).pop();
+      const { tab } = this.openTab('library', { title: name0, filePath, content: '' });
+      tab.forceClose = false;
+      this.tabs.setDirty(tab.id, false);
+      const libInst = modules.instances.get(tab.id);
+      await libInst?.def.importPath?.(filePath, libInst.state);
+      await window.mazz?.invoke('recent:add', { path: filePath });
+      this.fileTree.markActive(filePath);
+      this.syncTitle();
+      return;
+    }
+    // OPML/FreeMind/XMind：导图格式导入（v37；v45 改确定性管道——先解析再开签，
+    // 旧流程开空签再延时 350ms 投 __activeMindmapCtl，慢机/他签激活时投空或投错签=打开为空）
+    if (ext === 'opml' || ext === 'mm' || ext === 'xmind') {
+      const name2 = filePath.split(/[\/]/).pop();
+      try {
+        const { parseMindmapFile } = await import('../modules/mindmap/formats.js');
+        let data;
+        if (ext === 'xmind') {
+          const b64 = await window.mazz.invoke('fs:readFileBase64', { path: filePath });
+          const bin = atob(b64);
+          data = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+        } else {
+          data = await window.mazz.invoke('fs:readFile', { path: filePath });
+        }
+        const doc = await parseMindmapFile(name2, data);
+        const { tab: t2 } = this.openTab('mindmap', { title: name2, filePath, content: JSON.stringify({ parentLinks: [], notes: [], refLines: [], ...doc }) });
+        t2.forceClose = false;
+        this.tabs.setDirty(t2.id, false);
+      } catch (e) { toast('导图导入失败：' + e.message); return; }
+      await window.mazz?.invoke('recent:add', { path: filePath });
+      this.fileTree.markActive(filePath);
+      this.syncTitle();
+      return;
+    }
+    // 图片/PDF：查看器模块按路径读二进制，不走文本通道（否则打开全是乱码）
+    if (moduleId === 'viewer') {
+      const name = filePath.split(/[\\/]/).pop();
+      // 已开则激活（此前一律新开签：同一文件连开 N 个查看器签的温床）
+      for (const leaf of this.paneTree.leaves()) {
+        const exist = leaf.tabs.tabs.find(t => t.filePath === filePath && t.moduleId === 'viewer');
+        if (exist) {
+          leaf.tabs.activate(exist.id);
+          this.paneTree.setActive(leaf);
+          this.fileTree.markActive(filePath);
+          this.syncTitle();
+          return;
+        }
+      }
+      const { tab } = this.openTab('viewer', { title: name, filePath, content: { path: filePath } });
+      tab.forceClose = false;
+      this.tabs.setDirty(tab.id, false);
+      await window.mazz?.invoke('recent:add', { path: filePath });
+      this.fileTree.markActive(filePath);
+      this.syncTitle();
+      return;
+    }
     let content = '';
     try {
-      if (ext === 'xlsx' || ext === 'docx') {
+      if (ext === 'xlsx' || ext === 'docx' || ext === 'pptx') {
         const b64 = await window.mazz.invoke('fs:readFileBase64', { path: filePath });
         const bin = atob(b64);
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        content = ext === 'xlsx' ? { __xlsx: bytes.buffer } : { __docx: bytes.buffer };
+        if (ext === 'pptx') {
+          const { pptxToOutline } = await import('../modules/slide/pptx-import.js');
+          content = await pptxToOutline(bytes.buffer);
+        } else {
+          content = ext === 'xlsx' ? { __xlsx: bytes.buffer } : { __docx: bytes.buffer };
+        }
       } else {
         content = await window.mazz.invoke('fs:readFile', { path: filePath });
       }
@@ -361,10 +871,12 @@ export class Shell {
   async saveTab(tab, { saveAs = false } = {}) {
     const inst = modules.instances.get(tab.id);
     if (!inst) return false;
+    if (inst.def.readOnly) { toast('查看器是只读模块，无需保存'); return false; } // 防呆：空内容写回媒体文件
     let target = tab.filePath;
     if (saveAs || !target) {
       target = await window.mazz.invoke('dialog:saveFile', {
-        defaultPath: (tab.filePath || tab.title).replace(/\.[^.]*$/, '') + defaultExt(inst.name),
+        // 文件名框不带默认后缀——系统对话框按所选格式自动补（整个软件统一）
+        defaultPath: (tab.filePath || tab.title).replace(/\.[^.]*$/, ''),
         filters: saveFiltersFor(inst, tab.title),
       });
       if (!target) return false;
@@ -390,6 +902,7 @@ export class Shell {
         await window.mazz.invoke('fs:writeFile', { path: target, content });
       }
     } catch (e) { toast(`保存失败：${e.message}`); return false; }
+    try { inst.state.filePath = target; } catch {} // 同步模块实例路径（此前只更 tab.filePath：调试/外部打开等读实例路径的功能全是盲的）
     this.tabs.setDirty(tab.id, false);
     snapshots.untrack(tab.id);
     snapshots.track(tab.id, () => ({ filePath: target, moduleId: inst.name, content: safeGet(() => inst.def.getContent(inst.state)) }));
@@ -397,6 +910,27 @@ export class Shell {
     this.syncTitle();
     toast(`已保存 ${target.split(/[\\/]/).pop()}`);
     return true;
+  }
+
+  /** 关闭指定路径（或其父路径）已删除的全部标签（虚空标签清扫；含目录级联） */
+  closeGhostTabs(path) {
+    const norm = String(path || '').replace(/\\/g, '/');
+    if (!norm) return;
+    let closed = 0;
+    for (const leaf of this.paneTree.leaves()) {
+      for (const tab of [...leaf.tabs.tabs]) {
+        const fp = String(tab.filePath || '');
+        if (fp && (fp === norm || fp.startsWith(norm + '/'))) {
+          tab.forceClose = true;
+          modules.detach(tab.id);
+          snapshots.untrack(tab.id);
+          leaf.tabs.close(tab.id, { force: true });
+          closed++;
+        }
+      }
+    }
+    if (closed) toast(`已关闭 ${closed} 个已删除文件的标签`);
+    return closed;
   }
 
   async closeTabFlow(id) {
@@ -435,7 +969,7 @@ export class Shell {
     if (!inst) return;
     const count = safeGet(() => inst.def.getCharCount?.(inst.state));
     const pos = safeGet(() => inst.def.getCursorPos?.(inst.state));
-    this.statusbar.set(`${inst.def.icon} ${inst.def.displayName}`,
+    this.statusbar.set(`${inst.def.icon ? iconHtml(inst.def.icon) + ' ' : ''}${inst.def.displayName}`,
       count != null ? `${count} 字符` : '', pos || '');
   }
 
@@ -463,17 +997,169 @@ export class Shell {
       },
     });
     R('file.openPath', { title: '打开路径', run: async ({ path: p } = {}) => { if (p) await this.openFile(p); } });
+    R('file.openViewer', {
+      title: '查看器预览…（图片/PDF/音视频）', icon: '🖼', group: '文件', run: async () => {
+        const p = await window.mazz.invoke('dialog:openFile', {
+          filters: [
+            { name: '可预览文件', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif', 'pdf', 'mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus'] },
+            { name: '所有文件', extensions: ['*'] },
+          ],
+        });
+        if (p) await this.openFile(p);
+      },
+    });
+    R('player.open', {
+      title: '打开播放器…（音视频）', icon: '🎬', group: '文件', run: async () => {
+        const p = await window.mazz.invoke('dialog:openFile', {
+          filters: [{ name: '音视频', extensions: ['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg'] }],
+        });
+        if (p) await this.openFile(p);
+      },
+    });
+    R('file.openWithSystem', {
+      title: '用系统默认程序打开…', icon: '🚀', group: '文件', when: 'hasWorkspace || electron', run: async () => {
+        const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '所有文件', extensions: ['*'] }] });
+        if (!p) return;
+        if (!window.mazz?.isElectron) { toast('系统默认打开仅桌面版可用'); return; }
+        const r = await window.mazz.invoke('shell:openPath', { path: p }).catch(e => e.message || e);
+        if (r !== true) toast('外部打开失败：' + r);
+      },
+    });
     R('file.save', { title: '保存', icon: '💾', group: '文件', when: 'hasTabs', run: () => this.tabs.active && this.saveTab(this.tabs.active) });
     R('file.saveAs', { title: '另存为…', group: '文件', when: 'hasTabs', run: () => this.tabs.active && this.saveTab(this.tabs.active, { saveAs: true }) });
     R('file.closeTab', { title: '关闭当前标签', group: '文件', when: 'hasTabs', run: () => this.closeTabFlow(this.tabs.activeId) });
     R('file.print', { title: '打印…', icon: '🖨', group: '文件', when: 'hasTabs', run: () => window.mazz.invoke('print:print') });
     R('file.exportPDF', {
       title: '导出为 PDF…', group: '文件', when: 'hasTabs', run: async () => {
+        const tab = this.tabs.active;
+        const mod = tab?.moduleId;
+        // 专用管线：直接打主窗口会把网格/画布打成空白，必须走各模块分页 HTML（离屏窗导 PDF）
+        try {
+          if (mod === 'sheet' || mod === 'slide' || mod === 'markdown' || mod === 'text' || mod === 'notes') {
+            const target = await window.mazz.invoke('dialog:saveFile', {
+              defaultPath: (tab?.title || '文档').replace(/\.[^.]*$/, '') + '.pdf',
+              filters: [{ name: 'PDF', extensions: ['pdf'] }],
+            }).catch(() => null);
+            if (!target) return;
+            const { buildPrintDocument } = await import('../lib/print-preview.js');
+            let setup = { size: 'A4', orientation: 'portrait', margins: { top: 20, right: 20, bottom: 20, left: 20 }, pageno: true };
+            let pages = [];
+            if (mod === 'sheet') {
+              const ctl = window.__activeSheetCtl;
+              if (!ctl?.sheet) throw new Error('表格未就绪');
+              const { buildSheetPages } = await import('../modules/sheet/print.js');
+              setup = ctl.printSetup || { size: 'A4', orientation: 'landscape', margins: { top: 15, right: 15, bottom: 15, left: 15 }, pageno: true };
+              pages = buildSheetPages(ctl.sheet, setup);
+              if (!pages.length) { toast('表格没有内容'); return; }
+            } else if (mod === 'slide') {
+              const ctl = window.__activeSlideCtl;
+              if (!ctl?.slides?.length) throw new Error('演示未就绪');
+              const { buildSlidePages } = await import('../modules/slide/print.js');
+              setup = ctl.printSetup || { size: 'A4', orientation: 'landscape', margins: { top: 8, right: 8, bottom: 8, left: 8 }, pageno: false };
+              pages = buildSlidePages(ctl.slides, ctl.theme);
+            } else {
+              // 文档类：取编辑器渲染 HTML，本地图片内联为 data:（离屏沙盒窗读不到 file://）
+              const ctl = window.__activeMarkdownCtl;
+              const dom = ctl?.view?.dom;
+              const pm = dom ? (dom.classList.contains('ProseMirror') ? dom : dom.querySelector('.ProseMirror')) : null;
+              let inner = pm ? pm.innerHTML : `<pre style="white-space:pre-wrap">${String(ctl?.getContent?.() || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))}</pre>`;
+              const ws = await window.mazz.invoke('workspace:get').catch(() => null);
+              const imgs = [...inner.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)].map(m => m[0] && m[1]).filter(s => /^file:\/\/|^(?!https?:|data:|blob:)/.test(s));
+              for (const src of imgs.slice(0, 30)) {
+                let p = src.startsWith('file://') ? decodeURIComponent(src.slice(7)) : (ws ? ws + '/' + src.replace(/^\.\//, '') : null);
+                if (!p) continue;
+                try {
+                  const b64 = await window.mazz.invoke('fs:readFileBase64', { path: p });
+                  inner = inner.split(src).join(`data:image/${p.split('.').pop().replace(/jpg/i, 'jpeg')};base64,${b64}`);
+                } catch {}
+              }
+              pages = [`<div class="md-body" style="font-size:12pt;line-height:1.8">${inner}</div>`];
+            }
+            const html = buildPrintDocument({
+              title: tab?.title || '文档', setup,
+              pagesHtml: pages.map(i => `<div class="sheet">${i}</div>`).join(''),
+            });
+            const p = await window.mazz.invoke('print:html', { html, setup, toPdf: true, defaultPath: target });
+            if (p) toast(`PDF 已导出：${String(p).split(/[\\/]/).pop()}`);
+            return;
+          }
+        } catch (e) { toast('PDF 导出失败：' + e.message); return; }
+        // 其余模块：整窗打印兜底
         const p = await window.mazz.invoke('print:toPDF', { savePath: null });
         if (p) toast(`PDF 已导出：${p}`);
       },
     });
+    R('file.share', {
+      title: '发送到工作软件…', icon: '📤', group: '文件', when: 'hasTabs', run: async () => {
+        const { shareActiveFile } = await import('../lib/share.js');
+        await shareActiveFile(this);
+      },
+    });
+    R('file.import', {
+      title: '导入到工作区…', icon: '📥', group: '文件', run: async () => {
+        const paths = await window.mazz.invoke('dialog:openImport').catch(() => []);
+        if (paths?.length) await this.importExternal(paths);
+      },
+    });
+    R('sheet.printPreview', {
+      title: '打印预览…（表格）', icon: '🖨', group: '输出', when: "module=='sheet'", run: async () => {
+        const ctl = window.__activeSheetCtl;
+        if (!ctl) return;
+        const { openSheetPrintPreview } = await import('../modules/sheet/print.js');
+        const tab = this.tabs.active;
+        openSheetPrintPreview(ctl, tab?.title || '工作表');
+      },
+    });
+    R('slide.printPreview', {
+      title: '打印预览…（演示）', icon: '🖨', group: '输出', when: "module=='slide'", run: async () => {
+        const ctl = window.__activeSlideCtl;
+        if (!ctl) return;
+        const { openSlidePrintPreview } = await import('../modules/slide/print.js');
+        const tab = this.tabs.active;
+        openSlidePrintPreview(ctl, tab?.title || '演示文稿');
+      },
+    });
+    R('markdown.toMindmap', {
+      title: '提取标题结构为思维导图', icon: '🧠', group: '桥接', when: "module=='markdown'", run: async () => {
+        const inst = [...modules.instances.values()].find(i => i.name === 'markdown');
+        if (!inst) { toast('先打开一个文档'); return; }
+        const text = inst.def.getContent(inst.state) || '';
+        const { createNode } = await import('../modules/mindmap/model.js');
+        // 按 # / ## / ### 提取层级；无标题时用文件名作根
+        const roots = [];
+        const stack = [];
+        for (const line of text.split(/\r?\n/)) {
+          const m = /^(#{1,6})\s+(.*)$/.exec(line.trim());
+          if (!m) continue;
+          const level = m[1].length;
+          const node = createNode(m[2].trim());
+          while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+          if (stack.length) stack[stack.length - 1].node.children.push(node);
+          else roots.push(node);
+          stack.push({ level, node });
+        }
+        if (!roots.length) roots.push(createNode(inst.state.title?.replace(/\.[^.]*$/, '') || '未命名'));
+        const doc = { v: 3, mode: 'lr', scheme: 0, roots, notes: [], refLines: [], parentLinks: [], linkStyle: null };
+        this.openTab('mindmap', { title: (inst.state.title || '文档').replace(/\.[^.]*$/, '') + '.mindmap', content: JSON.stringify(doc) });
+        toast('已生成思维导图');
+      },
+    });
+    R('rec.screen', {
+      title: '全局内录（窗口/混音/变速）…', icon: '⏺', group: '工具', run: () => this.openScreenRecorderDialog(),
+    });
+    R('apps.rescanQuickLaunch', {
+      title: '重新扫描已安装软件（外部打开列表）', icon: '🔄', group: '工具', run: async () => {
+        const r = await window.mazz.invoke('apps:quickLaunch', { refresh: true }).catch(() => null);
+        toast(r?.apps?.length ? `发现 ${r.apps.length} 个可用软件` : '未发现可用软件（或非 Windows 平台）');
+      },
+    });
     R('file.quickOpen', { title: '快速跳转（最近/项目文件）', icon: '⚡', group: '文件', run: () => palette.open('files') });
+    // —— 智能创作（Factory，右侧工具坞承载）——
+    R('factory.copyMantra', { title: '复制创作模板母版（当前表单）', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.copyMantra() });
+    R('factory.generate', { title: '直接生成（当前表单）', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.generateNow() });
+    R('factory.runAll', { title: '全部启动创作任务', icon: '▶', group: '智能创作', run: () => this.sideDock?.factoryPanel?.runAllTasks() });
+    R('factory.newGenre', { title: '新建创作模板', icon: '✚', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openGenreEditor() });
+    R('factory.provider', { title: 'AI 服务设置（智能创作）', icon: '⚙', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProviderDialog() });
     R('file.openWorkspace', {
       title: '打开工作区…', group: '文件', run: async () => {
         const dir = await window.mazz.invoke('dialog:openFolder');
@@ -493,11 +1179,29 @@ export class Shell {
     R('view.fullScreen', { title: '全屏', group: '视图', run: () => window.mazz?.invoke('window:toggleFullScreen') });
     R('view.zoomIn', { title: '放大', group: '视图', run: () => this.setZoom(this.zoom + 0.1) });
     R('view.zoomOut', { title: '缩小', group: '视图', run: () => this.setZoom(this.zoom - 0.1) });
-    R('view.zoomReset', { title: '重置缩放', group: '视图', run: () => this.setZoom(1) });
+    R('view.zoomReset', { title: '重置缩放', group: '视图', run: () => {
+      resetAllPaneZooms(); // 全局与窗格缩放一起回 100%
+      this.setZoom(1);
+    } });
+    R('annotate.toggle', {
+      title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {
+        const { toggleAnnotate } = await import('../lib/annotate.js');
+        const on = toggleAnnotate();
+        toast(on ? '批注模式：直接圈画（Esc 退出，Ctrl+Z 撤销）' : '已退出批注');
+      },
+    });
+    R('annotate.clear', {
+      title: '批注清屏', icon: '⌫', group: '工具', run: async () => {
+        const { clearAnnotate } = await import('../lib/annotate.js');
+        clearAnnotate();
+        toast('批注已清屏');
+      },
+    });
     R('view.cycleTheme', {
       title: '轮换主题', icon: '🎨', group: '视图', run: async () => {
-        // 「图片自定义」不参与循环（只能从图片取色进入，无变量时会卡住循环）
-        const cycle = THEMES.filter(t => t.id !== 'custom');
+        // 「图片自定义」不参与循环；自定义主题包参与循环
+        const all = await this.allThemes();
+        const cycle = all.filter(t => t.id !== 'custom');
         const curId = document.documentElement.dataset.theme;
         const cur = cycle.findIndex(t => t.id === curId);
         this.setTheme(cycle[(cur + 1) % cycle.length].id);
@@ -529,6 +1233,21 @@ export class Shell {
       if (t?.filePath) { await window.mazz.invoke('clipboard:write', { text: t.filePath }); toast('路径已复制'); }
     } });
     // 移到新窗口（也可把标签直接拖出主窗口边界）
+    R('tab.moveToExistingWindow', {
+      title: '移到已有外部窗格…', icon: '🪟', group: '标签', when: "hasTabs && windowRole!='child'", run: async () => {
+        const tabId = this.tabs.activeId;
+        if (!tabId) return;
+        const wins = await window.mazz.invoke('window:listChildren').catch(() => []);
+        if (!wins.length) { toast('还没有外部窗格（可「移到新窗口」先建一个）'); return; }
+        const { showDomMenu } = await import('../lib/dom-menu.js');
+        const items = wins.map(w => ({
+          label: `${w.title || '外部窗格'} #${w.id}`,
+          fn: () => this.moveTabToNewWindow(tabId, { childId: w.id }),
+        }));
+        const r = { left: innerWidth / 2 - 100, bottom: 160 };
+        showDomMenu(items, r.left, r.bottom);
+      },
+    });
     R('tab.moveToNewWindow', { title: '移到新窗口', icon: '🗔', group: '标签', when: 'hasTabs',
       run: (payload) => this.moveTabToNewWindow(payload?.tabId || this.tabs.activeId) });
     // 移回主窗口（子窗专属）
@@ -570,6 +1289,13 @@ export class Shell {
     // —— 目录树命令 ——
     R('fileTree.newFile', { title: '新建文件', group: '目录树', run: () => this.newFileInTree() });
     R('fileTree.newFolder', { title: '新建文件夹', group: '目录树', run: () => this.newFolderInTree() });
+    R('fileTree.openManga', { title: '作为漫画打开', group: '目录树', run: async () => {
+      const p = contextKeys.get('treePath');
+      if (!p) return;
+      const { tab } = this.openTab('library', { title: p.split(/[\\/]/).pop(), filePath: p, content: '' });
+      const inst = modules.instances.get(tab.id);
+      await inst?.def.importMangaFolderPath?.(p, inst.state);
+    } });
     R('fileTree.open', { title: '打开', group: '目录树', run: async () => {
       const p = contextKeys.get('treePath');
       if (p) await this.openFile(p);
@@ -577,29 +1303,53 @@ export class Shell {
     R('fileTree.rename', { title: '重命名…', group: '目录树', run: async () => {
       const p = contextKeys.get('treePath');
       if (!p) return;
-      const name = await inputModal('重命名', p.split(/[\\/]/).pop());
+      // 命名框不带后缀（文件保留原后缀；文件夹无后缀概念）
+      const base = p.split(/[\\/]/).pop();
+      const isDir = contextKeys.get('treeIsDir');
+      const dot = base.lastIndexOf('.');
+      const stem = (!isDir && dot > 0) ? base.slice(0, dot) : base;
+      const ext = (!isDir && dot > 0) ? base.slice(dot) : '';
+      const name = await inputModal(`重命名${ext ? `（后缀 ${ext} 不变）` : ''}`, stem);
       if (!name?.trim()) return;
-      const to = p.split(/[\\/]/).slice(0, -1).concat(name.trim()).join('/');
+      const to = p.split(/[\\/]/).slice(0, -1).concat(name.trim() + ext).join('/');
       await window.mazz.invoke('fs:rename', { from: p, to });
+      bus.emit('filetree:renamed', { from: p, to });
       await this.fileTree.refresh();
     } });
     R('fileTree.delete', { title: '删除（回收站）', group: '目录树', run: async () => {
       const p = contextKeys.get('treePath');
       if (!p) return;
       const r = await window.mazz.invoke('dialog:confirm', { title: '删除', message: `将「${p.split(/[\\/]/).pop()}」移入回收站？`, buttons: ['删除', '取消'] });
-      if (r === 0) { await window.mazz.invoke('fs:delete', { path: p }); await this.fileTree.refresh(); }
+      if (r === 0) {
+        try {
+          const res = await window.mazz.invoke('fs:delete', { path: p });
+          if (res && res.trashed === false) toast('回收站不可用，已直接删除（文件被占用）');
+          this.closeGhostTabs(p); // 虚空标签即扫（watcher 的 unlink 是第二道）
+        } catch (e) { toast('删除失败：' + e.message); }
+        await this.fileTree.refresh();
+      }
     } });
     R('fileTree.copyPath', { title: '复制路径', group: '目录树', run: async () => {
       const p = contextKeys.get('treePath');
       if (p) { await window.mazz.invoke('clipboard:write', { text: p }); toast('路径已复制'); }
     } });
+    R('fileTree.closeDir', { title: '关闭文件夹', group: '目录树', run: async () => {
+      const p = contextKeys.get('treePath');
+      if (!p || !contextKeys.get('treeIsDir')) return;
+      await this.fileTree.closeDir(p);
+    } });
     R('fileTree.showInFolder', { title: '在文件夹中显示', group: '目录树', run: () => {
       const p = contextKeys.get('treePath');
       if (p) window.mazz.invoke('shell:showItemInFolder', { path: p });
     } });
+    // —— 资源管理器式：剪切/复制/粘贴/刷新 ——
+    R('fileTree.cut', { title: '剪切', group: '目录树', run: () => this.fileTree.cutCopy('cut') });
+    R('fileTree.copy', { title: '复制', group: '目录树', run: () => this.fileTree.cutCopy('copy') });
+    R('fileTree.paste', { title: '粘贴', group: '目录树', run: () => this.fileTree.paste() });
+    R('fileTree.refresh', { title: '刷新', group: '目录树', run: () => this.fileTree.refresh() });
 
     bus.on('tab:requestClose', (id) => this.closeTabFlow(id));
-    bus.on('tab:dragOut', (id) => this.moveTabToNewWindow(id));
+    bus.on('tab:dragOut', (p) => this.moveTabToNewWindow(p?.id ?? p, Number.isFinite(p?.x) ? p : null));
     // 全部窗格都没有标签时 → 自动归一为单窗格（欢迎页）
     bus.on('tab:empty', () => {
       if (!this.paneTree.leaves().some(l => l.tabs.tabs.length) && this.paneTree.leaves().length > 1) {
@@ -611,11 +1361,22 @@ export class Shell {
   setZoom(z) {
     this.zoom = Math.min(2, Math.max(0.5, z));
     this.tabs.area.style.zoom = this.zoom;
-    this.statusbar.setZoom(this.zoom);
+    this.syncZoomDisplay();
+  }
+
+  /** 活动窗格的内容缩放倍率（无窗格/无缩放 → 1） */
+  activePaneZoom() {
+    const area = this.paneTree.active?.el.querySelector('.editor-area');
+    return area ? paneZoomOf(area) : 1;
+  }
+
+  /** 状态栏百分比 = 全局缩放 × 活动窗格缩放 */
+  syncZoomDisplay() {
+    this.statusbar.setZoom(this.zoom * this.activePaneZoom());
   }
 
   /** 把标签移交到新窗口（快照内容 → 新窗口开同标签 → 本窗口关闭） */
-  async moveTabToNewWindow(tabId) {
+  async moveTabToNewWindow(tabId, pos = null) {
     const tab = this.tabs.get(tabId);
     if (!tab) return;
     const inst = modules.instances.get(tabId);
@@ -623,10 +1384,28 @@ export class Shell {
       moduleId: tab.moduleId,
       title: tab.title,
       filePath: tab.filePath,
-      content: inst ? inst.def.getContent(inst.state) : '',
+      // 只读查看器：交接路径而非空内容（getContent 返回 ''，子窗要能重新加载）
+      content: inst ? (inst.def.readOnly && tab.filePath ? { path: tab.filePath } : inst.def.getContent(inst.state)) : '',
     };
     if (snapshot.content == null) snapshot.content = '';
     try {
+      // 指定/拖到既有外部窗格 → 迁入该窗（v33 反馈：只会新建窗格进不去）
+      const targetId = pos?.childId || (pos && Number.isFinite(pos.x)
+        ? (await window.mazz.invoke('window:childAt', { x: pos.x, y: pos.y }).catch(() => null))?.id
+        : null);
+      if (targetId) {
+        const ok = await window.mazz.invoke('window:toChild', { winId: targetId, handoff: snapshot });
+        if (ok) {
+          tab.forceClose = true;
+          modules.detach(tabId);
+          snapshots.untrack(tabId);
+          const pane0 = this.paneTree.paneOfTab(tabId);
+          await (pane0 ? pane0.tabs : this.tabs).close(tabId, { force: true });
+          if (pane0) this.paneTree.onLeafEmpty(pane0);
+          toast(`已移入该窗口：${tab.title}`);
+          return;
+        }
+      }
       await window.mazz.invoke('window:openChild', { handoff: snapshot });
       tab.forceClose = true;
       modules.detach(tabId);
@@ -652,20 +1431,18 @@ export class Shell {
   }
 
   async newFileInTree() {
-    const base = contextKeys.get('treeIsDir') ? contextKeys.get('treePath') : this.workspace;
-    const name = await inputModal('文件名（.md/.txt）', '未命名.md');
-    if (!name) return;
-    const p = `${base || this.workspace}/${name}`;
-    await window.mazz.invoke('fs:writeFile', { path: p, content: '' });
-    await this.fileTree.refresh();
-    await this.openFile(p);
+    const t = this.fileTree.resolveTargetDir();
+    if (t.error) { toast(t.error); return; }
+    // 类型选择弹窗：五组 17 种（二进制办公格式自动生成合法空文档）
+    const ext = await pickNewFileType();
+    if (!ext) return;
+    // 资源管理器式：自动名落位 + 行内改名（后缀下拉）
+    await this.fileTree.startInlineCreate(t.dir, 'file', ext);
   }
   async newFolderInTree() {
-    const base = contextKeys.get('treeIsDir') ? contextKeys.get('treePath') : this.workspace;
-    const name = await inputModal('文件夹名', '新建文件夹');
-    if (!name) return;
-    await window.mazz.invoke('fs:mkdir', { path: `${base || this.workspace}/${name}` });
-    await this.fileTree.refresh();
+    const t = this.fileTree.resolveTargetDir();
+    if (t.error) { toast(t.error); return; }
+    await this.fileTree.startInlineCreate(t.dir, 'folder');
   }
 
   // ==================== 菜单贡献 + 键位总表 ====================
@@ -687,6 +1464,28 @@ export class Shell {
     K('ctrl+alt+\\', 'view.splitDown');
     K('ctrl+alt+right', 'view.moveToNextPane');
 
+    // —— 模块快建系列：Ctrl+Alt+Shift+字母（系统/主流软件均不占，与软件内既有键位不撞）——
+    K('ctrl+alt+shift+m', 'file.new');        // 新建文档（Markdown）
+    K('ctrl+alt+shift+e', 'file.newSheet');   // 新建表格（shEet）
+    K('ctrl+alt+shift+p', 'file.newSlide');   // 新建演示（PPT）
+    K('ctrl+alt+shift+b', 'file.newBrowser'); // 打开浏览器（Browser）
+    K('ctrl+alt+shift+c', 'file.newCode');    // 新建代码（Code）
+    K('ctrl+alt+shift+r', 'file.newMath');    // 打开计算器（REPL）
+    K('ctrl+alt+shift+n', 'file.newNotes');   // 新建笔记（Notes）
+    K('ctrl+alt+shift+g', 'file.newMindmap'); // 新建导图（Graph）
+    K('ctrl+alt+shift+d', 'file.newDraw');    // 新建画板（Draw）
+    K('ctrl+alt+shift+t', 'file.newText');    // 新建纯文本（Text）
+    K('ctrl+alt+shift+l', 'file.newLibrary'); // 打开书库（Library）
+    K('ctrl+alt+shift+f', 'file.newSearch');  // 全局搜索（Find）
+    K('ctrl+alt+shift+o', 'file.open');       // 打开文件（Open）
+    K('ctrl+alt+shift+s', 'app.openSettings');// 设置（Settings）
+    K('ctrl+alt+shift+a', 'factory.toggleDock'); // 智能创作面板（AI）
+    K('ctrl+alt+shift+w', 'dock.openWith');      // 打开方式面板（With）
+    K('ctrl+alt+shift+u', 'dock.tools');         // 工具面板（Utilities）
+    K('ctrl+alt+shift+k', 'annotate.toggle');    // 全局批注（marKer）
+    K('ctrl+alt+shift+x', 'annotate.clear');     // 批注清屏（X）
+    K('ctrl+alt+shift+v', 'view.toggleSidebar');  // 工作区折叠展开（V）
+
     // 5 号上下文：标签页
     menus.contribute('tab/context', [
       { command: 'file.closeTab', group: '1_close', title: '关闭' },
@@ -699,21 +1498,41 @@ export class Shell {
       { command: 'view.joinPanes', title: '合并全部窗格', group: '2_action', when: 'hasSplit' },
       { command: 'tab.copyPath', group: '3_path', title: '复制文件路径', when: 'hasTabs' },
       { command: 'tab.moveToNewWindow', group: '4_window', title: '移到新窗口', when: "hasTabs && windowRole!='child'" },
+      { command: 'tab.moveToExistingWindow', group: '4_window', title: '移到已有外部窗格…', when: "hasTabs && windowRole!='child'" },
       { command: 'tab.moveToMainWindow', group: '4_window', title: '移回主窗口', when: "windowRole=='child' && hasTabs" },
     ]);
     // 3 号上下文：文件树·文件
     menus.contribute('fileTree/file', [
       { command: 'fileTree.open', title: '打开', group: '1_open' },
-      { command: 'fileTree.rename', title: '重命名…', group: '2_file' },
-      { command: 'fileTree.delete', title: '删除（回收站）', group: '2_file' },
-      { command: 'fileTree.copyPath', title: '复制路径', group: '3_path' },
-      { command: 'fileTree.showInFolder', title: '在文件夹中显示', group: '3_path' },
+      { command: 'fileTree.cut', title: '剪切', group: '2_clip' },
+      { command: 'fileTree.copy', title: '复制', group: '2_clip' },
+      { command: 'fileTree.paste', title: '粘贴', group: '2_clip', when: 'treeClip' },
+      { command: 'fileTree.rename', title: '重命名…（F2）', group: '3_file' },
+      { command: 'fileTree.delete', title: '删除（回收站）', group: '3_file' },
+      { command: 'fileTree.copyPath', title: '复制路径', group: '4_path' },
+      { command: 'fileTree.showInFolder', title: '在文件夹中显示', group: '4_path' },
+      { command: 'fileTree.closeDir', title: '关闭文件夹（归入底部已关闭组）', group: '5_close' },
     ]);
     // 4 号上下文：文件树·文件夹
     menus.contribute('fileTree/folder', [
+      { command: 'fileTree.openManga', title: '作为漫画打开（图片序列 = 一话）', group: '1_open' },
       { command: 'fileTree.newFile', title: '新建文件', group: '1_new' },
       { command: 'fileTree.newFolder', title: '新建文件夹', group: '1_new' },
-      { command: 'fileTree.copyPath', title: '复制路径', group: '3_path' },
+      { command: 'fileTree.cut', title: '剪切', group: '2_clip' },
+      { command: 'fileTree.copy', title: '复制', group: '2_clip' },
+      { command: 'fileTree.paste', title: '粘贴', group: '2_clip', when: 'treeClip' },
+      { command: 'fileTree.rename', title: '重命名…（F2）', group: '3_file' },
+      { command: 'fileTree.delete', title: '删除（回收站）', group: '3_file' },
+      { command: 'fileTree.copyPath', title: '复制路径', group: '4_path' },
+      { command: 'fileTree.showInFolder', title: '在文件夹中显示', group: '4_path' },
+      { command: 'fileTree.closeDir', title: '关闭文件夹（归入底部已关闭组）', group: '5_close' },
+    ]);
+    // 5 号上下文：文件树·空白区（视同工作区根目录）
+    menus.contribute('fileTree/blank', [
+      { command: 'fileTree.newFile', title: '新建文件', group: '1_new' },
+      { command: 'fileTree.newFolder', title: '新建文件夹', group: '1_new' },
+      { command: 'fileTree.paste', title: '粘贴', group: '2_clip', when: 'treeClip' },
+      { command: 'fileTree.refresh', title: '刷新（F5）', group: '3_view' },
     ]);
 
     // 用户覆盖层（keybindings 经设置读取）
@@ -761,16 +1580,82 @@ export class Shell {
       this.fileTree.markActive(tab.filePath);
       contextKeys.set('hasTabs', true);
       this.rebuildModuleRibbon(tab);
+      this.syncZoomDisplay(); // 切换窗格/标签时刷新百分比
     });
     bus.on('tab:deactivate', (id) => modules.deactivateTab(id));
+    // 资源管理器右键「导入到 Mazz 工作区」（--import 参数经主进程转发）
+    if (window.mazz?.on) window.mazz.on('file:import', ({ paths }) => { if (paths?.length) this.importExternal(paths); });
+    // 外部编辑回传：磁盘文件变化 → 打开中的干净标签自动重载（外部软件保存后这边同步更新）
+    if (window.mazz?.isElectron && window.mazz?.on) {
+      const deb = new Map();
+      window.mazz.on('file:changed', ({ path: p }) => {
+        if (!p) return;
+        // 外部打开的转换文件被保存 → 优先走回传转换
+        import('../lib/extern-convert.js').then(m => {
+          if (m.handleExternalSave(p)) return;
+        }).catch(() => {});
+        for (const leaf of this.paneTree.leaves()) {
+          for (const tab of leaf.tabs.tabs) {
+            if (tab.filePath !== p) continue;
+            clearTimeout(deb.get(tab.id));
+            deb.set(tab.id, setTimeout(() => this.reloadTabFromDisk(tab), 400));
+          }
+        }
+      });
+    }
+    // 文件树改名 → 同步所有打开标签的路径与标题（否则保存会写回旧名）
+    bus.on('filetree:renamed', ({ from, to }) => {
+      const newName = to.split(/[\\/]/).pop();
+      for (const leaf of this.paneTree.leaves()) {
+        for (const tab of leaf.tabs.tabs) {
+          if (tab.filePath === from || (tab.filePath && from && tab.filePath.startsWith(from + '/'))) {
+            tab.filePath = to + tab.filePath.slice(from.length);
+            tab.title = tab.filePath.split(/[\\/]/).pop() || newName;
+            leaf.tabs.render();
+          }
+        }
+      }
+    });
     bus.on('tab:empty', () => { contextKeys.set('hasTabs', false); contextKeys.set('module', null); this.syncTitle(); });
 
     if (window.mazz?.isElectron) {
       window.mazz.on('file:open', async ({ path: p }) => { await this.openFile(p); });
       window.mazz.on('command:invoke', ({ id, payload }) => commands.execute(id, payload));
       window.mazz.on('window:handoff', async (snapshot) => { await this.receiveHandoff(snapshot); });
+      window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });
+      // 全屏逃生（系统覆盖层会吃自绘标题栏按钮——Esc + 浮动退出钮双保险，误触也能一眼看到出路）
+      let fsExitBtn = null;
+      const setFsUi = (on) => {
+        document.body.classList.toggle('is-fullscreen', !!on);
+        if (on && !fsExitBtn) {
+          fsExitBtn = document.createElement('button');
+          fsExitBtn.className = 'fs-exit';
+          fsExitBtn.textContent = '退出全屏（Esc）';
+          fsExitBtn.addEventListener('click', () => window.mazz.invoke('window:toggleFullScreen'));
+          document.body.appendChild(fsExitBtn);
+        } else if (!on && fsExitBtn) { fsExitBtn.remove(); fsExitBtn = null; }
+      };
+      window.mazz.on('window:fullscreen', ({ on }) => setFsUi(on));
+      window.mazz.invoke('window:isFullScreen').then(setFsUi).catch(() => {});
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (!document.body.classList.contains('is-fullscreen')) return;
+        if (document.querySelector('.mazz-palette-mask, .help-mask')) return; // 弹窗优先吃 Esc
+        e.stopPropagation();
+        window.mazz.invoke('window:toggleFullScreen').catch(() => {});
+      }, true);
+      // 多工作区切换：缓存路径全部失效（shell.workspace / ws-path 缓存 / watcher 重挂）→ 文件树重扎根
+      window.mazz.on('workspace:changed', async ({ path: p }) => {
+        this.workspace = p || await window.mazz.invoke('workspace:get').catch(() => this.workspace);
+        try { const { invalidateWsCache } = await import('../lib/ws-path.js'); invalidateWsCache(); } catch {}
+        if (this.workspace) window.mazz.invoke('fs:watch', { paths: [this.workspace] }).catch(() => {});
+        if (this.fileTree) this.fileTree._closedDirs = null; // 已关闭列表按工作区隔离：换区必须清缓存重读（此前换区不跟随）
+        await this.fileTree?.refresh?.();
+      });
       window.mazz.on('window:role', ({ role }) => { contextKeys.set('windowRole', role); });
       window.mazz.on('file:changed', ({ path: p, event }) => {
+        // 删除治理：文件/目录被删（回收站/外部/脚本）→ 打开中的标签不再虚空存在
+        if (event === 'unlink' || event === 'unlinkDir') { this.closeGhostTabs(p); return; }
         const tab = this.tabs.tabs.find(t => t.filePath === p);
         if (tab && event === 'change' && !tab.dirty) {
           toast('磁盘文件已变更', [
@@ -862,7 +1747,12 @@ export class Shell {
       <div class="set-row"><label>主题模式</label>
         <select id="s-tsource" class="rb-select"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></div>
       <div class="set-row"><label>UI 主题</label>
-        <select id="s-theme" class="rb-select">${THEMES.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+        <select id="s-theme" class="rb-select" style="max-width:56%"></select>
+        <button id="s-theme-del" class="rb-btn" style="flex-direction:row" title="删除选中的自定义主题（自带主题不可删）">🗑 删除</button></div>
+      <div class="set-row"><label>主题包</label>
+        <button id="s-theme-blank" class="rb-btn" style="flex-direction:row" title="在工作区 themes/ 生成空白主题包模板">📄 获取空白主题包</button>
+        <button id="s-theme-import" class="rb-btn" style="flex-direction:row" title="从 JSON 文件导入主题包">📥 导入</button>
+        <button id="s-theme-folder" class="rb-btn" style="flex-direction:row" title="打开主题文件夹（可给自定义主题改名）">📂 主题文件夹</button></div>
       <div class="set-row"><label>图片取色</label>
         <button id="s-imgtheme" class="rb-btn" style="flex-direction:row">🖼 从图片生成主题</button>
         <span style="font-size:11px;color:var(--fg-dim)">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>
@@ -872,6 +1762,14 @@ export class Shell {
         <select id="s-spell" class="rb-select"><option value="on">开启</option><option value="off">关闭</option></select></div>
       <div class="set-row"><label>最近文件</label>
         <button id="s-clearRecent" class="rb-btn" style="flex-direction:row">清空</button></div>
+      <div class="set-row"><label>系统集成</label>
+        <label style="font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="s-autolaunch"> 开机自启动（默认关闭）</label>
+        <button id="s-shortcut" class="rb-btn" style="flex-direction:row">🖥 发送桌面快捷方式</button>
+        <span id="s-shortcut-status" style="font-size:11px;color:var(--fg-dim)"></span></div>
+      <div class="set-row" id="s-explorer-row"><label>资源管理器</label>
+        <button id="s-explorer-reg" class="rb-btn" style="flex-direction:row">注册右键「导入到 Mazz 工作区」</button>
+        <button id="s-explorer-unreg" class="rb-btn" style="flex-direction:row">取消注册</button>
+        <span id="s-explorer-status" style="font-size:11px;color:var(--fg-dim)"></span></div>
       <div style="border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600">搜索实例（SearXNG）</div>
       <div class="set-row"><label>实例地址</label><input id="s-searx-url" class="rb-input" style="width:62%" placeholder="https://你的实例"></div>
       <div class="set-row"><label>用户名</label><input id="s-searx-user" class="rb-input" style="width:62%"></div>
@@ -892,12 +1790,87 @@ export class Shell {
     });
     window.mazz.invoke('settings:get', { key: 'closeBehavior' }).then(v => g('#s-close').value = v || 'ask').catch(() => {});
     window.mazz.invoke('settings:get', { key: 'themeSource' }).then(v => g('#s-tsource').value = v || 'system').catch(() => {});
-    g('#s-theme').value = document.documentElement.dataset.theme || 'paper';
-    g('#s-theme').addEventListener('change', e => this.setTheme(e.target.value));
+    // —— 主题：自带（不可删改）+ 自定义主题包（可增删/导入/改名）——
+    const refreshThemeSelect = async () => {
+      const all = await this.allThemes();
+      const cur = document.documentElement.dataset.theme || 'paper';
+      g('#s-theme').innerHTML =
+        `<optgroup label="自带主题">${all.filter(t => t.builtin).map(t => `<option value="${t.id}" ${t.id === cur ? 'selected' : ''}>${t.name}</option>`).join('')}</optgroup>` +
+        (all.some(t => !t.builtin)
+          ? `<optgroup label="自定义主题包">${all.filter(t => !t.builtin).map(t => `<option value="${t.id}" ${t.id === cur ? 'selected' : ''}>${t.name}</option>`).join('')}</optgroup>`
+          : '');
+      g('#s-theme-del').disabled = !(cur.startsWith('pack:'));
+      g('#s-theme-del').style.opacity = cur.startsWith('pack:') ? 1 : 0.4;
+    };
+    await refreshThemeSelect();
+    g('#s-theme').addEventListener('change', async (e) => {
+      this.setTheme(e.target.value);
+      await refreshThemeSelect();
+    });
+    g('#s-theme-del').addEventListener('click', async () => {
+      const cur = g('#s-theme').value;
+      if (!cur.startsWith('pack:')) { toast('自带主题不可删除'); return; }
+      const { deletePack } = await import('../lib/theme-store.js');
+      await deletePack(cur.slice(5));
+      toast('已删除主题包');
+      this.setTheme('paper');
+      await refreshThemeSelect();
+    });
+    g('#s-theme-blank').addEventListener('click', async () => {
+      const { obtainBlankPack } = await import('../lib/theme-store.js');
+      const p = await obtainBlankPack();
+      toast('空白主题包已生成：' + p.split('/').pop() + '（填色后在 UI 主题里选用）');
+      await this.openFile(p);
+      await refreshThemeSelect();
+    });
+    g('#s-theme-import').addEventListener('click', async () => {
+      const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '主题包', extensions: ['json'] }] }).catch(() => null);
+      if (!p) return;
+      try {
+        const text = await window.mazz.invoke('fs:readFile', { path: p });
+        const { importPack } = await import('../lib/theme-store.js');
+        const id = await importPack(text, p.split(/[\\/]/).pop());
+        toast('主题包已导入');
+        this.setTheme('pack:' + id);
+        await refreshThemeSelect();
+      } catch (e) { toast('导入失败：' + e.message); }
+    });
+    g('#s-theme-folder').addEventListener('click', async () => {
+      const { themesDir } = await import('../lib/theme-store.js');
+      const dir = await themesDir();
+      await window.mazz.invoke('fs:mkdir', { path: dir }).catch(() => {});
+      if (window.mazz.isElectron) {
+        window.mazz.invoke('shell:showItemInFolder', { path: dir });
+      } else {
+        // 网页/移动端：在文件树中展开主题文件夹
+        this.fileTree.expanded.add(dir);
+        await this.fileTree.refresh();
+        toast('主题文件在 themes/ 里——重命名文件即给主题改名');
+      }
+    });
     g('#s-imgtheme').addEventListener('click', async () => {
       const { applyImageTheme } = await import('../theme-custom.js');
       const ok = await applyImageTheme();
       if (ok) g('#s-theme').value = 'custom';
+    });
+    // —— 资源管理器右键菜单（仅 Windows 桌面版显示状态）——
+    (async () => {
+      const st = await window.mazz.invoke('explorermenu:status').catch(() => null);
+      const statusEl = m.body.querySelector('#s-explorer-status');
+      if (!window.mazz.isElectron) { m.body.querySelector('#s-explorer-row').style.display = 'none'; return; }
+      if (statusEl && st) statusEl.textContent = st.registered ? '已注册' : '未注册';
+    })();
+    g('#s-explorer-reg').addEventListener('click', async () => {
+      const r = await window.mazz.invoke('explorermenu:register').catch((e) => ({ ok: false, reason: e.message }));
+      toast(r.ok
+        ? '已注册：右键文件/文件夹可见「导入到 Mazz 工作区」（若未立刻出现，重启资源管理器）'
+        : '注册失败：' + (r.reason || '未知错误'), [], r.ok ? 3000 : 6000);
+      g('#s-explorer-status').textContent = r.ok ? '已注册' : ('注册失败：' + (r.reason || ''));
+    });
+    g('#s-explorer-unreg').addEventListener('click', async () => {
+      await window.mazz.invoke('explorermenu:unregister').catch(() => {});
+      toast('已取消注册');
+      g('#s-explorer-status').textContent = '未注册';
     });
     window.mazz.invoke('settings:get', { key: 'quickNoteTarget' }).then(v => g('#s-qn').value = v || 'daily').catch(() => {});
     window.mazz.invoke('settings:get', { key: 'spellcheckEnabled' }).then(v => g('#s-spell').value = v === false ? 'off' : 'on').catch(() => {});
@@ -911,6 +1884,26 @@ export class Shell {
       await window.mazz.invoke('spell:setEnabled', { enabled: e.target.value === 'on' }).catch(() => {});
       this.statusbar.setSpell(e.target.value === 'on');
     });
+    // 系统集成：开机自启 + 桌面快捷方式
+    if (window.mazz?.isElectron) {
+      const alEl = m.body.querySelector('#s-autolaunch');
+      alEl.checked = await window.mazz.invoke('app:getAutoLaunch').catch(() => false);
+      alEl.addEventListener('change', async () => {
+        const on = await window.mazz.invoke('app:setAutoLaunch', { enabled: alEl.checked }).catch(() => alEl.checked);
+        toast(on ? '开机自启动已开启' : '开机自启动已关闭');
+      });
+      g('#s-shortcut').addEventListener('click', async () => {
+        const st = m.body.querySelector('#s-shortcut-status');
+        try {
+          const ok = await window.mazz.invoke('app:createDesktopShortcut');
+          st.textContent = ok ? '✓ 已发送到桌面' : '创建失败';
+          toast(ok ? '桌面快捷方式已创建' : '创建失败');
+        } catch (e) { st.textContent = e.message; toast(e.message); }
+      });
+    } else {
+      m.body.querySelector('#s-autolaunch').disabled = true;
+      m.body.querySelector('#s-shortcut').disabled = true;
+    }
     g('#s-clearRecent').addEventListener('click', async () => {
       await window.mazz.invoke('recent:clear');
       toast('最近文件已清空');
@@ -957,6 +1950,65 @@ export class Shell {
 }
 
 // ==================== 通用工具 ====================
+// —— 新建文件类型（覆盖全部可导出格式；二进制办公格式生成合法空文档）——
+export const NEW_FILE_TYPES = [
+  { label: 'Markdown 文档', ext: 'md', group: '文档' },
+  { label: '纯文本', ext: 'txt', group: '文档' },
+  { label: 'Word 文档 (.docx)', ext: 'docx', group: '文档', binary: true },
+  { label: 'Mazz 表格', ext: 'mazzsheet', group: '表格' },
+  { label: 'CSV 表格', ext: 'csv', group: '表格' },
+  { label: 'TSV 表格', ext: 'tsv', group: '表格' },
+  { label: 'Excel 工作簿 (.xlsx)', ext: 'xlsx', group: '表格', binary: true },
+  { label: 'Mazz 演示', ext: 'mazzslide', group: '演示' },
+  { label: 'PowerPoint (.pptx)', ext: 'pptx', group: '演示', binary: true },
+  { label: '思维导图', ext: 'mindmap', group: '创作' },
+  { label: '画板', ext: 'mazzdraw', group: '创作' },
+  { label: 'JavaScript', ext: 'js', group: '代码' },
+  { label: 'TypeScript', ext: 'ts', group: '代码' },
+  { label: 'Python', ext: 'py', group: '代码' },
+  { label: 'HTML', ext: 'html', group: '代码' },
+  { label: 'CSS', ext: 'css', group: '代码' },
+  { label: 'JSON', ext: 'json', group: '代码' },
+  { label: 'Shell 脚本', ext: 'sh', group: '代码' },
+];
+
+export const BINARY_EXTS = new Set(['docx', 'xlsx', 'pptx']);
+
+export const NEW_FILE_DEFAULTS = {
+  md: () => '# 未命名\n\n',
+  mazzslide: () => '# 第 1 页\n',
+  mindmap: () => '中心主题\n',
+  csv: () => '', tsv: () => '', mazzsheet: () => '', txt: () => '', mazzdraw: () => '',
+  js: () => '', ts: () => '', py: () => '', html: () => '<!DOCTYPE html>\n<html>\n<head><meta charset="utf-8"><title></title></head>\n<body>\n</body>\n</html>\n',
+  css: () => '', json: () => '{}\n', sh: () => '#!/bin/sh\n',
+};
+
+/** 生成二进制空办公文档（docx/xlsx/pptx），返回 base64 */
+export async function makeBinaryDoc(ext) {
+  if (ext === 'docx') {
+    const { Document, Packer, Paragraph } = await import('docx');
+    const doc = new Document({ sections: [{ children: [new Paragraph('')] }] });
+    return Packer.toBase64String(doc);
+  }
+  if (ext === 'xlsx') {
+    const XLSX = await import('xlsx');
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[]]), 'Sheet1');
+    return XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+  }
+  if (ext === 'pptx') {
+    const { parseOutline } = await import('../modules/slide/outline.js');
+    const { exportPptx } = await import('../modules/slide/pptx.js');
+    const { SLIDE_THEMES } = await import('../modules/slide/themes.js');
+    const buf = await exportPptx(parseOutline('# 第 1 页\n'), SLIDE_THEMES[0], { fileName: '未命名' });
+    const u8 = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode(...u8.subarray(i, i + 8192));
+    return btoa(bin);
+  }
+  throw new Error('未知二进制类型: ' + ext);
+}
+
 export function toast(msg, actions = [], ms = 3000) {
   document.querySelectorAll('.mazz-toast').forEach(t => t.remove());
   const el = document.createElement('div');
@@ -988,6 +2040,29 @@ export function modal(title) {
   mask.querySelector('#m-close').addEventListener('click', () => mask.remove());
   mask.addEventListener('mousedown', e => { if (e.target === mask) mask.remove(); });
   return { el: mask, body: mask.querySelector('.modal-body'), close: () => mask.remove() };
+}
+
+/** 新建文件类型选择弹窗：分组展示 17 种类型，resolve 扩展名（不含点）或 null（取消） */
+export function pickNewFileType() {
+  return new Promise((resolve) => {
+    const m = modal('新建文件');
+    const groups = [...new Set(NEW_FILE_TYPES.map(t => t.group))];
+    m.body.innerHTML = `
+      <div style="min-width:430px;max-width:600px">
+        ${groups.map(g => `
+          <div style="font-size:11.5px;color:var(--fg-dim);margin:10px 0 6px">${g}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:7px">
+            ${NEW_FILE_TYPES.filter(t => t.group === g).map(t => `
+              <button class="nft-btn" data-ext="${t.ext}" style="display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left">
+                <span style="color:var(--accent);font-weight:700">.${t.ext}</span><span>${t.label.replace(/ *\([^)]*\)/g, '')}</span>
+              </button>`).join('')}
+          </div>`).join('')}
+      </div>`;
+    const done = (v) => { resolve(v); m.close(); };
+    m.body.querySelectorAll('.nft-btn').forEach(b => b.addEventListener('click', () => done(b.dataset.ext)));
+    const obs = new MutationObserver(() => { if (!document.body.contains(m.el)) { obs.disconnect(); resolve(null); } });
+    obs.observe(document.body, { childList: true });
+  });
 }
 
 /** 输入对话框（Electron 不支持 window.prompt，全应用统一替代件）。resolve 输入串或 null（取消） */

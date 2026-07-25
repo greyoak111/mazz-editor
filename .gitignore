@@ -3,3 +3,6 @@ renderer/dist/
 release/
 *.log
 .DS_Store
+mazz-android-patch.txt
+tests/e2e/shots/
+tests/e2e/media/

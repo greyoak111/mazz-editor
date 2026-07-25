@@ -19,8 +19,8 @@ export class Sheet {
     this.condFormats = [];       // [{r1,c1,r2,c2,type:'colorscale'|'databar'|'gt'|'lt'|'eq', a, b}]
     this._computed = new Map();  // "r,c" -> {epoch, value}
     this._epoch = 0;
-    this.maxRow = 50;
-    this.maxCol = 15;
+    this.maxRow = 200; // 初始 200 行/26 列（A-Z），滚动近界自动扩展（见 grid.js bindScroll）
+    this.maxCol = 26;
   }
 
   key(r, c) { return r + ',' + c; }

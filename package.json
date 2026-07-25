@@ -1,7 +1,7 @@
 {
   "name": "mazz-editor",
   "productName": "Mazz Editor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "榨干 Electron 的一站式超级编辑器 —— 文档/代码/创作 全闭环",
   "main": "main/main.js",
   "license": "MIT",
@@ -11,7 +11,8 @@
     "start": "electron .",
     "test": "node tests/run.js",
     "smoke": "node tests/e2e/smoke.js",
-    "dist": "node scripts/build.js && electron-builder"
+    "dist": "node scripts/build.js && electron-builder",
+    "test:e2e": "node tests/e2e/run.mjs"
   },
   "build": {
     "appId": "com.mazz.editor",
@@ -61,13 +62,15 @@
       "target": [
         "nsis"
       ],
-      "icon": "resources/icons/app.png",
+      "icon": "resources/icons/app.ico",
       "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "installerIcon": "resources/icons/app.ico",
+      "uninstallerIcon": "resources/icons/app.ico"
     },
     "mac": {
       "category": "public.app-category.productivity",
@@ -83,6 +86,7 @@
     "npmRebuild": false
   },
   "dependencies": {
+    "@lingo-reader/mobi-parser": "^0.4.6",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "bonjour-service": "^1.4.3",
@@ -90,6 +94,7 @@
     "docx": "^9.7.1",
     "echarts": "^6.1.0",
     "exceljs": "^4.4.0",
+    "fix-webm-duration": "^1.0.6",
     "jszip": "^3.10.1",
     "mammoth": "^1.12.0",
     "monaco-editor": "^0.55.1",
@@ -104,9 +109,10 @@
   "devDependencies": {
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.24.2",
     "jsdom": "^25.0.1",
     "markdown-it": "^14.1.0",
+    "playwright": "^1.56.1",
     "prosemirror-commands": "^1.6.2",
     "prosemirror-history": "^1.4.1",
     "prosemirror-inputrules": "^1.4.0",

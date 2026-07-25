@@ -40,12 +40,24 @@ export default {
     const inst = instances.get(container);
     if (!inst) return;
     current = inst;
+    window.__activeTextCtl = {
+      // 全局搜索命中直达：跳转到指定行（1-based）并滚动到可视区
+      jumpToLine(ln) {
+        const lines = inst.ta.value.split('\n');
+        const i = Math.max(0, Math.min(lines.length - 1, (ln || 1) - 1));
+        const pos = lines.slice(0, i).reduce((a, l) => a + l.length + 1, 0);
+        inst.ta.focus();
+        inst.ta.setSelectionRange(pos, pos + lines[i].length);
+        const lh = parseFloat(getComputedStyle(inst.ta).lineHeight) || 20;
+        inst.ta.scrollTop = Math.max(0, (i - 6) * lh);
+      },
+    };
     contextKeys.set('module', MODULE);
     contextKeys.set('hasSelection', getSelection(inst.ta));
     inst.ta.focus();
   },
   deactivate(container) {
-    if (current === instances.get(container)) current = null;
+    if (current === instances.get(container)) { current = null; window.__activeTextCtl = null; }
   },
 
   getContent(state) { return instances.get(state.container)?.ta.value ?? ''; },

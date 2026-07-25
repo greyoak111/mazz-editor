@@ -259,6 +259,10 @@ export class SheetGrid {
   bindScroll() {
     let raf = 0;
     this.scrollEl.addEventListener('scroll', () => {
+      // Excel 式无限网格：滚动接近边界时按需扩展（初始 200 行/26 列，滚到 80% 再加）
+      const sl = this.scrollEl.scrollLeft, st = this.scrollEl.scrollTop;
+      if (st + this.scrollEl.clientHeight > this.totalH() * 0.8) this.sheet.maxRow += 100;
+      if (sl + this.scrollEl.clientWidth > this.totalW() * 0.8) this.sheet.maxCol += 13;
       if (raf) return;
       raf = requestAnimationFrame(() => { raf = 0; this.render(); });
     });
@@ -398,8 +402,9 @@ export class SheetGrid {
   }
   cancelEdit() {
     if (!this.editing) return;
-    this.editing.input.remove();
-    this.editing = null;
+    const input = this.editing.input;
+    this.editing = null; // 先置空，防 remove 同步触发 blur 重入 commitEdit 二次移除
+    input.remove();
     this.render();
   }
 

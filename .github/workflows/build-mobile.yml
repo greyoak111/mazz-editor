@@ -1,0 +1,70 @@
+# .github/workflows/build-mobile.yml —— 云端编译 Android APK + iOS 未签名包
+# 用途：没有 Mac 也能产出 iOS 安装包坯子（之后用 Sideloadly/AltStore 在 Windows 上签名安装）
+# 触发：手动（Actions 页签 → Build Mobile → Run workflow）；公开仓库 macOS 运行器免费
+name: Build Mobile
+
+on:
+  workflow_dispatch:
+
+jobs:
+  android:
+    name: Android APK (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: 安装依赖
+        run: |
+          npm install --no-audit --no-fund
+          cd mobile && npm install --no-audit --no-fund
+      - name: 生成 Android 工程并同步
+        run: |
+          cd mobile
+          npx cap add android
+          npx cap sync android
+      - name: 编译 APK
+        run: cd mobile/android && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mazz-android-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+  ios:
+    name: iOS 未签名包（需后续签名）
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 安装依赖
+        run: |
+          npm install --no-audit --no-fund
+          cd mobile && npm install --no-audit --no-fund
+      - name: 生成 iOS 工程并同步
+        run: |
+          cd mobile
+          npx cap add ios
+          npx cap sync ios
+      - name: 编译（真机架构 · 不签名）
+        run: |
+          cd mobile/ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+            -sdk iphoneos -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+      - name: 打包未签名 IPA
+        run: |
+          mkdir -p Payload
+          cp -r mobile/ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -r MazzEditor-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mazz-ios-unsigned-ipa
+          path: MazzEditor-unsigned.ipa

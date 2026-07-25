@@ -7,7 +7,8 @@ export function renderSlideHTML(slide, theme, { scale = 1, canvasMode = false } 
     </ul>`).join('');
 
   const elements = (slide.elements || []).map((el, i) => {
-    const common = `left:${el.x}%;top:${el.y}%;width:${el.w}%;height:${el.h}%;`;
+    const common = `left:${el.x}%;top:${el.y}%;width:${el.w}%;height:${el.h}%;` +
+      (el.rotate ? `transform:rotate(${el.rotate}deg);` : '');
     if (el.type === 'text') {
       const st = el.style || {};
       const css = [
@@ -28,7 +29,7 @@ export function renderSlideHTML(slide, theme, { scale = 1, canvasMode = false } 
       return `<div class="sl-el" data-el="${i}" style="${common}background:${el.fill || theme.accent};border-radius:50%"></div>`;
     }
     if (el.type === 'image') {
-      return `<img class="sl-el" data-el="${i}" style="${common}object-fit:contain" src="${el.src}" alt="">`;
+      return `<img class="sl-el" data-el="${i}" style="${common}object-fit:contain;user-select:none;-webkit-user-drag:none" src="${el.src}" alt="" draggable="false">`;
     }
     return '';
   }).join('');

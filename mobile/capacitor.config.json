@@ -1,0 +1,15 @@
+{
+  "appId": "com.mazz.editor",
+  "appName": "Mazz Editor",
+  "webDir": "www",
+  "backgroundColor": "#f7f6f3",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "server": {
+    "androidScheme": "http"
+  }
+}

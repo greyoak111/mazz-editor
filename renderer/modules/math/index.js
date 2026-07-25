@@ -7,15 +7,101 @@ const instances = new Map();
 let current = null;
 
 // ==================== JS 沙箱后端 ====================
+// 注意：页面 CSP 禁用 eval/new Function——JS 后端走自研安全表达式求值器（数值计算全覆盖）
+// 纯表达式求值器：数字/四则/幂/取余/括号/一元正负/常用函数与常数
+const EXPR_FUNCS = {
+  sqrt: Math.sqrt, cbrt: Math.cbrt, abs: Math.abs, sign: Math.sign,
+  floor: Math.floor, ceil: Math.ceil, round: Math.round, trunc: Math.trunc,
+  exp: Math.exp, log: Math.log, ln: Math.log, log2: Math.log2, log10: Math.log10, lg: Math.log10,
+  pow: Math.pow, min: Math.min, max: Math.max, hypot: Math.hypot,
+  sin: Math.sin, cos: Math.cos, tan: Math.tan,
+  asin: Math.asin, acos: Math.acos, atan: Math.atan, atan2: Math.atan2,
+  sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh,
+  random: Math.random,
+};
+const EXPR_CONSTS = { pi: Math.PI, e: Math.E, tau: Math.PI * 2, inf: Infinity, infinity: Infinity };
+
+function evalExpr(src) {
+  const s = String(src).replace(/\s+/g, '');
+  let i = 0;
+  const peek = () => s[i];
+  const eat = (ch) => { if (ch === undefined || s[i] === ch) { i++; return true; } return false; };
+  const expect = (ch) => { if (!eat(ch)) throw new SyntaxError('在 ' + i + ' 处需要 ' + ch); };
+
+  function parseNum() {
+    const m = /^(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/.exec(s.slice(i));
+    if (!m) return null;
+    i += m[0].length;
+    return +m[0];
+  }
+  function parseIdent() {
+    const m = /^[A-Za-z_][A-Za-z0-9_]*/.exec(s.slice(i));
+    if (!m) return null;
+    i += m[0].length;
+    return m[0];
+  }
+  function parseAtom() {
+    if (eat('(')) { const v = parseAdd(); expect(')'); return v; }
+    const num = parseNum();
+    if (num !== null) return num;
+    const id = parseIdent();
+    if (id) {
+      const key = id.toLowerCase().replace(/^math\./, '');
+      if (eat('(')) {
+        const args = [];
+        if (!eat(')')) {
+          for (;;) {
+            args.push(parseAdd());
+            if (eat(')')) break;
+            expect(',');
+          }
+        }
+        const fn = EXPR_FUNCS[key];
+        if (!fn) throw new ReferenceError('未知函数: ' + id);
+        return fn(...args);
+      }
+      if (Object.hasOwn(EXPR_CONSTS, key)) return EXPR_CONSTS[key];
+      throw new ReferenceError('未知标识: ' + id);
+    }
+    throw new SyntaxError('无法解析: ' + s.slice(i, i + 8));
+  }
+  function parseSigned() {
+    if (eat('+')) return parseSigned();
+    if (eat('-')) return -parseSigned(); // 一元负号优先级低于幂（-2^2 = -4）
+    return parsePow();
+  }
+  function parsePow() {
+    const base = parseAtom();
+    // 幂右结合；指数可带符号（2^-3）
+    if (eat('^')) return Math.pow(base, parseSigned());
+    if (s.startsWith('**', i)) { i += 2; return Math.pow(base, parseSigned()); }
+    return base;
+  }
+  function parseMul() {
+    let v = parseSigned();
+    for (;;) {
+      if (s.startsWith('**', i)) return v; // ** 是幂不是乘
+      if (eat('*')) v *= parseSigned();
+      else if (eat('/')) v /= parseSigned();
+      else if (eat('%')) v %= parseSigned();
+      else return v;
+    }
+  }
+  function parseAdd() {
+    let v = parseMul();
+    for (;;) {
+      if (eat('+')) v += parseMul();
+      else if (eat('-')) v -= parseMul();
+      else return v;
+    }
+  }
+  const v = parseAdd();
+  if (i < s.length) throw new SyntaxError('多余内容: ' + s.slice(i));
+  return v;
+}
+
 function createJsSandbox() {
   const logs = [];
-  const sandbox = {
-    console: {
-      log: (...a) => logs.push(a.map(fmt).join(' ')),
-      error: (...a) => logs.push('[错误] ' + a.map(fmt).join(' ')),
-      warn: (...a) => logs.push('[警告] ' + a.map(fmt).join(' ')),
-    },
-  };
   function fmt(v) {
     if (typeof v === 'object' && v !== null) { try { return JSON.stringify(v, null, 2); } catch { return String(v); } }
     return String(v);
@@ -23,14 +109,19 @@ function createJsSandbox() {
   return {
     exec(code) {
       logs.length = 0;
+      // 语句/复杂 JS 超出表达式范畴：给出明确指引（CSP 禁用 eval，绝不静默失败）
+      if (/console\.|=>|\bfunction\b|\blet\b|\bconst\b|\bvar\b|\breturn\b|\bfor\b|\bwhile\b|\bif\b|\bclass\b|\bimport\b|\bnew\b|=[^=]/.test(code.replace(/\s+/g, ' '))) {
+        return {
+          output: 'JS 后端仅支持纯数学表达式（如 1+2*3、sqrt(2)、pow(2,10)、log(e^2)）。\n复杂脚本请用 Python 内核，或在代码模块中运行。',
+          error: true,
+        };
+      }
       try {
-        const fn = new Function('console', 'Math', 'JSON', 'Date', ...Object.keys(sandbox),
-          `"use strict";\nlet __result__;\n${code.includes('return') ? code : `__result__ = (${code});`}\nreturn __result__;`);
-        const result = fn(sandbox.console, Math, JSON, Date, ...Object.values(sandbox));
-        if (result !== undefined) logs.push('⇒ ' + fmt(result));
-        return { output: logs.join('\n') || '（无输出）' };
+        const v = evalExpr(code.replace(/\*\*/g, '^'));
+        logs.push('⇒ ' + fmt(v));
+        return { output: logs.join('\n') };
       } catch (e) {
-        return { output: logs.join('\n') + (logs.length ? '\n' : '') + e.name + ': ' + e.message, error: true };
+        return { output: e.name + ': ' + e.message, error: true };
       }
     },
   };
@@ -144,6 +235,21 @@ function createMath(container) {
 
   ctl.exec = run;
   ctl.setBackend = (b) => { backendSel.value = b; ctl.backend = b; updateStatus(); };
+  // 右键选单：运行/复制/清屏/重启（计算模块此前没有右键逻辑）
+  ctl.root?.addEventListener?.('contextmenu', async (e) => {
+    e.preventDefault();
+    const { showDomMenu } = await import('../../lib/dom-menu.js');
+    const sel = (window.getSelection()?.toString() || '').trim();
+    showDomMenu([
+      { label: '运行', fn: () => ctl.exec(ctl.inputEl.value) },
+      { label: '复制选中', fn: () => sel && navigator.clipboard?.writeText(sel), disabled: !sel },
+      { label: '复制全部输出', fn: () => navigator.clipboard?.writeText(ctl.logEl?.innerText || '') },
+      '-',
+      { label: '清屏', fn: () => window.MazzCommands.execute('math.clear') },
+      { label: '重启内核', fn: () => window.MazzCommands.execute('math.restart') },
+    ], e.clientX, e.clientY);
+  });
+
   return ctl;
 }
 

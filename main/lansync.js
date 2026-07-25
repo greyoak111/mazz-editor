@@ -40,6 +40,126 @@ function safeRel(p) {
   return norm;
 }
 
+// ==================== WebSocket 通道（手机/平板端；零依赖 RFC6455 极简实现） ====================
+// 设计：手机 WebView 无法裸 TLS（自签证书被系统拒绝），改走 WebSocket；
+// 加密不降格——配对码派生 AES-GCM-256 会话密钥（PBKDF2 10 万次），密钥即身份：
+// 口令错误 → 首帧 GCM 校验失败即断开，配对码永不明文上传。会话逻辑与 TLS 通道完全复用。
+const http = require('http');
+const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+
+function wsEncode(payload, op = 1) {
+  const len = payload.length;
+  let head;
+  if (len < 126) { head = Buffer.from([0x80 | op, len]); }
+  else if (len < 65536) { head = Buffer.alloc(4); head[0] = 0x80 | op; head[1] = 126; head.writeUInt16BE(len, 2); }
+  else { head = Buffer.alloc(10); head[0] = 0x80 | op; head[1] = 127; head.writeBigUInt64BE(BigInt(len), 2); }
+  return Buffer.concat([head, payload]);
+}
+
+function wsTryRead(adapter) {
+  const buf = adapter.buf;
+  if (buf.length < 2) return null;
+  const fin = !!(buf[0] & 0x80);
+  const op = buf[0] & 0x0f;
+  const masked = !!(buf[1] & 0x80);
+  let len = buf[1] & 0x7f;
+  let off = 2;
+  if (len === 126) { if (buf.length < 4) return null; len = buf.readUInt16BE(2); off = 4; }
+  else if (len === 127) { if (buf.length < 10) return null; len = Number(buf.readBigUInt64BE(2)); off = 10; }
+  if (len > 128 * 1024 * 1024) { adapter.buf = Buffer.alloc(0); return null; }
+  const maskOff = off;
+  if (masked) off += 4;
+  if (buf.length < off + len) return null;
+  let payload = buf.slice(off, off + len);
+  if (masked) {
+    const mask = buf.slice(maskOff, maskOff + 4);
+    const out = Buffer.alloc(len);
+    for (let i = 0; i < len; i++) out[i] = payload[i] ^ mask[i & 3];
+    payload = out;
+  }
+  adapter.buf = buf.slice(off + len);
+  return { fin, op, payload };
+}
+
+function encBuf(key, buf) {
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const ct = Buffer.concat([c.update(buf), c.final()]);
+  return { op: 'enc', iv: iv.toString('base64'), data: Buffer.concat([ct, c.getAuthTag()]).toString('base64') };
+}
+function decBuf(key, msg) {
+  const raw = Buffer.from(msg.data, 'base64');
+  const tag = raw.slice(raw.length - 16);
+  const ct = raw.slice(0, raw.length - 16);
+  const d = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(msg.iv, 'base64'));
+  d.setAuthTag(tag);
+  return Buffer.concat([d.update(ct), d.final()]); // GCM 校验失败抛错 → 配对码错误
+}
+
+/** 把 WebSocket 连接包装成 tls.Socket 的接口子集（on/write/end），会话层零改动复用 */
+class WsAdapter {
+  constructor(sock) {
+    this.sock = sock;
+    this.buf = Buffer.alloc(0);
+    this.frags = [];
+    this.key = null;
+    this.listeners = { data: [], error: [], close: [] };
+    sock.on('data', (c) => this.feed(c));
+    sock.on('error', () => this.emit('error'));
+    sock.on('close', () => this.emit('close'));
+  }
+  on(ev, cb) { (this.listeners[ev] || (this.listeners[ev] = [])).push(cb); }
+  emit(ev, ...args) { for (const cb of this.listeners[ev] || []) { try { cb(...args); } catch {} } }
+  sendJson(obj) { try { this.sock.write(wsEncode(Buffer.from(JSON.stringify(obj), 'utf8'))); } catch {} }
+  attachCrypto(key) { this.key = key; }
+  write(buf) { if (this.key) this.sendJson(encBuf(this.key, buf)); }
+  end(buf) { if (buf) { try { this.write(buf); } catch {} } this.close(); }
+  close() { try { this.sock.end(); } catch {} }
+  feed(chunk) {
+    this.buf = Buffer.concat([this.buf, chunk]);
+    for (;;) {
+      const fr = wsTryRead(this);
+      if (!fr) return;
+      if (fr.op === 8) { this.close(); this.emit('close'); return; }
+      if (fr.op === 9) { try { this.sock.write(wsEncode(fr.payload, 10)); } catch {} continue; }
+      if (fr.op !== 0 && fr.op !== 1 && fr.op !== 2) continue;
+      this.frags.push(fr.payload);
+      if (!fr.fin) continue;
+      const msg = Buffer.concat(this.frags);
+      this.frags = [];
+      let obj;
+      try { obj = JSON.parse(msg.toString('utf8')); } catch { continue; }
+      if (obj?.op === 'enc' && this.key) {
+        try { this.emit('data', decBuf(this.key, obj)); }
+        catch { this.close(); this.emit('close'); return; }
+      }
+    }
+  }
+}
+
+class WsServer {
+  constructor(onConn) { this.onConn = onConn; this.adapters = new Set(); this.server = null; this._port = null; }
+  listen(port) {
+    return new Promise((res, rej) => {
+      this.server = http.createServer((_, r) => { r.writeHead(426); r.end(); });
+      this.server.on('upgrade', (req, sock) => {
+        const k = req.headers['sec-websocket-key'];
+        if (!k) { sock.destroy(); return; }
+        const acc = crypto.createHash('sha1').update(k + WS_GUID).digest('base64');
+        sock.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ' + acc + '\r\n\r\n');
+        const adapter = new WsAdapter(sock);
+        this.adapters.add(adapter);
+        adapter.on('close', () => this.adapters.delete(adapter));
+        try { this.onConn(adapter); } catch {}
+      });
+      this.server.once('error', rej);
+      this.server.listen(port, () => { this._port = this.server.address().port; res(); });
+    });
+  }
+  port() { return this._port; }
+  close() { for (const a of [...this.adapters]) a.end(); try { this.server?.close(); } catch {} }
+}
+
 class LanSync {
   /**
    * @param {{bus?: any, store: any, workspace: (() => string) | string}} opts
@@ -151,6 +271,11 @@ class LanSync {
 
   /** 写入来件；基线判定冲突（本地偏离上次共识版本）时保留本地副本。返回 {status, conflictRel?, localHash?} */
   writeIncoming(item, baseline = {}) {
+    // 浏览器状态虚拟项：合并写回（收藏夹/历史/主页），不走文件落盘
+    if (item.path === LanSync.SETTINGS_REL) {
+      const ok = this.mergeBrowserState(Buffer.from(item.data || '', 'base64').toString('utf8'));
+      return ok ? { status: 'ok' } : { status: 'skip' };
+    }
     const rel = safeRel(item.path);
     if (!rel) return { status: 'skip' };
     const p = path.join(this.ws(), rel);
@@ -199,12 +324,28 @@ class LanSync {
     });
     const actualPort = this.server.address().port;
     this.mdnsStop = this.publishMdns(actualPort, deviceId);
-    return { port: actualPort, pairCode, fingerprint: this.fingerprint(), deviceId };
+    // —— 移动端 WebSocket 通道（端口 +1；失败静默，不影响桌面通道）——
+    this.webSync = null;
+    let wsPort = null;
+    try {
+      const salt = crypto.randomBytes(16);
+      const key = crypto.pbkdf2Sync(crypto.createHash('sha256').update(pairCode).digest(), salt, 100000, 32, 'sha256');
+      const srv = new WsServer((adapter) => {
+        adapter.sendJson({ op: 'ws-hello', salt: salt.toString('base64'), deviceId, fingerprint: this.fingerprint() });
+        adapter.attachCrypto(key);
+        this.handleIncoming(adapter, pairCode);
+      });
+      await srv.listen(actualPort + 1);
+      this.webSync = srv;
+      wsPort = srv.port();
+    } catch {}
+    return { port: actualPort, wsPort, pairCode, fingerprint: this.fingerprint(), deviceId };
   }
 
   async stopHost() {
     this.mdnsStop?.();
     this.mdnsStop = null;
+    if (this.webSync) { try { this.webSync.close(); } catch {} this.webSync = null; }
     if (this.server) {
       try { this.server.close(); } catch {}
       this.server = null;
@@ -304,6 +445,7 @@ class LanSync {
             settle(onError, new Error(msg.reason || '被拒绝'));
           } else if (msg.op === 'manifest') {
             const want = LanSync.diffWant(mine, msg.files);
+            this.setProgress({ phase: 'transfer', want: want.length, total: want.length });
             sock.write(encodeFrame({ op: 'want', paths: want }));
           } else if (msg.op === 'want') {
             const items = [];
@@ -314,6 +456,7 @@ class LanSync {
               if (item) items.push(item);
             }
             result.sent += items.length;
+            this.setProgress({ sent: (this.progress?.sent || 0) + items.length });
             sentFilesMsg = true;
             sock.write(encodeFrame({ op: 'files', items }));
             maybeDone();
@@ -323,9 +466,11 @@ class LanSync {
               const r = this.writeIncoming(item, baseline);
               if (r.status === 'ok') {
                 result.received++;
+                this.setProgress({ received: (this.progress?.received || 0) + 1 });
                 baselineNext.set(item.path, item.hash);
               } else if (r.status === 'conflict') {
                 result.received++;
+                this.setProgress({ received: (this.progress?.received || 0) + 1 });
                 result.conflicts.push(item.path);
                 baselineNext.set(item.path, item.hash);
                 // 冲突副本也是本地与对端共有的事实，入基线防二次误判
@@ -382,7 +527,13 @@ class LanSync {
       fingerprint: this.fingerprint(),
       lastPeer: this.store.get('sync.lastPeer') || null,
       lastResult: this.lastResult,
+      // 实时进度：{phase, sent, received, want, total}（sync.js 进度条/计数用）
+      progress: this.progress || null,
     };
+  }
+
+  setProgress(patch) {
+    this.progress = { phase: 'idle', sent: 0, received: 0, want: 0, total: 0, ...(this.progress || {}), ...patch };
   }
 
   // ==================== IPC ====================

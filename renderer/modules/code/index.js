@@ -1,6 +1,7 @@
 // renderer/modules/code/index.js —— 编程内核（Monaco + 集成终端）
 // Monaco：JS/TS 内置智能（补全/跳转/诊断/格式化）；终端：node-pty + xterm 多标签
 import { getMonaco, LANG_BY_EXT } from './monaco-setup.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { TerminalPanel } from './terminal-view.js';
 import { DebugService } from './debug.js';
 import { contextKeys } from '../../core/contextkey-service.js';
@@ -224,7 +225,7 @@ export default {
     <div class="rb-group" data-label="运行">
       <button class="rb-btn" data-command="code.runFile"><i class="ico">▶</i><span>运行文件</span></button>
       <button class="rb-btn" data-command="code.runSelection"><i class="ico">⏎</i><span>运行选区</span></button>
-      <button class="rb-btn" data-command="code.format"><i class="ico">⌨</i><span>格式化</span></button>
+      <button class="rb-btn" data-command="code.format"><i class="ico">${iconHtml('⌨')}</i><span>格式化</span></button>
     </div>
     <div class="rb-group" data-label="终端">
       <button class="rb-btn" data-command="code.toggleTerminal"><i class="ico">▗</i><span>切换终端</span></button>

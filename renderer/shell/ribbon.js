@@ -1,5 +1,6 @@
 // renderer/shell/ribbon.js —— 上下文 Ribbon：页签随模块切换；按钮一律走命令注册表
 import { commands } from '../core/command-registry.js';
+import { iconHtml } from '../lib/svg-icons.js';
 import { contextKeys } from '../core/contextkey-service.js';
 import { keymap, displayKey } from '../core/keymap-service.js';
 import { t } from '../i18n/index.js';
@@ -16,6 +17,11 @@ export class Ribbon {
     this.panelEl = this.el.querySelector('.ribbon-panel');
     this.activePage = null;
     this.ribbonState = { collapsed: false, height: null };
+    // 高度监测：够高（>96px）自动换行显示，不用一直横向拉找功能
+    if (typeof ResizeObserver !== 'undefined') {
+      this._wrapRO = new ResizeObserver(() => this.updateWrap());
+      this._wrapRO.observe(this.panelEl);
+    }
     // 双击页签折叠
     this.tabsEl.addEventListener('dblclick', () => this.setCollapsed(!this.ribbonState.collapsed));
     // 下缘拖拽调高
@@ -23,7 +29,7 @@ export class Ribbon {
     grip.className = 'ribbon-grip';
     grip.title = '拖拽调整工具栏高度';
     this.el.appendChild(grip);
-    grip.addEventListener('mousedown', (e) => this.startDrag(e));
+    grip.addEventListener('pointerdown', (e) => this.startDrag(e));
     contextKeys.onChange(() => this.refreshStates());
     commands.events.on('changed', () => this.refreshStates());
     this.restoreState();
@@ -67,12 +73,14 @@ export class Ribbon {
       this.panelEl.style.overflowY = 'auto';
     };
     const up = () => {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       this.persistState();
     };
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   }
 
   addPage(id, label, build, order = 0) {
@@ -99,9 +107,19 @@ export class Ribbon {
     fold.style.marginLeft = 'auto';
     fold.addEventListener('click', () => this.setCollapsed(!this.ribbonState.collapsed));
     this.tabsEl.appendChild(fold);
+    // 常驻：协议入口（帮助左侧，所有页面可见）
+    const agree = document.createElement('button');
+    agree.className = 'ribbon-tab';
+    agree.innerHTML = '<span class="ribbon-tab-ico">§</span> 协议';
+    agree.title = '用户服务协议及隐私政策';
+    agree.addEventListener('click', async () => {
+      const { showAgreement } = await import('../lib/agreement.js');
+      showAgreement();
+    });
+    this.tabsEl.appendChild(agree);
     const help = document.createElement('button');
     help.className = 'ribbon-tab ribbon-help-btn';
-    help.textContent = '❓ 帮助';
+    help.innerHTML = `<span class="ribbon-tab-ico">${iconHtml('❓')}</span> 帮助`;
     help.title = '使用指南（F1）';
     help.addEventListener('click', () => commands.execute('help.open'));
     this.tabsEl.appendChild(help);
@@ -129,22 +147,76 @@ export class Ribbon {
   }
 
   /** 工具方法：按钮组（data-command 一律走注册表） */
-  group(label, buttons) {
+  /** 按面板高度切换换行模式；换行态下「更多▾」折叠组自动全展开（空间已够，无需二级菜单） */
+  updateWrap() {
+    const wrap = this.panelEl.clientHeight > 96;
+    if (wrap !== this._wrapMode) {
+      this._wrapMode = wrap;
+      this.panelEl.classList.toggle('wrap', wrap);
+      this.renderPanel(); // 重建面板：wrap 态 group() 不折叠
+    } else {
+      this.panelEl.classList.toggle('wrap', wrap);
+    }
+  }
+
+  makeBtn(b) {
+    const btn = document.createElement('button');
+    btn.className = 'rb-btn';
+    btn.dataset.command = b.command;
+    btn.innerHTML = `<i class="ico">${iconHtml(b.icon || '')}</i><span>${b.label || ''}</span>`;
+    const key = displayKey(keymap.keyForCommand(b.command));
+    btn.title = (b.title || b.label || '') + (key ? `（${key}）` : '');
+    btn.addEventListener('click', () => commands.execute(b.command));
+    return btn;
+  }
+
+  /** 同组按钮超过 collapseAfter 个时，多余折叠进「更多▾」二级菜单（wrap 换行态全展开） */
+  group(label, buttons, { collapseAfter = 7 } = {}) {
     const g = document.createElement('div');
     g.className = 'rb-group';
     g.dataset.label = label;
-    for (const b of buttons) {
-      const btn = document.createElement('button');
-      btn.className = 'rb-btn';
-      btn.dataset.command = b.command;
-      btn.innerHTML = `<i class="ico">${b.icon || ''}</i><span>${b.label || ''}</span>`;
-      const key = displayKey(keymap.keyForCommand(b.command));
-      btn.title = (b.title || b.label || '') + (key ? `（${key}）` : '');
-      btn.addEventListener('click', () => commands.execute(b.command));
-      g.appendChild(btn);
+    const limit = this._wrapMode ? buttons.length : collapseAfter;
+    const visible = buttons.slice(0, limit);
+    const extra = buttons.slice(limit);
+    for (const b of visible) g.appendChild(this.makeBtn(b));
+    if (extra.length) {
+      const more = document.createElement('button');
+      more.className = 'rb-btn rb-more';
+      more.innerHTML = `<i class="ico">▾</i><span>更多</span>`;
+      more.title = `${label}·更多（${extra.length} 项）`;
+      more.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.showMore(label, extra, more);
+      });
+      g.appendChild(more);
     }
     this.panelEl.appendChild(g);
     return g;
+  }
+
+  /** 二级菜单弹出（点外关闭） */
+  showMore(label, buttons, anchor) {
+    document.querySelector('.rb-more-pop')?.remove();
+    const pop = document.createElement('div');
+    pop.className = 'rb-more-pop';
+    pop.innerHTML = `<div class="rb-more-title">${label}</div>`;
+    for (const b of buttons) {
+      const btn = this.makeBtn(b);
+      btn.style.flexDirection = 'row';
+      btn.style.width = '100%';
+      btn.addEventListener('click', () => pop.remove());
+      pop.appendChild(btn);
+    }
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect();
+    pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, innerWidth - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px`;
+    const close = (e) => {
+      if (!pop.contains(e.target)) {
+        pop.remove();
+        document.removeEventListener('mousedown', close);
+      }
+    };
+    setTimeout(() => document.addEventListener('mousedown', close), 0);
   }
 
   /** 上下文变化时刷新按钮可用态 */

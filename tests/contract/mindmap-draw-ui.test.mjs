@@ -36,15 +36,15 @@ describe('思维导图 UI', () => {
     const ctl = mindmapModule._forTests.instances.get(container);
     // JSON
     mindmapModule.setContent(JSON.stringify({ mark: 'mazz-mindmap-v1', root: { id: 'r', text: '测试根', children: [{ id: 'c1', text: '子1', children: [], collapsed: false }], collapsed: false } }), state);
-    assert.equal(ctl.doc.root.text, '测试根');
-    assert.equal(ctl.doc.root.children.length, 1);
+    assert.equal(ctl.doc.roots[0].text, '测试根');
+    assert.equal(ctl.doc.roots[0].children.length, 1);
     // Markdown 大纲
     mindmapModule.setContent('# 大纲根\n\n- 分支A\n  - 叶A\n- 分支B\n', state);
-    assert.equal(ctl.doc.root.text, '大纲根');
-    assert.equal(ctl.doc.root.children[0].children[0].text, '叶A');
+    assert.equal(ctl.doc.roots[0].text, '大纲根');
+    assert.equal(ctl.doc.roots[0].children[0].children[0].text, '叶A');
     // getContent 往返
     const back = JSON.parse(mindmapModule.getContent(state));
-    assert.equal(back.root.text, '大纲根');
+    assert.equal(back.roots[0].text, '大纲根');
     container.remove();
   });
 
@@ -54,58 +54,58 @@ describe('思维导图 UI', () => {
     mindmapModule.create(container);
     await tick();
     const ctl = mindmapModule._forTests.instances.get(container);
-    ctl.selected = ctl.doc.root.id;
-    const before = ctl.doc.root.children.length;
+    ctl.selected = ctl.doc.roots[0].id;
+    const before = ctl.doc.roots[0].children.length;
     ctl.addChildOf();
-    assert.equal(ctl.doc.root.children.length, before + 1, '应新增子节点');
+    assert.equal(ctl.doc.roots[0].children.length, before + 1, '应新增子节点');
     assert.ok(ctl.editing, '新节点应进入编辑态');
     // 提交编辑
     const editor = container.querySelector('.mm-editor');
     editor.value = '新分支';
-    editor.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    assert.equal(ctl.doc.root.children[before].text, '新分支');
+    editor.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+    assert.equal(ctl.doc.roots[0].children[before].text, '新分支');
     // 删除
-    ctl.selected = ctl.doc.root.children[before].id;
+    ctl.selected = ctl.doc.roots[0].children[before].id;
     ctl.deleteSelected();
-    assert.equal(ctl.doc.root.children.length, before, '应删除');
+    assert.equal(ctl.doc.roots[0].children.length, before, '应删除');
     container.remove();
   });
 
-  test('键盘路由：document 级 keydown 按当前实例响应（Tab/Enter/Delete/方向键）', async () => {
+  test('键盘路由：Tab/Alt+Enter/Delete/方向键 按当前实例响应', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const state = mindmapModule.create(container);
     await tick();
     const ctl = mindmapModule._forTests.instances.get(container);
     mindmapModule.activate(container, state); // current = ctl
-    ctl.selected = ctl.doc.root.id;
+    ctl.selected = ctl.doc.roots[0].id;
     ctl.editing = null;
-    const before = ctl.doc.root.children.length;
+    const before = ctl.doc.roots[0].children.length;
     // Tab → 子节点（document 冒泡，无需画布焦点）
     document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
-    assert.equal(ctl.doc.root.children.length, before + 1, 'Tab 应建子节点');
+    assert.equal(ctl.doc.roots[0].children.length, before + 1, 'Tab 应建子节点');
     assert.ok(ctl.editing, '新节点进入编辑');
     // 编辑提交后 Enter → 同级
     container.querySelector('.mm-editor').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     ctl.editing = null;
-    ctl.selected = ctl.doc.root.children[before].id;
-    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-    assert.equal(ctl.doc.root.children.length, before + 2, 'Enter 应建同级节点');
+    ctl.selected = ctl.doc.roots[0].children[before].id;
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', altKey: true, bubbles: true, cancelable: true }));
+    assert.equal(ctl.doc.roots[0].children.length, before + 2, 'Alt+Enter 应建同级节点');
     container.querySelector('.mm-editor').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     // Delete → 删除
     ctl.editing = null;
-    ctl.selected = ctl.doc.root.children[before + 1].id;
+    ctl.selected = ctl.doc.roots[0].children[before + 1].id;
     document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
-    assert.equal(ctl.doc.root.children.length, before + 1, 'Delete 应删除');
+    assert.equal(ctl.doc.roots[0].children.length, before + 1, 'Delete 应删除');
     // 方向键导航
     ctl.selected = null;
     document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
     assert.ok(ctl.selected, '方向键应能选中');
     // 切走（current 变化）后不再响应
     mindmapModule.deactivate(container);
-    const n = ctl.doc.root.children.length;
+    const n = ctl.doc.roots[0].children.length;
     document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
-    assert.equal(ctl.doc.root.children.length, n, 'deactivate 后 Tab 不应生效');
+    assert.equal(ctl.doc.roots[0].children.length, n, 'deactivate 后 Tab 不应生效');
     container.remove();
   });
 });

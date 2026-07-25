@@ -45,6 +45,7 @@ export async function exportDocx(doc, { setup, title = '文档', styleMap = {} }
           bold: marks.some(m => m.type.name === 'strong') || opts.bold || rd.bold || undefined,
           italics: marks.some(m => m.type.name === 'em') || rd.italics || undefined,
           strike: marks.some(m => m.type.name === 'strike'),
+          underline: marks.some(m => m.type.name === 'underline') ? { type: 'single' } : undefined,
           font: marks.some(m => m.type.name === 'code') ? (sm.code.font || 'Consolas') : (fs.family || rd.font || undefined),
           size: fs.size ? Math.round(fs.size * 2) : (rd.size || undefined),
           color: fs.color ? fs.color.replace('#', '') : (rd.color || undefined),
@@ -241,7 +242,13 @@ export async function exportDocx(doc, { setup, title = '文档', styleMap = {} }
   const size = PAGE_SIZES[setup?.size || 'A4'];
   const landscape = setup?.orientation === 'landscape';
   const [pw, ph] = landscape ? [size.h, size.w] : [size.w, size.h];
-  const marginTwip = Math.round((setup?.margin ?? 25) * 56.7);
+  // 四边页边距（兼容旧单值）：mm → twip
+  const mgAll = (setup?.margins && typeof setup.margins === 'object') ? setup.margins : null;
+  const mgOne = Math.max(0, Math.min(80, +(setup?.margin ?? 25)));
+  const mg = mgAll
+    ? { top: +mgAll.top || mgOne, right: +mgAll.right || mgOne, bottom: +mgAll.bottom || mgOne, left: +mgAll.left || mgOne }
+    : { top: mgOne, right: mgOne, bottom: mgOne, left: mgOne };
+  const tw = (mm) => Math.round(mm * 56.7);
 
   const headers = setup?.header ? {
     default: new Header({
@@ -282,7 +289,7 @@ export async function exportDocx(doc, { setup, title = '文档', styleMap = {} }
       properties: {
         page: {
           size: { width: Math.round(pw * 56.7), height: Math.round(ph * 56.7), orientation: landscape ? 'landscape' : 'portrait' },
-          margin: { top: marginTwip, bottom: marginTwip, left: marginTwip, right: marginTwip },
+          margin: { top: tw(mg.top), bottom: tw(mg.bottom), left: tw(mg.left), right: tw(mg.right) },
         },
       },
       headers, footers,
@@ -297,7 +304,9 @@ export async function exportDocx(doc, { setup, title = '文档', styleMap = {} }
 
 // ==================== 导入（mammoth → HTML → PM DOMParser） ====================
 export async function importDocx(schema, arrayBuffer) {
-  const mammoth = await import('mammoth');
+  const mammothMod = await import('mammoth');
+  // esbuild CJS→ESM 互操作：mammoth 的真实 API 可能挂在 default 上（dist 下 convertToHtml is not a function 的病根）
+  const mammoth = mammothMod.default?.convertToHtml ? mammothMod.default : mammothMod;
   // Buffer/Uint8Array → 真正的 ArrayBuffer（mammoth 只认 arrayBuffer 形态）
   const ab = arrayBuffer instanceof ArrayBuffer
     ? arrayBuffer

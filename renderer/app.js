@@ -21,6 +21,7 @@ import searchModule from './modules/search/index.js';
 import mindmapModule from './modules/mindmap/index.js';
 import drawModule from './modules/draw/index.js';
 import libraryModule from './modules/library/index.js';
+import viewerModule from './modules/viewer/index.js';
 import { registerTranslateCommands } from './translate.js';
 import { registerOcrCommands } from './ocr.js';
 import { registerVoiceCommands } from './voice.js';
@@ -30,6 +31,8 @@ import { registerSyncCommands } from './sync.js';
 import { registerHelpCommands } from './help/index.js';
 import { initI18n } from './i18n/index.js';
 import { registerBridgeCommands } from './bridge.js';
+import { registerFactoryExtras } from './modules/factory/index.js';
+import { registerWebBridge } from './modules/webbridge/index.js';
 
 // 全局命令入口（契约文档命名）
 window.MazzCommands = commands;
@@ -47,8 +50,11 @@ modules.register('search', searchModule);
 modules.register('mindmap', mindmapModule);
 modules.register('draw', drawModule);
 modules.register('library', libraryModule);
+modules.register('viewer', viewerModule);
 registerSharedEditCommands(commands);
 registerBridgeCommands(commands);
+registerFactoryExtras(commands);
+registerWebBridge(commands);
 registerTranslateCommands(commands);
 registerOcrCommands(commands);
 registerVoiceCommands(commands);
@@ -66,6 +72,8 @@ contextKeys.set('hasSelection', false);
 
 shell.boot().then(() => {
   console.log('%c◆ Mazz Editor%c 已启动 — 一切操作皆命令', 'color:#818cf8;font-weight:bold', '');
+  // 首次启动：弹出用户服务协议及隐私政策（勾选"后续不再弹出"后不再显示）
+  import('./lib/agreement.js').then(m => m.maybeAutoShowAgreement()).catch(() => {});
   // 后台加载工作区插件（不阻塞启动）
   if (window.mazz?.isElectron) {
     loadAllPlugins().then(rs => {

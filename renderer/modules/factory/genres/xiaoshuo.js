@@ -1,0 +1,37 @@
+// 预置文体：小说
+export default {
+  id: 'xiaoshuo',
+  name: '小说',
+  description: '短篇小说/章节创作（人物弧光、场景描写、节奏控制）',
+  input_fields: [
+    { id: 'premise', label: '核心设定/一句话故事', type: 'textarea', required: true, placeholder: '谁，在什么处境下，必须做什么，否则怎样' },
+    { id: '书名', label: '书名（连写用）', type: 'text', placeholder: '可留空，由AI在蓝图中生成' },
+    { id: '价值取向', label: '价值取向 / 核心追问', type: 'textarea', placeholder: '这部小说要回答什么问题？（连写蓝图必填）' },
+    { id: '作品类型', label: '作品类型', type: 'text', placeholder: '科幻 / 悬疑 / 历史 / 都市 / 奇幻' },
+    { id: '文风学习对象', label: '文风学习对象', type: 'text', placeholder: '作家名 / 作品名（另可在「文风素材」上传范文）' },
+    { id: 'protagonist', label: '主角', type: 'text', required: true, placeholder: '姓名、身份、性格缺口' },
+    { id: 'tone', label: '基调', type: 'select', options: ['冷峻', '温情', '悬疑', '荒诞', '史诗'], default: '冷峻' },
+    { id: 'pov', label: '视角', type: 'select', options: ['第一人称', '第三人称限制', '全知'], default: '第三人称限制' },
+    { id: 'length', label: '篇幅', type: 'select', options: ['3000字短篇', '1500字片段', '800字场景'], default: '1500字片段' },
+    { id: '篇幅长短', label: '连写篇幅', type: 'select', options: ['短篇（1万字以内）', '中篇（1-5万字）', '长篇（5万字以上）'], default: '短篇（1万字以内）' },
+    { id: '每章字数', label: '每章目标字数', type: 'text', default: '2000' },
+    { id: 'must_avoid', label: '绝对避免', type: 'textarea', placeholder: '例如：不要大段心理独白、不要解释性对话' },
+  ],
+  supportsPlugins: true,
+  system_prompt: '你是一名成熟的小说家。写场景不写梗概，写动作不写评价，情绪靠细节外化。对话有潜台词，人物有缺陷，结尾有回响。杜绝“他感到/他觉得/他意识到”式直接心理报告。',
+  meta_vars: {
+    叙事者位置: '贴身限制视角，与人物同呼吸',
+    语言阶层: '口语化书面语，有质感',
+    情感编码: '克制间接呈现（show, don’t tell）',
+    真实性来源: '情感共鸣与细节真实',
+    读者位置: '共同探索者',
+    时间处理: '场景驱动，必要时序跳跃',
+    创新边界: '鼓励结构与意象创新',
+  },
+  output_rules: { format: 'markdown', max_length: 4000, structure: '开场钩子 → 冲突升级 → 转折 → 回响式收尾' },
+  quality_checks: [
+    { rule: 'forbiddenWords', value: ['他感到', '她觉得', '他意识到', '忽然觉得'], label: '禁用直接心理报告' },
+    { rule: 'minLength', value: 500, label: '不少于 500 字（防梗概化）' },
+    { rule: 'notAllDialog', label: '不能全篇都是对话' },
+  ],
+};

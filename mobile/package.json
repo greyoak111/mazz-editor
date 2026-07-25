@@ -1,0 +1,27 @@
+{
+  "name": "mazz-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Mazz Editor 移动端壳（Capacitor）：渲染层 + Web 桥，编译 Android/iOS",
+  "scripts": {
+    "prepare": "node prepare.mjs",
+    "sync": "npm run prepare && cap sync android",
+    "sync:ios": "npm run prepare && cap sync ios",
+    "open": "cap open android",
+    "open:ios": "cap open ios",
+    "apk": "npm run sync && cd android && ./gradlew assembleDebug",
+    "apk:win": "npm run sync && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.2",
+    "@capacitor/ios": "^6.1.2",
+    "@capacitor/share": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2",
+    "mazz-tcp-server": "file:./plugins/tcp-server"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

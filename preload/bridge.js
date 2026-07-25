@@ -1,7 +1,7 @@
 // preload/bridge.js —— 白名单 IPC 桥（contextIsolation 安全基线）
 // 渲染进程唯一入口 window.mazz；任何新通道必须在白名单显式登记
 'use strict';
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 // 白名单：invoke 通道
 const INVOKE_CHANNELS = new Set([
@@ -12,12 +12,12 @@ const INVOKE_CHANNELS = new Set([
   'recent:list', 'recent:add', 'recent:clear',
   'settings:get', 'settings:set', 'workspace:get',
   'window:minimize', 'window:toggleMaximize', 'window:close', 'window:setTitle',
-  'window:isMaximized', 'window:toggleFullScreen', 'window:openChild', 'window:toMain',
+  'window:isMaximized', 'window:isFullScreen', 'window:toggleFullScreen', 'window:openChild', 'window:toMain',
   'theme:setSource', 'theme:isDark',
-  'print:print', 'print:toPDF',
+  'print:print', 'print:toPDF', 'print:html',
   'clipboard:write', 'clipboard:read', 'clipboard:readImagePNG',
   'notify:show',
-  'shell:showItemInFolder', 'shell:openExternal',
+  'shell:showItemInFolder', 'shell:openExternal', 'shell:openPath',
   'spell:setLanguages', 'spell:setEnabled',
   'quicknote:save', 'quicknote:close',
   'snapshot:write', 'snapshot:list', 'snapshot:clear', 'snapshot:clearAll', 'crash:lastExitUnclean',
@@ -29,22 +29,36 @@ const INVOKE_CHANNELS = new Set([
   'debug:start', 'debug:stop', 'debug:request', 'debug:status',
   'app:fonts',
   'pw:list', 'pw:save', 'pw:delete', 'pw:available',
+  'secret:set', 'secret:get',
+  'factory:pandocAvailable', 'factory:extractText', 'factory:pandocExport', 'fs:closeAll',
+  'factory:aiChat', 'factory:aiChatStream', 'factory:aiModels',
+  'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut',
   'tr:translate', 'tr:getConfig', 'tr:setConfig',
   'sync:identity', 'sync:host', 'sync:stopHost', 'sync:join', 'sync:discover', 'sync:status',
   'update:check', 'update:getConfig', 'update:setConfig',
+  'share:targets', 'share:sendFile', 'share:sendToExe',
+  'dialog:openImport', 'import:external',
+  'explorermenu:status', 'explorermenu:register', 'explorermenu:unregister',
+  'apps:quickLaunch', 'apps:launch',
+  'rec:sources', 'rec:useSource', 'rec:selfFrame',
+  'window:childAt', 'window:toChild', 'window:listChildren', 'theme:broadcast',
+  'workspace:list', 'workspace:add', 'workspace:remove', 'workspace:rename', 'workspace:setCurrent',
 ]);
 
 // 白名单：主进程 -> 渲染进程 事件
 const EVENT_CHANNELS = new Set([
-  'file:open', 'file:changed', 'command:invoke', 'menu:clicked',
+  'file:open', 'file:changed', 'file:import', 'command:invoke', 'menu:clicked',
   'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role',
-  'browser:openUrl', 'term:data', 'term:exit', 'debug:event',
+  'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'library:download',
+  'workspace:changed', 'window:fullscreen',
 ]);
 
 const listeners = new Map(); // channel -> Set<callback>
 
 contextBridge.exposeInMainWorld('mazz', {
   platform: process.platform,
+  // Electron 32+ File.path 已移除：拖拽文件取真实路径的唯一通道
+  getPathForFile: (file) => { try { return webUtils.getPathForFile(file); } catch { return ''; } },
   versions: { electron: process.versions.electron, chrome: process.versions.chrome },
   isElectron: true,
 

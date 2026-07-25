@@ -1,6 +1,7 @@
 // renderer/plugins/manager.js —— 插件管理器 UI：安装/启用/禁用/删除/打开
 import { modal, toast } from '../shell/shell.js';
 import { listPluginFiles, readMaz, isEnabled, setEnabled, installFromFile, loadAllPlugins, loadPlugin } from './loader.js';
+import { iconHtml } from '../lib/svg-icons.js';
 
 export function openPluginManager() {
   const m = modal('插件管理');
@@ -23,7 +24,7 @@ export function openPluginManager() {
       <div style="max-height:50vh;overflow-y:auto">
         ${rows.length ? rows.map(r => `
           <div class="plg-item" data-id="${r.manifest.id}" style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd,#e0ded8)">
-            <span style="font-size:20px">${r.error ? '⚠️' : '🧩'}</span>
+            <span style="font-size:20px">${iconHtml(r.error ? '⚠' : '🧩')}</span>
             <div style="flex:1;min-width:0">
               <div style="font-weight:600;font-size:13px">${r.manifest.name} <small style="color:#83817a">v${r.manifest.version}</small></div>
               <div style="font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.error || r.manifest.description || r.manifest.id}</div>

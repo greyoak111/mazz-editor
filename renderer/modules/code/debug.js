@@ -58,9 +58,11 @@ export class DebugService {
   // ==================== 会话 ====================
   async start() {
     if (!window.mazz?.isElectron) { toast('调试需要桌面版'); return; }
-    if (!this.ctl.filePath) { toast('请先保存文件再调试'); return; }
     if (this.ctl.language !== 'python') { toast('当前支持 Python 调试（JS 调试适配器随后接入）'); return; }
+    // 先保存再判定：ctl.filePath 从不随 saveTab 同步（误报「请先保存」的总根），tab.filePath 才是唯一真源
     await window.MazzCommands.execute('file.save');
+    const fp = window.MazzShell?.tabs?.active?.filePath || this.ctl.filePath;
+    if (!fp) { toast('请先保存文件再调试'); return; }
 
     const cfg = await openLaunchDialog(this.ctl);
     if (!cfg) return;
@@ -271,7 +273,8 @@ export class DebugService {
 export function openLaunchDialog(ctl) {
   return new Promise((resolve) => {
     const m = modal('调试配置 (launch)');
-    const program = ctl.filePath || '';
+    // 程序路径同样以 tab.filePath 为真源（ctl.filePath 从不随保存同步，launch 框常年空白）
+    const program = window.MazzShell?.tabs?.active?.filePath || ctl.filePath || '';
     m.body.innerHTML = `
       <div class="set-row"><label>程序</label><input id="lc-program" class="rb-input" style="width:70%" value="${escapeAttr(program)}"></div>
       <div class="set-row"><label>参数（空格分隔）</label><input id="lc-args" class="rb-input" style="width:70%" placeholder="arg1 arg2"></div>

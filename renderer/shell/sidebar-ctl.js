@@ -1,4 +1,6 @@
 // renderer/shell/sidebar-ctl.js —— 工作区侧栏控制（思源式）：折叠/展开 + 钉住/浮出 + 拖拽调宽
+import { iconHtml } from '../lib/svg-icons.js';
+
 const MIN_W = 180, MAX_W = 480;
 
 export class SidebarCtl {
@@ -11,7 +13,7 @@ export class SidebarCtl {
     const acts = sidebar.querySelector('.sidebar-head .acts');
     if (acts) {
       acts.insertAdjacentHTML('afterbegin',
-        `<button data-a="pin" title="钉住（推挤布局）/取消钉住（浮层覆盖）">📌</button>
+        `<button data-a="pin" title="钉住（推挤布局）/取消钉住（浮层覆盖）"></button>
          <button data-a="collapse" title="折叠工作区">«</button>`);
       acts.querySelector('[data-a=pin]').addEventListener('click', () => this.togglePin());
       acts.querySelector('[data-a=collapse]').addEventListener('click', () => this.setCollapsed(true));
@@ -55,8 +57,9 @@ export class SidebarCtl {
     sb.style.width = this.state.collapsed ? '0px' : this.state.width + 'px';
     const pinBtn = sb.querySelector('[data-a=pin]');
     if (pinBtn) {
-      pinBtn.textContent = this.state.pinned ? '📌' : '📍';
-      pinBtn.style.color = this.state.pinned ? '' : 'var(--accent, #4f46e5)';
+      // SVG pin 图标（与同行 « 等高的 14px；钉住=accent 强调，浮层=常规色）
+      pinBtn.innerHTML = iconHtml('📌');
+      pinBtn.style.color = this.state.pinned ? 'var(--accent, #4f46e5)' : '';
       pinBtn.title = this.state.pinned ? '已钉住（推挤布局）——点击切换浮层' : '浮层模式（点击编辑器外自动收起）——点击钉住';
     }
     // 浮层模式：点击外部自动收起

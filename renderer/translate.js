@@ -51,12 +51,27 @@ export function showTranslateModal(initialText = '') {
     if (!text) { toast('请输入原文'); return; }
     out.value = '翻译中…';
     btns.forEach(b => b.disabled = true);
+    // AI 优先（智能创作 Provider 就绪时，独立提示词工程）；否则免费引擎
+    try {
+      const { aiTranslate } = await import('./lib/ai-translate.js');
+      const ai = await aiTranslate({ text, from: source.value, to: target.value });
+      if (ai) {
+        out.value = ai.text || '（无结果）';
+        btns.forEach(b => b.disabled = !ai.text);
+        toast('AI 翻译完成');
+        return;
+      }
+    } catch (e) {
+      out.value = 'AI 翻译失败：' + (e.message || e) + '\n\n可检查智能创作 ⚙ 的 AI 服务配置，或改用免费引擎';
+      return;
+    }
     try {
       const r = await window.mazz.invoke('tr:translate', { text, from: source.value, to: target.value });
       out.value = r.text || '（无结果）';
       btns.forEach(b => b.disabled = !r.text);
+      toast('免费引擎翻译完成（配 AI 后可享受更高质量）');
     } catch (e) {
-      out.value = '翻译失败：' + (e.message || e) + '\n\n（免费引擎有日限额；限额满后可在设置中改配 LibreTranslate 自部署实例）';
+      out.value = '翻译失败：' + (e.message || e) + '\n\n（未配置 AI；免费引擎有日限额，也可在设置中改配 LibreTranslate 自部署实例）';
     }
   });
   m.body.querySelector('.tr-copy').addEventListener('click', async () => {
@@ -101,11 +116,19 @@ export function registerTranslateCommands(commands) {
         <div class="set-row"><label>实例地址</label><input id="trc-url" class="rb-input" style="width:64%" placeholder="https://your-libretranslate.host" value="${cfg.ltUrl || ''}"></div>
         <div class="set-row"><label>API Key</label><input id="trc-key" class="rb-input" style="width:64%" type="password" placeholder="${cfg.ltKeySet ? '（已设置，留空保持不变）' : '（可选）'}"></div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="trc-save" class="rb-btn" style="flex-direction:row">保存</button></div>`;
+      // AI 翻译提示词（自定义覆盖内置提示词工程）
+      const curPrompt = await window.mazz.invoke('settings:get', { key: 'mazz.translate.sysPrompt' }).catch(() => '');
+      const promptRow = document.createElement('div');
+      promptRow.innerHTML = `<div class="set-row" style="align-items:flex-start"><label>AI 提示词</label>
+        <textarea id="trc-sys" class="rb-input" rows="4" style="width:64%" placeholder="留空使用内置翻译提示词工程（铁律：只出译文/保留格式/信达雅/术语统一）">${(curPrompt || '').replace(/</g, '&lt;')}</textarea></div>
+        <div style="font-size:11px;color:var(--fg-dim);margin:2px 0 0 64px">智能创作 ⚙ 配好 AI 后，翻译自动走 AI（优先级高于免费引擎）</div>`;
+      m.body.querySelector('#trc-save').parentElement.before(promptRow);
       m.body.querySelector('#trc-save').addEventListener('click', async () => {
         const engine = m.body.querySelector('#trc-engine').value;
         const ltUrl = m.body.querySelector('#trc-url').value.trim();
         const ltKey = m.body.querySelector('#trc-key').value;
         await window.mazz.invoke('tr:setConfig', { engine, ltUrl, ...(ltKey ? { ltKey } : {}) });
+        await window.mazz.invoke('settings:set', { key: 'mazz.translate.sysPrompt', value: m.body.querySelector('#trc-sys')?.value.trim() || '' }).catch(() => {});
         toast('翻译引擎设置已保存');
         m.close();
       });

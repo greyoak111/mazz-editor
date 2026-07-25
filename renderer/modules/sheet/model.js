@@ -19,8 +19,8 @@ export class Sheet {
     this.condFormats = [];       // [{r1,c1,r2,c2,type:'colorscale'|'databar'|'gt'|'lt'|'eq', a, b}]
     this._computed = new Map();  // "r,c" -> {epoch, value}
     this._epoch = 0;
-    this.maxRow = 50;
-    this.maxCol = 15;
+    this.maxRow = 200; // 初始 200 行/26 列（A-Z），滚动近界自动扩展（见 grid.js bindScroll）
+    this.maxCol = 26;
   }
 
   key(r, c) { return r + ',' + c; }
@@ -76,7 +76,13 @@ export class Sheet {
     if (cached && cached.epoch === this._epoch) return cached.value;
     if (visiting.has(k)) return E.CYCLE;
     visiting.add(k);
-    const value = evaluate(parse(cell.f), this._ctx(r, c, visiting));
+    // 公式求值异常入格显示（#VALUE!/#NAME? 等），绝不允许把错误对象抛进渲染/事件链（E2E 实抓 18 条）
+    let value;
+    try {
+      value = evaluate(parse(cell.f), this._ctx(r, c, visiting));
+    } catch (e) {
+      value = (e && typeof e === 'object' && e.err) ? e : { err: '#VALUE!' };
+    }
     visiting.delete(k);
     this._computed.set(k, { epoch: this._epoch, value });
     return value;

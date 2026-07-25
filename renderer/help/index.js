@@ -2,6 +2,7 @@
 import { commands } from '../core/command-registry.js';
 import { keymap } from '../core/keymap-service.js';
 import { HELP_SECTIONS } from './content.js';
+import { SENIOR_SECTIONS } from './content-senior.js';
 import { t } from '../i18n/index.js';
 
 // ==================== mini Markdown 渲染器（帮助文档专用子集） ====================
@@ -80,6 +81,10 @@ export function openHelp(sectionId) {
       <div class="help-side">
         <div class="help-side-head">
           <b>❓ ${t('使用指南')}</b>
+          <select class="help-ver rb-select" title="文档版本切换">
+            <option value="std">喂饭级（常规详细版）</option>
+            <option value="senior">喂奶级（零基础老人版）</option>
+          </select>
           <input class="help-search" placeholder="${t('搜索帮助内容…')}" spellcheck="false" />
         </div>
         <div class="help-toc"></div>
@@ -95,9 +100,22 @@ export function openHelp(sectionId) {
   const tocEl = mask.querySelector('.help-toc');
   const contentEl = mask.querySelector('.help-content');
   const searchEl = mask.querySelector('.help-search');
+  const verEl = mask.querySelector('.help-ver');
+  // 喂奶级/喂饭级互切（记忆选择）
+  let SECTIONS = HELP_SECTIONS;
+  try {
+    const v = localStorage.getItem('mazz.help.ver');
+    if (v === 'senior') { SECTIONS = SENIOR_SECTIONS; verEl.value = 'senior'; }
+  } catch {}
+  verEl.addEventListener('change', () => {
+    SECTIONS = verEl.value === 'senior' ? SENIOR_SECTIONS : HELP_SECTIONS;
+    try { localStorage.setItem('mazz.help.ver', verEl.value); } catch {}
+    renderToc();
+    show(SECTIONS[0].id);
+  });
 
   function show(id) {
-    const sec = HELP_SECTIONS.find(s => s.id === id) || HELP_SECTIONS[0];
+    const sec = SECTIONS.find(s => s.id === id) || SECTIONS[0];
     contentEl.innerHTML = renderHelpMd(sec.body);
     contentEl.scrollTop = 0;
     tocEl.querySelectorAll('.help-toc-item').forEach(el =>
@@ -108,8 +126,8 @@ export function openHelp(sectionId) {
   function renderToc(filter = '') {
     const f = filter.trim().toLowerCase();
     const items = f
-      ? HELP_SECTIONS.filter(s => (s.title + s.body).toLowerCase().includes(f))
-      : HELP_SECTIONS;
+      ? SECTIONS.filter(s => (s.title + s.body).toLowerCase().includes(f))
+      : SECTIONS;
     tocEl.innerHTML = items.map(s =>
       `<div class="help-toc-item" data-id="${s.id}">${s.icon} ${s.title}</div>`).join('')
       || '<div class="help-toc-empty">' + t('（无匹配章节）') + '</div>';
@@ -126,7 +144,7 @@ export function openHelp(sectionId) {
   mask.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHelp(); });
 
   renderToc();
-  show(sectionId || HELP_SECTIONS[0].id);
+  show(sectionId || SECTIONS[0].id);
   searchEl.focus();
 }
 

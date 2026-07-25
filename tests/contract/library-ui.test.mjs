@@ -94,7 +94,7 @@ describe('书库 UI', () => {
     assert.ok(menu, '右键菜单应出现');
     assert.ok(menu.textContent.includes('移出书架'));
     assert.ok(menu.textContent.includes('导出为 Markdown'));
-    menu.querySelector('[data-a=remove]').click();
+    [...menu.querySelectorAll('.mazz-menu-item')].find(e => e.textContent === '移出书架').click();
     await tick(60);
     assert.equal((settings.get('library.books') || []).length, 1, '应移出一本');
     assert.equal(container.querySelectorAll('.lib-card').length, 1, '书架同步刷新');

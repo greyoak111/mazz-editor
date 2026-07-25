@@ -45,5 +45,10 @@ let started = false;
 process.on('beforeExit', () => {
   if (started) return;
   started = true;
-  runAll().then((fail) => { process.exitCode = fail ? 1 : 0; });
+  runAll().then((fail) => {
+    process.exitCode = fail ? 1 : 0;
+    // 强制退出：测试起过 server/定时器未清理时进程会被挂住（npm test 卡顿要回车的根因）；
+    // 微任务轮转一拍后强退，任何残留句柄不再阻塞
+    setTimeout(() => process.exit(fail ? 1 : 0), 100).unref?.();
+  });
 });

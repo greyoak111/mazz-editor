@@ -1,0 +1,99 @@
+/* renderer/styles/mobile.css —— 移动端/折叠屏自适应层
+   由 lib/mobile-env.js 在 <html> 上挂类驱动：m-web / m-touch / m-phone / m-tablet / m-wide / m-dualscreen / m-sidebar-open
+   断点对齐 Material 3 窗口尺寸类：手机 <600dp · 平板 600–839dp · 桌面 ≥840dp
+   全部规则限定在移动类名下，桌面端零影响 */
+
+/* ================= 基础：安全区 + 触屏 ================= */
+html { -webkit-text-size-adjust: 100%; }
+
+/* WebView/浏览器里窗口控制按钮无意义（仅 Electron Windows 用得到） */
+html.m-web .titlebar .tb-win-controls { display: none; }
+
+/* 状态栏/标题栏避开刘海与手势条 */
+.titlebar { padding-top: env(safe-area-inset-top, 0px); }
+.statusbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* 触屏：可点目标 ≥40dp */
+@media (pointer: coarse) {
+  .rb-btn { min-width: 42px; min-height: 42px; }
+  .ribbon-tab { min-height: 34px; padding-left: 12px; padding-right: 12px; }
+  .tabbar .tab, .tabbar [class*="tab"] { min-height: 38px; }
+  .sidebar-rail { width: 40px; }
+  .statusbar { min-height: 28px; }
+}
+
+/* 触屏：1px 分隔条加大热区（视觉不变） */
+html.m-touch .pane-divider,
+html.m-touch .ribbon-grip,
+html.m-touch .sidebar-grip { position: relative; }
+html.m-touch .pane-divider::after,
+html.m-touch .ribbon-grip::after,
+html.m-touch .sidebar-grip::after {
+  content: ''; position: absolute; inset: -7px; z-index: 31;
+}
+
+/* 抽屉按钮与遮罩（默认隐藏，仅手机显示） */
+#m-drawer-btn {
+  display: none; border: 0; background: none; color: inherit;
+  font-size: 17px; width: 36px; height: 36px; margin-right: 2px;
+  border-radius: 8px; place-items: center; flex: none; cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+#m-drawer-btn:active { background: var(--bg-active, rgba(0,0,0,.08)); }
+#m-drawer-scrim {
+  position: fixed; inset: 0; z-index: 150; background: rgba(20, 18, 16, .34);
+  opacity: 0; pointer-events: none; transition: opacity .2s ease;
+}
+
+/* ================= 手机 <600dp ================= */
+html.m-phone #m-drawer-btn { display: grid; }
+
+/* 侧栏 → 覆盖式抽屉 */
+html.m-phone .sidebar {
+  position: absolute; left: 0; top: 0; bottom: 0; z-index: 200;
+  width: min(78vw, 300px); max-width: none;
+  transform: translateX(-106%);
+  transition: transform .22s ease;
+  box-shadow: 2px 0 18px rgba(0, 0, 0, .18);
+}
+html.m-phone.m-sidebar-open .sidebar { transform: none; }
+html.m-phone.m-sidebar-open #m-drawer-scrim { opacity: 1; pointer-events: auto; }
+
+/* Ribbon 紧凑化（横向滑动已在桌面版自带 overflow-x:auto） */
+html.m-phone .ribbon-panel { min-height: 54px; padding: 4px 6px 8px; }
+html.m-phone .rb-btn { font-size: 11px; padding: 5px 6px; min-width: 40px; }
+html.m-phone .rb-group { padding: 0 6px 8px; }
+html.m-phone .ribbon-tabs { padding: 0 4px; }
+
+/* 标题栏/标签栏/状态栏瘦身 */
+html.m-phone .titlebar { height: calc(34px + env(safe-area-inset-top, 0px)); font-size: 12px; }
+html.m-phone .tabbar { height: 38px; }
+html.m-phone .tabbar > * { max-width: 132px; font-size: 12px; }
+html.m-phone .statusbar { font-size: 11px; }
+
+/* 欢迎页单列 */
+html.m-phone .welcome { padding: 24px 14px 40px; }
+html.m-phone .welcome h1 { font-size: 22px; }
+html.m-phone .welcome .w-grid { flex-direction: column; align-items: stretch; width: 100%; max-width: 420px; }
+html.m-phone .welcome .w-card { width: auto; }
+
+/* 命令面板/弹窗贴边 */
+html.m-phone .mazz-palette-mask > * { width: calc(100vw - 24px) !important; max-width: none !important; }
+
+/* 表格/代码等模块的内边距收紧 */
+html.m-phone .module-view { min-width: 0; }
+
+/* ================= 平板 600–839dp ================= */
+html.m-tablet .sidebar { width: 190px; }
+html.m-tablet .welcome .w-grid { max-width: 560px; }
+
+/* ================= 折叠屏展开/双屏 ================= */
+/* 左屏整栏给导航（文件树/笔记列表），右屏留给编辑区，天然避开铰链 */
+html.m-dualscreen .sidebar {
+  width: var(--seg-left-w, 320px);
+  max-width: var(--seg-left-w, 320px);
+  flex: none;
+}
+html.m-dualscreen .welcome .w-grid { max-width: 520px; }
+
+/* 竖折（上下分屏，少见）：不特殊处理，沿用平板布局 */

@@ -1,6 +1,7 @@
 // renderer/core/menu-service.js —— 右键选单体系：12 种上下文，when 表达式精确控制
 // Electron 下默认原生菜单（编辑器文本上下文由主进程拼写菜单接管）；浏览器/特殊场景用自绘 DOM 菜单
 import { commands } from './command-registry.js';
+import { iconHtml } from '../lib/svg-icons.js';
 import { t } from '../i18n/index.js';
 import { contextKeys } from './contextkey-service.js';
 import { keymap, displayKey } from './keymap-service.js';
@@ -83,7 +84,7 @@ class MenuService {
       }
       const row = document.createElement('div');
       row.className = 'mazz-menu-item' + (it.enabled ? '' : ' disabled');
-      row.innerHTML = `<span class="mazz-menu-icon">${it.icon || ''}</span><span class="mazz-menu-label"></span><span class="mazz-menu-key">${it.accelerator || ''}</span>`;
+      row.innerHTML = `<span class="mazz-menu-icon">${iconHtml(it.icon || '')}</span><span class="mazz-menu-label"></span><span class="mazz-menu-key">${it.accelerator || ''}</span>`;
       row.querySelector('.mazz-menu-label').textContent = it.label;
       if (it.enabled) {
         row.addEventListener('click', () => { this.closeDom(); commands.execute(it.id); });

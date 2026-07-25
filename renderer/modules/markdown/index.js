@@ -1,6 +1,7 @@
 // renderer/modules/markdown/index.js —— 文档编辑内核（ProseMirror 自建 · WYSIWYG Markdown）
 // 契约 v1 + contributes：输入规则 / 全快捷键 / 工具栏 / Markdown 双向序列化 / 链接气泡 / 查找替换
 import { EditorState, Plugin, PluginKey, TextSelection } from 'prosemirror-state';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { EditorView } from 'prosemirror-view';
 import { keymap as pmKeymap } from 'prosemirror-keymap';
 import { history, undo, redo } from 'prosemirror-history';
@@ -50,7 +51,8 @@ function createEditor(container, initialText) {
   page.className = 'pm-page';
   host.appendChild(page);
   container.appendChild(host);
-  container.style.position = 'relative';
+  // 注意：不要给 container 写内联 position——.module-view 需要保持 CSS 的 absolute+inset:0
+  // 约束高度，否则长文档把整个窗格撑穿、滚动条消失（findbar 锚定 absolute 的视图即可）
 
   const doc = parseMarkdown(initialText || '');
   const state = EditorState.create({
@@ -127,6 +129,31 @@ function createEditor(container, initialText) {
       return true;
     },
     handleDOMEvents: {
+      // 拖拽图片文件进编辑器即插入（v33 反馈：插图要拖拽直达）
+      dragover(view, event) {
+        if (event.dataTransfer?.types?.includes('Files')) { event.preventDefault(); return true; }
+        return false;
+      },
+      drop(view, event) {
+        const files = [...(event.dataTransfer?.files || [])];
+        const imgs = files.filter(f => /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(f.name));
+        if (!imgs.length) return false;
+        event.preventDefault();
+        const { state } = view;
+        let tr = state.tr;
+        const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? state.selection.from;
+        tr = tr.insert(pos);
+        for (const f of imgs) {
+          // Electron 32+：File.path 已移除，必须 webUtils.getPathForFile；网页桥：blob URL
+          const realPath = window.mazz?.isElectron ? (window.mazz.getPathForFile?.(f) || '') : '';
+          const src = window.mazz?.isElectron ? (realPath ? `file://${realPath}` : '') : URL.createObjectURL(f);
+          if (!src) continue;
+          tr = tr.replaceSelectionWith(state.schema.nodes.image.create({ src, alt: f.name }));
+        }
+        view.dispatch(tr.scrollIntoView());
+        view.focus();
+        return true;
+      },
       contextmenu(view, event) {
         if (window.mazz?.isElectron) return false; // 主进程原生菜单（拼写建议 + 注册表模型）
         event.preventDefault();
@@ -214,6 +241,8 @@ function applyFontStyle(patch) {
 
 function toggleScript(script) {
   if (!current?.view) return;
+  if (!script) script = 'sup'; // 裸执行（命令面板直接调）默认上标开关，undefined 会喂给 schema 炸场
+  
   const view = current.view;
   const mark = view.state.schema.marks.fontStyle;
   const { from, to, empty } = view.state.selection;
@@ -437,6 +466,14 @@ const wordCommands = [
         when: "module=='markdown'", run: (p) => applyBlockAttrs({ spacingBefore: p?.em ?? null }) },
       { id: 'markdown.setSpacingAfter', title: '段后距', group: '格式',
         when: "module=='markdown'", run: (p) => applyBlockAttrs({ spacingAfter: p?.em ?? null }) },
+      { id: 'markdown.toggleDropCap', title: '首字下沉', icon: '❆', group: '格式',
+        when: "module=='markdown'", run: () => {
+          const view = current?.view;
+          if (!view) return;
+          const { $from } = view.state.selection;
+          const cur = $from.parent.attrs?.dropCap;
+          applyBlockAttrs({ dropCap: cur ? null : true });
+        } },
 
       { id: 'markdown.exportDocx', title: '导出为 Word (docx)', icon: '📦', group: '文件',
         when: "module=='markdown'",
@@ -476,13 +513,14 @@ export default {
     const ctl = instances.get(container);
     if (!ctl) return;
     current = ctl;
+    window.__activeMarkdownCtl = ctl; // 焚诀改写/桥接取数
     contextKeys.set('module', MODULE);
     contextKeys.set('hasSelection', !ctl.view.state.selection.empty);
     scheduleModelPush();
     if (!ctl.view.hasFocus()) ctl.view.focus();
   },
   deactivate(container) {
-    if (current === instances.get(container)) current = null;
+    if (current === instances.get(container)) { current = null; window.__activeMarkdownCtl = null; }
   },
 
   // —— 内容 ——
@@ -545,7 +583,7 @@ export default {
   // —— 工具栏（Ribbon「开始」页由外壳调度）——
   toolbarHTML: `
     <div class="rb-group" data-label="剪贴板">
-      <button class="rb-btn" data-command="edit.paste"><i class="ico">📋</i><span>粘贴</span></button>
+      <button class="rb-btn" data-command="edit.paste"><i class="ico">${iconHtml('📋')}</i><span>粘贴</span></button>
     </div>
     <div class="rb-group" data-label="字体">
       <div id="md-font-picker"></div>
@@ -553,6 +591,7 @@ export default {
       <button class="rb-btn" data-command="markdown.toggleBold"><i class="ico">B</i><span>加粗</span></button>
       <button class="rb-btn" data-command="markdown.toggleItalic"><i class="ico" style="font-style:italic">I</i><span>斜体</span></button>
       <button class="rb-btn" data-command="markdown.toggleStrike"><i class="ico" style="text-decoration:line-through">S</i><span>删除线</span></button>
+      <button class="rb-btn" data-command="markdown.toggleUnderline"><i class="ico" style="text-decoration:underline">U</i><span>下划线</span></button>
       <button class="rb-btn" data-command="markdown.toggleInlineCode"><i class="ico">&lt;/&gt;</i><span>行内码</span></button>
       <button class="rb-btn" data-command="markdown.setScript" data-script="sup"><i class="ico">x²</i><span>上标</span></button>
       <button class="rb-btn" data-command="markdown.setScript" data-script="sub"><i class="ico">x₂</i><span>下标</span></button>
@@ -574,6 +613,7 @@ export default {
       </select>
       <button class="rb-btn" data-command="markdown.setIndent" data-indent="2"><i class="ico">⇨</i><span>首行缩进</span></button>
       <button class="rb-btn" data-command="markdown.setIndent" data-indent=""><i class="ico">⇦</i><span>去缩进</span></button>
+      <button class="rb-btn" data-command="markdown.toggleDropCap"><i class="ico">${iconHtml('❆')}</i><span>首字下沉</span></button>
     </div>
     <div class="rb-group" data-label="段落">
       <select class="rb-select" id="md-blocktype">
@@ -587,17 +627,17 @@ export default {
       <button class="rb-btn" data-command="markdown.setCodeBlock"><i class="ico">{ }</i><span>代码块</span></button>
     </div>
     <div class="rb-group" data-label="插入">
-      <button class="rb-btn" data-command="markdown.insertLink"><i class="ico">🔗</i><span>链接</span></button>
-      <button class="rb-btn" data-command="markdown.insertImage"><i class="ico">🖼</i><span>图片</span></button>
+      <button class="rb-btn" data-command="markdown.insertLink"><i class="ico">${iconHtml('🔗')}</i><span>链接</span></button>
+      <button class="rb-btn" data-command="markdown.insertImage"><i class="ico">${iconHtml('🖼')}</i><span>图片</span></button>
       <button class="rb-btn" data-command="markdown.insertHr"><i class="ico">―</i><span>分割线</span></button>
       <button class="rb-btn" data-command="markdown.insertTable"><i class="ico">▦</i><span>表格</span></button>
       <button class="rb-btn" data-command="markdown.insertFootnote"><i class="ico">†</i><span>脚注</span></button>
     </div>
     <div class="rb-group" data-label="页面">
       <button class="rb-btn" data-command="markdown.toggleToc"><i class="ico">≡</i><span>目录</span></button>
-      <button class="rb-btn" data-command="markdown.pageSetup"><i class="ico">⚙</i><span>页面设置</span></button>
-      <button class="rb-btn" data-command="markdown.pagePreview"><i class="ico">📄</i><span>分页预览</span></button>
-      <button class="rb-btn" data-command="markdown.exportDocx"><i class="ico">📦</i><span>导出docx</span></button>
+      <button class="rb-btn" data-command="markdown.pageSetup"><i class="ico">${iconHtml('⚙')}</i><span>页面设置</span></button>
+      <button class="rb-btn" data-command="markdown.pagePreview"><i class="ico">${iconHtml('📄')}</i><span>分页预览</span></button>
+      <button class="rb-btn" data-command="markdown.exportDocx"><i class="ico">${iconHtml('📦')}</i><span>导出docx</span></button>
     </div>
     <div class="rb-group" data-label="编辑">
       <button class="rb-btn" data-command="edit.find"><i class="ico">🔍</i><span>查找</span></button>
@@ -655,6 +695,8 @@ export default {
         when: "module=='markdown'", run: toggle('code') },
       { id: 'markdown.toggleStrike', title: '删除线', icon: 'S', group: '格式',
         when: "module=='markdown'", run: toggle('strike') },
+      { id: 'markdown.toggleUnderline', title: '下划线', icon: 'U', group: '格式',
+        when: "module=='markdown'", run: toggle('underline') },
       { id: 'markdown.clearFormatting', title: '清除格式', group: '格式',
         when: "module=='markdown'", run: withView(view => {
           const { from, to } = view.state.selection;
@@ -772,6 +814,7 @@ export default {
     keybindings: [
       { command: 'markdown.toggleBold', key: 'ctrl+b', when: "module=='markdown'" },
       { command: 'markdown.toggleItalic', key: 'ctrl+i', when: "module=='markdown'" },
+      { command: 'markdown.toggleUnderline', key: 'ctrl+u', when: "module=='markdown'" },
       { command: 'markdown.toggleInlineCode', key: 'ctrl+e', when: "module=='markdown'" },
       { command: 'markdown.toggleStrike', key: 'ctrl+shift+x', when: "module=='markdown'" },
       { command: 'markdown.insertLink', key: 'ctrl+k', when: "module=='markdown'" },
@@ -814,6 +857,7 @@ export default {
         { command: 'markdown.toggleBold', title: '加粗', when: 'hasSelection', group: '2_format' },
         { command: 'markdown.toggleItalic', title: '斜体', when: 'hasSelection', group: '2_format' },
         { command: 'markdown.toggleStrike', title: '删除线', when: 'hasSelection', group: '2_format' },
+        { command: 'markdown.toggleUnderline', title: '下划线', when: 'hasSelection', group: '2_format' },
         { command: 'markdown.toggleInlineCode', title: '行内代码', when: 'hasSelection', group: '2_format' },
         { command: 'markdown.insertLink', title: '插入链接', when: 'hasSelection', group: '3_insert' },
         { command: 'markdown.insertImage', title: '插入图片', when: '!hasSelection', group: '3_insert' },

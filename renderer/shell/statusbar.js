@@ -19,7 +19,12 @@ export class StatusBar {
     this.el.querySelector('#st-zoom').addEventListener('click', () => commands.execute('view.zoomReset'));
   }
   set(module, count, pos) {
-    if (module != null) this.el.querySelector('#st-module').textContent = module;
+    if (module != null) {
+      const slot = this.el.querySelector('#st-module');
+      // 含 SVG 图标的走 innerHTML（状态栏模块图标 SVG 化后的正确打开方式，纯文本仍走 textContent）
+      if (module.includes('<svg')) slot.innerHTML = module;
+      else slot.textContent = module;
+    }
     if (count != null) this.el.querySelector('#st-count').textContent = count;
     if (pos != null) this.el.querySelector('#st-pos').textContent = pos;
   }

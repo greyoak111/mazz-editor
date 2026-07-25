@@ -8,6 +8,12 @@ class FileWatcher {
     this.wm = windowManager;
     this.watched = new Set();
 
+    bus.handle('fs:closeAll', async () => {
+      try { this.watcher?.close(); } catch {}
+      this.watcher = null;
+      this.watched.clear();
+      return true;
+    });
     bus.handle('fs:watch', async ({ paths }) => {
       const list = Array.isArray(paths) ? paths : [paths];
       const fresh = list.filter(p => p && !this.watched.has(p));
@@ -19,7 +25,8 @@ class FileWatcher {
           ignored: /(^|[/\\])\.(git|mazz[/\\]temp)|node_modules/,
         });
         this.watcher.on('all', (evt, p) => {
-          this.wm.broadcast('file:changed', { event: evt, path: p, at: Date.now() });
+          // 渲染层路径统一正斜杠（与 fs:listDir / workspace:get 约定一致）
+          this.wm.broadcast('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
         });
       }
       this.watcher.add(fresh);
@@ -34,5 +41,31 @@ class FileWatcher {
     });
   }
   async close() { if (this.watcher) { await this.watcher.close(); this.watcher = null; } }
+
+  /** 挂起监视（记下根目录，释放全部句柄）——删除/移动被监视的多层目录前用，Windows 上句柄会锁目录 */
+  async suspend() {
+    if (!this.watcher) return;
+    try { await this.watcher.close(); } catch {}
+    this.watcher = null;
+  }
+
+  /** 恢复监视（重建实例并把根目录加回去） */
+  async resume() {
+    if (this.watcher || !this.watched.size) return;
+    const roots = [...this.watched];
+    this.watched.clear();
+    // 复用 fs:watch 通道逻辑重建
+    try {
+      this.watcher = chokidar.watch(roots, {
+        ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+        depth: 8,
+        ignored: /(^|[/\\])\.(git|mazz[/\\]temp)|node_modules/,
+      });
+      this.watcher.on('all', (evt, p) => {
+        this.wm.broadcast('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
+      });
+      roots.forEach(p => this.watched.add(p));
+    } catch {}
+  }
 }
 module.exports = FileWatcher;

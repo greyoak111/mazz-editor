@@ -113,3 +113,40 @@
 [data-theme="construct"] .pm-page , [data-theme="custom"] .pm-page { background: var(--doc-bg); border: 1.5px solid var(--border); box-shadow: 4px 4px 0 color-mix(in srgb, var(--border) 25%, transparent); }
 /* 滚动条 */
 [data-theme="construct"] ::-webkit-scrollbar-thumb, [data-theme="custom"] ::-webkit-scrollbar-thumb , [data-theme="custom"] ::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--bg); }
+
+/* 7. 星辉（借鉴原神 UI：羊皮纸 × 辰金描边 × 星辰点缀 × 柔光金辉） */
+[data-theme="genshin"] {
+  --bg: #f3eee1; --bg-elev: #faf6ea; --bg-hover: #eae2cd; --bg-active: #e0d5b8;
+  --fg: #4a4436; --fg-dim: #8c8471; --border: #d9cba8;
+  --accent: #c79a3d; --accent-soft: #f1e3bd; --accent-fg: #3e2f12;
+  --danger: #c9453c; --warn: #c9862b; --ok: #6fa46b;
+  --shadow: 0 6px 24px rgba(120, 95, 40, .18);
+  --doc-bg: #faf6ec;
+  --acc: #c79a3d; --bd: #d9cba8; --bd2: #b8a276; --card: #faf6ea;
+  --mut: #8c8471; --faint: #b0a68a; --sh: rgba(120, 95, 40, .16);
+}
+/* —— 星辉装饰 —— */
+[data-theme="genshin"] .titlebar { background: linear-gradient(180deg, #2e3446 0%, #262c3c 100%); border-bottom: 2px solid #c79a3d; }
+[data-theme="genshin"] .titlebar .tb-title, [data-theme="genshin"] .titlebar .tb-btn, [data-theme="genshin"] .titlebar .tb-logo { color: #f3ead0; }
+[data-theme="genshin"] .ribbon { background: linear-gradient(180deg, var(--bg-elev), var(--bg)); border-bottom: 1px solid var(--border); }
+[data-theme="genshin"] .ribbon-tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+[data-theme="genshin"] .ribbon-tab.on::before { content: '✦ '; font-size: 10px; }
+[data-theme="genshin"] .ribbon-help-btn { color: var(--accent); }
+[data-theme="genshin"] .sidebar { background: var(--bg); border-right: 1px solid var(--border); }
+[data-theme="genshin"] .sidebar-head { color: var(--accent); font-weight: 700; letter-spacing: 2px; }
+[data-theme="genshin"] .sidebar-head::before { content: '❖ '; }
+[data-theme="genshin"] .statusbar { background: #2e3446; border-top: 1px solid #c79a3d; }
+[data-theme="genshin"] .statusbar, [data-theme="genshin"] .statusbar .sb-item { color: #e8ddc0; }
+[data-theme="genshin"] .rb-btn:hover:not(:disabled) { background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
+[data-theme="genshin"] .rb-btn:active:not(:disabled), [data-theme="genshin"] .rb-btn.on { background: var(--accent); color: var(--accent-fg); }
+[data-theme="genshin"] .mazz-palette { border: 1px solid var(--border); box-shadow: 0 12px 40px rgba(120, 95, 40, .25); }
+[data-theme="genshin"] .w-card { border: 1px solid var(--border); background: var(--card); transition: all .15s; }
+[data-theme="genshin"] .w-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 6px 18px rgba(199, 154, 61, .25); transform: translateY(-1px); }
+[data-theme="genshin"] .welcome h1 b { color: var(--accent); }
+[data-theme="genshin"] .welcome h1::after { content: ' ✦'; color: var(--accent); }
+[data-theme="genshin"] .ft-node:hover { background: var(--bg-hover); }
+[data-theme="genshin"] .ft-node.on { background: var(--accent-soft); }
+[data-theme="genshin"] ::-webkit-scrollbar-thumb { background: #d3c298; border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
+[data-theme="genshin"] .side-dock { border-left: 2px solid var(--accent); }
+[data-theme="genshin"] .appwin-bar { border-bottom: 1px solid var(--border); background: linear-gradient(180deg, var(--bg-elev), var(--bg)); }
+[data-theme="genshin"] .sd-tab.on { background: var(--accent); color: var(--accent-fg); }

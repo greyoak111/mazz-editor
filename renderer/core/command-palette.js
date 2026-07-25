@@ -1,5 +1,6 @@
 // renderer/core/command-palette.js —— 命令面板：模糊搜索全部命令/文件/符号
 import { commands } from './command-registry.js';
+import { iconHtml } from '../lib/svg-icons.js';
 import { keymap, displayKey } from './keymap-service.js';
 import { t } from '../i18n/index.js';
 
@@ -84,7 +85,7 @@ class CommandPalette {
   renderList(list) {
     list.innerHTML = this.items.map((it, i) => `
       <div class="mazz-palette-item ${i === this.selected ? 'sel' : ''}" data-i="${i}">
-        <span class="pi-icon">${it.icon || '›'}</span>
+        <span class="pi-icon">${it.icon ? iconHtml(it.icon) : '›'}</span>
         <span class="pi-label">${highlight(it.label, it._f?.ranges)}</span>
         ${it.detail ? `<span class="pi-detail">${escapeHtml(it.detail)}</span>` : ''}
         ${it.key ? `<span class="pi-key">${it.key}</span>` : ''}

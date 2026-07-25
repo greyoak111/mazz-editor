@@ -162,7 +162,9 @@ describe('浏览器：主页主题与自定义主页', () => {
     assert.ok(html.includes('--bg:#f7f6f3'), 'light 应输出亮色变量');
     assert.ok(!html.includes('prefers-color-scheme'), 'light 不应包媒体查询');
     html = await render('system');
-    assert.ok(html.includes('prefers-color-scheme:dark'), 'system 应包暗色媒体查询');
+    // v34 起「跟随系统」= 跟随 Mazz 软件主题变量（不再用 prefers-color-scheme 媒体查询）
+    assert.ok(!html.includes('prefers-color-scheme'), 'system 应直接输出 Mazz 主题变量');
+    assert.ok(html.includes('--bg:'), 'system 应输出主题变量');
     assert.equal(store.get('browser.homeTheme'), 'system', '主题应持久化');
     container.remove();
   });

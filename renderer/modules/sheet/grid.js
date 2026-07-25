@@ -80,6 +80,14 @@ export class SheetGrid {
     this.renderFrozen(sl, st, c1, c2, r1, r2);
     this.renderSelection(sl, st);
     this.positionChrome();
+    // 编辑中的输入框跟随滚动（滚动/缩放后仍贴着单元格）
+    if (this.editing) {
+      const b = this.cellBox(this.editing.r, this.editing.c, sl, st);
+      this.editing.input.style.left = (HEADER_W + b.x) + 'px';
+      this.editing.input.style.top = (HEADER_H + b.y) + 'px';
+      this.editing.input.style.width = Math.max(b.w, 60) + 'px';
+      this.editing.input.style.height = b.h + 'px';
+    }
   }
 
   cellBox(r, c, sl, st) {
@@ -95,7 +103,9 @@ export class SheetGrid {
   }
 
   makeCell(r, c, sl, st, layer) {
-    const box = this.cellBox(r, c, sl, st);
+    // 单元格一律用内容坐标（sl/st 取 0）：滚动由 .sg-scroll 原生滚动与表头 translate 负责，
+    // 坐标再扣滚动量 = 双重滚动（滚得越多偏得越离谱——编辑框/选中框与单元格对不齐的根因）
+    const box = this.cellBox(r, c, 0, 0);
     if (box.covered) return null;
     const cell = this.sheet.get(r, c);
     const el = document.createElement('div');
@@ -127,6 +137,16 @@ export class SheetGrid {
       const bw = s.border === 'medium' ? '2px' : '1px';
       el.style.outline = `${bw} solid ${s.borderColor || 'var(--fg-dim)'}`;
       el.style.outlineOffset = `-${bw === '2px' ? 1 : 0}px`;
+    }
+    // 四边独立边框（v34 Excel 语义）：box-shadow inset 画线不改布局
+    if (s.bT || s.bR || s.bB || s.bL) {
+      const bc = s.borderColor || 'var(--fg-dim)';
+      const parts = [];
+      if (s.bT) parts.push(`inset 0 ${s.bT === 'medium' ? 2 : 1}px 0 0 ${bc}`);
+      if (s.bB) parts.push(`inset 0 -${s.bB === 'medium' ? 2 : 1}px 0 0 ${bc}`);
+      if (s.bL) parts.push(`inset ${s.bL === 'medium' ? 2 : 1}px 0 0 0 ${bc}`);
+      if (s.bR) parts.push(`inset -${s.bR === 'medium' ? 2 : 1}px 0 0 0 ${bc}`);
+      el.style.boxShadow = parts.join(', ');
     }
     // 条件格式
     const cfBg = this.evalCondFormats(r, c, v);
@@ -173,6 +193,11 @@ export class SheetGrid {
       el.textContent = numToCol(c);
       el.style.cssText = `left:${this.colX(c)}px;width:${this.colW(c)}px`;
       el.dataset.c = c;
+      const grip = document.createElement('span');
+      grip.className = 'sg-rz sg-rz-col';
+      grip.title = '拖拽调整列宽（双击自适应）';
+      this.bindResizeGrip(grip, 'col', c);
+      el.appendChild(grip);
       frag.appendChild(el);
     }
     this.colHeadInner.appendChild(frag);
@@ -189,9 +214,60 @@ export class SheetGrid {
       el.textContent = r;
       el.style.cssText = `top:${this.rowY(r)}px;height:${this.rowH(r)}px`;
       el.dataset.r = r;
+      const grip = document.createElement('span');
+      grip.className = 'sg-rz sg-rz-row';
+      grip.title = '拖拽调整行高（双击复位）';
+      this.bindResizeGrip(grip, 'row', r);
+      el.appendChild(grip);
       frag.appendChild(el);
     }
     this.rowHeadInner.appendChild(frag);
+  }
+
+  /** 行高列宽拖拽调整（Pointer Events，触屏可用）+ 双击自适应/复位 */
+  bindResizeGrip(grip, axis, idx) {
+    grip.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try { grip.setPointerCapture?.(e.pointerId); } catch {} // 某些环境指针捕获不可用
+      const isCol = axis === 'col';
+      const start = isCol ? e.clientX : e.clientY;
+      const orig = isCol ? this.colW(idx) : this.rowH(idx);
+      const move = (ev) => {
+        const delta = (isCol ? ev.clientX : ev.clientY) - start;
+        const v = Math.max(isCol ? 30 : 16, Math.min(isCol ? 400 : 200, orig + delta));
+        if (isCol) this.sheet.colW.set(idx, Math.round(v));
+        else this.sheet.rowH.set(idx, Math.round(v));
+        this.render();
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
+        this.hooks.onEdit?.([], '调整' + (isCol ? '列宽' : '行高'));
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    });
+    grip.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (axis === 'col') this.autoFitCol(idx);
+      else { this.sheet.rowH.delete(idx); this.render(); }
+      this.hooks.onEdit?.([], '自适应尺寸');
+    });
+  }
+
+  /** 列宽自适应内容（按最长文本估算） */
+  autoFitCol(c) {
+    let maxLen = 2;
+    for (let r = 1; r <= Math.min(this.sheet.maxRow, 500); r++) {
+      const v = this.sheet.computed(r, c);
+      if (v != null) maxLen = Math.max(maxLen, String(v).length);
+    }
+    this.sheet.colW.set(c, Math.max(50, Math.min(400, maxLen * 8 + 18)));
+    this.render();
   }
 
   renderFrozen(sl, st, c1, c2, r1, r2) {
@@ -255,7 +331,7 @@ export class SheetGrid {
   // ==================== 选区渲染 ====================
   renderSelection(sl, st) {
     const { r1, r2, c1, c2, active } = this.sel;
-    const a = active;
+    const a = active || { r: r1, c: c1 }; // 缺锚点时用选区左上角兜底（程序化构造选区不带 active 就崩的前科）
     const box = this.cellBox(a.r, a.c, sl, st);
     this.activeEl.style.cssText = `display:block;left:${HEADER_W + box.x}px;top:${HEADER_H + box.y}px;width:${box.w}px;height:${box.h}px`;
 
@@ -271,6 +347,10 @@ export class SheetGrid {
   bindScroll() {
     let raf = 0;
     this.scrollEl.addEventListener('scroll', () => {
+      // Excel 式无限网格：滚动接近边界时按需扩展（初始 200 行/26 列，滚到 80% 再加）
+      const sl = this.scrollEl.scrollLeft, st = this.scrollEl.scrollTop;
+      if (st + this.scrollEl.clientHeight > this.totalH() * 0.8) this.sheet.maxRow += 100;
+      if (sl + this.scrollEl.clientWidth > this.totalW() * 0.8) this.sheet.maxCol += 13;
       if (raf) return;
       raf = requestAnimationFrame(() => { raf = 0; this.render(); });
     });
@@ -403,15 +483,18 @@ export class SheetGrid {
     if (!this.editing) return;
     const { input, r, c } = this.editing;
     const val = input.value;
-    input.remove();
+    // 先置空再移除：remove() 会同步触发 blur，重入时 editing 已空直接返回，
+    // 否则重入的 remove 先摘除节点、外层 remove 抛 NotFoundError（实机破坏猴抓到）
     this.editing = null;
+    input.remove();
     this.hooks.onEdit?.([[r, c, val]]);
     this.render();
   }
   cancelEdit() {
     if (!this.editing) return;
-    this.editing.input.remove();
-    this.editing = null;
+    const input = this.editing.input;
+    this.editing = null; // 同上：先置空防 blur 重入 commitEdit 二次移除
+    input.remove();
     this.render();
   }
 
@@ -444,7 +527,7 @@ export class SheetGrid {
   // ==================== 填充柄 ====================
   applyFill() {
     const { r1, r2, c1, c2, active } = this.sel;
-    const a = active;
+    const a = active || { r: r1, c: c1 }; // 缺锚点时用选区左上角兜底（程序化构造选区不带 active 就崩的前科）
     // 源区 = 初始选区（active 锚定），目标 = 拖动后的扩区
     const edits = [];
     const srcR1 = Math.min(r1, a.r), srcR2 = Math.max(r2, a.r);

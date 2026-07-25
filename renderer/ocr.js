@@ -25,6 +25,12 @@ export function registerOcrCommands(commands) {
         <div style="display:flex;gap:14px;max-width:72vw">
           <img src="${dataUrl}" style="max-width:300px;max-height:300px;border:1px solid var(--bd,#e0ded8);border-radius:8px;object-fit:contain" alt="">
           <div style="flex:1;min-width:320px;display:flex;flex-direction:column;gap:8px">
+            <div class="tr-label">识别引擎
+              <select class="rb-select ocr-engine">
+                <option value="ai">AI 多模态（推荐，需配置 AI）</option>
+                <option value="local">本地 Tesseract（离线）</option>
+              </select>
+            </div>
             <div class="tr-label">识别语言
               <select class="rb-select ocr-lang">
                 <option value="chi_sim+eng">中文 + 英文</option>
@@ -48,7 +54,35 @@ export function registerOcrCommands(commands) {
       const copyBtn = m.body.querySelector('.ocr-copy');
       const insertBtn = m.body.querySelector('.ocr-insert');
 
+      const engineEl = m.body.querySelector('.ocr-engine');
       m.body.querySelector('.ocr-go').addEventListener('click', async () => {
+        if (engineEl.value === 'ai') {
+          // AI 多模态识别（vision 通道）
+          out.value = 'AI 识别中…';
+          status.textContent = 'AI 多模态识别中（比本地模型更懂版式与手写）';
+          try {
+            const { getProviderConfig, providerReady, visionChat } = await import('./modules/factory/provider.js');
+            const cfg = await getProviderConfig();
+            if (!providerReady(cfg)) {
+              out.value = '未配置 AI 服务——请先在智能创作 ⚙ 配置（或把引擎切回「本地 Tesseract」）';
+              status.textContent = '';
+              return;
+            }
+            const langName = { 'chi_sim+eng': '中文和英文', chi_sim: '中文', eng: '英文', jpn: '日文', kor: '韩文' }[m.body.querySelector('.ocr-lang').value] || '中文和英文';
+            const text = await visionChat({
+              cfg,
+              prompt: `请精确识别这张图片中的全部文字（主要是${langName}）。要求：1. 按原图版式与阅读顺序逐行输出原文；2. 表格按行以「|」分列；3. 不翻译、不解释、不评价、不补充任何内容；4. 看不清的字用 □ 标出。`,
+              imageDataUrl: dataUrl,
+            });
+            out.value = text;
+            status.textContent = '✓ AI 识别完成';
+            copyBtn.disabled = insertBtn.disabled = !text;
+          } catch (e) {
+            out.value = 'AI 识别失败：' + e.message;
+            status.textContent = '可切回「本地 Tesseract」重试';
+          }
+          return;
+        }
         const lang = m.body.querySelector('.ocr-lang').value;
         status.textContent = '正在加载识别引擎…';
         copyBtn.disabled = insertBtn.disabled = true;

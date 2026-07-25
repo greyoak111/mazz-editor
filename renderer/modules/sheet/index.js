@@ -1,5 +1,6 @@
 // renderer/modules/sheet/index.js —— 表格模块（sheet.js）：虚拟网格 + 公式引擎 + Excel 管线
 import { Workbook, Sheet, History, snapshotCells, restoreCells, remapFormula } from './model.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { SheetGrid, HEADER_H, HEADER_W } from './grid.js';
 import * as io from './io.js';
 import { insertChart, closeChart, getChartImage } from './charts.js';
@@ -288,6 +289,49 @@ function createSheet(container) {
 function withCtl(fn) { return () => { if (current) fn(current); } }
 function withSel(fn) { return withCtl(ctl => fn(ctl, ctl.grid.sel)); }
 
+/** Excel 语义边框：kind 展开为选区每格的四边集合（bT/bR/bB/bL）
+ * all=每格四边 / outer=选区外沿 / inner=选区内线 / top/bottom/left/right=对应整边 / none=清除
+ * width: thin|medium；color 同步写 borderColor（为 0/'' 表示该边清除） */
+function applyBorderToSel(ctl, sel, kind, width = 'thin', color = null) {
+  const sheet = ctl.sheet;
+  const snaps = snapshotCells(sheet, sel.r1, sel.c1, sel.r2, sel.c2);
+  const apply = () => {
+    for (let r = sel.r1; r <= sel.r2; r++) {
+      for (let c = sel.c1; c <= sel.c2; c++) {
+        if (kind === 'none') {
+          sheet.setStyle(r, c, { bT: null, bR: null, bB: null, bL: null, border: null });
+          continue;
+        }
+        const isTop = r === sel.r1, isBot = r === sel.r2, isL = c === sel.c1, isR = c === sel.c2;
+        const oneRow = sel.r1 === sel.r2, oneCol = sel.c1 === sel.c2;
+        const patch = {};
+        const W = width;
+        if (kind === 'all') { patch.bT = W; patch.bR = W; patch.bB = W; patch.bL = W; }
+        else if (kind === 'outer') {
+          if (isTop) patch.bT = W;
+          if (isBot) patch.bB = W;
+          if (isL) patch.bL = W;
+          if (isR) patch.bR = W;
+        } else if (kind === 'inner') {
+          if (!isTop || oneRow) patch.bT = W;
+          if (!isBot || oneRow) patch.bB = W;
+          if (!isL || oneCol) patch.bL = W;
+          if (!isR || oneCol) patch.bR = W;
+        } else if (kind === 'top') patch.bT = W;
+        else if (kind === 'bottom') patch.bB = W;
+        else if (kind === 'left') patch.bL = W;
+        else if (kind === 'right') patch.bR = W;
+        if (color) patch.borderColor = color;
+        sheet.setStyle(r, c, patch);
+      }
+    }
+  };
+  ctl.history.push('边框', () => { restoreCells(sheet, snaps); ctl.grid.render(); }, () => { apply(); ctl.grid.render(); });
+  apply();
+  window.MazzHost?.notifyChange(ctl.container);
+  ctl.grid.render();
+}
+
 function applyStyleToSel(ctl, sel, patch) {
   const sheet = ctl.sheet;
   const snaps = snapshotCells(sheet, sel.r1, sel.c1, sel.r2, sel.c2);
@@ -453,7 +497,12 @@ export default {
       <div id="sg-color-picker"></div>
       <div id="sg-fill-picker"></div>
       <select class="rb-select" id="sg-border" title="边框">
-        <option value="none">无边框</option><option value="thin">细边框</option><option value="medium">粗边框</option>
+        <option value="none">无边框</option><option value="all">全框线</option><option value="outer">外框线</option>
+        <option value="inner">内框线</option><option value="top">上框线</option><option value="bottom">下框线</option>
+        <option value="left">左框线</option><option value="right">右框线</option>
+      </select>
+      <select class="rb-select" id="sg-border-width" title="边框粗细">
+        <option value="thin">细线</option><option value="medium">粗线</option>
       </select>
       <button class="rb-btn" data-command="sheet.valignTop"><i class="ico">⤒</i><span>顶对齐</span></button>
       <button class="rb-btn" data-command="sheet.valignMiddle"><i class="ico">↔</i><span>垂直居中</span></button>
@@ -473,24 +522,24 @@ export default {
     <div class="rb-group" data-label="结构">
       <button class="rb-btn" data-command="sheet.merge"><i class="ico">▣</i><span>合并</span></button>
       <button class="rb-btn" data-command="sheet.unmerge"><i class="ico">▢</i><span>拆合并</span></button>
-      <button class="rb-btn" data-command="sheet.freezeAt"><i class="ico">❄</i><span>冻结至此</span></button>
-      <button class="rb-btn" data-command="sheet.unfreeze"><i class="ico">☀</i><span>解冻</span></button>
+      <button class="rb-btn" data-command="sheet.freezeAt"><i class="ico">${iconHtml('❄')}</i><span>冻结至此</span></button>
+      <button class="rb-btn" data-command="sheet.unfreeze"><i class="ico">${iconHtml('☀')}</i><span>解冻</span></button>
     </div>
     <div class="rb-group" data-label="数据">
       <button class="rb-btn" data-command="sheet.sortAsc"><i class="ico">A↓</i><span>升序</span></button>
       <button class="rb-btn" data-command="sheet.sortDesc"><i class="ico">Z↓</i><span>降序</span></button>
       <button class="rb-btn" data-command="sheet.toggleFilter"><i class="ico">⧩</i><span>筛选</span></button>
       <button class="rb-btn" data-command="sheet.validation"><i class="ico">✓</i><span>验证</span></button>
-      <button class="rb-btn" data-command="sheet.condFormat"><i class="ico">🎨</i><span>条件格式</span></button>
+      <button class="rb-btn" data-command="sheet.condFormat"><i class="ico">${iconHtml('🎨')}</i><span>条件格式</span></button>
     </div>
     <div class="rb-group" data-label="分析">
-      <button class="rb-btn" data-command="sheet.insertChart"><i class="ico">📈</i><span>图表</span></button>
+      <button class="rb-btn" data-command="sheet.insertChart"><i class="ico">${iconHtml('📈')}</i><span>图表</span></button>
       <button class="rb-btn" data-command="sheet.pivot"><i class="ico">∑</i><span>透视表</span></button>
       <button class="rb-btn" data-command="sheet.insertFunction"><i class="ico">fx</i><span>函数</span></button>
     </div>
     <div class="rb-group" data-label="文件">
-      <button class="rb-btn" data-command="sheet.exportXlsx"><i class="ico">📦</i><span>导出xlsx</span></button>
-      <button class="rb-btn" data-command="sheet.exportCsv"><i class="ico">📄</i><span>导出CSV</span></button>
+      <button class="rb-btn" data-command="sheet.exportXlsx"><i class="ico">${iconHtml('📦')}</i><span>导出xlsx</span></button>
+      <button class="rb-btn" data-command="sheet.exportCsv"><i class="ico">${iconHtml('📄')}</i><span>导出CSV</span></button>
       <button class="rb-btn" data-command="edit.undo"><i class="ico">↩</i><span>撤销</span></button>
       <button class="rb-btn" data-command="edit.redo"><i class="ico">↪</i><span>重做</span></button>
     </div>`,
@@ -516,9 +565,12 @@ export default {
       label: '填充色',
       onChange: (color) => window.MazzCommands.execute('sheet.setFillColor', { color }),
     });
-    panel.querySelector('#sg-border')?.addEventListener('change', (e) => {
-      window.MazzCommands.execute('sheet.setBorder', { border: e.target.value });
+    const fireBorder = () => window.MazzCommands.execute('sheet.setBorder', {
+      border: panel.querySelector('#sg-border').value,
+      width: panel.querySelector('#sg-border-width')?.value || 'thin',
     });
+    panel.querySelector('#sg-border')?.addEventListener('change', fireBorder);
+    panel.querySelector('#sg-border-width')?.addEventListener('change', fireBorder);
   },
 
   contributes: {
@@ -528,6 +580,33 @@ export default {
       { id: 'sheet.bold', title: '加粗', icon: 'B', group: '格式', when: "module=='sheet'", run: withCtl(ctl => ctl.toggleStyle('bold')) },
       { id: 'sheet.italic', title: '斜体', icon: 'I', group: '格式', when: "module=='sheet'", run: withCtl(ctl => ctl.toggleStyle('italic')) },
       { id: 'sheet.underline', title: '下划线', icon: 'U', group: '格式', when: "module=='sheet'", run: withCtl(ctl => ctl.toggleStyle('underline')) },
+      { id: 'sheet.setColWidth', title: '设置列宽…', icon: '↔', group: '格式', when: "module=='sheet'", run: withCtl(async (ctl) => {
+        const c = ctl.grid.sel.active.c;
+        const cur = ctl.sheet.colW.get(c) || 90;
+        const v = await inputModal(`设置第 ${c} 列列宽（px，30–400）`, String(cur));
+        const n = Math.max(30, Math.min(400, parseInt(v, 10) || 0));
+        if (n) { ctl.sheet.colW.set(c, n); ctl.grid.render(); toast(`列宽已设为 ${n}px`); }
+      }) },
+      { id: 'sheet.setRowHeight', title: '设置行高…', icon: '↕', group: '格式', when: "module=='sheet'", run: withCtl(async (ctl) => {
+        const r = ctl.grid.sel.active.r;
+        const cur = ctl.sheet.rowH.get(r) || 24;
+        const v = await inputModal(`设置第 ${r} 行行高（px，16–200）`, String(cur));
+        const n = Math.max(16, Math.min(200, parseInt(v, 10) || 0));
+        if (n) { ctl.sheet.rowH.set(r, n); ctl.grid.render(); toast(`行高已设为 ${n}px`); }
+      }) },
+      { id: 'sheet.autoFitCol', title: '列宽自适应内容', icon: '⇥', group: '格式', when: "module=='sheet'", run: withCtl(ctl => {
+        for (let c = ctl.grid.sel.c1; c <= ctl.grid.sel.c2; c++) ctl.grid.autoFitCol(c);
+        toast('已按内容调整列宽');
+      }) },
+      { id: 'sheet.uniformSize', title: '统一行高列宽…', icon: '⊞', group: '格式', when: "module=='sheet'", run: withCtl(async (ctl) => {
+        const v = await inputModal('统一列宽（px，留空跳过）/ 行高（用 / 分隔，如 90/24）', '90/24');
+        if (!v) return;
+        const [w, h] = v.split('/').map(x => parseInt(x.trim(), 10));
+        if (w > 0) for (let c = 1; c <= ctl.sheet.maxCol; c++) ctl.sheet.colW.set(c, Math.max(30, Math.min(400, w)));
+        if (h > 0) for (let r = 1; r <= ctl.sheet.maxRow; r++) ctl.sheet.rowH.set(r, Math.max(16, Math.min(200, h)));
+        ctl.grid.render();
+        toast('已统一尺寸');
+      }) },
       { id: 'sheet.alignLeft', title: '左对齐', group: '格式', when: "module=='sheet'", run: withSel((ctl, sel) => applyStyleToSel(ctl, sel, { align: 'left' })) },
       { id: 'sheet.alignCenter', title: '居中', group: '格式', when: "module=='sheet'", run: withSel((ctl, sel) => applyStyleToSel(ctl, sel, { align: 'center' })) },
       { id: 'sheet.alignRight', title: '右对齐', group: '格式', when: "module=='sheet'", run: withSel((ctl, sel) => applyStyleToSel(ctl, sel, { align: 'right' })) },
@@ -535,7 +614,7 @@ export default {
       { id: 'sheet.setFontSize', title: '设置字号', group: '格式', when: "module=='sheet'", run: (p) => withSel((ctl, sel) => applyStyleToSel(ctl, sel, { size: p?.size }))() },
       { id: 'sheet.setTextColor', title: '文字颜色', group: '格式', when: "module=='sheet'", run: (p) => withSel((ctl, sel) => applyStyleToSel(ctl, sel, { color: p?.color }))() },
       { id: 'sheet.setFillColor', title: '填充颜色', group: '格式', when: "module=='sheet'", run: (p) => withSel((ctl, sel) => applyStyleToSel(ctl, sel, { fill: p?.color }))() },
-      { id: 'sheet.setBorder', title: '边框', group: '格式', when: "module=='sheet'", run: (p) => withSel((ctl, sel) => applyStyleToSel(ctl, sel, { border: p?.border }))() },
+      { id: 'sheet.setBorder', title: '边框（全/外/内/单边）', group: '格式', when: "module=='sheet'", run: (p) => withSel((ctl, sel) => applyBorderToSel(ctl, sel, p?.border || 'all', p?.width || 'thin', p?.color))() },
       { id: 'sheet.valignTop', title: '顶部对齐', group: '格式', when: "module=='sheet'", run: withSel((ctl, sel) => applyStyleToSel(ctl, sel, { valign: 'top' })) },
       { id: 'sheet.valignMiddle', title: '垂直居中', group: '格式', when: "module=='sheet'", run: withSel((ctl, sel) => applyStyleToSel(ctl, sel, { valign: 'middle' })) },
       { id: 'sheet.valignBottom', title: '底部对齐', group: '格式', when: "module=='sheet'", run: withSel((ctl, sel) => applyStyleToSel(ctl, sel, { valign: 'bottom' })) },
@@ -659,6 +738,9 @@ export default {
         { command: 'sheet.insertColLeft', title: '在左侧插入列', group: '1_struct' },
         { command: 'sheet.deleteCol', title: '删除列', group: '1_struct' },
         { command: 'sheet.merge', title: '合并单元格', group: '1_struct' },
+        { command: 'sheet.setRowHeight', title: '设置本行行高…', group: '2_size' },
+        { command: 'sheet.setColWidth', title: '设置本列列宽…', group: '2_size' },
+        { command: 'sheet.autoFitCol', title: '本列宽度自适应', group: '2_size' },
         { command: 'sheet.cellFormat', title: '单元格格式…', group: '2_format' },
         { command: 'sheet.sortAsc', title: '升序排序', group: '3_data' },
         { command: 'sheet.sortDesc', title: '降序排序', group: '3_data' },

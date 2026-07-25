@@ -17,6 +17,13 @@ const strikeMark = {
   toDOM: () => ['s', 0],
 };
 
+// 下划线 mark（HTML <u> 双向；Markdown 无原生语法，序列化为 <u>…</u>）
+const underlineMark = {
+  parseDOM: [{ tag: 'u' }, { tag: 'ins' },
+    { style: 'text-decoration', getAttrs: v => v.includes('underline') && null }],
+  toDOM: () => ['u', 0],
+};
+
 // 批注 mark（CriticMarkup 风格 {==正文==}{>>批注<<} 内联自足）
 export const commentMark = {
   attrs: { id: { default: '' }, text: { default: '' } },
@@ -82,6 +89,7 @@ export const schema = new Schema({
     .append(tableSchemaNodes()),
   marks: baseSchema.spec.marks
     .addToEnd('strike', strikeMark)
+    .addToEnd('underline', underlineMark)
     .addToEnd('comment', commentMark)
     .addToEnd('fontStyle', fontStyleMark),
 });
@@ -93,10 +101,25 @@ tokenizer.use(footnoteRefPlugin);
 tokenizer.use(fontStylePlugin);
 tokenizer.use(wikilinkPlugin);
 tokenizer.use(commentPlugin);
+// <u>…</u> 行内规则（Markdown 无原生下划线语法）
+tokenizer.inline.ruler.push('underline', (state, silent) => {
+  const src = state.src.slice(state.pos);
+  const m = /^<u>([^<]+)<\/u>/.exec(src);
+  if (!m) return false;
+  if (!silent) {
+    state.push('u_open', 'u', 1);
+    const t = state.push('text', '', 0);
+    t.content = m[1];
+    state.push('u_close', 'u', -1);
+  }
+  state.pos += m[0].length;
+  return true;
+});
 
 export const mdParser = new MarkdownParser(schema, tokenizer, {
   ...defaultMarkdownParser.tokens,
   s: { mark: 'strike' },
+  u: { mark: 'underline' },
   ...footnoteTokenHandler,
   ...fontStyleTokens,
   ...commentTokens,
@@ -124,6 +147,7 @@ export const mdSerializer = new MarkdownSerializer(
   {
     ...defaultMarkdownSerializer.marks,
     strike: { open: '~~', close: '~~', mixable: true, expelEnclosingWhitespace: true },
+    underline: { open: '<u>', close: '</u>', mixable: true, expelEnclosingWhitespace: true },
     comment: { open: commentSerializer.open, close: commentSerializer.close, mixable: false },
     fontStyle: fontStyleSerializer.fontStyle,
   },

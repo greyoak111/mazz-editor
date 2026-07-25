@@ -6,7 +6,7 @@ let activeRec = null;
 export function registerVoiceCommands(commands) {
   commands.register('voice.dictate', {
     title: '语音输入（开始/停止）', icon: '🎙', group: '工具',
-    when: "module=='markdown' || module=='text' || module=='notes'",
+    // 不限模块（v33 工具坞点了没反应的根因就是 when 限制）；无文本焦点时给出引导
     run: () => {
       // 再次执行 = 停止
       if (activeRec) {
@@ -18,6 +18,10 @@ export function registerVoiceCommands(commands) {
         toast('当前环境不支持语音识别（Electron 默认不带语音服务）');
         return;
       }
+      // 无文本输入目标时先引导（避免"点了没反应"的错觉）
+      const ae = document.activeElement;
+      const editable = ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName) || ae.closest?.('.ProseMirror, [contenteditable]'));
+      if (!editable) toast('将识别结果插入当前光标处——先点一下文档编辑区再开始');
       const rec = new SR();
       rec.lang = 'zh-CN';
       rec.continuous = true;

@@ -170,6 +170,15 @@ export async function exportXlsx(workbook, { chartImages = [] } = {}) {
           bottom: { style: st }, right: { style: st },
         };
       }
+      // 四边独立边框（v34）：逐边导出，颜色 argb
+      if (s.bT || s.bR || s.bB || s.bL) {
+        const col = s.borderColor ? { argb: 'FF' + s.borderColor.replace('#', '') } : undefined;
+        ec.border = ec.border || {};
+        if (s.bT) ec.border.top = { style: s.bT === 'medium' ? 'medium' : 'thin', color: col };
+        if (s.bR) ec.border.right = { style: s.bR === 'medium' ? 'medium' : 'thin', color: col };
+        if (s.bB) ec.border.bottom = { style: s.bB === 'medium' ? 'medium' : 'thin', color: col };
+        if (s.bL) ec.border.left = { style: s.bL === 'medium' ? 'medium' : 'thin', color: col };
+      }
     }
     for (const m of sheet.merges) ws.mergeCells(m.r1, m.c1, m.r2, m.c2);
     for (const [c, w] of sheet.colW) ws.getColumn(c).width = w / 7.2;

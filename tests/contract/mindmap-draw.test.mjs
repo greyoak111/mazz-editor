@@ -12,7 +12,7 @@ describe('思维导图：树操作', () => {
     const b = mm.createNode('B', 'b');
     a.children.push(mm.createNode('A1', 'a1'));
     r.children.push(a, b);
-    return r;
+    return [r];
   }
 
   test('查找/追加/插入/删除', () => {
@@ -24,41 +24,47 @@ describe('思维导图：树操作', () => {
     assert.equal(mm.findNode(r, 'a').children.length, 2);
     const s = mm.createNode('B2', 'b2');
     mm.insertSibling(r, 'b', s);
-    assert.equal(r.children[2].id, 'b2');
+    assert.equal(r[0].children[2].id, 'b2');
     assert.ok(mm.removeNode(r, 'a1'));
     assert.equal(mm.findNode(r, 'a1'), null);
-    assert.ok(!mm.removeNode(r, 'root'), '根不可删');
+    assert.ok(mm.removeNode(r, 'root'), 'v2 多根森林：根节点可删除');
+    assert.equal(r.length, 0);
   });
 
   test('moveNode 重排 + 防环', () => {
     const r = sampleTree();
     assert.ok(mm.moveNode(r, 'b', 'a'), 'B 移到 A 下');
     assert.equal(mm.findNode(r, 'a').children[1].id, 'b');
-    assert.equal(r.children.length, 1);
+    assert.equal(r[0].children.length, 1);
     assert.ok(!mm.moveNode(r, 'a', 'b'), 'A 不能移到自己的子树（防环）');
-    assert.ok(!mm.moveNode(r, 'root', 'b'), '根不可移动');
+    assert.ok(!mm.moveNode(r, 'root', 'b'), '根不能移入自己的子树');
+    // v2 多根：根可以并入另一棵独立的树
+    r.push(mm.createNode('另一棵树', 'r2'));
+    assert.ok(mm.moveNode(r, 'root', 'r2'), 'v2 多根森林：根可并入他树');
+    assert.equal(r.length, 1);
+    assert.equal(mm.findNode(r, 'r2').children[0].id, 'root');
   });
 
   test('大纲互转：parseOutline / toOutline 往返', () => {
     const md = '# 项目计划\n\n- 前端\n  - 页面\n  - 组件\n- 后端\n  - API\n';
     const tree = mm.parseOutline(md);
-    assert.equal(tree.text, '项目计划');
-    assert.equal(tree.children.length, 2);
-    assert.equal(tree.children[0].text, '前端');
-    assert.equal(tree.children[0].children[1].text, '组件');
+    assert.equal(tree[0].text, '项目计划');
+    assert.equal(tree[0].children.length, 2);
+    assert.equal(tree[0].children[0].text, '前端');
+    assert.equal(tree[0].children[0].children[1].text, '组件');
     const out = mm.toOutline(tree);
     assert.ok(out.includes('# 项目计划'));
     assert.ok(out.includes('- 前端'));
     assert.ok(out.includes('  - 页面'));
     // 往返一致
     const tree2 = mm.parseOutline(out);
-    assert.equal(tree2.children[0].children[0].text, '页面');
+    assert.equal(tree2[0].children[0].children[0].text, '页面');
   });
 
   test('任务列表标记被剥除', () => {
     const tree = mm.parseOutline('# T\n\n- [ ] 待办\n- [x] 完成\n');
-    assert.equal(tree.children[0].text, '待办');
-    assert.equal(tree.children[1].text, '完成');
+    assert.equal(tree[0].children[0].text, '待办');
+    assert.equal(tree[0].children[1].text, '完成');
   });
 
   test('水平树布局：父节点垂直居中于子树', () => {

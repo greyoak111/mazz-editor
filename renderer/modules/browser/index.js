@@ -2,6 +2,7 @@
 // webview 多标签 + 地址栏三模式 + 历史收藏 + 页内查找 + 隐私隔离 + SearXNG 内核（主进程代理）
 // 隐私红线：搜索页不显示任何源站信息；结果链接直达目标站；跨域 Referer 由主进程剥离
 import { contextKeys } from '../../core/contextkey-service.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { menus } from '../../core/menu-service.js';
 import { toast, modal, inputModal } from '../../shell/shell.js';
 
@@ -23,8 +24,8 @@ function createBrowser(container) {
       <button class="br-nav" data-a="reload" title="刷新（Ctrl+R）">⟳</button>
       <button class="br-nav" data-a="home" title="主页">⌂</button>
       <input class="br-addr" placeholder="输入网址，或关键词搜索（Enter 直达 / 搜索）" spellcheck="false" />
-      <button class="br-nav" data-a="find" title="页内查找（Ctrl+F）">🔍</button>
-      <button class="br-nav" data-a="bookmark" title="收藏当前页（Ctrl+Shift+B）">☆</button>
+      <button class="br-nav" data-a="find" title="页内查找（Ctrl+F）">${iconHtml('🔍')}</button>
+      <button class="br-nav" data-a="bookmark" title="收藏当前页（Ctrl+Shift+B）">${iconHtml('⭐')}</button>
       <button class="br-nav" data-a="newtab" title="新标签（Ctrl+T）">＋</button>
     </div>
     <div class="br-findbar">
@@ -71,15 +72,17 @@ function createBrowser(container) {
   };
 
   // ==================== 标签管理 ====================
-  function openTab(url = HOME, { background = false } = {}) {
+  function openTab(url = HOME, { background = false, partition = 'persist:mazz-browser' } = {}) {
     const id = 'bt-' + tabSeq++;
     const viewWrap = document.createElement('div');
     viewWrap.className = 'br-view-wrap';
     viewWrap.dataset.tabId = id;
+    viewWrap.dataset.partition = partition;
     let view;
     if (isElectron()) {
       view = document.createElement('webview');
-      view.setAttribute('partition', 'persist:mazz-browser');
+      // 会话分离：隐私浏览 persist:mazz-browser（反追踪）；投稿会话 persist:mazz-author（固定登录态）
+      view.setAttribute('partition', partition);
       view.setAttribute('allowpopups', '');
       view.setAttribute('src', 'about:blank'); // 空 webview 必须给初始页，否则可能永不触发 dom-ready
       view.className = 'br-webview';
@@ -107,6 +110,9 @@ function createBrowser(container) {
     ctl.tabs.forEach(t => t.view.parentElement.classList.toggle('on', t.id === id));
     ctl.addrEl.value = tab.url === HOME ? '' : tab.url;
     renderTabs();
+    // 切回即唤醒输入路由（关新标签页后原标签「显示正常但点击滚动全死」的兜底：
+    // site-per-process 治本不合并，focus 治标重激活——双保险）
+    try { tab.view.focus?.(); } catch {}
   }
 
   function closeTab(id) {
@@ -161,17 +167,21 @@ function createBrowser(container) {
     queueNav(tab, url);
   }
 
-  /** 导航统一入口：dom-ready 队列 + 串行化（消灭 ERR_ABORTED 竞跑） */
+  /** 导航统一入口：dom-ready 队列 + 串行化（消灭 ERR_ABORTED 竞跑）
+   *  关键纪律：队首先 catch 一次——任何一次导航失败都不许污染队列，
+   *  否则链式拒绝会让这个标签从此点哪都没反应（"冻住"的病根） */
   function queueNav(tab, url) {
-    tab.navQueue = tab.navQueue || Promise.resolve();
+    tab.navQueue = (tab.navQueue || Promise.resolve()).catch(() => {});
     tab.navQueue = tab.navQueue.then(async () => {
+      if (!tab.view?.isConnected) return; // 标签已关/视图已摘，静默丢弃
       if (!tab.domReady && isElectron()) {
+        // 等真 dom-ready（监听器置位），不许盲置——盲置会让未就绪 webview 吃 loadURL 抛错
         await Promise.race([
           new Promise((resolve) => tab.view.addEventListener('dom-ready', resolve, { once: true })),
-          new Promise((resolve) => setTimeout(resolve, 3000)), // 超时兜底：绝不无限等待
+          new Promise((resolve) => setTimeout(resolve, 8000)), // 重页/分区初始化慢，放宽到 8s
         ]);
-        tab.domReady = true;
       }
+      if (!tab.view?.isConnected) return;
       if (url === HOME) {
         tab.url = HOME; // 逻辑 URL 保持 mazz://home（renderHome 加载的 data: 不覆盖它）
         tab.title = '主页';
@@ -199,23 +209,27 @@ function createBrowser(container) {
       }
       try {
         if (isElectron()) {
+          if (!tab.view?.isConnected) return;
           await tab.view.loadURL(url).catch(() => {});
         } else {
           tab.view.src = url;
         }
       } catch (e) { toast('打开失败：' + e.message); }
-    });
+    }).catch(() => {}); // 双保险：链尾再兜一次，队列永远是 resolved
     return tab.navQueue;
   }
 
   /** Ctrl+滚轮缩放（注入客页 → console 通道回传） */
   function injectZoom(tab) {
+    if (!tab?.view?.isConnected || !tab?.domReady) return; // 标签已关/webview 重建中（attached 但未 dom-ready）都别碰
     if (!isElectron()) return;
-    tab.view.executeJavaScript(`
-      window.addEventListener('wheel', (e) => {
-        if (e.ctrlKey) { e.preventDefault(); console.log('MAZZ_ZOOM:' + e.deltaY); }
-      }, { passive: false });
-    `).catch(() => {});
+    try {
+      tab.view.executeJavaScript(`
+        window.addEventListener('wheel', (e) => {
+          if (e.ctrlKey) { e.preventDefault(); console.log('MAZZ_ZOOM:' + e.deltaY); }
+        }, { passive: false });
+      `).catch(() => {});
+    } catch { /* 客进程已死的 webview：同步抛，吃掉 */ }
   }
 
   /** 主页 HTML（主题变量化：明亮/黑暗/跟随系统 + ⚙ 设置面板） */
@@ -226,18 +240,25 @@ function createBrowser(container) {
     const folderBlocks = ctl.folders.map(f => {
       const items = ctl.bookmarks.filter(b => (b.folder || 'default') === f.id).slice(0, 8);
       if (!items.length && ctl.folders.length <= 1) return '';
-      return `<h2>📁 ${escapeHtml(f.name)}${items.length ? '' : ' <small>（空）</small>'}</h2><div class="grid">${
+      return `<h2>${iconHtml('📁')} ${escapeHtml(f.name)}${items.length ? '' : ' <small>（空）</small>'}</h2><div class="grid">${
         items.map(b => `<span class="card-wrap"><a class="card" href="${escapeAttr(b.url)}" title="${escapeAttr(b.url)}">${escapeHtml(b.name || b.title)}</a><span class="card-acts"><i data-act="rename" data-url="${escapeAttr(b.url)}">✎</i><i data-act="del-bm" data-url="${escapeAttr(b.url)}">✕</i></span></span>`).join('')
       }</div>`;
     }).join('');
+    // 主题变量取自 Mazz 当前主题（跟随软件主题，与播放器同源），而非写死色板
+    const cs = getComputedStyle(document.documentElement);
+    const v = (name, fb) => cs.getPropertyValue(name).trim() || fb;
+    const mazzVars = `--bg:${v('--bg', '#f7f6f3')};--fg:${v('--fg', '#2c2c2a')};--mut:${v('--fg-dim', '#83817a')};--faint:${v('--fg-dim', '#a3a19a')};--card:${v('--bg-soft', '#fff')};--bd:${v('--border', '#e0ded8')};--bd2:${v('--bg-hover', '#ecebe6')};--acc:${v('--accent', '#4f46e5')};--sh:rgba(0,0,0,.08)`;
     const lightVars = `--bg:#f7f6f3;--fg:#2c2c2a;--mut:#83817a;--faint:#a3a19a;--card:#fff;--bd:#e0ded8;--bd2:#ecebe6;--acc:#4f46e5;--sh:rgba(0,0,0,.05)`;
     const darkVars = `--bg:#1b1b1a;--fg:#e8e6e1;--mut:#9b9890;--faint:#7d7b74;--card:#262625;--bd:#3d3c39;--bd2:#333231;--acc:#818cf8;--sh:rgba(0,0,0,.4)`;
     const themeCss = theme === 'dark' ? `:root{${darkVars}}`
       : theme === 'light' ? `:root{${lightVars}}`
-      : `:root{${lightVars}}@media (prefers-color-scheme:dark){:root{${darkVars}}}`;
+      : `:root{${mazzVars}}`; // 「跟随系统」= 跟随 Mazz 软件主题（v33 反馈：与播放器同一套变量）
     const tBtn = (v, label) => `<button class="tbtn${theme === v ? ' on' : ''}" data-act="theme" data-url="${v}">${label}</button>`;
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
       ${themeCss}
+      /* SVG 图标钉死：webview 独立文档里没有 .mz-ico 尺寸规则，无 width/height 的 SVG 按默认 300×150
+         甚至拉伸失控——收藏夹文件夹图案全屏巨大的总根（用户实图实锤） */
+      .mz-ico{width:1.05em;height:1.05em;vertical-align:-0.15em;flex:none}
       body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:40px 40px 30px}
       .hero{text-align:center;margin:4vh 0 26px}
       h1{font-size:30px;margin:0 0 4px}h1 b{color:var(--acc)}
@@ -273,8 +294,8 @@ function createBrowser(container) {
       .hset .hint{font-size:11px;color:var(--faint);margin-top:8px;line-height:1.6}
     </style></head><body>
       <div class="htop">
-        ${tBtn('light', '☀ 明亮')}${tBtn('dark', '🌙 黑暗')}${tBtn('system', '◐ 跟随系统')}
-        <button class="tbtn" data-act="gear" title="主页设置">⚙</button>
+        ${tBtn('light', iconHtml('☀') + ' 明亮')}${tBtn('dark', iconHtml('🌙') + ' 黑暗')}${tBtn('system', iconHtml('◐') + ' 跟随系统')}
+        <button class="tbtn" data-act="gear" title="主页设置">${iconHtml('⚙')}</button>
       </div>
       <div class="hset" id="hset">
         <div class="lbl">自定义主页</div>
@@ -284,7 +305,7 @@ function createBrowser(container) {
           <button class="ghost" data-act="reset-home">恢复内置</button>
         </div>
         <div class="lbl" style="margin-top:12px">账号密码</div>
-        <div class="row"><button data-act="pw">🔑 打开密码管理器</button></div>
+        <div class="row"><button data-act="pw">${iconHtml('🔑')} 打开密码管理器</button></div>
         <div class="hint">主题按钮即时生效并记忆；自定义主页后，新建标签页将直接打开该网址。</div>
       </div>
       <div class="hero">
@@ -323,19 +344,54 @@ function createBrowser(container) {
     </body></html>`;
   }
 
+  // Mazz 主题变化 → 重建主页（跟随软件主题）
+  if (!ctl._themeWatch) {
+    ctl._themeWatch = new MutationObserver(() => {
+      for (const t of ctl.tabs || []) if (t.url === HOME) renderHome(t);
+    });
+    ctl._themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+
   function renderHome(tab) {
     const html = buildHomeHtml();
     tab.view.srcdoc = html; // iframe 预览路径
-    if (isElectron() && tab.view.setAttribute) {
-      if (tab.homeLoaded && tab.domReady && tab.view.executeJavaScript) {
-        // 已在主页：原地重写文档，零导航（根除 ERR_ABORTED 连击）
-        tab.view.executeJavaScript(
-          `document.open();document.write(${JSON.stringify(html)});document.close();`
-        ).catch(() => {
-          tab.homeLoaded = false;
-          tab.view.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-          tab.homeLoaded = true;
+    if (!isElectron()) {
+      // iframe/srcdoc：内联脚本被页面 CSP 拦截——父页直接绑定（srcdoc 与父页同源）
+      tab.view.addEventListener('load', () => {
+        const doc = tab.view.contentDocument;
+        if (!doc) return;
+        doc.getElementById('sf')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const v = doc.getElementById('q')?.value.trim();
+          if (v) window.postMessage({ mazzSearch: v }, '*');
         });
+        doc.addEventListener('click', (e) => {
+          const t = e.target.closest('[data-act]');
+          if (!t) return;
+          e.preventDefault(); e.stopPropagation();
+          const act = t.dataset.act;
+          let url = t.dataset.url || '';
+          if (act === 'gear') { doc.getElementById('hset')?.classList.toggle('open'); return; }
+          if (act === 'set-home') url = doc.getElementById('home-url')?.value.trim() || '';
+          window.postMessage({ mazzAct: act, url }, '*');
+        }, true);
+        doc.getElementById('home-url')?.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); doc.querySelector('[data-act=set-home]')?.click(); }
+        });
+      }, { once: true });
+    }
+    if (isElectron() && tab.view.setAttribute) {
+      if (tab.homeLoaded && tab.domReady && tab.view.isConnected && tab.view.executeJavaScript) {
+        // 已在主页：原地重写文档，零导航（根除 ERR_ABORTED 连击）
+        try {
+          tab.view.executeJavaScript(
+            `document.open();document.write(${JSON.stringify(html)});document.close();`
+          ).catch(() => {
+            tab.homeLoaded = false;
+            tab.view.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+            tab.homeLoaded = true;
+          });
+        } catch { tab.homeLoaded = false; }
       } else {
         // 首次：webview 无 srcdoc，用 data URL（经统一队列，dom-ready 已就绪）
         tab.view.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
@@ -375,8 +431,41 @@ function createBrowser(container) {
   }
 
   // ==================== webview 事件 ====================
+  /** 客进程崩溃复活：B站等重页会把 guest 干死（render-process-gone），死 webview 不 reload 就永远是僵尸标签——
+   *  先 reload 复活，复活不了就重建 webview 元素（保留 partition 与逻辑 URL） */
+  function reviveView(tab, reason) {
+    if (!isElectron() || tab._reviving) return;
+    tab._reviving = true;
+    tab.domReady = false;
+    const cur = tab.url && tab.url !== HOME ? tab.url : null;
+    try { tab.view.reload(); } catch {}
+    // 6 秒后还没活（dom-ready 未再触发）→ 重建元素
+    setTimeout(() => {
+      tab._reviving = false;
+      if (tab.domReady || !tab.view?.isConnected) return;
+      const wrap = tab.view.parentElement;
+      const nv = document.createElement('webview');
+      nv.setAttribute('partition', wrap.dataset.partition || 'persist:mazz-browser');
+      nv.setAttribute('allowpopups', '');
+      nv.setAttribute('src', 'about:blank');
+      nv.className = 'br-webview';
+      tab.view.remove();
+      wrap.appendChild(nv);
+      tab.view = nv;
+      bindView(tab);
+      toast('页面进程已重启' + (reason ? `（${reason}）` : ''));
+      queueNav(tab, cur || HOME);
+    }, 6000);
+  }
+
   function bindView(tab) {
     const v = tab.view;
+    v.addEventListener('dom-ready', () => { tab.domReady = true; });
+    v.addEventListener('render-process-gone', (e) => {
+      if (e?.details?.reason === 'clean-exit') return;
+      reviveView(tab, e?.details?.reason);
+    });
+    v.addEventListener('unresponsive', () => reviveView(tab, '无响应'));
     v.addEventListener('page-title-updated', (e) => {
       if (isInternalUrl(tab.url)) return; // 内部页标题由导航逻辑管理（主页保持「主页」）
       tab.title = e.title || tab.url;
@@ -434,7 +523,7 @@ function createBrowser(container) {
         const cur = tab.zoom || 1;
         const next = Math.min(3, Math.max(0.3, cur + (dy < 0 ? 0.1 : -0.1)));
         tab.zoom = next;
-        v.setZoomFactor(next);
+        if (v.isConnected) v.setZoomFactor(next);
         toast(`缩放 ${Math.round(next * 100)}%`);
       }
       if (msg === 'MAZZ_RETRY:1') {
@@ -762,12 +851,27 @@ function createBrowser(container) {
   findbar.querySelector('[data-f=close]').addEventListener('click', closeFind);
 
   // ==================== 工具栏按钮 ====================
-  root.querySelector('[data-a=back]').addEventListener('click', () => activeTab()?.view.goBack?.());
-  root.querySelector('[data-a=forward]').addEventListener('click', () => activeTab()?.view.goForward?.());
+  /** 带看门狗的历史前进/后退：B站挂起加载（长连接/风控挂起）会阻塞 goBack 呈现"冻结"；
+   *  先 stop 断挂起再跳，3s 后探活——客死/无响应即 reviveView 复活，不许标签从此冻死 */
+  function guardedHistoryNav(tab, dir) {
+    if (!tab?.view?.isConnected) return;
+    try { tab.view.stop?.(); } catch {}
+    try { dir === 'back' ? tab.view.goBack?.() : tab.view.goForward?.(); } catch {}
+    clearTimeout(tab._navDog);
+    tab._navDog = setTimeout(() => {
+      if (!tab.view?.isConnected) return;
+      try {
+        tab.view.executeJavaScript('1', true).catch(() => reviveView(tab, '返回卡死探活失败'));
+      } catch { reviveView(tab, '返回卡死探活异常'); }
+    }, 3000);
+  }
+  root.querySelector('[data-a=back]').addEventListener('click', () => guardedHistoryNav(activeTab(), 'back'));
+  root.querySelector('[data-a=forward]').addEventListener('click', () => guardedHistoryNav(activeTab(), 'forward'));
   root.querySelector('[data-a=reload]').addEventListener('click', () => {
     const t = activeTab();
     if (!t) return;
-    t.view.reload ? t.view.reload() : navigate(t, t.url);
+    // webview 未挂 DOM/未 dom-ready 时 reload 会直接抛错——守卫后走导航队列
+    (t.view?.isConnected && t.domReady && t.view.reload) ? t.view.reload() : navigate(t, t.url);
   });
   root.querySelector('[data-a=home]').addEventListener('click', () => navigate(activeTab(), HOME));
   root.querySelector('[data-a=find]').addEventListener('click', openFind);
@@ -796,6 +900,7 @@ function createBrowser(container) {
 
   // ==================== 暴露给命令的方法 ====================
   ctl.openUrl = (url) => navigate(activeTab(), url);
+  ctl.openTab = (url) => openTab(url || HOME); // 真新建页签（newTab 命令此前错走 openUrl=当前签导航，E2E 实抓）
   ctl.search = (q) => doSearch(q);
   ctl.getSelection = async () => {
     const t = activeTab();
@@ -1022,6 +1127,7 @@ export default {
     const ctl = instances.get(container);
     if (!ctl) return;
     current = ctl;
+    window.__activeBrowserCtl = ctl; // 出站桥等外部调用入口（投稿会话拉起）
     contextKeys.set('module', MODULE);
   },
   deactivate(container) {
@@ -1065,17 +1171,17 @@ export default {
     <div class="rb-group" data-label="导航">
       <button class="rb-btn" data-command="browser.newTab"><i class="ico">＋</i><span>新标签</span></button>
       <button class="rb-btn" data-command="browser.home"><i class="ico">⌂</i><span>主页</span></button>
-      <button class="rb-btn" data-command="browser.bookmark"><i class="ico">☆</i><span>收藏</span></button>
-      <button class="rb-btn" data-command="browser.find"><i class="ico">🔍</i><span>页内查找</span></button>
+      <button class="rb-btn" data-command="browser.bookmark"><i class="ico">${iconHtml('☆')}</i><span>收藏</span></button>
+      <button class="rb-btn" data-command="browser.find"><i class="ico">${iconHtml('🔍')}</i><span>页内查找</span></button>
     </div>
     <div class="rb-group" data-label="协同">
       <button class="rb-btn" data-command="browser.clipToNote"><i class="ico">✂</i><span>摘录到笔记</span></button>
-      <button class="rb-btn" data-command="browser.pageToLibrary"><i class="ico">📥</i><span>网页剪藏</span></button>
+      <button class="rb-btn" data-command="browser.pageToLibrary"><i class="ico">${iconHtml('📥')}</i><span>网页剪藏</span></button>
       <button class="rb-btn" data-command="browser.manageBookmarks"><i class="ico">📁</i><span>收藏管理</span></button>
       <button class="rb-btn" data-command="browser.exportBookmarks"><i class="ico">📑</i><span>导出收藏</span></button>
     </div>
     <div class="rb-group" data-label="搜索">
-      <button class="rb-btn" data-command="browser.selfcheck"><i class="ico">⚡</i><span>实例自检</span></button>
+      <button class="rb-btn" data-command="browser.selfcheck"><i class="ico">${iconHtml('⚡')}</i><span>实例自检</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {
@@ -1086,7 +1192,7 @@ export default {
   contributes: {
     commands: [
       { id: 'browser.newTab', title: '新建浏览器标签', icon: '＋', group: '浏览器',
-        when: "module=='browser'", run: () => { if (current) { const t = current.activeTab(); if (t) current.openUrl(current.home); } } },
+        when: "module=='browser'", run: () => current?.openTab?.(current.home) },
       { id: 'browser.openUrl', title: '打开网址', group: '浏览器',
         run: ({ url }) => { if (current && url) current.openUrl(url); } },
       { id: 'browser.home', title: '回主页', group: '浏览器', when: "module=='browser'",
@@ -1136,11 +1242,11 @@ export default {
           window.MazzHost?.openTab('markdown', { title: '浏览器收藏.md', content: md });
         } },
       { id: 'browser.navBack', title: '后退', group: '浏览器', when: "module=='browser'",
-        run: () => current?.activeTab()?.view.goBack?.() },
+        run: () => current && guardedHistoryNav(current.activeTab(), 'back') },
       { id: 'browser.navForward', title: '前进', group: '浏览器', when: "module=='browser'",
-        run: () => current?.activeTab()?.view.goForward?.() },
+        run: () => current && guardedHistoryNav(current.activeTab(), 'forward') },
       { id: 'browser.navReload', title: '刷新', group: '浏览器', when: "module=='browser'",
-        run: () => { const t = current?.activeTab(); if (t) t.view.reload ? t.view.reload() : current.openUrl(t.url); } },
+        run: () => { const t = current?.activeTab(); if (t) (t.view?.isConnected && t.domReady && t.view.reload) ? t.view.reload() : current.openUrl(t.url); } },
       { id: 'browser.copyUrl', title: '复制页面地址', group: '浏览器', when: "module=='browser'",
         run: async () => {
           const t = current?.activeTab();
