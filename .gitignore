@@ -6,3 +6,5 @@ release/
 mazz-android-patch.txt
 tests/e2e/shots/
 tests/e2e/media/
+*.patch 
+*-b64.txt 
