@@ -80,9 +80,10 @@ function createViewer(container) {
     setZoom(ctl.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
   }, { passive: false });
 
-  /** 媒体源：桌面用 file://（不占内存）；网页/移动读 base64 建 Blob URL */
+  /** 媒体源：桌面走 mazz-res://media/ 协议（页面同源化：file:// 页面 media loader 零请求实锤根治，
+   *  同源 video 画 canvas 不污染——截图/GIF 录制命门；range 206 由主进程流式供）；网页/移动读 base64 建 Blob URL */
   async function mediaUrl(path) {
-    if (window.mazz?.isElectron) return 'file://' + path.replace(/\\/g, '/').replace(/#/g, '%23').replace(/\?/g, '%3F');
+    if (window.mazz?.isElectron) return 'mazz-res://media/' + encodeURIComponent(path.replace(/\\/g, '/'));
     const b64 = await window.mazz.invoke('fs:readFileBase64', { path });
     const bin = atob(b64);
     const bytes = new Uint8Array(bin.length);
@@ -111,6 +112,18 @@ function createViewer(container) {
     ctl.body.querySelector('.vf-open').addEventListener('click', () => extBtn.click());
     ctl.body.querySelector('.vf-tc')?.addEventListener('click', () => transcodeAndPlay(name, ext));
     extBtn.style.display = '';
+    // HEVC 缺失时附微软官方组件指引（按平台分发：win32 链接/mac 原生/linux VAAPI）
+    if (isMedia) {
+      import('../../lib/codec-guide.js').then(({ probeCodecs, renderHevcGuide, currentPlatform }) => {
+        const hevc = probeCodecs().find(r => r.name.includes('HEVC'));
+        if (!hevc || hevc.ok) return;
+        const guide = document.createElement('div');
+        guide.className = 'vf-hevc-guide';
+        guide.style.cssText = 'margin-top:12px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:11.5px;line-height:1.8;color:var(--fg-dim);max-width:520px;text-align:left';
+        ctl.body.querySelector('.viewer-fallback')?.appendChild(guide);
+        renderHevcGuide(guide, currentPlatform());
+      }).catch(() => {});
+    }
   }
 
   /** ffmpeg 转码后播放（带进度；同会话内缓存结果） */
@@ -144,14 +157,14 @@ function createViewer(container) {
       setProg('写入缓存…', 0.98);
       let url;
       if (window.mazz?.isElectron) {
-        // 写临时文件，file:// 播放（不占内存；同会话缓存命中直接播）
+        // 写临时文件，协议 URL 播放（不占内存；同会话缓存命中直接播）
         const ws = await window.mazz.invoke('workspace:get');
         const dir = `${ws}/.mazz/temp`;
         await window.mazz.invoke('fs:mkdir', { path: dir });
         const outExt = AUDIO_EXTS.has(ext) ? 'mp3' : 'mp4';
         const outPath = `${dir}/transcoded_${Date.now()}.${outExt}`;
         await window.mazz.invoke('fs:writeFileBase64', { path: outPath, base64: u8ToB64(out) });
-        url = 'file://' + outPath;
+        url = 'mazz-res://media/' + encodeURIComponent(outPath.replace(/\\/g, '/'));
       } else {
         url = URL.createObjectURL(new Blob([out], { type: AUDIO_EXTS.has(ext) ? 'audio/mpeg' : 'video/mp4' }));
       }
@@ -249,9 +262,32 @@ function createViewer(container) {
         // 切歌保持全屏：新 stage 不是 fullscreen 元素，主动恢复（此前切歌强制退出全屏）
         if (wasFs) { try { playerRoot.querySelector('.mz-stage')?.requestFullscreen?.(); } catch {} }
         // 原生解码失败 → 降级卡（错误监听挂主媒体，真实可信）
-        playerRoot.querySelector('.mz-media').addEventListener('error', () => {
+        playerRoot.querySelector('.mz-media').addEventListener('error', (ev) => {
+          // P2P 流专属：流已接通但编码超 Chromium 解码面（番剧 H.264/HEVC 全灭实锤）——
+          // 不毁播放器（列表栏/下载管理/网络面板是用户上下文，销毁连坐实锤过），内嵌明白话层
+          const mediaEl = ev.target;
+          window.__errDiag = { cs: mediaEl.currentSrc, s: mediaEl.src, code: mediaEl.error?.code, t: Date.now() };
+          if (/^https?:\/\//.test(mediaEl.currentSrc || mediaEl.src || '')) {
+            const ov = document.createElement('div');
+            ov.className = 'mz-stream-err';
+            ov.innerHTML = `<b>${iconHtml('⚠')} 流已接通，但本机内核无法解码该视频编码</b>
+              <span>边下边播链路照常工作（看列表栏下载管理进度），下完可系统播放器打开</span>
+              <span class="mz-stream-err-guide"></span>`;
+            playerRoot.querySelector('.mz-stage')?.appendChild(ov);
+            // HEVC 缺失附官方组件指引（播放设置「解码能力」同款，微软商店组件 CDN 官方包）
+            import('../../lib/codec-guide.js').then(({ probeCodecs, renderHevcGuide, currentPlatform }) => {
+              const hevc = probeCodecs().find(r => r.name.includes('HEVC'));
+              if (!hevc || hevc.ok) return;
+              renderHevcGuide(ov.querySelector('.mz-stream-err-guide'), currentPlatform());
+            }).catch(() => {});
+            return;
+          }
           try { player?.destroy(); } catch {}
-          showFallback(name, ext, '此格式 Chromium 内核无法解码（可改用外部播放器）');
+          // 解码失败给明白话：按容器给最可能编码猜测（mkv 十之八九 HEVC/AV1——用户 BDrip 主流形态）
+        const codecGuess = ext === 'mkv' || ext === 'webm'
+          ? '（mkv 壳里十之八九是 HEVC(x265)/AV1，本机 Chromium 内核暂不支持）'
+          : '';
+        showFallback(name, ext, `本机内核无法解码${codecGuess}——可转码为 H.264 播放，或改用外部播放器`);
         }, { once: true });
         ctl._player = player;
         ctl._playerKind = ctl.kind; // 记录类型（切歌复用判定：同类才换源不重建）
@@ -279,6 +315,7 @@ export default {
     const ctl = instances.get(container);
     if (!ctl) return;
     current = ctl;
+    window.__activeViewerCtl = ctl; // 浏览器/书库同款活动实例锚点（命令与 E2E 取件口）
     // 切回复活：root 被 deactivate 摘除时重新挂上并重载（此前切回后播放器半残：DOM 在、事件全灭）
     if (ctl.root && !ctl.root.isConnected) {
       container.appendChild(ctl.root);

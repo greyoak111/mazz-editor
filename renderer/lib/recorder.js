@@ -49,10 +49,17 @@ class Recorder {
   start() {
     if (!this.rec) return false;
     this.t0 = Date.now();
-    this.rec.ondataavailable = (e) => { if (e.data?.size) this.chunks.push(e.data); };
+    this.bytes = 0; // 已收数据量（看门狗与 E2E 断言用）
+    this.rec.ondataavailable = (e) => { if (e.data?.size) { this.chunks.push(e.data); this.bytes += e.data.size; } };
     this.rec.onstop = async () => {
       let blob = new Blob(this.chunks, { type: this.mime });
       try {
+        // 零数据绝不落盘：写出一个 0KB 的「视频文件」只会误导用户以为录到了（录半分钟 0KB 事故的产物）
+        if (!blob.size) {
+          toast('录制无数据：全程未捕获到画面/声音（窗口被最小化/遮挡或采集被拒），未生成文件', [], 6000);
+          this.onstop?.();
+          return;
+        }
         // webm duration 修复：canvas.captureStream+MediaRecorder 产的 webm 缺时长元数据（EBML duration 为 Infinity），
         // Chromium <video> 与 ffmpeg 都嫌不规范——「自己录的 webm 自己放不了+转码失败退出码1」的总根
         const durationMs = Date.now() - this.t0;
@@ -65,10 +72,19 @@ class Recorder {
       this.onstop?.();
     };
     this.rec.start(1000);
+    // 字节看门狗：2.5s 仍零数据=采集链路断流（后台节流掐帧/采集被拒），立即报因并停录——
+    // 绝不再闷头空转半小时最后赏用户一个 0KB 文件
+    this._watchdog = setTimeout(() => {
+      if (this.rec?.state === 'recording' && !this.bytes) {
+        toast('录制无数据：画面采集断流（窗口被最小化/遮挡或被系统拒绝）——已停止，请调整窗口状态后重试', [], 6000);
+        this.stop();
+      }
+    }, 2500);
     toast('内录中…（再次点击停止）');
     return true;
   }
   stop() {
+    clearTimeout(this._watchdog);
     try { this.rec?.state !== 'inactive' && this.rec.stop(); } catch {}
     this.stream.getTracks().forEach(t => t.stop());
   }
@@ -86,14 +102,22 @@ export async function startCanvasRecorder(canvas, { name } = {}) {
 async function mixAudio({ systemStream, micOn, sysOn }) {
   const ctx = new AudioContext();
   const dest = ctx.createMediaStreamDestination();
+  let sources = 0;
   if (sysOn && systemStream?.getAudioTracks().length) {
     ctx.createMediaStreamSource(new MediaStream(systemStream.getAudioTracks())).connect(dest);
+    sources++;
   }
   if (micOn) {
     try {
       const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
       ctx.createMediaStreamSource(mic).connect(dest);
+      sources++;
     } catch { toast('麦克风不可用，已仅录画面'); }
+  }
+  // 零音源绝不挂空目标轨：裸 MediaStreamAudioDestinationNode（无输入）不产任何样本，
+  // MediaRecorder(vp9,opus) 死等每轨首样本才开混流——整条录制被它噎成零字节（自录零数据真凶，
+  // 变量隔离实验实锤：同画布同编码，挂空轨 bytes=0，不挂 6KB+）
+  if (!sources) { ctx.close().catch(() => {}); return { ctx: null, stream: new MediaStream() };
   }
   return { ctx, stream: dest.stream };
 }
@@ -181,31 +205,103 @@ ${raw}`;
  * @param {boolean} o.sysAudio 系统内音
  * @param {boolean} o.micAudio 麦克风
  */
+/** 单源画面捕获：三级降级通路（开源录屏界经典 fallback） */
+async function captureSource(src, wantAudio) {
+  // 一级：getDisplayMedia（主进程 setDisplayMediaRequestHandler 按 rec:useSource 授权出列）
+  // 授权推送与消费同处一函数，杜绝陈旧授权串源错录（旧实现由对话框预推全部源，自录源不入队即残留）
+  try {
+    await window.mazz.invoke('rec:useSource', { id: src.id, audio: wantAudio });
+    const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: wantAudio });
+    if (wantAudio && !s.getAudioTracks().length) toast('系统内音不可用，已仅录画面');
+    return s;
+  } catch {}
+  // 二级：系统内音（loopback）被个别声卡/系统策略拖累整路拒绝时，降级无声再试
+  if (wantAudio) {
+    try {
+      await window.mazz.invoke('rec:useSource', { id: src.id, audio: false });
+      const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false });
+      toast('系统内音捕获失败，已降级为仅录画面');
+      return s;
+    } catch {}
+  }
+  // 三级：Electron 官方 desktopCapturer 经典通路（getUserMedia + chromeMediaSource，全版本兼容）
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: src.id, maxFrameRate: 15 } },
+    });
+  } catch {}
+  toast(`「${src.name}」画面捕获失败（检查系统录屏权限设置后重试）`, [], 5000);
+  return null;
+}
+
 export async function startScreenRecorder({ sources, speed = 3, sysAudio = true, micAudio = false, name, outFormat = 'webm', subtitle = false }) {
   if (!sources?.length) { toast('先选择录制窗口'); return null; }
   const captures = [];
+  const cleanup = () => captures.forEach(c => { c._stop?.(); c.stream?.getTracks?.().forEach(t => { try { t.stop(); } catch {} }); });
   for (const src of sources) {
     if (src.id === 'mazz:self') {
       // 自录虚拟源：capturePage 帧轮询（Chromium 枚举排除自家窗口的绕行通道）
       captures.push({ src, self: true, stream: null });
       continue;
     }
-    const stream = await navigator.mediaDevices.getDisplayMedia
-      ? await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15, displaySurface: 'window' }, audio: sysAudio })
-      : null;
-    if (!stream) return null;
+    const stream = await captureSource(src, sysAudio);
+    if (!stream) { cleanup(); return null; } // 失败必须放掉已到手的采集轨（录制指示灯泄露防线）
     captures.push({ src, stream });
   }
-  // 混音
+  // 混音（系统内音取第一路真实采集流；自录虚拟源无流）
   const { ctx: audioCtx, stream: audioStream } = await mixAudio({
-    systemStream: captures[0]?.stream, micOn: micAudio, sysOn: sysAudio,
+    systemStream: captures.find(c => c.stream)?.stream, micOn: micAudio, sysOn: sysAudio,
   });
 
-  // 画布合成（多源平铺）+ 变速抽帧
+  // 字幕轨：外部语音识别（可选，停止时单独存 .srt 一轨）
+  let subTrack = null;
+  if (subtitle) {
+    subTrack = new SubtitleTrack();
+    if (!subTrack.start()) { subTrack = null; toast('语音识别不可用，仅录画面'); }
+  }
+
+  // 两条录制路径共用的停止收尾：字幕轨落盘 + 采集轨全放 + 音频上下文回收
+  const finalizeStop = async () => {
+    if (subTrack) {
+      // AI 介入：先润色断句与错别字（srt 生成前文本态；无 AI 配置静默跳过）
+      try {
+        const polished = await subTrack.polishWithAI();
+        if (polished) toast('字幕已 AI 润色（断句+错字修正）');
+      } catch {}
+      const srt = subTrack.stop();
+      if (srt.trim()) {
+        try {
+          const dir = await wsPath('/录制');
+          const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+          const p = `${dir}/${(name || '全局内录').replace(/[\\/:*?"<>|]/g, '-')}-${stamp}.srt`;
+          await window.mazz.invoke('fs:writeFile', { path: p, content: srt });
+          toast('字幕轨已保存：' + p.split('/').pop());
+        } catch {}
+      }
+    }
+    cleanup(); // 放掉全部采集轨（loopback 系统音/麦克风指示灯的泄露防线——旧实现停录后轨不灭）
+    setTimeout(() => audioCtx?.close?.().catch(() => {}), 600); // 等末段音频冲刷完再回收（零音源时 audioCtx 为 null）
+  };
+
+  // —— 直录路径（单源原速）：WebRTC 桌面采集轨由浏览器进程推帧，不经渲染器合成器/画布——
+  // 窗口最小化/被遮挡照录不误（开源录屏清一色此模式；画布路径是后台节流断帧的重灾区）
+  const solo = captures.length === 1 && !captures[0].self && speed === 1;
+  if (solo) {
+    const stream = new MediaStream(captures[0].stream.getVideoTracks());
+    for (const t of audioStream.getAudioTracks()) stream.addTrack(t);
+    const r = new Recorder(stream, { name: name || '全局内录', outFormat });
+    const rawStop = r.stop.bind(r);
+    r.stop = async () => { await finalizeStop(); rawStop(); };
+    if (!r.start()) { try { subTrack?.stop(); } catch {} cleanup(); return null; }
+    return r;
+  }
+
+  // —— 画布合成路径（多源平铺/变速/自录虚拟源）：反节流三开关+backgroundThrottling:false 护体 ——
   const canvas = document.createElement('canvas');
   canvas.width = 1600; canvas.height = 900;
   const c2d = canvas.getContext('2d');
-  const videos = captures.map((c, i) => {
+  const videos = captures.map((c) => {
     if (c.self) {
       // 自录虚拟源：capturePage 帧轮询喂 Image 元素（接口对齐 video：readyState/drawImage 可用）
       const img = new Image();
@@ -246,13 +342,6 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
   const stream = canvas.captureStream(FPS);
   for (const t of audioStream.getAudioTracks()) stream.addTrack(t);
 
-  // 字幕轨：外部语音识别（可选，停止时单独存 .srt 一轨）
-  let subTrack = null;
-  if (subtitle) {
-    subTrack = new SubtitleTrack();
-    if (!subTrack.start()) { subTrack = null; toast('语音识别不可用，仅录画面'); }
-  }
-
   const r = new Recorder(stream, { name: name || '全局内录', outFormat });
   // 采集存活检测：DXGI 全屏复制在部分显卡/驱动上整段失败（错误 0x887A0026 键控互斥已弃用），
   // 1.5s 后全部视频源仍无帧 → 明确报因并给出路，不闷头录一坨黑
@@ -267,25 +356,9 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
   r.stop = async () => {
     clearInterval(timer);
     videos.forEach(v => { v._stop?.(); v.srcObject = null; }); // _stop 停自录帧轮询
-    // 字幕轨落盘（与视频同名 .srt，单独一轨便于自行修改）
-    if (subTrack) {
-      // AI 介入：先润色断句与错别字（srt 生成前文本态；无 AI 配置静默跳过）
-      try {
-        const polished = await subTrack.polishWithAI();
-        if (polished) toast('字幕已 AI 润色（断句+错字修正）');
-      } catch {}
-      const srt = subTrack.stop();
-      if (srt.trim()) {
-        try {
-          const dir = await wsPath('/录制');
-          const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-          const p = `${dir}/${(name || '全局内录').replace(/[\\/:*?"<>|]/g, '-')}-${stamp}.srt`;
-          await window.mazz.invoke('fs:writeFile', { path: p, content: srt });
-          toast('字幕轨已保存：' + p.split('/').pop());
-        } catch {}
-      }
-    }
+    await finalizeStop();
     rawStop();
   };
-  return r.start() ? r : null;
+  if (!r.start()) { try { subTrack?.stop(); } catch {} clearInterval(timer); videos.forEach(v => { v._stop?.(); v.srcObject = null; }); cleanup(); return null; }
+  return r;
 }

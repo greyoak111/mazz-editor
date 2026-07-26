@@ -102,8 +102,9 @@ export async function exportDocx(doc, { setup, title = '文档', styleMap = {} }
       if (r && r.__image) {
         const src = r.__image.attrs.src || '';
         try {
-          if (src.startsWith('file://') && window.mazz?.isElectron) {
-            const b64 = await window.mazz.invoke('fs:readFileBase64', { path: src.replace('file://', '') });
+          if ((src.startsWith('file://') || src.startsWith('mazz-res://media/')) && window.mazz?.isElectron) {
+            const p = src.startsWith('mazz-res://media/') ? decodeURIComponent(src.slice('mazz-res://media/'.length)) : src.replace('file://', '');
+            const b64 = await window.mazz.invoke('fs:readFileBase64', { path: p }); // 页面同源化后图片引用双前缀兼容
             out.push(new ImageRun({
               data: Uint8Array.from(atob(b64), c => c.charCodeAt(0)),
               transformation: { width: 480, height: 320 },

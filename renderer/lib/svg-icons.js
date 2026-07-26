@@ -106,6 +106,7 @@ const MAP = {
   '🖼': S('<rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.5"/><path d="M4 17l5-4 4 3 3-2 4 3"/>'),
   '🎬': S('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 5v4M17 5v4M11 12l4 2.5-4 2.5v-5z"/>'),
   '🎵': S('<path d="M9 18V6l10-2v12M9 18a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zm10-2a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>'),
+  '🗔': S('<rect x="3" y="5" width="18" height="12" rx="1.5"/><rect x="13" y="11" width="7" height="5" rx="1"/>'),
   '📽': S('<rect x="3" y="7" width="13" height="10" rx="1"/><path d="M16 10l5-2v8l-5-2v-4z"/>'),
   '📚': S('<path d="M5 4a2 2 0 0 1 2-2h13v16H7a2 2 0 0 0-2 2V4zm0 16a2 2 0 0 0 2 2h13v-4"/>'),
   '🗂': S('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2H3V7zm0 4h18v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6z"/>'),

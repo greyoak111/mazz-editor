@@ -1,4 +1,6 @@
-// renderer/modules/library/epub.js —— EPUB 解析器：zip → container → OPF → spine/目录 → 章节 HTML（资源 dataURL 化）
+// renderer/modules/library/epub.js —— EPUB 解析器：zip → container → OPF → spine/目录 → 章节 HTML
+// 两段式：loadChapterRaw（sanitize + 图片占位符 libimg:N，产物可入缓存 zip）
+//        materialize（占位符 → blob URL（内存纪律）/dataURL（无 createObjectURL 环境回退））
 import JSZip from 'jszip';
 
 const byNS = (doc, name) => doc.getElementsByTagNameNS('*', name);
@@ -14,7 +16,42 @@ function resolvePath(dir, href) {
   return decodeURIComponent(out.join('/'));
 }
 
-const MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml' };
+const MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', avif: 'image/avif', bmp: 'image/bmp' };
+const canBlob = () => typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
+const bytesToB64 = (bytes) => {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return btoa(s);
+};
+
+/** 共享加工器：blob URL 登记 + 环境回退（缓存与原生两条路径同一套纪律） */
+export function makeImageMaterializer() {
+  const urls = new Set();
+  const toUrl = (ext, bytes) => {
+    if (canBlob()) {
+      const u = URL.createObjectURL(new Blob([bytes], { type: MIME[ext] || 'image/jpeg' }));
+      urls.add(u);
+      return u;
+    }
+    return `data:${MIME[ext] || 'image/jpeg'};base64,${bytesToB64(bytes)}`;
+  };
+  const unloadAll = () => { for (const u of urls) URL.revokeObjectURL(u); urls.clear(); };
+  return { toUrl, unloadAll, liveCount: () => urls.size };
+}
+
+/** 占位符章节 → 可渲染 HTML（libimg:N 换真 URL） */
+export async function materialize(rawCh, getBytes, toUrl) {
+  if (!rawCh.images?.length) return rawCh.html;
+  let html = rawCh.html;
+  for (let i = 0; i < rawCh.images.length; i++) {
+    const im = rawCh.images[i];
+    if (!im) continue; // 缓存空洞（图片缺失）保留占位由上层自然隐藏
+    const bytes = await getBytes(im);
+    if (!bytes) continue;
+    html = html.replaceAll(`src="libimg:${i}"`, `src="${toUrl(im.ext, bytes)}"`);
+  }
+  return html;
+}
 
 export async function parseEpub(buffer) {
   const zip = await JSZip.loadAsync(buffer);
@@ -74,47 +111,62 @@ export async function parseEpub(buffer) {
     }
   }
 
-  // 4. 章节 HTML：sanitize + 图片 dataURL 化
-  const loadAsset = async (href) => {
-    const f = zip.file(href);
-    if (!f) return null;
-    const ext = href.split('.').pop().toLowerCase();
-    if (!MIME[ext]) return null;
-    const b64 = await f.async('base64');
-    return `data:${MIME[ext]};base64,${b64}`;
+  // 4. 章节两段式：raw（sanitize + 占位符，可入缓存）→ materialize（占位符换真 URL）
+  const readZipBytes = async (zipPath) => {
+    const f = zip.file(zipPath);
+    return f ? f.async('uint8array') : null;
   };
-
-  async function loadChapter(item) {
+  async function loadChapterRaw(item) {
     const path = resolvePath(opfDir, item.href);
     const f = zip.file(path);
-    if (!f) return { id: item.id, title: '', html: '<p>（章节缺失）</p>' };
+    if (!f) return { id: item.id, html: '<p>（章节缺失）</p>', images: [] };
     const raw = await f.async('text');
     const doc = new DOMParser().parseFromString(raw, 'application/xhtml+xml');
     const body = doc.querySelector('body') || doc.documentElement;
     // 剥除危险/无效元素
     body.querySelectorAll('script, style, link, iframe, object, embed, form, input, button, select, textarea').forEach(el => el.remove());
-    // 图片资源重写
+    // 图片改占位符（实体化延迟到渲染前——内存纪律与缓存格式的公共形态）
     const chapDir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+    const images = [];
     for (const img of body.querySelectorAll('img, image')) {
       const src = img.getAttribute('src') || img.getAttribute('xlink:href');
       if (!src || src.startsWith('data:')) continue;
-      const dataUrl = await loadAsset(resolvePath(chapDir, src));
-      if (dataUrl) {
-        img.setAttribute('src', dataUrl);
-        img.removeAttribute('xlink:href');
-      } else img.remove();
+      const zipPath = resolvePath(chapDir, src);
+      const ext = zipPath.split('.').pop().toLowerCase();
+      if (!MIME[ext] || !zip.file(zipPath)) { img.remove(); continue; }
+      img.setAttribute('src', `libimg:${images.length}`);
+      img.removeAttribute('xlink:href');
+      images.push({ zipPath, ext });
     }
-    return { id: item.id, title: '', html: body.innerHTML };
+    return { id: item.id, html: body.innerHTML, images };
   }
 
-  // 封面
+  const mat = makeImageMaterializer();
+  const chapCache = new Map(); // 章节实体化备忘（模式切换/字号重排不再回炉，blob URL 一会话一份）
+  async function loadChapter(item) {
+    if (chapCache.has(item.id)) return chapCache.get(item.id);
+    const rawCh = await loadChapterRaw(item);
+    // materialize 的 getBytes 收的是 im 对象（非裸路径——契约实锤签名错位：裸传 readZipBytes 必然 null）
+    const html = await materialize(rawCh, (im) => readZipBytes(im.zipPath), mat.toUrl);
+    const out = { id: item.id, title: '', html };
+    chapCache.set(item.id, out);
+    return out;
+  }
+
+  // 封面（读取 bytes 也走材料化纪律）
   let cover = null;
   let coverId = '';
   for (const m of byNS(opf, 'meta')) if (m.getAttribute('name') === 'cover') coverId = m.getAttribute('content');
   const coverItem = (coverId && manifest.get(coverId)) || [...manifest.values()].find(m => m.type.startsWith('image/'));
-  if (coverItem) cover = await loadAsset(resolvePath(opfDir, coverItem.href));
+  let coverRaw = null;
+  if (coverItem) {
+    coverRaw = { zipPath: resolvePath(opfDir, coverItem.href), ext: coverItem.href.split('.').pop().toLowerCase() };
+    const bytes = await readZipBytes(coverRaw.zipPath);
+    if (bytes) cover = mat.toUrl(coverRaw.ext, bytes);
+  }
 
-  return { title, author, cover, spine, toc, loadChapter, zip };
+  const unloadAll = () => { mat.unloadAll(); chapCache.clear(); };
+  return { title, author, cover, coverRaw, spine, toc, loadChapter, loadChapterRaw, readZipBytes, unloadAll, zip };
 }
 
 /** 章节 HTML → 粗 Markdown（导出笔记用） */

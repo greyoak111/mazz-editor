@@ -166,15 +166,18 @@ export async function scenes6({ win, human, WS, WS2, scenario }) {
     }, [WS + '/电子书/潮声集.epub']);
     await win.waitForTimeout(1500);
     await evaluate(() => { [...document.querySelectorAll('.lib-card')].find(c => c.getBoundingClientRect().width > 0 && c.textContent.includes('潮声集'))?.click(); });
+    // 波次十八沙箱帧后：分栏结构在 iframe 文档内（壳内查询必空）——全部读帧（可见域过滤）
     await human.until(() => {
-      const w = [...document.querySelectorAll('.lib-flow-wrap')].find(e => e.getBoundingClientRect().width > 0);
+      const f = [...document.querySelectorAll('iframe.lib-book-frame')].find(e => e.getBoundingClientRect().width > 0);
+      const w = f?.contentDocument?.querySelector('.lib-flow-wrap');
       return w && w.scrollWidth > 0 ? true : null;
     }, { timeout: 9000, msg: 'epub 分栏就绪' });
     // 双页模式：切 mode
     await evaluate(() => { const s = [...document.querySelectorAll('.lib-mode')].find(e => e.getBoundingClientRect().width > 0); if (s) { s.value = 'double'; s.dispatchEvent(new Event('change', { bubbles: true })); } });
     await win.waitForTimeout(1200);
     const dbl = await evaluate(() => {
-      const w = [...document.querySelectorAll('.lib-flow-wrap')].find(e => e.getBoundingClientRect().width > 0);
+      const f = [...document.querySelectorAll('iframe.lib-book-frame')].find(e => e.getBoundingClientRect().width > 0);
+      const w = f?.contentDocument?.querySelector('.lib-flow-wrap');
       const flow = w?.querySelector('.lib-flow');
       if (!w || !flow) return null;
       const colW = parseFloat(flow.style.columnWidth) || 0;
@@ -185,9 +188,10 @@ export async function scenes6({ win, human, WS, WS2, scenario }) {
     await evaluate(() => { const s = [...document.querySelectorAll('.lib-mode')].find(e => e.getBoundingClientRect().width > 0); if (s) { s.value = 'single'; s.dispatchEvent(new Event('change', { bubbles: true })); } });
     await win.waitForTimeout(1200);
     const sgl = await evaluate(() => {
-      const w = [...document.querySelectorAll('.lib-flow-wrap')].find(e => e.getBoundingClientRect().width > 0);
+      const f = [...document.querySelectorAll('iframe.lib-book-frame')].find(e => e.getBoundingClientRect().width > 0);
+      const w = f?.contentDocument?.querySelector('.lib-flow-wrap');
       if (!w) return null;
-      const pageW = w.parentElement?.clientWidth || 1; // 可视区宽（wrap 的父容器）
+      const pageW = w.parentElement?.clientWidth || 1; // 可视区宽（wrap 的父容器=帧视口）
       const flow = w.querySelector('.lib-flow');
       return {
         wrapRatio: w.clientWidth / pageW, // 容器宽/可视宽（应≈70%）
@@ -203,17 +207,14 @@ export async function scenes6({ win, human, WS, WS2, scenario }) {
 
   // ==================== 6：mobi·真实特征·标题正文双正（收编 chk-mobi2） ====================
   await scenario('mobi·真实特征·乱码绝育', async () => {
-    const r = await evaluate(async () => {
-      const { parseMobi } = await import('./mobi.js').catch(() => ({}));
-      return null; // 占位：真实验证在 chk-mobi2 单元（node 直跑）
-    }).catch(() => null);
-    // 直接复用 chk-mobi2 的构造与断言（渲染进程内跑 parseMobi）
+    // （退役占位探针：import('./mobi.js') 相对页面必 404——file:// 时代 ERR_FILE_NOT_FOUND 侥幸放行，mazz-res 时代 404 记账实锤）
+    // 同源化后渲染进程直达源码模块（页面 mazz-res://app/ 根——旧 /renderer/ 绝对路径在 file:// 时代必 404（allow 名单侥幸放行），同源后 ./modules/ 真可达=升级占位探针为真验证）
     const out = await evaluate(async () => {
-      const m = await import('/renderer/modules/library/mobi.js').catch(e => ({ err: e.message }));
-      return m?.err || 'imported';
+      const m = await import('./modules/library/mobi.js').catch(e => ({ err: String(e.message || e).slice(0, 80) }));
+      return m?.err || (typeof m.parseMobi === 'function' ? 'imported' : 'no-parseMobi');
     }).catch(e => 'imp-fail:' + e.message.slice(0, 60));
-    human.log('mobi 渲染进程导入:', out, '（单元实证见 chk-mobi2，已绿）');
-    await human.assert(true, 'chk-mobi2 单元实证已过（标题 EXTH 正名/正文 UTF-8/垃圾记录零混入）');
+    human.log('mobi 渲染进程导入:', out);
+    await human.assert(out === 'imported', `同源后 mobi 模块必须渲染进程可达（实际 ${out}；单元实证见 chk-mobi2，已绿）`);
   });
 
   // ==================== 7：播放器·全屏快捷键·锁定可解 ====================
@@ -346,10 +347,11 @@ export async function scenes6({ win, human, WS, WS2, scenario }) {
     await evaluate(() => window.MazzCommands?.execute('file.newBrowser'));
     await win.waitForTimeout(2800);
     const r = await evaluate(async () => {
-      const wv = [...document.querySelectorAll('webview')].find(v => v.getBoundingClientRect().width > 0);
-      if (!wv) return { err: 'no-webview' };
+      // 波次二十后探查走视图客页通道（webview 标签已死，execJs 是唯一真源）
+      const ctl = window.__activeBrowserCtl;
+      if (!ctl?.execJs) return { err: 'no-execJs' };
       try {
-        return await wv.executeJavaScript(`
+        return await ctl.execJs(null, `
           (() => {
             const svgs = [...document.querySelectorAll('svg')].map(s => Math.max(s.getBoundingClientRect().width, s.getBoundingClientRect().height));
             const maxSvg = svgs.length ? Math.max(...svgs) : 0;

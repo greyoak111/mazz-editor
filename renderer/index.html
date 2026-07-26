@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-theme="paper">
 <head>
+  <link rel="icon" href="data:,"><!-- 禁 favicon 请求：mazz-res 时代 404 消息文本不含 allow 字样（file:// 时代 ERR_FILE_NOT_FOUND 侥幸放行实锤） -->
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' file: data: blob:; media-src 'self' file: data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com; worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com" />
+        content="default-src 'self'; script-src 'self' blob: mazz-res: 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' mazz-res: file: data: blob:; media-src 'self' mazz-res: file: data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' blob: data: mazz-res: https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com; worker-src 'self' blob: mazz-res: https://cdn.jsdelivr.net https://unpkg.com" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Mazz Editor</title>
   <link rel="stylesheet" href="styles/themes.css" />

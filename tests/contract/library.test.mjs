@@ -61,12 +61,15 @@ describe('epub 解析器', () => {
     assert.equal(epub.spine.length, 2, 'spine 两章');
     assert.equal(epub.toc.length, 2, '目录两条');
     assert.equal(epub.toc[0].label, '第一章 开始');
-    assert.ok(epub.cover?.startsWith('data:image/png;base64,'), '封面 dataURL');
-    // 章节：script 被剥除、图片重写为 dataURL
+    // 波次十九内存纪律：支持 createObjectURL 的环境封面/插图 blob 化，不支持回退 dataURL
+    const canBlob = typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
+    const imgPrefix = canBlob ? 'blob:' : 'data:image/png;base64,';
+    assert.ok(epub.cover?.startsWith(imgPrefix), `封面 URL 形态随环境（实际 ${epub.cover?.slice(0, 24)}…）`);
+    // 章节：script 被剥除、图片重写为可渲染 URL
     const ch1 = await epub.loadChapter(epub.spine[0]);
     assert.ok(ch1.html.includes('正文一'));
     assert.ok(!ch1.html.includes('<script'), 'script 应被剥除');
-    assert.ok(ch1.html.includes('data:image/png;base64,'), '图片应重写为 dataURL');
+    assert.ok(ch1.html.includes(imgPrefix), '图片应重写为可渲染 URL（blob 优先）');
     assert.ok(!ch1.html.includes('src="pic.png"'), '原始相对路径不应残留');
     const ch2 = await epub.loadChapter(epub.spine[1]);
     assert.ok(ch2.html.includes('正文二'));
@@ -79,7 +82,9 @@ describe('cbz 解析器', () => {
     assert.equal(cbz.count, 3, '只计图片页');
     assert.deepEqual(cbz.names, ['page1.png', 'page2.png', 'page10.png'], '自然排序 page2 < page10');
     const p0 = await cbz.loadPage(0);
-    assert.ok(p0.startsWith('data:image/png;base64,'));
+    // blob 化（波次十八内存纪律）：支持 createObjectURL 的环境出 blob:，不支持（老 jsdom）回退 data:
+    const canBlob = typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
+    assert.ok(p0.startsWith(canBlob ? 'blob:' : 'data:image/png;base64,'), `页面 URL 形态应符合环境（实际 ${p0.slice(0, 24)}…）`);
   });
 });
 

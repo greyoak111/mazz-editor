@@ -19,7 +19,9 @@ export class Human {
         const t = m.text();
         // 已知环境噪音白名单（jsdom 无关，真 Electron 里的良性报错）
         if (/Autofill|SharedArrayBuffer|deprecat/i.test(t)) return;
-        this.errors.push('[console.error] ' + t.slice(0, 300));
+        // 带资源 URL（「Failed to load resource」不报 URL=盲猜实锤——location 补位）
+        const loc = m.location()?.url;
+        this.errors.push('[console.error] ' + t.slice(0, 300) + (loc ? ' @ ' + loc.slice(0, 140) : ''));
       }
     });
     window.on('requestfailed', (r) => {

@@ -78,25 +78,26 @@ function createBrowser(container) {
     viewWrap.className = 'br-view-wrap';
     viewWrap.dataset.tabId = id;
     viewWrap.dataset.partition = partition;
-    let view;
+    const tab = { id, view: null, viewId: null, host: null, partition, title: '新标签页', url: HOME, el: null, canBack: false, canFwd: false };
     if (isElectron()) {
-      view = document.createElement('webview');
-      // 会话分离：隐私浏览 persist:mazz-browser（反追踪）；投稿会话 persist:mazz-author（固定登录态）
-      view.setAttribute('partition', partition);
-      view.setAttribute('allowpopups', '');
-      view.setAttribute('src', 'about:blank'); // 空 webview 必须给初始页，否则可能永不触发 dom-ready
-      view.className = 'br-webview';
+      // WebContentsView 时代：视图由主进程持有一等公民，宿主 div 只量尺寸摆位置——
+      // 会话分离沿用：隐私浏览 persist:mazz-browser（反追踪）；投稿会话 persist:mazz-author（固定登录态）
+      tab.viewId = id;
+      tab.host = document.createElement('div');
+      tab.host.className = 'br-view-host';
+      viewWrap.appendChild(tab.host);
+      // 创建就绪闸：renderHome/导航必等视图落地（竞态实锤——bv:js 抢在 bv:create 前到达=主页永远空白）
+      tab.viewReady = window.mazz.invoke('bv:create', { tabId: id, partition, url: 'about:blank' }).catch(() => {});
     } else {
-      view = document.createElement('iframe');
-      view.className = 'br-webview';
-      view.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox');
+      tab.view = document.createElement('iframe');
+      tab.view.className = 'br-webview';
+      tab.view.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox');
+      viewWrap.appendChild(tab.view);
+      tab.host = tab.view;
+      bindIframeView(tab);
     }
-    viewWrap.appendChild(view);
     ctl.views.appendChild(viewWrap);
-
-    const tab = { id, view, title: '新标签页', url: HOME, el: null, canBack: false, canFwd: false };
     ctl.tabs.push(tab);
-    bindView(tab);
     renderTabs();
     if (!background) activate(id);
     navigate(tab, url);
@@ -107,26 +108,28 @@ function createBrowser(container) {
     const tab = ctl.tabs.find(t => t.id === id);
     if (!tab) return;
     ctl.activeId = id;
-    ctl.tabs.forEach(t => t.view.parentElement.classList.toggle('on', t.id === id));
+    ctl.tabs.forEach(t => t.host.parentElement.classList.toggle('on', t.id === id));
     ctl.addrEl.value = tab.url === HOME ? '' : tab.url;
     renderTabs();
-    // 切回即唤醒输入路由（关新标签页后原标签「显示正常但点击滚动全死」的兜底：
-    // site-per-process 治本不合并，focus 治标重激活——双保险）
-    try { tab.view.focus?.(); } catch {}
+    syncBounds();
+    // 切回即聚焦唤醒输入（webview 时代要靠 focus 赌运气，视图时代主进程一句话的事）
+    if (isElectron()) window.mazz.invoke('bv:focus', { tabId: tab.viewId }).catch(() => {});
+    else try { tab.view.focus?.(); } catch {}
   }
 
   function closeTab(id) {
     const i = ctl.tabs.findIndex(t => t.id === id);
     if (i < 0) return;
     const tab = ctl.tabs[i];
-    tab.view.remove();
+    if (isElectron() && tab.viewId) window.mazz.invoke('bv:destroy', { tabId: tab.viewId }).catch(() => {});
+    tab.host.remove();
     tab.el?.remove();
     ctl.tabs.splice(i, 1);
     if (ctl.activeId === id) {
       const next = ctl.tabs[i] || ctl.tabs[i - 1];
       if (next) activate(next.id);
-      else { ctl.activeId = null; renderTabs(); }
-    } else renderTabs();
+      else { ctl.activeId = null; renderTabs(); syncBounds(); }
+    } else { renderTabs(); syncBounds(); }
     if (!ctl.tabs.length) openTab(HOME);
   }
 
@@ -167,23 +170,17 @@ function createBrowser(container) {
     queueNav(tab, url);
   }
 
-  /** 导航统一入口：dom-ready 队列 + 串行化（消灭 ERR_ABORTED 竞跑）
+  /** 导航统一入口：串行化队列（消灭竞跑）
    *  关键纪律：队首先 catch 一次——任何一次导航失败都不许污染队列，
-   *  否则链式拒绝会让这个标签从此点哪都没反应（"冻住"的病根） */
+   *  否则链式拒绝会让这个标签从此点哪都没反应（"冻住"的病根）。
+   *  视图时代不再需要 dom-ready 赌注：视图在主进程创建即随时可 loadURL */
   function queueNav(tab, url) {
     tab.navQueue = (tab.navQueue || Promise.resolve()).catch(() => {});
     tab.navQueue = tab.navQueue.then(async () => {
-      if (!tab.view?.isConnected) return; // 标签已关/视图已摘，静默丢弃
-      if (!tab.domReady && isElectron()) {
-        // 等真 dom-ready（监听器置位），不许盲置——盲置会让未就绪 webview 吃 loadURL 抛错
-        await Promise.race([
-          new Promise((resolve) => tab.view.addEventListener('dom-ready', resolve, { once: true })),
-          new Promise((resolve) => setTimeout(resolve, 8000)), // 重页/分区初始化慢，放宽到 8s
-        ]);
-      }
-      if (!tab.view?.isConnected) return;
+      if (!tab.host?.isConnected) return; // 标签已关/宿主已摘，静默丢弃
+      if (isElectron() && tab.viewReady) await tab.viewReady; // 视图落地才许写主页/导航（竞态闸）
       if (url === HOME) {
-        tab.url = HOME; // 逻辑 URL 保持 mazz://home（renderHome 加载的 data: 不覆盖它）
+        tab.url = HOME; // 逻辑 URL 保持 mazz://home
         tab.title = '主页';
         renderTabs();
         if (ctl.activeId === tab.id) ctl.addrEl.value = '';
@@ -191,26 +188,18 @@ function createBrowser(container) {
         const custom = (ctl.customHome || '').trim();
         if (custom) {
           tab.homeLoaded = false;
-          try {
-            if (isElectron()) await tab.view.loadURL(custom).catch(() => {});
-            else tab.view.src = custom;
-          } catch {}
+          if (isElectron()) await window.mazz.invoke('bv:nav', { tabId: tab.viewId, action: 'load', url: custom }).catch(() => {});
+          else tab.view.src = custom;
           return;
         }
         renderHome(tab);
-        // 等主页落地再放下一个导航（消灭 data: ERR_ABORTED 噪音）
-        if (isElectron()) {
-          await Promise.race([
-            new Promise((resolve) => tab.view.addEventListener('did-stop-loading', resolve, { once: true })),
-            new Promise((resolve) => setTimeout(resolve, 1500)),
-          ]);
-        }
         return;
       }
       try {
+        tab._errorPage = false;
         if (isElectron()) {
-          if (!tab.view?.isConnected) return;
-          await tab.view.loadURL(url).catch(() => {});
+          if (!tab.host?.isConnected) return;
+          await window.mazz.invoke('bv:nav', { tabId: tab.viewId, action: 'load', url }).catch(() => {});
         } else {
           tab.view.src = url;
         }
@@ -221,15 +210,44 @@ function createBrowser(container) {
 
   /** Ctrl+滚轮缩放（注入客页 → console 通道回传） */
   function injectZoom(tab) {
-    if (!tab?.view?.isConnected || !tab?.domReady) return; // 标签已关/webview 重建中（attached 但未 dom-ready）都别碰
+    if (!isElectron() || !tab?.viewId || !tab.host?.isConnected) return;
+    window.mazz.invoke('bv:js', {
+      tabId: tab.viewId,
+      code: `window.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) { e.preventDefault(); console.log('MAZZ_ZOOM:' + e.deltaY); }
+      }, { passive: false });`,
+    }).catch(() => {});
+  }
+
+  // ==================== 摆位引擎（宿主矩形 → 主进程视图）+ 遮挡隐身 ====================
+  /** 原生视图永远压在 DOM 之上：谁可见谁多大，由这里统一发令 */
+  function syncBounds() {
     if (!isElectron()) return;
-    try {
-      tab.view.executeJavaScript(`
-        window.addEventListener('wheel', (e) => {
-          if (e.ctrlKey) { e.preventDefault(); console.log('MAZZ_ZOOM:' + e.deltaY); }
-        }, { passive: false });
-      `).catch(() => {});
-    } catch { /* 客进程已死的 webview：同步抛，吃掉 */ }
+    const fs = ctl._htmlFs && ctl._htmlFs === ctl.activeId; // HTML5 全屏态：视图铺满主窗
+    for (const tab of ctl.tabs) {
+      const on = tab.id === ctl.activeId && !ctl._cloaked && tab.host?.isConnected;
+      if (!on) { window.mazz.invoke('bv:bounds', { tabId: tab.viewId, visible: false }).catch(() => {}); continue; }
+      let r;
+      if (fs) r = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+      else { const b = tab.host.getBoundingClientRect(); r = { x: b.left, y: b.top, width: b.width, height: b.height }; }
+      window.mazz.invoke('bv:bounds', { tabId: tab.viewId, rect: r, visible: r.width > 2 && r.height > 2 }).catch(() => {});
+    }
+  }
+  if (isElectron()) {
+    // 布局跟随：容器尺寸/窗体尺寸变化即重摆
+    try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}
+    window.addEventListener('resize', syncBounds);
+    // 遮挡隐身：弹层/菜单/放映/拖拽期间视图必须隐身（原生表面压一切 DOM，不隐身就吃菜单吃拖放）
+    const cloakCheck = () => {
+      const overlay = [...document.querySelectorAll('.mazz-palette-mask, .help-mask, .mazz-menu, .sl-present')].some(el => el.getBoundingClientRect().width > 0);
+      const cloaked = overlay || !!ctl._dragging;
+      if (cloaked !== ctl._cloaked) { ctl._cloaked = cloaked; syncBounds(); }
+    };
+    new MutationObserver(cloakCheck).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    // 拖签/拖放期间：HTML5 拖拽事件到不了原生表面，视图隐身让 DOM 盾牌与分屏预览正常工作
+    document.addEventListener('dragstart', () => { ctl._dragging = true; cloakCheck(); }, true);
+    document.addEventListener('dragend', () => { ctl._dragging = false; cloakCheck(); }, true);
+    document.addEventListener('drop', () => { ctl._dragging = false; cloakCheck(); }, true);
   }
 
   /** 主页 HTML（主题变量化：明亮/黑暗/跟随系统 + ⚙ 设置面板） */
@@ -354,8 +372,8 @@ function createBrowser(container) {
 
   function renderHome(tab) {
     const html = buildHomeHtml();
-    tab.view.srcdoc = html; // iframe 预览路径
     if (!isElectron()) {
+      tab.view.srcdoc = html; // iframe 预览路径（视图时代 tab.view 为 null——裸赋必炸，主页渲染全灭的总根）
       // iframe/srcdoc：内联脚本被页面 CSP 拦截——父页直接绑定（srcdoc 与父页同源）
       tab.view.addEventListener('load', () => {
         const doc = tab.view.contentDocument;
@@ -380,23 +398,13 @@ function createBrowser(container) {
         });
       }, { once: true });
     }
-    if (isElectron() && tab.view.setAttribute) {
-      if (tab.homeLoaded && tab.domReady && tab.view.isConnected && tab.view.executeJavaScript) {
-        // 已在主页：原地重写文档，零导航（根除 ERR_ABORTED 连击）
-        try {
-          tab.view.executeJavaScript(
-            `document.open();document.write(${JSON.stringify(html)});document.close();`
-          ).catch(() => {
-            tab.homeLoaded = false;
-            tab.view.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-            tab.homeLoaded = true;
-          });
-        } catch { tab.homeLoaded = false; }
-      } else {
-        // 首次：webview 无 srcdoc，用 data URL（经统一队列，dom-ready 已就绪）
-        tab.view.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-        tab.homeLoaded = true;
-      }
+    if (isElectron() && tab.viewId) {
+      // 视图时代：原地重写文档恒成立（about:blank 随时可写，零导航零 data: 历史污染）
+      tab.homeLoaded = true;
+      window.mazz.invoke('bv:js', {
+        tabId: tab.viewId,
+        code: `document.open();document.write(${JSON.stringify(html)});document.close();`,
+      }).catch(() => {});
     }
   }
 
@@ -418,7 +426,16 @@ function createBrowser(container) {
       <p>${escapeHtml(friendly)}</p>
       <button onclick="console.log('MAZZ_RETRY:1')">重试</button>
     </div></body></html>`;
-    tab.view.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+    if (isElectron()) {
+      // 错误页写进失败文档本体（URL 保持失败地址，返回导航天然正常——不进 data: 不污染历史）
+      tab._errorPage = true;
+      window.mazz.invoke('bv:js', {
+        tabId: tab.viewId,
+        code: `document.open();document.write(${JSON.stringify(html)});document.close();`,
+      }).catch(() => {});
+    } else {
+      tab.view.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+    }
   }
 
   function friendlyError(desc, url) {
@@ -430,70 +447,140 @@ function createBrowser(container) {
     return '可稍后重试，或换个网址。';
   }
 
-  // ==================== webview 事件 ====================
-  /** 客进程崩溃复活：B站等重页会把 guest 干死（render-process-gone），死 webview 不 reload 就永远是僵尸标签——
-   *  先 reload 复活，复活不了就重建 webview 元素（保留 partition 与逻辑 URL） */
-  function reviveView(tab, reason) {
+  // ==================== 视图事件（WebContentsView 时代：主进程转发 → 本路由器） ====================
+  /** 客进程崩溃复活：毁旧建新（Min crashed 处置同款干脆），保留 partition 与逻辑 URL */
+  async function reviveView(tab, reason) {
     if (!isElectron() || tab._reviving) return;
     tab._reviving = true;
-    tab.domReady = false;
     const cur = tab.url && tab.url !== HOME ? tab.url : null;
-    try { tab.view.reload(); } catch {}
-    // 6 秒后还没活（dom-ready 未再触发）→ 重建元素
-    setTimeout(() => {
-      tab._reviving = false;
-      if (tab.domReady || !tab.view?.isConnected) return;
-      const wrap = tab.view.parentElement;
-      const nv = document.createElement('webview');
-      nv.setAttribute('partition', wrap.dataset.partition || 'persist:mazz-browser');
-      nv.setAttribute('allowpopups', '');
-      nv.setAttribute('src', 'about:blank');
-      nv.className = 'br-webview';
-      tab.view.remove();
-      wrap.appendChild(nv);
-      tab.view = nv;
-      bindView(tab);
-      toast('页面进程已重启' + (reason ? `（${reason}）` : ''));
-      queueNav(tab, cur || HOME);
-    }, 6000);
+    toast('页面进程已重启' + (reason ? `（${reason}）` : ''));
+    try { await window.mazz.invoke('bv:destroy', { tabId: tab.viewId }); } catch {}
+    try { await window.mazz.invoke('bv:create', { tabId: tab.viewId, partition: tab.partition, url: 'about:blank' }); } catch {}
+    tab._reviving = false;
+    syncBounds();
+    queueNav(tab, cur || HOME);
   }
 
-  function bindView(tab) {
-    const v = tab.view;
-    v.addEventListener('dom-ready', () => { tab.domReady = true; });
-    v.addEventListener('render-process-gone', (e) => {
-      if (e?.details?.reason === 'clean-exit') return;
-      reviveView(tab, e?.details?.reason);
-    });
-    v.addEventListener('unresponsive', () => reviveView(tab, '无响应'));
-    v.addEventListener('page-title-updated', (e) => {
-      if (isInternalUrl(tab.url)) return; // 内部页标题由导航逻辑管理（主页保持「主页」）
-      tab.title = e.title || tab.url;
-      renderTabs();
-    });
-    v.addEventListener('did-navigate', (e) => {
-      // 内部页面（主页 data:/about:blank 等）不覆盖标签逻辑 URL，也不进历史
-      if (isInternalUrl(e.url)) return;
-      // 自定义主页落地：保持主页逻辑身份，不进历史
-      if (tab.url === HOME && ctl.customHome && normUrl(e.url) === normUrl(ctl.customHome)) {
-        tab.homeLoaded = false; // 自定义主页非内置文档，不可原地重写
+  function handleBvEvent(tab, type, d) {
+    switch (type) {
+      case 'render-process-gone':
+        if (d.reason === 'clean-exit') return;
+        reviveView(tab, d.reason);
+        return;
+      case 'unresponsive':
+        reviveView(tab, '无响应');
+        return;
+      case 'page-title-updated':
+        if (isInternalUrl(tab.url)) return; // 内部页标题由导航逻辑管理（主页保持「主页」）
+        tab.title = d.title || tab.url;
+        renderTabs();
+        return;
+      case 'did-navigate': {
+        // 内部页面（主页/about:blank 等）不覆盖标签逻辑 URL，也不进历史
+        if (isInternalUrl(d.url)) return;
+        // 自定义主页落地：保持主页逻辑身份，不进历史
+        if (tab.url === HOME && ctl.customHome && normUrl(d.url) === normUrl(ctl.customHome)) {
+          tab.homeLoaded = false;
+          return;
+        }
+        // 被动导航 = 落地 URL 与目标 URL 不符（重定向/页面自跳）
+        const passive = normUrl(d.url) !== normUrl(tab.url);
+        tab.url = d.url;
+        tab.homeLoaded = false;
+        tab._errorPage = false; // 真导航落地即离开错误页
+        if (ctl.activeId === tab.id) ctl.addrEl.value = d.url;
+        pushHistory(d.url, tab.title, passive);
+        window.MazzHost?.notifyChange(container);
         return;
       }
-      // 被动导航 = 落地 URL 与目标 URL 不符（重定向/页面自跳）
-      const passive = normUrl(e.url) !== normUrl(tab.url);
-      tab.url = e.url;
-      tab.homeLoaded = false; // 已离开主页
-      if (ctl.activeId === tab.id) ctl.addrEl.value = e.url;
-      pushHistory(e.url, tab.title, passive);
-      window.MazzHost?.notifyChange(container);
-    });
-    v.addEventListener('did-navigate-in-page', (e) => {
-      if (e.isMainFrame && !isInternalUrl(e.url)) {
-        tab.url = e.url;
-        if (ctl.activeId === tab.id) ctl.addrEl.value = e.url;
+      case 'did-navigate-in-page':
+        if (d.isMainFrame && !isInternalUrl(d.url)) {
+          tab.url = d.url;
+          tab._errorPage = false;
+          if (ctl.activeId === tab.id) ctl.addrEl.value = d.url;
+        }
+        return;
+      case 'console-message': {
+        const msg = d.message || '';
+        if (msg.startsWith('MAZZ_Q:')) {
+          const q = msg.slice(7).trim();
+          if (!q) return;
+          const input = normalizeInput(q);
+          if (input?.type === 'url') navigate(tab, input.value);
+          else if (input?.value) doSearch(input.value);
+        }
+        if (msg.startsWith('MAZZ_ACT:')) {
+          const [act, url] = msg.slice(9).split('|');
+          handleHomeAction(act, decodeURIComponent(url || ''));
+        }
+        if (msg.startsWith('MAZZ_ZOOM:')) {
+          const dy = parseFloat(msg.slice(10));
+          if (isNaN(dy)) return;
+          const cur = tab.zoom || 1;
+          const next = Math.min(3, Math.max(0.3, cur + (dy < 0 ? 0.1 : -0.1)));
+          tab.zoom = next;
+          window.mazz.invoke('bv:zoom', { tabId: tab.viewId, factor: next }).catch(() => {});
+          toast(`缩放 ${Math.round(next * 100)}%`);
+        }
+        if (msg === 'MAZZ_RETRY:1') queueNav(tab, tab.url);
+        return;
       }
+      case 'did-fail-load':
+        if (d.isMainFrame && d.errorCode !== -3) {
+          tab.title = '加载失败';
+          renderTabs();
+          renderLoadError(tab, { errorDescription: d.errorDescription || String(d.errorCode) });
+        }
+        return;
+      case 'found-in-page': {
+        const r = d.result || {};
+        root.querySelector('.br-find-count').textContent = r.matches ? `${r.activeMatchOrdinal}/${r.matches}` : '无结果';
+        return;
+      }
+      case 'context-menu': {
+        // 客页右键（坐标已在主进程换算到主窗系）
+        contextKeys.set('browserMediaType', d.mediaType || 'none');
+        contextKeys.set('browserHasSelection', !!(d.selectionText || '').trim());
+        contextKeys.set('browserLinkUrl', d.linkURL || '');
+        menus.show('browser/page', { x: d.x, y: d.y, preferDom: true });
+        ctl.contextParams = d;
+        return;
+      }
+      case 'open-url':
+        if (d.url) openTab(d.url);
+        return;
+      case 'dom-ready':
+      case 'did-stop-loading':
+        injectZoom(tab);
+        return;
+      case 'enter-html-full-screen':
+        // HTML5 全屏：视图铺满主窗（原生表面压一切 DOM，真全屏零技巧）
+        ctl._htmlFs = tab.viewId;
+        syncBounds();
+        return;
+      case 'leave-html-full-screen':
+        ctl._htmlFs = null;
+        syncBounds();
+        return;
+    }
+  }
+  // 事件路由登记（每个模块实例一次）
+  if (isElectron() && !ctl._bvWired) {
+    ctl._bvWired = true;
+    window.mazz.on('bv:event', ({ tabId, type, data }) => {
+      const tab = ctl.tabs.find(t => t.viewId === tabId);
+      if (tab) handleBvEvent(tab, type, data || {});
     });
-    // 主页搜索框：postMessage 通道（iframe 预览与 webview 通用）
+  }
+
+  /** iframe 预览路径（非 Electron：网页预览/契约环境） */
+  function bindIframeView(tab) {
+    const v = tab.view;
+    // 契约/预览同体：DOM 事件即视图事件（导航系直进路由器，行为逻辑一处真源）
+    v.addEventListener('did-navigate', (e) => handleBvEvent(tab, 'did-navigate', { url: e.url }));
+    v.addEventListener('did-navigate-in-page', (e) => handleBvEvent(tab, 'did-navigate-in-page', { url: e.url, isMainFrame: e.isMainFrame !== false }));
+    v.addEventListener('page-title-updated', (e) => handleBvEvent(tab, 'page-title-updated', { title: e.title }));
+    // 主页搜索框：postMessage 通道（iframe 预览专用）
     window.addEventListener('message', (e) => {
       if (e.data?.mazzSearch) {
         const input = normalizeInput(e.data.mazzSearch);
@@ -503,57 +590,7 @@ function createBrowser(container) {
       }
       if (e.data?.mazzAct) handleHomeAction(e.data.mazzAct, e.data.url);
     });
-    // 主页搜索框：console 通道（Electron webview 专用）
-    v.addEventListener('console-message', (e) => {
-      const msg = e.message || '';
-      if (msg.startsWith('MAZZ_Q:')) {
-        const q = msg.slice(7).trim();
-        if (!q) return;
-        const input = normalizeInput(q);
-        if (input?.type === 'url') navigate(tab, input.value);
-        else if (input?.value) doSearch(input.value);
-      }
-      if (msg.startsWith('MAZZ_ACT:')) {
-        const [act, url] = msg.slice(9).split('|');
-        handleHomeAction(act, decodeURIComponent(url || ''));
-      }
-      if (msg.startsWith('MAZZ_ZOOM:')) {
-        const dy = parseFloat(msg.slice(10));
-        if (isNaN(dy)) return;
-        const cur = tab.zoom || 1;
-        const next = Math.min(3, Math.max(0.3, cur + (dy < 0 ? 0.1 : -0.1)));
-        tab.zoom = next;
-        if (v.isConnected) v.setZoomFactor(next);
-        toast(`缩放 ${Math.round(next * 100)}%`);
-      }
-      if (msg === 'MAZZ_RETRY:1') {
-        queueNav(tab, tab.url);
-      }
-    });
-    v.addEventListener('did-fail-load', (e) => {
-      if (e.isMainFrame && e.errorCode !== -3) {
-        tab.title = '加载失败';
-        renderLoadError(tab, e);
-      }
-    });
-    v.addEventListener('found-in-page', (e) => {
-      const r = e.result;
-      root.querySelector('.br-find-count').textContent = r.matches ? `${r.activeMatchOrdinal}/${r.matches}` : '无结果';
-    });
-    v.addEventListener('contextmenu', (e) => e.preventDefault());
-    // webview 的 context-menu 事件（Electron）：右键 7/8 号上下文
-    v.addEventListener('context-menu', (e) => {
-      if (!isElectron()) return;
-      const p = e.params || {};
-      contextKeys.set('browserMediaType', p.mediaType || 'none');
-      contextKeys.set('browserHasSelection', !!(p.selectionText || '').trim());
-      contextKeys.set('browserLinkUrl', p.linkURL || '');
-      menus.show('browser/page', { x: p.x, y: p.y, preferDom: true });
-      ctl.contextParams = p;
-    });
     v.addEventListener('focus', () => { current = ctl; contextKeys.set('module', MODULE); });
-    // 每次页面加载完成都注入缩放脚本（跨页不失效）
-    v.addEventListener('dom-ready', () => injectZoom(tab));
   }
 
   // ==================== 历史/收藏（自定义命名/删除/文件夹分类） ====================
@@ -811,10 +848,12 @@ function createBrowser(container) {
   function openPanel() {
     ctl.panelOpen = true;
     ctl.root.classList.add('panel-open');
+    syncBounds(); // 面板开合改变可视区宽——视图即时重摆
   }
   function closePanel() {
     ctl.panelOpen = false;
     ctl.root.classList.remove('panel-open');
+    syncBounds();
   }
   function showPanelMessage(msg) {
     openPanel();
@@ -830,48 +869,50 @@ function createBrowser(container) {
   }
   function closeFind() {
     findbar.classList.remove('on');
-    const t = activeTab();
-    t?.view.stopFindInPage?.('clearSelection');
+    findInActive('');
   }
-  ctl.findInput.addEventListener('input', () => {
+  function findInActive(text, opts) {
     const t = activeTab();
-    const text = ctl.findInput.value;
-    if (!text) { t?.view.stopFindInPage?.('clearSelection'); return; }
-    t?.view.findInPage?.(text);
-  });
+    if (!t) return;
+    if (isElectron()) window.mazz.invoke('bv:find', { tabId: t.viewId, text, opts }).catch(() => {});
+    else if (text) t?.view.findInPage?.(text, opts);
+    else t?.view.stopFindInPage?.('clearSelection');
+  }
+  ctl.findInput.addEventListener('input', () => findInActive(ctl.findInput.value));
   ctl.findInput.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeFind();
-    if (e.key === 'Enter') {
-      const t = activeTab();
-      if (ctl.findInput.value) t?.view.findInPage?.(ctl.findInput.value, { findNext: true, forward: !e.shiftKey });
-    }
+    if (e.key === 'Enter' && ctl.findInput.value) findInActive(ctl.findInput.value, { findNext: true, forward: !e.shiftKey });
   });
-  findbar.querySelector('[data-f=next]').addEventListener('click', () => activeTab()?.view.findInPage?.(ctl.findInput.value, { findNext: true, forward: true }));
-  findbar.querySelector('[data-f=prev]').addEventListener('click', () => activeTab()?.view.findInPage?.(ctl.findInput.value, { findNext: true, forward: false }));
+  findbar.querySelector('[data-f=next]').addEventListener('click', () => findInActive(ctl.findInput.value, { findNext: true, forward: true }));
+  findbar.querySelector('[data-f=prev]').addEventListener('click', () => findInActive(ctl.findInput.value, { findNext: true, forward: false }));
   findbar.querySelector('[data-f=close]').addEventListener('click', closeFind);
 
   // ==================== 工具栏按钮 ====================
-  /** 带看门狗的历史前进/后退：B站挂起加载（长连接/风控挂起）会阻塞 goBack 呈现"冻结"；
-   *  先 stop 断挂起再跳，3s 后探活——客死/无响应即 reviveView 复活，不许标签从此冻死 */
-  function guardedHistoryNav(tab, dir) {
-    if (!tab?.view?.isConnected) return;
-    try { tab.view.stop?.(); } catch {}
-    try { dir === 'back' ? tab.view.goBack?.() : tab.view.goForward?.(); } catch {}
+  /** 历史前进/后退（视图时代：goBack 不再有 guest 代理挂起——结构性冻结已绝）
+   *  错误页零跳链天然成立：错误页写进失败文档本体（URL=失败地址），历史里当前条目即失败页，
+   *  回退 -1 自然落在失败前的好页——Min 要 -2 跳链是因为它的错误页另起内部条目，我们不产那个累赘。
+   *  余味一件套：探活看门狗减重版——导航 3s 后客页无应答即复活（兜底保险，不是救命稻草） */
+  async function historyNav(tab, dir) {
+    if (!tab?.host?.isConnected) return;
+    if (!isElectron()) {
+      try { dir === 'back' ? tab.view.contentWindow.history.back() : tab.view.contentWindow.history.forward(); } catch {}
+      return;
+    }
+    await window.mazz.invoke('bv:nav', { tabId: tab.viewId, action: dir === 'back' ? 'back' : 'forward' }).catch(() => {});
     clearTimeout(tab._navDog);
-    tab._navDog = setTimeout(() => {
-      if (!tab.view?.isConnected) return;
-      try {
-        tab.view.executeJavaScript('1', true).catch(() => reviveView(tab, '返回卡死探活失败'));
-      } catch { reviveView(tab, '返回卡死探活异常'); }
+    tab._navDog = setTimeout(async () => {
+      if (!tab.host?.isConnected) return;
+      const r = await window.mazz.invoke('bv:js', { tabId: tab.viewId, code: '1' }).catch(() => null);
+      if (r && typeof r === 'object' && r.__err) reviveView(tab, '导航探活失败');
     }, 3000);
   }
-  root.querySelector('[data-a=back]').addEventListener('click', () => guardedHistoryNav(activeTab(), 'back'));
-  root.querySelector('[data-a=forward]').addEventListener('click', () => guardedHistoryNav(activeTab(), 'forward'));
+  root.querySelector('[data-a=back]').addEventListener('click', () => historyNav(activeTab(), 'back'));
+  root.querySelector('[data-a=forward]').addEventListener('click', () => historyNav(activeTab(), 'forward'));
   root.querySelector('[data-a=reload]').addEventListener('click', () => {
     const t = activeTab();
     if (!t) return;
-    // webview 未挂 DOM/未 dom-ready 时 reload 会直接抛错——守卫后走导航队列
-    (t.view?.isConnected && t.domReady && t.view.reload) ? t.view.reload() : navigate(t, t.url);
+    if (isElectron()) window.mazz.invoke('bv:nav', { tabId: t.viewId, action: 'reload' }).catch(() => {});
+    else if (t.view?.isConnected && t.view.contentWindow) { try { t.view.contentWindow.location.reload(); } catch { navigate(t, t.url); } }
   });
   root.querySelector('[data-a=home]').addEventListener('click', () => navigate(activeTab(), HOME));
   root.querySelector('[data-a=find]').addEventListener('click', openFind);
@@ -905,18 +946,23 @@ function createBrowser(container) {
   ctl.getSelection = async () => {
     const t = activeTab();
     if (!t || !isElectron()) return '';
-    try { return await t.view.executeJavaScript('window.getSelection().toString()'); } catch { return ''; }
+    const r = await window.mazz.invoke('bv:js', { tabId: t.viewId, code: 'window.getSelection().toString()' }).catch(() => null);
+    return (r && typeof r === 'object' && r.__err) ? '' : (r ?? '');
   };
   ctl.getPageText = async () => {
     const t = activeTab();
     if (!t || !isElectron()) return null;
-    try {
-      const r = await t.view.executeJavaScript(`(() => {
-        const art = document.querySelector('article') || document.body;
-        return { title: document.title, url: location.href, text: art.innerText.slice(0, 20000) };
-      })()`);
-      return r;
-    } catch { return null; }
+    const r = await window.mazz.invoke('bv:js', { tabId: t.viewId, code: `(() => {
+      const art = document.querySelector('article') || document.body;
+      return { title: document.title, url: location.href, text: art.innerText.slice(0, 20000) };
+    })()` }).catch(() => null);
+    return (r && typeof r === 'object' && r.__err) ? null : r;
+  };
+  /** 测试口：在指定（或活动）视图客页执行 JS（E2E 探查唯一通道——webview 标签已死） */
+  ctl.execJs = async (tabId, code) => {
+    const id = tabId || activeTab()?.viewId;
+    if (!id || !isElectron()) return null;
+    return window.mazz.invoke('bv:js', { tabId: id, code }).catch(() => null);
   };
   /** 主页快捷动作：重命名/删除（收藏与历史，URL 归一化匹配）+ 主题/自定义主页/密码管理器 */
   async function handleHomeAction(act, url) {
@@ -1145,7 +1191,9 @@ export default {
       const obj = JSON.parse(data);
       if (obj.mark === 'mazz-browser-v1' && obj.tabs?.length) {
         for (let i = ctl.tabs.length - 1; i >= 0; i--) {
-          ctl.tabs[i].view.remove(); ctl.tabs[i].el?.remove();
+          // 视图时代拆签：先毁主进程视图再摘宿主（tab.view 只对 iframe 路径存在——视图时代它是 null）
+          if (isElectron() && ctl.tabs[i].viewId) window.mazz.invoke('bv:destroy', { tabId: ctl.tabs[i].viewId }).catch(() => {});
+          ctl.tabs[i].host?.remove(); ctl.tabs[i].el?.remove();
         }
         ctl.tabs.length = 0;
         obj.tabs.forEach(t => ctl.openTabWith ? null : null);
@@ -1242,11 +1290,11 @@ export default {
           window.MazzHost?.openTab('markdown', { title: '浏览器收藏.md', content: md });
         } },
       { id: 'browser.navBack', title: '后退', group: '浏览器', when: "module=='browser'",
-        run: () => current && guardedHistoryNav(current.activeTab(), 'back') },
+        run: () => current && historyNav(current.activeTab(), 'back') },
       { id: 'browser.navForward', title: '前进', group: '浏览器', when: "module=='browser'",
-        run: () => current && guardedHistoryNav(current.activeTab(), 'forward') },
+        run: () => current && historyNav(current.activeTab(), 'forward') },
       { id: 'browser.navReload', title: '刷新', group: '浏览器', when: "module=='browser'",
-        run: () => { const t = current?.activeTab(); if (t) (t.view?.isConnected && t.domReady && t.view.reload) ? t.view.reload() : current.openUrl(t.url); } },
+        run: () => { const t = current?.activeTab(); if (!t) return; if (isElectron()) window.mazz.invoke('bv:nav', { tabId: t.viewId, action: 'reload' }).catch(() => {}); else current.openUrl(t.url); } },
       { id: 'browser.copyUrl', title: '复制页面地址', group: '浏览器', when: "module=='browser'",
         run: async () => {
           const t = current?.activeTab();

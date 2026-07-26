@@ -265,7 +265,7 @@ export class Shell {
   /** 全局内录对话框：源多选 + 音频开关 + 变速 + 启停 */
   async openScreenRecorderDialog() {
     if (!window.mazz?.isElectron) { toast('全局内录仅桌面版可用'); return; }
-    if (this._screenRec) { this._screenRec.stop(); this._screenRec = null; toast('已停止，文件保存到工作区 录制/'); return; }
+    if (this._screenRec) { this._screenRec.stop(); this._screenRec = null; toast('正在停止并收尾…'); return; }
     let sources = [];
     try { sources = await window.mazz.invoke('rec:sources'); }
     catch (e) { toast('录制源枚举失败：' + e.message); return; }
@@ -301,17 +301,19 @@ export class Shell {
     m.body.querySelector('#rec-go').addEventListener('click', async () => {
       if (!picked.size) { toast('先选择录制源'); return; }
       const chosen = sources.filter(s => picked.has(s.id));
-      for (const s of chosen) await window.mazz.invoke('rec:useSource', { id: s.id });
       const { startScreenRecorder } = await import('../lib/recorder.js');
-      const r = await startScreenRecorder({
-        sources: chosen,
-        speed: +m.body.querySelector('#rec-speed').value,
-        sysAudio: m.body.querySelector('#rec-sys').checked,
-        micAudio: m.body.querySelector('#rec-mic').checked,
-        outFormat: m.body.querySelector('#rec-fmt')?.value || 'webm',
-        subtitle: m.body.querySelector('#rec-sub')?.checked ?? true,
-        name: '全局内录',
-      });
+      let r = null;
+      try {
+        r = await startScreenRecorder({
+          sources: chosen,
+          speed: +m.body.querySelector('#rec-speed').value,
+          sysAudio: m.body.querySelector('#rec-sys').checked,
+          micAudio: m.body.querySelector('#rec-mic').checked,
+          outFormat: m.body.querySelector('#rec-fmt')?.value || 'webm',
+          subtitle: m.body.querySelector('#rec-sub')?.checked ?? true,
+          name: '全局内录',
+        });
+      } catch (e) { toast('录制启动失败：' + (e?.message || e)); return; } // 旧实现此处无 catch：采集被拒=未处理拒绝静默吞掉
       if (!r) { toast('启动失败'); return; }
       this._screenRec = r;
       toast('内录中… 再次执行「全局内录」命令停止');
@@ -382,9 +384,14 @@ export class Shell {
     };
     const hideOverlay = () => { overlay?.remove(); overlay = null; zone = null; zoneLeaf = null; };
     const shields = (on) => document.body.classList.toggle('tab-dragging', on);
+    // 清理唯一真源（三路兜底，不再单押 dragend）：拖签中途源元素被重渲染销毁→dragend 永失，
+    // 33% 框+盾牌钉死屏幕（「神秘框」粘连复现实锤）——看门狗/pointerup/blur 三路必达
+    let dog = null;
+    const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; };
+    const armDog = () => { clearTimeout(dog); dog = setTimeout(cleanup, 1500); }; // 1.5s 无 dragover 即判拖拽死亡
 
     document.addEventListener('dragstart', (e) => {
-      if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) shields(true);
+      if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); }
     }, true);
     // 捕获相：模块内部（如编辑器拖拽插图区）stopPropagation 也截不到这里——
     // 此前 dragover 走冒泡相，多窗格下被模块内层截停，分区永 null=拖不了分屏（灾难现场病根）
@@ -394,20 +401,23 @@ export class Shell {
       if (e.target.closest?.('.tabbar')) { if (zone) hideOverlay(); return; }
       const leaf = leafAt(e.clientX, e.clientY);
       const z = leaf && zoneIn(leaf, e.clientX, e.clientY);
-      if (leaf && z) { zone = z; zoneLeaf = leaf; showOverlay(leaf, z); e.preventDefault(); }
+      if (leaf && z) { zone = z; zoneLeaf = leaf; showOverlay(leaf, z); armDog(); e.preventDefault(); }
       else if (zone) hideOverlay();
     }, true);
     document.addEventListener('drop', (e) => {
       const tabId = e.dataTransfer?.getData('mazz/tab');
       const z = zone, leaf = zoneLeaf;
-      hideOverlay();
-      shields(false);
+      cleanup();
       if (!tabId || !z || !leaf) return;
       e.preventDefault();
       e.stopPropagation();
       this.splitWithTab(tabId, z, leaf);
     }, true);
-    document.addEventListener('dragend', () => { hideOverlay(); shields(false); });
+    document.addEventListener('dragend', cleanup);
+    // 兜底一：真实鼠标拖拽必以 pointerup 收场（dragend 被源毁灭吞掉时的唯一活口）
+    document.addEventListener('pointerup', () => { if (overlay || document.body.classList.contains('tab-dragging')) cleanup(); }, true);
+    // 兜底二：切窗/失焦即清（alt-tab 中断拖拽的残渣）
+    window.addEventListener('blur', cleanup);
   }
 
   /** 外部文件拖入：主界面/外部窗格自动打开（支持格式走 EXT_MODULE 路由） */
@@ -2036,7 +2046,8 @@ export function modal(title) {
       <b style="font-size:15px">${title}</b>
       <button class="rb-btn" style="min-width:28px" id="m-close">✕</button>
     </div><div class="modal-body"></div></div>`;
-  document.body.appendChild(mask);
+  // 全屏挂接：全屏时只有 fullscreenElement 子树可见——mask 挂 body 必隐身（播放设置全屏打不开实锤）
+  (document.fullscreenElement || document.body).appendChild(mask);
   mask.querySelector('#m-close').addEventListener('click', () => mask.remove());
   mask.addEventListener('mousedown', e => { if (e.target === mask) mask.remove(); });
   return { el: mask, body: mask.querySelector('.modal-body'), close: () => mask.remove() };

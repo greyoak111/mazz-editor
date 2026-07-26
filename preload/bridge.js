@@ -41,6 +41,11 @@ const INVOKE_CHANNELS = new Set([
   'explorermenu:status', 'explorermenu:register', 'explorermenu:unregister',
   'apps:quickLaunch', 'apps:launch',
   'rec:sources', 'rec:useSource', 'rec:selfFrame',
+  'player:subAssets',
+  'tor:add', 'tor:stats', 'tor:list', 'tor:streamUrl', 'tor:filePath', 'tor:remove', 'tor:fileBytes',
+  'sites:list', 'sites:search', 'sites:magnet', 'sites:home',
+  'mkv:tracks', 'mkv:extractFlac', 'mkv:extractTrack',
+  'bv:create', 'bv:destroy', 'bv:bounds', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state',
   'window:childAt', 'window:toChild', 'window:listChildren', 'theme:broadcast',
   'workspace:list', 'workspace:add', 'workspace:remove', 'workspace:rename', 'workspace:setCurrent',
 ]);
@@ -50,7 +55,7 @@ const EVENT_CHANNELS = new Set([
   'file:open', 'file:changed', 'file:import', 'command:invoke', 'menu:clicked',
   'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role',
   'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'library:download',
-  'workspace:changed', 'window:fullscreen',
+  'workspace:changed', 'window:fullscreen', 'bv:event',
 ]);
 
 const listeners = new Map(); // channel -> Set<callback>

@@ -65,13 +65,20 @@ describe('书库 UI', () => {
     const ctl = instances.get(container);
     await ctl.openBook('bk1');
     await tick(150);
+    // 沙箱帧后正文在 iframe 内（koodo 式隔离）：读帧文档，无帧回退壳内（双保险）
+    const bookHtml = () => {
+      const f = container.querySelector('iframe.lib-book-frame');
+      return f?.contentDocument?.body?.innerHTML || container.querySelector('.lib-page').innerHTML;
+    };
     assert.ok(container.querySelector('.lib-reader').style.display !== 'none', '阅读器应显示');
-    assert.ok(container.querySelector('.lib-page').innerHTML.includes('开篇章'), '应渲染第一章');
+    assert.ok(container.querySelector('iframe.lib-book-frame'), '沙箱阅读帧应存在');
+    assert.equal(container.querySelector('iframe.lib-book-frame').getAttribute('sandbox'), 'allow-same-origin', '帧须沙箱隔离');
+    assert.ok(bookHtml().includes('开篇章'), '应渲染第一章');
     assert.ok(container.querySelector('.lib-pos').textContent.includes('1/2'));
     // 翻页
     container.querySelector('[data-a=next]').click();
     await tick(120);
-    assert.ok(container.querySelector('.lib-page').innerHTML.includes('续章'), '应到第二章');
+    assert.ok(bookHtml().includes('续章'), '应到第二章');
     assert.ok(container.querySelector('.lib-pos').textContent.includes('2/2'));
     // 进度已记忆
     const progress = settings.get('library.progress');

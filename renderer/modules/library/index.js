@@ -4,7 +4,9 @@ import { iconHtml } from '../../lib/svg-icons.js';
 import { contextKeys } from '../../core/contextkey-service.js';
 import { toast, inputModal, modal } from '../../shell/shell.js';
 import { parseEpub, htmlToMarkdown } from './epub.js';
-import { parseCbz } from './cbz.js';
+import { readBookCache, writeBookCache } from './cache.js';
+import { getAllRules, saveAllRules, rulesForBook, processHtmlText } from './clean.js';
+import { parseCbz, makeBytesPager } from './cbz.js';
 import { parseMobi, paginateText, textPageToHtml, extractMobiImages, imageBytesToDataUrl } from './mobi.js';
 import { buildMangaBook, imageUrl } from './manga.js';
 
@@ -79,6 +81,7 @@ function createLibrary(container) {
         <button class="rb-btn" data-a="direction" title="翻页方向：左到右 / 右到左（日漫习惯）">${iconHtml('⇄')}</button>
         <select class="lib-mode rb-select" title="阅读模式">
           <option value="single">单页</option><option value="double">双页</option><option value="scroll">滚动</option>
+          <option value="vertical">竖排</option>
         </select>
         <select class="lib-read-theme rb-select" title="阅读主题">
           ${Object.entries(READ_THEMES).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}
@@ -90,6 +93,10 @@ function createLibrary(container) {
           <option value="0.7" selected>页宽 70%</option><option value="0.8">页宽 80%</option>
           <option value="1">全宽 100%</option>
         </select>
+        <select class="lib-zh rb-select" title="简繁转换（OpenCC 字表+高频词纠偏，随书记忆）">
+          <option value="">原文</option><option value="t2s">转简体</option><option value="s2t">转繁体</option>
+        </select>
+        <button class="rb-btn" data-a="clean-rules" title="净化规则（替换/删除，字面或正则，全书或本书——网文广告/水印清洗）">${iconHtml('⛨')} 净化</button>
       </div>
       <div class="lib-reader-main">
         <div class="lib-toc" style="display:none"></div>
@@ -362,28 +369,40 @@ function createLibrary(container) {
         bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       }
+      // 换书先放血：上一本书的图片 blob URL 全部 revoke（大漫画/重图 epub 内存纪律，绝不跨书残留）
+      try { ctl.book?.cbz?.unloadAll?.(); } catch {}
+      try { ctl.book?.epub?.unloadAll?.(); } catch {}
+      ctl._flowRO?.disconnect?.(); ctl._flowRO = null; // RO 随帧退役（否则帧亡后 layOut 读空 _fdoc 炸异常警察）
+      ctl._frame?.remove?.(); ctl._frame = null; ctl._fdoc = null; // 沙箱帧随书重建
       ctl.book = { meta: book };
       const progress = (await window.mazz.invoke('settings:get', { key: PROGRESS_KEY }).catch(() => ({}))) || {};
       // 分栏屏位比例（重开恢复用；只在分栏横排布局完成后消费一次）
       ctl._pendingRatio = (typeof progress[id]?.ratio === 'number') ? progress[id].ratio : null;
+      // 内容锚（重开恢复最高优先级：xpath+章号+文本指纹，重排免疫——koodo 模型）
+      ctl._pendingAnchor = progress[id]?.anchor || null;
       if (book.format === 'epub') {
-        ctl.book.epub = await parseEpub(bytes.buffer);
+        // 预处理缓存优先（koodo cache-zip：一次解析永久快开）；源文件 mtime/size 不符即回退全量解析
+        const stat = await window.mazz.invoke('fs:stat', { path: book.path }).catch(() => null);
+        const cached = stat && await readBookCache(book.id, stat).catch(() => null);
+        if (cached) ctl.book.epub = cached;
+        else ctl.book.epub = await parseEpub(bytes.buffer);
+        ctl.book.epub._srcStat = stat;
         ctl.chapterIdx = Math.min(progress[id]?.chapter || 0, ctl.book.epub.spine.length - 1);
       } else if (book.format === 'manga-folder') {
         ctl.book.manga = await buildMangaBook(book.path);
         ctl.pageIdx = Math.min(progress[id]?.page || 0, ctl.book.manga.chapters.length - 1);
       } else if (book.format === 'pdf') {
-        ctl.book.pdf = { url: window.mazz?.isElectron ? 'file://' + book.path.replace(/\\/g, '/') : URL.createObjectURL(new Blob([bytes.buffer], { type: 'application/pdf' })) };
+        ctl.book.pdf = { url: window.mazz?.isElectron ? 'mazz-res://media/' + encodeURIComponent(book.path.replace(/\\/g, '/')) : URL.createObjectURL(new Blob([bytes.buffer], { type: 'application/pdf' })) }; // 页面同源化
       } else if (book.format === 'txt' || book.format === 'mobi' || book.format === 'azw3') {
         // 图片型 mobi（漫画）：image records 图多（≥3）即按 cbz 漫画管线渲染——
         // 漫画型 mobi 正文是图片记录不是文字（「乱码」真相：只提了 HTML 骨架碎片，图一张没提）
         if (book.format !== 'txt') {
           const imgs = extractMobiImages(bytes.buffer);
           if (imgs.length >= 3) {
-            const pages = imgs.map(im => imageBytesToDataUrl(im.mime, im.bytes));
-            ctl.book.cbz = { count: pages.length, loadPage: async (i) => pages[i] };
+            // blob URL + 翻页 revoke 内存纪律（与 cbz 同管线同纪律）
+            ctl.book.cbz = makeBytesPager(imgs, async (i) => imgs[i]);
             ctl.book.meta.format = 'cbz'; // 伪装 cbz 走漫画管线（单双页/进度/图宽全通）
-            ctl.pageIdx = Math.min(progress[id]?.page || 0, pages.length - 1);
+            ctl.pageIdx = Math.min(progress[id]?.page || 0, imgs.length - 1);
           }
         }
         if (!ctl.book.cbz) {
@@ -399,9 +418,17 @@ function createLibrary(container) {
       readerView.style.display = 'flex';
       root.querySelector('.lib-book-title').textContent = book.title;
       window.MazzHost?.setTabTitle(container, book.title);
+      // 净化规则与简繁偏好随书恢复（加工链版本戳驱动章节回炉）
+      ctl._cleanRules = rulesForBook(await getAllRules(), book.id);
+      ctl.zhMode = progress[id]?.zh || '';
+      root.querySelector('.lib-zh').value = ctl.zhMode || '';
       renderToc();
       applyReadTheme();
       await showCurrent();
+      // 首开后台写预处理缓存（下次零解析直开——只疼第一次）
+      if (ctl.book?.meta?.format === 'epub' && ctl.book.epub && !ctl.book.epub._fromCache && ctl.book.epub._srcStat) {
+        writeBookCache(book.id, ctl.book.epub._srcStat, ctl.book.epub).catch(() => {});
+      }
     } catch (e) {
       toast('打开失败：' + (e.message || e));
     }
@@ -413,6 +440,10 @@ function createLibrary(container) {
       // 分栏比例统一存储：epub 存 chapter、文本类存 page，分栏横排一律附 ratio（屏位比例 0..1）
       const rec = ctl.book.meta.format === 'epub' ? { chapter: ctl.chapterIdx } : { page: ctl.pageIdx };
       if (ctl._flowWrap && typeof ctl._flowRatio === 'number') rec.ratio = +ctl._flowRatio.toFixed(5);
+      if (ctl.zhMode) rec.zh = ctl.zhMode; // 简繁偏好随书记忆
+      // 内容锚 + 字数加权百分比（koodo handleRecord 模型：锚内容不锚屏位，改字号/页宽/单双页后恢复不漂）
+      const anch = captureAnchor();
+      if (anch) { rec.anchor = anch; rec.pct = +weightedPct(anch).toFixed(5); }
       all[ctl.book.meta.id] = rec;
       window.mazz.invoke('settings:set', { key: PROGRESS_KEY, value: all });
     }).catch(() => {});
@@ -449,10 +480,11 @@ function createLibrary(container) {
 
   function updateProgressBar() {
     const b = ctl.book;
-    // 滚动模式（文本类）：按滚动位置百分比报（漫画早已同此——此前锚定章节数，滚到底进度还停在章首）
+    // 滚动模式（文本类）：按帧内滚动位置百分比报（沙箱帧后滚动发生在帧内，不再读壳 contentEl）
     if (ctl.mode === 'scroll' && b && b.meta.format !== 'pdf' && b.meta.format !== 'cbz' && b.meta.format !== 'manga-folder') {
-      const sh = contentEl.scrollHeight - contentEl.clientHeight;
-      const pct = sh > 0 ? Math.round(contentEl.scrollTop / sh * 100) : 100;
+      const se = ctl._fdoc ? (ctl._fdoc.scrollingElement || ctl._fdoc.documentElement) : contentEl;
+      const sh = se.scrollHeight - se.clientHeight;
+      const pct = sh > 0 ? Math.round(se.scrollTop / sh * 100) : 100;
       const cur = currentPos() + 1;
       const total = totalPages();
       const unit = b.meta.format === 'epub' ? '章' : '页';
@@ -460,13 +492,14 @@ function createLibrary(container) {
       progFill.style.width = pct + '%';
       return;
     }
-    // 切片横排：按屏数报进度（一屏=一页，百分比精确；_flowOffset 平移量定位）
+    // 切片横排：按屏数报进度（一屏=一页，百分比精确；分母与翻页步进同一把尺——stepOf）
     if (ctl._flowWrap && ctl.mode !== 'scroll' && b && b.meta.format !== 'cbz' && b.meta.format !== 'manga-folder' && b.meta.format !== 'pdf'
         && ctl._flowWrap.clientWidth > 0 && (ctl._flowWrap.querySelector('.lib-flow')?.scrollWidth || 0) > 0) {
       const w = ctl._flowWrap;
       const flow = w.querySelector('.lib-flow');
-      const cols = Math.max(1, Math.round(flow.scrollWidth / w.clientWidth));
-      const cur = Math.min(cols, Math.round((ctl._flowOffset || 0) / w.clientWidth) + 1);
+      const step = ctl._stepOf?.() || w.clientWidth || 1;
+      const cols = Math.max(1, Math.round(flow.scrollWidth / step));
+      const cur = Math.min(cols, Math.round((ctl._flowOffset || 0) / step) + 1);
       const pct = Math.round(cur / cols * 100);
       posEl.textContent = `第 ${cur}/${cols} 页 · ${pct}%`;
       progFill.style.width = pct + '%';
@@ -515,12 +548,22 @@ function createLibrary(container) {
   // ==================== 阅读渲染 ====================
   async function textPagesHtml(idx) {
     const b = ctl.book;
+    let raw;
     if (b.meta.format === 'epub') {
       const item = b.epub.spine[idx];
       const ch = await b.epub.loadChapter(item);
-      return ch.html;
+      raw = ch.html;
+    } else {
+      raw = textPageToHtml(b.textBook.pages[idx]);
     }
-    return textPageToHtml(b.textBook.pages[idx]);
+    // 加工链（净化规则 + 简繁转换）：DOM 文本节点级，按章缓存——规则/简繁版本戳一变才回炉
+    const ver = `${ctl._rulesVer || 0}:${ctl.zhMode || ''}`;
+    ctl._procCache = ctl._procCache || {};
+    if (ctl._procCache[idx]?.ver !== ver) {
+      const out = processHtmlText(raw, { rules: ctl._cleanRules || [], zhMode: ctl.zhMode || '' });
+      ctl._procCache[idx] = { ver, html: out };
+    }
+    return ctl._procCache[idx].html;
   }
 
   async function imagePageUrl(idx) {
@@ -531,11 +574,137 @@ function createLibrary(container) {
     return b.cbz.loadPage(idx);
   }
 
+  // ==================== 沙箱阅读帧（koodo 式隔离：书籍样式/脚本与壳互不渗漏，自研净室复刻） ====================
+  function frameCss() {
+    const t = READ_THEMES[ctl.readTheme] || READ_THEMES.paper;
+    const ff = ctl.fontFamily ? `font-family:${ctl.fontFamily};` : '';
+    return `html,body{margin:0;padding:0;height:100%;}
+body{color:${t.fg};background:${t.bg};font-size:${ctl.fontSize}px;line-height:${ctl.lineHeight};${ff}box-sizing:border-box;overflow:hidden;}
+body.lib-scroll{overflow-y:auto;}
+img{max-width:100%;} a{color:inherit;}
+.lib-flow-wrap{height:100%;overflow:hidden;margin:0 auto;}
+.lib-flow{height:100%;box-sizing:border-box;padding:18px 0;will-change:transform;}
+.lib-flow .lib-chap-mark{display:block;break-before:column;}
+.lib-chap-sep{text-align:center;opacity:.55;font-size:.85em;margin:.6em 0;}
+.lib-scroll-page{padding:24px 32px;}
+hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
+body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
+  }
+  function applyFrameStyle() { if (ctl._fstyle) ctl._fstyle.textContent = frameCss(); }
+  function ensureFrame() {
+    if (ctl._frame && ctl._frame.isConnected && ctl._fdoc) return ctl._frame;
+    pageEl.innerHTML = '';
+    const f = document.createElement('iframe');
+    f.className = 'lib-book-frame';
+    f.setAttribute('sandbox', 'allow-same-origin'); // 书的脚本默认禁跑（koodo 同款纪律）
+    pageEl.appendChild(f);
+    const d = f.contentDocument;
+    const st = d.createElement('style');
+    d.head.appendChild(st);
+    ctl._frame = f; ctl._fdoc = d; ctl._fstyle = st;
+    applyFrameStyle();
+    // 帧内选区缓存：点「摘录」按钮焦点转移折叠选区（壳内同款坑，帧内同款缓存解）
+    d.addEventListener('selectionchange', () => {
+      const t = (f.contentWindow.getSelection?.()?.toString() || '').trim();
+      if (t) ctl._lastSel = t;
+    });
+    // 链接拦截：书内锚点→切片定位；外链→浏览器模块（否则 iframe 被导航走=阅读面蒸发）
+    d.addEventListener('click', (e) => {
+      const a = e.target.closest?.('a');
+      if (!a) return;
+      e.preventDefault(); e.stopPropagation();
+      const href = a.getAttribute('href') || '';
+      if (href.startsWith('#')) {
+        const id = decodeURIComponent(href.slice(1));
+        const tgt = d.getElementById(id) || d.querySelector(`[name="${CSS.escape(id)}"]`);
+        if (!tgt) return;
+        if (ctl._flowWrap && ctl._applyOffset) ctl._applyOffset(tgt.offsetLeft, true);
+        else tgt.scrollIntoView?.();
+      } else if (/^https?:/i.test(href)) {
+        // 书内外链走系统浏览器（webview 嵌入会被壳 CSP default-src 'self' 拒载=console.error 污染）
+        window.mazz?.invoke?.('shell:openExternal', { url: href }).catch(() => {});
+        toast('已在系统浏览器打开链接');
+      }
+    });
+    // 帧内滚轮/右键/指针——iframe 不冒泡到壳，事件桥各接一份
+    d.addEventListener('wheel', (e) => onReaderWheel(e, true), { passive: false });
+    d.addEventListener('pointermove', () => { if (!progManualFold) progShow(); });
+    d.addEventListener('contextmenu', (e) => { const r = f.getBoundingClientRect(); onReaderContext(e, r.left, r.top); }); // 帧坐标系→壳坐标系
+    return f;
+  }
+
+  // ==================== 内容锚与字数加权进度（koodo handleRecord 模型：锚内容不锚屏位，重排免疫） ====================
+  const flowEl = () => ctl._fdoc?.querySelector('.lib-flow') || null;
+  const topOf = (node, flow) => { let n = node; while (n && n.parentElement && n.parentElement !== flow) n = n.parentElement; return n; };
+  const xpathOf = (node, flow) => {
+    const idx = []; let n = node;
+    while (n && n !== flow) { const p = n.parentElement; if (!p) break; idx.unshift([...p.children].indexOf(n)); n = p; }
+    return idx.join('/');
+  };
+  const resolveXpath = (path) => {
+    let n = flowEl(); if (!n || !path) return null;
+    for (const i of String(path).split('/').map(Number)) { if (!n?.children?.[i]) return null; n = n.children[i]; }
+    return n;
+  };
+  /** 当前屏首个可见顶层块（列布局块的 offsetLeft 即其列起点；竖排换视觉坐标公式） */
+  function firstVisibleBlock() {
+    const flow = flowEl();
+    if (!flow || !ctl._flowWrap?.clientWidth) return null;
+    const off = ctl._flowOffset || 0, wrapW = ctl._flowWrap.clientWidth;
+    const isV = ctl.mode === 'vertical';
+    const vx = (el) => isV ? el.offsetLeft + off : el.offsetLeft - off; // 视觉 x（横排负向/竖排正向平移）
+    for (const ch of flow.children) {
+      if (ch.classList?.contains('lib-chap-mark') || ch.classList?.contains('lib-chap-sep')) continue;
+      const left = vx(ch);
+      if (left + (ch.offsetWidth || 1) > 2 && left < wrapW) return ch;
+    }
+    return null;
+  }
+  /** 锚块章归属（回溯最近章标记） */
+  function chapterOfBlock(top) {
+    let s = top, m = 0;
+    while (s) { if (s.classList?.contains('lib-chap-mark')) { m = +s.dataset.i; break; } s = s.previousElementSibling; }
+    return m;
+  }
+  function captureAnchor() {
+    const el = firstVisibleBlock();
+    const flow = flowEl();
+    if (!el || !flow) return null;
+    const top = topOf(el, flow);
+    return { p: xpathOf(el, flow), t: (el.textContent || '').trim().slice(0, 80), m: chapterOfBlock(top) };
+  }
+  /** 字数加权全书百分比：Σ前序章字数/总字数 + 章内块序位占比×本章字数/总字数 */
+  function weightedPct(anch) {
+    const sizes = ctl._chapSizes || [];
+    if (!anch || !sizes.length) return ctl._flowRatio || 0;
+    const total = sizes.reduce((a, x) => a + x, 0) || 1;
+    const before = sizes.slice(0, anch.m).reduce((a, x) => a + x, 0);
+    let frac = 0;
+    const flow = flowEl();
+    const node = resolveXpath(anch.p);
+    if (flow && node) {
+      const blocks = [];
+      let s = topOf(node, flow);
+      while (s && !s.classList?.contains('lib-chap-mark')) s = s.previousElementSibling;
+      const start = s;
+      let count = 0, idx = -1;
+      let cur = start ? start.nextElementSibling : flow.firstElementChild;
+      const top = topOf(node, flow);
+      while (cur && !cur.classList?.contains('lib-chap-mark')) {
+        if (!cur.classList?.contains('lib-chap-sep')) { if (cur === top) idx = count; count++; }
+        cur = cur.nextElementSibling;
+      }
+      if (count > 0 && idx >= 0) frac = idx / count;
+    }
+    return (before + (sizes[anch.m] || 0) * frac) / total;
+  }
+
   async function showCurrent() {
     const b = ctl.book;
     if (!b) return;
-    // 漫画/PDF/分栏横排用全宽容器；纯文本纵向保留 760px 舒适宽
-    const isImgOrFlow = b.meta.format === 'pdf' || b.meta.format === 'cbz' || b.meta.format === 'manga-folder' || ctl.mode !== 'scroll';
+    // 漫画/PDF/文本全类全宽容器（沙箱帧占满 pageEl，阅读留白由帧内 CSS 自理）
+    const isText = ['epub', 'txt', 'mobi', 'azw3'].includes(b.meta.format);
+    const isImgOrFlow = b.meta.format === 'pdf' || b.meta.format === 'cbz' || b.meta.format === 'manga-folder' || isText || ctl.mode !== 'scroll';
     pageEl.classList.toggle('lib-page--full', !!isImgOrFlow);
     pageEl.classList.remove('lib-manga-mode'); // 每次渲染前清模式类（漫画分支会按需重加，防文本/epub 串到漫画布局）
     contentEl.classList.toggle('lib-content--x', !!(ctl.mode !== 'scroll' && b.meta.format !== 'pdf'));
@@ -568,24 +737,31 @@ function createLibrary(container) {
           progFill.style.width = pct + '%';
         };
       } else {
+        // 文本类滚动：全量串联进沙箱帧（帧内原生滚动，壳内样式零渗漏）
+        ensureFrame();
         const total = totalPages();
         const htmls = [];
         for (let i = 0; i < total; i++) {
           const h = await textPagesHtml(i);
           htmls.push(`<div class="lib-scroll-page" data-i="${i}">${h}</div>`);
         }
-        pageEl.innerHTML = htmls.join('<hr class="lib-page-sep">');
-        // 滚动跟随进度
-        const target = pageEl.querySelector(`[data-i="${currentPos()}"]`);
+        ctl._fdoc.body.classList.add('lib-scroll');
+        ctl._fdoc.body.innerHTML = htmls.join('<hr class="lib-page-sep">');
+        applyFrameStyle();
+        // 滚动跟随进度（帧内 scrollingElement，事件挂在帧文档上——iframe 不冒泡到壳）
+        const target = ctl._fdoc.querySelector(`[data-i="${currentPos()}"]`);
         if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
-        contentEl.onscroll = () => {
-          const pages = [...pageEl.querySelectorAll('.lib-scroll-page')];
-          const mid = contentEl.scrollTop + contentEl.clientHeight / 3;
+        ctl._fdoc.addEventListener('scroll', () => {
+          const se = ctl._fdoc.scrollingElement || ctl._fdoc.documentElement;
+          const pages = [...ctl._fdoc.querySelectorAll('.lib-scroll-page')];
+          const mid = se.scrollTop + se.clientHeight / 3;
           let cur = 0;
           for (const p of pages) { if (p.offsetTop <= mid) cur = +p.dataset.i; }
           if (ctl.book.meta.format === 'epub') ctl.chapterIdx = cur; else ctl.pageIdx = cur;
           updateProgressBar();
-        };
+          ctl._flowHideT && clearTimeout(ctl._flowHideT);
+          ctl._flowHideT = setTimeout(saveProgress, 600);
+        }, true);
       }
     } else if (isImage) {
       // 图片类：单页=一图一屏（max-height 约束，杜绝底部被挡）；双页=中轴分割占满整格
@@ -611,29 +787,38 @@ function createLibrary(container) {
         } else {
           pageEl.innerHTML = await showOne(ctl.pageIdx);
         }
+        // 翻页释放内存纪律：只留当前屏±邻页，其余 blob URL 立即 revoke（koodo 式，大漫画不胀爆）
+        b.cbz.unloadOutside?.(new Set([ctl.pageIdx - 1, ctl.pageIdx, ctl.pageIdx + 1, ctl.pageIdx + 2]));
       }
     } else {
-      // 文本类：单页/双页 = CSS 分栏横排仿书页（整书串联，章末自动续，一屏刚好一屏）
+      // 文本类：单页/双页 = CSS 分栏横排仿书页（整书串联入沙箱帧，章末自动续，一屏刚好一屏）
+      ensureFrame();
       const total = totalPages();
       const unit = b.meta.format === 'epub' ? '章' : '页';
       const htmls = [];
+      ctl._chapSizes = []; // 各章文本字数（字数加权进度用——锚点模型的一级数据）
       for (let i = 0; i < total; i++) {
         const h = await textPagesHtml(i);
+        ctl._chapSizes.push(h.replace(/<[^>]+>/g, '').length || 1);
         htmls.push(`<span class="lib-chap-mark" data-i="${i}"></span>${i > 0 ? `<div class="lib-chap-sep">—— 第 ${i + 1} ${unit} ——</div>` : ''}${h}`);
       }
-      pageEl.innerHTML = `<div class="lib-flow-wrap"><div class="lib-flow">${htmls.join('')}</div></div>`;
-      const wrap = pageEl.querySelector('.lib-flow-wrap');
-      // 翻页方向：rtl 时列从右排起（日漫习惯）
-      wrap.style.direction = ctl.direction === 'rtl' ? 'rtl' : '';
-      const flow = pageEl.querySelector('.lib-flow');
+      const isVert = ctl.mode === 'vertical'; // 竖排：自研无 multicol 模型（writing-mode+行距网格切片）
+      ctl._fdoc.body.classList.remove('lib-scroll');
+      ctl._fdoc.body.classList.toggle('lib-vertical', isVert);
+      ctl._fdoc.body.innerHTML = `<div class="lib-flow-wrap"><div class="lib-flow">${htmls.join('')}</div></div>`;
+      applyFrameStyle();
+      const wrap = ctl._fdoc.querySelector('.lib-flow-wrap');
+      // 翻页方向：rtl 时列从右排起（日漫习惯；竖排 vertical-rl 天然右起）
+      wrap.style.direction = ctl.direction === 'rtl' && !isVert ? 'rtl' : '';
+      const flow = ctl._fdoc.querySelector('.lib-flow');
 
-      // —— 切片定位：translateX(-offset) 平移内容显示当前屏（epub.js/foliate-js 正宗分页） ——
+      // —— 切片定位：translateX(∓offset) 平移内容显示当前屏（横排负向/竖排正向——竖行从右向左生长探针实锤） ——
       const applyOffset = (off, smooth = false) => {
         const wrapW = wrap.clientWidth || 1;
         const max = Math.max(0, flow.scrollWidth - wrapW);
         ctl._flowOffset = Math.max(0, Math.min(off, max));
         flow.style.transition = smooth ? 'transform .22s ease' : '';
-        flow.style.transform = `translateX(${-ctl._flowOffset}px)`;
+        flow.style.transform = `translateX(${isVert ? ctl._flowOffset : -ctl._flowOffset}px)`;
         // 进度比例
         ctl._flowRatio = max > 0 ? ctl._flowOffset / max : 0;
         // 同步 currentPos（TOC 高亮用）：找当前屏最近的章标记
@@ -644,21 +829,38 @@ function createLibrary(container) {
         const layoutValid = marks.length > 1 && marks.some((m, i) => i > 0 && m.offsetLeft !== marks[0]?.offsetLeft);
         if (layoutValid) {
           let cur2 = 0;
-          for (const mk of marks) { if (mk.offsetLeft <= x) cur2 = +mk.dataset.i; }
+          // 竖排阅读序=l 递减（内容向负 x 生长）：当前章=满足 l ≥ −offset−4 的最大章序
+          for (const mk of marks) { if (isVert ? mk.offsetLeft >= -ctl._flowOffset - 4 : mk.offsetLeft <= x) cur2 = +mk.dataset.i; }
           if (ctl.book?.meta.format === 'epub') ctl.chapterIdx = cur2; else ctl.pageIdx = cur2;
         }
         updateProgressBar();
         ctl._flowHideT && clearTimeout(ctl._flowHideT);
         ctl._flowHideT = setTimeout(saveProgress, 600);
       };
+      ctl._applyOffset = applyOffset; // 帧内锚点链接经此定位
+
+      // 步进几何（koodo 同式）：栏距 pitch=页宽+gap，屏步进=单页 pitch / 双页 2×pitch——
+      // 旧实现步进=容器宽（双页 2×页宽+gap），每翻一屏少跨一个 gap 漂移累积（「固定错位」余孽）
+      // 竖排：步进=行距网格宽（ctl._pageW 已 snap 到行距整数倍，零切行）
+      const gapOf = () => (ctl.mode === 'double' ? 48 : 0);
+      const pitchOf = () => (ctl._pageW || 0) + gapOf();
+      const stepOf = () => isVert ? (ctl._pageW || 1) : ((ctl.mode === 'double' ? 2 * pitchOf() : pitchOf()) || 1);
+      ctl._stepOf = stepOf; // 进度条页数分母同基准（步进与报数同一把尺）
 
       const layOut = () => {
+        // 帧已退役（离书/换书后 RO 迟发）直接弃权——空 _fdoc 硬读必炸（异常警察实锤）
+        if (!ctl._fdoc) return;
         // 可视宽回退链：innerHTML 同步读 clientWidth 常为 0/旧值（超宽总根）——RAF 后必修正
-        const w = wrap.parentElement?.clientWidth || pageEl.clientWidth || 0;
+        const w = ctl._fdoc.documentElement?.clientWidth || wrap.parentElement?.clientWidth || pageEl.clientWidth || 0;
         if (!w) return;
-        const gap = ctl.mode === 'double' ? 48 : 0;
+        const gap = gapOf();
         let pageW;
-        if (ctl.mode === 'double') {
+        if (isVert) {
+          // 竖排：行距网格 snap——宽度=行距整数倍（每屏整数竖行零切行；行距=字号×行高）
+          const rowPitch = Math.max(18, ctl.fontSize * (ctl.lineHeight || 1.8));
+          const pct = ctl.pageWidth > 0 ? Math.min(ctl.pageWidth, 1) : 0.7;
+          pageW = Math.max(rowPitch * 4, Math.floor((w * pct) / rowPitch) * rowPitch);
+        } else if (ctl.mode === 'double') {
           // 双页：栏宽=半屏（中轴分割）
           pageW = Math.floor((w - gap) / 2);
         } else {
@@ -667,22 +869,58 @@ function createLibrary(container) {
           pageW = Math.floor(w * pct);
         }
         ctl._pageW = pageW;
+        // 重排前捕内容锚：CSS 换血 DOM 不动，锚块引用存活——重排后锚回原内容（重排免疫，koodo 模型）
+        const anchorEl = firstVisibleBlock();
         // 容器固定宽：单页=页宽，双页=2×页宽+gap（**容器永不超宽**——切片的核心，告别 overflow-x 全宽滚动）
-        const wrapW = ctl.mode === 'double' ? Math.min(pageW * 2 + gap, w) : Math.min(pageW, w);
+        // 竖排：宽度 snap 到行距整数倍（每屏整数竖行零切行），无 multicol 竖行自排（探针几何实锤）
+        const wrapW = isVert ? pageW : (ctl.mode === 'double' ? Math.min(pageW * 2 + gap, w) : Math.min(pageW, w));
         wrap.style.width = wrapW + 'px';
         wrap.style.margin = '0 auto';
         wrap.style.overflow = 'hidden';
-        // 内容分栏：栏宽=页宽（双页栏宽=半屏），高=容器高
-        flow.style.columnWidth = pageW + 'px';
-        flow.style.columnGap = gap + 'px';
+        if (isVert) {
+          flow.style.columnWidth = ''; flow.style.columnGap = ''; flow.style.columnFill = '';
+        } else {
+          // 内容分栏：栏宽=页宽（双页栏宽=半屏），高=容器高；column-fill:auto 逐栏填满（分页多栏必要条件）
+          flow.style.columnWidth = pageW + 'px';
+          flow.style.columnGap = gap + 'px';
+          flow.style.columnFill = 'auto';
+        }
         flow.style.height = '100%';
-        // 保持当前屏位比例重定位
-        applyOffset((ctl._flowRatio || 0) * Math.max(0, flow.scrollWidth - wrapW));
+        if (anchorEl && anchorEl.isConnected) applyOffset(isVert ? -anchorEl.offsetLeft : anchorEl.offsetLeft);
+        else applyOffset((ctl._flowRatio || 0) * Math.max(0, flow.scrollWidth - wrapW));
       };
       layOut();
-      // 布局落定后必重排一次（同步读宽不可靠：目录开合/字号/窗格拖变全要跟上）
-      requestAnimationFrame(() => { layOut(); });
-      setTimeout(() => layOut(), 300);
+      // 定位三级：内容锚（重开恢复）→ 分栏屏位比例 → 章标记（koodo handleRecord 同优先级）
+      // 重放式恢复（随三趟重排重放）：首趟布局宽度可能未稳，恢复一次性消费=锚块被钉死在
+      // 过渡布局的错误位置（保存 50% 恢复 33% 实锤）——每趟重排都按锚/比例重放，落定后一次性消费
+      const offOf = (node) => isVert ? -node.offsetLeft : node.offsetLeft; // 竖排正向平移（恢复=块视觉 x 归零）
+      const restoreOnce = () => {
+        if (ctl._pendingAnchor) {
+          const node = resolveXpath(ctl._pendingAnchor.p);
+          // 文本指纹校验：路径解析到的节点与记忆文本一致才采纳（书改版防错锚）
+          const fp = (ctl._pendingAnchor.t || '').trim().slice(0, 20);
+          const ok = node && (!fp || (node.textContent || '').trim().startsWith(fp));
+          // 恢复决策诊断窗（E2E 排障取数口）
+          window.__restoreDbg = { p: ctl._pendingAnchor.p, fp, nodeText: (node?.textContent || '').trim().slice(0, 20), nodeOffL: node?.offsetLeft ?? null, ok, max: Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1)), wrapW: wrap.clientWidth };
+          if (ok) applyOffset(offOf(node));
+          else applyOffset((ctl._pendingRatio || 0) * Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1)));
+          return true;
+        }
+        if (typeof ctl._pendingRatio === 'number') {
+          applyOffset(ctl._pendingRatio * Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1)));
+          return true;
+        }
+        return false;
+      };
+      const hadPending = restoreOnce();
+      if (!hadPending) {
+        const anchor = flow.querySelector(`[data-i="${currentPos()}"]`);
+        if (anchor) applyOffset(offOf(anchor));
+        else applyOffset(0);
+      }
+      // 布局落定后必重排（同步读宽不可靠：目录开合/字号/窗格拖变全要跟上）；重排在即重放恢复
+      requestAnimationFrame(() => { layOut(); if (hadPending) restoreOnce(); });
+      setTimeout(() => { layOut(); if (hadPending) restoreOnce(); ctl._pendingAnchor = null; ctl._pendingRatio = null; }, 320);
       // 窗格拖动/窗口缩放实时跟随
       if (typeof ResizeObserver !== 'undefined') {
         if (ctl._flowRO) ctl._flowRO.disconnect();
@@ -690,7 +928,7 @@ function createLibrary(container) {
         ctl._flowRO.observe(pageEl);
       }
       ctl._flowWrap = wrap;
-      // 切片翻页口：步进=容器宽（单页+页宽，双页+2×页宽）
+      // 切片翻页口：贴网自矫正（koodo 纪律——先 Math.round 取整贴网再 ±1 页，漂移不累积）
       ctl._flowNav = async (delta) => {
         // 章节显式步进：布局未就绪（jsdom 契约环境 clientWidth=0）时 translateX 无效，
         // 但 chapterIdx/pageIdx 必须走——否则翻页后进度文本不动（契约 2/2 实锤）
@@ -702,19 +940,11 @@ function createLibrary(container) {
           await showCurrent();
           return;
         }
-        const step = wrap.clientWidth || ctl._pageW || 1;
-        applyOffset((ctl._flowOffset || 0) + delta * step, true);
+        const step = stepOf();
+        const cur = Math.round((ctl._flowOffset || 0) / step);
+        applyOffset((cur + delta) * step, true);
       };
       ctl._flowLayout = () => { layOut(); updateProgressBar(); };
-      // 定位：有分栏屏位比例优先按比例恢复屏位（根治重开跳章首），否则锚到 currentPos 章标记
-      if (typeof ctl._pendingRatio === 'number') {
-        applyOffset(ctl._pendingRatio * Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1)));
-        ctl._pendingRatio = null;
-      } else {
-        const anchor = flow.querySelector(`[data-i="${currentPos()}"]`);
-        if (anchor) applyOffset(anchor.offsetLeft);
-        else applyOffset(0);
-      }
     }
     if (ctl.mode !== 'scroll' && !(ctl._flowWrap && !isImage && b.meta.format !== 'pdf')) contentEl.scrollTop = 0;
     updateProgressBar();
@@ -749,6 +979,7 @@ function createLibrary(container) {
     pageEl.style.fontSize = ctl.fontSize + 'px';
     pageEl.style.lineHeight = ctl.lineHeight;
     if (ctl.fontFamily) pageEl.style.fontFamily = ctl.fontFamily;
+    applyFrameStyle(); // 沙箱帧内样式同步（主题/字号/行高/字体重写帧内 <style>，帧外样式进不去帧）
   }
 
   // ==================== 书签 ====================
@@ -962,6 +1193,9 @@ function createLibrary(container) {
   root.querySelector('[data-a=import]').addEventListener('click', importBook);
   root.querySelector('[data-a=import-folder]').addEventListener('click', importMangaFolder);
   root.querySelector('[data-a=back]').addEventListener('click', () => {
+    try { ctl.book?.cbz?.unloadAll?.(); } catch {} // 离书放血：图片 blob URL 全 revoke
+    ctl._flowRO?.disconnect?.(); ctl._flowRO = null;
+    ctl._frame?.remove?.(); ctl._frame = null; ctl._fdoc = null;
     readerView.style.display = 'none';
     shelfView.style.display = 'flex';
     ctl.book = null;
@@ -982,7 +1216,7 @@ function createLibrary(container) {
     if (t) ctl._lastSel = t;
   });
   root.querySelector('[data-a=clip]').addEventListener('click', async () => {
-    const text = (window.getSelection()?.toString() || '').trim() || ctl._lastSel || '';
+    const text = readSelection() || ctl._lastSel || ''; // 帧内选区优先（沙箱帧后正文选区在帧里）
     if (!text) { toast('先选中一段文字'); return; }
     window.__libClipText = text; // 桥接命令直接读缓存（桥内同样被折叠坑）
     window.MazzCommands.execute('bridge.libToNote');
@@ -1016,16 +1250,84 @@ function createLibrary(container) {
     ctl.pageWidth = +e.target.value;
     if (ctl._flowLayout) ctl._flowLayout();
   });
+  // 简繁转换：版本戳驱动章节回炉 + 随书记忆
+  root.querySelector('.lib-zh').addEventListener('change', (e) => {
+    ctl.zhMode = e.target.value;
+    saveProgress();
+    showCurrent();
+  });
+  // 净化规则管理（替换/删除 × 字面/正则 × 全书/本书）
+  root.querySelector('[data-a=clean-rules]').addEventListener('click', async () => {
+    const m = modal('净化规则');
+    const renderList = (rules) => rules.map((r, i) => `
+      <div style="display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd,#eee);font-size:12.5px">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r.pattern || '').replace(/"/g, '&quot;')}">
+          <b>${r.type === 'delete' ? '删' : '换'}</b> ${r.name || r.pattern}
+          <span style="color:var(--fg-dim);font-size:11px">${r.match === 'regex' ? '正则' : '字面'} · ${r.scope === 'all' ? '全书' : '本书'}${r.type !== 'delete' && r.replacement ? ' → ' + r.replacement : ''}</span>
+        </span>
+        <button class="fc-mini" data-delrule="${i}" style="color:var(--danger)">删除</button>
+      </div>`).join('') || '<div style="color:var(--fg-dim);padding:8px 0">还没有规则——网文广告与站点水印的清洗层</div>';
+    const redraw = async () => {
+      const rules = await getAllRules();
+      m.body.querySelector('.cr-list').innerHTML = renderList(rules);
+      m.body.querySelectorAll('[data-delrule]').forEach(btn => btn.addEventListener('click', async () => {
+        const cur = await getAllRules();
+        cur.splice(+btn.dataset.delrule, 1);
+        await saveAllRules(cur);
+        ctl._cleanRules = rulesForBook(cur, ctl.book?.meta?.id);
+        ctl._rulesVer = (ctl._rulesVer || 0) + 1;
+        redraw();
+        showCurrent();
+      }));
+    };
+    m.body.innerHTML = `
+      <div style="min-width:480px;max-width:620px">
+        <div class="cr-list" style="max-height:32vh;overflow-y:auto"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center">
+          <input class="rb-input cr-name" placeholder="规则名（可空）" style="width:110px">
+          <input class="rb-input cr-pattern" placeholder="匹配内容（如：广告|水印网址）" style="flex:1;min-width:150px">
+          <select class="rb-select cr-match"><option value="plain">字面</option><option value="regex">正则</option></select>
+          <select class="rb-select cr-type"><option value="delete">删除</option><option value="replace">替换为</option></select>
+          <input class="rb-input cr-rep" placeholder="替换为（删除留空）" style="width:120px">
+          <select class="rb-select cr-scope"><option value="all">全书</option><option value="book">本书</option></select>
+          <button class="rb-btn cr-add" style="flex-direction:row">＋ 添加</button>
+        </div>
+        <div style="font-size:11px;color:var(--fg-dim);margin-top:6px">规则按序生效；作用于文本节点（永不碰标签结构）；坏正则会自动跳过。</div>
+      </div>`;
+    m.body.querySelector('.cr-add').addEventListener('click', async () => {
+      const pattern = m.body.querySelector('.cr-pattern').value;
+      if (!pattern) return;
+      const rules = await getAllRules();
+      rules.push({
+        name: m.body.querySelector('.cr-name').value.trim(),
+        pattern,
+        match: m.body.querySelector('.cr-match').value,
+        type: m.body.querySelector('.cr-type').value,
+        replacement: m.body.querySelector('.cr-rep').value,
+        scope: m.body.querySelector('.cr-scope').value,
+        bookId: ctl.book?.meta?.id || null,
+      });
+      await saveAllRules(rules);
+      ctl._cleanRules = rulesForBook(rules, ctl.book?.meta?.id);
+      ctl._rulesVer = (ctl._rulesVer || 0) + 1;
+      redraw();
+      showCurrent();
+    });
+    redraw();
+  });
   ctl.pageWidth = ctl.pageWidth ?? 0.7; // 仅初始化：0.7=窗格 70%（百分比，随窗格走；0=也按 70% 兜底）
   root.querySelector('[data-a=font-plus]').addEventListener('click', () => {
     ctl.fontSize = Math.min(32, ctl.fontSize + 1);
     applyTextStyle();
   });
   // 阅读滚轮：默认向下翻/滚，Ctrl+滚轮字号缩放（漫画为图宽缩放）
-  contentEl.addEventListener('wheel', (e) => {
+  // 壳内 contentEl 与沙箱帧内各挂一份（iframe 事件不冒泡到壳——帧内滚动/翻页全靠这座桥）
+  function onReaderWheel(e, inFrame = false) {
     if (!ctl.book || ctl.book.meta.format === 'pdf') return;
-    e.preventDefault();
     const isImage = ctl.book.meta.format === 'cbz' || ctl.book.meta.format === 'manga-folder';
+    // 帧内文本滚动模式：原生滚动放行（不 preventDefault，让帧自己滚）
+    if (inFrame && !isImage && ctl.mode === 'scroll' && !(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
     if (e.ctrlKey || e.metaKey) {
       if (isImage) {
         // 漫画：Ctrl+滚轮缩放图宽（60%–130%）
@@ -1035,12 +1337,12 @@ function createLibrary(container) {
       } else {
         ctl.fontSize = Math.min(32, Math.max(12, ctl.fontSize + (e.deltaY < 0 ? 1 : -1)));
         applyTextStyle();
-        ctl._flowLayout?.(); // 分栏重排
+        ctl._flowLayout?.(); // 分栏重排（帧内样式已同步，锚点重锚不丢位置）
       }
       return;
     }
     if (ctl.mode === 'scroll') {
-      contentEl.scrollTop += e.deltaY; // 滚动模式自然滚
+      contentEl.scrollTop += e.deltaY; // 壳内滚动模式（漫画）自然滚
       return;
     }
     if (ctl._flowWrap && !isImage) {
@@ -1054,7 +1356,8 @@ function createLibrary(container) {
     }
     if (Math.abs(e.deltaY) < 24) return;
     nav(e.deltaY > 0 ? 1 : -1);
-  }, { passive: false });
+  }
+  contentEl.addEventListener('wheel', (e) => onReaderWheel(e, false), { passive: false });
   // 进度条：3 秒无操作自动收起（可折叠）；peek/底部热区展开，交互重置计时
   const progBar = root.querySelector('.lib-progress');
   const progPeek = root.querySelector('.lib-progress-peek');
@@ -1078,22 +1381,24 @@ function createLibrary(container) {
   progBar.addEventListener('pointerleave', () => { if (!progManualFold) progShow(); }); // 同上：离开也不许把刚折叠的进度栏拉回来
   progShow();
 
-  // 阅读页右键：摘录/复制/字号/返回
-  pageEl.addEventListener('contextmenu', async (e) => {
+  // 阅读页右键：摘录/复制/字号/返回（壳页与沙箱帧内共用——帧内坐标系需换算到壳）
+  const readSelection = () => (ctl._frame?.contentWindow?.getSelection?.()?.toString() || '').trim() || (window.getSelection()?.toString() || '').trim();
+  async function onReaderContext(e, ox = 0, oy = 0) {
     e.preventDefault();
     const { showDomMenu } = await import('../../lib/dom-menu.js');
-    const sel = (window.getSelection()?.toString() || '').trim();
+    const sel = readSelection();
     showDomMenu([
-      { label: '摘录到书摘笔记', fn: () => window.MazzCommands.execute('bridge.libToNote'), disabled: !sel },
+      { label: '摘录到书摘笔记', fn: () => { const t = readSelection() || ctl._lastSel || ''; if (t) { window.__libClipText = t; window.MazzCommands.execute('bridge.libToNote'); } }, disabled: !sel },
       { label: '复制选中', fn: () => navigator.clipboard?.writeText(sel), disabled: !sel },
       '-',
-      { label: '字号 +', fn: () => { ctl.fontSize = Math.min(32, ctl.fontSize + 1); applyTextStyle(); } },
-      { label: '字号 −', fn: () => { ctl.fontSize = Math.max(12, ctl.fontSize - 1); applyTextStyle(); } },
+      { label: '字号 +', fn: () => { ctl.fontSize = Math.min(32, ctl.fontSize + 1); applyTextStyle(); ctl._flowLayout?.(); } },
+      { label: '字号 −', fn: () => { ctl.fontSize = Math.max(12, ctl.fontSize - 1); applyTextStyle(); ctl._flowLayout?.(); } },
       { label: '添加书签', fn: () => addMark() },
       '-',
       { label: '返回书架', fn: () => root.querySelector('[data-a=back]').click() },
-    ], e.clientX, e.clientY);
-  });
+    ], e.clientX + ox, e.clientY + oy);
+  }
+  pageEl.addEventListener('contextmenu', (e) => onReaderContext(e));
 
   // 「下载站」：投稿会话打开电子书站（cookie 持久，下载的 epub/mobi/pdf 自动存工作区书库并入库）
   root.querySelector('[data-a=dl-site]')?.addEventListener('click', async () => {

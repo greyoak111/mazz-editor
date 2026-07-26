@@ -2,10 +2,11 @@
 // 单实例 · mazz:// 协议 · 文件关联参数转发 · 白名单 IPC · 托盘 · 全局快捷键 · 崩溃恢复 · 打印双路径
 'use strict';
 const {
-  app, Menu, dialog, clipboard, nativeTheme, Notification,
+  app, Menu, dialog, clipboard, nativeTheme, Notification, protocol, net,
   shell, powerSaveBlocker, powerMonitor, session, safeStorage, BrowserWindow, desktopCapturer,
 } = require('electron');
 const fs = require('fs');
+const { Readable } = require('stream'); // mazz-res media/ 分支：range 流式响应（GB 级不整读）
 const path = require('path');
 
 // Windows 任务栏/开始菜单图标与分组归属（不设会回落成 Electron 默认图标）
@@ -15,6 +16,24 @@ app.setAppUserModelId('com.mazz.editor');
 // 关掉其中一个 webview 就把共享进程拖垮——另一个同站标签页「页面还在显示但点击/滚动全死」
 // （B站/知乎跳新标签页再关闭返回的稳定僵死总根）。site-per-process 强制每站点独立进程，关一不拖一。
 app.commandLine.appendSwitch('site-per-process');
+
+// 全局内录反节流（录半小时产出 0KB 的总根）：录制别的窗口时本窗被最小化/遮挡，Chromium 会把
+// 后台渲染页的 BeginFrame 与定时器掐掉——画布合成路径断帧 → MediaRecorder 全程零数据 → 0KB 文件。
+// 业界录屏/自动化标准配置（Playwright/Puppeteer 默认即携带同款开关）：
+app.commandLine.appendSwitch('disable-background-timer-throttling'); // 后台定时器不掐（合成抽帧 setInterval 全速）
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows'); // Windows 原生窗口遮挡检测不降级
+app.commandLine.appendSwitch('disable-renderer-backgrounding'); // 渲染进程不因后台降优先级
+app.commandLine.appendSwitch('disable-background-media-suspend'); // 后台静音 <video> 不被省电暂停（合成路径视频源防断流）
+// 平台硬解显式开（扒 NipaPlay 老版所得"硬解 HEVC"全部秘密：它裸 HTML5 video 零解码代码，
+// 吃的就是 Chromium 平台解码器默认红利——H264/AAC 由 Electron 官方 Chrome-branding ffmpeg 软解（Linux 沙箱试播实证），
+// HEVC 走 OS 平台解码器：Win 需系统 HEVC 组件（PlatformHEVCDecoderSupport M107+），mac 走 VideoToolbox，Linux 需 VAAPI——显式开幂等保险）
+app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,VaapiVideoDecoder');
+
+// mazz-res:// 资源协议：wasm worker 唯一活路——jassub 等 ES module worker 在 blob:/file:// 源下全被
+// Chromium 掐死（module worker 源策略实锤），标准+安全+CORS 特权自定义协议是 Electron 里的正道
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'mazz-res', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
+]);
 
 const Store = require('./store');
 const IpcBus = require('./ipc-bus');
@@ -640,7 +659,137 @@ function registerChannels() {
     });
   });
   // —— 屏幕录制：源枚举 + getDisplayMedia 许可队列（模块级共享，hookDisplayMedia 消费）——
+  // —— mazz-res:// 资源协议处理器：映射 renderer/dist 静态资产（worker/wasm/字体等，仅限该目录防穿越） ——
+  protocol.handle('mazz-res', async (req) => {
+    try {
+      // 自定义协议 URL 首段是 host 不是 path：mazz-res://lib/x → host=lib（丢段 404 实锤）——host+pathname 拼回全路径
+      const u = new URL(req.url);
+      const rel = decodeURIComponent(u.host + u.pathname).replace(/^\/+/, '');
+      if (rel === 'fonts/fallback') return serveFont();
+      // P2P 流代理：mazz-res://tor/127.0.0.1:{port}/{path} → webtorrent range 流端点
+      // （播放器 CSP 不用动——mazz-res 已在白名单，页面对本地 HTTP 流全走这一口）
+      if (rel.startsWith('tor/')) {
+        const target = 'http://' + rel.slice(4);
+        try {
+          new URL(target);
+          const headers = {};
+          if (req.headers.get('range')) headers.range = req.headers.get('range');
+          const resp = await net.fetch(target, { headers });
+          // media 元素使用必须 ACAO/CORP（页面 mazz-res 同源化后同源直过，双保险）
+          const h = new Headers(resp.headers);
+          h.set('Access-Control-Allow-Origin', '*');
+          h.set('Cross-Origin-Resource-Policy', 'cross-origin');
+          return new Response(resp.body, { status: resp.status, headers: h });
+        } catch { return new Response('bad tor url', { status: 400 }); }
+      }
+      // —— app/ 分支：主页面同源化（file:// 页面对 http/custom 媒体的请求在 browser 侧 media loader 被 file-access 闸零请求掐死（实锤）——
+      //    结构性根治=页面与媒体同走 mazz-res 一源；映射 renderer/ 根（index.html/quicknote/styles/lib/dist，防穿越） ——
+      if (rel.startsWith('app/')) {
+        const base = path.join(__dirname, '..', 'renderer');
+        const full = path.join(base, rel.slice(4));
+        if (!full.startsWith(base)) return new Response('forbidden', { status: 403 });
+        if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return new Response('not found: ' + rel, { status: 404 });
+        const buf = fs.readFileSync(full);
+        const APP_MIME = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.map': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.webp': 'image/webp', '.bmp': 'image/bmp', '.wasm': 'application/wasm', '.otf': 'font/otf', '.ttf': 'font/ttf', '.ttc': 'font/collection', '.woff2': 'font/woff2' };
+        const mime = APP_MIME[path.extname(full).toLowerCase()] || 'application/octet-stream';
+        return new Response(buf, { headers: { 'Content-Type': mime, 'Content-Length': String(buf.length), 'Access-Control-Allow-Origin': '*' } });
+      }
+      // —— media/ 分支：本地媒体文件 range 流（页面同源化后 file:// 视频反被拦——媒体全走协议同源自洽，
+      //    连带白拿：同源 video 画 canvas 不污染（截图/GIF 录制命门）；range 206 是 mp4 非 faststart/seek 的命脉；
+      //    任意绝对路径=设计意图（播放用户磁盘任意媒体，只读不写） ——
+      if (rel.startsWith('media/')) {
+        const filePath = rel.slice(6);
+        let st;
+        try { st = fs.statSync(filePath); } catch { return new Response('not found', { status: 404 }); }
+        if (!st.isFile()) return new Response('not found', { status: 404 });
+        const size = st.size;
+        const ext = filePath.split('.').pop().toLowerCase();
+        const MEDIA_MIME = { mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/mp4', mkv: 'video/x-matroska', webm: 'video/webm', avi: 'video/x-msvideo', wmv: 'video/x-ms-wmv', flv: 'video/x-flv', ts: 'video/mp2t', mts: 'video/mp2t', m2ts: 'video/mp2t', mpg: 'video/mpeg', mpeg: 'video/mpeg', '3gp': 'video/3gpp', ogv: 'video/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', flac: 'audio/flac', aac: 'audio/aac', oga: 'audio/ogg', ogg: 'audio/ogg', opus: 'audio/ogg', m4a: 'audio/mp4',
+          png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon', avif: 'image/avif', pdf: 'application/pdf' };
+        const mime = MEDIA_MIME[ext] || 'application/octet-stream';
+        const cors = { 'Access-Control-Allow-Origin': '*', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Accept-Ranges': 'bytes' };
+        const range = req.headers.get('range');
+        if (range) {
+          const m = /bytes=(\d*)-(\d*)/.exec(range);
+          let start = m && m[1] ? parseInt(m[1], 10) : null;
+          let end = m && m[2] ? parseInt(m[2], 10) : null;
+          if (start == null && end != null) { start = Math.max(0, size - end); end = size - 1; } // suffix 尾段（mp4 moov 在尾时 Chromium 必发）
+          if (start == null) start = 0;
+          if (end == null || end >= size) end = size - 1;
+          if (start > end || start >= size) return new Response(null, { status: 416, headers: { ...cors, 'Content-Range': `bytes */${size}` } });
+          const body = Readable.toWeb(fs.createReadStream(filePath, { start, end }));
+          return new Response(body, { status: 206, headers: { ...cors, 'Content-Type': mime, 'Content-Length': String(end - start + 1), 'Content-Range': `bytes ${start}-${end}/${size}` } });
+        }
+        // 无 range 全文件流式（GB 级恒定内存，不整读）
+        const body = Readable.toWeb(fs.createReadStream(filePath));
+        return new Response(body, { status: 200, headers: { ...cors, 'Content-Type': mime, 'Content-Length': String(size) } });
+      }
+      const base = path.join(__dirname, '..', 'renderer', 'dist');
+      const full = path.join(base, rel);
+      if (!full.startsWith(base)) return new Response('forbidden', { status: 403 });
+      console.warn('[mazz-res]', rel, fs.existsSync(full) ? 'hit' : 'miss');
+      if (!fs.existsSync(full)) return new Response('not found: ' + rel, { status: 404 });
+      const buf = fs.readFileSync(full);
+      const mime = rel.endsWith('.wasm') ? 'application/wasm' : rel.endsWith('.js') ? 'text/javascript' : 'application/octet-stream';
+      // 带 COOP/COEP 跨域隔离头：Octopus 依赖 SharedArrayBuffer 起 wasm 与通信——
+      // 隔离头缺席时 SAB undefined，Octopus 挂起在 SharedArrayBuffer 检测上静默死亡（三波实锤）
+      const csp = "script-src 'self' blob: mazz-res: 'wasm-unsafe-eval'; worker-src 'self' blob: mazz-res:";
+      return new Response(buf, { headers: {
+        'Content-Type': mime, 'Content-Length': String(buf.length), 'Access-Control-Allow-Origin': '*',
+        'Content-Security-Policy': csp,
+        'Cross-Origin-Opener-Policy': 'same-origin', // COOP/COEP 跨域隔离：SharedArrayBuffer 解锁钥匙（Octopus wasm 命脉）
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+      } });
+    } catch (e) { return new Response('not found', { status: 404 }); }
+  });
+
+  // —— OS CJK 回退字体（字幕组排版命门：无 CJK 回退字体中文全灭；按平台取第一个在的） ——
+  const readFallbackFont = () => {
+    const candidates = process.platform === 'win32'
+      ? ['C:/Windows/Fonts/msyh.ttc', 'C:/Windows/Fonts/simhei.ttf', 'C:/Windows/Fonts/simsun.ttc', 'C:/Windows/Fonts/Deng.ttf']
+      : process.platform === 'darwin'
+        ? ['/System/Library/Fonts/PingFang.ttc', '/System/Library/Fonts/STHeiti Light.ttc', '/Library/Fonts/Arial Unicode.ttf']
+        : ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc', '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
+          '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', '/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf'];
+    for (const p of candidates) {
+      try { return { buf: fs.readFileSync(p), name: path.basename(p) }; } catch {}
+    }
+    return null;
+  };
+  // 字体经 mazz-res://fonts/fallback 供 worker 取（blob:file:// URL 在 worker 内 XHR 被 CORS 掐=sans-serif 装载失败实锤）
+  const serveFont = () => {
+    const f = readFallbackFont();
+    if (!f) return new Response('no font', { status: 404 });
+    const mime = f.name.endsWith('.ttc') ? 'font/collection' : f.name.endsWith('.otf') ? 'font/otf' : 'font/ttf';
+    return new Response(f.buf, { headers: { 'Content-Type': mime, 'Content-Length': String(f.buf.length), 'Access-Control-Allow-Origin': '*' } });
+  };
+
+  // —— 播放器字幕资产：subtitles-octopus（libass wasm）worker/wasm 字节 + OS CJK 回退字体（一次取齐） ——
+  bus.handle('player:subAssets', async () => {
+    const jd = (...f) => path.join(__dirname, '..', 'renderer', 'dist', 'lib', 'octopus', ...f);
+    const readB64 = (p) => { try { return fs.readFileSync(p).toString('base64'); } catch { return null; } };
+    // CJK 回退字体候选（字幕组排版命门：无 CJK 回退字体中文全灭；按平台取第一个在的）
+    const fontCandidates = process.platform === 'win32'
+      ? ['C:/Windows/Fonts/msyh.ttc', 'C:/Windows/Fonts/simhei.ttf', 'C:/Windows/Fonts/simsun.ttc', 'C:/Windows/Fonts/Deng.ttf']
+      : process.platform === 'darwin'
+        ? ['/System/Library/Fonts/PingFang.ttc', '/System/Library/Fonts/STHeiti Light.ttc', '/Library/Fonts/Arial Unicode.ttf']
+        : ['/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc', '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
+          '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', '/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf'];
+    let fallbackFont = null;
+    for (const p of fontCandidates) {
+      const b64 = readB64(p);
+      if (b64) { fallbackFont = { name: path.basename(p), base64: b64 }; break; }
+    }
+    return {
+      workerJs: readB64(jd('subtitles-octopus-worker.js')),
+      wasm: readB64(jd('subtitles-octopus-worker.wasm')),
+      legacyWorkerJs: readB64(jd('subtitles-octopus-worker-legacy.js')),
+      fallbackFont,
+    };
+  });
+
   bus.handle('rec:sources', async () => {
+    recQueueShared.length = 0; // 新一轮枚举=新一轮会话：清掉陈旧授权，防串源错录
     const list = await desktopCapturer.getSources({ types: ['window', 'screen'], thumbnailSize: { width: 320, height: 200 } });
     const out = list.map(s => ({ id: s.id, name: s.name, thumb: s.thumbnail.isEmpty() ? null : s.thumbnail.toDataURL() }));
     // Chromium desktopCapturer 枚举排除本进程窗口（防递归自指）——自录走 capturePage 专用通道，
@@ -662,7 +811,7 @@ function registerChannels() {
       return img.toPNG().toString('base64');
     } catch { return null; }
   });
-  bus.handle('rec:useSource', async ({ id }) => { recQueueShared.push(id); return true; });
+  bus.handle('rec:useSource', async ({ id, audio }) => { recQueueShared.push({ id, audio: audio !== false }); return true; });
   // getDisplayMedia 许可处理器挂到主窗会话（窗口创建后由 hookDisplayMedia 安装）
 
   // —— 打印预览输出：离屏窗体加载分页 HTML，按精确纸张/四边距打印或导 PDF ——
@@ -906,12 +1055,15 @@ function hookDisplayMedia() {
   const ses = wm.main?.webContents?.session;
   if (!ses) return;
   ses.setDisplayMediaRequestHandler((req, cb) => {
-    const id = recQueueShared.shift();
-    if (!id) return cb({ video: true, audio: 'loopback' });
+    const entry = recQueueShared.shift();
+    const id = typeof entry === 'string' ? entry : entry?.id; // 兼容历史字符串项
+    const wantAudio = typeof entry === 'object' && entry ? entry.audio !== false : true;
+    const grant = (video) => cb(wantAudio ? { video, audio: 'loopback' } : { video }); // 尊重渲染端音频偏好（降级无声重试）
+    if (!id) return grant(true);
     desktopCapturer.getSources({ types: ['window', 'screen'] }).then(list => {
       const src = list.find(s => s.id === id) || list[0];
-      cb({ video: src, audio: 'loopback' });
-    }).catch(() => cb({ video: true, audio: 'loopback' }));
+      grant(src);
+    }).catch(() => grant(true));
   });
 }
 
@@ -1021,6 +1173,48 @@ app.whenReady().then(() => {
   new Updater({ bus, store, version: require('../package.json').version });
   const bs = new BrowserSession({ session: browserSess, bus });
   bs.hookWindow(wm.main);
+  // —— P2P 边下边播守护（webtorrent 主进程实例 + 127.0.0.1 range 流端点） ——
+  const TorrentDaemon = require('./torrent-daemon');
+  new TorrentDaemon({ bus, workspace: () => store.get('workspace'), session: browserSess });
+  const TorrentSites = require('./torrent-sites');
+  new TorrentSites({ bus });
+
+  // —— MKV 轻量解复用（自研 EBML-lite：多音轨枚举与全编码轨抽帧封装，输出缓存到 媒体库/.audcache） ——
+  const { listTracks, extractFlacTrack, extractTrack } = require('./mkv-demux');
+  bus.handle('mkv:tracks', async ({ path: p }) => {
+    try { return listTracks(p); } catch (e) { return { tracks: [], err: String(e.message || e) }; }
+  });
+  bus.handle('mkv:extractFlac', async ({ path: p, trackNumber }) => {
+    const key = require('crypto').createHash('sha1').update(p + '#' + trackNumber).digest('hex').slice(0, 12);
+    const dir = path.join(store.get('workspace'), '媒体库', '.audcache');
+    fs.mkdirSync(dir, { recursive: true });
+    const dest = path.join(dir, `${key}-t${trackNumber}.flac`);
+    if (fs.existsSync(dest)) return { path: dest, cached: true };
+    const buf = extractFlacTrack(p, trackNumber);
+    if (!buf) throw new Error('该音轨不可抽（非 FLAC 或抽帧失败）');
+    fs.writeFileSync(dest, buf);
+    return { path: dest, cached: false };
+  });
+  // 全编码版：FLAC/Vorbis/AAC/Opus 各自封装（.flac/.ogg/.aac）——后缀探测缓存（同轨落过盘即直用）
+  bus.handle('mkv:extractTrack', async ({ path: p, trackNumber }) => {
+    const key = require('crypto').createHash('sha1').update(p + '#' + trackNumber).digest('hex').slice(0, 12);
+    const dir = path.join(store.get('workspace'), '媒体库', '.audcache');
+    fs.mkdirSync(dir, { recursive: true });
+    for (const ext of ['flac', 'ogg', 'aac']) {
+      const c = path.join(dir, `${key}-t${trackNumber}.${ext}`);
+      if (fs.existsSync(c)) return { path: c, cached: true, ext };
+    }
+    let r;
+    try { r = extractTrack(p, trackNumber); }
+    catch (e) { throw new Error('该文件 EBML 结构损坏或超出解析面（' + String(e.message || e).slice(0, 40) + '）'); } // 原始栈消息不穿给用户（明白话化实锤）
+    if (!r) throw new Error('该音轨不可抽（编码不在支持表 FLAC/Vorbis/AAC/Opus 或抽帧失败）');
+    const dest = path.join(dir, `${key}-t${trackNumber}.${r.ext}`);
+    fs.writeFileSync(dest, r.buf);
+    return { path: dest, cached: false, ext: r.ext };
+  });
+  // 浏览器视图注册表（WebContentsView 主进程持有——webview 标签结构性病根终结）
+  const BrowserViews = require('./browser-views');
+  new BrowserViews({ bus, wm, session: browserSess });
 
   // —— 投稿会话（persist:mazz-author）：电子书站登录态下载 → 自动存工作区书库并入库 ——
   try {

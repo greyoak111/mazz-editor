@@ -160,7 +160,7 @@ function createSlide(container) {
                 const ext = path.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
                 const dest = `${dir}/slide_${Date.now()}.${ext}`;
                 await window.mazz.invoke('fs:writeFileBase64', { path: dest, base64: b64 });
-                el.src = 'file://' + dest;
+                el.src = 'mazz-res://media/' + encodeURIComponent(String(dest).replace(/\\/g, '/')); // 页面同源化
               } else el.src = path;
               addEl(el);
             });

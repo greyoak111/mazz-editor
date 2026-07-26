@@ -72,7 +72,10 @@ export async function scenes3({ win, human, WS, WS2, scenario }) {
     await human.assertVisible('[data-a=side-close]', '独立收起钮应在');
     await human.evaluate(() => document.querySelector('[data-a=side-close]')?.click());
     await win.waitForTimeout(300);
-    const hidden = await evaluate(() => document.querySelector('.mz-side')?.style.display === 'none');
+    const hidden = await evaluate(() => {
+      const s = document.querySelector('.mz-side');
+      return s && getComputedStyle(s).display === 'none'; // w26 起显隐 class 驱动——断言计算样式与实现解耦（旧内联 style.display 断言漏网实锤）
+    });
     await human.assert(hidden, '收起后播放列表应隐藏');
   });
 
@@ -349,8 +352,9 @@ export async function scenes3({ win, human, WS, WS2, scenario }) {
     await win.waitForTimeout(400);
     const items = await evaluate(() => document.querySelectorAll('.help-toc-item').length);
     await human.assert(items >= 1 && items < 30, `搜索「导图」应过滤章节（剩 ${items}）`);
-    const first = await evaluate(() => document.querySelector('.help-toc-item')?.textContent || '');
-    await human.assert(first.includes('导图'), '首命中应含导图');
+    const hits = await evaluate(() => [...document.querySelectorAll('.help-toc-item')].map(e => e.textContent || ''));
+    // 过滤是全文匹配（含正文提及），首条未必是标题命中——断言命中集中必有导图章节（原「首命中」断言按旧目录排序已失效）
+    await human.assert(hits.some(t => t.includes('思维导图') || t.includes('导图')), `命中集中应有导图章节（实际 ${JSON.stringify(hits.slice(0, 3))}）`);
     await human.evaluate(() => document.querySelector('.help-close')?.click());
   });
 

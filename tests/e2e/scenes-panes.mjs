@@ -70,6 +70,10 @@ export async function scenesPanes({ win, human, WS, scenario }) {
 
   // ============ P2：竖条间迁签（tabbar 拖入已有格） ============
   await scenario('分屏·竖条间迁签·空格可用', async () => {
+    // 先给第 0 格补一签（P1 末态 [1,1,1,1]，直接迁会把 0 格掏空触发自动收缩=迁签误变窗格数的场景脆弱性）
+    await evaluate(() => window.MazzShell.paneTree.setActive(window.MazzShell.paneTree.leaves()[0]));
+    await openDocs([['p-e.md', '# 戊']]);
+    await win.waitForTimeout(300);
     const st0 = await dump();
     // 从第 0 格（有多个签）拖一个签进第 2 格的标签栏
     const moved = await evaluate(() => {

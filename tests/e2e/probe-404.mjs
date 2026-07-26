@@ -1,0 +1,16 @@
+import { _electron as electron } from 'playwright';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+const ROOT = path.resolve('.');
+const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-404-'));
+const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-404ws-'));
+const app = await electron.launch({ args: [ROOT], env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' }, timeout: 120000 });
+const win = await app.firstWindow();
+win.on('response', r => { if (r.status() >= 400) console.log('[404]', r.status(), r.url()); });
+win.on('requestfailed', r => console.log('[FAIL]', r.url().slice(0, 100), r.failure()?.errorText));
+win.on('console', m => { if (m.type() === 'error') console.log('[CERR]', m.text().slice(0, 120), '|', m.location()?.url?.slice(0, 90)); });
+await win.waitForFunction(() => !!(window.MazzCommands && window.mazz), null, { timeout: 15000 });
+await win.waitForTimeout(5000);
+console.log('done');
+await app.close().catch(() => {});

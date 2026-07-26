@@ -1,6 +1,8 @@
 // renderer/modules/viewer/player.js —— Mazz Player（名义独立 · 内核与查看器共享）
 // PotPlayer 风：深色皮肤 · 控制条自动隐藏 · 进度条悬停缩略图 · 无边框播放 · 播放列表 · 高保真信息 · 音频频谱
 import { iconHtml } from '../../lib/svg-icons.js';
+import { attachSubtitle, detachSubtitle, probeSubtitles, setSubtitleVisible, subtitleAttached } from './subtitles.js';
+import { nextEpisodePath } from '../../lib/episode-detect.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
@@ -22,7 +24,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       ${isVideo ? `<video class="mz-media" playsinline></video>` : `
         <div class="mz-audio-wrap">
           <canvas class="mz-spectrum"></canvas>
-          <div class="mz-audio-disc"><span>🎵</span></div>
+          <div class="mz-audio-disc"><span>${iconHtml('🎵')}</span></div>
           <audio class="mz-media"></audio>
         </div>`}
       <div class="mz-topbar">
@@ -30,9 +32,20 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         <span class="mz-meta"></span>
         <button class="mz-x" data-a="close" title="关闭">${iconHtml('✕')}</button>
       </div>
-      <div class="mz-side" style="display:none">
-        <div class="mz-side-head">播放列表 <span class="mz-side-count"></span><button class="mz-side-x" data-a="side-close" title="收起播放列表">${iconHtml('✕')}</button></div>
+      <div class="mz-side">
+        <div class="mz-side-grip" title="拖拽调整宽度"></div>
+        <div class="mz-side-head">
+          <div class="mz-src-tabs">
+            <button class="mz-src-tab on" data-src="playlist" title="同目录播放列表（原有）">播放列表</button>
+            <button class="mz-src-tab" data-src="medialib" title="工作区媒体库（随工作区切换）">媒体库</button>
+            <button class="mz-src-tab" data-src="web" title="网络资源（种子站搜索，边下边播）">网络资源</button>
+          </div>
+          <span class="mz-side-count"></span>
+          <button class="mz-side-x" data-a="side-close" title="收起列表栏（视频区铺满）">${iconHtml('›')}</button>
+        </div>
         <div class="mz-list"></div>
+        <div class="mz-medialib" style="display:none"></div>
+        <div class="mz-web" style="display:none"></div>
       </div>
       <div class="mz-controls">
         <div class="mz-seek">
@@ -49,10 +62,14 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           <input class="mz-vol" type="range" min="0" max="1" step="0.05" value="1" title="音量（↑↓）">
           <span class="mz-bright-wrap" title="画面亮度">${iconHtml('☀')}<input class="mz-bright" type="range" min="0.4" max="1.6" step="0.05" value="1"></span>
           <select class="mz-speed" title="倍速">${[0.5, 0.8, 1, 1.2, 1.5, 2].map(v => `<option value="${v}" ${v === 1 ? 'selected' : ''}>${v}×</option>`).join('')}</select>
+          <span class="mz-track-wrap" style="display:none"></span>
+          <button class="mz-btn" data-a="pip" title="画中画（PiP）">${iconHtml('🗔')}</button>
           <button class="mz-btn" data-a="loop" title="循环（L）：列表循环">${iconHtml('🔁')}</button>
           <button class="mz-btn" data-a="snap" title="截图（S）">${iconHtml('📷')}</button>
           <button class="mz-btn" data-a="gif" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>
           <button class="mz-btn" data-a="progmem" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
+          <button class="mz-btn" data-a="sub" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
+          <button class="mz-btn" data-a="pset" title="播放设置（字幕/连播/片源）">${iconHtml('⚙')}</button>
           <button class="mz-btn" data-a="list" title="播放列表">${iconHtml('☰')}</button>
           <button class="mz-btn" data-a="zoom-reset" title="画面复位（缩放/亮度一键还原）">1:1</button>
           <button class="mz-btn" data-a="lock" title="窗口锁定（沉浸观影防误触，一键开关）">${iconHtml('🔓')}</button>
@@ -106,6 +123,142 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       }, { once: true });
     }
   }).catch(() => {});
+  // ==================== 字幕（ASS/SRT 特效字幕：同名自动探测 + 外挂手动载入 + JASSUB/libass 渲染） ====================
+  const SUB_SW = 'player.subtitleEnabled';
+  let subEnabled = true, subVisible = true;
+  const subBtn = root.querySelector('[data-a=sub]');
+  const syncSubBtn = () => {
+    subBtn.classList.toggle('on', subVisible && subtitleAttached());
+    subBtn.style.opacity = subVisible ? '1' : '.45';
+  };
+  let subLoadSeq = 0; // 并发序号闸：settings 回调与 setSource 双触发只许最新一趟生效（并发双挂载竞态实锤）
+  let subFor = null;   // 已挂载对应的路径（同片重进不重复挂载——竞态杀 in-flight 的总根，在这里闸死）
+  async function loadAutoSubtitle(notify = false) {
+    window.__subFlow = { stage: 'enter', isVideo, curPath, subEnabled, subFor };
+    if (!isVideo || !curPath || !subEnabled) return;
+    if (subFor === curPath) return; // 同片已挂/在挂，重进跳过
+    const seq = ++subLoadSeq;
+    subFor = curPath; // 先占坑（在挂与已挂同坑，后来者见此即弃）
+    const subs = await probeSubtitles(curPath);
+    window.__subFlow = { stage: 'probed', count: subs.length, seq, subLoadSeq, curPath };
+    if (seq !== subLoadSeq || !subs.length) {
+      subFor = null; // 后到的旧呼叫弃权
+      // 手动点击必须有明白话（静默=「字幕按钮点击了没反应」实锤：探测不到就闷死）
+      if (notify && !subs.length) import('../../shell/shell.js').then(({ toast }) => toast('未探测到同名字幕（.ass/.srt/.ssa 与视频同目录同名）——可用 播放设置→外挂字幕文件 手动挂载'));
+      return;
+    }
+    try {
+      await attachSubtitle(media, { subPath: subs[0] });
+      if (seq !== subLoadSeq) return;
+      subVisible = true;
+      syncSubBtn();
+      import('../../shell/shell.js').then(({ toast }) => toast('已挂载字幕：' + subs[0].split('/').pop()));
+    } catch (e) {
+      // 挂载失败必须明白报因（资产缺失/字体/解析），不许闷死——闷死的后果是用户以为"没字幕功能"
+      import('../../shell/shell.js').then(({ toast }) => toast('字幕挂载失败：' + (e?.message || e)));
+    }
+  }
+  window.mazz?.invoke('settings:get', { key: SUB_SW }).then(v => { subEnabled = v !== false; if (isVideo) loadAutoSubtitle(); syncSubBtn(); }).catch(() => {});
+  subBtn.addEventListener('click', () => {
+    if (!subtitleAttached()) { if (isVideo) loadAutoSubtitle(true); return; } // 手动点击：无字幕也要明白话
+    subVisible = !subVisible;
+    setSubtitleVisible(subVisible);
+    syncSubBtn();
+    import('../../shell/shell.js').then(({ toast }) => toast(subVisible ? '字幕显示' : '字幕隐藏'));
+  });
+
+  // ==================== 自动连播（番剧场景：同目录剧集嗅探，播完 3s 倒计时可取消） ====================
+  const AUTO_NEXT_SW = 'player.autoNextEnabled';
+  let autoNext = true;
+  window.mazz?.invoke('settings:get', { key: AUTO_NEXT_SW }).then(v => { autoNext = v !== false; }).catch(() => {});
+
+  // ==================== 播放设置面板（字幕/连播/片源集中地） ====================
+  root.querySelector('[data-a=pset]')?.addEventListener('click', async () => {
+    const { modal, toast } = await import('../../shell/shell.js');
+    const m = modal('播放设置');
+    const seedSites = [
+      ['Nyaa（番剧种子总库）', 'https://nyaa.si'],
+      ['动漫花园 DMHY', 'https://dmhy.org'],
+      ['MioBT 猫萌', 'https://www.miobt.com'],
+      ['acg.rip', 'https://acg.rip'],
+      ['bangumi.moe 萌番组', 'https://bangumi.moe'],
+    ];
+    m.body.innerHTML = `
+      <div style="min-width:420px;font-size:12.5px">
+        <div class="ps-sec"><b>${iconHtml('💬')} 字幕</b>
+          <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" class="ps-sub-sw" ${subEnabled ? 'checked' : ''}> 自动探测同名字幕（.ass/.srt/.ssa）</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="rb-btn ps-sub-load" style="flex-direction:row">外挂字幕文件…</button>
+            <span style="color:var(--fg-dim);font-size:11px">${subtitleAttached() ? '已挂载' : '未挂载'} · 渲染：JASSUB（libass wasm）</span>
+          </div>
+        </div>
+        <div class="ps-sec" style="margin-top:12px"><b>${iconHtml('⏭')} 连播</b>
+          <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" class="ps-next-sw" ${autoNext ? 'checked' : ''}> 播完自动接下一集（同目录剧集嗅探，3s 倒计时可取消）</label>
+        </div>
+        <div class="ps-sec" style="margin-top:12px"><b>${iconHtml('🔊')} 音频增益</b>
+          <div style="display:flex;gap:6px;align-items:center;margin:6px 0">
+            <select class="rb-select ps-gain" title="音量增益（WebAudio 共享链，超出硬件 100%）">
+              ${[1, 1.5, 2, 3].map(v => `<option value="${v}">${Math.round(v * 100)}%</option>`).join('')}
+            </select>
+            <span style="color:var(--fg-dim);font-size:11px">主媒体与外挂音轨同一增益节点（静音片源救星）</span>
+          </div>
+        </div>
+        <div class="ps-sec" style="margin-top:12px"><b>${iconHtml('🎬')} 解码能力（本机实测）</b>
+          <div class="ps-codec" style="font-size:11.5px;line-height:1.85;margin-top:6px;color:var(--fg-dim)">探测中…</div>
+        </div>
+        <div class="ps-sec" style="margin-top:12px"><b>${iconHtml('⬇')} 找片源（浏览器投稿会话打开，登录一次长期有效）</b>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+            ${seedSites.map(([n, u]) => `<button class="rb-btn ps-site" data-u="${u}" style="flex-direction:row">${n}</button>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    // 解码自检：矩阵实测读数 + HEVC 缺失按平台给官方组件指引（微软商店组件 CDN 官方包）
+    (async () => {
+      const box = m.body.querySelector('.ps-codec');
+      if (!box) return;
+      const { probeCodecs, renderHevcGuide, currentPlatform } = await import('../../lib/codec-guide.js');
+      const rows = probeCodecs();
+      box.innerHTML = rows.map(r => `<div>${r.ok ? '<span style="color:var(--ok,#16a34a)">✓</span>' : '<span style="color:var(--danger,#dc2626)">✗</span>'} ${r.name}<span style="opacity:.55">（${r.verdict}）</span></div>`).join('');
+      const hevc = rows.find(r => r.name.includes('HEVC'));
+      if (hevc && !hevc.ok) {
+        const guide = document.createElement('div');
+        guide.className = 'ps-hevc-guide';
+        guide.style.cssText = 'margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:11px;line-height:1.8';
+        box.appendChild(guide);
+        renderHevcGuide(guide, currentPlatform());
+      }
+    })().catch(() => {});
+    m.body.querySelector('.ps-sub-sw').addEventListener('change', (e) => {
+      subEnabled = e.target.checked;
+      window.mazz?.invoke('settings:set', { key: SUB_SW, value: subEnabled }).catch(() => {});
+      if (subEnabled && isVideo) loadAutoSubtitle();
+      else if (!subEnabled) { subFor = null; detachSubtitle(); syncSubBtn(); }
+    });
+    m.body.querySelector('.ps-sub-load').addEventListener('click', async () => {
+      const r = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '字幕文件', extensions: ['ass', 'srt', 'ssa'] }] }).catch(() => null);
+      const p = typeof r === 'string' ? r : (r?.path || r?.filePath || (Array.isArray(r) ? r[0] : null));
+      if (!p) return;
+      try {
+        await attachSubtitle(media, { subPath: p });
+        subVisible = true; syncSubBtn();
+        m.close(); toast('已挂载外挂字幕：' + p.split('/').pop());
+      } catch (e) { toast('字幕挂载失败：' + e.message); }
+    });
+    const gainSel = m.body.querySelector('.ps-gain');
+    window.mazz?.invoke('settings:get', { key: 'player.audioGain' }).then(v => { if (gainSel) gainSel.value = String(v || 1); }).catch(() => {});
+    gainSel?.addEventListener('change', (e) => setGain(+e.target.value));
+    m.body.querySelector('.ps-next-sw').addEventListener('change', (e) => {
+      autoNext = e.target.checked;
+      window.mazz?.invoke('settings:set', { key: AUTO_NEXT_SW, value: autoNext }).catch(() => {});
+    });
+    m.body.querySelectorAll('.ps-site').forEach(btn => btn.addEventListener('click', () => {
+      const u = btn.dataset.u;
+      window.MazzShell?.openTab?.('browser', { title: '找片源', content: '' });
+      setTimeout(() => window.__activeBrowserCtl?.openTabRaw?.(u, { partition: 'persist:mazz-author' }), 800);
+      m.close();
+    }));
+  });
+
   const controls = root.querySelector('.mz-controls');
   const topbar = root.querySelector('.mz-topbar');
   const playBtn = root.querySelector('[data-a=play]');
@@ -174,6 +327,361 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   const next = () => navTo(ctl.plIndex + 1 < ctl.playlist.length ? ctl.plIndex + 1 : 0);
   const prev = () => navTo(ctl.plIndex - 1 >= 0 ? ctl.plIndex - 1 : ctl.playlist.length - 1);
 
+  // ==================== 资源三源（播放列表/媒体库/网络资源——行文字带完整标题名称一栏） ====================
+  const srcTabs = root.querySelectorAll('.mz-src-tab');
+  const sideList = root.querySelector('.mz-list');
+  const mlEl = root.querySelector('.mz-medialib');
+  const webEl = root.querySelector('.mz-web');
+  ctl.srcMode = 'playlist';
+  const setSrcMode = (m) => {
+    ctl.srcMode = m;
+    srcTabs.forEach(t => t.classList.toggle('on', t.dataset.src === m));
+    sideList.style.display = m === 'playlist' ? '' : 'none';
+    mlEl.style.display = m === 'medialib' ? 'flex' : 'none'; // flex 链有界滚动（列表没做滚动条实锤：父链无 flex 高度约束，溢出撑爆）
+    webEl.style.display = m === 'web' ? 'flex' : 'none';
+    if (m === 'medialib') renderMedialib();
+    if (m === 'web') renderWeb();
+  };
+  srcTabs.forEach(t => t.addEventListener('click', () => setSrcMode(t.dataset.src)));
+
+  // —— 媒体库：工作区媒体库（工作区切换则切换） ——
+  async function renderMedialib() {
+    const ws = await window.mazz.invoke('workspace:get');
+    const dir = ws + '/媒体库';
+    await window.mazz.invoke('fs:mkdir', { path: dir }).catch(() => {});
+    const entries = await window.mazz.invoke('fs:listDir', { path: dir }).catch(() => []);
+    const exts = new Set([...MEDIA_VIDEO, ...MEDIA_AUDIO]);
+    const files = entries.filter(e => !e.isDir && exts.has(e.name.split('.').pop().toLowerCase()))
+      .sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+    root.querySelector('.mz-side-count').textContent = `（${files.length}）`;
+    mlEl.innerHTML = `
+      <div class="mz-ml-bar">
+        <button class="rb-btn" data-ml="import" style="flex-direction:row">${iconHtml('＋')} 导入视频</button>
+        <button class="rb-btn" data-ml="open" style="flex-direction:row" title="在文件管理器打开媒体库目录">${iconHtml('🗂')}</button>
+      </div>
+      <div class="mz-ml-list">` +
+      (files.length ? files.map(f => `<div class="mz-li mz-ml-item" data-p="${f.path}" title="${f.name}">
+          <span class="mz-ml-name">${f.name}</span><span class="mz-ml-size">${(f.size / 1048576).toFixed(1)}MB</span>
+        </div>`).join('') : '<div class="mz-dim">媒体库是空的——导入视频，或边下边播后选择「存到媒体库」</div>') +
+      `</div>`;
+    mlEl.querySelector('[data-ml=import]').addEventListener('click', async () => {
+      const r = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '视频/音频', extensions: [...MEDIA_VIDEO, ...MEDIA_AUDIO] }], multi: true }).catch(() => null);
+      if (!r) return;
+      for (const p of (Array.isArray(r) ? r : [r])) {
+        const b64 = await window.mazz.invoke('fs:readFileBase64', { path: p }).catch(() => null);
+        if (!b64) continue;
+        await window.mazz.invoke('fs:writeFileBase64', { path: dir + '/' + p.replace(/\\/g, '/').split('/').pop(), base64: b64 }).catch(() => {});
+      }
+      renderMedialib();
+    });
+    mlEl.querySelector('[data-ml=open]').addEventListener('click', () => {
+      window.mazz.invoke('shell:showItemInFolder', { path: dir }).catch(() => {});
+    });
+    mlEl.querySelectorAll('.mz-ml-item').forEach(el => el.addEventListener('click', () => onNav?.(el.dataset.p)));
+  }
+  // 工作区切换 → 媒体库模式重扫（工作区切换则切换实装）
+  window.mazz?.on?.('workspace:changed', () => { if (ctl.srcMode === 'medialib') renderMedialib(); });
+
+  // —— 网络资源：种子站搜索（懒取 magnet 边下边播）+ magnet 手贴 + 下载管理 ——
+  let webInited = false;
+  const watching = new Map(); // infoHash -> {title, filePath, streamUrl, done, progress, downSpeed, numPeers}
+  async function renderWeb() {
+    if (webInited) { renderWatching(); return; }
+    webInited = true;
+    const sites = await window.mazz.invoke('sites:list').catch(() => []);
+    webEl.innerHTML = `
+      <div class="mz-web-bar">
+        <select class="mz-web-site rb-select">${sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select>
+        <input class="mz-web-kw rb-input" placeholder="搜索番名/关键词，回车搜…" spellcheck="false">
+        <button class="rb-btn mz-web-go" style="flex-direction:row">搜</button>
+      </div>
+      <div class="mz-web-bar">
+        <input class="mz-web-magnet rb-input" placeholder="或直接粘贴 magnet:? 链接，回车边下边播" spellcheck="false">
+      </div>
+      <div class="mz-web-watch"></div>
+      <div class="mz-web-rows mz-dim">载入站点首页（当日上传列表）…</div>`;
+    // 行渲染共用：搜索与首页同结构（日期/类型/完整标题（名称一栏，按图样式直接扒）/大小/上传者）
+    const renderRows = (site, rows) => {
+      const rowsEl = webEl.querySelector('.mz-web-rows');
+      rowsEl.className = 'mz-web-rows';
+      rowsEl.innerHTML = rows.map((x, i) => `
+        <div class="mz-web-row" data-i="${i}">
+          <span class="mz-wr-date">${x.date || ''}</span>
+          <span class="mz-wr-type">${x.type || ''}</span>
+          <span class="mz-wr-title" title="${(x.title || '').replace(/"/g, '&quot;')}">${x.title || ''}</span>
+          <span class="mz-wr-size">${x.size || ''}</span>
+          <span class="mz-wr-up">${x.uploader || ''}</span>
+        </div>`).join('');
+      rowsEl.querySelectorAll('.mz-web-row').forEach(el => el.addEventListener('click', () => playRow(site, rows[+el.dataset.i], el)));
+    };
+    // 站点首页=当日上传列表：首开即载 + 切站即载（选中即展示）
+    const loadHome = async () => {
+      const site = webEl.querySelector('.mz-web-site').value;
+      const rowsEl = webEl.querySelector('.mz-web-rows');
+      rowsEl.className = 'mz-web-rows mz-dim';
+      rowsEl.textContent = '载入站点首页（当日上传列表）…';
+      try {
+        const r = await window.mazz.invoke('sites:home', { site });
+        if (!r.rows?.length) { rowsEl.textContent = '首页暂无资源行（站点结构可能已变）'; return; }
+        renderRows(site, r.rows);
+      } catch (e) {
+        rowsEl.className = 'mz-web-rows mz-dim';
+        rowsEl.textContent = '首页载入失败：' + (e.message || e);
+      }
+    };
+    const go = async () => {
+      const site = webEl.querySelector('.mz-web-site').value;
+      const kw = webEl.querySelector('.mz-web-kw').value.trim();
+      if (!kw) return;
+      const rowsEl = webEl.querySelector('.mz-web-rows');
+      rowsEl.className = 'mz-web-rows mz-dim';
+      rowsEl.textContent = '搜索中…';
+      try {
+        const r = await window.mazz.invoke('sites:search', { site, kw });
+        if (!r.rows?.length) { rowsEl.textContent = '无结果（换个关键词或站点试试）'; return; }
+        renderRows(site, r.rows);
+      } catch (e) {
+        rowsEl.className = 'mz-web-rows mz-dim';
+        rowsEl.textContent = '搜索失败：' + (e.message || e);
+      }
+    };
+    webEl.querySelector('.mz-web-site').addEventListener('change', loadHome);
+    webEl.querySelector('.mz-web-go').addEventListener('click', go);
+    webEl.querySelector('.mz-web-kw').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); e.stopPropagation(); });
+    webEl.querySelector('.mz-web-magnet').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const v = e.target.value.trim();
+      if (v.startsWith('magnet:')) playMagnet(v, v.slice(0, 40));
+      e.stopPropagation();
+    });
+    renderWatching();
+    loadHome(); // 首开即载：站点首页当日上传列表（同搜索行结构）
+  }
+
+  async function playRow(site, row, el) {
+    if (el.dataset.busy) return;
+    el.dataset.busy = '1';
+    const titleEl = el.querySelector('.mz-wr-title');
+    const old = titleEl.textContent;
+    titleEl.textContent = '取 magnet 中…';
+    try {
+      const m = await window.mazz.invoke('sites:magnet', { site, href: row.href });
+      await playMagnet(m.magnet, m.title || row.title || old);
+      el.remove();
+    } catch (e) {
+      titleEl.textContent = old;
+      delete el.dataset.busy;
+      const { toast } = await import('../../shell/shell.js');
+      toast('取 magnet 失败：' + (e.message || e));
+    }
+  }
+
+  async function playMagnet(magnet, title) {
+    const { toast } = await import('../../shell/shell.js');
+    try {
+      toast('连接种子 swarm，取元数据…');
+      const r = await window.mazz.invoke('tor:add', { magnet, name: title });
+      const file = (r.files || [])[0];
+      if (!file) throw new Error('种子内无可播放文件');
+      const rawUrl = await window.mazz.invoke('tor:streamUrl', { infoHash: r.infoHash, filePath: file.path });
+      // 流走 mazz-res://tor/ 代理（页面同源化：裸 http://127.0.0.1 在 file:// 页 media loader 零请求实锤根治；
+      // encodeURI：种子文件名带空格/中文时 URL 必须编码）
+      const streamUrl = 'mazz-res://tor/' + encodeURI(rawUrl).replace('http://', '');
+      watching.set(r.infoHash, { title: r.name || title, filePath: file.path, streamUrl, done: false, progress: 0 });
+      setSource(streamUrl, r.name || title, streamUrl, file.length);
+      renderWatching();
+      startWatchPoll();
+      // 种子内字幕：探 .ass/.srt/.ssa → tor:fileBytes 按需取块（小块下完即收）→ 内容直挂（播放即挂）
+      const subFile = (r.files || []).find(f => /\.(ass|srt|ssa)$/i.test(f.path || ''));
+      if (subFile) {
+        try {
+          const bytes = await window.mazz.invoke('tor:fileBytes', { infoHash: r.infoHash, filePath: subFile.path });
+          const u8 = bytes instanceof Uint8Array ? bytes : (bytes?.data ? new Uint8Array(bytes.data) : null);
+          if (u8?.length) {
+            await attachSubtitle(media, { subContent: new TextDecoder().decode(u8) });
+            subVisible = true; syncSubBtn();
+            toast('已挂载种子内字幕：' + (subFile.name || subFile.path.split('/').pop()));
+          }
+        } catch (e) { toast('种子内字幕挂载失败：' + (e.message || e)); }
+      }
+    } catch (e) {
+      toast('种子添加失败：' + (e.message || e));
+    }
+  }
+
+  function renderWatching() {
+    const box = webEl.querySelector('.mz-web-watch');
+    if (!box) return;
+    if (!watching.size) { box.innerHTML = ''; return; }
+    box.innerHTML = [...watching.entries()].map(([ih, w]) => `
+      <div class="mz-watch" data-ih="${ih}">
+        <div class="mz-watch-title" title="${(w.title || '').replace(/"/g, '&quot;')}">${w.title || ih.slice(0, 10)}</div>
+        <div class="mz-watch-bar"><div class="mz-watch-fill" style="width:${Math.round((w.progress || 0) * 100)}%"></div></div>
+        <div class="mz-watch-meta">${Math.round((w.progress || 0) * 100)}% · ${((w.downSpeed || 0) / 1024).toFixed(0)}KB/s · ${w.numPeers || 0}peers</div>
+        <div class="mz-watch-acts">
+          <button data-wa="play" title="打开流播放">${iconHtml('▶')}</button>
+          <button data-wa="rm" title="移除并删除文件">${iconHtml('✕')}</button>
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('.mz-watch').forEach(el => {
+      const ih = el.dataset.ih;
+      el.querySelector('[data-wa=play]').addEventListener('click', () => {
+        const w = watching.get(ih);
+        if (w) setSource(w.streamUrl, w.title, w.streamUrl, 0);
+      });
+      el.querySelector('[data-wa=rm]').addEventListener('click', async () => {
+        watching.delete(ih);
+        await window.mazz.invoke('tor:remove', { infoHash: ih, deleteFiles: true });
+        renderWatching();
+      });
+    });
+  }
+
+  let watchPollT = null;
+  function startWatchPoll() {
+    if (watchPollT) return;
+    watchPollT = setInterval(async () => {
+      for (const [ih, w] of watching) {
+        const st = await window.mazz.invoke('tor:stats', { infoHash: ih }).catch(() => null);
+        if (!st) continue;
+        Object.assign(w, st);
+        if (st.done && !w.done) { w.done = true; onTorrentDone(ih, w); }
+      }
+      renderWatching();
+    }, 2500);
+  }
+
+  async function onTorrentDone(ih, w) {
+    const { toast } = await import('../../shell/shell.js');
+    const mode = (await window.mazz.invoke('settings:get', { key: 'player.torrentKeepMode' }).catch(() => 'ask')) || 'ask';
+    const keep = async () => {
+      const src = await window.mazz.invoke('tor:filePath', { infoHash: ih, filePath: w.filePath });
+      if (src) {
+        const ws = await window.mazz.invoke('workspace:get');
+        const dest = ws + '/媒体库/' + src.replace(/\\/g, '/').split('/').pop();
+        await window.mazz.invoke('fs:rename', { from: src, to: dest }).catch(() => null);
+        await window.mazz.invoke('tor:remove', { infoHash: ih, deleteFiles: false });
+        if (ctl.srcMode === 'medialib') renderMedialib();
+        toast('已存到媒体库');
+      }
+      watching.delete(ih);
+      renderWatching();
+    };
+    const discard = async () => {
+      watching.delete(ih);
+      await window.mazz.invoke('tor:remove', { infoHash: ih, deleteFiles: true });
+      renderWatching();
+    };
+    if (mode === 'keep') return keep();
+    if (mode === 'discard') return discard();
+    toast(`「${w.title || '种子'}」下载完成——存到媒体库吗？`, [
+      { label: '存到媒体库', fn: keep },
+      { label: '不存，删除', fn: discard, ghost: true },
+    ], 15000);
+  }
+
+  // ==================== 多音轨（MKV 自解复用：EBML-lite 枚举轨表 + 全编码抽轨封装双元素同步） ====================
+  // 原 A_FLAC 单轨直通泛化：Vorbis/AAC/Opus 全编码（Ogg/ADTS 自封装，主进程 mkv:extractTrack）
+  const SUPPORTED_TRACK_CODECS = /^A_(FLAC|VORBIS|AAC|OPUS)/i;
+  let audioTracks = [], auxEl = null, curTrackIdx = 0;
+  async function probeAudioTracks() {
+    if (!isVideo || !curPath || !/\.mkv$/i.test(curPath)) { audioTracks = []; renderTrackMenu(); return; }
+    const r = await window.mazz.invoke('mkv:tracks', { path: curPath }).catch(() => null);
+    audioTracks = (r?.tracks || []).filter(t => t.type === 2);
+    renderTrackMenu();
+  }
+  function renderTrackMenu() {
+    const wrap = root.querySelector('.mz-track-wrap');
+    if (!wrap) return;
+    if (audioTracks.length <= 1) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    wrap.innerHTML = `<select class="mz-track rb-select" title="音轨（多轨片源切轨换音道；FLAC/Vorbis/AAC/Opus 自封装直通，其他编码探测仅展示）">
+      ${audioTracks.map((t, i) => `<option value="${i}" ${i === curTrackIdx ? 'selected' : ''}>${i === 0 ? '主轨' : '轨' + (i + 1)} · ${t.language || 'und'}${SUPPORTED_TRACK_CODECS.test(t.codecId || '') ? '' : '（暂不支持）'}</option>`).join('')}
+    </select>`;
+    wrap.querySelector('.mz-track').addEventListener('change', (e) => switchTrack(+e.target.value));
+  }
+  async function switchTrack(idx) {
+    const t = audioTracks[idx];
+    if (!t || idx === curTrackIdx) return;
+    const { toast } = await import('../../shell/shell.js');
+    if (!SUPPORTED_TRACK_CODECS.test(t.codecId || '')) { toast('该编码音轨暂不支持切换——支持 FLAC/Vorbis/AAC/Opus'); renderTrackMenu(); return; }
+    try {
+      toast('抽取音轨中…');
+      const r = await window.mazz.invoke('mkv:extractTrack', { path: curPath, trackNumber: t.trackNumber });
+      await attachAuxAudio('mazz-res://media/' + encodeURIComponent(r.path.replace(/\\/g, '/')), idx);
+      curTrackIdx = idx;
+      toast(`已切到音轨 ${idx + 1}（${t.language || 'und'} · ${r.ext || ''}）`);
+    } catch (e) { toast('音轨抽取失败：' + (e.message || e)); renderTrackMenu(); }
+  }
+  async function attachAuxAudio(url, idx) {
+    detachAuxAudio(false);
+    if (idx === 0) { media.muted = false; return; }
+    media.muted = true; // 画面整轨静音（Chromium 无法单独禁容器内某轨，声音全由 aux 轨接管）
+    auxEl = new Audio(url);
+    auxEl.playbackRate = media.playbackRate;
+    auxEl.volume = media.volume;
+    auxEl.muted = media.muted;
+    if (ctl._chain && (ctl._chain.gain.gain.value > 1)) {
+      try {
+        const aSrc = ctl._chain.ctx.createMediaElementSource(auxEl);
+        aSrc.connect(ctl._chain.gain); // 增益共享一链（与主媒体同源增益节点）
+      } catch {}
+    }
+    const sync = {
+      play: () => { auxEl.currentTime = media.currentTime; auxEl.play().catch(() => {}); },
+      pause: () => auxEl.pause(),
+      seeked: () => { auxEl.currentTime = media.currentTime; },
+      timeupdate: () => { if (Math.abs(auxEl.currentTime - media.currentTime) > 0.35) auxEl.currentTime = media.currentTime; },
+      ratechange: () => { auxEl.playbackRate = media.playbackRate; },
+      volumechange: () => { auxEl.volume = media.volume; auxEl.muted = media.muted; },
+    };
+    for (const [ev, fn] of Object.entries(sync)) media.addEventListener(ev, fn);
+    auxEl._sync = sync;
+    if (!media.paused) sync.play();
+  }
+  function detachAuxAudio(resetMute = true) {
+    if (auxEl?._sync) for (const [ev, fn] of Object.entries(auxEl._sync)) media.removeEventListener(ev, fn);
+    try { auxEl?.pause(); auxEl?.removeAttribute('src'); } catch {}
+    auxEl = null;
+    if (resetMute) { media.muted = false; curTrackIdx = 0; }
+  }
+  probeAudioTracks();
+
+  // ==================== 音频增益（WebAudio 共享链：主媒体与 aux 轨同一增益节点，300% 上限） ====================
+  function mediaChain() {
+    if (!ctl._chain) {
+      const ctx = ctl._actx || (ctl._actx = new AudioContext());
+      const src = ctx.createMediaElementSource(media);
+      const gain = ctx.createGain();
+      gain.gain.value = 1;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+      ctl._chain = { ctx, src, gain };
+      ctx.resume?.().catch(() => {});
+    }
+    return ctl._chain;
+  }
+  function setGain(x) {
+    if (x > 1.0001) mediaChain().gain.gain.value = x;
+    else if (ctl._chain) ctl._chain.gain.gain.value = 1;
+    window.mazz?.invoke('settings:set', { key: 'player.audioGain', value: x }).catch(() => {});
+  }
+  window.mazz?.invoke('settings:get', { key: 'player.audioGain' }).then(v => { if (v > 1) setGain(v); }).catch(() => {});
+
+  // ==================== 倍速/亮度记忆（上次值恢复 + 变更即存） ====================
+  window.mazz?.invoke('settings:get', { key: 'player.lastSpeed' }).then(v => {
+    if (v && v !== 1) {
+      const sel = root.querySelector('.mz-speed');
+      if (sel) { sel.value = String(v); media.playbackRate = v; }
+    }
+  }).catch(() => {});
+  window.mazz?.invoke('settings:get', { key: 'player.lastBrightness' }).then(v => {
+    if (v && v !== 1) {
+      const b = root.querySelector('.mz-bright');
+      if (b) { b.value = v; media.style.filter = `brightness(${v})`; }
+    }
+  }).catch(() => {});
+
   // ---------- 播放/进度 ----------
   const togglePlay = () => { media.paused ? media.play().catch(() => {}) : media.pause(); };
   playBtn.addEventListener('click', togglePlay);
@@ -191,7 +699,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     knob.style.left = pct + '%';
     timeEl.innerHTML = `<b>${fmtTime(media.currentTime)}</b> / ${fmtTime(media.duration)}`;
   });
-  media.addEventListener('ended', () => {
+  // 循环兜底（非连播路径的原逻辑）
+  const fallbackLoop = () => {
     if (ctl.loop === 'sequential' && ctl.plIndex + 1 >= ctl.playlist.length) return; // 顺序播：播完即停
     if (ctl.loop === 'single' || ctl.playlist.length <= 1 || next === undefined) {
       media.currentTime = 0;
@@ -202,6 +711,24 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const ni = ctl.plIndex + 1 < ctl.playlist.length ? ctl.plIndex + 1 : 0;
     if (ctl.playlist[ni] === curPath) { media.currentTime = 0; media.play().catch(() => {}); }
     else next();
+  };
+  media.addEventListener('ended', () => {
+    // 自动连播优先（番剧场景：同目录嗅探到下一集；single/off 尊重用户显式选择不拦）
+    if (autoNext && isVideo && curPath && ctl.loop !== 'single' && ctl.loop !== 'off') {
+      (async () => {
+        const dir = curPath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+        const entries = await window.mazz.invoke('fs:listDir', { path: dir }).catch(() => []);
+        const exts = new Set([...MEDIA_VIDEO, ...MEDIA_AUDIO]);
+        const np = nextEpisodePath(curPath, entries, exts);
+        if (!np) { fallbackLoop(); return; }
+        const { toast } = await import('../../shell/shell.js');
+        let cancel = false;
+        toast(`3s 后自动连播：${np.split('/').pop()}`, [{ label: '取消连播', fn: () => { cancel = true; } }], 3000);
+        setTimeout(() => { if (!cancel) onNav?.(np); }, 3000);
+      })();
+      return;
+    }
+    fallbackLoop();
   });
 
   // 进度条拖拽
@@ -336,10 +863,11 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   // ---------- 音量/倍速/循环/截图 ----------
   const vol = root.querySelector('.mz-vol');
-  // 亮度调节（filter:brightness）
+  // 亮度调节（filter:brightness + 亮度记忆）
   const bright = root.querySelector('.mz-bright');
   if (bright) bright.addEventListener('input', () => {
     media.style.filter = `brightness(${bright.value})`;
+    window.mazz?.invoke('settings:set', { key: 'player.lastBrightness', value: +bright.value }).catch(() => {});
   });
   // 窗口锁定：沉浸观影防误触（锁后键盘/鼠标媒体控制全部失效，再点一次或 Esc 解锁）
   let locked = false;
@@ -379,7 +907,17 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');
   }
   muteBtn.addEventListener('click', () => { media.muted = !media.muted; syncVolIcon(); });
-  root.querySelector('.mz-speed').addEventListener('change', (e) => { media.playbackRate = +e.target.value; });
+  root.querySelector('.mz-speed').addEventListener('change', (e) => {
+    media.playbackRate = +e.target.value;
+    window.mazz?.invoke('settings:set', { key: 'player.lastSpeed', value: +e.target.value }).catch(() => {}); // 倍速记忆
+  });
+  root.querySelector('[data-a=pip]')?.addEventListener('click', async () => {
+    if (!isVideo) return;
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture();
+      else await media.requestPictureInPicture();
+    } catch (e) { import('../../shell/shell.js').then(({ toast }) => toast('画中画不可用：' + (e.message || e))); }
+  });
   const loopBtn = root.querySelector('[data-a=loop]');
   loopBtn.addEventListener('click', () => {
     ctl.loop = { list: 'single', single: 'sequential', sequential: 'off', off: 'list' }[ctl.loop];
@@ -403,14 +941,45 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     } catch (e) {}
   });
 
-  // ---------- 播放列表面板 ----------
-  root.querySelector('[data-a=list]').addEventListener('click', () => {
-    const side = root.querySelector('.mz-side');
-    side.style.display = side.style.display === 'none' ? 'flex' : 'none';
-  });
-  // 侧栏独立收起钮（点了没反应的吐槽根因：原只能靠复点列表钮猜）
-  root.querySelector('[data-a=side-close]').addEventListener('click', () => {
-    root.querySelector('.mz-side').style.display = 'none';
+  // ---------- 播放列表面板（工作区栏同款：展开推挤视频区/收起铺满/左缘 grip 拖拽调宽/折叠符号/状态记忆） ----------
+  const SIDE_MIN = 200, SIDE_MAX = 520;
+  ctl.sideW = 260; ctl.sideOpen = false;
+  const applySide = () => {
+    stage.style.setProperty('--mz-side-w', ctl.sideW + 'px');
+    stage.classList.toggle('side-open', ctl.sideOpen);
+  };
+  const persistSide = () => {
+    window.mazz?.invoke('settings:set', { key: 'player.listSide', value: { width: ctl.sideW, open: ctl.sideOpen } }).catch(() => {});
+  };
+  const setSideOpen = (open) => { ctl.sideOpen = !!open; applySide(); persistSide(); };
+  window.mazz?.invoke('settings:get', { key: 'player.listSide' }).then(v => {
+    if (v && typeof v === 'object') {
+      if (v.width >= SIDE_MIN && v.width <= SIDE_MAX) ctl.sideW = v.width;
+      if (typeof v.open === 'boolean') ctl.sideOpen = v.open;
+    }
+    applySide();
+  }).catch(() => {});
+  root.querySelector('[data-a=list]').addEventListener('click', () => setSideOpen(!ctl.sideOpen));
+  // 侧栏折叠钮（›：收起即铺满——与工作区栏 «/» 展开折叠同款语义，SVG 一致化）
+  root.querySelector('[data-a=side-close]').addEventListener('click', () => setSideOpen(false));
+  // 左缘 grip 拖拽调宽（往左拖=变宽；工作区栏 SidebarCtl 同款手势）
+  const sideGrip = root.querySelector('.mz-side-grip');
+  sideGrip.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    sideGrip.classList.add('on');
+    const startX = e.clientX, startW = ctl.sideW;
+    const move = (ev) => {
+      ctl.sideW = Math.min(Math.max(startW + (startX - ev.clientX), SIDE_MIN), SIDE_MAX);
+      stage.style.setProperty('--mz-side-w', ctl.sideW + 'px');
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      sideGrip.classList.remove('on');
+      persistSide();
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
   });
 
   // ---------- 无边框 / 全屏 ----------
@@ -452,16 +1021,13 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     togglePlay();
   });
 
-  // ---------- 音频频谱 ----------
+  // ---------- 音频频谱（共享媒体源链——不得重复 createMediaElementSource 撞车（InvalidStateError 实锤） ----------
   if (!isVideo) {
     try {
-      const ctx = ctl._actx || new AudioContext();
-      ctl._actx = ctx;
-      const src = ctx.createMediaElementSource(media);
-      const analyser = ctx.createAnalyser();
+      const { src } = mediaChain(); // 用共享链的源（增益节点已在链上，频谱只搭顺风车）
+      const analyser = ctl._chain.ctx.createAnalyser();
       analyser.fftSize = 64;
       src.connect(analyser);
-      analyser.connect(ctx.destination);
       const canvas = root.querySelector('.mz-spectrum');
       const c2d = canvas.getContext('2d');
       const data = new Uint8Array(analyser.frequencyBinCount);
@@ -520,9 +1086,12 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   /** 切歌复用：只换源不重建（stage 不销毁，全屏物理保持——比 wasFs 恢复 requestFullscreen 可靠） */
   function setSource(newUrl, newName, newPath, newSize = 0) {
     saveProgMem(); // 旧片先存进度（用旧 curPath）
+    // 同片 setSource（activate 重载/刷新）不得卸载字幕——detach+重挂的竞态杀 in-flight 是总根（三连实锤）
+    const pathChanged = newPath !== curPath;
     curUrl = newUrl; curName = newName; curPath = newPath;
     curSize = newSize;
     media.pause();
+    if (pathChanged) { detachSubtitle(); subFor = null; detachAuxAudio(); audioTracks = []; probeAudioTracks(); }
     media.src = curUrl;
     root.querySelector('.mz-name').textContent = curName;
     root.querySelector('.mz-name').title = curName;
@@ -552,13 +1121,17 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       }
     })();
     media.play().catch(() => {});
+    if (isVideo) loadAutoSubtitle(); // 新片字幕自动探测（subEnabled 态已缓存）
   }
 
   return {
     setSource,
+    /** 外挂字幕直挂（设置面板/E2E 通道——bundle 内模块裸 import 进不来，此口是唯一真源） */
+    loadSub: async (p) => { await attachSubtitle(media, { subPath: p }); subVisible = true; syncSubBtn(); return true; },
     destroy() {
       document.removeEventListener('keydown', onKey, true);
       clearTimeout(hideTimer);
+      clearInterval(watchPollT); // 种子状态轮询必清（泄漏会后台持续打 tor:stats）
       clearInterval(progMemTimer); // 进度记忆定时器必清（泄漏会持续写 settings）
       saveProgMem(); // 销毁前终存一次（关签/切歌时位置不丢）
       if (previewVideo) { previewVideo.pause(); previewVideo.removeAttribute('src'); previewVideo = null; }
@@ -568,6 +1141,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         cp?.catch?.(() => {});
         ctl._actx = null;
       } catch {}
+      detachSubtitle(); // 字幕渲染器与 canvas 必清（worker 不退役=内存挂账）
+      detachAuxAudio(); // aux 音轨元素与同步监听必清（切走不卸=后台双音轨同播实锤）
       media.pause();
     },
   };

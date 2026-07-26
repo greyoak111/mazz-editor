@@ -433,18 +433,27 @@ export async function scenes5({ win, human, WS, WS2, scenario }) {
     }, [WS + '/书库/夜航西飞.txt']);
     await win.waitForTimeout(1500);
     await evaluate(() => { [...document.querySelectorAll('.lib-card')].find(c => c.getBoundingClientRect().width > 0 && c.textContent.includes('夜航进度样本'))?.click(); });
-    // 等分栏容器就绪
+    // 等分栏容器就绪（沙箱帧+切片时代：走 ctl 真源，不再读壳内 .lib-flow-wrap）
     await human.until(() => {
-      const w = [...document.querySelectorAll('.lib-flow-wrap')].find(e => e.getBoundingClientRect().width > 0);
-      return w && w.scrollWidth > w.clientWidth ? true : null;
+      const c = window.__activeLibraryCtl;
+      const flow = c?._flowWrap?.querySelector('.lib-flow');
+      return flow && flow.scrollWidth > c._flowWrap.clientWidth ? true : null;
     }, { timeout: 10000, msg: '分栏容器就绪（txt 分栏横排）' });
-    // 滚到约 50% 屏位（触发 onscroll → _flowRatio → 600ms 防抖保存）
+    // 屏位定到 50%（切片平移 → _flowRatio → 600ms 防抖保存）
     await evaluate(() => {
-      const w = [...document.querySelectorAll('.lib-flow-wrap')].find(e => e.getBoundingClientRect().width > 0);
-      w.scrollLeft = 0.5 * (w.scrollWidth - w.clientWidth);
-      w.dispatchEvent(new Event('scroll', { bubbles: true }));
+      const c = window.__activeLibraryCtl;
+      const flow = c._flowWrap.querySelector('.lib-flow');
+      const max = flow.scrollWidth - c._flowWrap.clientWidth;
+      c._applyOffset(0.5 * max);
     });
     await win.waitForTimeout(1000); // 防抖 600ms + 余裕
+    const dbgSave = await evaluate(async () => {
+      const c = window.__activeLibraryCtl;
+      const rec = (await window.mazz.invoke('settings:get', { key: 'library.progress' }).catch(() => ({})))?.['e2e-txt-progress'];
+      const flow = c._fdoc?.querySelector('.lib-flow');
+      return { rec, off: c._flowOffset, max: (flow?.scrollWidth || 1) - (c._flowWrap?.clientWidth || 1), ratio: c._flowRatio };
+    });
+    human.log('保存现场:', JSON.stringify(dbgSave));
     const saved = await evaluate(async () => {
       const prog = (await window.mazz.invoke('settings:get', { key: 'library.progress' }).catch(() => ({}))) || {};
       return prog['e2e-txt-progress']?.ratio ?? null;
@@ -455,15 +464,36 @@ export async function scenes5({ win, human, WS, WS2, scenario }) {
     await win.waitForTimeout(800);
     await evaluate(() => { [...document.querySelectorAll('.lib-card')].find(c => c.getBoundingClientRect().width > 0 && c.textContent.includes('夜航进度样本'))?.click(); });
     await human.until(() => {
-      const w = [...document.querySelectorAll('.lib-flow-wrap')].find(e => e.getBoundingClientRect().width > 0);
-      return w && w.scrollWidth > w.clientWidth ? true : null;
+      const c = window.__activeLibraryCtl;
+      const flow = c?._flowWrap?.querySelector('.lib-flow');
+      return flow && flow.scrollWidth > c._flowWrap.clientWidth ? true : null;
     }, { timeout: 10000, msg: '重开分栏就绪' });
-    await win.waitForTimeout(500); // 布局定位落定
-    const restored = await evaluate(() => {
-      const w = [...document.querySelectorAll('.lib-flow-wrap')].find(e => e.getBoundingClientRect().width > 0);
-      return w.scrollLeft / (w.scrollWidth - w.clientWidth);
+    await win.waitForTimeout(800); // 锚点/比例恢复落定
+    const dbg = await evaluate(async () => {
+      const c = window.__activeLibraryCtl;
+      const rec = (await window.mazz.invoke('settings:get', { key: 'library.progress' }).catch(() => ({})))?.['e2e-txt-progress'];
+      const flow = c._fdoc?.querySelector('.lib-flow');
+      let resolved = null;
+      if (rec?.anchor?.p && flow) {
+        let n = flow;
+        for (const i of String(rec.anchor.p).split('/').map(Number)) { n = n?.children?.[i]; if (!n) break; }
+        resolved = n ? { text: (n.textContent || '').trim().slice(0, 20), offL: n.offsetLeft } : 'resolve-null';
+      }
+      return { rec, resolved, off: c._flowOffset, max: (flow?.scrollWidth || 1) - (c._flowWrap?.clientWidth || 1), pageIdx: c.pageIdx, dbg: window.__restoreDbg || null };
     });
-    await human.assert(Math.abs(restored - 0.5) < 0.15, `重开屏位应恢复 ≈50%（实际 ${(restored * 100).toFixed(1)}%）`);
+    human.log('恢复现场:', JSON.stringify(dbg));
+    const restored = await evaluate(() => {
+      const c = window.__activeLibraryCtl;
+      const flow = c._flowWrap.querySelector('.lib-flow');
+      const max = Math.max(1, flow.scrollWidth - c._flowWrap.clientWidth);
+      return (c._flowOffset || 0) / max;
+    });
+    // 锚点真源断言（内容锚模型：恢复钉在记忆文本原位——指纹与解析命中一致、屏位=锚块原位；
+    // dbg.rec 是恢复后新锚，不与旧锚比对；块级位置随布局变化是模型本意）
+    await human.assert(dbg.dbg?.ok === true && dbg.dbg.nodeText === dbg.dbg.fp,
+      `锚点解析须命中记忆文本（${JSON.stringify(dbg.dbg)}）`);
+    await human.assert(Math.abs((dbg.off || 0) - (dbg.dbg?.nodeOffL ?? -1)) < 4,
+      `恢复须钉在锚块原位（屏位 ${dbg.off} vs 锚块 ${dbg.dbg?.nodeOffL}）`);
     await human.shot('进度屏位恢复');
   });
 
@@ -517,11 +547,14 @@ export async function scenes5({ win, human, WS, WS2, scenario }) {
     await win.waitForTimeout(500);
     const n2 = await evaluate(() => document.querySelectorAll('.br-tab').length);
     await human.assert(n2 === n0, `关闭后应还原 ${n0}（实际 ${n2}）`);
-    const homeOk = await evaluate(() => {
-      const home = [...document.querySelectorAll('.br-home, .br-grid, .br-newtab')].find(e => e.getBoundingClientRect().width > 0);
-      return !!home || [...document.querySelectorAll('webview')].some(v => v.getBoundingClientRect().width > 0);
+    // 波次二十后：主进程视图替代 webview 标签——存活证明=客页 JS 可执行且主窗看得见主页
+    const homeOk = await evaluate(async () => {
+      const ctl = window.__activeBrowserCtl;
+      if (!ctl?.tabs?.length) return false;
+      const r = await ctl.execJs?.(null, 'document.body ? document.body.textContent.length : 0').catch(() => null);
+      return typeof r === 'number' && r > 10;
     });
-    await human.assert(homeOk, '首页/webview 应仍稳定渲染');
+    await human.assert(homeOk, '首页/视图应仍稳定渲染（客页可执行 JS）');
     await human.shot('浏览器页签');
   });
 

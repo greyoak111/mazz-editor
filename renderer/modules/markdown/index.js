@@ -146,7 +146,7 @@ function createEditor(container, initialText) {
         for (const f of imgs) {
           // Electron 32+：File.path 已移除，必须 webUtils.getPathForFile；网页桥：blob URL
           const realPath = window.mazz?.isElectron ? (window.mazz.getPathForFile?.(f) || '') : '';
-          const src = window.mazz?.isElectron ? (realPath ? `file://${realPath}` : '') : URL.createObjectURL(f);
+          const src = window.mazz?.isElectron ? (realPath ? `mazz-res://media/${encodeURIComponent(String(realPath).replace(/\\/g, '/'))}` : '') : URL.createObjectURL(f); // 页面同源化
           if (!src) continue;
           tr = tr.replaceSelectionWith(state.schema.nodes.image.create({ src, alt: f.name }));
         }
@@ -743,7 +743,7 @@ export default {
             filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'] }],
           }).catch(() => null);
           if (!p) return;
-          const src = window.mazz?.isElectron ? `file://${p}` : p;
+          const src = window.mazz?.isElectron ? `mazz-res://media/${encodeURIComponent(String(p).replace(/\\/g, '/'))}` : p; // 页面同源化
           const { state } = current.view;
           current.view.dispatch(state.tr.replaceSelectionWith(schema.nodes.image.create({ src, alt: p.split(/[\\/]/).pop() })).scrollIntoView());
           current.view.focus();

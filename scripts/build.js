@@ -50,6 +50,14 @@ async function build() {
         path.join(root, 'renderer', 'dist', 'codicon.ttf'),
       );
     } catch {}
+    // subtitles-octopus（libass-wasm）字幕渲染 worker/wasm——classic worker 走 mazz-res:// 协议取件
+    try {
+      const jd = path.join(root, 'renderer', 'dist', 'lib', 'octopus');
+      fs.mkdirSync(jd, { recursive: true });
+      for (const f of ['subtitles-octopus-worker.js', 'subtitles-octopus-worker.wasm', 'subtitles-octopus-worker-legacy.js']) {
+        fs.copyFileSync(path.join(root, 'node_modules', 'libass-wasm', 'dist', 'js', f), path.join(jd, f));
+      }
+    } catch {}
     console.log('[build] renderer/dist/ 打包完成（ESM 分片 + Monaco workers）');
   }
 }

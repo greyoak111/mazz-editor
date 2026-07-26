@@ -25,6 +25,7 @@ export async function collectImages(html, { workspace } = {}) {
     const src = match[1];
     let path = null;
     if (src.startsWith('file://')) path = decodeURIComponent(src.slice(7));
+    else if (src.startsWith('mazz-res://media/')) path = decodeURIComponent(src.slice('mazz-res://media/'.length)); // 页面同源化双前缀兼容
     else if (!/^https?:|^data:|^blob:/.test(src) && workspace) path = workspace + '/' + src.replace(/^\.\//, '');
     if (!path || seen.has(path)) continue;
     try {

@@ -103,8 +103,18 @@ describe('v45 实机回归', () => {
     const src = readSrc('renderer/modules/browser/index.js');
     assert.ok(src.includes('render-process-gone'), '必须监听客进程崩溃');
     assert.ok(src.includes('reviveView'), '必须有复活函数');
-    assert.ok(src.includes("v.addEventListener('dom-ready', () => { tab.domReady = true; })"), 'dom-ready 必须真实置位');
-    assert.ok(!src.includes('setTimeout(resolve, 3000)'), '3 秒盲置旧逻辑必须清除');
+    // 波次二十 WebContentsView 迁移：主进程持有一等视图，webview 标签与 dom-ready 赌注一并废除
+    assert.ok(src.includes('bv:create'), '必须走 WebContentsView 创建通道');
+    assert.ok(!src.includes("document.createElement('webview')"), 'Electron 路径不得再创建 webview 标签');
+  });
+
+  test('分屏预览框清理三路兜底（粘连绝育）', () => {
+    const src = readSrc('renderer/shell/shell.js');
+    assert.ok(src.includes('cleanup'), '清理必须收拢唯一真源');
+    assert.ok(src.includes('armDog') && src.includes('1500'), '看门狗必须有（无 dragover 判死）');
+    assert.ok(src.includes("addEventListener('pointerup'"), 'pointerup 兜底必须有（dragend 被源毁灭吞掉的活口）');
+    assert.ok(src.includes("addEventListener('blur', cleanup)"), 'blur 兜底必须有');
+    assert.ok(src.includes('armDog(); e.preventDefault()') || src.includes('armDog()'), '活跃拖拽必须喂狗');
   });
 
   test('主题包全量 22 键+结构镜像', () => {

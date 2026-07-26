@@ -39,6 +39,7 @@ class WindowManager {
         contextIsolation: true, sandbox: false, nodeIntegration: false,
         spellcheck: true, webviewTag: true, // 隐私浏览器模块需要 webview
         plugins: true, // 内置 PDFium：查看器模块渲染 PDF
+        backgroundThrottling: false, // 全局内录命脉：窗口最小化/被遮挡时画布合成与定时器照常（配主进程反节流三开关）
       },
     });
     this.main = win;
@@ -63,7 +64,7 @@ class WindowManager {
       forceShow('did-fail-load');
     });
     setTimeout(() => forceShow('ready-to-show 超时 (4s)'), 4000);
-    win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+    win.loadURL('mazz-res://app/index.html'); // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
 
     // 窗口状态记忆
     const saveState = () => {
@@ -110,7 +111,7 @@ class WindowManager {
     });
     this.children.add(win);
     win.once('ready-to-show', () => { win.show(); win.focus(); });
-    win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+    win.loadURL('mazz-res://app/index.html'); // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
     win.on('closed', () => { this.children.delete(win); });
     win.webContents.on('render-process-gone', (_e, details) => {
       if (details.reason !== 'clean-exit' && details.reason !== 'killed') {
@@ -141,7 +142,7 @@ class WindowManager {
       },
     });
     this.quickNote = win;
-    win.loadFile(path.join(__dirname, '..', 'renderer', 'quicknote.html'));
+    win.loadURL('mazz-res://app/quicknote.html');
     win.once('ready-to-show', () => {
       win.show();
       win.webContents.send('mazz:event', { channel: 'quicknote:focus', payload: { initialText } });

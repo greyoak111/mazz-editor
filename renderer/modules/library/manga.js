@@ -44,7 +44,7 @@ export async function buildMangaBook(dir) {
 
 /** 图片路径 → 可渲染 URL（Electron 走 file://；网页/移动端读 base64 建 Blob） */
 export async function imageUrl(p) {
-  if (window.mazz?.isElectron) return 'file://' + p.replace(/\\/g, '/');
+  if (window.mazz?.isElectron) return 'mazz-res://media/' + encodeURIComponent(p.replace(/\\/g, '/')); // 页面同源化：file:// 图片在非 file 页被拦
   const b64 = await window.mazz.invoke('fs:readFileBase64', { path: p });
   const ext = p.split('.').pop().toLowerCase().replace('jpg', 'jpeg');
   return 'data:image/' + ext + ';base64,' + b64;
