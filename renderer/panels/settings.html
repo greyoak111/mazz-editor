@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>设置</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:12px; flex:none; -webkit-app-region:drag; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .head { display:flex; align-items:center; gap:8px; padding:12px 18px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; font-size:15px; font-weight:600; }
+  main { flex:1; min-height:0; padding:14px 20px; overflow-y:auto; }
+  .set-row { display:flex; align-items:center; gap:16px; padding:7px 0; border-bottom:1px dashed var(--border); font-size:12.5px; } /* set-row 原版值对齐 */
+  .set-row:last-child { border-bottom:0; }
+  .set-row label { width:118px; flex:none; font-size:13px; color:var(--fg); font-weight:600; }
+  .set-row .ctl { flex:1; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .sel { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); max-width:100%; } /* rb 同值（W55 样式统一） */
+  .inp { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); width:62%; }
+  .inp:focus, .sel:focus { border-color:var(--accent); outline:none; }
+  .btn { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer; font-family:var(--font-ui); display:inline-flex; align-items:center; gap:5px; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn.pri { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .hint { font-size:11.5px; color:var(--fg-dim); }
+  .status { font-size:11.5px; color:var(--fg-dim); }
+  .sep { margin:14px 0 6px; font-size:12px; color:var(--fg-dim); font-weight:600; letter-spacing:.5px; }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="head">设置</div>
+  <main id="m" class="ps-scroll-y">
+    <div class="set-row"><label>语言 (Language)</label><div class="ctl"><select id="s-lang" class="sel"></select></div></div>
+    <div class="set-row"><label>关闭按钮行为</label><div class="ctl"><select id="s-close" class="sel"><option value="ask">每次询问</option><option value="tray">最小化到托盘</option><option value="quit">直接退出</option></select></div></div>
+    <div class="set-row"><label>主题模式</label><div class="ctl"><select id="s-tsource" class="sel"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></div></div>
+    <div class="set-row"><label>UI 主题</label><div class="ctl"><select id="s-theme" class="sel" style="max-width:56%"></select>
+      <button id="s-theme-del" class="btn" title="删除选中的自定义主题（自带主题不可删）"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M10 11v6M14 11v6"/></svg> 删除</button></div></div>
+    <div class="set-row"><label>主题包</label><div class="ctl">
+      <button id="s-theme-blank" class="btn" title="在工作区 themes/ 生成空白主题包模板"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 3h8l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg> 获取空白主题包</button>
+      <button id="s-theme-import" class="btn" title="从 JSON 文件导入主题包"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 4v11M7 10l5 5 5-5M4 15v5h16v-5"/></svg> 导入</button>
+      <button id="s-theme-folder" class="btn" title="打开主题文件夹（可给自定义主题改名）"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg> 主题文件夹</button></div></div>
+    <div class="set-row"><label>图片取色</label><div class="ctl">
+      <button id="s-imgtheme" class="btn"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.5"/><path d="M4 17l5-4 4 3 3-2 4 3"/></svg> 从图片生成主题</button>
+      <span class="hint">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div></div>
+    <div class="set-row"><label>快速笔记保存到</label><div class="ctl"><select id="s-qn" class="sel"><option value="daily">每日笔记</option><option value="inbox">inbox.md</option></select></div></div>
+    <div class="set-row"><label>拼写检查</label><div class="ctl"><select id="s-spell" class="sel"><option value="on">开启</option><option value="off">关闭</option></select></div></div>
+    <div class="set-row"><label>最近文件</label><div class="ctl"><button id="s-clearRecent" class="btn">清空</button></div></div>
+    <div class="sep">系统集成</div>
+    <div class="set-row"><label>开机自启动</label><div class="ctl"><label style="font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px;color:var(--fg-dim)"><input type="checkbox" id="s-autolaunch"> 开机自启动（默认关闭）</label>
+      <button id="s-shortcut" class="btn">🖥 发送桌面快捷方式</button><span id="s-shortcut-status" class="status"></span></div></div>
+    <div class="set-row"><label>资源管理器</label><div class="ctl">
+      <button id="s-explorer-reg" class="btn">注册右键「导入到 Mazz 工作区」</button>
+      <button id="s-explorer-unreg" class="btn">取消注册</button><span id="s-explorer-status" class="status"></span></div></div>
+    <div class="sep">搜索实例（SearXNG）</div>
+    <div class="set-row"><label>实例地址</label><div class="ctl"><input id="s-searx-url" class="inp" placeholder="https://你的实例"></div></div>
+    <div class="set-row"><label>用户名</label><div class="ctl"><input id="s-searx-user" class="inp"></div></div>
+    <div class="set-row"><label>密码</label><div class="ctl"><input id="s-searx-pass" class="inp" type="password"></div></div>
+    <div class="set-row"><label></label><div class="ctl">
+      <button id="s-searx-save" class="btn pri">保存并自检</button><span id="s-searx-status" class="status"></span></div></div>
+    <div class="set-row"><label>AI 扩展</label><div class="ctl"><span class="hint">AI 扩展层已预留（Provider 未配置，相关菜单为禁用态）——智能创作 ⚙ 里配置</span></div></div>
+  </main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+// —— 数据桥：settingsQuery 全量拉取 / settingsSet 分项落盘 / settingsAction 动作 ——
+function ask() { window.mazz.invoke('panel:action', { type: 'settingsQuery' }).catch(() => {}); }
+function set(key, value) { window.mazz.invoke('panel:action', { type: 'settingsSet', key, value }).catch(() => {}); }
+function act(actName, extra = {}) { window.mazz.invoke('panel:action', { type: 'settingsAction', act: actName, ...extra }).catch(() => {}); }
+
+window.mazz.on('panel:push', (p) => {
+  if (p?.type === 'settingsAll') { fill(p); return; }
+  if (p?.type === 'settingsActionResult') {
+    if (p.act === 'searxSave') $('#s-searx-status').textContent = p.msg || '';
+    if (p.act === 'shortcut') $('#s-shortcut-status').textContent = p.msg || '';
+    if (p.act === 'explorerReg' || p.act === 'explorerUnreg') $('#s-explorer-status').textContent = p.msg || '';
+    if (p.reload) ask();
+    return;
+  }
+});
+
+function fill(d) {
+  const lang = $('#s-lang');
+  lang.innerHTML = (d.languages || []).map(l => `<option value="${esc(l.id)}" ${l.id === d.lang ? 'selected' : ''}>${esc(l.name)}</option>`).join('');
+  $('#s-close').value = d.closeBehavior || 'ask';
+  $('#s-tsource').value = d.themeSource || 'system';
+  const th = $('#s-theme');
+  const builtin = (d.themes || []).filter(t => t.builtin), custom = (d.themes || []).filter(t => !t.builtin);
+  th.innerHTML = `<optgroup label="自带主题">${builtin.map(t => `<option value="${esc(t.id)}" ${t.id === d.theme ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</optgroup>`
+    + (custom.length ? `<optgroup label="自定义主题包">${custom.map(t => `<option value="${esc(t.id)}" ${t.id === d.theme ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</optgroup>` : '');
+  const isPack = String(d.theme || '').startsWith('pack:');
+  $('#s-theme-del').disabled = !isPack;
+  $('#s-qn').value = d.quickNoteTarget || 'daily';
+  $('#s-spell').value = d.spellcheck === false ? 'off' : 'on';
+  $('#s-autolaunch').checked = !!d.autolaunch;
+  $('#s-explorer-status').textContent = d.explorerRegistered ? '已注册' : '未注册';
+  $('#s-searx-url').placeholder = d.searxMasked || 'https://你的实例';
+  $('#s-searx-user').value = d.searxUser || '';
+  $('#s-searx-pass').placeholder = d.searxHasPass ? '（已设置，不修改请留空）' : '（未设置）';
+}
+
+$('#s-lang').addEventListener('change', (e) => set('lang', e.target.value));
+$('#s-close').addEventListener('change', (e) => set('closeBehavior', e.target.value));
+$('#s-tsource').addEventListener('change', (e) => set('themeSource', e.target.value));
+$('#s-theme').addEventListener('change', (e) => set('theme', e.target.value));
+$('#s-qn').addEventListener('change', (e) => set('quickNoteTarget', e.target.value));
+$('#s-spell').addEventListener('change', (e) => set('spellcheck', e.target.value === 'on'));
+$('#s-theme-del').addEventListener('click', () => act('delTheme', { id: $('#s-theme').value }));
+$('#s-theme-blank').addEventListener('click', () => act('blankPack'));
+$('#s-theme-import').addEventListener('click', () => act('importPack'));
+$('#s-theme-folder').addEventListener('click', () => act('packFolder'));
+$('#s-imgtheme').addEventListener('click', () => act('imgTheme'));
+$('#s-clearRecent').addEventListener('click', () => act('clearRecent'));
+$('#s-autolaunch').addEventListener('change', () => act('autolaunch', { enabled: $('#s-autolaunch').checked }));
+$('#s-shortcut').addEventListener('click', () => act('shortcut'));
+$('#s-explorer-reg').addEventListener('click', () => act('explorerReg'));
+$('#s-explorer-unreg').addEventListener('click', () => act('explorerUnreg'));
+$('#s-searx-save').addEventListener('click', () => {
+  $('#s-searx-status').textContent = '自检中…';
+  act('searxSave', { url: $('#s-searx-url').value.trim(), user: $('#s-searx-user').value.trim(), pass: $('#s-searx-pass').value });
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+ask();
+</script>
+</body></html>

@@ -326,6 +326,7 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
   const FPS = 10;
   // 变速：speed 倍快放 = 内容帧率提高 speed 倍（采样 10fps 下抽帧，播放即为 speed× 快进）
   const interval = Math.max(30, 1000 / (FPS * speed));
+  let frameTick = 0;
   const timer = setInterval(() => {
     c2d.fillStyle = '#111';
     c2d.fillRect(0, 0, canvas.width, canvas.height);
@@ -338,6 +339,12 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
         c2d.drawImage(v, (i % 2) * w, Math.floor(i / 2) * h, w, h);
       }
     });
+    // W56 B11 录制中实况流：合成画布周期帧推面板（500ms 节流=2fps 预览足够——不用新拉流，合成器白拿）
+    if (++frameTick % Math.max(1, Math.round(500 / interval)) === 0) {
+      try {
+        window.mazz?.invoke?.('panel:push', { kind: 'recorder', payload: { type: 'recFrame', data: canvas.toDataURL('image/jpeg', 0.5) } }).catch(() => {});
+      } catch {}
+    }
   }, interval);
   const stream = canvas.captureStream(FPS);
   for (const t of audioStream.getAudioTracks()) stream.addTrack(t);

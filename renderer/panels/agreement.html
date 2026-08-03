@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>用户服务协议及隐私政策</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:12px; flex:none; -webkit-app-region:drag; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .head { display:flex; align-items:center; gap:8px; padding:12px 18px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; font-size:15px; font-weight:600; }
+  main { flex:1; min-height:0; padding:16px 22px; overflow-y:auto; font-size:13.5px; line-height:1.9; }
+  main h3 { margin:16px 0 8px; font-size:14px; color:var(--accent); }
+  main p { margin:7px 0; }
+  main b { color:var(--fg); }
+  .foot { flex:none; display:flex; align-items:center; gap:12px; padding:12px 18px; border-top:1px solid var(--border); background:var(--bg-elev); }
+  .foot label { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--fg-dim); cursor:pointer; flex:1; }
+  .btn { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer; font-family:var(--font-ui); }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn.pri { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+  .btn.pri:hover { filter:brightness(1.08); }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="head"><span id="t">用户服务协议及隐私政策</span></div>
+  <main id="m" class="ps-scroll-y"><div style="color:var(--fg-dim);text-align:center;padding:40px 0">加载中…</div></main>
+  <div class="foot">
+    <label><input type="checkbox" id="nomore"> <span id="nm">后续不再弹出</span></label>
+    <button class="btn" id="close">关闭</button>
+    <button class="btn pri" id="accept">知悉</button>
+  </div>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+// 轻量 md 渲染（与 lib/agreement.js 同款：## 标题 / **加粗** / 段落）
+function renderMd(md) {
+  return String(md || '').split(/\n{2,}/).map(p => {
+    if (p.startsWith('## ')) return '<h3>' + esc(p.slice(3)) + '</h3>';
+    return '<p>' + esc(p).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>') + '</p>';
+  }).join('');
+}
+
+// 数据桥：主窗应答 agreementQuery（文案 ZH/EN 单源，不复制维护）
+window.mazz.invoke('panel:action', { type: 'agreementQuery' }).catch(() => {});
+window.mazz.on('panel:push', (p) => {
+  if (p?.type !== 'agreement') return;
+  $('#t').textContent = p.title || '用户服务协议及隐私政策';
+  $('#m').innerHTML = renderMd(p.body);
+  $('#nm').textContent = p.noMore || '后续不再弹出';
+  $('#close').textContent = p.closeLabel || '关闭';
+  $('#accept').textContent = p.acceptLabel || '知悉';
+});
+
+function done(nomoreChecked) {
+  window.mazz.invoke('panel:action', { type: 'agreementDone', nomore: !!nomoreChecked }).catch(() => {});
+  pwb('close');
+}
+$('#close').addEventListener('click', () => done($('#nomore').checked));
+$('#accept').addEventListener('click', () => done($('#nomore').checked));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+</script>
+</body></html>

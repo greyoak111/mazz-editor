@@ -9,6 +9,12 @@ async function openHostDialog() {
     toast('浏览器预览无法当主机，请用「局域网同步：加入」连电脑');
     return;
   }
+  // P2b：全原生独立子窗格（DOM modal 浏览器前台被压——收编）
+  if (window.mazz?.isElectron) {
+    window.mazz.invoke('panel:action', { type: 'syncStashTab', tab: 'host' }).catch(() => {});
+    window.mazz.invoke('panel:open', { kind: 'sync' }).catch(() => {});
+    return;
+  }
   try {
     const { port, wsPort, pairCode, fingerprint, deviceId } = await window.mazz.invoke('sync:host', {});
     const m = modal('局域网同步 · 发起共享');
@@ -103,6 +109,12 @@ async function doJoin({ host, port, pairCode }) {
 }
 
 async function openJoinDialog() {
+  // P2b：全原生独立子窗格（DOM modal 浏览器前台被压——收编）
+  if (window.mazz?.isElectron) {
+    window.mazz.invoke('panel:action', { type: 'syncStashTab', tab: 'join' }).catch(() => {});
+    window.mazz.invoke('panel:open', { kind: 'sync' }).catch(() => {});
+    return;
+  }
   const m = modal('局域网同步 · 加入');
   // mDNS 发现列表
   let discovered = [];
@@ -174,6 +186,12 @@ export function registerSyncCommands(commands) {
   commands.register('update.check', {
     title: '检查更新', icon: '⬆', group: '工具',
     run: async () => {
+      // P2b：全原生独立子窗格（DOM modal 浏览器前台被压——收编）
+      if (window.mazz?.isElectron) {
+        window.mazz.invoke('panel:action', { type: 'syncStashTab', tab: 'update' }).catch(() => {});
+        window.mazz.invoke('panel:open', { kind: 'sync' }).catch(() => {});
+        return;
+      }
       const r = await window.mazz.invoke('update:check').catch(() => null);
       if (!r) { toast('检查更新失败'); return; }
       const m = modal('检查更新');

@@ -4,7 +4,7 @@ import { ensureMedia, transcodeTrio } from './media.mjs';
 import fs from 'fs';
 import path from 'path';
 
-export async function scenes3({ win, human, WS, WS2, scenario }) {
+export async function scenes3({ app, win, human, WS, WS2, scenario }) {
   const evaluate = (fn, arg) => human.evaluate(fn, arg);
   const vis = `els.find(e => e.offsetParent) || els[els.length - 1]`;
 
@@ -342,20 +342,24 @@ export async function scenes3({ win, human, WS, WS2, scenario }) {
 
   // ==================== 41：帮助搜索过滤 ====================
   await scenario('帮助·搜索过滤·章节命中', async () => {
+    // W52③：F1 帮助开全应用子窗（非主窗 DOM 遮罩）——在子窗内做同款搜索实证
     await win.keyboard.press('F1');
-    await win.waitForTimeout(600);
-    await evaluate(() => {
+    await win.waitForTimeout(2500);
+    let helpWin = null;
+    for (const w of app.windows()) if (w.url().includes('index.html') && w !== win) { helpWin = w; break; }
+    await human.assert(!!helpWin, 'F1 帮助应开全应用子窗');
+    await helpWin.waitForTimeout(1500);
+    await helpWin.evaluate(() => {
       const i = document.querySelector('.help-search');
       i.value = '导图';
       i.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await win.waitForTimeout(400);
-    const items = await evaluate(() => document.querySelectorAll('.help-toc-item').length);
+    await helpWin.waitForTimeout(400);
+    const items = await helpWin.evaluate(() => document.querySelectorAll('.help-toc-item').length);
     await human.assert(items >= 1 && items < 30, `搜索「导图」应过滤章节（剩 ${items}）`);
-    const hits = await evaluate(() => [...document.querySelectorAll('.help-toc-item')].map(e => e.textContent || ''));
-    // 过滤是全文匹配（含正文提及），首条未必是标题命中——断言命中集中必有导图章节（原「首命中」断言按旧目录排序已失效）
+    const hits = await helpWin.evaluate(() => [...document.querySelectorAll('.help-toc-item')].map(e => e.textContent || ''));
     await human.assert(hits.some(t => t.includes('思维导图') || t.includes('导图')), `命中集中应有导图章节（实际 ${JSON.stringify(hits.slice(0, 3))}）`);
-    await human.evaluate(() => document.querySelector('.help-close')?.click());
+    await helpWin.close().catch(() => {});
   });
 
   // ==================== 42：i18n 切换 ====================

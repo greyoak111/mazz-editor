@@ -35,6 +35,10 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'mazz-res', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
 ]);
 
+// W58 预览档根治：mazz-res handler 模块级引渡——隐私浏览器独立会话（persist:mazz-browser）默认不继承默认会话的
+// protocol.handle，视图会话里 mazz-res=未知协议 → load 静默流产死守 about:blank（data: URL 对照组实证管道本身无恙）
+let mazzResHandler = null;
+
 const Store = require('./store');
 const IpcBus = require('./ipc-bus');
 const WindowManager = require('./window-manager');
@@ -45,6 +49,25 @@ const FileWatcher = require('./file-watcher');
 const SearxService = require('./searx');
 const TranslateService = require('./translate');
 const LanSync = require('./lansync');
+
+// —— 密码加解密（模块级：pw:list 句柄与 BrowserViews 自动填充注入共用——
+// 曾在函数作用域内，注入 BrowserViews 的闭包跨域引用 ReferenceError 静默全灭（真机探针实锤）——
+const __pwEncrypt = (text) => {
+  const { safeStorage } = require('electron');
+  if (safeStorage.isEncryptionAvailable()) {
+    return { enc: true, data: safeStorage.encryptString(String(text ?? '')).toString('base64') };
+  }
+  return { enc: false, data: Buffer.from(String(text ?? ''), 'utf8').toString('base64') };
+};
+const __pwDecrypt = (payload) => {
+  const { safeStorage } = require('electron');
+  try {
+    if (payload?.enc) return safeStorage.decryptString(Buffer.from(payload.data, 'base64'));
+    return Buffer.from(payload?.data || '', 'base64').toString('utf8');
+  } catch { return ''; }
+};
+const PanelWindows = require('./panel-windows');
+const BrowserViews = require('./browser-views'); // 模块级：theme:broadcast 等跨函数句柄要摸到静态注册表（作用域病实锤绝育）
 const ShareService = require('./share');
 const Importer = require('./importer');
 const StartMenuApps = require('./startmenu');
@@ -185,11 +208,12 @@ function registerChannels() {
     writeAtomic(p, content, encoding || 'utf8');
     return true;
   });
-  bus.handle('fs:listDir', async ({ path: p }) => {
+  bus.handle('fs:listDir', async ({ path: p, includeDot = false }) => {
     // 目录不存在视同空目录（v33：factory-genres/创作产出/themes 未建时不再抛错刷屏）
     if (!fs.existsSync(p)) return [];
     const entries = fs.readdirSync(p, { withFileTypes: true });
-    return entries.filter(e => !e.name.startsWith('.'))
+    // includeDot（W44 媒体库递归专用）：.git 外全放（默认仍滤点——工作区树不泄 .git）
+    return entries.filter(e => includeDot ? e.name !== '.git' : !e.name.startsWith('.'))
       .map(e => {
         // 附带时间戳（排序选单需要；stat 失败置 0 不影响主流程）
         let mtimeMs = 0, ctimeMs = 0;
@@ -422,6 +446,9 @@ function registerChannels() {
   });
 
   // —— 系统集成：开机自启（默认关闭）+ 桌面快捷方式 ——
+  // —— W58 工具链探测（全语言运行体系：运行前探测，缺失人话提示绝不静默） ——
+  try { const Toolchain = require('./toolchain'); new Toolchain({ bus }); } catch (e) { console.error('[toolchain] 装配失败:', e.message); }
+
   bus.handle('app:getAutoLaunch', async () => app.getLoginItemSettings().openAtLogin);
   bus.handle('app:setAutoLaunch', async ({ enabled }) => {
     app.setLoginItemSettings({ openAtLogin: !!enabled });
@@ -459,18 +486,8 @@ function registerChannels() {
 
   // —— 密码管理器（safeStorage 系统级加密：Windows DPAPI / macOS Keychain / Linux keyring） ——
   // 红线：密文落盘，明文只在主进程内存中瞬时存在；渲染进程拿不到加密密钥
-  const pwEncrypt = (text) => {
-    if (safeStorage.isEncryptionAvailable()) {
-      return { enc: true, data: safeStorage.encryptString(String(text ?? '')).toString('base64') };
-    }
-    return { enc: false, data: Buffer.from(String(text ?? ''), 'utf8').toString('base64') };
-  };
-  const pwDecrypt = (payload) => {
-    try {
-      if (payload?.enc) return safeStorage.decryptString(Buffer.from(payload.data, 'base64'));
-      return Buffer.from(payload?.data || '', 'base64').toString('utf8');
-    } catch { return ''; }
-  };
+  const pwEncrypt = __pwEncrypt;
+  const pwDecrypt = __pwDecrypt;
   bus.handle('pw:available', async () => safeStorage.isEncryptionAvailable());
   // —— 通用密钥存储（safeStorage 加密落盘，API Key 等通用机密专用）——
   bus.handle('secret:set', async ({ key, value }) => {
@@ -562,20 +579,26 @@ function registerChannels() {
   });
 
   // —— 窗口 ——
-  bus.handle('window:minimize', async () => {
-    if (wm.main?.isFullScreen()) wm.main.setFullScreen(false); // 全屏态先退出（系统覆盖层会吃自绘钮）
-    wm.main?.minimize();
+  // W52③ 主窗杀手平反：窗控三句柄按调用者窗口落（fromWebContents——子窗/面板的 ✕ 不再灭主窗；
+  // 此前硬编码 wm.main，面板 ✕ 一点主窗即死（E2E 级联实锤，真机同雷）
+  const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;
+  bus.handle('window:minimize', async (payload, event) => {
+    const w = callerWin(event);
+    if (w?.isFullScreen()) w.setFullScreen(false); // 全屏态先退出（系统覆盖层会吃自绘钮）
+    w?.minimize();
   });
-  bus.handle('window:toggleMaximize', async () => {
-    if (!wm.main) return false;
-    if (wm.main.isFullScreen()) { wm.main.setFullScreen(false); return true; } // 全屏下「最大化」= 退出全屏
-    wm.main.isMaximized() ? wm.main.unmaximize() : wm.main.maximize();
-    return wm.main.isMaximized();
+  bus.handle('window:toggleMaximize', async (payload, event) => {
+    const w = callerWin(event);
+    if (!w) return false;
+    if (w.isFullScreen()) { w.setFullScreen(false); return true; } // 全屏下「最大化」= 退出全屏
+    w.isMaximized() ? w.unmaximize() : w.maximize();
+    return w.isMaximized();
   });
   bus.handle('window:isFullScreen', async () => !!wm.main?.isFullScreen());
-  bus.handle('window:close', async () => {
-    if (wm.main?.isFullScreen()) wm.main.setFullScreen(false); // 先退全屏再关，避免覆盖层吃事件
-    wm.main?.close();
+  bus.handle('window:close', async (payload, event) => {
+    const w = callerWin(event);
+    if (w?.isFullScreen()) w.setFullScreen(false); // 先退全屏再关，避免覆盖层吃事件
+    w?.close();
   });
   bus.handle('window:setTitle', async ({ title }) => wm.main?.setTitle(title));
   bus.handle('window:isMaximized', async () => !!wm.main?.isMaximized());
@@ -586,6 +609,7 @@ function registerChannels() {
 
   // 分窗：开新窗口并交接标签快照
   bus.handle('window:openChild', async ({ handoff }) => {
+    // W53：lean 路线退役（七面板+坞浮动全走 panel-windows 全原生子窗格）——openChild 只服务模块分窗
     const child = wm.createChild();
     child.webContents.once('did-finish-load', () => {
       child.webContents.send('mazz:event', { channel: 'window:role', payload: { role: 'child' } });
@@ -624,10 +648,20 @@ function registerChannels() {
     return false;
   });
   // 主题广播：主窗换主题 → 全部子窗口跟随（v33 外部窗格不同步根因）
-  bus.handle('theme:broadcast', async ({ id }) => {
+  bus.handle('theme:broadcast', async ({ id, vars }) => {
     for (const child of wm.children) {
-      if (!child.isDestroyed()) child.webContents.send('mazz:event', { channel: 'theme:changed', payload: { id } });
+      if (!child.isDestroyed()) child.webContents.send('mazz:event', { channel: 'theme:changed', payload: { id, vars } });
     }
+    PanelWindows.broadcastTheme(id, vars); // W47：面板窗（收藏/密码/工具坞）同跟随主界面主题；W58c：vars 快照随播——自定义/主题包下子窗不再透明裸奔
+    for (const bvs of BrowserViews.all) bvs.rethemeAllDevTools(id); // W52④：开着 devtools 也实时换主题（静态注册表——局部 const 跨函数引用必 ReferenceError，真机实锤）
+    // W52e：应用主题映射 nativeTheme（运行时，不落 store 不覆盖用户 themeSource 设置）——
+    // devtools/原生件跟随的唯一活路：uiTheme localStorage 键 Chromium 已不读（探针实锤 body 纹丝不动）
+    try {
+      if (['ink', 'indigo', 'moss'].includes(id)) nativeTheme.themeSource = 'dark';
+      else if (['paper', 'sand', 'construct'].includes(id)) nativeTheme.themeSource = 'light';
+    } catch {}
+    // W52：主窗底色实时跟随（setBackgroundColor 即时生效——拖拽闪主题色不闪刺白）
+    try { wm.main?.setBackgroundColor(wm.themeBg()); } catch {}
     return true;
   });
   // 移回主窗口：子窗标签快照转发主窗
@@ -660,7 +694,7 @@ function registerChannels() {
   });
   // —— 屏幕录制：源枚举 + getDisplayMedia 许可队列（模块级共享，hookDisplayMedia 消费）——
   // —— mazz-res:// 资源协议处理器：映射 renderer/dist 静态资产（worker/wasm/字体等，仅限该目录防穿越） ——
-  protocol.handle('mazz-res', async (req) => {
+  mazzResHandler = async (req) => {
     try {
       // 自定义协议 URL 首段是 host 不是 path：mazz-res://lib/x → host=lib（丢段 404 实锤）——host+pathname 拼回全路径
       const u = new URL(req.url);
@@ -705,8 +739,11 @@ function registerChannels() {
         const size = st.size;
         const ext = filePath.split('.').pop().toLowerCase();
         const MEDIA_MIME = { mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/mp4', mkv: 'video/x-matroska', webm: 'video/webm', avi: 'video/x-msvideo', wmv: 'video/x-ms-wmv', flv: 'video/x-flv', ts: 'video/mp2t', mts: 'video/mp2t', m2ts: 'video/mp2t', mpg: 'video/mpeg', mpeg: 'video/mpeg', '3gp': 'video/3gpp', ogv: 'video/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', flac: 'audio/flac', aac: 'audio/aac', oga: 'audio/ogg', ogg: 'audio/ogg', opus: 'audio/ogg', m4a: 'audio/mp4',
-          png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon', avif: 'image/avif', pdf: 'application/pdf' };
+          png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon', avif: 'image/avif', pdf: 'application/pdf',
+          html: 'text/html', htm: 'text/html', css: 'text/css', js: 'text/javascript', mjs: 'text/javascript', json: 'application/json', xml: 'application/xml', txt: 'text/plain', md: 'text/plain' }; // W58 文档族（html 预览档命门——缺了就是 octet-stream 触发下载而不渲染）
         const mime = MEDIA_MIME[ext] || 'application/octet-stream';
+        // W58 文档族 utf-8 明码：无 <meta charset> 的中文 html 预览被按 Latin-1 解码=乱码（截图实锤）——text/* 与 json/xml/javascript 全带 charset
+        const ct = /^(text\/|application\/(json|xml|javascript))/.test(mime) ? mime + '; charset=utf-8' : mime;
         const cors = { 'Access-Control-Allow-Origin': '*', 'Cross-Origin-Resource-Policy': 'cross-origin', 'Accept-Ranges': 'bytes' };
         const range = req.headers.get('range');
         if (range) {
@@ -718,11 +755,11 @@ function registerChannels() {
           if (end == null || end >= size) end = size - 1;
           if (start > end || start >= size) return new Response(null, { status: 416, headers: { ...cors, 'Content-Range': `bytes */${size}` } });
           const body = Readable.toWeb(fs.createReadStream(filePath, { start, end }));
-          return new Response(body, { status: 206, headers: { ...cors, 'Content-Type': mime, 'Content-Length': String(end - start + 1), 'Content-Range': `bytes ${start}-${end}/${size}` } });
+          return new Response(body, { status: 206, headers: { ...cors, 'Content-Type': ct, 'Content-Length': String(end - start + 1), 'Content-Range': `bytes ${start}-${end}/${size}` } });
         }
         // 无 range 全文件流式（GB 级恒定内存，不整读）
         const body = Readable.toWeb(fs.createReadStream(filePath));
-        return new Response(body, { status: 200, headers: { ...cors, 'Content-Type': mime, 'Content-Length': String(size) } });
+        return new Response(body, { status: 200, headers: { ...cors, 'Content-Type': ct, 'Content-Length': String(size) } });
       }
       const base = path.join(__dirname, '..', 'renderer', 'dist');
       const full = path.join(base, rel);
@@ -741,7 +778,8 @@ function registerChannels() {
         'Cross-Origin-Embedder-Policy': 'require-corp',
       } });
     } catch (e) { return new Response('not found', { status: 404 }); }
-  });
+  };
+  protocol.handle('mazz-res', mazzResHandler);
 
   // —— OS CJK 回退字体（字幕组排版命门：无 CJK 回退字体中文全灭；按平台取第一个在的） ——
   const readFallbackFont = () => {
@@ -1165,10 +1203,17 @@ app.whenReady().then(() => {
 
   // —— 隐私浏览器：独立会话 + 搜索服务（主进程专属，实例凭据不出主进程）——
   const browserSess = session.fromPartition('persist:mazz-browser');
+  // W58 预览档根治：浏览器独立会话同注册 mazz-res——html 运行预览/媒体页全走此源，默认会话独享=视图会话 about:blank（实锤）
+  if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);
   new SearxService({ bus, store, session: browserSess });
   new TranslateService({ bus, store });
   // —— 局域网同步 + 自动更新入口 ——
   new LanSync({ bus, store, workspace: () => store.get('workspace') });
+  // —— 演示手机遥控伺服（W40：单端口单页面+WS 指令道+心跳） ——
+  const SlideRemote = require('./slide-remote');
+  new SlideRemote({ bus, win: () => wm.main });
+  // —— 衍生面板原生子窗（W43 并行进程：收藏管理/密码管理器独立合成，与 WebContentsView 永不相见——白屏病根除） ——
+  new PanelWindows({ bus, win: () => wm.main });
   new ShareService({ bus, store, startMenuApps });
   new Updater({ bus, store, version: require('../package.json').version });
   const bs = new BrowserSession({ session: browserSess, bus });
@@ -1213,8 +1258,10 @@ app.whenReady().then(() => {
     return { path: dest, cached: false, ext: r.ext };
   });
   // 浏览器视图注册表（WebContentsView 主进程持有——webview 标签结构性病根终结）
-  const BrowserViews = require('./browser-views');
-  new BrowserViews({ bus, wm, session: browserSess });
+  // 类走模块级 require（顶部）：局部 const 会遮蔽且跨函数不可达（ReferenceError 病源）
+  const browserViews = new BrowserViews({ bus, wm, session: browserSess,
+    themeId: () => store.get('theme'), // W52④ devtools 主题取数
+    pwList: () => (store.get('passwords', [])).map(e => ({ id: e.id, site: e.site, username: e.username, password: __pwDecrypt(e.password) })) }); // W48 自动填充/修改识别取数
 
   // —— 投稿会话（persist:mazz-author）：电子书站登录态下载 → 自动存工作区书库并入库 ——
   try {

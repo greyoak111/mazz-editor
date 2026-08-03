@@ -17,6 +17,14 @@ function insertAtCursor(text) {
 }
 
 export function showTranslateModal(initialText = '') {
+  // W52f：浏览器前台 DOM modal 必被 WebContentsView 压（真机实锤）——收编 lean 弹窗子窗；
+  // lean 子窗内（dataset.windowMode）直开本机 modal 防递归
+  if (window.mazz?.isElectron) {
+    // W53：全原生独立子窗格（应用壳 lean 路线退役）——初始文本经主窗暂存透传
+    if (initialText) window.mazz.invoke('panel:action', { type: 'translateStashInit', text: initialText }).catch(() => {});
+    window.mazz.invoke('panel:open', { kind: 'translate' }).catch(() => {});
+    return;
+  }
   const m = modal('翻译');
   m.body.innerHTML = `
     <div class="tr-grid">
@@ -37,6 +45,7 @@ export function showTranslateModal(initialText = '') {
       <button class="rb-btn tr-copy" style="flex-direction:row" disabled>复制译文</button>
       <button class="rb-btn tr-replace" style="flex-direction:row" disabled>替换选区</button>
       <button class="rb-btn tr-insert" style="flex-direction:row" disabled>插入到光标</button>
+      ${document.documentElement.dataset.windowMode === 'lean' ? '<span style="font-size:11px;color:var(--fg-dim);align-self:center">弹窗版：替换/插入请在主窗使用</span>' : ''}
     </div>`;
   const src = m.body.querySelector('.tr-src');
   const out = m.body.querySelector('.tr-out');
@@ -105,6 +114,11 @@ export function registerTranslateCommands(commands) {
   commands.register('translate.config', {
     title: '翻译引擎设置', icon: '⚙', group: '工具',
     run: async () => {
+      // W53：引擎设置并入翻译子窗格抽屉（⚙ 引擎设置钮）
+      if (window.mazz?.isElectron) {
+        window.mazz.invoke('panel:open', { kind: 'translate' }).catch(() => {});
+        return;
+      }
       const cfg = await window.mazz.invoke('tr:getConfig').catch(() => ({}));
       const m = modal('翻译引擎设置');
       m.body.innerHTML = `

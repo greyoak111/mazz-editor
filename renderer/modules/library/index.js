@@ -422,6 +422,7 @@ function createLibrary(container) {
       ctl._cleanRules = rulesForBook(await getAllRules(), book.id);
       ctl.zhMode = progress[id]?.zh || '';
       root.querySelector('.lib-zh').value = ctl.zhMode || '';
+      root._zhProxy?.setCurrent(ctl.zhMode || ''); // B12b：只同步按钮文案——不派 change（否则 openBook 期 saveProgress/showCurrent 被连坐双跑）
       renderToc();
       applyReadTheme();
       await showCurrent();
@@ -1255,6 +1256,14 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     ctl.zhMode = e.target.value;
     saveProgress();
     showCurrent();
+  });
+  // B12b 收编：书库工具栏五 select 子窗格化（隐藏保留作状态单源；分类筛选选项动态——开格重读自带保鲜）
+  import('../../lib/select-menu.js').then(({ selectProxy }) => {
+    for (const cls of ['.lib-cat-filter', '.lib-mode', '.lib-read-theme', '.lib-pagew', '.lib-zh']) {
+      const s = root.querySelector(cls); if (!s) continue;
+      const px = selectProxy(s);
+      if (cls === '.lib-zh') root._zhProxy = px; // 随书恢复直赋值时的文案同步口
+    }
   });
   // 净化规则管理（替换/删除 × 字面/正则 × 全书/本书）
   root.querySelector('[data-a=clean-rules]').addEventListener('click', async () => {

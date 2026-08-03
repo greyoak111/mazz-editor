@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>分屏预览</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<style>
+  html, body { background: transparent; margin: 0; overflow: hidden; }
+  #pv { position: fixed; pointer-events: none; transition: all .08s ease; }
+</style></head><body>
+<div id="pv"></div>
+<script>
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+// W56 救火：计算全挪罩页（用户明路——主窗只当邮差转 leaf 矩形+鼠标点；zone/rect/渐变/锚线罩页自算，零高频 IPC 零主窗算力）
+const zoneIn = (r, x, y) => {
+  const fx = (x - r.left) / r.width, fy = (y - r.top) / r.height;
+  if (fx < 0 || fx > 1 || fy < 0 || fy > 1) return null;
+  if (fx < 1 / 3) return 'left';
+  if (fx > 2 / 3) return 'right';
+  if (fy < 1 / 3) return 'up';
+  if (fy > 2 / 3) return 'down';
+  return null;
+};
+const zoneColors = () => {
+  const c = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4f46e5';
+  const m = /^#([0-9a-f]{6})$/i.exec(c);
+  const rgb = m ? (() => { const n = parseInt(m[1], 16); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; })() : '79, 70, 229';
+  return { rgb, border: `rgba(${rgb}, 0.55)` };
+};
+const zoneGradient = (z, rgb) => {
+  const stops = `rgba(${rgb}, 0.40) 0%, rgba(${rgb}, 0.24) 16%, rgba(${rgb}, 0.10) 42%, rgba(${rgb}, 0.03) 72%, rgba(${rgb}, 0) 100%`;
+  const dir = { left: 'to right', right: 'to left', up: 'to bottom', down: 'to top' }[z] || 'to right';
+  return `linear-gradient(${dir}, ${stops})`;
+};
+window.mazz.on('panel:push', (p) => {
+  const pv = document.getElementById('pv');
+  if (p?.type !== 'splitpreview') return;
+  if (p.hide) { pv.style.width = '0px'; pv.style.height = '0px'; pv.style.border = 'none'; return; }
+  const r = p.leaf || {}, mx = p.x || 0, my = p.y || 0;
+  const z = p.zone || zoneIn(r, mx, my);
+  if (!z) { pv.style.width = '0px'; pv.style.border = 'none'; return; }
+  const zc = zoneColors();
+  const rect = { left: r.left, top: r.top, width: r.width / 3, height: r.height / 3 };
+  if (z === 'left') Object.assign(rect, { width: r.width / 3, height: r.height });
+  else if (z === 'right') Object.assign(rect, { left: r.left + r.width * 2 / 3, width: r.width / 3, height: r.height });
+  else if (z === 'up') Object.assign(rect, { width: r.width, height: r.height / 3 });
+  else Object.assign(rect, { top: r.top + r.height * 2 / 3, width: r.width, height: r.height / 3 });
+  const borderSide = ({ left: 'borderRight', right: 'borderLeft', up: 'borderBottom', down: 'borderTop' })[z] || 'borderRight';
+  pv.style.left = rect.left + 'px';
+  pv.style.top = rect.top + 'px';
+  pv.style.width = rect.width + 'px';
+  pv.style.height = rect.height + 'px';
+  pv.style.background = zoneGradient(z, zc.rgb);
+  pv.style.border = 'none';
+  pv.style[borderSide] = '1.5px solid ' + zc.border;
+});
+</script>
+</body></html>

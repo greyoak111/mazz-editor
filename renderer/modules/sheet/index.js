@@ -571,6 +571,12 @@ export default {
     });
     panel.querySelector('#sg-border')?.addEventListener('change', fireBorder);
     panel.querySelector('#sg-border-width')?.addEventListener('change', fireBorder);
+    // B12b 收编：ribbon 三 select 子窗格化（隐藏保留作状态单源，change/取值联动照旧）
+    import('../../lib/select-menu.js').then(({ selectProxy }) => {
+      for (const id of ['#sg-border', '#sg-border-width', '#sg-fmt']) {
+        const s = panel.querySelector(id); if (s) selectProxy(s);
+      }
+    });
   },
 
   contributes: {

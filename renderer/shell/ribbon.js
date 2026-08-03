@@ -114,6 +114,11 @@ export class Ribbon {
     agree.title = '用户服务协议及隐私政策';
     agree.addEventListener('click', async () => {
       const { showAgreement } = await import('../lib/agreement.js');
+      // W52③ 协议走全应用子窗（Electron；网页预览留 modal 兜底）
+      if (window.mazz?.isElectron) {
+        window.mazz.invoke('panel:open', { kind: 'agreement' }).catch(() => showAgreement()); // W53：全原生独立子窗格（应用壳 lean 路线退役）
+        return;
+      }
       showAgreement();
     });
     this.tabsEl.appendChild(agree);
@@ -194,8 +199,19 @@ export class Ribbon {
     return g;
   }
 
-  /** 二级菜单弹出（点外关闭） */
-  showMore(label, buttons, anchor) {
+  /** 二级菜单弹出（W56 救火 B13：回老样式——ctxmenu 子窗格承载（W55 应用风卡片菜单=老样式血统）；
+   *  载体不回 DOM（回了必被浏览器视图压）；OS 原生菜单仅留浏览器视图内右键（W34 路）；网页预览留 DOM 兜底） */
+  async showMore(label, buttons, anchor) {
+    if (window.mazz?.isElectron && typeof window.mazz?.invoke === 'function') {
+      const r = anchor?.getBoundingClientRect?.() || { left: 100, bottom: 80 };
+      const { menus } = await import('../core/menu-service.js');
+      // ctxmenu 桥（与右键菜单同体）：stash 项+开格定位（锚点正下，右缘对齐防出屏——主进程翻边兜底）
+      menus._ctxItems = buttons.map(b => ({ id: b.command, label: b.label, icon: b.icon || '', enabled: b.enabled !== false })); // icon 必须带（B13 丢 icon=二级菜单无 SVG 样式平反——桥会 iconHtml 转换）
+      const h = Math.min(buttons.length * 28 + 12, Math.round(window.innerHeight * 0.8));
+      const w = Math.max(200, Math.min(280, 14 + Math.max(...buttons.map(b => String(b.label || '').length)) * 13));
+      await window.mazz.invoke('panel:open', { kind: 'ctxmenu', opts: { x: Math.max(8, r.left + (r.width || 0) - w), y: (r.bottom || 80) + 4, w, h } }).catch(() => {});
+      return;
+    }
     document.querySelector('.rb-more-pop')?.remove();
     const pop = document.createElement('div');
     pop.className = 'rb-more-pop';
@@ -209,7 +225,8 @@ export class Ribbon {
     }
     document.body.appendChild(pop);
     const r = anchor.getBoundingClientRect();
-    pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, innerWidth - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px`;
+    const vw = window.innerWidth || document.documentElement.clientWidth || 1024; // jsdom/契约环境 innerWidth 裸全局可能缺席（实锤）
+    pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px`;
     const close = (e) => {
       if (!pop.contains(e.target)) {
         pop.remove();

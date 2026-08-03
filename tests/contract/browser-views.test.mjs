@@ -49,9 +49,9 @@ describe('浏览器根治·渲染层双路径', () => {
     assert.ok(!src.includes("document.createElement('webview')"), '不得再创建 webview 标签');
     // 摆位与遮挡隐身
     assert.ok(src.includes('syncBounds'), '必须有摆位引擎');
-    assert.ok(src.includes('_cloaked'), '必须有遮挡隐身');
-    assert.ok(src.includes('.mazz-palette-mask, .help-mask, .mazz-menu'), '弹层清单必须含菜单与遮罩');
-    assert.ok(src.includes('dragstart'), '拖拽隐身必须有');
+    assert.ok(src.includes('_cloaked'), '兜底 cloak 过渡件必须有（W52 起只认全屏遮罩两件套——②③波遣散后退役）');
+    assert.ok(!src.includes("mazz.on('bv:frame'"), '帧管线必须已退（离屏弯路清算实锤）');
+    assert.ok(!src.includes('br-osr'), '离屏 canvas 必须已退');
     // 导航纪律：错误页写进失败文档（回退天然落前页，无跳链累赘）+ 减重看门狗
     assert.ok(src.includes('renderLoadError'), '错误页渲染必须有');
     assert.ok(src.includes('_navDog'), '减重看门狗必须有');

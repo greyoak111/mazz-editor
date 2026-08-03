@@ -4,6 +4,11 @@ import { listPluginFiles, readMaz, isEnabled, setEnabled, installFromFile, loadA
 import { iconHtml } from '../lib/svg-icons.js';
 
 export function openPluginManager() {
+  // W53：全原生独立子窗格（应用壳 lean 路线退役）
+  if (window.mazz?.isElectron) {
+    window.mazz.invoke('panel:open', { kind: 'plugins' }).catch(() => {});
+    return;
+  }
   const m = modal('插件管理');
   const render = async () => {
     const files = await listPluginFiles();

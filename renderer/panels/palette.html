@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>命令面板</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css"> <!-- 军规④：滚动条族消费方真实加载（base.css 面板窗不载——写了不算做了病绝育） -->
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:12px; flex:none; -webkit-app-region:drag; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .head { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; }
+  .head input { flex:1; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:8px; padding:7px 12px; font-size:14px; outline:none; font-family:var(--font-ui); }
+  .head input:focus { border-color:var(--accent); }
+  main { flex:1; min-height:0; padding:6px 8px; overflow-y:auto; }
+  .row { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:8px; cursor:pointer; }
+  .row.on, .row:hover { background:var(--accent-soft); }
+  .row .t { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .g { font-size:11px; color:var(--fg-dim); }
+  .row kbd { background:var(--bg-active); border-radius:4px; padding:0 7px; font-family:var(--font-mono); font-size:11px; color:var(--fg-dim); }
+  .empty { color:var(--fg-dim); text-align:center; padding:30px 0; }
+  .tabs { display:flex; gap:2px; flex:none; }
+  .tab { border:0; background:none; color:var(--fg-dim); padding:5px 12px; border-radius:7px; cursor:pointer; font-size:12.5px; font-family:var(--font-ui); }
+  .tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .row .d { font-size:11px; color:var(--fg-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:46%; }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="head">
+    <span class="tabs"><button class="tab on" data-t="commands">命令</button><button class="tab" data-t="files">文件</button></span>
+    <input id="q" placeholder="输入命令名或拼音/缩写检索…" autofocus>
+  </div>
+  <main id="m" class="mazz-scroll"></main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const pwb=(a)=>window.mazz.invoke('window:'+a).catch(()=>{});
+$('#p-min').addEventListener('click',()=>pwb('minimize'));
+$('#p-max').addEventListener('click',()=>pwb('toggleMaximize'));
+$('#p-close').addEventListener('click',()=>pwb('close'));
+const applyTheme=(id,vars)=>{ if(id) document.documentElement.dataset.theme=id; if(vars) for(const [k,v] of Object.entries(vars)) if(v) document.documentElement.style.setProperty('--'+k,v); };
+window.mazz.invoke('panel:action',{type:'themeSnapshot'}).catch(()=>{});
+window.mazz.on('theme:changed',({id,vars})=>applyTheme(id,vars));
+window.mazz.on('panel:push',(p)=>{ if(p?.type==='themeInit') applyTheme(p.id,p.vars); });
+const esc=(s)=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+let items = [], sel = 0, qT = null, tab = 'commands';
+// 初始页签桥问（file.quickOpen 收编入口暂存——主窗推 initTab）
+window.mazz.invoke('panel:action', { type: 'paletteInitQuery' }).catch(() => {});
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  $('#q').placeholder = t === 'files' ? '输入文件名…（最近文件 + 工作区）' : '输入命令名或拼音/缩写检索…';
+  sel = 0; ask();
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
+function ask() {
+  clearTimeout(qT);
+  qT = setTimeout(() => window.mazz.invoke('panel:action', { type: tab === 'files' ? 'quickopenQuery' : 'paletteQuery', q: $('#q').value.trim() }).catch(() => {}), 80);
+}
+function render() {
+  const m = $('#m');
+  if (!items.length) { m.innerHTML = '<div class="empty">无匹配命令</div>'; return; }
+  m.innerHTML = items.map((it, i) => '<div class="row' + (i === sel ? ' on' : '') + '" data-i="' + i + '">'
+    + '<span class="t">' + esc(it.title) + '</span><span class="g">' + esc(it.group || '') + '</span>'
+    + (it.detail ? '<span class="d">' + esc(it.detail) + '</span>' : '')
+    + (it.key ? '<kbd>' + esc(it.key) + '</kbd>' : '') + '</div>').join('');
+  m.querySelectorAll('.row').forEach(r => r.addEventListener('click', () => run(items[+r.dataset.i])));
+  m.querySelector('.row.on')?.scrollIntoView({ block: 'nearest' });
+}
+function run(it) {
+  if (!it) return;
+  if (tab === 'files') window.mazz.invoke('panel:action', { type: 'quickopenRun', path: it.path }).catch(() => {});
+  else window.mazz.invoke('panel:action', { type: 'paletteRun', id: it.id }).catch(() => {});
+  window.mazz.invoke('panel:close', { kind: 'palette' }).catch(() => {});
+}
+$('#q').addEventListener('input', () => { sel = 0; ask(); });
+$('#q').addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); render(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); render(); }
+  else if (e.key === 'Enter') { e.preventDefault(); run(items[sel]); }
+  else if (e.key === 'Escape') pwb('close');
+});
+window.mazz.on('panel:push', (p) => {
+  if (p?.type === 'paletteInit' && p.tab) { setTab(p.tab); return; }
+  if (!p?.items) return;
+  items = p.items;
+  if (sel >= items.length) sel = Math.max(0, items.length - 1);
+  render();
+});
+ask();
+</script></body></html>

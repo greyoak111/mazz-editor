@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>AI 服务 · 创作模板</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:12px; flex:none; -webkit-app-region:drag; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .head { display:flex; align-items:center; gap:4px; padding:8px 14px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; }
+  .head .tab { border:0; background:none; color:var(--fg-dim); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:var(--font-ui); }
+  .head .tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  main { flex:1; min-height:0; padding:14px 20px; overflow-y:auto; }
+  .set-row { display:flex; align-items:center; gap:10px; padding:7px 0; }
+  .set-row label { width:88px; flex:none; font-size:12.5px; font-weight:600; }
+  .inp, .sel { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); }
+  .inp:focus, .sel:focus { border-color:var(--accent); outline:none; }
+  .inp { width:64%; }
+  textarea.inp { width:100%; resize:vertical; line-height:1.6; }
+  .btn { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer; font-family:var(--font-ui); display:inline-flex; align-items:center; gap:5px; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn.pri { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+  .hint { font-size:12px; color:var(--fg-dim); margin-top:8px; }
+  .sec { font-size:12.5px; margin:10px 0 4px; }
+  .acts { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="head">
+    <button class="tab on" data-t="provider">AI 服务</button>
+    <button class="tab" data-t="genre">新建创作模板</button>
+  </div>
+  <main id="m" class="ps-scroll-y"></main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+let tab = 'provider', PRESETS = [];
+function setTab(t) { tab = t; document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t)); render(); }
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
+window.mazz.on('panel:push', (p) => {
+  if (p?.type === 'factoryPresets') { PRESETS = p.presets || []; renderProvider(); return; }
+  if (p?.type === 'factoryInit' && p.tab) setTab(p.tab);
+});
+// PRESETS 桥取（单源在 provider.js，面板不复制）
+window.mazz.invoke('panel:action', { type: 'factoryPresetsQuery' }).catch(() => {});
+window.mazz.invoke('panel:action', { type: 'factoryInitQuery' }).catch(() => {});
+
+function render() { tab === 'provider' ? renderProvider() : renderGenre(); }
+
+// ==================== AI 服务 ====================
+async function renderProvider() {
+  const m = $('#m');
+  const cfg = (await window.mazz.invoke('settings:get', { key: 'factory.provider' }).catch(() => null)) || {};
+  const key = (await window.mazz.invoke('secret:get', { key: 'factory.providerKey' }).catch(() => '')) || '';
+  m.innerHTML = `
+    <div class="set-row"><label>服务商</label>
+      <select id="pv-preset" class="sel">${PRESETS.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></div>
+    <div class="set-row"><label>接口地址</label><input id="pv-base" class="inp" value="${esc(cfg.baseURL || '')}" placeholder="https://api.deepseek.com" spellcheck="false"></div>
+    <div class="set-row"><label>模型</label>
+      <input id="pv-model" class="inp" style="width:44%" value="${esc(cfg.model || '')}" placeholder="模型名（可直接编辑）" spellcheck="false">
+      <select id="pv-model-sel" class="sel" style="max-width:30%"><option value="">选单…</option></select>
+      <button class="btn" id="pv-fetch" title="从端点拉取全部模型">拉取</button></div>
+    <div class="set-row"><label>API Key</label><input id="pv-key" class="inp" type="password" value="${esc(key)}" placeholder="sk-…（加密存储）" spellcheck="false"></div>
+    <div class="acts">
+      <button class="btn" id="pv-test">测试连接</button>
+      <button class="btn pri" id="pv-save">保存</button>
+    </div>
+    <div id="pv-status" class="hint">OpenAI 兼容端点均可（DeepSeek / Kimi / OpenAI / 智谱 / Ollama 本地）。Key 经系统加密存储。</div>`;
+  const g = (id) => m.querySelector(id);
+  g('#pv-preset').value = PRESETS.find(p => p.baseURL === cfg.baseURL)?.id || 'custom';
+  const fillModels = (ids) => { g('#pv-model-sel').innerHTML = '<option value="">选单…</option>' + (ids || []).map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join(''); };
+  fillModels(PRESETS.find(x => x.id === g('#pv-preset').value)?.models || []);
+  g('#pv-preset').addEventListener('change', () => {
+    const p = PRESETS.find(x => x.id === g('#pv-preset').value);
+    if (p?.baseURL) { g('#pv-base').value = p.baseURL; if (p.models?.length) g('#pv-model').value = p.models[0]; }
+    fillModels(p?.models || []);
+  });
+  g('#pv-model-sel').addEventListener('change', () => { if (g('#pv-model-sel').value) g('#pv-model').value = g('#pv-model-sel').value; });
+  g('#pv-fetch').addEventListener('click', async () => {
+    g('#pv-status').textContent = '拉取模型中…';
+    try {
+      const ids = await window.mazz.invoke('factory:aiModels', { baseURL: g('#pv-base').value.trim(), apiKey: g('#pv-key').value });
+      fillModels(ids || []);
+      g('#pv-status').textContent = ids?.length ? `拉到 ${ids.length} 个模型` : '端点未返回模型清单';
+    } catch (e) { g('#pv-status').textContent = '拉取失败：' + (e.message || e); }
+  });
+  g('#pv-test').addEventListener('click', async () => {
+    g('#pv-status').textContent = '测试中…';
+    try {
+      await window.mazz.invoke('factory:aiChat', { baseURL: g('#pv-base').value.trim(), apiKey: g('#pv-key').value, model: g('#pv-model').value.trim(), system: '你是助手', user: '用四个字回答：连接正常', maxTokens: 32 });
+      g('#pv-status').textContent = '✓ 连接正常';
+    } catch (e) { g('#pv-status').textContent = '✗ ' + (e.message || e); }
+  });
+  g('#pv-save').addEventListener('click', async () => {
+    await window.mazz.invoke('settings:set', { key: 'factory.provider', value: { baseURL: g('#pv-base').value.trim(), model: g('#pv-model').value.trim() } });
+    await window.mazz.invoke('secret:set', { key: 'factory.providerKey', value: g('#pv-key').value });
+    g('#pv-status').textContent = '✓ 已保存（主窗/坞的配置同步生效）';
+    window.mazz.invoke('panel:action', { type: 'factoryProviderSaved' }).catch(() => {});
+  });
+}
+
+// ==================== 新建创作模板 ====================
+function renderGenre() {
+  const m = $('#m');
+  m.innerHTML = `
+    <div class="set-row"><label>名称</label><input id="ge-name" class="inp" placeholder="护理记录"></div>
+    <div class="set-row"><label>描述</label><input id="ge-desc" class="inp" placeholder="简短说明"></div>
+    <div class="sec">输入字段（每行一个：标签|类型|必填。类型：text/textarea/select）</div>
+    <textarea id="ge-fields" rows="4" class="inp" spellcheck="false">患者姓名|text|必填
+护理要点|textarea|必填
+记录类型|text|选填</textarea>
+    <div class="sec">系统提示词（角色与文风要求）</div>
+    <textarea id="ge-sys" rows="3" class="inp" spellcheck="false">你是一名资深…</textarea>
+    <div class="sec">质量校验（每行一条：描述|规则:值，如 不少于500字|minLength:500）</div>
+    <textarea id="ge-checks" rows="3" class="inp" spellcheck="false">不少于 500 字|minLength:500
+必须包含签名|contains:签名</textarea>
+    <div class="acts"><button class="btn pri" id="ge-save">保存到工作区</button></div>
+    <div id="ge-status" class="hint"></div>`;
+  const g = (id) => m.querySelector(id);
+  g('#ge-save').addEventListener('click', async () => {
+    const name = g('#ge-name').value.trim();
+    if (!name) { g('#ge-status').textContent = '先起个名字'; return; }
+    const fields = g('#ge-fields').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+      const [label, type = 'text', req] = l.split('|').map(x => x.trim());
+      return { id: 'f_' + label, label, type: ['text', 'textarea', 'select'].includes(type) ? type : 'text', required: /必/.test(req || '') };
+    });
+    const checks = g('#ge-checks').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+      const [label, rule] = l.split('|').map(x => x.trim());
+      const [r, v] = (rule || '').split(':');
+      return { label, rule: r || 'minLength', value: isNaN(+v) ? v : +v };
+    });
+    const tpl = {
+      id: 'custom_' + name, name, description: g('#ge-desc').value.trim(),
+      input_fields: fields.length ? fields : [{ id: 'f_需求', label: '需求', type: 'textarea', required: true }],
+      system_prompt: g('#ge-sys').value.trim() || '你是一名资深写作专家。',
+      meta_vars: {}, output_rules: { format: 'markdown', max_length: 3000 },
+      quality_checks: checks,
+    };
+    window.mazz.invoke('panel:action', { type: 'genreSave', tpl }).catch(() => {});
+    g('#ge-status').textContent = '已保存到工作区（智能创作面板刷新）';
+  });
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+renderProvider();
+</script>
+</body></html>

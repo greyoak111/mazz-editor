@@ -174,10 +174,12 @@ export function nodeTextLayout(node, depth) {
 
 function measureNode(node, depth) {
   // 按内容自适应：真实测量 + 自动折行（完整显示为底线；v35 修复溢出）
+  // 图形库 shape 内边距（菱形/椭圆最吃宽度——文字不贴边；shapePad 与 mm-shapes 同步）
+  const pad = { diamond: 1.45, ellipse: 1.3, cylinder: 1.15, para: 1.2, rect: 1, round: 1 }[node.shape] || 1;
   const lay = nodeTextLayout(node, depth);
-  const needW = lay.textW + 34;
-  const needH = lay.textH + 18;
-  const w = Math.max(node.minW || 90, Math.min(MAX_TEXT_W + 34, needW), node.w || 0);
+  const needW = lay.textW * pad + 34;
+  const needH = lay.textH * (pad > 1 ? 1.15 : 1) + 18;
+  const w = Math.max(node.minW || 90, Math.min(MAX_TEXT_W * pad + 34, needW), node.w || 0);
   const h = Math.max(node.minH || (depth === 0 ? NODE_H + 6 : NODE_H), needH, node.h || 0);
   return { w, h };
 }
@@ -220,6 +222,17 @@ export function resolveOverlap(entity, others, { margin = 8 } = {}) {
   return e;
 }
 
+/** 分支框合并：自身+子孙 box 的总框（kityminder getBranchBox 同款——虚拟化判定/磁吸避让共用） */
+function branchOf(box, childBoxes) {
+  let x1 = box.x, y1 = box.y, x2 = box.x + box.w, y2 = box.y + box.h;
+  for (const cb of childBoxes) {
+    const br = cb.branch;
+    x1 = Math.min(x1, br.x); y1 = Math.min(y1, br.y);
+    x2 = Math.max(x2, br.x + br.w); y2 = Math.max(y2, br.y + br.h);
+  }
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
 /** 自左向右（水平树） */
 export function layoutLR(roots, { startX = 24, startY = 24 } = {}) {
   const boxes = new Map();
@@ -234,6 +247,12 @@ export function layoutLR(roots, { startX = 24, startY = 24 } = {}) {
     if (!childBoxes.length) y = cursorY, cursorY += size.h + 14;
     else y = (childBoxes[0].y + childBoxes[childBoxes.length - 1].y) / 2;
     const box = { node, depth, x, y, w: size.w, h: size.h, parentId: node._parent || null };
+    // 钉坐标（混合画布）：pinned 节点脱离布局流——坐标=fx/fy（未初始化则随本次布局值起步）
+    if (node.pinned) {
+      if (node.fx == null) { node.fx = box.x; node.fy = y; }
+      box.x = node.fx; box.y = node.fy ?? box.y;
+    }
+    box.branch = branchOf(box, childBoxes); // 分支框（性能碾压波：虚拟化/避让）
     node._parent = null;
     boxes.set(node.id, box);
     return box;
@@ -255,6 +274,12 @@ export function layoutTB(roots, { startX = 24, startY = 24 } = {}) {
     if (!childBoxes.length) x = cursorX, cursorX += size.w + 20;
     else x = (childBoxes[0].x + childBoxes[childBoxes.length - 1].x) / 2;
     const box = { node, depth, x, y, w: size.w, h: size.h, parentId: node._parent || null };
+    // 钉坐标（混合画布）：pinned 脱离布局流（fx/fy）
+    if (node.pinned) {
+      if (node.fx == null) { node.fx = x; node.fy = box.y; }
+      box.x = node.fx; box.y = node.fy ?? box.y;
+    }
+    box.branch = branchOf(box, childBoxes); // 分支框
     node._parent = null;
     boxes.set(node.id, box);
     return box;
@@ -272,17 +297,21 @@ export function layoutRadial(roots, { cx = 420, cy = 340 } = {}) {
     // 自由坐标优先（拖拽过）
     const bx = node.fx != null ? node.fx : x;
     const by = node.fy != null ? node.fy : y;
-    boxes.set(node.id, { node, depth, x: bx, y: by, w: size.w, h: size.h, parentId: node._parent || null });
+    const box = { node, depth, x: bx, y: by, w: size.w, h: size.h, parentId: node._parent || null };
+    boxes.set(node.id, box);
     node._parent = null;
     const kids = node.collapsed ? [] : node.children;
-    if (!kids.length) return;
+    const childBoxes = [];
+    if (!kids.length) { box.branch = branchOf(box, []); return box; }
     const step = (a1 - a0) / kids.length;
     kids.forEach((k, i) => {
       const ang = a0 + step * (i + 0.5);
       const r = RING * (depth + 1);
       k._parent = node.id;
-      placeRing(k, depth + 1, bx + Math.cos(ang) * r, by + Math.sin(ang) * r, a0 + step * i, a0 + step * (i + 1));
+      childBoxes.push(placeRing(k, depth + 1, bx + Math.cos(ang) * r, by + Math.sin(ang) * r, a0 + step * i, a0 + step * (i + 1)));
     });
+    box.branch = branchOf(box, childBoxes); // 分支框
+    return box;
   };
   // 多根：等角散布在中心圆上
   roots.forEach((r, i) => {
@@ -311,6 +340,32 @@ export function layout(roots, mode = 'lr', opts = {}) {
   return layoutLR(rs, opts);
 }
 
+// ==================== 拐点参数化（渲染病 B2 根治） ====================
+// kityminder 顶点+向量同款思路：拐点不存屏幕绝对坐标，存「沿两端连线系数 t + 法向偏移比例 k」
+// （pos = a + (c-a)·t + n·k·|ac|）——重排后由端点实时重算屏幕位置，结构性不错位。
+// 旧「重排后按父子平均位移平移拐点」是近似补丁（v33），两端位移不等时失真=概率复现真根，本波废除。
+/** 屏幕点 → 参数 {t,k}（a/c 任意带 cx/cy 形态） */
+export function wpFromPoint(a, c, pt) {
+  const dx = c.cx - a.cx, dy = c.cy - a.cy, L = Math.hypot(dx, dy) || 1;
+  const t = ((pt.x - a.cx) * dx + (pt.y - a.cy) * dy) / (L * L);
+  const nx = -dy / L, ny = dx / L;
+  const k = ((pt.x - a.cx) * nx + (pt.y - a.cy) * ny) / L;
+  return { t, k };
+}
+/** 参数 {t,k} → 屏幕点；旧 {x,y} 绝对格式直通（懒迁移前兼容） */
+export function wpToPoint(a, c, wp) {
+  if (wp == null) return null;
+  if (wp.t == null) return { x: wp.x, y: wp.y };
+  const dx = c.cx - a.cx, dy = c.cy - a.cy, L = Math.hypot(dx, dy) || 1;
+  const nx = -dy / L, ny = dx / L;
+  return { x: a.cx + dx * wp.t + nx * wp.k * L, y: a.cy + dy * wp.t + ny * wp.k * L };
+}
+/** 懒迁移：旧 {x,y} 拐点一次性转 {t,k}（数据修正不记撤销，一轮到位；已参数化原样） */
+export function wpMigrate(wps, a, c) {
+  if (!Array.isArray(wps) || !wps.length || wps[0].t != null) return wps;
+  return wps.map(p => (p && p.t != null ? p : wpFromPoint(a, c, p)));
+}
+
 // ==================== 颜色预设 ====================
 export const LEVEL_SCHEMES = [
   { name: '默认', colors: ['#4f46e5', '#0ea5e9', '#059669', '#d97706', '#dc2626', '#7c3aed'] },
@@ -328,7 +383,7 @@ export function createParentLink(fromId, toId) {
 }
 
 export function createNote(text = '', x = 0, y = 0) {
-  return { id: 'note' + (seq++) + '-' + Date.now().toString(36), text, x, y, w: 150, color: null, style: null };
+  return { id: 'note' + (seq++) + '-' + Date.now().toString(36), text, x, y, w: 150, color: null, style: null, image: null }; // image：图片便笺 dataURL（混合画布图片对象）
 }
 export function createRefLine(fromId, fromKind, toId, toKind) {
   return {
@@ -344,11 +399,13 @@ export function createRefLine(fromId, fromKind, toId, toKind) {
 // ==================== 序列化 ====================
 export function serializeDoc(doc) {
   return JSON.stringify({
-    v: 3, mode: doc.mode || 'lr', scheme: doc.scheme ?? 0,
+    v: 4, mode: doc.mode || 'lr', scheme: doc.scheme ?? 0, // v4：拐点参数化 {t,k}（v3 绝对 {x,y} 由渲染期 wpMigrate 懒迁移）
     roots: doc.roots,
     notes: doc.notes || [],
     refLines: doc.refLines || [],
     parentLinks: doc.parentLinks || [],
+    swimlanes: doc.swimlanes || [], // 泳道（w31 图形库扩容）
+    frames: doc.frames || [], // 演示叙事帧（w33 Prezi 式圈帧）
     linkStyle: doc.linkStyle || null,
     showGrid: !!doc.showGrid,
   });
@@ -356,19 +413,21 @@ export function serializeDoc(doc) {
 export function parseDoc(text) {
   try {
     const obj = JSON.parse(text);
-    if (obj && (obj.v === 3 || obj.v === 2) && Array.isArray(obj.roots)) {
+    if (obj && (obj.v === 4 || obj.v === 3 || obj.v === 2) && Array.isArray(obj.roots)) {
       return {
         mode: obj.mode || 'lr', scheme: obj.scheme ?? 0,
         roots: obj.roots,
         notes: obj.notes || [],
         refLines: obj.refLines || [],
         parentLinks: obj.parentLinks || [],
+        swimlanes: obj.swimlanes || [],
+        frames: obj.frames || [],
         linkStyle: obj.linkStyle || null,
         showGrid: !!obj.showGrid,
       };
     }
-    if (obj && obj.root) return { mode: 'lr', scheme: 0, roots: [obj.root], notes: [], refLines: [], parentLinks: [], linkStyle: null }; // 旧单根 JSON
+    if (obj && obj.root) return { mode: 'lr', scheme: 0, roots: [obj.root], notes: [], refLines: [], parentLinks: [], swimlanes: [], linkStyle: null }; // 旧单根 JSON
   } catch {}
   // 更旧的 Markdown 大纲
-  return { mode: 'lr', scheme: 0, roots: parseOutline(text), notes: [], refLines: [], parentLinks: [], linkStyle: null };
+  return { mode: 'lr', scheme: 0, roots: parseOutline(text), notes: [], refLines: [], parentLinks: [], swimlanes: [], linkStyle: null };
 }

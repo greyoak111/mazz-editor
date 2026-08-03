@@ -4,7 +4,7 @@
   <link rel="icon" href="data:,"><!-- 禁 favicon 请求：mazz-res 时代 404 消息文本不含 allow 字样（file:// 时代 ERR_FILE_NOT_FOUND 侥幸放行实锤） -->
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' blob: mazz-res: 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' mazz-res: file: data: blob:; media-src 'self' mazz-res: file: data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' blob: data: mazz-res: https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com; worker-src 'self' blob: mazz-res: https://cdn.jsdelivr.net https://unpkg.com" />
+        content="default-src 'self'; script-src 'self' blob: mazz-res: 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' mazz-res: file: data: blob:; media-src 'self' mazz-res: file: data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' blob: data: mazz-res: https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com; worker-src 'self' blob: mazz-res: https://cdn.jsdelivr.net https://unpkg.com; object-src 'self' mazz-res:; frame-src 'self' mazz-res:" /> <!-- W58d：PDF embed 插件数据+内框双放行（default-src 'self' 不盖 mazz-res://media 异源=PDF 白页实锤） -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Mazz Editor</title>
   <link rel="stylesheet" href="styles/themes.css" />
@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="styles/mobile.css" />
 </head>
 <body>
-  <script src="lib/mobile-env.js"></script>
+  <script type="module" src="lib/mobile-env.js"></script><!-- W52f：ESM 文件 classic 加载必炸（import  outside a module——首轮监听挂晚常年隐身，reload 抓现行） -->
   <script type="module" src="dist/app.js"></script>
 </body>
 </html>

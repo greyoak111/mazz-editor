@@ -20,7 +20,7 @@ function paraInfo(pXml) {
 
 /** 单页图片提取：<p:pic> → 画布元素（data URL；超大图跳过防卡爆） */
 async function slideImages(zip, xml, slidePath) {
-  const relsPath = slidePath.replace(/\/([^/]+)$/, '/_rels$1') + '.rels';
+  const relsPath = slidePath.replace(/\/([^/]+)$/, '/_rels/$1') + '.rels'; // W42 平反：旧式漏斜杠拼成 _relsslide1.xml.rels——rels 永远读空，图片导入静默死（无测试覆盖活到今天）
   const relsXml = await zip.file(relsPath)?.async('text').catch(() => null) || '';
   const rmap = new Map();
   for (const m of relsXml.matchAll(/Id="([^"]+)"[^>]*Target="([^"]+)"/g)) rmap.set(m[1], m[2]);

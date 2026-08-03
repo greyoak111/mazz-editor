@@ -73,7 +73,10 @@ contextKeys.set('hasSelection', false);
 shell.boot().then(() => {
   console.log('%c◆ Mazz Editor%c 已启动 — 一切操作皆命令', 'color:#818cf8;font-weight:bold', '');
   // 首次启动：弹出用户服务协议及隐私政策（勾选"后续不再弹出"后不再显示）
-  import('./lib/agreement.js').then(m => m.maybeAutoShowAgreement()).catch(() => {});
+  // 子窗（?role=child）不跑——协议是主窗职责，二级窗弹协议会抢 lean 弹窗的屏（实锤）
+  if (!new URLSearchParams(location.search).get('role')) {
+    import('./lib/agreement.js').then(m => m.maybeAutoShowAgreement()).catch(() => {});
+  }
   // 后台加载工作区插件（不阻塞启动）
   if (window.mazz?.isElectron) {
     loadAllPlugins().then(rs => {

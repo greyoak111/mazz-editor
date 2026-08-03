@@ -73,6 +73,9 @@ class ModuleRegistry {
     const inst = this.instances.get(tabId);
     if (inst) {
       try { inst.def.deactivate(inst.container, inst.state); } catch (e) { console.error(e); }
+      // 幽灵三钩③：dispose 收尸钩（关签/分窗摘除时模块原生资源必收——browser WebContentsView 永生粘附实锤；
+      // 有钩才调，无钩模块零影响）
+      try { inst.def.dispose?.(inst.state); } catch (e) { console.error('[modules] dispose 失败:', e.message || e); }
       this.instances.delete(tabId);
     }
   }

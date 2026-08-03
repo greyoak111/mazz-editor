@@ -38,6 +38,15 @@ export class FileTree {
         </span></div>
       <div class="filetree" tabindex="0"></div>`;
     this.treeEl = this.el.querySelector('.filetree');
+    // B13b「..st」窄列观感根治：侧栏过窄时隐藏父路径后缀（rtl+ellipsis 在窄列只剩两字符=视觉垃圾实锤）——
+    // ResizeObserver 看树容器真实宽度，比阈值即挂 ft-narrow 类整族隐藏（无 RO 环境=一次性判定+resize 兜底）
+    const ckNarrow = () => this.treeEl.classList.toggle('ft-narrow', this.treeEl.getBoundingClientRect().width < 210);
+    if (typeof ResizeObserver !== 'undefined') {
+      this._narrowRO = new ResizeObserver((es) => {
+        for (const e of es) e.target.classList.toggle('ft-narrow', e.contentRect.width < 210);
+      });
+      this._narrowRO.observe(this.treeEl);
+    } else { ckNarrow(); window.addEventListener('resize', ckNarrow); }
     this.el.querySelector('[data-a=newFile]').addEventListener('click', () => onNewFile());
     this.el.querySelector('[data-a=newFolder]').addEventListener('click', () => onNewFolder());
     this.el.querySelector('[data-a=refresh]')?.remove();

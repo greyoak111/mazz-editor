@@ -222,10 +222,11 @@ function createBrowser(container) {
   // ==================== 摆位引擎（宿主矩形 → 主进程视图）+ 遮挡隐身 ====================
   /** 原生视图永远压在 DOM 之上：谁可见谁多大，由这里统一发令 */
   function syncBounds() {
+    // 幽灵三钩出口：activate/deactivate 生命周期的显隐发令同口（挂 ctl 供 def 钩子直调）
     if (!isElectron()) return;
     const fs = ctl._htmlFs && ctl._htmlFs === ctl.activeId; // HTML5 全屏态：视图铺满主窗
     for (const tab of ctl.tabs) {
-      const on = tab.id === ctl.activeId && !ctl._cloaked && tab.host?.isConnected;
+      const on = tab.id === ctl.activeId && !ctl._cloaked && !ctl._dragCloak && tab.host?.isConnected; // _dragCloak=拖拽分屏期间强制隐（独立闸——observer 的 mask 真源不覆盖它）
       if (!on) { window.mazz.invoke('bv:bounds', { tabId: tab.viewId, visible: false }).catch(() => {}); continue; }
       let r;
       if (fs) r = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
@@ -233,21 +234,17 @@ function createBrowser(container) {
       window.mazz.invoke('bv:bounds', { tabId: tab.viewId, rect: r, visible: r.width > 2 && r.height > 2 }).catch(() => {});
     }
   }
+  ctl.__sync = syncBounds; // 生命周期三钩发令口（activate 必显/deactivate 全场景隐统一走此）
   if (isElectron()) {
     // 布局跟随：容器尺寸/窗体尺寸变化即重摆
     try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}
     window.addEventListener('resize', syncBounds);
-    // 遮挡隐身：弹层/菜单/放映/拖拽期间视图必须隐身（原生表面压一切 DOM，不隐身就吃菜单吃拖放）
+    // 兜底遮挡隐身（W52 过渡：只认全屏遮罩两件套（modal/帮助），backgroundThrottling:false 加持下关罩即活不再白死——②③波逐类遣散后此闸退役）
     const cloakCheck = () => {
-      const overlay = [...document.querySelectorAll('.mazz-palette-mask, .help-mask, .mazz-menu, .sl-present')].some(el => el.getBoundingClientRect().width > 0);
-      const cloaked = overlay || !!ctl._dragging;
+      const cloaked = [...document.querySelectorAll('.mazz-palette-mask, .help-mask')].some(el => el.getBoundingClientRect().width > 0);
       if (cloaked !== ctl._cloaked) { ctl._cloaked = cloaked; syncBounds(); }
     };
     new MutationObserver(cloakCheck).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
-    // 拖签/拖放期间：HTML5 拖拽事件到不了原生表面，视图隐身让 DOM 盾牌与分屏预览正常工作
-    document.addEventListener('dragstart', () => { ctl._dragging = true; cloakCheck(); }, true);
-    document.addEventListener('dragend', () => { ctl._dragging = false; cloakCheck(); }, true);
-    document.addEventListener('drop', () => { ctl._dragging = false; cloakCheck(); }, true);
   }
 
   /** 主页 HTML（主题变量化：明亮/黑暗/跟随系统 + ⚙ 设置面板） */
@@ -537,13 +534,13 @@ function createBrowser(container) {
         root.querySelector('.br-find-count').textContent = r.matches ? `${r.activeMatchOrdinal}/${r.matches}` : '无结果';
         return;
       }
-      case 'context-menu': {
-        // 客页右键（坐标已在主进程换算到主窗系）
-        contextKeys.set('browserMediaType', d.mediaType || 'none');
-        contextKeys.set('browserHasSelection', !!(d.selectionText || '').trim());
-        contextKeys.set('browserLinkUrl', d.linkURL || '');
-        menus.show('browser/page', { x: d.x, y: d.y, preferDom: true });
-        ctl.contextParams = d;
+      case 'ctx-action': {
+        // 原生右键菜单动作回派（白屏根治：右键改主进程 popup 独立合成层，动作经此回 MazzCommands 零重写）
+        contextKeys.set('browserMediaType', d.params?.mediaType || 'none');
+        contextKeys.set('browserHasSelection', !!(d.params?.selectionText || '').trim());
+        contextKeys.set('browserLinkUrl', d.params?.linkURL || '');
+        ctl.contextParams = d.params || {};
+        if (d.command) window.MazzCommands?.execute(d.command);
         return;
       }
       case 'open-url':
@@ -552,6 +549,9 @@ function createBrowser(container) {
       case 'dom-ready':
       case 'did-stop-loading':
         injectZoom(tab);
+        return;
+      case 'key-reload': // F5/Ctrl+R 网页内按下（主进程拦截转发）——走 reloadTab 汇聚，主页重塞不白屏
+        reloadTab(tab);
         return;
       case 'enter-html-full-screen':
         // HTML5 全屏：视图铺满主窗（原生表面压一切 DOM，真全屏零技巧）
@@ -659,6 +659,8 @@ function createBrowser(container) {
   function bookmarkCurrent() {
     const t = activeTab();
     if (!t || isInternalUrl(t.url)) return;
+    // W54 B3：全原生独立子窗格（DOM modal 浏览器前台必被压——W43 漏网收编）
+    if (isElectron()) { window.mazz.invoke('panel:open', { kind: 'bookmark' }).catch(() => {}); return; }
     const m = modal('收藏当前页');
     const folderOpts = (sel) => ctl.folders.map(f =>
       `<option value="${f.id}" ${f.id === sel ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('');
@@ -691,8 +693,9 @@ function createBrowser(container) {
     });
   }
 
-  /** 收藏管理（文件夹新建/命名/删除 + 条目重命名/删除/移动） */
+  /** 收藏管理（W43 并行进程：原生子窗独立合成，与 WebContentsView 永不相见——白屏病根除；渲染层 modal 仅网页预览兜底） */
   function openBookmarkManager() {
+    if (isElectron()) { window.mazz.invoke('panel:open', { kind: 'favmgr' }).catch(() => {}); return; }
     const m = modal('收藏管理');
     const render = () => {
       const foldersHtml = ctl.folders.map(f => {
@@ -908,12 +911,16 @@ function createBrowser(container) {
   }
   root.querySelector('[data-a=back]').addEventListener('click', () => historyNav(activeTab(), 'back'));
   root.querySelector('[data-a=forward]').addEventListener('click', () => historyNav(activeTab(), 'forward'));
-  root.querySelector('[data-a=reload]').addEventListener('click', () => {
-    const t = activeTab();
+  /** 刷新唯一汇聚（工具栏钮 / Ctrl+R 命令 / 右键菜单三路同口）：
+   *  主页是 document.write 原地重写的 about:blank——wc.reload() 重载的是空文档=白屏（真机实锤）；
+   *  逻辑 URL 为主页时一律走 queueNav 重塞（自带竞态闸/自定义主页分支/主题重建），真网页才 wc.reload() */
+  function reloadTab(t) {
     if (!t) return;
+    if (t.url === HOME) { queueNav(t, HOME); return; }
     if (isElectron()) window.mazz.invoke('bv:nav', { tabId: t.viewId, action: 'reload' }).catch(() => {});
     else if (t.view?.isConnected && t.view.contentWindow) { try { t.view.contentWindow.location.reload(); } catch { navigate(t, t.url); } }
-  });
+  }
+  root.querySelector('[data-a=reload]').addEventListener('click', () => reloadTab(activeTab()));
   root.querySelector('[data-a=home]').addEventListener('click', () => navigate(activeTab(), HOME));
   root.querySelector('[data-a=find]').addEventListener('click', openFind);
   root.querySelector('[data-a=newtab]').addEventListener('click', () => openTab(HOME));
@@ -930,6 +937,67 @@ function createBrowser(container) {
   // 新窗审批事件（主进程转发）：弹窗改在模块内开标签
   if (isElectron()) {
     window.mazz.on('browser:openUrl', ({ url }) => { if (url) openTab(url); });
+    // W43 并行面板回推：数据已变→装载+主页即刷；动作→开网址/指定条目填充
+    window.mazz.on('panel:changed', (pl) => {
+      if (pl?.kind !== 'favmgr') return;
+      loadStore().then(() => { for (const t of ctl.tabs || []) if (t.url === HOME) renderHome(t); });
+    });
+    window.mazz.on('panel:action', (pl) => {
+      if (pl?.type === 'openUrl' && pl.url) openTab(pl.url);
+      else if (pl?.type === 'fillPassword' && pl.id) fillPassword(pl.id);
+      // W54 B3 收藏当前页桥（panel 子窗格：预填+保存，ctl 真相源）
+      else if (pl?.type === 'bookmarkQuery') {
+        const t = activeTab();
+        window.mazz.invoke('panel:push', { kind: 'bookmark', payload: { type: 'bookmark', title: t?.title || '', url: t?.url || '', folders: ctl.folders || [] } }).catch(() => {});
+      } else if (pl?.type === 'bookmarkSave') {
+        let folderId = pl.folderId;
+        if (folderId === '__new' && pl.newFolderName) {
+          folderId = 'f' + Date.now();
+          ctl.folders.push({ id: folderId, name: pl.newFolderName });
+          saveFolders();
+        }
+        const t = activeTab();
+        if (t && !isInternalUrl(t.url)) {
+          const name = pl.name || t.title;
+          const key = normUrl(t.url);
+          ctl.bookmarks = ctl.bookmarks.filter(b => normUrl(b.url) !== key);
+          ctl.bookmarks.unshift({ url: t.url, title: t.title, name, folder: folderId || 'default', at: Date.now() });
+          saveBookmarks();
+          window.mazz.invoke('panel:changed', { kind: 'favmgr' }).catch(() => {});
+          toast(`已收藏到「${ctl.folders.find(f => f.id === folderId)?.name || '默认收藏夹'}」`);
+        }
+      }
+    });
+    // W47 密码智能记录：页面提交捕获 → 询问保存（Edge 同款；每站每人每会话只问一趟，绝不静默落库）
+    window.mazz.on('bv:event', ({ type, data }) => {
+      // W48 修改识别：密码已更改 → 询问更新保存（Edge 同款）
+      if (type === 'pw-changed' && data?.id) {
+        const ck = 'pwOffered|chg|' + data.id;
+        if (ctl[ck]) return;
+        ctl[ck] = true;
+        toast(`${data.site}：密码已更改——更新保存的密码？`, [
+          { label: '更新', fn: async () => {
+              await window.mazz.invoke('pw:save', { entry: { id: data.id, site: data.site, username: data.username, password: data.password } });
+              window.mazz.invoke('panel:changed', { kind: 'pwmgr' }).catch(() => {});
+              toast('已更新保存的密码');
+            } },
+          { label: '暂不', ghost: true, fn: () => {} },
+        ], 12000);
+        return;
+      }
+      if (type !== 'pw-capture' || !data?.site) return;
+      const key = 'pwOffered|' + data.site + '|' + (data.username || '');
+      if (ctl[key]) return;
+      ctl[key] = true;
+      toast(`${data.site}：保存账号「${data.username || '（空）'}」的密码吗？`, [
+        { label: '保存', fn: async () => {
+            await window.mazz.invoke('pw:save', { entry: { site: data.site, username: data.username || '', password: data.password } });
+            window.mazz.invoke('panel:changed', { kind: 'pwmgr' }).catch(() => {});
+            toast('已保存到密码管理器');
+          } },
+        { label: '暂不', ghost: true, fn: () => {} },
+      ], 12000);
+    });
   }
 
   // 键盘（模块级）：Ctrl+T 新标签 / Ctrl+L 地址栏 / Ctrl+W 关标签
@@ -1011,6 +1079,7 @@ function createBrowser(container) {
 
   // ==================== 密码管理器（safeStorage 加密，主进程存储） ====================
   async function openPasswordManager() {
+    if (isElectron()) { window.mazz.invoke('panel:open', { kind: 'pwmgr' }).catch(() => {}); return; } // W43 并行子窗
     const m = modal('密码管理器');
     const encAvail = await window.mazz.invoke('pw:available').catch(() => false);
     const rowStyle = 'display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid var(--bd2,#ecebe6)';
@@ -1102,7 +1171,7 @@ function createBrowser(container) {
   }
 
   /** 在当前网页填充已保存的账号密码（按站点域名匹配） */
-  async function fillPassword() {
+  async function fillPassword(pwId = null) {
     const t = activeTab();
     if (!t || isInternalUrl(t.url)) { toast('当前页面无法填充'); return; }
     if (!isElectron()) { toast('填充功能仅在桌面端可用'); return; }
@@ -1110,7 +1179,7 @@ function createBrowser(container) {
     if (!list.length) { toast('密码库为空——先打开密码管理器添加'); return; }
     let host = '';
     try { host = new URL(t.url).hostname.toLowerCase(); } catch {}
-    const match = list.find(e => {
+    const match = (pwId && list.find(e => e.id === pwId)) || list.find(e => {
       const s = (e.site || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
       return s && (host === s || host.endsWith('.' + s) || host.includes(s) || s.includes(host));
     });
@@ -1144,6 +1213,7 @@ function createBrowser(container) {
   ctl.openBookmarkManager = openBookmarkManager;
   ctl.openPasswordManager = openPasswordManager;
   ctl.fillPassword = fillPassword;
+  ctl.reloadTab = reloadTab; // 命令注册在模块顶层够不着 createBrowser 内部函数——实例方法出口（ReferenceError 实锤平反）
 
   // 初始
   loadStore().then(() => openTab(HOME));
@@ -1167,7 +1237,9 @@ export default {
   create(container) {
     const ctl = createBrowser(container);
     instances.set(container, ctl);
-    return { container };
+    // W58c 根治：create 必须返回 ctl 本体（code 模块 W58 同款病——返回 { container } 让 inst.state 与真 ctl 分家，
+    // pane:tabMoved 监听器拿 { container } 空调 __sync/reloadTab=分屏自动刷新全静默失效）
+    return ctl;
   },
   activate(container) {
     const ctl = instances.get(container);
@@ -1175,9 +1247,27 @@ export default {
     current = ctl;
     window.__activeBrowserCtl = ctl; // 出站桥等外部调用入口（投稿会话拉起）
     contextKeys.set('module', MODULE);
+    // 幽灵三钩①（页签一切一炸一片实锤）：切回必显——显隐不再靠 ResizeObserver/偶发事件赏饭
+    if (isElectron()) queueMicrotask(() => { try { ctl.__sync?.(); } catch {} });
   },
   deactivate(container) {
-    if (current === instances.get(container)) current = null;
+    const ctl = instances.get(container);
+    if (current === ctl) current = null;
+    // 幽灵三钩②：切走必隐——deactivate 不发令=视图铺成鬼（图129 播放器里长主页实锤）
+    if (ctl && isElectron()) {
+      for (const t of ctl.tabs) {
+        if (t.viewId) window.mazz.invoke('bv:bounds', { tabId: t.viewId, visible: false }).catch(() => {});
+      }
+    }
+  },
+  /** 幽灵三钩③：外壳关签/分窗摘除必收尸（module-registry detach 唯一出口） */
+  dispose(state) {
+    const ctl = instances.get(state?.container);
+    if (!ctl || !isElectron()) return;
+    for (const t of ctl.tabs) {
+      if (t.viewId) window.mazz.invoke('bv:destroy', { tabId: t.viewId }).catch(() => {});
+    }
+    ctl.tabs = [];
   },
   getContent(state) {
     const ctl = instances.get(state.container);
@@ -1223,10 +1313,10 @@ export default {
       <button class="rb-btn" data-command="browser.find"><i class="ico">${iconHtml('🔍')}</i><span>页内查找</span></button>
     </div>
     <div class="rb-group" data-label="协同">
-      <button class="rb-btn" data-command="browser.clipToNote"><i class="ico">✂</i><span>摘录到笔记</span></button>
+      <button class="rb-btn" data-command="browser.clipToNote"><i class="ico">${iconHtml('✂')}</i><span>摘录到笔记</span></button>
       <button class="rb-btn" data-command="browser.pageToLibrary"><i class="ico">${iconHtml('📥')}</i><span>网页剪藏</span></button>
-      <button class="rb-btn" data-command="browser.manageBookmarks"><i class="ico">📁</i><span>收藏管理</span></button>
-      <button class="rb-btn" data-command="browser.exportBookmarks"><i class="ico">📑</i><span>导出收藏</span></button>
+      <button class="rb-btn" data-command="browser.manageBookmarks"><i class="ico">${iconHtml('📁')}</i><span>收藏管理</span></button>
+      <button class="rb-btn" data-command="browser.exportBookmarks"><i class="ico">${iconHtml('📑')}</i><span>导出收藏</span></button>
     </div>
     <div class="rb-group" data-label="搜索">
       <button class="rb-btn" data-command="browser.selfcheck"><i class="ico">${iconHtml('⚡')}</i><span>实例自检</span></button>
@@ -1294,7 +1384,7 @@ export default {
       { id: 'browser.navForward', title: '前进', group: '浏览器', when: "module=='browser'",
         run: () => current && historyNav(current.activeTab(), 'forward') },
       { id: 'browser.navReload', title: '刷新', group: '浏览器', when: "module=='browser'",
-        run: () => { const t = current?.activeTab(); if (!t) return; if (isElectron()) window.mazz.invoke('bv:nav', { tabId: t.viewId, action: 'reload' }).catch(() => {}); else current.openUrl(t.url); } },
+        run: () => { const t = current?.activeTab(); if (!t) return; if (isElectron()) current.reloadTab?.(t); else current.openUrl(t.url); } },
       { id: 'browser.copyUrl', title: '复制页面地址', group: '浏览器', when: "module=='browser'",
         run: async () => {
           const t = current?.activeTab();
@@ -1305,6 +1395,8 @@ export default {
           const text = await current?.getSelection();
           if (text?.trim()) current?.search(text.trim());
         } },
+      { id: 'browser.devtools', title: '开发者工具（F12）', icon: '🔧', group: '浏览器', when: "module=='browser'",
+        run: () => { const t = current?.activeTab(); if (t) window.mazz.invoke('bv:devtools', { tabId: t.viewId }).catch(() => {}); } },
       { id: 'browser.passwordManager', title: '密码管理器', group: '浏览器', when: "module=='browser'",
         run: () => current?.openPasswordManager() },
       { id: 'browser.fillPassword', title: '填充账号密码', group: '浏览器', when: "module=='browser'",
@@ -1317,6 +1409,7 @@ export default {
     keybindings: [
       { command: 'browser.find', key: 'ctrl+f', when: "module=='browser'" },
       { command: 'browser.bookmark', key: 'ctrl+shift+b', when: "module=='browser'" },
+      { command: 'browser.devtools', key: 'f12', when: "module=='browser'" },
     ],
     menus: {
       // 7 号上下文：浏览器·网页

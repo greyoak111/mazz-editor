@@ -35,8 +35,19 @@ export class FontFamilyPicker {
   }
   set(v) { this.value = v; this.input.value = v || ''; this.input.placeholder = v || '字体'; }
   async show() {
-    // 用 fixed 定位逃出 Ribbon 裁剪，列表可滚动
     const rect = this.input.getBoundingClientRect();
+    // W58i：字体选择格全原生独立子窗（DOM 下拉被窗格裁切/视图压的漏网——picklist 通用格收编）
+    if (window.mazz?.isElectron) {
+      const fonts = await systemFonts();
+      window.__picklistPending = {
+        title: '字体（本机字体库）', searchable: true, allowFree: true, current: this.input.value,
+        items: fonts.map(f => ({ v: f, label: f, font: f })),
+        onPick: (v) => { this.set(v); this.onChange?.(v); },
+      };
+      window.mazz.invoke('panel:open', { kind: 'picklist', opts: { x: rect.left, y: rect.bottom + 4, w: Math.max(rect.width + 40, 300), h: 420 } }).catch(() => {});
+      return;
+    }
+    // 用 fixed 定位逃出 Ribbon 裁剪，列表可滚动
     this.drop.style.position = 'fixed';
     this.drop.style.left = rect.left + 'px';
     this.drop.style.top = (rect.bottom + 4) + 'px';
@@ -91,6 +102,16 @@ export class FontSizePicker {
   }
   show() {
     const rect = this.input.getBoundingClientRect();
+    // W58i：字号选择格同收编（预设+自由值——picklist 通用格）
+    if (window.mazz?.isElectron) {
+      window.__picklistPending = {
+        title: '字号', searchable: true, allowFree: true, current: String(this.input.value ?? ''),
+        items: this.presets.map(s => ({ v: String(s), label: String(s) })),
+        onPick: (v) => { this.set(v); const n = parseFloat(v); if (!isNaN(n)) this.onChange?.(n); },
+      };
+      window.mazz.invoke('panel:open', { kind: 'picklist', opts: { x: rect.left, y: rect.bottom + 4, w: Math.max(rect.width + 30, 200), h: 400 } }).catch(() => {});
+      return;
+    }
     this.drop.style.position = 'fixed';
     this.drop.style.left = rect.left + 'px';
     this.drop.style.top = (rect.bottom + 4) + 'px';

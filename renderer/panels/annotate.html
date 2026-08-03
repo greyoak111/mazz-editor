@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>批注</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css"> <!-- 军规④：滚动条族消费方真实加载（base.css 面板窗不载——写了不算做了病绝育） -->
+<style>
+  html, body { background: transparent; margin: 0; overflow: hidden; }
+  * { box-sizing: border-box; }
+  body { font: 13px/1.5 var(--font-ui); }
+  #cv { position: fixed; inset: 0; display: block; }
+  .bar { position: fixed; left: 50%; top: 132px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; /* W52e④：顶部停靠——与 DOM 版全局批注（ribbon.bottom+12）同位，底端停靠平反 */
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 7px 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.35); color: var(--fg); -webkit-app-region: no-drag; }
+  .bar .fold { border: 0; background: none; color: var(--fg-dim); cursor: pointer; padding: 2px 6px; border-radius: 6px; display: flex; }
+  .bar .fold:hover { color: var(--accent); }
+  .bar #colors { display: inline-flex; align-items: center; gap: 6px; }
+  .bar .c { display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; flex: none; } /* inline 元素宽高无效=竖条案平反（i 必须块化） */
+  .bar .c.on { border-color: var(--fg); }
+  .bar .sep { width: 1px; height: 18px; background: var(--border); flex: none; }
+  .bar input[type=range] { width: 80px; accent-color: var(--accent); }
+  .bar .act { display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--fg-dim); border-radius: 7px; padding: 3px 8px; cursor: pointer; font-size: 12px; }
+  .bar .act:hover { color: var(--accent); border-color: var(--accent); }
+  .bar.collapsed .body { display: none; }
+  .bar .body { display: flex; align-items: center; gap: 8px; }
+</style></head><body>
+<canvas id="cv"></canvas>
+<div class="bar" id="bar">
+  <button class="fold" id="fold" title="折叠/展开"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <span class="body" id="body">
+    <span id="colors"></span>
+    <span class="sep"></span>
+    <input type="range" id="size" min="2" max="16" value="5" title="粗细">
+    <button class="act" id="undo" title="撤销上一笔（Ctrl+Z）"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v6"/></svg>撤销</button>
+    <button class="act" id="clear" title="清空全部批注"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>清屏</button>
+    <button class="act" id="exit" title="退出批注（Esc）"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>退出</button>
+  </span>
+</div>
+<script>
+// 批注墨迹画布（W52④：页面在下层活窗，本窗只管收笔画——压感平滑二次曲线）
+const COLORS = ['#dc2626', '#d97706', '#2563eb', '#16a34a', '#e5e5e5'];
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let color = COLORS[0], size = 5, drawing = null, strokes = [];
+const applyTheme=(id,vars)=>{ if(id) document.documentElement.dataset.theme=id; if(vars) for(const [k,v] of Object.entries(vars)) if(v) document.documentElement.style.setProperty('--'+k,v); };
+window.mazz.invoke('panel:action',{type:'themeSnapshot'}).catch(()=>{});
+window.mazz.on('theme:changed',({id,vars})=>applyTheme(id,vars));
+window.mazz.on('panel:push',(p)=>{ if(p?.type==='themeInit') applyTheme(p.id,p.vars); });
+document.getElementById('colors').innerHTML = COLORS.map(c =>
+  `<i class="c${c === color ? ' on' : ''}" data-c="${c}" style="background:${c}"></i>`).join('');
+document.querySelectorAll('.c').forEach(el => el.addEventListener('click', () => {
+  color = el.dataset.c;
+  document.querySelectorAll('.c').forEach(x => x.classList.toggle('on', x === el));
+}));
+document.getElementById('size').addEventListener('input', (e) => { size = +e.target.value; });
+document.getElementById('undo').addEventListener('click', () => { strokes.pop(); redraw(); });
+document.getElementById('clear').addEventListener('click', () => { strokes = []; redraw(); });
+document.getElementById('exit').addEventListener('click', () => exitAll());
+document.getElementById('fold').addEventListener('click', () => document.getElementById('bar').classList.toggle('collapsed'));
+function exitAll() {
+  window.mazz.invoke('panel:action', { type: 'annotateExit' }).catch(() => {});
+  window.mazz.invoke('panel:close', { kind: 'annotate' }).catch(() => {});
+}
+function resize() {
+  const dpr = devicePixelRatio || 1;
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redraw();
+}
+window.addEventListener('resize', resize);
+resize();
+function drawStroke(st) {
+  const pts = st.pts;
+  if (!pts.length) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  if (pts.length < 3) { ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y); }
+  else {
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+    }
+    ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+  }
+  ctx.strokeStyle = st.color;
+  ctx.lineWidth = st.size;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.stroke();
+}
+function redraw() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  for (const s of strokes) drawStroke(s);
+  if (drawing) drawStroke(drawing);
+}
+cv.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0) return;
+  drawing = { pts: [{ x: e.clientX, y: e.clientY }], color, size };
+  cv.setPointerCapture?.(e.pointerId);
+});
+window.addEventListener('pointermove', (e) => {
+  if (!drawing) return;
+  drawing.pts.push({ x: e.clientX, y: e.clientY });
+  redraw();
+});
+window.addEventListener('pointerup', () => {
+  if (!drawing) return;
+  if (drawing.pts.length >= 2) strokes.push(drawing);
+  drawing = null;
+  redraw();
+});
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') exitAll();
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); strokes.pop(); redraw(); }
+});
+// 滚轮穿透：本画布不拦，让下层页面自己滚（透明罩纪律）
+cv.addEventListener('wheel', (e) => { e.preventDefault(); }, { passive: false });
+</script></body></html>

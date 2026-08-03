@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>插件管理</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:12px; flex:none; -webkit-app-region:drag; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .head { display:flex; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; }
+  .head .t { font-size:15px; font-weight:600; flex:1; }
+  .btn { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer; font-family:var(--font-ui); display:inline-flex; align-items:center; gap:4px; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .head .note { font-size:11px; color:var(--fg-dim); }
+  main { flex:1; min-height:0; padding:10px 16px; overflow-y:auto; }
+  .plg { display:flex; align-items:center; gap:10px; padding:9px 6px; border-bottom:1px solid var(--border); }
+  .plg .ico { font-size:20px; width:26px; text-align:center; flex:none; }
+  .plg .info { flex:1; min-width:0; }
+  .plg .name { font-weight:600; font-size:13px; }
+  .plg .name small { color:var(--fg-dim); font-weight:400; }
+  .plg .desc { font-size:11.5px; color:var(--fg-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .plg .desc.err { color:#c2410c; }
+  .empty { color:var(--fg-dim); text-align:center; padding:40px 0; line-height:2; }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="head">
+    <span class="t">插件管理</span>
+    <span class="note">.maz = zip 包（plugin.json + main.js）</span>
+    <button class="btn" id="install">＋ 安装插件</button>
+  </div>
+  <main id="m" class="ps-scroll-y"><div class="empty">加载中…</div></main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+let rows = [];
+function ask() { window.mazz.invoke('panel:action', { type: 'pluginsQuery' }).catch(() => {}); }
+function act(actName, extra = {}) { window.mazz.invoke('panel:action', { type: 'pluginsAction', act: actName, ...extra }).catch(() => {}); }
+
+function render() {
+  const m = $('#m');
+  if (!rows.length) {
+    m.innerHTML = '<div class="empty">还没有安装插件——点「安装插件」选择 .maz 文件<br><small>交付包 samples/ 目录自带两个示例插件</small></div>';
+    return;
+  }
+  m.innerHTML = rows.map((r, i) => `
+    <div class="plg" data-i="${i}">
+      <span class="ico">${r.error ? '⚠' : '🧩'}</span>
+      <div class="info">
+        <div class="name">${esc(r.name)} <small>v${esc(r.version)}</small></div>
+        <div class="desc${r.error ? ' err' : ''}">${esc(r.error || r.desc || r.id)}</div>
+      </div>
+      ${r.error ? '' : `
+        <button class="btn" data-a="open" ${r.enabled ? '' : 'disabled'}>打开</button>
+        <button class="btn" data-a="toggle">${r.enabled ? '禁用' : '启用'}</button>`}
+      <button class="btn" data-a="del">删除</button>
+    </div>`).join('');
+  m.querySelectorAll('.plg button').forEach(b => b.addEventListener('click', () => {
+    const r = rows[+b.closest('.plg').dataset.i];
+    if (!r) return;
+    act(b.dataset.a, { id: r.id, path: r.path, enabled: r.enabled, name: r.name });
+  }));
+}
+window.mazz.on('panel:push', (p) => {
+  if (p?.type !== 'plugins') return;
+  rows = p.rows || [];
+  render();
+});
+$('#install').addEventListener('click', () => act('install'));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+ask();
+</script>
+</body></html>

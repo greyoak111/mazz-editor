@@ -1,0 +1,28 @@
+import { _electron as electron } from 'playwright';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+const ROOT = path.resolve('.');
+const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-ctx-'));
+const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-ctxws-'));
+const app = await electron.launch({ args: [ROOT], env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' }, timeout: 120000 });
+const win = await app.firstWindow();
+await win.waitForFunction(() => !!(window.MazzCommands && window.mazz), null, { timeout: 15000 });
+await win.waitForTimeout(500);
+await win.evaluate(() => window.MazzShell?.openTab?.('browser', { title: '浏览器', content: '' }));
+await win.waitForFunction(() => !!window.__activeBrowserCtl, null, { timeout: 9000 });
+await win.waitForTimeout(1200);
+const spot = await win.evaluate(() => {
+  const host = [...document.querySelectorAll('.br-view-host')].find(e => e.getBoundingClientRect().width > 0);
+  const r = host.getBoundingClientRect();
+  return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+});
+await win.evaluate(() => window.__activeBrowserCtl.execJs(null, "window.__N={click:0,ctx:0};document.addEventListener(String.fromCharCode(99,108,105,99,107),()=>window.__N.click++,true);document.addEventListener(String.fromCharCode(99,111,110,116,101,120,116,109,101,110,117),()=>window.__N.ctx++,true);'ok'"));
+await win.mouse.click(spot.x, spot.y, { button: 'left' });
+await win.waitForTimeout(400);
+const afterLeft = await win.evaluate(() => window.__activeBrowserCtl.execJs(null, 'JSON.stringify(window.__N)'));
+await win.mouse.click(spot.x, spot.y, { button: 'right' });
+await win.waitForTimeout(600);
+const afterRight = await win.evaluate(() => window.__activeBrowserCtl.execJs(null, 'JSON.stringify(window.__N)'));
+console.log('spot:', JSON.stringify(spot), '左键后:', afterLeft, '右键后:', afterRight);
+await app.close().catch(() => {});

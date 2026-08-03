@@ -189,6 +189,9 @@ export class PaneTree {
     targetLeaf.tabs.render();
     from.refreshEmpty();
     targetLeaf.refreshEmpty();
+    // W58c 分屏穿帮根治唯一闸：移签跨窗格必广播——activate 里的 __sync 可能在 render 前拿到旧几何，
+    // 且 WebContentsView 挪窝后 GPU 表面不重绘（用户定版药方：分屏过去自动刷新一下页面）
+    bus.emit('pane:tabMoved', { tabId, from, target: targetLeaf });
     if (keepEmpty) this.syncKeys();
     else this.onLeafEmpty(from);
   }

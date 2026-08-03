@@ -37,8 +37,46 @@ export class FactoryPanel {
   }
 
   loadJSON(k, dft) { try { return JSON.parse(localStorage.getItem(k)) ?? dft; } catch { return dft; } }
+
+  // ==================== W53 坞浮动状态镜像（dockfloat 子窗格=远程视图，本实例是真相源） ====================
+  snapshot() {
+    return {
+      genres: (this.genres || []).map(g => ({ id: g.id, name: g.name, custom: !!g.custom, description: g.description || '' })),
+      genreId: this.genre?.id || '',
+      fields: (this.genre?.input_fields || []).map(f => ({ id: f.id, label: f.label, type: f.type, required: !!f.required, placeholder: f.placeholder || '', default: f.default ?? '', options: f.options || null })),
+      values: { ...(this.values || {}) },
+      genreDesc: this.genre?.description || '',
+      providerConfigured: providerReady(this.cfg),
+      providerHint: providerReady(this.cfg) ? `● ${this.cfg.model} 已就绪` : '未配置 AI 服务（主窗坞齿轮配置；不配也能「复制模板母版」去别的 AI 用）',
+      dump: this.el.querySelector('.fc-dump-text')?.value || '',
+      dualLoop: !!this.el.querySelector('.fc-dualloop')?.checked,
+      maxMode: !!this.el.querySelector('.fc-maxmode')?.checked,
+      maxChapters: +(this.el.querySelector('.fc-maxchapters')?.value || 0),
+      extras: {
+        plugins: (this.genre?.supportsPlugins ? NOVEL_PLUGINS.map(p => ({ id: p.id, name: p.name, on: this.pluginSel.has(p.id) })) : []),
+        styles: (this.styles || []).map(st => ({ id: st.id, name: st.label, on: this.styleIds.has(st.id) })),
+        embeds: (this.embeds || []).map(e => ({ name: e.name || '(资料)' })),
+      },
+      tasks: this.tasksSnapshot(),
+    };
+  }
+  tasksSnapshot() {
+    const STATUS = { pending: '⏳ 等待', running: '⚡ 执行中', done: '✓ 完成', 'done-warn': '⚠ 完成(有警告)', failed: '✗ 失败', paused: '⏸ 已终止' };
+    return (this.tasks || []).map(t => ({
+      title: (t.mode === 'max' ? '📖 ' : '📄 ') + t.label + (t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}章]` : ''),
+      statusText: STATUS[t.status] || t.status, desc: t.desc || '', pct: t.pct ?? null,
+    }));
+  }
+  pushSnapshot() {
+    if (!window.mazz?.isElectron) return;
+    window.mazz.invoke('panel:push', { kind: 'dockfloat', payload: { type: 'factorySnapshot', snapshot: this.snapshot() } }).catch(() => {});
+  }
+  pushTasks() {
+    if (!window.mazz?.isElectron) return;
+    window.mazz.invoke('panel:push', { kind: 'dockfloat', payload: { type: 'factoryTasks', tasks: this.tasksSnapshot() } }).catch(() => {});
+  }
   saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
-  persistTasks() { this.saveJSON(TASKS_KEY, this.tasks); this.renderTasks(); }
+  persistTasks() { this.saveJSON(TASKS_KEY, this.tasks); this.renderTasks(); this.pushTasks(); }
 
   async reload() {
     this.cfg = await getProviderConfig();
@@ -54,6 +92,7 @@ export class FactoryPanel {
     // 启动扫描可恢复任务（原版启动恢复列表）
     this.resumables = await scanResumableTasks();
     this.renderResumables();
+    this.pushSnapshot(); // W53 坞浮动镜像
   }
 
   // ==================== 骨架 ====================
@@ -157,6 +196,11 @@ export class FactoryPanel {
     this.logEl = this.el.querySelector('.fc-log');
     this.dumpEl = this.el.querySelector('.fc-dump-text');
     this.genreSel = this.el.querySelector('.fc-genre');
+    // B12b 收编：模板/导出格式两 select 子窗格化（隐藏保留作状态单源；genre 选项重建 MutationObserver 自带保鲜）
+    import('../../lib/select-menu.js').then(({ selectProxy }) => {
+      selectProxy(this.genreSel, { btnClass: 'fc-selmenu' });
+      const ef = this.el.querySelector('.fc-exportfmt'); if (ef) selectProxy(ef);
+    });
     this.genreSel.addEventListener('change', () => {
       this.genre = this.genres.find(g => g.id === this.genreSel.value) || this.genres[0];
       this.values = {};
@@ -497,6 +541,7 @@ export class FactoryPanel {
       el.addEventListener('change', () => { this.values[el.dataset.f] = el.value; });
     });
     this.renderExtras();
+    this.pushSnapshot(); // W53 坞浮动镜像
   }
 
   fieldHtml(f) {
@@ -1141,6 +1186,12 @@ ${chapters}
 
   // ==================== Provider 设置 ====================
   async openProviderDialog() {
+    // W57：全原生独立子窗格（DOM modal 浏览器前台被压——创作配置两件收编）
+    if (window.mazz?.isElectron) {
+      window.mazz.invoke('panel:action', { type: 'factoryStashTab', tab: 'provider' }).catch(() => {});
+      window.mazz.invoke('panel:open', { kind: 'factorycfg' }).catch(() => {});
+      return;
+    }
     const cfg = await getProviderConfig();
     const m = modal('AI 服务设置');
     m.body.innerHTML = `
@@ -1207,6 +1258,12 @@ ${chapters}
 
   // ==================== 创作模板编辑 ====================
   async openGenreEditor() {
+    // W57：全原生独立子窗格（DOM modal 浏览器前台被压——创作配置两件收编）
+    if (window.mazz?.isElectron) {
+      window.mazz.invoke('panel:action', { type: 'factoryStashTab', tab: 'genre' }).catch(() => {});
+      window.mazz.invoke('panel:open', { kind: 'factorycfg' }).catch(() => {});
+      return;
+    }
     const m = modal('新建创作模板');
     m.body.innerHTML = `
       <div style="min-width:460px">

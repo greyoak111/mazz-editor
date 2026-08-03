@@ -1,0 +1,843 @@
+diff --git a/renderer/modules/viewer/player.js b/renderer/modules/viewer/player.js
+index 9324e90..731ec82 100644
+--- a/renderer/modules/viewer/player.js
++++ b/renderer/modules/viewer/player.js
+@@ -1059,6 +1059,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
+   function scheduleHide() {
+     clearTimeout(hideTimer);
+     if (media.paused) return;
++    // W58f：自动隐藏只留全屏/无边框——窗口态底栏常驻（窗口态消失=「离谱情况」真机实锤）
++    if (!document.fullscreenElement && !ctl.borderless) return;
+     hideTimer = setTimeout(() => {
+       if (!ctl.borderless) controls.classList.add('fade');
+       topbar.classList.add('fade');
+diff --git a/renderer/panels/agreement.html b/renderer/panels/agreement.html
+index 93059d5..21c9c52 100644
+--- a/renderer/panels/agreement.html
++++ b/renderer/panels/agreement.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/bookmark.html b/renderer/panels/bookmark.html
+index 0d9b3c3..09d9d34 100644
+--- a/renderer/panels/bookmark.html
++++ b/renderer/panels/bookmark.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/ctxmenu.html b/renderer/panels/ctxmenu.html
+index fda2a9b..4e67e7b 100644
+--- a/renderer/panels/ctxmenu.html
++++ b/renderer/panels/ctxmenu.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:12.5px/1.45 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; max-height:100vh; background:var(--bg-elev); color:var(--fg); border-radius:10px; overflow:hidden; border:1px solid var(--border); box-shadow:0 8px 30px rgba(0,0,0,.32); }
+diff --git a/renderer/panels/dockfloat.html b/renderer/panels/dockfloat.html
+index 64bfc4f..533203e 100644
+--- a/renderer/panels/dockfloat.html
++++ b/renderer/panels/dockfloat.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/factorycfg.html b/renderer/panels/factorycfg.html
+index c137cbc..0b159b3 100644
+--- a/renderer/panels/factorycfg.html
++++ b/renderer/panels/factorycfg.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/favmgr.html b/renderer/panels/favmgr.html
+index b65d5fe..cf36147 100644
+--- a/renderer/panels/favmgr.html
++++ b/renderer/panels/favmgr.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css"> <!-- 军规④：滚动条族消费方真实加载（base.css 面板窗不载——写了不算做了病绝育） -->
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.6 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/help.html b/renderer/panels/help.html
+index 31f11a0..f07dde0 100644
+--- a/renderer/panels/help.html
++++ b/renderer/panels/help.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/newfile.html b/renderer/panels/newfile.html
+index 7c7c82a..e99d383 100644
+--- a/renderer/panels/newfile.html
++++ b/renderer/panels/newfile.html
+@@ -7,11 +7,16 @@
+ <link rel="stylesheet" href="panel-shared.css">
+ <title>新建文件</title>
+ <style>
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动（外飘轨双滚动条实锤） */
+   body { font-family: var(--font-ui); }
+-  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
++  .pwin { box-sizing: border-box; display:flex; flex-direction:column; height:100%; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+   .head { padding: 10px 14px 8px; }
+   .head h2 { font-size: 14px; margin: 0; font-weight: 600; }
+-  .body { padding: 4px 14px 14px; overflow: auto; min-height: 0; }
++  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; } /* W58f：窗控三键归位（与其他子窗同款右上悬浮） */
++  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor: pointer; font-size:12px; }
++  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
++  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
++  .body { padding: 4px 14px 14px; overflow: auto; min-height: 0; flex: 1; }
+   .grp { font-size: 11.5px; color: var(--fg-dim); margin: 10px 0 6px; }
+   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 7px; }
+   .nft { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--bg-elev); cursor: pointer; font-size: 12.5px; color: var(--fg); text-align: left; font-family: var(--font-ui); }
+diff --git a/renderer/panels/palette.html b/renderer/panels/palette.html
+index d31eca6..b356c41 100644
+--- a/renderer/panels/palette.html
++++ b/renderer/panels/palette.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css"> <!-- 军规④：滚动条族消费方真实加载（base.css 面板窗不载——写了不算做了病绝育） -->
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/panel-shared.css b/renderer/panels/panel-shared.css
+index 2ed6a1a..e314d11 100644
+--- a/renderer/panels/panel-shared.css
++++ b/renderer/panels/panel-shared.css
+@@ -9,9 +9,11 @@
+ *::-webkit-scrollbar-track { background: transparent; }
+ *::-webkit-scrollbar-corner { background: transparent; }
+ 
+-/* 滚动容器工具类：超框即滚（min-height:0 是 flex 子级滚动的生死线） */
+-.ps-scroll { overflow: auto; min-height: 0; scrollbar-width: thin; }
+-.ps-scroll-y { overflow-y: auto; overflow-x: hidden; min-height: 0; scrollbar-width: thin; }
++/* 滚动容器工具类：超框即滚（min-height:0 是 flex 子级滚动的生死线）
++ * W58g 真统一：scrollbar-width: thin 标准属性在现代 Chromium 里压死 ::-webkit-scrollbar 伪元素样式
++ * （子窗一直是系统细灰轨=与主窗主题丸不统一的真根，两波误判）——一律拔除，与主窗同走 webkit 一族 */
++.ps-scroll { overflow: auto; min-height: 0; }
++.ps-scroll-y { overflow-y: auto; overflow-x: hidden; min-height: 0; }
+ 
+ 
+ /* —— W55 迁移前 modal 控件族原值（与 base.css rb 族同值——独立子窗格与迁移前样式统一） —— */
+diff --git a/renderer/panels/plugins.html b/renderer/panels/plugins.html
+index 51b6b4b..7c77041 100644
+--- a/renderer/panels/plugins.html
++++ b/renderer/panels/plugins.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/pwmgr.html b/renderer/panels/pwmgr.html
+index 023005d..01a43ba 100644
+--- a/renderer/panels/pwmgr.html
++++ b/renderer/panels/pwmgr.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css"> <!-- 军规④：滚动条族消费方真实加载（base.css 面板窗不载——写了不算做了病绝育） -->
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.6 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/recorder.html b/renderer/panels/recorder.html
+index 7391c3c..7f50b9a 100644
+--- a/renderer/panels/recorder.html
++++ b/renderer/panels/recorder.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/settings.html b/renderer/panels/settings.html
+index 0e879d9..c477990 100644
+--- a/renderer/panels/settings.html
++++ b/renderer/panels/settings.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/shortcuts.html b/renderer/panels/shortcuts.html
+index cfa4c35..2a634db 100644
+--- a/renderer/panels/shortcuts.html
++++ b/renderer/panels/shortcuts.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css"> <!-- 军规④：滚动条族消费方真实加载（base.css 面板窗不载——写了不算做了病绝育） -->
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.6 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/sync.html b/renderer/panels/sync.html
+index e5e0c08..ca68a53 100644
+--- a/renderer/panels/sync.html
++++ b/renderer/panels/sync.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/panels/translate.html b/renderer/panels/translate.html
+index ec75a7e..b120736 100644
+--- a/renderer/panels/translate.html
++++ b/renderer/panels/translate.html
+@@ -5,7 +5,7 @@
+ <link rel="stylesheet" href="../styles/themes.css">
+ <link rel="stylesheet" href="panel-shared.css">
+ <style>
+-  html, body { background: transparent; }
++  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+   * { box-sizing: border-box; }
+   body { margin:0; font:13px/1.5 var(--font-ui); }
+   .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+diff --git a/renderer/styles/base.css b/renderer/styles/base.css
+index d59c12e..ba2770b 100644
+--- a/renderer/styles/base.css
++++ b/renderer/styles/base.css
+@@ -61,8 +61,8 @@ body.platform-mac .tb-win-controls { display: none; }
+ /* ---------- 工作区 ---------- */
+ .workspace { flex: 1; display: flex; min-height: 0; } /* W52e③ 坞真推拉：坞停靠态是 workspace 的 flex 兄弟（布局成员），让位由 flex 自动完成——margin hack 平反 */
+ .sidebar {
+-  width: 232px; flex: none; background: var(--bg-elev); border-right: 1px solid var(--border);
+-  display: flex; flex-direction: column; transition: margin-left .18s ease;
++  width: 232px; max-width: 32vw; flex: none; background: var(--bg-elev); border-right: 1px solid var(--border);
++  display: flex; flex-direction: column; transition: margin-left .18s ease; /* W58f：左栏工作区自适应让位（窄窗按比例收——播放器底栏保命宽度） */
+ }
+ .sidebar.hidden { margin-left: -232px; }
+ .sidebar-head { padding: 8px 10px; font-size: 11px; color: var(--fg-dim); display: flex; justify-content: space-between; align-items: center; }
+@@ -1155,7 +1155,7 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
+ .mz-time { font-size: 12px; color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+ .mz-vol { width: 74px; accent-color: var(--accent); }
+ .mz-speed { background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 5px; font-size: 12px; padding: 2px 4px; }
+-.mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); }
++.mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 24%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f：右栏列表自适应让位（窄窗压宽保底栏——24% 封顶 150 保底） */
+ /* 列表栏工作区栏同款推挤：展开=视频区/顶条/控制条/字幕画布同步收窄，收起=全量铺满 */
+ .mz-stage.side-open .mz-side { display: flex; }
+ .mz-stage.side-open .mz-media, .mz-stage.side-open .mz-audio-wrap, .mz-stage.side-open .mz-sub-host { width: calc(100% - var(--mz-side-w)); }
+diff --git a/tests/contract/hotfix-w58f.test.mjs b/tests/contract/hotfix-w58f.test.mjs
+new file mode 100644
+index 0000000..6b47216
+--- /dev/null
++++ b/tests/contract/hotfix-w58f.test.mjs
+@@ -0,0 +1,47 @@
++// tests/contract/hotfix-w58f.test.mjs —— W58f 契约（播放器三栏自适应/面板滚动锁/新建文件窗控归位）
++import './_setup.mjs';
++import { describe, test, assert } from '../harness.mjs';
++import fs from 'node:fs';
++import path from 'node:path';
++
++const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
++
++describe('① 播放器三栏自适应+底栏常驻', () => {
++  test('自动隐藏只留全屏/无边框', () => {
++    const pl = readSrc('renderer/modules/viewer/player.js');
++    assert.ok(pl.includes('if (!document.fullscreenElement && !ctl.borderless) return;'), '窗口态 fade 必须绝迹');
++  });
++  test('右栏列表+左栏工作区自适应让位', () => {
++    const css = readSrc('renderer/styles/base.css');
++    assert.ok(/\.mz-side \{[^}]*max-width: 24%/.test(css), 'mz-side 24% 封顶必须有');
++    assert.ok(/\.mz-side \{[^}]*min-width: 150px/.test(css), 'mz-side 150 保底必须有');
++    assert.ok(/\.sidebar \{[^}]*max-width: 32vw/.test(css), 'sidebar 32vw 封顶必须有');
++  });
++});
++
++describe('② 面板滚动锁（外飘轨绝育）', () => {
++  test('全部面板 html/body 锁溢出（覆盖面板豁免）', () => {
++    const files = fs.readdirSync(path.resolve('renderer/panels')).filter(f => f.endsWith('.html') && !['annotate.html', 'splitpreview.html'].includes(f));
++    assert.ok(files.length >= 16, '面板数底线');
++    for (const f of files) {
++      const s = readSrc('renderer/panels/' + f);
++      assert.ok(/html, body \{[^}]*overflow: hidden/.test(s), f + ' 必须锁文档级滚动');
++    }
++  });
++  test('内滚容器在位（防裁切回退）', () => {
++    const files = fs.readdirSync(path.resolve('renderer/panels')).filter(f => f.endsWith('.html') && !['annotate.html', 'splitpreview.html'].includes(f));
++    for (const f of files) {
++      const s = readSrc('renderer/panels/' + f);
++      assert.ok(s.includes('ps-scroll') || /overflow:\s*auto/.test(s) || /overflow-y:\s*auto/.test(s), f + ' 必须有内滚容器');
++    }
++  });
++});
++
++describe('③ 新建文件窗控三键归位+内滚唯一', () => {
++  test('p-winbtns 同款右上悬浮+body flex 内滚', () => {
++    const nf = readSrc('renderer/panels/newfile.html');
++    assert.ok(nf.includes('.p-winbtns { position:absolute; top:2px; right:8px;'), '窗控三键必须右上悬浮（同款）');
++    assert.ok(/\.body \{[^}]*flex: 1/.test(nf), 'body 必须 flex:1 内滚唯一');
++    assert.ok(/\.pwin \{[^}]*height:100%/.test(nf), 'pwin 必须随文档高');
++  });
++});
+diff --git a/tests/contract/hotfix-w58g.test.mjs b/tests/contract/hotfix-w58g.test.mjs
+new file mode 100644
+index 0000000..9f5ddd3
+--- /dev/null
++++ b/tests/contract/hotfix-w58g.test.mjs
+@@ -0,0 +1,30 @@
++// tests/contract/hotfix-w58g.test.mjs —— W58g 契约（子窗滚动条真统一：标准属性压钉拔除）
++import './_setup.mjs';
++import { describe, test, assert } from '../harness.mjs';
++import fs from 'node:fs';
++import path from 'node:path';
++
++const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
++
++describe('子窗滚动条真统一（第三波斩根）', () => {
++  test('scrollbar-width: thin 声明绝迹（webkit 一族解封）', () => {
++    const ps = readSrc('renderer/panels/panel-shared.css');
++    assert.ok(!ps.includes('scrollbar-width: thin;'), 'thin 声明必须拔除（现代 Chromium 标准属性压死 webkit 伪元素=两波不统一的真根）');
++    assert.ok(!ps.includes('scrollbar-color'), 'scrollbar-color 同族压钉不得存在');
++    // webkit 一族必须在（W58e 镜像）：换色=--bg-active 主题变量+hover accent；透明化=2px 透明边+background-clip
++    assert.ok(ps.includes('*::-webkit-scrollbar { width: 10px; height: 10px; }'), 'webkit 10px 轨必须在');
++    assert.ok(ps.includes('background: var(--bg-active); border-radius: 5px; border: 2px solid transparent; background-clip: content-box;'), '主题换色+透明化浮丸必须在');
++    assert.ok(ps.includes('*::-webkit-scrollbar-thumb:hover { background: var(--accent);'), 'hover accent 美化必须在');
++  });
++  test('面板内联无第二压钉', () => {
++    const files = fs.readdirSync(path.resolve('renderer/panels')).filter(f => f.endsWith('.html'));
++    for (const f of files) {
++      const s = readSrc('renderer/panels/' + f);
++      assert.ok(!s.includes('scrollbar-width') && !s.includes('scrollbar-color'), f + ' 不得有内联标准属性压钉');
++    }
++  });
++  test('主窗一族无标准属性（镜像源同引擎路径）', () => {
++    const base = readSrc('renderer/styles/base.css');
++    assert.ok(!base.includes('scrollbar-width') && !base.includes('scrollbar-color'), '主窗 base.css 同标准——皆 webkit 一族');
++  });
++});
+diff --git a/tests/e2e/probe-playerbar.mjs b/tests/e2e/probe-playerbar.mjs
+new file mode 100644
+index 0000000..3ad2b8f
+--- /dev/null
++++ b/tests/e2e/probe-playerbar.mjs
+@@ -0,0 +1,44 @@
++// tests/e2e/probe-playerbar.mjs —— 探针：播放器底栏几何直视（多宽度）
++import { _electron as electron } from 'playwright';
++import fs from 'fs'; import os from 'os'; import path from 'path';
++import { seedFixtures } from './fixtures.mjs';
++const ROOT = path.resolve('.');
++const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
++const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
++await seedFixtures(WS, WS);
++const app = await electron.launch({ args: [ROOT], env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' }, timeout: 120000 });
++const win = await app.firstWindow();
++await win.waitForLoadState('domcontentloaded');
++await win.waitForTimeout(2600);
++for (let i = 0; i < 12; i++) { const acc = await win.evaluate(() => !!document.querySelector('#agree-accept')); if (acc) { await win.click('#agree-accept').catch(() => {}); await win.waitForTimeout(300); continue; } break; }
++await win.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }).catch(() => {}));
++await win.evaluate(() => window.MazzCommands?.execute('file.newViewer'));
++await win.waitForTimeout(2000);
++// 播放列表开（模拟真机）
++await win.evaluate(() => document.querySelector('[data-a=list]')?.click()).catch(() => {});
++await win.waitForTimeout(800);
++
++for (const w of [1920, 1600, 1366, 1280, 1080]) {
++  await win.setViewportSize({ width: w, height: 900 }).catch(() => {});
++  await win.waitForTimeout(500);
++  const st = await win.evaluate(() => {
++    const ctr = document.querySelector('.mz-controls');
++    const bar = document.querySelector('.mz-bar');
++    const stage = document.querySelector('.mz-stage');
++    const side = document.querySelector('.mz-side');
++    const sb = document.querySelector('.sidebar');
++    if (!ctr || !bar) return { fatal: 'no controls' };
++    const cr = ctr.getBoundingClientRect(), br = bar.getBoundingClientRect(), sr = stage?.getBoundingClientRect(), pr = side?.getBoundingClientRect();
++    const cs = getComputedStyle(ctr), bs = getComputedStyle(bar);
++    return {
++      controlsRect: { l: Math.round(cr.left), r: Math.round(cr.right), w: Math.round(cr.width) },
++      barRect: { l: Math.round(br.left), r: Math.round(br.right), w: Math.round(br.width) },
++      stageW: Math.round(sr?.width || 0), sideW: Math.round(pr?.width || 0), sbW: Math.round(sb?.getBoundingClientRect().width || 0),
++      opacity: cs.opacity, fade: ctr.classList.contains('fade'), barMinW: bs.minWidth, barOverflowX: bs.overflowX,
++      stageOverflow: getComputedStyle(stage).overflow,
++    };
++  });
++  console.log(`W${w}:`, JSON.stringify(st));
++}
++await app.close().catch(() => {});
++process.exit(0);
+diff --git a/tests/e2e/run60.mjs b/tests/e2e/run60.mjs
+new file mode 100644
+index 0000000..a9356c7
+--- /dev/null
++++ b/tests/e2e/run60.mjs
+@@ -0,0 +1,69 @@
++// tests/e2e/scenes60.mjs —— W58c 实证批 runner（scenes60 专用迭代器）
++import { _electron as electron } from 'playwright';
++import fs from 'fs';
++import os from 'os';
++import path from 'path';
++import { Human } from './human.mjs';
++import { seedFixtures } from './fixtures.mjs';
++import { scenes60 } from './scenes60.mjs';
++
++const ROOT = path.resolve('.');
++const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
++const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
++const WS2 = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws2-'));
++await seedFixtures(WS, WS2);
++fs.writeFileSync(WS + '/测试文档.md', '# W58c 实证\n\n正文。\n');
++
++const results = [];
++const SCENE_TIMEOUT = 45000;
++async function scenario(name, fn) {
++  const t0 = Date.now();
++  try {
++    await Promise.race([fn(), new Promise((_, rej) => setTimeout(() => rej(new Error(`场景熔断(${SCENE_TIMEOUT / 1000}s)`)), SCENE_TIMEOUT))]);
++    results.push([name, 'PASS']);
++    console.log(`■ ${name} ✅ (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
++  } catch (e) {
++    results.push([name, 'FAIL', e.message]);
++    console.error(`■ ${name} ❌\n${e.message}`);
++  }
++}
++
++let app, win, human, ownPid = null;
++async function main() {
++  app = await electron.launch({
++    args: [ROOT],
++    env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' },
++    timeout: 120000,
++  });
++  win = await app.firstWindow();
++  await win.waitForLoadState('domcontentloaded');
++  ownPid = app.process()?.pid ?? null;
++  human = new Human(win);
++  human.watchMain(app); // 军规⑩ 主进程日志警察
++  await human.until(() => !!(window.MazzCommands && window.MazzShell), { timeout: 15000, msg: '壳初始化' });
++  await win.waitForTimeout(600);
++  await human.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }).catch(() => {}));
++  for (let i = 0; i < 20; i++) {
++    const state = await human.evaluate(() => {
++      const masks = [...document.querySelectorAll('.mazz-palette-mask')].filter(m => m.getBoundingClientRect().width > 0);
++      const acc = document.querySelector('#agree-accept');
++      return { masks: masks.length, agree: !!acc };
++    });
++    if (state.agree) { await human.click('#agree-accept').catch(() => {}); await win.waitForTimeout(300); continue; }
++    if (state.masks === 0) break;
++    await win.keyboard.press('Escape');
++    await win.waitForTimeout(300);
++  }
++
++  await scenes60({ app, win, human, WS, WS2, scenario });
++  await scenario('异常警察·全程零渲染异常', async () => { await human.finish({ allow: ['ERR_ABORTED', 'net::ERR_FILE_NOT_FOUND', 'favicon', 'findDocumentLinks', 'findDocumentSymbols', 'getFoldingRanges'] }); });
++
++  const passed = results.filter(r => r[1] === 'PASS').length;
++  console.log('═══════════');
++  console.log(`W58f实证批：${passed}/${results.length} 过`);
++  const fails = results.filter(r => r[1] !== 'PASS');
++  if (fails.length) { console.log('失败：' + fails.map(f => f[0]).join('、')); process.exitCode = 1; }
++  await app.close().catch(() => {});
++  process.exit(process.exitCode || 0);
++}
++main().catch(e => { console.error('RUNNER_FATAL', e); process.exit(2); });
+diff --git a/tests/e2e/run61.mjs b/tests/e2e/run61.mjs
+new file mode 100644
+index 0000000..52e5472
+--- /dev/null
++++ b/tests/e2e/run61.mjs
+@@ -0,0 +1,69 @@
++// tests/e2e/scenes61.mjs —— W58c 实证批 runner（scenes61 专用迭代器）
++import { _electron as electron } from 'playwright';
++import fs from 'fs';
++import os from 'os';
++import path from 'path';
++import { Human } from './human.mjs';
++import { seedFixtures } from './fixtures.mjs';
++import { scenes61 } from './scenes61.mjs';
++
++const ROOT = path.resolve('.');
++const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
++const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
++const WS2 = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws2-'));
++await seedFixtures(WS, WS2);
++fs.writeFileSync(WS + '/测试文档.md', '# W58c 实证\n\n正文。\n');
++
++const results = [];
++const SCENE_TIMEOUT = 45000;
++async function scenario(name, fn) {
++  const t0 = Date.now();
++  try {
++    await Promise.race([fn(), new Promise((_, rej) => setTimeout(() => rej(new Error(`场景熔断(${SCENE_TIMEOUT / 1000}s)`)), SCENE_TIMEOUT))]);
++    results.push([name, 'PASS']);
++    console.log(`■ ${name} ✅ (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
++  } catch (e) {
++    results.push([name, 'FAIL', e.message]);
++    console.error(`■ ${name} ❌\n${e.message}`);
++  }
++}
++
++let app, win, human, ownPid = null;
++async function main() {
++  app = await electron.launch({
++    args: [ROOT],
++    env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' },
++    timeout: 120000,
++  });
++  win = await app.firstWindow();
++  await win.waitForLoadState('domcontentloaded');
++  ownPid = app.process()?.pid ?? null;
++  human = new Human(win);
++  human.watchMain(app); // 军规⑩ 主进程日志警察
++  await human.until(() => !!(window.MazzCommands && window.MazzShell), { timeout: 15000, msg: '壳初始化' });
++  await win.waitForTimeout(600);
++  await human.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }).catch(() => {}));
++  for (let i = 0; i < 20; i++) {
++    const state = await human.evaluate(() => {
++      const masks = [...document.querySelectorAll('.mazz-palette-mask')].filter(m => m.getBoundingClientRect().width > 0);
++      const acc = document.querySelector('#agree-accept');
++      return { masks: masks.length, agree: !!acc };
++    });
++    if (state.agree) { await human.click('#agree-accept').catch(() => {}); await win.waitForTimeout(300); continue; }
++    if (state.masks === 0) break;
++    await win.keyboard.press('Escape');
++    await win.waitForTimeout(300);
++  }
++
++  await scenes61({ app, win, human, WS, WS2, scenario });
++  await scenario('异常警察·全程零渲染异常', async () => { await human.finish({ allow: ['ERR_ABORTED', 'net::ERR_FILE_NOT_FOUND', 'favicon', 'findDocumentLinks', 'findDocumentSymbols', 'getFoldingRanges'] }); });
++
++  const passed = results.filter(r => r[1] === 'PASS').length;
++  console.log('═══════════');
++  console.log(`W58g实证批：${passed}/${results.length} 过`);
++  const fails = results.filter(r => r[1] !== 'PASS');
++  if (fails.length) { console.log('失败：' + fails.map(f => f[0]).join('、')); process.exitCode = 1; }
++  await app.close().catch(() => {});
++  process.exit(process.exitCode || 0);
++}
++main().catch(e => { console.error('RUNNER_FATAL', e); process.exit(2); });
+diff --git a/tests/e2e/scenes60.mjs b/tests/e2e/scenes60.mjs
+new file mode 100644
+index 0000000..78c0776
+--- /dev/null
++++ b/tests/e2e/scenes60.mjs
+@@ -0,0 +1,95 @@
++// tests/e2e/scenes60.mjs —— W58f 实证批（军规⑲ scoped：播放器三栏/面板滚动锁/新建文件窗控）
++export async function scenes60({ app, win, human, WS, WS2, scenario }) {
++  const wait = (ms) => win.waitForTimeout(ms);
++  const evaluate = (fn, arg) => win.evaluate(fn, arg);
++
++  // ==================== 1：窗口态底栏常驻+右栏自适应 ====================
++  await scenario('播放器·窗口态底栏常驻', async () => {
++    await evaluate(() => window.MazzCommands?.execute('file.newViewer'));
++    await wait(2000);
++    await evaluate(() => document.querySelector('[data-a=list]')?.click()).catch(() => {});
++    await wait(600);
++    // 等到超过旧 2.4s 隐藏窗（旧病：窗口态 fade 消失）
++    await wait(3200);
++    const st = await evaluate(() => {
++      const ctr = document.querySelector('.mz-controls');
++      const bar = document.querySelector('.mz-bar');
++      const side = document.querySelector('.mz-side');
++      const stage = document.querySelector('.mz-stage');
++      return {
++        opacity: ctr ? getComputedStyle(ctr).opacity : null,
++        fade: ctr?.classList.contains('fade') ?? null,
++        btns: bar?.querySelectorAll('.mz-btn').length ?? 0,
++        sideW: side?.getBoundingClientRect().width ?? 0,
++        stageW: stage?.getBoundingClientRect().width ?? 0,
++      };
++    });
++    human.log('底栏常驻:', JSON.stringify(st));
++    await human.assert(st.opacity === '1' && st.fade === false, `窗口态底栏必须常驻（实拿 opacity=${st.opacity} fade=${st.fade}）`);
++    await human.assert(st.btns >= 17, `全组件必须在（实拿 ${st.btns}）`);
++    // 右栏 24% 封顶实证（1920 视口下 260 ≤ 24%——先确认基线）
++    await human.assert(st.sideW <= Math.ceil(st.stageW * 0.24) + 1, `右栏必须 ≤24% 舞台（实拿 ${st.sideW}/${st.stageW}）`);
++  });
++
++  // ==================== 2：左栏工作区 32vw 封顶 ====================
++  await scenario('左栏·工作区 32vw 封顶', async () => {
++    const st = await evaluate(() => {
++      const sb = document.querySelector('.sidebar');
++      const cs = getComputedStyle(sb);
++      return { w: sb.getBoundingClientRect().width, max: cs.maxWidth, vw: window.innerWidth };
++    });
++    human.log('左栏:', JSON.stringify(st));
++    await human.assert(st.max === '32vw' || st.max.endsWith('px'), `max-width 必须落（实拿 ${st.max}）`);
++    const capPx = st.max === '32vw' ? st.vw * 0.32 : parseFloat(st.max);
++    await human.assert(st.w <= Math.ceil(capPx) + 1, `左栏宽必须 ≤32vw（实拿 ${st.w} vs ${Math.round(capPx)}）`);
++    await evaluate(() => window.MazzCommands?.execute('file.closeTab')).catch(() => {});
++    await wait(300);
++  });
++
++  // ==================== 3：面板外飘轨绝育 ====================
++  await scenario('面板·外飘轨绝育内滚唯一', async () => {
++    await evaluate(() => window.MazzCommands?.execute('fileTree.newFile'));
++    await wait(2400);
++    const pw = app.windows().find(w => w.url().includes('/panels/newfile.html'));
++    await human.assert(!!pw, '新建文件子窗必须开');
++    // 先压窗高逼内容溢出（18 卡全显时内滚不激活=测不出唯一性）
++    await pw.setViewportSize({ width: 560, height: 360 }).catch(() => {});
++    await wait(600);
++    const st = await pw.evaluate(() => {
++      const de = document.documentElement;
++      const body = document.querySelector('.body');
++      return {
++        vbar: window.innerWidth - de.clientWidth, // 文档级竖滚动条占位（>0=外飘轨现身）
++        bodyScrollable: body ? body.scrollHeight > body.clientHeight + 1 : null,
++        bodyFlex: body ? getComputedStyle(body).flexGrow : null,
++        htmlOv: getComputedStyle(de).overflow,
++      };
++    }).catch(() => null);
++    human.log('滚动锁:', JSON.stringify(st));
++    await human.assert(st && st.vbar === 0, `文档级滚动条必须绝迹=外飘轨绝育（实拿占位 ${st?.vbar}px）`);
++    await human.assert(st.htmlOv === 'hidden', '文档级必须锁溢出');
++    await human.assert(st.bodyScrollable === true && st.bodyFlex === '1', `内滚必须唯一且 flex:1（实拿 ${JSON.stringify(st)}）`);
++    await pw.close().catch(() => {});
++    await wait(400);
++  });
++
++  // ==================== 4：新建文件窗控三键归位 ====================
++  await scenario('新建文件·窗控三键右上悬浮', async () => {
++    await evaluate(() => window.MazzCommands?.execute('fileTree.newFile'));
++    await wait(2200);
++    const pw = app.windows().find(w => w.url().includes('/panels/newfile.html'));
++    await human.assert(!!pw, '子窗必须开');
++    const st = await pw.evaluate(() => {
++      const wb = document.querySelector('.p-winbtns');
++      if (!wb) return null;
++      const cs = getComputedStyle(wb);
++      const r = wb.getBoundingClientRect();
++      return { pos: cs.position, top: cs.top, right: cs.right, rx: Math.round(window.innerWidth - r.right), btns: wb.querySelectorAll('button').length };
++    }).catch(() => null);
++    human.log('窗控:', JSON.stringify(st));
++    await human.assert(st && st.pos === 'absolute' && st.top === '2px' && st.right === '8px', `三键必须右上悬浮（实拿 ${JSON.stringify(st)}）`);
++    await human.assert(st.btns === 3, '三键必须齐（收起/最大/关闭）');
++    await pw.close().catch(() => {});
++    await wait(300);
++  });
++}
+diff --git a/tests/e2e/scenes61.mjs b/tests/e2e/scenes61.mjs
+new file mode 100644
+index 0000000..6eeaeb9
+--- /dev/null
++++ b/tests/e2e/scenes61.mjs
+@@ -0,0 +1,37 @@
++// tests/e2e/scenes61.mjs —— W58g 实证批（scoped：子窗滚动条真统一——thin 压钉拔除+主题丸同款）
++export async function scenes61({ app, win, human, WS, WS2, scenario }) {
++  const wait = (ms) => win.waitForTimeout(ms);
++  const evaluate = (fn, arg) => win.evaluate(fn, arg);
++
++  await scenario('滚动条·thin 压钉拔除+主窗同款实证', async () => {
++    // 主窗基线：全局滚动条即 webkit 一族（加载链文本实证——base.css 无标准属性压钉）
++    const mainBase = await evaluate(async () => {
++      const t = await fetch('styles/base.css').then(r => r.text()).catch(() => '');
++      return { thumb: t.includes('background: var(--bg-active); border-radius: 5px; border: 2px solid transparent; background-clip: content-box;'), noStd: !t.includes('scrollbar-width') && !t.includes('scrollbar-color') };
++    });
++    human.log('主窗一族:', JSON.stringify(mainBase));
++    await human.assert(mainBase.thumb && mainBase.noStd, `主窗必须 webkit 一族且无压钉（实拿 ${JSON.stringify(mainBase)}）`);
++    // 面板：help 长内容——computed scrollbarWidth 不得为 thin + 加载链文本三钉
++    await evaluate(() => window.mazz.invoke('panel:open', { kind: 'help' }).catch(() => {}));
++    await wait(2400);
++    const pw = app.windows().find(w => w.url().includes('/panels/help.html'));
++    await human.assert(!!pw, '帮助子窗必须开');
++    const st = await pw.evaluate(async () => {
++      const el = document.querySelector('.ps-scroll') || document.querySelector('[class*=scroll]') || document.body;
++      const sw = getComputedStyle(el).scrollbarWidth;
++      const cssText = await fetch('panel-shared.css').then(r => r.text()).catch(() => '');
++      return {
++        sw,
++        noThinDecl: !cssText.includes('scrollbar-width: thin;'),
++        webkit10: cssText.includes('*::-webkit-scrollbar { width: 10px; height: 10px; }'),
++        themed: cssText.includes('background: var(--bg-active); border-radius: 5px; border: 2px solid transparent; background-clip: content-box;'),
++        hover: cssText.includes('scrollbar-thumb:hover { background: var(--accent);'),
++      };
++    }).catch(() => null);
++    human.log('子窗实证:', JSON.stringify(st));
++    await human.assert(st && st.sw !== 'thin', `标准属性压钉必须拔除（实拿 scrollbarWidth=${st?.sw}）`);
++    await human.assert(st.noThinDecl && st.webkit10 && st.themed && st.hover, `webkit 一族必须完整在位（实拿 ${JSON.stringify(st)}）`);
++    await pw.close().catch(() => {});
++    await wait(400);
++  });
++}
+diff --git a/tests/e2e/shot-w58f.mjs b/tests/e2e/shot-w58f.mjs
+new file mode 100644
+index 0000000..24e3ba7
+--- /dev/null
++++ b/tests/e2e/shot-w58f.mjs
+@@ -0,0 +1,39 @@
++// tests/e2e/shot-w58f.mjs —— W58f 实证截图
++import { _electron as electron } from 'playwright';
++import fs from 'fs'; import os from 'os'; import path from 'path';
++import { seedFixtures } from './fixtures.mjs';
++const ROOT = path.resolve('.');
++const OUT = process.env.SHOT_DIR || '/mnt/agents/output';
++const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
++const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
++await seedFixtures(WS, WS);
++const app = await electron.launch({ args: [ROOT], env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' }, timeout: 120000 });
++const win = await app.firstWindow();
++await win.waitForLoadState('domcontentloaded');
++await win.waitForTimeout(2600);
++for (let i = 0; i < 15; i++) {
++  const acc = await win.evaluate(() => !!document.querySelector('#agree-accept'));
++  if (acc) { await win.click('#agree-accept').catch(() => {}); await win.waitForTimeout(300); continue; }
++  const n = await win.evaluate(() => [...document.querySelectorAll('.mazz-palette-mask')].filter(m => m.getBoundingClientRect().width > 0).length);
++  if (!n) break; await win.keyboard.press('Escape'); await win.waitForTimeout(250);
++}
++await win.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }).catch(() => {}));
++// ① 播放器窗口态底栏常驻（等 3.2s 旧隐藏窗后拍）
++await win.evaluate(() => window.MazzCommands?.execute('file.newViewer'));
++await win.waitForTimeout(2000);
++await win.evaluate(() => document.querySelector('[data-a=list]')?.click()).catch(() => {});
++await win.waitForTimeout(3400);
++await win.screenshot({ path: OUT + '/w58f-播放器底栏常驻.png' });
++// ② 新建文件窗控归位+压窗内滚（外飘轨绝育）
++await win.evaluate(() => window.MazzCommands?.execute('fileTree.newFile'));
++await win.waitForTimeout(2200);
++const nf = app.windows().find(w => w.url().includes('/panels/newfile.html'));
++if (nf) {
++  await nf.setViewportSize({ width: 560, height: 420 }).catch(() => {});
++  await nf.waitForTimeout(600);
++  await nf.evaluate(() => { const b = document.querySelector('.body'); if (b) b.scrollTop = 60; });
++  await nf.waitForTimeout(400);
++  await nf.screenshot({ path: OUT + '/w58f-新建文件归位内滚.png' });
++}
++await app.close().catch(() => {});
++console.log('SHOTS_DONE');
+diff --git a/tests/e2e/shot-w58g.mjs b/tests/e2e/shot-w58g.mjs
+new file mode 100644
+index 0000000..c6c4a74
+--- /dev/null
++++ b/tests/e2e/shot-w58g.mjs
+@@ -0,0 +1,38 @@
++// tests/e2e/shot-w58g.mjs —— W58g 对比同框实证（主窗/子窗滚动条同款换色）
++import { _electron as electron } from 'playwright';
++import fs from 'fs'; import os from 'os'; import path from 'path';
++import { seedFixtures } from './fixtures.mjs';
++const ROOT = path.resolve('.');
++const OUT = process.env.SHOT_DIR || '/mnt/agents/output';
++const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
++const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
++await seedFixtures(WS, WS);
++const app = await electron.launch({ args: [ROOT], env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' }, timeout: 120000 });
++const win = await app.firstWindow();
++await win.waitForLoadState('domcontentloaded');
++await win.waitForTimeout(2600);
++for (let i = 0; i < 15; i++) {
++  const acc = await win.evaluate(() => !!document.querySelector('#agree-accept'));
++  if (acc) { await win.click('#agree-accept').catch(() => {}); await win.waitForTimeout(300); continue; }
++  const n = await win.evaluate(() => [...document.querySelectorAll('.mazz-palette-mask')].filter(m => m.getBoundingClientRect().width > 0).length);
++  if (!n) break; await win.keyboard.press('Escape'); await win.waitForTimeout(250);
++}
++await win.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }).catch(() => {}));
++// 深主题（墨黑）显换色
++await win.evaluate(() => window.MazzShell?.setTheme?.('ink'));
++await win.waitForTimeout(1000);
++// ① 主窗滚动条（文件树右缘特写）
++await win.screenshot({ path: OUT + '/w58g-主窗滚动条-ink.png', clip: { x: 0, y: 200, width: 320, height: 500 } });
++// ② 子窗滚动条（help 面板滚出轨后拍右缘）
++await win.evaluate(() => window.mazz.invoke('panel:open', { kind: 'help' }).catch(() => {}));
++await win.waitForTimeout(2400);
++const pw = app.windows().find(w => w.url().includes('/panels/help.html'));
++if (pw) {
++  await pw.evaluate(() => { const el = document.querySelector('.ps-scroll') || document.querySelector('.body'); if (el) el.scrollTop = 80; });
++  await pw.waitForTimeout(400);
++  const r = await pw.evaluate(() => { const w = window.innerWidth, h = window.innerHeight; return { x: w - 260, y: 0, width: 260, height: Math.min(h, 560) }; });
++  await pw.screenshot({ path: OUT + '/w58g-子窗滚动条-ink.png', clip: r });
++}
++await win.evaluate(() => window.MazzShell?.setTheme?.('paper'));
++await app.close().catch(() => {});
++console.log('SHOTS_DONE');
+diff --git a/tests/e2e/shot-w58g2.mjs b/tests/e2e/shot-w58g2.mjs
+new file mode 100644
+index 0000000..50af8f6
+--- /dev/null
++++ b/tests/e2e/shot-w58g2.mjs
+@@ -0,0 +1,28 @@
++import { _electron as electron } from 'playwright';
++import fs from 'fs'; import os from 'os'; import path from 'path';
++import { seedFixtures } from './fixtures.mjs';
++const ROOT = path.resolve('.');
++const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
++const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
++await seedFixtures(WS, WS);
++const app = await electron.launch({ args: [ROOT], env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' }, timeout: 120000 });
++const win = await app.firstWindow();
++await win.waitForLoadState('domcontentloaded');
++await win.waitForTimeout(2600);
++for (let i = 0; i < 15; i++) {
++  const acc = await win.evaluate(() => !!document.querySelector('#agree-accept'));
++  if (acc) { await win.click('#agree-accept').catch(() => {}); await win.waitForTimeout(300); continue; }
++  const n = await win.evaluate(() => [...document.querySelectorAll('.mazz-palette-mask')].filter(m => m.getBoundingClientRect().width > 0).length);
++  if (!n) break; await win.keyboard.press('Escape'); await win.waitForTimeout(250);
++}
++await win.evaluate(() => window.MazzShell?.setTheme?.('ink'));
++await win.waitForTimeout(900);
++for (let i = 0; i < 60; i++) fs.writeFileSync(WS + `/填充文件${String(i).padStart(2, '0')}.md`, '# 填充\n');
++await win.waitForTimeout(1500);
++await win.waitForTimeout(2200);
++await win.evaluate(() => { const s = document.querySelector('.ProseMirror')?.parentElement || document.querySelector('[class*=editor]'); if (s) s.scrollTop = 200; });
++await win.waitForTimeout(500);
++await win.waitForTimeout(600);
++await win.screenshot({ path: '/mnt/agents/output/w58g-主窗滚动条-ink.png', clip: { x: 0, y: 250, width: 245, height: 560 } });
++await app.close().catch(() => {});
++console.log('DONE');
+diff --git a/tests/run.js b/tests/run.js
+index 9f8eeb3..a652189 100644
+--- a/tests/run.js
++++ b/tests/run.js
+@@ -53,6 +53,8 @@ const files = [
+   'tests/contract/hotfix-w58c.test.mjs',
+   'tests/contract/hotfix-w58d.test.mjs',
+   'tests/contract/hotfix-w58e.test.mjs',
++  'tests/contract/hotfix-w58f.test.mjs',
++  'tests/contract/hotfix-w58g.test.mjs',
+   'tests/contract/library.test.mjs',
+   'tests/contract/library-ui.test.mjs',
+   'tests/contract/word-v2-plugins.test.mjs',

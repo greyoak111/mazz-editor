@@ -184,6 +184,7 @@ export class Shell {
         { command: 'file.newSheet', icon: '📊', label: '表格' },
         { command: 'file.newSlide', icon: '📽', label: '演示' },
         { command: 'file.newBrowser', icon: '🌐', label: '浏览器' },
+        { command: 'file.newViewer', icon: '🎬', label: '播放器' },
         { command: 'file.newCode', icon: '💻', label: '代码' },
         { command: 'file.newMath', icon: '🧮', label: '计算' },
         { command: 'file.newNotes', icon: '📓', label: '笔记' },
@@ -265,6 +266,8 @@ export class Shell {
   /** 全局内录对话框：源多选 + 音频开关 + 变速 + 启停 */
   async openScreenRecorderDialog() {
     if (!window.mazz?.isElectron) { toast('全局内录仅桌面版可用'); return; }
+    // W53：全原生独立子窗格（控制台面板）；已在录=旧命令行为保留（再按=停止）
+    if (window.mazz?.isElectron) { window.mazz.invoke('panel:open', { kind: 'recorder' }).catch(() => {}); return; }
     if (this._screenRec) { this._screenRec.stop(); this._screenRec = null; toast('正在停止并收尾…'); return; }
     let sources = [];
     try { sources = await window.mazz.invoke('rec:sources'); }
@@ -359,8 +362,23 @@ export class Shell {
       if (fy > 2 / 3) return 'down';
       return null;
     };
+    // W57 分屏路线修正（用户定版）：老 DOM overlay 转正——罩页方案停用（独立窗链路长收效差实锤）；
+    // Min 思路=DOM 直接简单零延迟，「不抢渲染」=拖拽 cloak：拖起页签→浏览器视图全隐让位，DOM 预览随便画，落下即恢复
+    const dragCloak = (on) => {
+      const bctl = window.__activeBrowserCtl;
+      if (!bctl) return;
+      bctl._dragCloak = !!on; // 拖拽独立闸（不复用 _cloaked——mask observer 会每帧覆盖它（探针实锤 dragging=true cloaked=false））
+      bctl.__sync?.();
+    };
     const showOverlay = (leaf, z) => {
+      const r = leaf.el.getBoundingClientRect();
       const zc = zoneColors();
+      const rect = { left: r.left, top: r.top, width: r.width / 3, height: r.height / 3 };
+      if (z === 'left') Object.assign(rect, { width: r.width / 3, height: r.height });
+      else if (z === 'right') Object.assign(rect, { left: r.left + r.width * 2 / 3, width: r.width / 3, height: r.height });
+      else if (z === 'up') Object.assign(rect, { width: r.width, height: r.height / 3 });
+      else Object.assign(rect, { top: r.top + r.height * 2 / 3, width: r.width, height: r.height / 3 });
+      const borderSide = ({ left: 'borderRight', right: 'borderLeft', up: 'borderBottom', down: 'borderTop' })[z] || 'borderRight';
       if (!overlay) {
         overlay = document.createElement('div');
         overlay.style.cssText = `position:fixed;pointer-events:none;z-index:60;border-radius:6px;transition:all .08s ease`;
@@ -370,13 +388,7 @@ export class Shell {
       // 边框只留画面边沿那一条锚线；中心侧零边界（用户实锤：整圈虚线框让渐隐尽头挂了一条线）
       overlay.style.border = 'none';
       overlay.style.borderRadius = '0';
-      overlay.style[({ left: 'borderRight', right: 'borderLeft', up: 'borderBottom', down: 'borderTop' })[z] || 'borderRight'] = `1.5px solid ${zc.border}`;
-      const r = leaf.el.getBoundingClientRect();
-      const rect = { left: r.left, top: r.top, width: r.width / 3, height: r.height / 3 };
-      if (z === 'left') Object.assign(rect, { width: r.width / 3, height: r.height });
-      else if (z === 'right') Object.assign(rect, { left: r.left + r.width * 2 / 3, width: r.width / 3, height: r.height });
-      else if (z === 'up') Object.assign(rect, { width: r.width, height: r.height / 3 });
-      else Object.assign(rect, { top: r.top + r.height * 2 / 3, width: r.width, height: r.height / 3 });
+      overlay.style[borderSide] = `1.5px solid ${zc.border}`;
       overlay.style.left = rect.left + 'px';
       overlay.style.top = rect.top + 'px';
       overlay.style.width = rect.width + 'px';
@@ -387,11 +399,11 @@ export class Shell {
     // 清理唯一真源（三路兜底，不再单押 dragend）：拖签中途源元素被重渲染销毁→dragend 永失，
     // 33% 框+盾牌钉死屏幕（「神秘框」粘连复现实锤）——看门狗/pointerup/blur 三路必达
     let dog = null;
-    const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; };
+    const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图
     const armDog = () => { clearTimeout(dog); dog = setTimeout(cleanup, 1500); }; // 1.5s 无 dragover 即判拖拽死亡
 
     document.addEventListener('dragstart', (e) => {
-      if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); }
+      if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）
     }, true);
     // 捕获相：模块内部（如编辑器拖拽插图区）stopPropagation 也截不到这里——
     // 此前 dragover 走冒泡相，多窗格下被模块内层截停，分区永 null=拖不了分屏（灾难现场病根）
@@ -479,6 +491,9 @@ export class Shell {
     }
     try {
       const ext = tab.filePath.split('.').pop().toLowerCase();
+      // W58d：二进制族的对象契约只合 markdown/sheet/slide——降级 tab（超大 docx 走 code 纯文本）强灌 {__docx} 对象
+      // 会被 string-only setContent 抹成空白（监看回刷连坐实锤）——模块不合直接跳过重载
+      if ((ext === 'xlsx' || ext === 'docx' || ext === 'pptx') && !['markdown', 'sheet', 'slide'].includes(inst.name)) return;
       let content;
       if (ext === 'xlsx' || ext === 'docx' || ext === 'pptx') {
         const b64 = await window.mazz.invoke('fs:readFileBase64', { path: tab.filePath });
@@ -575,11 +590,26 @@ export class Shell {
     setInterval(() => this.pollStatus(), 600);
   }
 
+  /** W58c 主题变量快照：主窗 computed style 单源（预设/主题包/图片自定义通吃）——
+   *  广播与面板初始化共用；自定义主题下原生子窗透明裸奔的根治件 */
+  _themeVarsSnapshot() {
+    const KEYS = ['bg', 'bg-elev', 'bg-hover', 'bg-active', 'fg', 'fg-dim', 'border', 'accent', 'accent-soft', 'accent-fg', 'danger', 'warn', 'ok', 'shadow', 'doc-bg', 'acc', 'bd', 'bd2', 'card', 'mut', 'faint', 'sh'];
+    const cs = getComputedStyle(document.documentElement);
+    const vars = {};
+    for (const k of KEYS) { const v = cs.getPropertyValue('--' + k).trim(); if (v) vars[k] = v; }
+    return { id: document.documentElement.dataset.theme || 'paper', vars };
+  }
+
+  /** 主窗换主题 → 广播子窗口跟随（v33 外部窗格主题不同步修复；pack/图片自定义一并覆盖） */
+  _broadcastThemeNow() {
+    if (contextKeys.get('windowRole') === 'child') return;
+    const { id, vars } = this._themeVarsSnapshot();
+    window.mazz?.invoke('theme:broadcast', { id, vars }).catch(() => {});
+  }
+
   setTheme(id) {
-    // 主窗换主题 → 广播子窗口跟随（v33 外部窗格主题不同步修复；pack/图片自定义一并覆盖）
-    if (contextKeys.get('windowRole') !== 'child' && id) {
-      window.mazz?.invoke('theme:broadcast', { id }).catch(() => {});
-    }
+    // W58c：广播必须在变量真落应用之后——旧版开口就播，子窗拿到的是上一主题的皮；
+    // 自定义主题包/图片主题干脆只有 id 没有变量通道=面板无 [data-theme] 规则可匹配=透明裸奔（真机实锤）
     if (id?.startsWith('pack:')) {
       // 自定义主题包（工作区 themes/ 下的 JSON）：注入后切换
       import('../lib/theme-store.js').then(async ({ listPacks, applyPack }) => {
@@ -590,10 +620,12 @@ export class Shell {
           document.documentElement.dataset.theme = 'paper';
           this.statusbar.setTheme('纸白');
           toast('主题包不存在（可能已被删除）——已回退纸白');
+          this._broadcastThemeNow();
           return;
         }
         applyPack(packId, pack);
         this.statusbar.setTheme(pack.name);
+        this._broadcastThemeNow();
       });
       window.mazz?.invoke('settings:set', { key: 'theme', value: id }).catch(() => {});
       return;
@@ -607,7 +639,10 @@ export class Shell {
           document.documentElement.dataset.theme = 'construct';
           toast('还没有图片自定义主题——请先在设置里「从图片生成主题」');
         }
+        this._broadcastThemeNow(); // 成败都播：ok=注入后快照，fail=construct 回退后快照
       });
+    } else {
+      this._broadcastThemeNow();
     }
     const t = THEMES.find(t => t.id === id) || THEMES[0];
     this.statusbar.setTheme(t.name);
@@ -668,6 +703,8 @@ export class Shell {
     const tab = this.tabs.add({ title, moduleId, filePath });
     // 空内容视为 null：让模块用自身默认初始内容（如演示模板），不触发 setContent('') 清空
     const inst = modules.attach(tab.id, moduleId, tab.view, content ? content : null);
+    // W58 路径同步另一半：打开即把 filePath 写进模块 state（attach 单参丢路径——打开时实例路径盲=runFile fp=null 实锤）
+    try { if (filePath) inst.state.filePath = filePath; } catch {}
     this.containerTab.set(tab.view, tab.id);
     tab.forceClose = false;
     if (!inst.def.readOnly) {
@@ -695,6 +732,7 @@ export class Shell {
         this.appendQuickLaunch(panel, def.name, tab);
       }, 0);
     }
+    this.ribbon.showPage?.('module'); // W58：ribbon 上下文跟随模块——切模块自动切 module 页（code toolbarHTML 从未渲染=B12 按钮不在的总根）
     this.ribbon.renderTabs();
   }
 
@@ -784,9 +822,44 @@ export class Shell {
     panel.appendChild(g);
   }
 
+  /** W58d 大文件降级通道：ProseMirror 无虚拟化=整树渲染此量级必卡死（8.3MB/10万行 md 打开即渲染进程崩落实锤）——
+   *  降级走 Monaco（虚拟化+自带 largeFileOptimizations，官方大文件姿势）；docx 走 mammoth extractRawText 轻提取 */
+  async openLargeFile(filePath, ext, size) {
+    const name = filePath.split(/[\\/]/).pop();
+    const mb = (size / 1048576).toFixed(1);
+    let content;
+    if (ext === 'docx') {
+      toast(`大文档降级：${name}（${mb}MB）以纯文本轻快打开——富文本解析此量级必卡死，如需排版请分段处理`, [], 6000);
+      const b64 = await window.mazz.invoke('fs:readFileBase64', { path: filePath });
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const { extractRawTextFromDocx } = await import('../modules/markdown/docx-io.js');
+      content = await extractRawTextFromDocx(bytes.buffer);
+    } else {
+      toast(`大文件降级：${name}（${mb}MB）以轻快编辑器打开——富文本引擎整树渲染此量级必卡死`, [], 6000);
+      content = await window.mazz.invoke('fs:readFile', { path: filePath });
+    }
+    const { tab, inst } = this.openTab('code', { title: name, filePath, content });
+    if (inst?.def.setLanguage) {
+      const lang = ext === 'docx' ? 'plaintext' : (inst.def.langOfPath?.(filePath) || 'plaintext');
+      inst.def.setLanguage(lang, inst.state);
+    }
+    tab.forceClose = false;
+    this.tabs.setDirty(tab.id, false);
+    await window.mazz?.invoke('recent:add', { path: filePath });
+    this.fileTree.markActive(filePath);
+    this.syncTitle();
+  }
+
   async openFile(filePath) {
     const ext = filePath.split('.').pop().toLowerCase();
     const moduleId = EXT_MODULE[ext] || 'text';
+    // W58d 大文件降级闸：md/txt/mazz 超 1.5MB / docx 超 3MB 一律走降级通道（富文本引擎卡死防线）
+    if (['md', 'markdown', 'mazz', 'txt', 'docx'].includes(ext)) {
+      const st = await window.mazz.invoke('fs:stat', { path: filePath }).catch(() => null);
+      if (st?.size > (ext === 'docx' ? 3 * 1024 * 1024 : 1.5 * 1024 * 1024)) return this.openLargeFile(filePath, ext, st.size);
+    }
     // epub/cbz/mobi/azw3：进书库入库打开（原来是当文本打开成乱码）
     if (ext === 'epub' || ext === 'cbz' || ext === 'mobi' || ext === 'azw3') {
       const name0 = filePath.split(/[\\/]/).pop();
@@ -913,6 +986,11 @@ export class Shell {
       }
     } catch (e) { toast(`保存失败：${e.message}`); return false; }
     try { inst.state.filePath = target; } catch {} // 同步模块实例路径（此前只更 tab.filePath：调试/外部打开等读实例路径的功能全是盲的）
+    // W58 语言链根治②：保存后按扩展名同步 code 模块语言（保存为 .py 后 RUNNERS 仍 plaintext=无法运行的总根）
+    if (inst.name === 'code') {
+      const l = inst.def.langOfPath?.(target);
+      if (l) { try { inst.state.language = l; } catch {} }
+    }
     this.tabs.setDirty(tab.id, false);
     snapshots.untrack(tab.id);
     snapshots.track(tab.id, () => ({ filePath: target, moduleId: inst.name, content: safeGet(() => inst.def.getContent(inst.state)) }));
@@ -998,6 +1076,7 @@ export class Shell {
     R('file.newNotes', { title: '打开笔记库', icon: '📓', group: '文件', run: () => this.openTab('notes', { title: '笔记', content: '' }) });
     R('file.newSearch', { title: '全局搜索', icon: '🔎', group: '文件', run: () => this.openTab('search', { title: '全局搜索', content: '' }) });
     R('file.newMindmap', { title: '新建思维导图', icon: '🧠', group: '文件', run: () => this.openTab('mindmap', { title: '未命名.mindmap', content: '' }) });
+    R('file.newViewer', { title: '新建播放器（无视频启动）', icon: '🎬', group: '文件', run: () => this.openTab('viewer', { title: '播放器', content: '' }) }); // W44：裸播放器起手——侧栏三源选源即播
     R('file.newDraw', { title: '新建画板', icon: '🎨', group: '文件', run: () => this.openTab('draw', { title: '未命名.mazzdraw', content: '' }) });
     R('file.newLibrary', { title: '打开书库', icon: '📚', group: '文件', run: () => this.openTab('library', { title: '书库', content: '' }) });
     R('file.open', {
@@ -1163,7 +1242,15 @@ export class Shell {
         toast(r?.apps?.length ? `发现 ${r.apps.length} 个可用软件` : '未发现可用软件（或非 Windows 平台）');
       },
     });
-    R('file.quickOpen', { title: '快速跳转（最近/项目文件）', icon: '⚡', group: '文件', run: () => palette.open('files') });
+    R('file.quickOpen', { title: '快速跳转（最近/项目文件）', icon: '⚡', group: '文件', run: () => {
+      // W53：命令面板子窗格文件页（DOM palette.open('files') 浏览器前台必被压——漏网收编）
+      if (window.mazz?.isElectron) {
+        this._paletteInitTab = 'files';
+        window.mazz.invoke('panel:open', { kind: 'palette' }).catch(() => palette.open('files'));
+        return;
+      }
+      palette.open('files');
+    } });
     // —— 智能创作（Factory，右侧工具坞承载）——
     R('factory.copyMantra', { title: '复制创作模板母版（当前表单）', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.copyMantra() });
     R('factory.generate', { title: '直接生成（当前表单）', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.generateNow() });
@@ -1195,6 +1282,12 @@ export class Shell {
     } });
     R('annotate.toggle', {
       title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {
+        // W52④ 分路：浏览器页（WebContentsView 原生层压 DOM）走透明墨迹子窗；其余模块保 DOM 老层（久经考验）
+        if (window.mazz?.isElectron && contextKeys.get('module') === 'browser') {
+          const opened = await window.mazz.invoke('panel:open', { kind: 'annotate' }).catch(() => null);
+          if (opened?.ok) { toast('批注模式（墨迹子窗）：直接圈画（Esc 退出）'); return; }
+          if (opened?.already) { await window.mazz.invoke('panel:close', { kind: 'annotate' }).catch(() => {}); toast('已退出批注'); return; }
+        }
         const { toggleAnnotate } = await import('../lib/annotate.js');
         const on = toggleAnnotate();
         toast(on ? '批注模式：直接圈画（Esc 退出，Ctrl+Z 撤销）' : '已退出批注');
@@ -1283,9 +1376,20 @@ export class Shell {
       } });
 
     // —— 应用 ——
-    R('app.commandPalette', { title: '命令面板', icon: '⌘', group: '应用', run: () => palette.open('commands') });
-    R('app.openSettings', { title: '设置…', icon: '⚙', group: '应用', run: () => this.openSettingsModal() });
-    R('app.language', { title: '界面语言设置 (Language)', icon: '🌐', group: '应用', run: () => this.openSettingsModal() });
+    R('app.commandPalette', { title: '命令面板', icon: '⌘', group: '应用', run: () => {
+      // W52③ 薄子窗（Quick Open 体感——不占主窗 DOM 零遮盖；网页预览留内嵌兜底）
+      if (window.mazz?.isElectron) { window.mazz.invoke('panel:open', { kind: 'palette' }).catch(() => palette.open('commands')); return; }
+      palette.open('commands');
+    } });
+    R('app.openSettings', { title: '设置…', icon: '⚙', group: '应用', run: () => {
+      // W53 全原生独立子窗格（应用壳 lean 路线退役；网页预览留 modal 兜底）
+      if (window.mazz?.isElectron) { window.mazz.invoke('panel:open', { kind: 'settings' }).catch(() => this.openSettingsModal()); return; }
+      this.openSettingsModal();
+    } });
+    R('app.language', { title: '界面语言设置 (Language)', icon: '🌐', group: '应用', run: () => {
+      if (window.mazz?.isElectron) { window.mazz.invoke('panel:open', { kind: 'settings' }).catch(() => this.openSettingsModal()); return; }
+      this.openSettingsModal();
+    } });
     R('app.toggleSpellcheck', { title: '开关拼写检查', group: '应用', run: async () => {
       if (!window.mazz?.isElectron) { toast('浏览器预览模式无拼写检查服务'); return; }
       const cur = await window.mazz.invoke('settings:get', { key: 'spellcheckEnabled' });
@@ -1293,7 +1397,11 @@ export class Shell {
       this.statusbar.setSpell(!cur);
       toast(!cur ? '拼写检查已开启' : '拼写检查已关闭');
     } });
-    R('app.shortcutSheet', { title: '快捷键速查表', group: '应用', run: () => this.openShortcutSheet() });
+    R('app.shortcutSheet', { title: '快捷键速查表', group: '应用', run: () => {
+      // W52③ 薄子窗（同上）
+      if (window.mazz?.isElectron) { window.mazz.invoke('panel:open', { kind: 'shortcuts' }).catch(() => this.openShortcutSheet()); return; }
+      this.openShortcutSheet();
+    } });
     R('app.about', { title: '关于 Mazz Editor', group: '应用', run: () => toast('Mazz Editor v0.1.0 · 榨干 Electron 的一站式超级编辑器（第一阶段构建）') });
 
     // —— 目录树命令 ——
@@ -1431,6 +1539,8 @@ export class Shell {
 
   /** 新窗口启动时接收交接标签 */
   async receiveHandoff(snapshot) {
+    // W52③ 全应用子窗 modal 支路：settings/help/agreement 大 UI 零重写落第二窗
+    // W53：openModal/lean 支路全体退役——设置/帮助/协议/翻译/插件/快开/内录全走 panel-windows 全原生子窗格
     if (!snapshot?.moduleId || !modules.get(snapshot.moduleId)) return;
     this.openTab(snapshot.moduleId, {
       title: snapshot.title || '分窗标签',
@@ -1443,7 +1553,13 @@ export class Shell {
   async newFileInTree() {
     const t = this.fileTree.resolveTargetDir();
     if (t.error) { toast(t.error); return; }
-    // 类型选择弹窗：五组 17 种（二进制办公格式自动生成合法空文档）
+    // W58e：新建文件收编全原生独立子窗（漏网之鱼——DOM modal 被视图压的最后一个）
+    if (window.mazz?.isElectron) {
+      this._newfileDir = t.dir; // 落点选中态 stash（面板开着期间用户可能改选——以开窗瞬间为准）
+      window.mazz.invoke('panel:open', { kind: 'newfile' }).catch(() => {});
+      return;
+    }
+    // 类型选择弹窗：五组 17 种（二进制办公格式自动生成合法空文档）——非 Electron 兜底
     const ext = await pickNewFileType();
     if (!ext) return;
     // 资源管理器式：自动名落位 + 行内改名（后缀下拉）
@@ -1593,6 +1709,18 @@ export class Shell {
       this.syncZoomDisplay(); // 切换窗格/标签时刷新百分比
     });
     bus.on('tab:deactivate', (id) => modules.deactivateTab(id));
+    // W58c 分屏穿帮根治：移签跨窗格后——①等布局落稳重同步视图边界（activate 时可能拿到旧几何）
+    // ②浏览器页自动刷新（用户定版药方：挪窝的 GPU 表面不重绘=渲染穿帮，reload 强制重画）
+    bus.on('pane:tabMoved', ({ tabId }) => {
+      const inst = modules.instances.get(tabId);
+      if (!inst || inst.name !== 'browser') return;
+      setTimeout(() => {
+        const ctl = inst.state;
+        ctl?.__sync?.();
+        const t = ctl?.tabs?.find(x => x.id === ctl.activeId) || ctl?.tabs?.[0];
+        if (t && !ctl?._cloaked && !ctl?._dragCloak) ctl.reloadTab?.(t);
+      }, 80);
+    });
     // 资源管理器右键「导入到 Mazz 工作区」（--import 参数经主进程转发）
     if (window.mazz?.on) window.mazz.on('file:import', ({ paths }) => { if (paths?.length) this.importExternal(paths); });
     // 外部编辑回传：磁盘文件变化 → 打开中的干净标签自动重载（外部软件保存后这边同步更新）
@@ -1633,6 +1761,450 @@ export class Shell {
       window.mazz.on('command:invoke', ({ id, payload }) => commands.execute(id, payload));
       window.mazz.on('window:handoff', async (snapshot) => { await this.receiveHandoff(snapshot); });
       window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });
+      // W52③ 薄子窗数据桥：paletteQuery/shortcutQuery 答、paletteRun 行
+      // W54 B10 拽回吸附提示：进热区主窗右缘亮条
+      window.mazz.on('dock:snapHint', ({ on } = {}) => {
+        let el = document.querySelector('.dock-snap-hint');
+        if (!el) { el = document.createElement('div'); el.className = 'dock-snap-hint'; document.body.appendChild(el); }
+        el.classList.toggle('on', !!on);
+      });
+      // W53 坞浮动联动：dockfloat 子窗格 ✕ 关闭 → 坞回停靠上岗
+      window.mazz.on('panel:changed', (pl) => {
+        if (pl?.kind === 'dockfloat' && pl.closed) this.sideDock?.backFromFloat?.();
+      });
+      window.mazz.on('panel:action', async (pl) => {
+        if (!pl?.type) return;
+        // W58c 主题快照桥：面板窗初始化取 id+变量一把抓（预设/主题包/图片自定义通吃——子窗透明化根治）
+        if (pl.type === 'themeSnapshot') {
+          if (pl.kind) window.mazz.invoke('panel:push', { kind: pl.kind, payload: { type: 'themeInit', ...this._themeVarsSnapshot() } }).catch(() => {});
+          return;
+        }
+        // W58e 新建文件子窗桥：类型目录单源下发（NEW_FILE_TYPES 不复制）+ 落点 stash 行内创建
+        if (pl.type === 'newfileQuery') {
+          if (pl.kind) window.mazz.invoke('panel:push', { kind: pl.kind, payload: { type: 'newfileTypes', types: NEW_FILE_TYPES } }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'newfilePick') {
+          // dir 允许 null（未选中=工作区根——startInlineCreate 自带 `dir ?? getWorkspace()` 回落；门死 null=无选中断粮实锤）
+          if (pl.ext) await this.fileTree.startInlineCreate(this._newfileDir ?? null, 'file', pl.ext);
+          return;
+        }
+        // W58i picklist 通用选择格桥（字体/字号收编——数据由 pickers.js 经 window.__picklistPending stash）
+        if (pl.type === 'picklistQuery') {
+          const d = window.__picklistPending;
+          if (pl.kind && d) window.mazz.invoke('panel:push', { kind: pl.kind, payload: { type: 'picklistData', data: { title: d.title, items: d.items, searchable: d.searchable, allowFree: d.allowFree, current: d.current } } }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'picklistPick') {
+          const d = window.__picklistPending;
+          window.__picklistPending = null;
+          if (d?.onPick) d.onPick(pl.value);
+          return;
+        }
+        // W53 协议面板桥（全原生子窗格：文案单源在 lib/agreement.js，面板页不复制维护）
+        if (pl.type === 'agreementQuery') {
+          try {
+            const { agreementContent } = await import('../lib/agreement.js');
+            const c = agreementContent();
+            window.mazz.invoke('panel:push', { kind: 'agreement', payload: { type: 'agreement', title: c.title, body: c.body, noMore: c.noMore, closeLabel: c.close, acceptLabel: c.accept } }).catch(() => {});
+          } catch {}
+          return;
+        }
+        if (pl.type === 'agreementDone') {
+          if (pl.nomore) window.mazz.invoke('settings:set', { key: 'agreement.noMore', value: true }).catch(() => {});
+          return;
+        }
+        // W53 设置面板桥（全原生子窗格：逻辑单源在 openSettingsModal——面板页只渲染，主窗干活）
+        if (pl.type === 'settingsQuery') {
+          try {
+            const { LANGUAGES, getLanguage } = await import('../i18n/index.js');
+            const gx = (k) => window.mazz.invoke('settings:get', { key: k }).catch(() => null);
+            const all = await this.allThemes();
+            const cur = document.documentElement.dataset.theme || 'paper';
+            const [closeBehavior, themeSource, quickNoteTarget, spellcheck, autolaunch, searxMc, explorerSt] = await Promise.all([
+              gx('closeBehavior'), gx('themeSource'), gx('quickNoteTarget'), gx('spellcheckEnabled'),
+              window.mazz.invoke('app:getAutoLaunch').catch(() => false),
+              window.mazz.invoke('searx:getMaskedConfig').catch(() => ({})),
+              window.mazz.invoke('explorermenu:status').catch(() => null),
+            ]);
+            window.mazz.invoke('panel:push', { kind: 'settings', payload: {
+              type: 'settingsAll', languages: LANGUAGES, lang: getLanguage(),
+              closeBehavior: closeBehavior || 'ask', themeSource: themeSource || 'system',
+              themes: all, theme: cur, quickNoteTarget: quickNoteTarget || 'daily',
+              spellcheck, autolaunch: !!autolaunch,
+              explorerRegistered: !!explorerSt?.registered,
+              searxMasked: searxMc?.masked || '', searxUser: searxMc?.user || '', searxHasPass: !!searxMc?.hasPass,
+            } }).catch(() => {});
+          } catch {}
+          return;
+        }
+        if (pl.type === 'settingsSet') {
+          try {
+            if (pl.key === 'lang') {
+              const { setLanguage } = await import('../i18n/index.js');
+              await setLanguage(pl.value);
+            } else if (pl.key === 'theme') {
+              this.setTheme(pl.value); // 广播全窗+面板跟随（主题变窗格变）
+            } else if (pl.key === 'themeSource') {
+              window.mazz.invoke('theme:setSource', { source: pl.value }).catch(() => {});
+            } else if (pl.key === 'spellcheck') {
+              await window.mazz.invoke('spell:setEnabled', { enabled: !!pl.value }).catch(() => {});
+              this.statusbar.setSpell(!!pl.value);
+            } else if (pl.key) {
+              window.mazz.invoke('settings:set', { key: pl.key, value: pl.value }).catch(() => {});
+            }
+          } catch {}
+          window.mazz.invoke('panel:push', { kind: 'settings', payload: { type: 'settingsActionResult', act: 'set', reload: true } }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'settingsAction') {
+          const back = (act, msg, reload = false) => window.mazz.invoke('panel:push', { kind: 'settings', payload: { type: 'settingsActionResult', act, msg, reload } }).catch(() => {});
+          try {
+            if (pl.act === 'delTheme') {
+              if (!String(pl.id || '').startsWith('pack:')) { back('delTheme', '自带主题不可删除', false); return; }
+              const { deletePack } = await import('../lib/theme-store.js');
+              await deletePack(String(pl.id).slice(5));
+              this.setTheme('paper');
+              toast('已删除主题包'); back('delTheme', '已删除主题包', true);
+            } else if (pl.act === 'blankPack') {
+              const { obtainBlankPack } = await import('../lib/theme-store.js');
+              const p = await obtainBlankPack();
+              toast('空白主题包已生成：' + p.split('/').pop());
+              await this.openFile(p);
+              back('blankPack', '已生成空白主题包', true);
+            } else if (pl.act === 'importPack') {
+              const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '主题包', extensions: ['json'] }] }).catch(() => null);
+              if (!p) { back('importPack', '', false); return; }
+              const text = await window.mazz.invoke('fs:readFile', { path: p });
+              const { importPack } = await import('../lib/theme-store.js');
+              const id = await importPack(text, p.split(/[\\/]/).pop());
+              this.setTheme('pack:' + id);
+              toast('主题包已导入'); back('importPack', '已导入并启用', true);
+            } else if (pl.act === 'packFolder') {
+              const { themesDir } = await import('../lib/theme-store.js');
+              const dir = await themesDir();
+              await window.mazz.invoke('fs:mkdir', { path: dir }).catch(() => {});
+              window.mazz.invoke('shell:showItemInFolder', { path: dir }).catch(() => {});
+              back('packFolder', '已打开主题文件夹', false);
+            } else if (pl.act === 'imgTheme') {
+              const { applyImageTheme } = await import('../theme-custom.js');
+              await applyImageTheme();
+              back('imgTheme', '', true);
+            } else if (pl.act === 'clearRecent') {
+              await window.mazz.invoke('recent:clear').catch(() => {});
+              this.rebuildFileIndex();
+              toast('最近文件已清空'); back('clearRecent', '已清空', false);
+            } else if (pl.act === 'autolaunch') {
+              const on = await window.mazz.invoke('app:setAutoLaunch', { enabled: !!pl.enabled }).catch(() => !!pl.enabled);
+              back('autolaunch', on ? '已开启' : '已关闭', true);
+            } else if (pl.act === 'shortcut') {
+              const ok = await window.mazz.invoke('app:createDesktopShortcut').catch(() => false);
+              back('shortcut', ok ? '✓ 已发送到桌面' : '创建失败', false);
+            } else if (pl.act === 'explorerReg') {
+              const r = await window.mazz.invoke('explorermenu:register').catch((e) => ({ ok: false, reason: e.message }));
+              back('explorerReg', r.ok ? '已注册（若未立刻出现，重启资源管理器）' : ('注册失败：' + (r.reason || '')), true);
+            } else if (pl.act === 'explorerUnreg') {
+              await window.mazz.invoke('explorermenu:unregister').catch(() => {});
+              back('explorerUnreg', '未注册', true);
+            } else if (pl.act === 'searxSave') {
+              const cur = await window.mazz.invoke('settings:get', { key: 'searx' }).catch(() => null);
+              const cfg = { url: pl.url || cur?.url, user: pl.user || cur?.user, pass: pl.pass || cur?.pass };
+              try {
+                const sc = await window.mazz.invoke('searx:setConfig', cfg);
+                back('searxSave', sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；'), false);
+              } catch (e) { back('searxSave', '✗ ' + e.message, false); }
+            }
+          } catch (e) { back(pl.act || '?', '失败：' + e.message, false); }
+          return;
+        }
+        if (pl.type === 'translateStashInit') { this._translateInitText = String(pl.text || ''); return; }
+        // W56 B7 翻译「替换/插入」跨窗桥：主窗对当前编辑器选区执行（面板无选区概念）
+        if (pl.type === 'translateAction') {
+          const back = (msg) => window.mazz.invoke('panel:push', { kind: 'translate', payload: { type: 'translateActResult', msg } }).catch(() => {});
+          try {
+            const sel = (window.getSelection()?.toString() || '');
+            if (pl.act === 'replace' && !sel.trim()) { back('当前编辑器无选区——先在主窗选中一段'); return; }
+            document.execCommand('insertText', false, String(pl.text || ''));
+            back(pl.act === 'replace' ? '已替换选区' : '已插入到光标');
+          } catch (e) { back('执行失败：' + e.message); }
+          return;
+        }
+        // W53 翻译面板桥：初始文本（选区透传暂存——面板 ready 后问取）
+        if (pl.type === 'translateQueryInit') {
+          const text = this._translateInitText || '';
+          this._translateInitText = '';
+          if (text) window.mazz.invoke('panel:push', { kind: 'translate', payload: { type: 'translateInit', text } }).catch(() => {});
+          return;
+        }
+        // W53 插件管理桥（逻辑单源在 plugins/loader.js——面板页只渲染）
+        if (pl.type === 'pluginsQuery') {
+          try {
+            const { listPluginFiles, readMaz, isEnabled } = await import('../plugins/loader.js');
+            const files = await listPluginFiles();
+            const rows = [];
+            for (const f2 of files) {
+              try {
+                const { manifest } = await readMaz(f2.path);
+                rows.push({ id: manifest.id, name: manifest.name, version: manifest.version, desc: manifest.description || manifest.id, enabled: await isEnabled(manifest.id), error: null, path: f2.path });
+              } catch (e) {
+                rows.push({ id: f2.name, name: f2.name, version: '?', desc: '', enabled: false, error: e.message, path: f2.path });
+              }
+            }
+            window.mazz.invoke('panel:push', { kind: 'plugins', payload: { type: 'plugins', rows } }).catch(() => {});
+          } catch {}
+          return;
+        }
+        if (pl.type === 'pluginsAction') {
+          const reload = () => window.mazz.invoke('panel:action', { type: 'pluginsQuery' }).catch(() => {});
+          try {
+            const L = await import('../plugins/loader.js');
+            if (pl.act === 'toggle') {
+              await L.setEnabled(pl.id, !pl.enabled);
+              if (!pl.enabled) {
+                try { const { manifest, code } = await L.readMaz(pl.path); await L.loadPlugin(code, manifest); }
+                catch (e) { toast('加载失败：' + e.message); }
+              }
+              toast(pl.enabled ? `插件「${pl.name}」已禁用（重载后生效）` : `插件「${pl.name}」已启用`);
+            } else if (pl.act === 'del') {
+              await window.mazz.invoke('fs:delete', { path: pl.path }).catch(() => {});
+              await L.setEnabled(pl.id, false);
+              toast('插件已删除（已加载的实例重启后卸载）');
+            } else if (pl.act === 'open') {
+              window.MazzHost?.openTab('plugin:' + pl.id, { title: pl.name, content: '' });
+            } else if (pl.act === 'install') {
+              const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: 'Mazz 插件', extensions: ['maz'] }] }).catch(() => null);
+              if (p) {
+                try { await L.installFromFile(p); toast('插件已安装'); }
+                catch (e) { toast('安装失败：' + e.message); }
+              }
+            }
+          } catch (e) { toast('插件操作失败：' + e.message); }
+          setTimeout(reload, 300);
+          return;
+        }
+        // W53 帮助面板桥：主窗预渲染 HTML（renderHelpMd 单源——面板页零渲染逻辑复制）
+        if (pl.type === 'helpQuery') {
+          try {
+            const { renderHelpMd } = await import('../help/index.js');
+            const { HELP_SECTIONS } = await import('../help/content.js');
+            const { SENIOR_SECTIONS } = await import('../help/content-senior.js');
+            const ver = pl.ver === 'senior' ? 'senior' : 'std';
+            const src = ver === 'senior' ? SENIOR_SECTIONS : HELP_SECTIONS;
+            const sections = src.map(s => ({ id: s.id, icon: s.icon, title: s.title, html: renderHelpMd(s.body), text: s.body.replace(/[#*`|\[\]()>-]/g, '').slice(0, 4000) }));
+            window.mazz.invoke('panel:push', { kind: 'help', payload: { type: 'help', ver, sections, section: pl.section || null } }).catch(() => {});
+          } catch (e) { console.error('[help] 桥应答失败:', e.message || e); }
+          return;
+        }
+        // W53 全局内录桥（录制本体在主窗 recorder.js——面板页纯控制台，关面板不中断）
+        if (pl.type === 'recQuery') {
+          if (this._screenRec) {
+            window.mazz.invoke('panel:push', { kind: 'recorder', payload: { type: 'recState', recording: true, startedAt: this._screenRecAt || Date.now(), desc: this._screenRecDesc || '' } }).catch(() => {});
+          }
+          return;
+        }
+        if (pl.type === 'recStart') {
+          if (this._screenRec) { window.mazz.invoke('panel:push', { kind: 'recorder', payload: { type: 'recState', recording: true, startedAt: this._screenRecAt } }).catch(() => {}); return; }
+          try {
+            const { startScreenRecorder } = await import('../lib/recorder.js');
+            const r = await startScreenRecorder(pl.payload || {});
+            if (!r) throw new Error('启动失败');
+            this._screenRec = r;
+            this._screenRecAt = Date.now();
+            this._screenRecDesc = `${(pl.payload?.sources || []).length} 个源 · ${pl.payload?.outFormat || 'webm'} · ${pl.payload?.speed || 1}x`;
+            toast('内录中… 面板/命令随时可停');
+            window.mazz.invoke('panel:push', { kind: 'recorder', payload: { type: 'recState', recording: true, startedAt: this._screenRecAt, desc: this._screenRecDesc } }).catch(() => {});
+          } catch (e) {
+            window.mazz.invoke('panel:push', { kind: 'recorder', payload: { type: 'recState', recording: false, msg: '启动失败：' + (e.message || e) } }).catch(() => {});
+          }
+          return;
+        }
+        if (pl.type === 'recStop') {
+          try { this._screenRec?.stop(); } catch {}
+          this._screenRec = null;
+          toast('内录已停止，文件保存中…');
+          window.mazz.invoke('panel:push', { kind: 'recorder', payload: { type: 'recState', recording: false, msg: '已停止，保存中…' } }).catch(() => {});
+          return;
+        }
+        // W53 快速跳转桥（fileIndex 缓存索引单源——命令面板文件页）
+        if (pl.type === 'paletteInitQuery') {
+          const tab = this._paletteInitTab || 'commands';
+          this._paletteInitTab = null;
+          if (tab !== 'commands') window.mazz.invoke('panel:push', { kind: 'palette', payload: { type: 'paletteInit', tab } }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'quickopenQuery') {
+          try {
+            const { fuzzyScore } = await import('../core/command-palette.js');
+            const q = String(pl.q || '').toLowerCase();
+            const items = (this.fileIndex || [])
+              .map(it => ({ it, s: fuzzyScore(q, (it.label || '') + ' ' + (it.detail || '')) || { score: -1 } }))
+              .filter(x => !q || x.s.score >= 0)
+              .sort((a, b) => b.s.score - a.s.score)
+              .slice(0, 30)
+              .map(x => ({ title: x.it.label, detail: x.it.detail || '', path: x.it.path, group: x.it.icon || '' }));
+            window.mazz.invoke('panel:push', { kind: 'palette', payload: { items } }).catch(() => {});
+          } catch {}
+          return;
+        }
+        if (pl.type === 'quickopenRun') {
+          if (pl.path) await this.openFile(pl.path).catch(() => {});
+          return;
+        }
+        // W53 坞浮动桥（dockfloat 子窗格：SideDock.factoryPanel 是真相源——面板纯远程视图）
+        if (pl.type === 'dockFloatInit') {
+          this.sideDock?.factoryPanel?.pushSnapshot();
+          return;
+        }
+        if (pl.type === 'dockToolsQuery') {
+          const groups = this.sideDock?.toolsGroups?.() || [];
+          // 图标 SVG 化（零 emoji 按钮军规——ctxmenu 正解同款：主窗 iconHtml 转换随 push 带，面板页无 iconHtml 不裸奔）
+          const { iconHtml } = await import('../lib/svg-icons.js');
+          const svgGroups = groups.map(([g, items]) => [g, items.map(it => ({ ...it, ico: it.ico ? iconHtml(it.ico) : '' }))]);
+          window.mazz.invoke('panel:push', { kind: 'dockfloat', payload: { type: 'dockTools', groups: svgGroups } }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'dockRun') {
+          if (pl.cmd) commands.execute(pl.cmd);
+          return;
+        }
+        if (pl.type === 'dockOpenPath') {
+          if (pl.path) await this.openFile(pl.path).catch(() => {});
+          return;
+        }
+        if (pl.type === 'dockFloatBack') {
+          // 回停靠：坞重新上岗（子窗由面板自己 close）
+          this.sideDock?.backFromFloat?.();
+          return;
+        }
+        if (pl.type === 'factoryAction') {
+          const fp = this.sideDock?.factoryPanel;
+          if (!fp) return;
+          try {
+            if (pl.act === 'selectGenre') {
+              const g = (fp.genres || []).find(x => x.id === pl.id);
+              if (g) { fp.genre = g; fp.values = {}; fp.renderForm(); }
+            } else if (pl.act === 'setValue') {
+              fp.values[pl.f] = pl.v;
+            } else if (pl.act === 'setDump') {
+              const el = fp.el.querySelector('.fc-dump-text'); if (el) el.value = String(pl.v || '');
+            } else if (pl.act === 'setFlag') {
+              const map = { dualLoop: '.fc-dualloop', maxMode: '.fc-maxmode' };
+              if (pl.k === 'maxChapters') { const el = fp.el.querySelector('.fc-maxchapters'); if (el) el.value = pl.v; }
+              else if (map[pl.k]) { const el = fp.el.querySelector(map[pl.k]); if (el) el.checked = !!pl.v; }
+            } else if (pl.act === 'fill') {
+              await fp.smartFill();
+              fp.pushSnapshot();
+            } else if (pl.act === 'copy') {
+              await fp.copyMantra();
+            } else if (pl.act === 'generate') {
+              fp.generateNow();
+            } else if (pl.act === 'runall') {
+              fp.runAllTasks();
+            } else if (pl.act === 'togglePlugin') {
+              // W54 B8 增强区全桥：chips 选中态切换（renderExtras 自推快照）
+              fp.pluginSel.has(pl.id) ? fp.pluginSel.delete(pl.id) : fp.pluginSel.add(pl.id);
+              fp.renderExtras(); fp.pushSnapshot();
+            } else if (pl.act === 'toggleStyle') {
+              fp.styleIds.has(pl.id) ? fp.styleIds.delete(pl.id) : fp.styleIds.add(pl.id);
+              fp.renderExtras(); fp.pushSnapshot();
+            } else if (pl.act === 'plugcfg') {
+              fp.openPluginConfig();
+            } else if (pl.act === 'styleup') {
+              await fp.uploadStyle(); fp.pushSnapshot();
+            } else if (pl.act === 'styleonline') {
+              fp.onlineStyle();
+            } else if (pl.act === 'embedadd') {
+              await fp.addEmbed(); fp.pushSnapshot();
+            } else if (pl.act === 'embeddel') {
+              fp.embeds.splice(+pl.i, 1); fp.renderExtras(); fp.pushSnapshot();
+            } else if (pl.act === 'websearch') {
+              const el = fp.el.querySelector('.fc-search');
+              if (el) el.value = String(pl.q || '');
+              await fp.webSearch();
+              fp.pushSnapshot(); // 检索结果注入 dump 后回填面板
+            }
+          } catch (e) { toast('创作面板动作失败：' + e.message); }
+          return;
+        }
+        // W55 右键菜单子窗格桥：菜单项单源在 menu-service._ctxItems（全软件右键并行化）
+        if (pl.type === 'ctxmenuQuery') {
+          try {
+            const { menus } = await import('../core/menu-service.js');
+            const { iconHtml } = await import('../lib/svg-icons.js');
+            // 图标 SVG 化（零 emoji 按钮军规——面板页无 iconHtml，svg 串随 push 带）
+            const items = (menus._ctxItems || []).map(it => ({ ...it, svg: it.icon ? iconHtml(it.icon) : '' }));
+            menus._ctxItems = null;
+            window.mazz.invoke('panel:push', { kind: 'ctxmenu', payload: { type: 'ctxmenu', items } }).catch(() => {});
+          } catch {}
+          return;
+        }
+        if (pl.type === 'ctxmenuPick') {
+          if (pl.id) commands.execute(pl.id);
+          return;
+        }
+        if (pl.type === 'syncStashTab') { this._syncInitTab = pl.tab || 'host'; return; }
+        // P2b sync 面板桥：页签参数透传（host/join/update）
+        if (pl.type === 'syncInitQuery') {
+          const tab = this._syncInitTab || 'host';
+          this._syncInitTab = null;
+          window.mazz.invoke('panel:push', { kind: 'sync', payload: { type: 'syncInit', tab } }).catch(() => {});
+          return;
+        }
+        // W57 创作配置面板桥（AI 服务/创作模板——单源在 factory 模块，面板只渲染）
+        if (pl.type === 'factoryPresetsQuery') {
+          try {
+            const { PRESETS } = await import('../modules/factory/provider.js');
+            window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryPresets', presets: PRESETS } }).catch(() => {});
+          } catch {}
+          return;
+        }
+        if (pl.type === 'factoryInitQuery') {
+          const tab = this._factoryInitTab || 'provider';
+          this._factoryInitTab = null;
+          window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryInit', tab } }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'factoryStashTab') { this._factoryInitTab = pl.tab || 'provider'; return; }
+        if (pl.type === 'genreSave') {
+          try {
+            const { saveCustomGenre } = await import('../modules/factory/engine.js');
+            await saveCustomGenre(pl.tpl);
+            this.sideDock?.factoryPanel?.reload?.();
+            toast('模板已保存到工作区');
+          } catch (e) { toast('模板保存失败：' + e.message); }
+          return;
+        }
+        if (pl.type === 'factoryProviderSaved') {
+          this.sideDock?.factoryPanel?.reload?.();
+          return;
+        }
+        if (pl.type === 'paletteQuery') {
+          const { fuzzyScore } = await import('../core/command-palette.js');
+          const { keymap, displayKey } = await import('../core/keymap-service.js');
+          const q = String(pl.q || '').toLowerCase();
+          const items = commands.list()
+            .map(c => ({ c, s: fuzzyScore(q, (c.title || '') + ' ' + c.id) || { score: -1, ranges: [] } })) // fuzzyScore 未命中返 null——裸读 .score 必崩（实证实锤）
+            .filter(x => !q || x.s.score >= 0)
+            .sort((a, b) => (b.s.score - a.s.score) || String(a.c.title).localeCompare(String(b.c.title), 'zh-CN'))
+            .slice(0, 50)
+            .map(x => ({ id: x.c.id, title: x.c.title || x.c.id, group: x.c.group || '', key: displayKey(keymap.keyForCommand(x.c.id)) || '' }));
+          window.mazz.invoke('panel:push', { kind: 'palette', payload: { items } }).catch(() => {});
+        } else if (pl.type === 'shortcutQuery') {
+          const { keymap, displayKey } = await import('../core/keymap-service.js');
+          const groups = {};
+          for (const b of (keymap.defaults || [])) {
+            const cmd = commands.get(b.command);
+            const g = cmd?.group || '其他';
+            (groups[g] = groups[g] || []).push({ key: displayKey(b.key) || b.key, title: cmd?.title || b.command });
+          }
+          window.mazz.invoke('panel:push', { kind: 'shortcuts', payload: { groups } }).catch(() => {});
+        } else if (pl.type === 'paletteRun' && pl.id) {
+          commands.execute(pl.id);
+          window.mazz.invoke('panel:close', { kind: 'palette' }).catch(() => {});
+        } else if (pl.type === 'annotateExit') {
+          toast('已退出批注');
+        }
+      });
       // 全屏逃生（系统覆盖层会吃自绘标题栏按钮——Esc + 浮动退出钮双保险，误触也能一眼看到出路）
       let fsExitBtn = null;
       const setFsUi = (on) => {
@@ -2023,6 +2595,13 @@ export function toast(msg, actions = [], ms = 3000) {
   document.querySelectorAll('.mazz-toast').forEach(t => t.remove());
   const el = document.createElement('div');
   el.className = 'mazz-toast';
+  // W57 toast 防压（创作提示半截被视图压实锤）：活动浏览器视图覆盖左下安全区时挪顶（ribbon 下缘=视图永远够不着）
+  try {
+    const bctl = window.__activeBrowserCtl;
+    const t = bctl?.tabs?.find(x => x.id === bctl.activeId);
+    const vr = t?.host?.getBoundingClientRect?.();
+    if (vr && vr.left < 300 && vr.bottom > window.innerHeight - 120) el.classList.add('mazz-toast-top');
+  } catch {}
   const span = document.createElement('span');
   span.textContent = msg;
   el.appendChild(span);
@@ -2033,7 +2612,8 @@ export function toast(msg, actions = [], ms = 3000) {
     b.addEventListener('click', () => { el.remove(); a.fn(); });
     el.appendChild(b);
   }
-  document.body.appendChild(el);
+  // 全屏挂接：全屏时只有 fullscreenElement 子树可见——toast 挂 body 必隐身（全屏按字幕钮无反馈实锤，与 modal 同款修法）
+  (document.fullscreenElement || document.body).appendChild(el);
   if (ms) setTimeout(() => el.remove(), ms + actions.length * 1500);
   return el;
 }

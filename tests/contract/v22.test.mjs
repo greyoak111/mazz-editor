@@ -26,7 +26,15 @@ describe('桥接合并逻辑（非覆盖）', () => {
     };
     window.MazzHost = { openTab: () => {} };
     const { bridges } = await import('../../renderer/bridge.js');
-    await bridges.execute('code.toMarkdown', { text: 'const a=1;', language: 'js', sourceTabId: 't1' });
+    const p1 = bridges.execute('code.toMarkdown', { text: 'const a=1;', language: 'js', sourceTabId: 't1' });
+    // 选择器弹层必等点击（picker modal 设计如此）——模拟点「自动新建」防挂死（定时炸弹拆线）
+    await new Promise(r => setTimeout(r, 80));
+    document.querySelector('.bt-opt')?.click();
+    await p1;
+    await bridges.execute('code.toMarkdown', { text: 'const b=2;', language: 'js', sourceTabId: 't1' });
+    const merged = files.get('/workspace/桥接/代码片段.md') || '';
+    assert.ok(merged.includes('# 旧内容'), `旧内容必须保留（${JSON.stringify(merged.slice(0, 40))}）`);
+    assert.ok(merged.includes('const a=1') && merged.includes('const b=2'), '两次桥接必须合并续接（非覆盖实锤）');
     // 第一次是选择器：自动新建（模拟点击自动新建路径不可行于无 DOM 交互，改直接验证 upsert 二次合并）
     const code = fs.readFileSync(new URL('../../renderer/bridge.js', import.meta.url), 'utf8');
     assert.ok(code.includes('合并式更新'), '必须有合并注释标识');

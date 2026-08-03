@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>使用指南</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:12px; flex:none; -webkit-app-region:drag; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .layout { flex:1; min-height:0; display:flex; }
+  .side { width:250px; flex:none; display:flex; flex-direction:column; border-right:1px solid var(--border); background:var(--bg-elev); }
+  .side-head { padding:12px 14px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:8px; }
+  .side-head .t { font-size:15px; font-weight:600; }
+  .side-head select, .side-head input { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); width:100%; }
+  .side-head input:focus, .side-head select:focus { border-color:var(--accent); outline:none; }
+  .toc { flex:1; min-height:0; overflow-y:auto; padding:8px; }
+  .toc-item { padding:8px 10px; border-radius:8px; cursor:pointer; font-size:12.5px; line-height:1.4; }
+  .toc-item:hover { background:var(--bg-hover); }
+  .toc-item.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .toc-empty { color:var(--fg-dim); text-align:center; padding:30px 0; font-size:12px; }
+  .body { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .content { flex:1; min-height:0; overflow-y:auto; padding:20px 28px; font-size:13.5px; line-height:1.85; }
+  .content h2 { font-size:19px; margin:4px 0 12px; color:var(--fg); }
+  .content h3 { font-size:15.5px; margin:18px 0 8px; color:var(--accent); }
+  .content h4, .content h5 { font-size:13.5px; margin:14px 0 6px; }
+  .content p { margin:7px 0; }
+  .content ul, .content ol { margin:7px 0 7px 22px; }
+  .content li { margin:3px 0; }
+  .content pre { background:var(--bg-active); border-radius:8px; padding:10px 14px; font-family:var(--font-mono); font-size:12px; overflow-x:auto; margin:10px 0; }
+  .content code { background:var(--bg-active); border-radius:4px; padding:1px 6px; font-family:var(--font-mono); font-size:12px; }
+  .content pre code { background:none; padding:0; }
+  .content table { border-collapse:collapse; margin:10px 0; }
+  .content td { border:1px solid var(--border); padding:5px 12px; font-size:12.5px; }
+  .content b { color:var(--fg); }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="layout">
+    <div class="side">
+      <div class="side-head">
+        <span class="t">❓ 使用指南</span>
+        <select id="ver"><option value="std">喂饭级（常规详细版）</option><option value="senior">喂奶级（零基础老人版）</option></select>
+        <input id="q" placeholder="搜索帮助内容…" spellcheck="false" />
+      </div>
+      <div class="toc ps-scroll-y" id="toc"></div>
+    </div>
+    <div class="body"><div class="content ps-scroll-y" id="content"></div></div>
+  </div>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+let SECTIONS = [];
+function ask(ver) { window.mazz.invoke('panel:action', { type: 'helpQuery', ver }).catch(() => {}); }
+function show(id) {
+  const sec = SECTIONS.find(s => s.id === id) || SECTIONS[0];
+  if (!sec) return;
+  $('#content').innerHTML = sec.html;
+  $('#content').scrollTop = 0;
+  document.querySelectorAll('.toc-item').forEach(el => el.classList.toggle('on', el.dataset.id === sec.id));
+}
+function renderToc(filter = '') {
+  const f = filter.trim().toLowerCase();
+  const items = f ? SECTIONS.filter(s => (s.title + (s.text || '')).toLowerCase().includes(f)) : SECTIONS;
+  $('#toc').innerHTML = items.map(s => `<div class="toc-item" data-id="${esc(s.id)}">${esc(s.icon || '')} ${esc(s.title)}</div>`).join('')
+    || '<div class="toc-empty">（无匹配章节）</div>';
+  document.querySelectorAll('.toc-item').forEach(el => el.addEventListener('click', () => show(el.dataset.id)));
+  if (f && items.length) show(items[0].id);
+}
+window.mazz.on('panel:push', (p) => {
+  if (p?.type !== 'help') return;
+  SECTIONS = p.sections || [];
+  try { localStorage.setItem('mazz.help.ver', p.ver || 'std'); } catch {}
+  renderToc();
+  if (SECTIONS.length) show(p.section || SECTIONS[0].id);
+});
+$('#ver').addEventListener('change', () => ask($('#ver').value));
+$('#q').addEventListener('input', () => renderToc($('#q').value));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+// 版本记忆（与主窗同键）
+try { const v = localStorage.getItem('mazz.help.ver'); if (v === 'senior') $('#ver').value = 'senior'; } catch {}
+ask($('#ver').value);
+</script>
+</body></html>

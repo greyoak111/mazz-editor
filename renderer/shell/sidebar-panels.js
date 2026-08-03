@@ -50,6 +50,8 @@ export class SidebarPanels {
       <button class="sb-tbtn" data-a="ws-manage" title="工作区管理（添加/移除/改名）">⋯</button>`;
     head.before(this.wsBar);
     this.wsSel = this.wsBar.querySelector('.sb-ws-sel');
+    // B12b 收编：工作区切换器子窗格化（原生弹出层被视图压的根治形——select 隐藏保留作状态单源，选项开格时重读）
+    import('../lib/select-menu.js').then(({ selectProxy }) => selectProxy(this.wsSel, { btnClass: 'sb-ws-btn' }));
     this.wsSel.addEventListener('change', async () => {
       const p = this.wsSel.value;
       if (!p) return;

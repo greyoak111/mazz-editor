@@ -52,6 +52,8 @@ function createSearch(container) {
   const scopeEl = root.querySelector('.gs-scope');
   const metaEl = root.querySelector('.gs-meta');
   const resultsEl = root.querySelector('.gs-results');
+  // B12b 收编：类型/范围两 select 子窗格化（隐藏保留作状态单源——取值读 .value 的旧路径零改动）
+  import('../../lib/select-menu.js').then(({ selectProxy }) => { selectProxy(typeEl); selectProxy(scopeEl); });
 
   const ctl = {
     root, container,

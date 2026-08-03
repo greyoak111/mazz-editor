@@ -156,7 +156,11 @@ export function closeHelp() {
 export function registerHelpCommands() {
   commands.register('help.open', {
     title: '使用指南（帮助中心）', icon: '❓', group: '帮助',
-    run: () => openHelp(),
+    run: () => {
+      // W52③ 全应用子窗（大 UI 零重写；网页预览留 modal 兜底）
+      if (window.mazz?.isElectron) { window.mazz.invoke('panel:open', { kind: 'help' }).catch(() => openHelp()); return; } // W53 全原生独立子窗格
+      openHelp();
+    },
   });
   keymap.register({ command: 'help.open', key: 'f1' });
 }

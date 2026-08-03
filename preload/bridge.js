@@ -35,6 +35,9 @@ const INVOKE_CHANNELS = new Set([
   'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut',
   'tr:translate', 'tr:getConfig', 'tr:setConfig',
   'sync:identity', 'sync:host', 'sync:stopHost', 'sync:join', 'sync:discover', 'sync:status',
+  'toolchain:detect', 'toolchain:detectAll',
+  'slideRemote:start', 'slideRemote:stop', 'slideRemote:state', 'slideRemote:status', 'panel:push',
+  'panel:open', 'panel:close', 'panel:changed', 'panel:action', 'panel:dragStart', 'panel:move', 'panel:dragEnd',
   'update:check', 'update:getConfig', 'update:setConfig',
   'share:targets', 'share:sendFile', 'share:sendToExe',
   'dialog:openImport', 'import:external',
@@ -45,7 +48,7 @@ const INVOKE_CHANNELS = new Set([
   'tor:add', 'tor:stats', 'tor:list', 'tor:streamUrl', 'tor:filePath', 'tor:remove', 'tor:fileBytes',
   'sites:list', 'sites:search', 'sites:magnet', 'sites:home',
   'mkv:tracks', 'mkv:extractFlac', 'mkv:extractTrack',
-  'bv:create', 'bv:destroy', 'bv:bounds', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state',
+  'bv:create', 'bv:destroy', 'bv:bounds', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state', 'bv:emitTest', 'bv:ctxMenu', 'bv:devtools', 'bv:dtProbe', 'bv:capture',
   'window:childAt', 'window:toChild', 'window:listChildren', 'theme:broadcast',
   'workspace:list', 'workspace:add', 'workspace:remove', 'workspace:rename', 'workspace:setCurrent',
 ]);
@@ -55,7 +58,8 @@ const EVENT_CHANNELS = new Set([
   'file:open', 'file:changed', 'file:import', 'command:invoke', 'menu:clicked',
   'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role',
   'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'library:download',
-  'workspace:changed', 'window:fullscreen', 'bv:event',
+  'workspace:changed', 'window:fullscreen', 'bv:event', 'bv:frame', 'slideRemote:cmd', 'slideRemote:client',
+  'panel:changed', 'panel:action', 'panel:push', 'dock:snapHint',
 ]);
 
 const listeners = new Map(); // channel -> Set<callback>

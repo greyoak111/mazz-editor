@@ -40,13 +40,35 @@ export async function prepareForExternalOpen(tab, inst, targetApp) {
     b64 = await toB64(new Uint8Array(buf));
     outExt = 'xlsx';
   } else if (ext === 'mazzslide') {
+    // S2 修复（二次打开外部 PowerPoint 报「格式转换失败」）：步骤化诊断——内容源/解析/导出/写盘分段抱因，
+    // 不再一句「格式转换失败」闷死；内容源统一走编辑器实时大纲（getContent 返回非字符串时兜 JSON）
     const { parseOutline } = await import('../modules/slide/outline.js');
+    const ctl = window.__activeSlideCtl;
+    let content;
+    if (ctl?.isV2) {
+      // v2 模式：doc2 转 v1 大纲（外部打开 pptx 兼容链；outlineEl 空壳实锤修正——v2 编辑器退位后 outlineEl 无内容）
+      const { doc2ToOutline } = await import('../modules/slide/doc.js');
+      content = doc2ToOutline(ctl.doc2);
+    } else {
+      content = ctl?.outlineEl?.value;
+      if (content == null && inst?.def?.getContent) content = inst.def.getContent(inst.state);
+    }
+    if (typeof content !== 'string') content = content == null ? '' : JSON.stringify(content);
+    let slides;
+    try { slides = parseOutline(content); }
+    catch (e) { throw new Error('大纲解析失败：' + (e.message || e)); }
+    // 空检要按内容判（parseOutline('') 也会产 1 个全空 slide 骨架——length 拦不住，全空才算空）
+    const hasContent = (slides || []).some(s =>
+      (s.title || '').trim() || (s.notes || '').trim() || (s.elements || []).length ||
+      (s.sections || []).some(sec => (sec.heading || '').trim() || (sec.bullets || []).length));
+    if (!hasContent) throw new Error('大纲内容为空（编辑器里没有可导出的幻灯内容）');
+    // exportPptx 引擎在空检后才加载（空大纲不加载导出器=快速失败；pptxgenjs 解析面只在有货时触达）
     const { exportPptx } = await import('../modules/slide/pptx.js');
     const { SLIDE_THEMES } = await import('../modules/slide/themes.js');
-    const ctl = window.__activeSlideCtl;
-    const content = inst?.def?.getContent ? inst.def.getContent(inst.state) : (ctl?.outlineEl?.value || '');
     const theme = ctl?.theme || SLIDE_THEMES[0];
-    const buf = await exportPptx(parseOutline(content), theme);
+    let buf;
+    try { buf = await exportPptx(slides, theme); }
+    catch (e) { throw new Error('pptx 导出失败：' + (e.message || e)); }
     b64 = await toB64(new Uint8Array(buf));
     outExt = 'pptx';
   } else {
@@ -78,7 +100,12 @@ export async function prepareForExternalOpen(tab, inst, targetApp) {
     await window.mazz.invoke('fs:writeFileBase64', { path: tempPath, base64: b64 });
   } catch (e) {
     tempPath = `${dir}/${name}-${Date.now().toString(36)}.${outExt}`;
-    await window.mazz.invoke('fs:writeFileBase64', { path: tempPath, base64: b64 });
+    try {
+      await window.mazz.invoke('fs:writeFileBase64', { path: tempPath, base64: b64 });
+    } catch (e2) {
+      // S2 修复：唯一名也写不进（临时目录权限/占用）——明白话带路径，不再裸「格式转换失败」
+      throw new Error(`临时文件写入失败（可能被 ${outExt === 'pptx' ? 'PowerPoint' : '外部程序'}占用或目录无权限）：${dir}`);
+    }
   }
   pending.set(tempPath, { origPath: tab.filePath, ext, name });
   return { launchPath: tempPath, converted: true, outExt };
@@ -121,3 +148,7 @@ export async function handleExternalSave(tempPath) {
 
 export function isPendingConvert(p) { return pending.has(p); }
 export function clearConvert(p) { pending.delete(p); }
+
+// E2E/排障测试口：bundle 加载即挂（源码依赖图（shell→registry→slide/pptx 含 bare pptxgenjs）在页面内裸 import 源码必炸——
+// 触达产品链只能走打包产物形态）
+if (typeof window !== 'undefined') window.__externConvert = { prepareForExternalOpen, handleExternalSave, isPendingConvert, clearConvert, pptxToOutline: (buf) => import('../modules/slide/pptx-import.js').then(m => m.pptxToOutline(buf)) };

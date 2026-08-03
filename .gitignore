@@ -6,5 +6,6 @@ release/
 mazz-android-patch.txt
 tests/e2e/shots/
 tests/e2e/media/
-*.patch 
-*-b64.txt 
+
+# 调试转储（W43 起不再入库）
+*-b64.txt

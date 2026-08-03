@@ -213,6 +213,11 @@ function createViewer(container) {
     extBtn.style.display = 'none';
 
     try {
+      if (ctl.kind === 'image' || ctl.kind === 'pdf') {
+        // W58d：竞态上台的裸播放器收尸（连带根绝——_player 悬挂还会误导 activate 的空片判活）
+        try { ctl._player?.destroy?.(); } catch {}
+        ctl._player = null; ctl._playerKind = null;
+      }
       if (ctl.kind === 'image') {
         const url = await mediaUrl(path);
         ctl.body.innerHTML = '';
@@ -302,14 +307,34 @@ function createViewer(container) {
   return ctl;
 }
 
+/** 空档起手（W44 无视频启动）：裸播放器上台——侧栏三源（播放列表/媒体库/网络资源）全可用，选源即播；幂等（有片/有播放器/有内容不碰） */
+async function bootEmptyPlayer(ctl) {
+  // 竞态闸：await import 期间 activate 同钩会再入（双播放器实锤）——同步占位先于一切 await
+  if (ctl.path || ctl._player || ctl._bootingEmpty || ctl.body.children.length) return;
+  ctl._bootingEmpty = true;
+  const { createPlayer } = await import('./player.js');
+  // W58d：await 落锤前重验闸——竞态期间 setContent 已装片（看图/PDF 连带裸播放器上台，真机三证实锤）
+  if (ctl.path || ctl._player || ctl.body.children.length) { ctl._bootingEmpty = false; return; }
+  const playerRoot = document.createElement('div');
+  playerRoot.className = 'mz-player-root';
+  ctl.body.appendChild(playerRoot);
+  ctl._player = createPlayer(playerRoot, {
+    url: null, name: '播放器', ext: '', path: null, kind: 'video',
+    onNav: (p2) => ctl.load(p2),
+  });
+  ctl._bootingEmpty = false;
+}
+
 export default {
-  displayName: '查看器',
+  displayName: '播放器',
   icon: '🖼',
   readOnly: true, // 只读模块：禁止保存/另存（防止空内容写回媒体文件）
   create(container) {
     const ctl = createViewer(container);
     instances.set(container, ctl);
-    return { container };
+    bootEmptyPlayer(ctl); // 无视频启动：立即上裸播放器（挂 DOM 不等 attach——detached DOM 照样建，真机慢 attach 不再被 350ms 竞态吃单）
+    // W58d 根治：create 必须返回 ctl 本体（军规⑰第三起——code/browser 同族病，{ container } 畸形态绝育）
+    return ctl;
   },
   activate(container) {
     const ctl = instances.get(container);
@@ -321,6 +346,8 @@ export default {
       container.appendChild(ctl.root);
       if (ctl.path) ctl.load(ctl.path);
     }
+    // 空片切回：deactivate 毁了播放器但 DOM 残壳还在——清壳重起裸播放器（否则切回=死 UI 实锤）
+    if (!ctl.path && !ctl._player && !ctl._bootingEmpty) { ctl.body.innerHTML = ''; bootEmptyPlayer(ctl); }
     contextKeys.set('module', MODULE);
   },
   deactivate(container) {

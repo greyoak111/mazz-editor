@@ -105,6 +105,7 @@
     "perfect-freehand": "^1.2.3",
     "pptxgenjs": "^4.0.1",
     "prosemirror-tables": "^1.8.5",
+    "qrcode": "^1.5.4",
     "tesseract.js": "^7.0.0",
     "webtorrent": "2.8.5",
     "xlsx": "^0.18.5"

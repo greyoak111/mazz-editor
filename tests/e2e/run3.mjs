@@ -55,7 +55,7 @@ async function main() {
     await win.waitForTimeout(300);
   }
 
-  await scenes3({ win, human, WS, WS2, scenario });
+  await scenes3({ app, win, human, WS, WS2, scenario });
   await scenario('异常警察·全程零渲染异常', async () => { await human.finish({ allow: ['ERR_ABORTED', 'net::ERR_FILE_NOT_FOUND', 'favicon'] }); });
 
   const fails = results.filter(r => r[1] === 'FAIL');

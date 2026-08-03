@@ -326,3 +326,15 @@ export async function importDocx(schema, arrayBuffer) {
   const doc = DOMParser.fromSchema(schema).parse(div);
   return { doc, warnings: result.messages?.map(m => m.message) || [] };
 }
+
+/** W58d 超大 docx 降级通道：extractRawText 轻提取（不转 HTML 不进 PM——百万字级 convertToHtml+PM 整树必卡死，
+ *  资料实证 extractRawText 是 mammoth 官方轻路径） */
+export async function extractRawTextFromDocx(arrayBuffer) {
+  const mammothMod = await import('mammoth');
+  const mammoth = mammothMod.default?.extractRawText ? mammothMod.default : mammothMod;
+  const ab = arrayBuffer instanceof ArrayBuffer
+    ? arrayBuffer
+    : arrayBuffer.buffer.slice(arrayBuffer.byteOffset, arrayBuffer.byteOffset + arrayBuffer.byteLength);
+  const r = await mammoth.extractRawText({ arrayBuffer: ab });
+  return r.value || '';
+}

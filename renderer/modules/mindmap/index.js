@@ -5,7 +5,15 @@ import { toast, inputModal } from '../../shell/shell.js';
 import {
   createNode, createNote, createRefLine, createParentLink, findNode, findParent, removeNode, insertSibling, appendChild, moveNode,
   toOutline, layout, LEVEL_SCHEMES, levelColor, serializeDoc, parseDoc, measureNote, nodeTextLayout, wrapTextLines,
+  wpFromPoint, wpToPoint, wpMigrate, // 拐点参数化（B2 根治）
 } from './model.js';
+// 模块注册骨架 + 功能 deals（kityminder 声明式同款：shapes 图形库 / swimlanes 泳道 / tplpack 模板包 / present 叙事模式）
+import { mmBoot, mmTeardown, mmExec, mmModuleNames } from './mm-modules.js';
+import { SHAPES, ARROW_HEADS, shapeEl, arrowHeadD, shapePad } from './mm-shapes.js';
+import { renderSwimlanes, laneDragMove, laneDragEnd, laneOf } from './mm-swimlanes.js';
+import { listPacks } from './mm-tplpack.js';
+import { camTween, camOfFrame } from './mm-present.js'; // 演示叙事 deals 注册 + 镜头动画器（帧跳转预览消费）
+import { createSlideDoc, createSlide as createV2Slide, createItem as createSlItem, addSlideToDoc, serializeDoc as serializeSlDoc } from '../slide/doc.js'; // W41 导图帧→演示本体（死转，不挂桥接引用）
 import { PRESET_TEMPLATES, listTemplates, deleteTemplate, obtainBlankTemplate } from './templates.js';
 
 const MODULE = 'mindmap';
@@ -49,6 +57,14 @@ function createMindmap(container) {
   const wrap = root.querySelector('.mm-canvas-wrap');
   const svg = root.querySelector('.mm-svg');
   const viewport = root.querySelector('.mm-viewport');
+  // 连线 canvas 层（性能碾压皇冠：虚拟化模式下连线三类全画 canvas，SVG 只管节点/手柄/选中——
+  // 万级连线不吃 SVG 元素；小图（<200 节点）全走 SVG 现状零行为差）
+  const linkCanvas = document.createElement('canvas');
+  linkCanvas.className = 'mm-link-layer';
+  linkCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0';
+  svg.style.position = 'relative';
+  svg.style.zIndex = '1';
+  wrap.insertBefore(linkCanvas, svg);
   const editor = root.querySelector('.mm-editor');
   const stylebar = root.querySelector('.mm-stylebar');
 
@@ -59,12 +75,26 @@ function createMindmap(container) {
     selectedNote: null, // 便笺 id
     selectedLine: null, // 引用线 id 或 'conn:子节点id'
     cam: { x: 30, y: 30, k: 1 },
+    toolMode: 'build', // 窗格操作模式（w34：build 新建 | pan 移动 | select 选框）
+    multiSel: new Set(), // 选框模式批量选中集（节点 id）
     undoStack: [], redoStack: [],
     editing: null,      // {kind:'node'|'note', id} 或 null
     boxes: null,
     layoutInfo: null,
     linkMode: null,     // 引用线创建中：null | {from:{id,k}}
   };
+  ctl.selectedNode = () => findNode(ctl.doc?.roots || [], ctl.selected); // deals 命令消费口
+  ctl.mutate = (fn) => mutate(fn); // deals 命令统一走撤销登记
+  ctl.mmStatus = 'normal'; // 状态机单字段（mm-present：normal|present+rollback）
+  ctl.setCam = () => { viewport.setAttribute('transform', `translate(${ctl.cam.x},${ctl.cam.y}) scale(${ctl.cam.k})`); drawLinkLayer(ctl._lastLinkStrokes || [], !!shVirtual); }; // 镜头动画统一口（canvas 层随帧）
+  mmBoot(ctl); // 模块注册骨架：shapes/swimlanes/tplpack 声明式 deals 统一分派（kityminder 同款）
+  ctl.mmExec = (name, ...args) => mmExec(ctl, name, ...args); // 实例命令口（E2E/deals 直调，绕过「页面裸 import 源码=新模块实例」陷阱）
+
+  // 虚拟化共享态（render() 计算、renderNotes/renderParentLinks/renderRefLines 三个独立函数消费——
+  // render() 局部变量它们够不着（ReferenceError 实锤），文件级共享是唯一活口）
+  let shVirtual = false, shVr = null, shLinkStrokes = [];
+  const shInView = (b) => !shVirtual || boxInView(shVr, b);
+  const shInViewBranch = (br) => !shVirtual || branchInView(shVr, br);
 
   // ==================== 数据 ====================
   function snapshot() {
@@ -133,33 +163,76 @@ function createMindmap(container) {
     return { x: box.x + ox, y: box.y + oy, w: box.w, h: box.h };
   }
 
+  // ==================== 视口虚拟化（性能碾压：DOM 元素与总节点数解耦，万级节点硬指标） ====================
+  const VIRTUAL_MIN = 200; // 节点总数阈值：以下全量渲染（小图零行为差）
+  // —— canvas 连线层工具：贝塞尔采样 + path d 字符串 → 折线点列（三类连线 d 逻辑零重写，d→pts 统一） ——
+  function bezSamples(p0, p1, p2, p3, n = 12) {
+    const out = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, u = 1 - t;
+      out.push([u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * p3[1]]);
+    }
+    return out;
+  }
+  function quadSamples(p0, p1, p2, n = 12) {
+    const out = [];
+    for (let i = 0; i <= n; i++) { const t = i / n, u = 1 - t; out.push([u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]]); }
+    return out;
+  }
+  function pathToPts(d) {
+    const toks = String(d).match(/[MLCQZ]|-?\d+(?:\.\d+)?/gi) || [];
+    const pts = []; let i = 0, cmd = null, cur = [0, 0];
+    const num = () => parseFloat(toks[i++]);
+    while (i < toks.length) {
+      const tk = toks[i];
+      if (/^[MLCQZ]$/i.test(tk)) { cmd = tk.toUpperCase(); i++; if (cmd === 'Z') break; continue; }
+      if (cmd === 'M' || cmd === 'L') { cur = [num(), num()]; pts.push(cur); if (cmd === 'M') cmd = 'L'; }
+      else if (cmd === 'C') { const p1 = [num(), num()], p2 = [num(), num()], p3 = [num(), num()]; pts.push(...bezSamples(cur, p1, p2, p3).slice(1)); cur = p3; }
+      else if (cmd === 'Q') { const p1 = [num(), num()], p2 = [num(), num()]; pts.push(...quadSamples(cur, p1, p2).slice(1)); cur = p2; }
+      else i++;
+    }
+    return pts;
+  }
+  // 点到折线距离（canvas 模式数学命中）
+  function distToPts(x, y, pts) {
+    let best = Infinity;
+    for (let j = 0; j + 1 < pts.length; j++) {
+      const [x1, y1] = pts[j], [x2, y2] = pts[j + 1];
+      const dx = x2 - x1, dy = y2 - y1, L2 = dx * dx + dy * dy || 1;
+      const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / L2));
+      best = Math.min(best, Math.hypot(x - (x1 + dx * t), y - (y1 + dy * t)));
+    }
+    return best;
+  }
+  function viewRect() {
+    const k = ctl.cam.k;
+    const vw = (wrap.clientWidth || 800) / k, vh = (wrap.clientHeight || 600) / k;
+    const vx = -ctl.cam.x / k, vy = -ctl.cam.y / k;
+    return { x: vx - vw * 0.15, y: vy - vh * 0.15, w: vw * 1.3, h: vh * 1.3 }; // 世界矩形+缓冲带
+  }
+  const boxInView = (vr, b) => b.x + b.w >= vr.x && b.x <= vr.x + vr.w && b.y + b.h >= vr.y && b.y <= vr.y + vr.h;
+  const branchInView = (vr, br) => br && boxInView(vr, br);
+  function countAll(roots) { let n = 0; for (const r of (Array.isArray(roots) ? roots : [roots])) { (function w(x) { n++; for (const c of x.children) w(c); })(r); } return n; }
+
   function render() {
     const L = layout(ctl.doc.roots, ctl.doc.mode);
     ctl.boxes = L.boxes;
     ctl.layoutInfo = { width: L.width, height: L.height };
-    // 节点重排位移时，自定义拐点跟随平移（父/子平均位移）——否则增删节点后编辑过的线
-    // 视觉贴近到新位置的节点上（v33 实测诡异渲染；数据修正不记撤销，一轮到位不累积）
-    if (ctl._prevBoxes) {
-      const deltas = new Map();
-      for (const b of L.boxes.values()) {
-        const prev = ctl._prevBoxes.get(b.node.id);
-        if (prev) deltas.set(b.node.id, { dx: boxPos(b).x - prev.x, dy: boxPos(b).y - prev.y });
-      }
-      const shift = (wps, idA, idB) => {
-        if (!wps?.length) return;
-        const da = deltas.get(idA) || { dx: 0, dy: 0 }, db = deltas.get(idB) || { dx: 0, dy: 0 };
-        const mx = (da.dx + db.dx) / 2, my = (da.dy + db.dy) / 2;
-        if (mx || my) for (const w of wps) { w.x += mx; w.y += my; }
-      };
-      for (const b of L.boxes.values()) {
-        if (b.parentId && b.node.linkWps?.length) shift(b.node.linkWps, b.parentId, b.node.id);
-      }
-      for (const rl of ctl.doc.refLines || []) shift(rl.waypoints, rl.from?.id, rl.to?.id);
-      for (const pl of ctl.doc.parentLinks || []) shift(pl.waypoints, pl.from?.id, pl.to?.id);
-    }
-    ctl._prevBoxes = new Map([...L.boxes.values()].map(b => [b.node.id, { x: boxPos(b).x, y: boxPos(b).y }]));
+    // 可见集（虚拟化；小图全量零行为差）
+    const total = countAll(ctl.doc.roots);
+    const virtual = total >= VIRTUAL_MIN;
+    const vr = virtual ? viewRect() : null;
+    const inView = (b) => !virtual || boxInView(vr, b);
+    const inViewBranch = (br) => !virtual || branchInView(vr, br);
+    let drawn = 0, linksDrawn = 0;
+    const linkStrokes = []; // canvas 连线画列（虚拟化模式收集，render 尾统一绘制）
+    shVirtual = virtual; shVr = vr; shLinkStrokes = linkStrokes; // 共享态同步（三渲染函数消费）
+    // （废除 v33 平均位移平移补丁：两端位移不等时近似失真=诡异渲染概率复现真根——
+    //  拐点已全面参数化 {t,k}（wpFromPoint/wpToPoint），重排后由端点实时重算，结构性不错位）
     viewport.innerHTML = '';
     viewport.setAttribute('transform', `translate(${ctl.cam.x},${ctl.cam.y}) scale(${ctl.cam.k})`);
+    // 泳道背景层（节点/连线下层；deals=swimlanes）
+    renderSwimlanes(svgEl, viewport, ctl);
     // 可开关网格坐标线（世界坐标，随平移缩放；手动定位用）
     if (ctl.doc.showGrid) {
       viewport.appendChild(svgEl('rect', {
@@ -174,8 +247,10 @@ function createMindmap(container) {
     // 连线（含连接线样式与注释；可选中：点选改直曲/颜色/线宽/拐点，右键选单）
     for (const b of L.boxes.values()) {
       if (!b.parentId) continue;
+      if (!inViewBranch(b.branch)) continue; // 虚拟化：整支不可见则跳（分支框判定）
       const p = L.boxes.get(b.parentId);
       if (!p) continue;
+      linksDrawn++;
       const a = boxPos(p), c = boxPos(b);
       const x1 = a.x + a.w, y1 = a.y + a.h / 2;
       const x2 = c.x, y2 = c.y + c.h / 2;
@@ -188,7 +263,9 @@ function createMindmap(container) {
       const straight = mode === 'straight';
       let d;
       if (straight && node.linkWps?.length) {
-        d = 'M' + [[x1, y1], ...node.linkWps.map(w => [w.x, w.y]), [x2, y2]].map(q => q.join(',')).join(' L');
+        // 懒迁移旧绝对拐点 + 参数化取屏（重排随端点实时重算——不再有位移平移补丁）
+        node.linkWps = wpMigrate(node.linkWps, { cx: x1, cy: y1 }, { cx: x2, cy: y2 });
+        d = 'M' + [[x1, y1], ...node.linkWps.map(w => { const q = wpToPoint({ cx: x1, cy: y1 }, { cx: x2, cy: y2 }, w); return [q.x, q.y]; }), [x2, y2]].map(q => q.join(',')).join(' L');
       } else if (straight) {
         d = connectorStraightD(a, c, b.parentId, node.id);
       } else {
@@ -196,6 +273,10 @@ function createMindmap(container) {
           ? `M${a.x + a.w / 2},${a.y + a.h} C${a.x + a.w / 2},${(a.y + a.h + c.y) / 2} ${c.x + c.w / 2},${(a.y + a.h + c.y) / 2} ${c.x + c.w / 2},${c.y}`
           : `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
       }
+      // canvas 模式（虚拟化）：d→pts 入 canvas 画列（选中高亮同入），SVG 不建连线但手柄照走
+      if (virtual) {
+        linkStrokes.push({ id: 'conn:' + node.id, pts: pathToPts(d), color: node.linkColor || ls.color || (isSel ? 'var(--acc, #4f46e5)' : (ctl.template.connColor || 'var(--bd, #d8d6cf)')), width: node.linkWidth || ls.width || (isSel ? 2.6 : 1.6), dash: false });
+      } else {
       const connPath = svgEl('path', {
         d, fill: 'none',
         stroke: node.linkColor || ls.color || (isSel ? 'var(--acc, #4f46e5)' : (ctl.template.connColor || 'var(--bd, #d8d6cf)')),
@@ -234,11 +315,12 @@ function createMindmap(container) {
         const wy = (e.clientY - rect.top - ctl.cam.y) / ctl.cam.k;
         mutate(() => {
           node.linkWps = node.linkWps || [];
-          node.linkWps.push({ x: wx, y: wy });
+          node.linkWps.push(wpFromPoint({ cx: x1, cy: y1 }, { cx: x2, cy: y2 }, { x: wx, y: wy })); // 参数化入库
           node.linkMode = 'straight';
         });
       });
       viewport.appendChild(connPath);
+      }
       // 直线模式拐点手柄（选中时）：拖动调位 / 右键删除
       if (isSel && straight) {
         // Array.isArray 区分「用户删光了（[]，直来直去无拐点）」与「从未自定义（undefined，给默认两拐）」——
@@ -249,12 +331,13 @@ function createMindmap(container) {
           return [{ x: midX, y: y1 }, { x: midX, y: y2 }];
         })();
         wps.forEach((wp, i) => {
-          const dot = svgEl('circle', { cx: wp.x, cy: wp.y, r: 5.5, fill: '#fff', stroke: node.linkColor || ls.color || 'var(--acc, #4f46e5)', 'stroke-width': 2, class: 'mm-wp', 'data-idx': i });
+          const qp = wpToPoint({ cx: x1, cy: y1 }, { cx: x2, cy: y2 }, wp); // 参数化取屏定位手柄
+          const dot = svgEl('circle', { cx: qp.x, cy: qp.y, r: 5.5, fill: '#fff', stroke: node.linkColor || ls.color || 'var(--acc, #4f46e5)', 'stroke-width': 2, class: 'mm-wp', 'data-idx': i });
           dot.style.cursor = 'grab';
           dot.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
-            node.linkWps = wps.map(w => ({ ...w })); // 固化
-            drag = { type: 'connwp', node, idx: i, sx: e.clientX, sy: e.clientY, ox: wp.x, oy: wp.y };
+            node.linkWps = wps.map(w => wpFromPoint({ cx: x1, cy: y1 }, { cx: x2, cy: y2 }, w)); // 固化即参数化
+            drag = { type: 'connwp', node, idx: i, sx: e.clientX, sy: e.clientY, ox: qp.x, oy: qp.y };
           });
           dot.addEventListener('contextmenu', (e) => {
             e.preventDefault(); e.stopPropagation();
@@ -279,17 +362,21 @@ function createMindmap(container) {
     }
     // 节点
     for (const b of L.boxes.values()) {
+      if (!inView(b)) continue; // 虚拟化：视口外节点不建 DOM
+      drawn++;
       const pos = boxPos(b);
       const node = b.node;
       const g = svgEl('g', { class: 'mm-node', 'data-id': node.id, transform: `translate(${pos.x},${pos.y})` });
       const selected = ctl.selected === node.id;
-      const rect = svgEl('rect', {
-        width: pos.w, height: pos.h, rx: ctl.template.radius ?? 9,
+      // 图形库 shape（流程图六符；rect 默认）——归属泳道时边框着泳道色（归属着色）
+      const lane = laneOf(ctl.doc.swimlanes, pos.x + pos.w / 2, pos.y + pos.h / 2);
+      const shapeAttrs = {
+        rx: (node.shape || 'rect') === 'rect' ? (ctl.template.radius ?? 9) : undefined,
         fill: fillOf(node, b.depth, selected),
-        stroke: strokeOf(node, b.depth, selected),
-        'stroke-width': selected ? 2 : 1.2,
-      });
-      g.appendChild(rect);
+        stroke: lane ? lane.color : strokeOf(node, b.depth, selected),
+        'stroke-width': lane ? 2.2 : (selected ? 2 : 1.2),
+      };
+      g.appendChild(shapeEl(svgEl, node.shape || 'rect', pos, shapeAttrs));
       // 多行文本：与测量同一折行布局（v35 溢出根治），默认上下左右居中
       const lay = nodeTextLayout(node, b.depth);
       const lines = lay.lines;
@@ -324,6 +411,15 @@ function createMindmap(container) {
         badge.textContent = `(${countDesc(node)})`;
         g.appendChild(badge);
       }
+      // 钉坐标角标（混合画布：pinned 节点脱离布局流的标记）
+      if (node.pinned) {
+        const pin = svgEl('g', { class: 'mm-pin', transform: `translate(${pos.w - 14},${-6})` });
+        pin.appendChild(svgEl('circle', { cx: 7, cy: 7, r: 7, fill: 'var(--acc, #4f46e5)' }));
+        const pt = svgEl('text', { x: 7, y: 10, 'text-anchor': 'middle', 'font-size': 9, fill: '#fff' });
+        pt.textContent = '📌';
+        pin.appendChild(pt);
+        g.appendChild(pin);
+      }
       // 选中节点：右下角调尺寸手柄（完整显示内容为底线）
       if (selected) {
         const rz = svgEl('rect', { x: pos.w - 10, y: pos.h - 10, width: 10, height: 10, rx: 2, fill: 'var(--acc, #4f46e5)', class: 'mm-resize', 'data-id': node.id });
@@ -347,7 +443,50 @@ function createMindmap(container) {
     renderNotes();
     renderRefLines();
     renderParentLinks();
+    renderMultiSel(); // 选框多选高亮（w34）
+    // canvas 连线层绘制（虚拟化模式；SVG 之上交互由 SVG 节点/手柄承载，连线视觉全归 canvas）
+    ctl._lastLinkStrokes = virtual ? linkStrokes : null; // 数学命中共用（canvas 模式）
+    drawLinkLayer(linkStrokes, virtual);
+    ctl._vstats = { total, drawn, linksDrawn, virtual, vr }; // 虚拟化统计（E2E/诊断——须在自增后赋值）
     renderStylebar();
+  }
+
+  // ==================== canvas 连线层 ====================
+  function drawLinkLayer(strokes, on) {
+    const cw = wrap.clientWidth || 0, ch = wrap.clientHeight || 0, dpr = window.devicePixelRatio || 1;
+    if (linkCanvas.width !== cw * dpr || linkCanvas.height !== ch * dpr) { linkCanvas.width = cw * dpr; linkCanvas.height = ch * dpr; }
+    let ctx;
+    try { ctx = linkCanvas.getContext('2d'); } catch { return; } // jsdom 契约环境无 canvas 实现（E2E 真 Chromium 有）
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+    if (!on) return;
+    const k = ctl.cam.k;
+    const world = (p) => [p[0] * k + ctl.cam.x, p[1] * k + ctl.cam.y];
+    const cssColor = (c) => c?.startsWith('var(') ? (getComputedStyle(root).getPropertyValue(c.match(/var\((--[a-z-]+)/)?.[1] || '--bd') || '#d8d6cf') : (c || '#d8d6cf');
+    for (const s of strokes) {
+      if (!s.pts?.length) continue;
+      ctx.beginPath();
+      const p0 = world(s.pts[0]);
+      ctx.moveTo(p0[0], p0[1]);
+      for (let i = 1; i < s.pts.length; i++) { const p = world(s.pts[i]); ctx.lineTo(p[0], p[1]); }
+      ctx.strokeStyle = cssColor(s.color);
+      ctx.lineWidth = (s.width || 1.6) * k;
+      ctx.setLineDash(s.dash ? [6 * k, 4 * k] : []);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  /** canvas 模式数学命中：世界坐标点 → 最近连线（<8/k px 内） */
+  function hitTestLinks(wx, wy) {
+    const strokes = ctl._lastLinkStrokes || [];
+    let best = null, bestD = 8 / ctl.cam.k + 4;
+    for (const s of strokes) {
+      const d = distToPts(wx, wy, s.pts);
+      if (d < bestD) { bestD = d; best = s; }
+    }
+    return best;
   }
 
   // ==================== 多父级连接线（与主连接线同款样式；可选中编辑直曲/颜色/线宽/拐点/注释） ====================
@@ -367,20 +506,22 @@ function createMindmap(container) {
       const endPt = { x: x2, y: y2 };
       if (pl.mode === 'straight') {
         // Array.isArray 区分「删光了（[]）」与「未自定义（undefined）」（同主连接线，防删光复位两拐）
-        const wps = Array.isArray(pl.waypoints) ? pl.waypoints : defaultTwoWaypoints({ cx: x1, cy: y1, w: 0, h: 0 }, { cx: x2, cy: y2, w: 0, h: 0 });
-        const pts = [[x1, y1], ...wps.map(w => [w.x, w.y]), [x2, y2]];
+        const pa = { cx: x1, cy: y1 }, pc = { cx: x2, cy: y2 };
+        const wps = Array.isArray(pl.waypoints) ? (pl.waypoints = wpMigrate(pl.waypoints, pa, pc)) : defaultTwoWaypoints({ cx: x1, cy: y1, w: 0, h: 0 }, { cx: x2, cy: y2, w: 0, h: 0 });
+        const pts = [[x1, y1], ...wps.map(w => { const q = wpToPoint(pa, pc, w); return [q.x, q.y]; }), [x2, y2]];
         d = 'M' + pts.map(q => q.join(',')).join(' L');
         const prev = pts[pts.length - 2];
         arrowAng = Math.atan2(y2 - prev[1], x2 - prev[0]);
         // 直线模式拐点手柄（选中时）
         if (sel) {
           wps.forEach((wp, i) => {
-            const dot = svgEl('circle', { cx: wp.x, cy: wp.y, r: 5.5, fill: '#fff', stroke: color, 'stroke-width': 2, class: 'mm-wp', 'data-idx': i });
+            const qp = wpToPoint(pa, pc, wp);
+            const dot = svgEl('circle', { cx: qp.x, cy: qp.y, r: 5.5, fill: '#fff', stroke: color, 'stroke-width': 2, class: 'mm-wp', 'data-idx': i });
             dot.style.cursor = 'grab';
             dot.addEventListener('pointerdown', (e) => {
               e.stopPropagation();
-              pl.waypoints = wps.map(w => ({ ...w }));
-              drag = { type: 'wp', rl: pl, idx: i, sx: e.clientX, sy: e.clientY, ox: wp.x, oy: wp.y };
+              pl.waypoints = wps.map(w => wpFromPoint(pa, pc, w)); // 固化即参数化
+              drag = { type: 'wp', rl: pl, idx: i, sx: e.clientX, sy: e.clientY, ox: qp.x, oy: qp.y };
             });
             dot.addEventListener('contextmenu', (e) => {
               e.preventDefault(); e.stopPropagation();
@@ -393,6 +534,11 @@ function createMindmap(container) {
         const mx = (x1 + x2) / 2;
         d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
         arrowAng = Math.atan2(y2 - y1, x2 - mx);
+      }
+      // canvas 模式（虚拟化）：入 canvas 画列（直线拐点折线/贝塞尔统一 d→pts），SVG 不建连线
+      if (shVirtual) {
+        shLinkStrokes.push({ id: pl.id, pts: pathToPts(d), color, width, dash: false });
+        continue;
       }
       const path = svgEl('path', {
         d, fill: 'none', stroke: color, 'stroke-width': width,
@@ -423,17 +569,22 @@ function createMindmap(container) {
         const wy = (e.clientY - rect.top - ctl.cam.y) / ctl.cam.k;
         mutate(() => {
           pl.waypoints = pl.waypoints || [];
-          pl.waypoints.push({ x: wx, y: wy });
+          pl.waypoints.push(wpFromPoint({ cx: x1, cy: y1 }, { cx: x2, cy: y2 }, { x: wx, y: wy })); // 参数化入库
           pl.mode = 'straight';
         });
       });
       viewport.appendChild(path);
-      // 箭头（同色）
+      // 箭头（多形态同色）
       const ah = 8;
-      viewport.appendChild(svgEl('path', {
-        d: `M${endPt.x},${endPt.y} l${-ah * Math.cos(arrowAng - 0.4)},${-ah * Math.sin(arrowAng - 0.4)} l${ah * 0.6},0 l${-ah * Math.cos(arrowAng + 0.4)},${-ah * Math.sin(arrowAng + 0.4)} Z`,
-        fill: color,
-      }));
+      const plHeadKind = pl.arrow || ctl.doc.linkStyle?.arrow || ctl.mmOpts?.arrow || 'arrow';
+      if (plHeadKind === 'circle') {
+        viewport.appendChild(svgEl('circle', { cx: endPt.x, cy: endPt.y, r: 4.5, fill: '#fff', stroke: color, 'stroke-width': 2 }));
+      } else if (plHeadKind !== 'none') {
+        viewport.appendChild(svgEl('path', {
+          d: arrowHeadD(plHeadKind, endPt.x, endPt.y, arrowAng, ah),
+          fill: plHeadKind === 'open' ? 'none' : color, stroke: plHeadKind === 'open' ? color : 'none', 'stroke-width': plHeadKind === 'open' ? 1.8 : 0,
+        }));
+      }
       // 线注释
       if (pl.note) {
         const ns = pl.noteStyle || {};
@@ -485,6 +636,7 @@ function createMindmap(container) {
   // ==================== 便笺 ====================
   function renderNotes() {
     for (const n of ctl.doc.notes) {
+      if (!shInView({ x: n.x, y: n.y, w: n.w, h: n.w })) continue; // 虚拟化（共享态）
       // 便笺按内容自适应尺寸（多行也保证不溢出）
       n.w = Math.max(100, measureNote(n));
       const g = svgEl('g', { class: 'mm-note', 'data-id': n.id, transform: `translate(${n.x},${n.y})` });
@@ -496,6 +648,10 @@ function createMindmap(container) {
         'stroke-width': sel ? 2 : 1.2,
         filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.12))',
       }));
+      if (n.image) {
+        // 图片便笺（混合画布：图片对象自由共存——粘贴/拖入即图，文本压底）
+        g.appendChild(svgEl('image', { href: n.image, x: 6, y: 6, width: n.w - 12, height: n.w - 12, preserveAspectRatio: 'xMidYMid meet' }));
+      } else {
       // 便笺多行文本：与测量同一折行（v35），上下左右居中
       const _noteLayFont = `${n.style?.bold ? 700 : 400} ${(n.style?.size) || 12}px ${n.style?.family || 'sans-serif'}`;
       const lines = wrapTextLines(n.text || '（便笺）', _noteLayFont, 300);
@@ -512,6 +668,7 @@ function createMindmap(container) {
         t.textContent = ln;
         g.appendChild(t);
       });
+      }
       g.addEventListener('pointerdown', (e) => onNotePointerDown(e, n));
       g.addEventListener('dblclick', (e) => { e.stopPropagation(); startEditNote(n); });
       viewport.appendChild(g);
@@ -542,7 +699,7 @@ function createMindmap(container) {
 
   /** 直线折线路径：无拐点=直连（横平竖直或倾斜）；有拐点=按拐点折（首末接边自适应） */
   function refLinePath(rl, aInfo, cInfo) {
-    const wps = rl.waypoints || [];
+    const wps = rl.waypoints?.length ? (rl.waypoints = wpMigrate(rl.waypoints, aInfo, cInfo)) : [];
     if (!wps.length) {
       // 无拐点：直来直去一条直线
       const d = { x: cInfo.cx - aInfo.cx, y: cInfo.cy - aInfo.cy };
@@ -550,11 +707,11 @@ function createMindmap(container) {
       const p2 = edgePoint({ x: cInfo.cx, y: cInfo.cy }, { x: cInfo.cx - d.x, y: cInfo.cy - d.y }, cInfo.w, cInfo.h);
       return [[p1.x, p1.y], [p2.x, p2.y]];
     }
-    // 首末点按邻接段方向自适应接边
-    const first = wps[0], last = wps[wps.length - 1];
+    // 首末点按邻接段方向自适应接边；拐点一律参数化取屏（随端点重算）
+    const first = wpToPoint(aInfo, cInfo, wps[0]), last = wpToPoint(aInfo, cInfo, wps[wps.length - 1]);
     const start = edgePoint({ x: aInfo.cx, y: aInfo.cy }, first, aInfo.w, aInfo.h);
     const end = edgePoint({ x: cInfo.cx, y: cInfo.cy }, last, cInfo.w, cInfo.h);
-    return [[start.x, start.y], ...wps.map(p => [p.x, p.y]), [end.x, end.y]];
+    return [[start.x, start.y], ...wps.map(p => { const q = wpToPoint(aInfo, cInfo, p); return [q.x, q.y]; }), [end.x, end.y]];
   }
 
   /** 切换直线模式时的默认两拐：直出 → 拐 → 拐直入（Z 形） */
@@ -582,6 +739,7 @@ function createMindmap(container) {
       const a = entityCenter(rl.from.id, rl.from.k);
       const c = entityCenter(rl.to.id, rl.to.k);
       if (!a || !c) continue;
+      rl.waypoints = wpMigrate(rl.waypoints, a, c); // 懒迁移统一收口（曲线/直线/手柄全链同走）
       const sel = ctl.selectedLine === rl.id;
       const color = rl.color || (sel ? 'var(--acc, #4f46e5)' : '#94a3b8');
       const width = rl.width || (sel ? 3 : 1.8);
@@ -595,11 +753,15 @@ function createMindmap(container) {
         arrowAng = Math.atan2(cy - prev[1], cx - prev[0]);
       } else {
         const bend = Math.max(-200, Math.min(200, rl.bend ?? 30));
-        const ctrl = rl.waypoints?.length ? rl.waypoints[0] : { x: mx + bend, y: my - 30 };
+        const ctrl = rl.waypoints?.length ? wpToPoint(a, c, rl.waypoints[0]) : { x: mx + bend, y: my - 30 }; // 参数化取屏
         d = `M${ax},${ay} Q${ctrl.x},${ctrl.y} ${cx},${cy}`;
         arrowAng = Math.atan2(cy - ctrl.y, cx - ctrl.x);
         rl._ctrl = ctrl; // 渲染期暂存，供手柄定位
       }
+      // canvas 模式（虚拟化）：入 canvas 画列（虚线样式随 width 档），SVG 不建连线但手柄照走
+      if (shVirtual) {
+        shLinkStrokes.push({ id: rl.id, pts: pathToPts(d), color, width, dash: width <= 2.5 });
+      } else {
       const path = svgEl('path', {
         d, fill: 'none', stroke: color, 'stroke-width': width,
         'stroke-dasharray': width > 2.5 ? 'none' : '6 4',
@@ -637,26 +799,33 @@ function createMindmap(container) {
         const wy = (e.clientY - rect.top - ctl.cam.y) / ctl.cam.k;
         mutate(() => {
           rl.waypoints = rl.waypoints || [];
-          rl.waypoints.push({ x: wx, y: wy });
+          rl.waypoints.push(wpFromPoint(a, c, { x: wx, y: wy })); // 参数化入库（重排随端点重算）
         });
       });
       viewport.appendChild(rlHit);
       viewport.appendChild(path);
-      // 箭头
+      // 箭头（多形态：arrow/open/diamond/circle/none——线级覆盖 > 全局 linkStyle.arrow）
       const ah = 8;
-      viewport.appendChild(svgEl('path', {
-        d: `M${cx},${cy} l${-ah * Math.cos(arrowAng - 0.4)},${-ah * Math.sin(arrowAng - 0.4)} l${ah * 0.6},0 l${-ah * Math.cos(arrowAng + 0.4)},${-ah * Math.sin(arrowAng + 0.4)} Z`,
-        fill: color,
-      }));
+      const headKind = rl.arrow || ctl.doc.linkStyle?.arrow || ctl.mmOpts?.arrow || 'arrow';
+      if (headKind === 'circle') {
+        viewport.appendChild(svgEl('circle', { cx, cy, r: 4.5, fill: '#fff', stroke: color, 'stroke-width': 2 }));
+      } else if (headKind !== 'none') {
+        const headD = arrowHeadD(headKind, cx, cy, arrowAng, ah);
+        viewport.appendChild(svgEl('path', {
+          d: headD, fill: headKind === 'open' ? 'none' : color, stroke: headKind === 'open' ? color : 'none', 'stroke-width': headKind === 'open' ? 1.8 : 0,
+        }));
+      }
+      }
       // 拐点手柄（选中时显示；拖拽移动 / 右键删除）
       if (sel) {
         const wps = rl.mode === 'straight' ? (rl.waypoints || []) : (rl.waypoints?.length ? rl.waypoints : [rl._ctrl]);
         wps.forEach((wp, i) => {
-          const dot = svgEl('circle', { cx: wp.x, cy: wp.y, r: 5.5, fill: '#fff', stroke: color, 'stroke-width': 2, class: 'mm-wp', 'data-idx': i });
+          const qp = wpToPoint(a, c, wp); // 参数化取屏定位手柄
+          const dot = svgEl('circle', { cx: qp.x, cy: qp.y, r: 5.5, fill: '#fff', stroke: color, 'stroke-width': 2, class: 'mm-wp', 'data-idx': i });
           dot.style.cursor = 'grab';
           dot.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
-            drag = { type: 'wp', rl, idx: i, sx: e.clientX, sy: e.clientY, ox: wp.x, oy: wp.y };
+            drag = { type: 'wp', rl, idx: i, sx: e.clientX, sy: e.clientY, ox: qp.x, oy: qp.y };
           });
           dot.addEventListener('contextmenu', (e) => {
             e.preventDefault(); e.stopPropagation();
@@ -694,6 +863,7 @@ function createMindmap(container) {
   // ==================== 编辑 ====================
   let editOpenedAt = 0;
   function startEdit(box) {
+    if (ctl.mmStatus === 'present') return; // 放映态编辑禁用
     const pos = boxPos(box);
     editOpenedAt = Date.now();
     ctl.editing = { kind: 'node', id: box.node.id };
@@ -733,8 +903,16 @@ function createMindmap(container) {
     commitEdit();
   });
   editor.addEventListener('keydown', (e) => {
-    // Enter 换行；Ctrl+Enter 退出并保存；Esc 取消
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); commitEdit(); }
+    // 快捷键对调（用户拍板不反直觉）：Enter=确认提交；Alt+Enter=内容换行；Ctrl+Enter 确认兼容手势；Esc 取消
+    if (e.key === 'Enter' && e.altKey) {
+      // Alt+Enter 换行必须手插（textarea 默认只认裸 Enter 换行，Alt+Enter 浏览器无默认插入实锤）
+      e.preventDefault();
+      const el = e.target;
+      const s = el.selectionStart ?? el.value.length, t = el.selectionEnd ?? s;
+      el.value = el.value.slice(0, s) + '\n' + el.value.slice(t);
+      el.selectionStart = el.selectionEnd = s + 1;
+    }
+    else if (e.key === 'Enter' && !e.altKey) { e.preventDefault(); commitEdit(); }
     else if (e.key === 'Escape') { ctl.editing = null; editor.style.display = 'none'; }
     e.stopPropagation();
   });
@@ -978,6 +1156,7 @@ function createMindmap(container) {
 
   /** 节点右键：编辑/新建/连接/删除 */
   function showNodeMenu(x, y, box) {
+    if (ctl.mmStatus === 'present') return; // 放映态菜单禁用（状态机闸）
     const id = box.node.id;
     mmMenu([
       { label: '编辑文字', fn: () => startEdit(box) },
@@ -988,26 +1167,48 @@ function createMindmap(container) {
       { label: '添加父级连接（多父级）', fn: () => { ctl.selected = id; startParentLinkMode(); } },
       { label: '绘制引用线', fn: () => { ctl.selected = id; startLinkMode(); } },
       '-',
+      ...SHAPES.map(s => ({
+        label: `${(box.node.shape || 'rect') === s.id ? '✓ ' : ''}形状：${s.name}`,
+        fn: () => mmExec(ctl, 'setNodeShape', s.id),
+      })),
+      '-',
+      { label: `${box.node.pinned ? '✓ ' : ''}钉住位置（脱离布局）`, fn: () => mutate(() => {
+        const n = box.node;
+        if (n.pinned) { n.pinned = false; delete n.fx; delete n.fy; }
+        else { n.pinned = true; if (n.fx == null) { const b = ctl.boxes.get(n.id); n.fx = b?.x ?? 80; n.fy = b?.y ?? 80; } }
+      }) },
+      '-',
       { label: '删除节点', fn: () => deleteNode(id) },
     ], x, y);
   }
 
   /** 空白右键：新建/视图 */
   function showBlankMenu(x, y) {
+    if (ctl.mmStatus === 'present') return; // 放映态菜单禁用（状态机闸）
     const rect = wrap.getBoundingClientRect();
     const wx = (x - rect.left - ctl.cam.x) / ctl.cam.k;
     const wy = (y - rect.top - ctl.cam.y) / ctl.cam.k;
-    mmMenu([
+    const items = [];
+    if (ctl.multiSel.size) items.push({ label: `删除所选 ${ctl.multiSel.size} 个节点`, fn: () => deleteMultiSel() }, '-'); // 选框批量删除（右键选单同款）
+    if (ctl.multiSel.size >= 3) items.push(
+      { label: `水平等距分布（${ctl.multiSel.size} 个）`, fn: () => distributeSel('x') },
+      { label: `垂直等距分布（${ctl.multiSel.size} 个）`, fn: () => distributeSel('y') },
+      '-',
+    ); // 混合画布：等距分布（首尾不动中间均分）
+    items.push(
       { label: '新建根节点', fn: () => addRootAt(wx, wy) },
       { label: '新建便笺', fn: () => addNoteAt(wx, wy) },
+      { label: '新建泳道', fn: () => mmExec(ctl, 'addSwimlane', { x: wx - 180, y: wy - 120 }) },
       '-',
       { label: '适应视图', fn: () => fitView() },
       { label: '一键美化重排', fn: () => beautify() },
-    ], x, y);
+    );
+    mmMenu(items, x, y);
   }
 
   /** 线右键：直曲切换/加拐点/删除（连接线=清除自定义样式） */
   function showLineMenu(x, y) {
+    if (ctl.mmStatus === 'present') return; // 放映态菜单禁用（状态机闸）
     const id = ctl.selectedLine;
     if (!id) return;
     const isConn = id.startsWith('conn:');
@@ -1044,10 +1245,18 @@ function createMindmap(container) {
             fn: () => mutate(() => {
               const a = entityCenter(rl.from.id, rl.from.k), c = entityCenter(rl.to.id, rl.to.k);
               rl.waypoints = rl.waypoints || [];
-              rl.waypoints.push({ x: (a.cx + c.cx) / 2, y: (a.cy + c.cy) / 2 - 20 });
+              rl.waypoints.push(wpFromPoint(a, c, { x: (a.cx + c.cx) / 2, y: (a.cy + c.cy) / 2 - 20 })); // 参数化入库
             }),
           },
         );
+        // 箭头形态子项（线级覆盖；isConn 树连线也吃全局 linkStyle.arrow）
+        items.push('-');
+        for (const ah of ARROW_HEADS) {
+          items.push({
+            label: `${((rl.arrow || ctl.doc.linkStyle?.arrow || 'arrow') === ah.id ? '✓ ' : '')}箭头：${ah.name}`,
+            fn: () => mutate(() => { rl.arrow = ah.id === 'arrow' ? undefined : ah.id; }),
+          });
+        }
       }
     }
     mmMenu(items, x, y);
@@ -1070,6 +1279,16 @@ function createMindmap(container) {
   const RADIAL = () => ctl.doc.mode === 'radial';
   function onNodePointerDown(e, box) {
     e.stopPropagation();
+    if (ctl.mmStatus === 'present') return; // 放映态编辑禁用（状态机闸）
+    if (ctl.toolMode === 'pan') { // 移动模式：节点上也平移画布（不选中不拖节点）
+      ctl.selected = null; // 移动模式清选中（不产生新选中，旧选中也不留）
+      drag = { type: 'pan', sx: e.clientX, sy: e.clientY, cam: { ...ctl.cam } };
+      return;
+    }
+    if (ctl.toolMode === 'select') { // 选框模式：节点上也起选框（不拖节点）
+      drag = { type: 'selrect', sel: selectRectStart(e) };
+      return;
+    }
     if (e.button !== 0) return;
     wrap.focus({ preventScroll: true });
     if (ctl.linkMode) return pickLinkTarget({ id: box.node.id, k: 'node' });
@@ -1092,13 +1311,34 @@ function createMindmap(container) {
   wrap.addEventListener('pointerdown', (e) => {
     if (e.target === svg || e.target === viewport) {
       wrap.focus({ preventScroll: true });
+      // canvas 模式连线数学命中（<8/k px 最近线优先于平移）
+      if (ctl._lastLinkStrokes && e.button === 0) {
+        const rect0 = wrap.getBoundingClientRect();
+        const wx0 = (e.clientX - rect0.left - ctl.cam.x) / ctl.cam.k, wy0 = (e.clientY - rect0.top - ctl.cam.y) / ctl.cam.k;
+        const hit = hitTestLinks(wx0, wy0);
+        if (hit) {
+          ctl.selectedLine = hit.id;
+          ctl.selected = null; ctl.selectedNote = null;
+          render(); // 选中高亮（canvas 重画选中色）
+          renderStylebar();
+          return;
+        }
+      }
+      if (ctl.mmStatus === 'present') return; // 放映态镜头由帧驱动，禁手拖
+      if (ctl.toolMode === 'select') { // 选框模式：空白起选框（不 pan）
+        drag = { type: 'selrect', sel: selectRectStart(e) };
+        return;
+      }
       drag = { type: 'pan', sx: e.clientX, sy: e.clientY, cam: { ...ctl.cam } };
       ctl.selected = null;
       render();
     }
   });
   window.addEventListener('pointermove', (e) => {
-    if (!drag || current !== ctl) return;
+    if (current !== ctl) return;
+    // 泳道拖拽（标题条移位/右下调尺寸；deals=swimlanes）
+    if (ctl._laneDrag) { if (laneDragMove(ctl, e)) { render(); } return; }
+    if (!drag) return;
     if (drag.type === 'pan') {
       ctl.cam.x = drag.cam.x + (e.clientX - drag.sx);
       ctl.cam.y = drag.cam.y + (e.clientY - drag.sy);
@@ -1126,34 +1366,47 @@ function createMindmap(container) {
         }
       }
     } else if (drag.type === 'wp') {
-      // 拐点拖拽（曲线=调弯曲，直线=调拐点位）
+      // 拐点拖拽（曲线=调弯曲，直线=调拐点位）——落点参数化入库（重排随端点重算）
       const dx = (e.clientX - drag.sx) / ctl.cam.k, dy = (e.clientY - drag.sy) / ctl.cam.k;
       const rl = drag.rl;
-      if (rl.mode === 'straight') {
-        rl.waypoints[drag.idx] = { x: drag.ox + dx, y: drag.oy + dy };
-      } else {
-        rl.waypoints = rl.waypoints?.length ? rl.waypoints : [];
-        rl.waypoints[drag.idx] = { x: drag.ox + dx, y: drag.oy + dy };
-        rl.bend = rl.waypoints[drag.idx].x - ((entityCenter(rl.from.id, rl.from.k)?.cx + entityCenter(rl.to.id, rl.to.k)?.cx) / 2 || 0);
+      const a = entityCenter(rl.from.id, rl.from.k), c = entityCenter(rl.to.id, rl.to.k);
+      rl.waypoints = rl.waypoints?.length ? rl.waypoints : [];
+      rl.waypoints[drag.idx] = wpFromPoint(a, c, { x: drag.ox + dx, y: drag.oy + dy });
+      if (rl.mode !== 'straight') {
+        rl.bend = wpToPoint(a, c, rl.waypoints[drag.idx]).x - ((a?.cx + c?.cx) / 2 || 0); // bend 语义保留（无 waypoints 时的默认）
       }
       // 实时重绘路径（轻量：只更新 path d 和手柄位）
       const pathEl = viewport.querySelector(`.mm-refline[data-id="${rl.id}"]`);
       if (pathEl) {
-        const a = entityCenter(rl.from.id, rl.from.k), c = entityCenter(rl.to.id, rl.to.k);
         if (rl.mode === 'straight') {
           const pts = refLinePoints(rl, a, c);
           pathEl.setAttribute('d', 'M' + pts.map(p => p.join(',')).join(' L'));
         } else {
-          const ctrl = rl.waypoints[drag.idx];
+          const ctrl = wpToPoint(a, c, rl.waypoints[drag.idx]);
           pathEl.setAttribute('d', `M${a.x},${a.y} Q${ctrl.x},${ctrl.y} ${c.x},${c.y}`);
         }
       }
       const dot = viewport.querySelectorAll('.mm-wp')[drag.idx];
-      if (dot) { dot.setAttribute('cx', rl.waypoints[drag.idx].x); dot.setAttribute('cy', rl.waypoints[drag.idx].y); }
+      if (dot) { const q = wpToPoint(a, c, rl.waypoints[drag.idx]); dot.setAttribute('cx', q.x); dot.setAttribute('cy', q.y); }
+    } else if (drag.type === 'selrect') {
+      // 选框拖动：实时画虚线框（世界坐标 rect）
+      drag.sel.cur = { x: (e.clientX - wrap.getBoundingClientRect().left - ctl.cam.x) / ctl.cam.k, y: (e.clientY - wrap.getBoundingClientRect().top - ctl.cam.y) / ctl.cam.k };
+      const r = selectRectCalc(drag.sel);
+      let box = viewport.querySelector('.mm-selrect');
+      if (!box) { box = svgEl('rect', { class: 'mm-selrect', fill: 'rgba(79,70,229,.08)', stroke: 'var(--acc, #4f46e5)', 'stroke-width': 1.2, 'stroke-dasharray': '5 3' }); viewport.appendChild(box); }
+      box.setAttribute('x', r.x); box.setAttribute('y', r.y);
+      box.setAttribute('width', Math.max(0, r.w)); box.setAttribute('height', Math.max(0, r.h));
     } else if (drag.type === 'connwp') {
-      // 连接线拐点拖拽（直线模式）
+      // 连接线拐点拖拽（直线模式）——落点参数化入库
       const dx = (e.clientX - drag.sx) / ctl.cam.k, dy = (e.clientY - drag.sy) / ctl.cam.k;
-      drag.node.linkWps[drag.idx] = { x: drag.ox + dx, y: drag.oy + dy };
+      const node = drag.node;
+      const pb = ctl.boxes.get(findParent(ctl.doc.roots, node.id)?.id), cb = ctl.boxes.get(node.id);
+      if (pb && cb) {
+        const pa = { cx: pb.x + pb.w, cy: pb.y + pb.h / 2 }, pc = { cx: cb.x, cy: cb.y + cb.h / 2 };
+        node.linkWps[drag.idx] = wpFromPoint(pa, pc, { x: drag.ox + dx, y: drag.oy + dy });
+      } else {
+        node.linkWps[drag.idx] = { x: drag.ox + dx, y: drag.oy + dy };
+      }
       render();
     } else if (drag.type === 'node') {
       const dx = (e.clientX - drag.sx) / ctl.cam.k, dy = (e.clientY - drag.sy) / ctl.cam.k;
@@ -1170,6 +1423,13 @@ function createMindmap(container) {
           node.offX = drag.orig.offX + dx;
           node.offY = drag.orig.offY + dy;
         }
+        // 磁吸对齐线（混合画布：x/y 边缘与中线吸附 8/k px，excalidraw 式虚线参考线）
+        const snap = snapNode(node);
+        if (snap.dx || snap.dy) {
+          if (RADIAL()) { node.fx += snap.dx; node.fy += snap.dy; }
+          else { node.offX += snap.dx; node.offY += snap.dy; }
+        }
+        renderSnapLines(snap);
         // 吸附目标高亮（拖到别的节点上 = 改父级）
         const el = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.mm-node');
         viewport.querySelectorAll('.mm-node rect').forEach(r => r.style.strokeDasharray = '');
@@ -1190,8 +1450,59 @@ function createMindmap(container) {
       g.setAttribute('transform', `translate(${pos.x},${pos.y})`);
     }
   }
+
+  // ==================== 磁吸对齐线（混合画布：拖动吸附 + 虚线参考线） ====================
+  /** 拖动节点对齐吸附：x/y 左中右/上中下边缘，阈值 8/k px，返回修正与参考线 */
+  function snapNode(node) {
+    const selfBox = (() => { const b = ctl.boxes.get(node.id); const p = boxPos(b); return { x: p.x, y: p.y, w: b.w, h: b.h }; })();
+    const TH = 8 / ctl.cam.k;
+    const xs = [], ys = [];
+    for (const [, b] of ctl.boxes) {
+      if (b.node.id === node.id) continue;
+      const p = boxPos(b);
+      xs.push(p.x, p.x + b.w / 2, p.x + b.w);
+      ys.push(p.y, p.y + b.h / 2, p.y + b.h);
+    }
+    const snap1 = (val, cands) => {
+      let best = null, bd = TH;
+      for (const c of cands) { const d = Math.abs(val - c); if (d < bd) { bd = d; best = c; } }
+      return best;
+    };
+    const cx = [selfBox.x, selfBox.x + selfBox.w / 2, selfBox.x + selfBox.w];
+    const cy = [selfBox.y, selfBox.y + selfBox.h / 2, selfBox.y + selfBox.h];
+    let dx = 0, dy = 0, lineX = null, lineY = null;
+    for (let i = 0; i < 3; i++) {
+      const sx = snap1(cx[i] + dx, xs);
+      if (sx != null && lineX == null) { lineX = sx; dx = sx - cx[i]; }
+      const sy = snap1(cy[i] + dy, ys);
+      if (sy != null && lineY == null) { lineY = sy; dy = sy - cy[i]; }
+    }
+    return { dx, dy, lineX, lineY, box: selfBox };
+  }
+  /** 对齐参考线渲染（拖动中两条虚线；松手清） */
+  function renderSnapLines(snap) {
+    viewport.querySelectorAll('.mm-snapline').forEach(el => el.remove());
+    if (!snap.lineX && !snap.lineY) return;
+    if (snap.lineX != null) {
+      viewport.appendChild(svgEl('line', { x1: snap.lineX, y1: snap.box.y - 4000, x2: snap.lineX, y2: snap.box.y + snap.box.h + 4000, class: 'mm-snapline', stroke: 'var(--acc, #4f46e5)', 'stroke-width': 1, 'stroke-dasharray': '4 3', opacity: 0.7 }));
+    }
+    if (snap.lineY != null) {
+      viewport.appendChild(svgEl('line', { x1: snap.box.x - 4000, y1: snap.lineY, x2: snap.box.x + snap.box.w + 4000, y2: snap.lineY, class: 'mm-snapline', stroke: 'var(--acc, #4f46e5)', 'stroke-width': 1, 'stroke-dasharray': '4 3', opacity: 0.7 }));
+    }
+  }
   window.addEventListener('pointerup', (e) => {
-    if (!drag || current !== ctl) return;
+    if (current !== ctl) return;
+    if (ctl._laneDrag) { laneDragEnd(ctl); mutate(() => {}); return; } // 泳道落位入栈
+    if (!drag) return;
+    if (drag.type === 'pan' && ctl._vstats?.virtual) { render(); } // 虚拟化：平移结束重算可见集（transform-only 平移期保流畅）
+    if (drag.type === 'selrect') { // 选框落：批量选中（相交集）+虚线框清除+多选高亮
+      viewport.querySelector('.mm-selrect')?.remove();
+      const n = applySelectRect(drag.sel);
+      drag = null;
+      render();
+      if (n) toast(`已选中 ${n} 个节点（Delete 或右键删除）`);
+      return;
+    }
     if (drag.type === 'wp' || drag.type === 'resize' || drag.type === 'connwp') {
       mutate(() => {}); // 落位入栈
       drag = null;
@@ -1218,6 +1529,7 @@ function createMindmap(container) {
     }
     if (drag.type === 'node' && drag.moved) {
       const node = findNode(ctl.doc.roots, drag.id);
+      viewport.querySelectorAll('.mm-snapline').forEach(el => el.remove()); // 对齐参考线松手清（混合画布）
       if (drag.target && drag.target !== drag.id && node) {
         // 拖到别的节点上 = 改父级（清除手动坐标）
         mutate(() => {
@@ -1236,6 +1548,7 @@ function createMindmap(container) {
     drag = null;
   });
   wrap.addEventListener('wheel', (e) => {
+    if (ctl.mmStatus === 'present') { e.preventDefault(); return; } // 放映态禁缩放
     e.preventDefault();
     const rect = wrap.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
@@ -1245,10 +1558,26 @@ function createMindmap(container) {
     ctl.cam.y = my - (my - ctl.cam.y) * (k2 / ctl.cam.k);
     ctl.cam.k = k2;
     viewport.setAttribute('transform', `translate(${ctl.cam.x},${ctl.cam.y}) scale(${ctl.cam.k})`);
+    // 虚拟化重渲染防抖：缩放改可见集（transform-only 保流畅，140ms 后重算）
+    clearTimeout(ctl._virtT);
+    ctl._virtT = setTimeout(() => { if (ctl._vstats?.virtual) render(); }, 140);
   }, { passive: false });
   wrap.addEventListener('contextmenu', (e) => {
     if (e.target === svg || e.target === viewport) {
       e.preventDefault();
+      // canvas 模式：命中连线 → 线菜单（否则空白菜单）
+      if (ctl._lastLinkStrokes) {
+        const rect = wrap.getBoundingClientRect();
+        const wx = (e.clientX - rect.left - ctl.cam.x) / ctl.cam.k, wy = (e.clientY - rect.top - ctl.cam.y) / ctl.cam.k;
+        const hit = hitTestLinks(wx, wy);
+        if (hit) {
+          ctl.selectedLine = hit.id;
+          ctl.selected = null; ctl.selectedNote = null;
+          render();
+          showLineMenu(e.clientX, e.clientY);
+          return;
+        }
+      }
       showBlankMenu(e.clientX, e.clientY);
     }
   });
@@ -1257,15 +1586,84 @@ function createMindmap(container) {
       const rect = wrap.getBoundingClientRect();
       const x = (e.clientX - rect.left - ctl.cam.x) / ctl.cam.k;
       const y = (e.clientY - rect.top - ctl.cam.y) / ctl.cam.k;
+      // canvas 模式：命中连线 → 双击加拐点（直线直角拐/曲线弯曲，按 id 前缀分派参数化入库）
+      if (ctl._lastLinkStrokes && !e.shiftKey) {
+        const hit = hitTestLinks(x, y);
+        if (hit) {
+          mutate(() => {
+            if (hit.id.startsWith('conn:')) {
+              const node = findNode(ctl.doc.roots, hit.id.slice(5));
+              const pb = ctl.boxes.get(findParent(ctl.doc.roots, node.id)?.id), cb = ctl.boxes.get(node.id);
+              if (node && pb && cb) {
+                node.linkWps = node.linkWps || [];
+                node.linkWps.push(wpFromPoint({ cx: pb.x + pb.w, cy: pb.y + pb.h / 2 }, { cx: cb.x, cy: cb.y + cb.h / 2 }, { x, y }));
+                node.linkMode = 'straight';
+              }
+            } else {
+              const rl = ctl.doc.refLines.find(l => l.id === hit.id) || (ctl.doc.parentLinks || []).find(l => l.id === hit.id);
+              if (rl) {
+                const a = entityCenter(rl.from.id ?? rl.from, rl.from.k ?? 'node'), c = entityCenter(rl.to.id ?? rl.to, rl.to.k ?? 'node');
+                rl.waypoints = rl.waypoints || [];
+                rl.waypoints.push(wpFromPoint(a, c, { x, y }));
+                if (rl.mode !== 'curve') rl.mode = 'straight';
+              }
+            }
+          });
+          return;
+        }
+      }
       // Shift+双击空白 → 新增便笺；普通双击 → 新增根节点
       if (e.shiftKey) addNoteAt(x, y);
       else addRootAt(x, y);
     }
   });
 
+  // 图片便笺入口（混合画布：粘贴/拖入图片即成图片对象）
+  wrap.addEventListener('paste', (e) => {
+    if (ctl.mmStatus === 'present') return;
+    const items = [...(e.clipboardData?.items || [])];
+    const img = items.find(it => it.type?.startsWith('image/'));
+    if (!img) return;
+    e.preventDefault();
+    const file = img.getAsFile();
+    const fr = new FileReader();
+    fr.onload = () => {
+      const rect = wrap.getBoundingClientRect();
+      const n = createNote('', (-ctl.cam.x / ctl.cam.k) + 80, (-ctl.cam.y / ctl.cam.k) + 80);
+      n.image = fr.result; n.w = 220;
+      mutate(() => { ctl.doc.notes.push(n); });
+      toast('已粘贴为图片便笺');
+    };
+    fr.readAsDataURL(file);
+  });
+  wrap.addEventListener('drop', (e) => {
+    if (ctl.mmStatus === 'present') return;
+    const f = e.dataTransfer?.files?.[0];
+    if (!f || !f.type?.startsWith('image/')) return;
+    e.preventDefault();
+    const fr = new FileReader();
+    fr.onload = () => {
+      const rect = wrap.getBoundingClientRect();
+      const n = createNote('', (e.clientX - rect.left - ctl.cam.x) / ctl.cam.k, (e.clientY - rect.top - ctl.cam.y) / ctl.cam.k);
+      n.image = fr.result; n.w = 220;
+      mutate(() => { ctl.doc.notes.push(n); });
+      toast('已拖入为图片便笺');
+    };
+    fr.readAsDataURL(f);
+  });
+  wrap.addEventListener('dragover', (e) => { if (e.dataTransfer?.files?.[0]?.type?.startsWith('image/')) e.preventDefault(); });
+
   // 键盘路由
   document.addEventListener('keydown', (e) => {
     if (current !== ctl || ctl.editing) return;
+    // 状态机闸：present 态全部键路由走放映专属（编辑键全禁，kityminder status 自判同款）
+    if (ctl.mmStatus === 'present') {
+      e.preventDefault(); e.stopPropagation(); // 真实键盘事件就地消掉（编辑键全禁，载荷走 detail 专递）
+      document.dispatchEvent(new CustomEvent('mm:present-key', { detail: { key: e.key } }));
+      return;
+    }
+    // F5 启动放映（叙事模式）
+    if (e.key === 'F5') { e.preventDefault(); mmExec(ctl, 'startPresent', 0); return; }
     const id = ctl.selected;
     // Ctrl+Z 撤销 / Ctrl+Alt+Z（或 Ctrl+Y）重做（用户要求绑定，v34）
     if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'z') {
@@ -1289,7 +1687,8 @@ function createMindmap(container) {
     else if (e.key === 'Enter' && e.altKey && id) { e.preventDefault(); addSiblingOf(id); } // Alt+Enter 新建同级（避开与编辑器换行冲突）
     else if ((e.key === 'Delete' || e.key === 'Backspace')) {
       e.preventDefault();
-      if (ctl.selectedLine) deleteSelectedLine();
+      if (ctl.multiSel.size) deleteMultiSel(); // 选框批量删除优先（w34）
+      else if (ctl.selectedLine) deleteSelectedLine();
       else if (ctl.selectedNote) deleteNote(ctl.selectedNote);
       else if (id) deleteNode(id);
     }
@@ -1307,7 +1706,12 @@ function createMindmap(container) {
   });
 
   // ==================== 样式条（选中节点/便笺/线时） ====================
+  // B12b：样式条 select 批量子窗格化——innerHTML 重写前旧代理收尸（menus 贡献/MutationObserver 不泄漏）
+  const proxyStylebarSelects = () => import('../../lib/select-menu.js').then(({ selectProxy }) => {
+    stylebar._selProxies = [...stylebar.querySelectorAll('select.mm-sb')].map(s => selectProxy(s, { btnClass: 'mm-sb selmenu-btn' }));
+  });
   function renderStylebar() {
+    if (stylebar._selProxies) { for (const p of stylebar._selProxies) p?.destroy?.(); stylebar._selProxies = null; }
     // 便笺样式条
     if (ctl.selectedNote) {
       const n = ctl.doc.notes.find(x => x.id === ctl.selectedNote);
@@ -1323,6 +1727,7 @@ function createMindmap(container) {
         <button class="mm-sb-btn" data-n="__del" title="删除便笺">✕</button>`;
       stylebar.querySelectorAll('[data-n]').forEach(el => el.addEventListener('change', () => onNoteStyle(el.dataset.n, el.value)));
       stylebar.querySelectorAll('[data-n]').forEach(el => el.addEventListener('click', () => onNoteStyle(el.dataset.n, el.value)));
+      proxyStylebarSelects();
       return;
     }
     // 连接线/引用线/多父级连接线样式条
@@ -1363,6 +1768,7 @@ function createMindmap(container) {
         if (el.classList.contains('mm-sb-btn')) el.addEventListener('click', () => onLineStyle(el.dataset.l, el.value, el));
         else el.addEventListener('change', () => onLineStyle(el.dataset.l, el.value, el));
       });
+      proxyStylebarSelects();
       return;
     }
     const node = ctl.selected && findNode(ctl.doc.roots, ctl.selected);
@@ -1370,6 +1776,12 @@ function createMindmap(container) {
       // 无线选中：显示全局操作（模板/布局/配色），模板不再非得选中节点（v33 反馈）
       stylebar.style.display = 'flex';
       stylebar.innerHTML = `
+        <span class="mm-tools" style="display:inline-flex;gap:2px">
+          <button class="mm-sb-btn ${ctl.toolMode === 'build' ? 'on' : ''}" data-t="build" title="新建模式：双击空白新增节点（现状）">${iconHtml('＋')}</button>
+          <button class="mm-sb-btn ${ctl.toolMode === 'pan' ? 'on' : ''}" data-t="pan" title="移动模式：左键任意拖动=平移画布（十字箭头）">${iconHtml('✥')}</button>
+          <button class="mm-sb-btn ${ctl.toolMode === 'select' ? 'on' : ''}" data-t="select" title="选框模式：左键拖框批量选中，Delete/右键删除（虚线框）">${iconHtml('⬚')}</button>
+        </span>
+        <button class="mm-sb-btn" data-k="__merge" title="导图间桥接：把另一张导图合并进来（自选落点，避让防冲突）">${iconHtml('⇆')} 合并</button>
         <span style="font-size:11.5px;color:var(--fg-dim)">全局</span>
         <select class="mm-sb" data-k="__template" title="样式模板"></select>
         <select class="mm-sb" data-k="__mode" title="展开方式">
@@ -1381,15 +1793,37 @@ function createMindmap(container) {
           ${LEVEL_SCHEMES.map((sc, i) => `<option value="${i}" ${ctl.doc.scheme === i ? 'selected' : ''}>${sc.name}配色</option>`).join('')}
         </select>
         <button class="mm-sb-btn" data-k="__beautify" title="一键美化（清手动痕迹自动重排）">美化</button>
-        <button class="mm-sb-btn ${ctl.doc.showGrid ? 'on' : ''}" data-k="__grid" title="网格坐标线（手动定位辅助）">网格</button>`;
+        <button class="mm-sb-btn" data-k="__lane" title="新建泳道（标题条拖动移位，右下手柄调尺寸）">＋泳道</button>
+        <button class="mm-sb-btn ${ctl.doc.showGrid ? 'on' : ''}" data-k="__grid" title="网格坐标线（手动定位辅助）">网格</button>
+        <span style="width:1px;height:18px;background:var(--bd,#e0ded8)"></span>
+        <select class="mm-sb" data-k="__arrow" title="箭头形态（全局）">
+          ${ARROW_HEADS.map(a => `<option value="${a.id}" ${(ctl.doc.linkStyle?.arrow || 'arrow') === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}
+        </select>
+        <select class="mm-sb" data-k="__pack" title="模板包（mmtpl-packs/ 库）"><option value="">模板包…</option></select>
+        <button class="mm-sb-btn" data-k="__pack-export" title="当前文档+样式打包为 .mmtpl 入库">打包</button>
+        <span style="width:1px;height:18px;background:var(--bd,#e0ded8)"></span>
+        <button class="mm-sb-btn" data-k="__frame-add" title="当前视口圈为一帧（Prezi 式叙事）">＋帧</button>
+        <button class="mm-sb-btn ${ctl.mmStatus === 'present' ? 'on' : ''}" data-k="__present" title="F5 放映（→/空格 下一帧 · ← 上一帧 · Esc 退出）">▶ 放映</button>
+        <span class="mm-frames" style="display:inline-flex;gap:4px;align-items:center"></span>`;
       stylebar.querySelector('[data-k="__mode"]').addEventListener('change', (e) => mutate(() => { ctl.doc.mode = e.target.value; }));
       stylebar.querySelector('[data-k="__scheme"]').addEventListener('change', (e) => mutate(() => { ctl.doc.scheme = +e.target.value; }));
+      stylebar.querySelector('[data-k="__lane"]').addEventListener('click', () => mmExec(ctl, 'addSwimlane', {}));
+      stylebar.querySelector('[data-k="__arrow"]').addEventListener('change', (e) => mmExec(ctl, 'setArrowHead', e.target.value));
+      stylebar.querySelector('[data-k="__pack"]').addEventListener('change', (e) => { if (e.target.value) mmExec(ctl, 'importTplPack', e.target.value); e.target.value = ''; });
+      stylebar.querySelector('[data-k="__pack-export"]').addEventListener('click', () => mmExec(ctl, 'exportTplPack'));
+      stylebar.querySelector('[data-k="__frame-add"]').addEventListener('click', () => mmExec(ctl, 'addFrame', {}));
+      stylebar.querySelector('[data-k="__present"]').addEventListener('click', () => mmExec(ctl, ctl.mmStatus === 'present' ? 'exitPresent' : 'startPresent', 0));
+      stylebar.querySelectorAll('[data-t]').forEach(btn => btn.addEventListener('click', () => setToolMode(btn.dataset.t)));
+      stylebar.querySelector('[data-k="__merge"]').addEventListener('click', () => mergeFromFile());
+      renderPackSelect();
+      renderFramesBar();
       stylebar.querySelector('[data-k="__beautify"]').addEventListener('click', () => beautify());
       stylebar.querySelector('[data-k="__grid"]').addEventListener('click', (e) => {
         mutate(() => { ctl.doc.showGrid = !ctl.doc.showGrid; });
         e.currentTarget.classList.toggle('on', !!ctl.doc.showGrid);
       });
       renderTemplateSelect();
+      proxyStylebarSelects();
       return;
     }
     const s = node.style || (node.style = {});
@@ -1434,6 +1868,288 @@ function createMindmap(container) {
       else el.addEventListener('change', () => onStyleChange(el.dataset.k, el.value));
     });
     renderTemplateSelect();
+    proxyStylebarSelects();
+  }
+
+  // ==================== 导图间桥接（w34：把另一张导图合并进来，自选落点不与原有内容冲突） ====================
+  /** 全树克隆：id 全量重生成（防 id 冲突），内容/样式/折叠/形状/连线参数全保 */
+  function cloneTreeWithNewIds(n, idMap) {
+    const c = createNode(n.text || '');
+    if (n.style) c.style = JSON.parse(JSON.stringify(n.style));
+    if (n.color) c.color = n.color;
+    if (n.collapsed) c.collapsed = true;
+    if (n.shape) c.shape = n.shape;
+    if (n.linkWps) c.linkWps = JSON.parse(JSON.stringify(n.linkWps));
+    if (n.linkMode) c.linkMode = n.linkMode;
+    if (n.linkNote) c.linkNote = JSON.parse(JSON.stringify(n.linkNote));
+    if (n.linkColor) c.linkColor = n.linkColor;
+    if (n.linkWidth) c.linkWidth = n.linkWidth;
+    if (n.offX != null) { c.offX = n.offX; c.offY = n.offY; }
+    if (n.fx != null) { c.fx = n.fx; c.fy = n.fy; }
+    if (n.minW) c.minW = n.minW; if (n.minH) c.minH = n.minH; if (n.w) c.w = n.w; if (n.h) c.h = n.h;
+    idMap.set(n.id, c.id);
+    c.children = (n.children || []).map(k => cloneTreeWithNewIds(k, idMap));
+    return c;
+  }
+
+  /** 合并来源文档进当前：targetId 有值=挂为该节点子树（结构内不冲突），否则自动落点（现有内容右侧空白+纵向错位） */
+  function mergeDocsInto(src, { targetId = null } = {}) {
+    const idMap = new Map();
+    const newRoots = (Array.isArray(src.roots) ? src.roots : [src.roots]).map(n => cloneTreeWithNewIds(n, idMap));
+    if (targetId) {
+      for (const r of newRoots) appendChild(ctl.doc.roots, targetId, r);
+    } else {
+      // 自动落点：现有分支框最右 +120 起排，逐根横移；纵随最高点（不与原有内容冲突实锤）
+      let maxX = 40, minY = 40;
+      for (const b of (ctl.boxes?.values?.() || [])) {
+        const br = b.branch || b;
+        maxX = Math.max(maxX, br.x + br.w);
+        minY = Math.min(minY, b.y);
+      }
+      for (const r of newRoots) { r.offX = maxX + 120; r.offY = minY; maxX += 300; }
+      ctl.doc.roots.push(...newRoots);
+    }
+    // 附属重映射（引用线/多父级/便笺/泳道/帧——端点 id 走 idMap，坐标错位防叠）
+    const sfx = Date.now().toString(36);
+    for (const rl of (src.refLines || [])) {
+      if (idMap.has(rl.from?.id) && idMap.has(rl.to?.id)) {
+        const nrl = JSON.parse(JSON.stringify(rl));
+        nrl.id = 'rl-m' + sfx + '-' + ctl.doc.refLines.length;
+        nrl.from = { id: idMap.get(rl.from.id), k: rl.from.k };
+        nrl.to = { id: idMap.get(rl.to.id), k: rl.to.k };
+        ctl.doc.refLines.push(nrl);
+      }
+    }
+    for (const pl of (src.parentLinks || [])) {
+      if (idMap.has(pl.from) && idMap.has(pl.to)) {
+        const npl = JSON.parse(JSON.stringify(pl));
+        npl.id = 'pl-m' + sfx + '-' + ctl.doc.parentLinks.length;
+        npl.from = idMap.get(pl.from);
+        npl.to = idMap.get(pl.to);
+        ctl.doc.parentLinks.push(npl);
+      }
+    }
+    for (const n of (src.notes || [])) {
+      const nn = createNote(n.text, (n.x || 0) + 30, (n.y || 0) + 30);
+      if (n.color) nn.color = n.color; if (n.style) nn.style = JSON.parse(JSON.stringify(n.style)); if (n.w) nn.w = n.w;
+      ctl.doc.notes.push(nn);
+    }
+    for (const l of (src.swimlanes || [])) {
+      const nl = JSON.parse(JSON.stringify(l));
+      nl.id = l.id + '-m' + sfx; nl.x = (l.x || 0) + 20; nl.y = (l.y || 0) + 20;
+      ctl.doc.swimlanes.push(nl);
+    }
+    for (const f of (src.frames || [])) {
+      const nf = JSON.parse(JSON.stringify(f));
+      nf.id = f.id + '-m' + sfx; nf.x = (f.x || 0) + 20; nf.y = (f.y || 0) + 20;
+      ctl.doc.frames.push(nf);
+    }
+    return { roots: newRoots.length, mapped: idMap.size };
+  }
+
+  /** 桥接入口：选来源文件 → 落点两档（挂选中节点/自动避撞位） → 合并 → 适配 */
+  async function mergeFromFile() {
+    try {
+      const ws = await window.mazz.invoke('workspace:get');
+      const files = [];
+      const walk = async (dir, depth) => {
+        const entries = await window.mazz.invoke('fs:listDir', { path: dir }).catch(() => []);
+        for (const e of entries) {
+          if (!e.isDir && /\.mindmap$/i.test(e.name)) files.push(e.path);
+          else if (e.isDir && depth > 0 && !e.name.startsWith('.')) await walk(e.path, depth - 1);
+        }
+      };
+      await walk(ws, 1);
+      const cur = ctl.filePath || ctl.tabPath || '';
+      const cands = files.filter(p => p !== cur);
+      if (!cands.length) { toast('工作区没有其他导图文件可合并'); return; }
+      const pick = await inputModal('合并来源（输入序号）\n' + cands.map((p, i) => `${i + 1}. ${p.split('/').pop()}`).join('\n'), '1');
+      if (pick == null) return;
+      const src = cands[Math.max(1, Math.min(cands.length, parseInt(pick, 10) || 1)) - 1];
+      // 落点：有选中节点时问挂点
+      let targetId = null;
+      if (ctl.selected) {
+        const ans = await inputModal(`合并到选中节点「${findNode(ctl.doc.roots, ctl.selected)?.text || ctl.selected}」作为其子树？\n输入 y=挂为子树，其他=自动落点（避让不冲突）`, 'y');
+        if (ans == null) return;
+        if (String(ans).trim().toLowerCase() === 'y') targetId = ctl.selected;
+      }
+      const text = await window.mazz.invoke('fs:readFile', { path: src });
+      const srcDoc = parseDoc(text);
+      if (!srcDoc?.roots?.length) { toast('来源导图内容为空或解析失败'); return; }
+      let r = null;
+      mutate(() => { r = mergeDocsInto(srcDoc, { targetId }); });
+      requestAnimationFrame(fitView);
+      toast(`已合并「${src.split('/').pop()}」：${r.roots} 根 ${r.mapped} 节点${targetId ? '（挂为子树）' : '（自动避让位）'}`);
+    } catch (e) { toast('合并失败：' + (e.message || e)); }
+  }
+
+  // ==================== 窗格操作模式（w34：build 新建 / pan 移动 / select 选框） ====================
+  function setToolMode(m) {
+    ctl.toolMode = ['build', 'pan', 'select'].includes(m) ? m : 'build';
+    if (ctl.toolMode !== 'select') { ctl.multiSel.clear(); }
+    render();
+    renderStylebar();
+    syncHint();
+  }
+  /** hint 随模式（现状文案/移动文案/选框文案） */
+  function syncHint() {
+    const h = root.querySelector('.mm-hint');
+    if (!h) return;
+    h.textContent = ctl.toolMode === 'pan'
+      ? '移动模式：左键任意拖动=平移画布 · 点工具钮切回新建/选框'
+      : ctl.toolMode === 'select'
+        ? '选框模式：左键拖框批量选中 · Delete 或右键删除所选 · 点工具钮切换模式'
+        : '双击节点编辑 · 双击空白新增根节点 · Shift+双击空白新增便笺 · Tab 子节点 · Alt+Enter 同级 · Ctrl+Alt+J 连接 · Ctrl+Z 撤销 · 右键更多操作 · 滚轮缩放';
+  }
+
+  /** 选框拖出：pointerdown(select 模式)→拖虚线框→松手批量选中（box 与框相交） */
+  function selectRectStart(e) {
+    const rect = wrap.getBoundingClientRect();
+    const sx = (e.clientX - rect.left - ctl.cam.x) / ctl.cam.k, sy = (e.clientY - rect.top - ctl.cam.y) / ctl.cam.k;
+    return { sx, sy, cur: { x: sx, y: sy } };
+  }
+  function selectRectCalc(sel) {
+    const x1 = Math.min(sel.sx, sel.cur.x), y1 = Math.min(sel.sy, sel.cur.y);
+    const x2 = Math.max(sel.sx, sel.cur.x), y2 = Math.max(sel.sy, sel.cur.y);
+    return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+  }
+  function applySelectRect(sel) {
+    const r = selectRectCalc(sel);
+    const hit = new Set();
+    for (const [id, b] of ctl.boxes) {
+      if (b.x + b.w >= r.x && b.x <= r.x + r.w && b.y + b.h >= r.y && b.y <= r.y + r.h) hit.add(id);
+    }
+    ctl.multiSel = hit;
+    return hit.size;
+  }
+
+  /** 等距分布（混合画布：多选≥3 按轴排序，首尾不动中间均分间距） */
+  function distributeSel(axis) {
+    if (ctl.multiSel.size < 3) { toast('先选框选中 3 个以上节点'); return false; }
+    // 全走 boxPos（含 offX 的实位——box.x 布局层恒定（170 实锤），布局坐标算等距必错）
+    const items = [...ctl.multiSel].map(id => ctl.boxes.get(id)).filter(Boolean)
+      .map(b => { const p = boxPos(b); return { node: b.node, x: p.x, y: p.y, w: p.w, h: p.h }; });
+    if (items.length < 3) return false;
+    items.sort((a, b) => (axis === 'x' ? a.x - b.x : a.y - b.y));
+    mutate(() => {
+      const first = items[0], last = items[items.length - 1];
+      if (axis === 'x') {
+        const span = (last.x + last.w) - first.x;
+        const gap = (span - items.reduce((s, b) => s + b.w, 0)) / (items.length - 1);
+        let cur = first.x;
+        for (let i = 1; i < items.length - 1; i++) {
+          cur += items[i - 1].w + gap;
+          const d = cur - items[i].x;
+          items[i].node.offX = (items[i].node.offX || 0) + d;
+          if (items[i].node.fx != null) items[i].node.fx += d;
+          cur = items[i].x;
+        }
+      } else {
+        const span = (last.y + last.h) - first.y;
+        const gap = (span - items.reduce((s, b) => s + b.h, 0)) / (items.length - 1);
+        let cur = first.y;
+        for (let i = 1; i < items.length - 1; i++) {
+          cur += items[i - 1].h + gap;
+          const d = cur - items[i].y;
+          items[i].node.offY = (items[i].node.offY || 0) + d;
+          if (items[i].node.fy != null) items[i].node.fy += d;
+          cur = items[i].y;
+        }
+      }
+    });
+    toast(`已${axis === 'x' ? '水平' : '垂直'}等距分布 ${items.length} 个节点`);
+    return true;
+  }
+
+  /** 批量删除所选（Delete/右键选单共用；端点清理随 deleteNode 同链） */
+  function deleteMultiSel() {
+    if (!ctl.multiSel.size) return false;
+    const n = ctl.multiSel.size;
+    mutate(() => {
+      for (const id of [...ctl.multiSel]) {
+        removeNode(ctl.doc.roots, id);
+        ctl.doc.refLines = (ctl.doc.refLines || []).filter(l => !(l.from.id === id || l.to.id === id));
+        ctl.doc.parentLinks = (ctl.doc.parentLinks || []).filter(l => !(l.from === id || l.to === id));
+      }
+      ctl.multiSel.clear();
+    });
+    toast(`已删除 ${n} 个节点`);
+    return true;
+  }
+
+  /** 多选渲染（选框模式：批量选中高亮描边） */
+  function renderMultiSel() {
+    if (ctl.toolMode !== 'select' || !ctl.multiSel.size) return;
+    for (const [id, b] of ctl.boxes) {
+      if (!ctl.multiSel.has(id)) continue;
+      const g = viewport.querySelector(`.mm-node[data-id="${id}"]`);
+      const sh = g?.querySelector('polygon,ellipse,path,rect:not(.mm-resize)');
+      if (sh) { sh.setAttribute('stroke', 'var(--acc, #4f46e5)'); sh.setAttribute('stroke-width', '2.6'); }
+    }
+  }
+
+  // ==================== 帧侧栏（圈帧列表：跳转/排序/删除） ====================
+  function renderFramesBar() {
+    const host = stylebar.querySelector('.mm-frames');
+    if (!host) return;
+    const fs = ctl.doc.frames || [];
+    host.innerHTML = fs.map((f, i) => `
+      <span class="mm-frame" data-id="${f.id}" title="${(f.title || '').replace(/"/g, '&quot;')}（点击跳转镜头；↑↓ 排序 · ✕ 删除）"
+        style="display:inline-flex;gap:2px;align-items:center;border:1px solid var(--bd,#e0ded8);border-radius:6px;padding:1px 5px;font-size:11px;cursor:pointer">
+        <b>${i + 1}</b>·${(f.title || '帧').slice(0, 8)}<i data-a="up" style="cursor:pointer">↑</i><i data-a="dn" style="cursor:pointer">↓</i><i data-a="del" style="cursor:pointer">✕</i>
+      </span>`).join('');
+    host.querySelectorAll('.mm-frame').forEach(el => {
+      const id = el.dataset.id;
+      el.addEventListener('click', (e) => {
+        const a = e.target.dataset?.a;
+        if (a === 'del') { mmExec(ctl, 'removeFrame', id); renderFramesBar(); return; }
+        if (a === 'up') { mmExec(ctl, 'moveFrame', { id, dir: -1 }); renderFramesBar(); return; }
+        if (a === 'dn') { mmExec(ctl, 'moveFrame', { id, dir: 1 }); renderFramesBar(); return; }
+        // 跳转镜头（预览=帧适配动画）
+        const f = (ctl.doc.frames || []).find(x => x.id === id);
+        if (f && ctl.mmStatus !== 'present') {
+          camTween(ctl, camOfFrame(ctl, f, wrap), { duration: 480 }); // 帧跳转预览（镜头动画器直引）
+        }
+      });
+    });
+  }
+
+  // ==================== 放映覆盖层（mm:present-change 驱动） ====================
+  function ensurePresentStage() {
+    if (ctl._stage) return ctl._stage;
+    const st = document.createElement('div');
+    st.className = 'mm-present-stage';
+    st.style.cssText = 'position:fixed;inset:auto 0 0 0;z-index:60;display:none;justify-content:center;pointer-events:none;padding-bottom:26px';
+    st.innerHTML = `<div class="mm-present-hud" style="pointer-events:auto;display:flex;gap:14px;align-items:center;background:rgba(20,20,24,.82);color:#eee;border-radius:999px;padding:8px 18px;font-size:12.5px;backdrop-filter:blur(6px)">
+      <b class="mm-pv-title"></b><span class="mm-pv-idx" style="opacity:.75"></span><span style="opacity:.55">→/空格 下一帧 · ← 上一帧 · Esc 退出</span>
+      <button class="mm-pv-exit" style="background:none;border:0;color:#eee;cursor:pointer;font-size:14px" title="退出放映（Esc）">✕</button>
+    </div>`;
+    st.querySelector('.mm-pv-exit').addEventListener('click', () => mmExec(ctl, 'exitPresent'));
+    document.body.appendChild(st);
+    ctl._stage = st;
+    return st;
+  }
+  document.addEventListener('mm:present-change', (e) => {
+    if (current !== ctl) return;
+    const d = e.detail || {};
+    const st = ensurePresentStage();
+    st.style.display = d.on ? 'flex' : 'none';
+    if (d.on) {
+      st.querySelector('.mm-pv-idx').textContent = `${(d.idx ?? 0) + 1} / ${d.total ?? ''}`;
+      st.querySelector('.mm-pv-title').textContent = d.frame?.title || '放映中';
+      // 放映态：编辑区禁用（状态机闸）；样式栏隐藏（HUD 替代）
+      stylebar.style.display = 'none';
+    } else {
+      renderStylebar();
+    }
+  });
+
+  // ==================== 模板包选单（mmtpl-packs/ 库） ====================
+  async function renderPackSelect() {
+    const el = stylebar.querySelector('[data-k="__pack"]');
+    if (!el) return;
+    const packs = await listPacks().catch(() => []);
+    el.innerHTML = `<option value="">模板包…（${packs.length}）</option>` + packs.map(p => `<option value="${p.path.replace(/"/g, '&quot;')}">${p.name}</option>`).join('');
   }
 
   // ==================== 模板选单 ====================
@@ -1618,6 +2334,39 @@ function createMindmap(container) {
     window.MazzHost?.openTab('markdown', { title: (ctl.title || '思维导图') + '.md', content: toOutline(ctl.doc.roots) });
   }
 
+  /** 帧转演示（W41 本体形态：doc.frames→layouts.frames——标题 Item+帧内节点要点+note→notes；死转不挂桥接引用） */
+  function framesToSlide() {
+    const frames = ctl.doc.frames || [];
+    if (!frames.length) { toast('还没有叙事帧——先「圈帧」（演示叙事工具）再转演示'); return; }
+    const boxes = ctl.boxes || ctl.layoutInfo?.boxes;
+    const doc2 = createSlideDoc((ctl.title || '思维导图') + ' 帧演示', 'night');
+    const inFrame = (fr) => {
+      if (!boxes) return [];
+      // 帧矩形罩节点中心（树序 DFS——要点顺序即导图阅读顺序）
+      const hit = new Set();
+      for (const [id, b] of boxes) {
+        const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+        if (cx >= fr.x && cx <= fr.x + fr.w && cy >= fr.y && cy <= fr.y + fr.h) hit.add(id);
+      }
+      const out = [];
+      const dfs = (n) => {
+        if (!n) return;
+        if (hit.has(n.id)) out.push((n.text || '').trim().split('\n')[0].slice(0, 40));
+        for (const k of (n.children || [])) dfs(k);
+      };
+      for (const r of (ctl.doc.roots || [])) dfs(r);
+      return out.filter(Boolean);
+    };
+    for (const fr of frames) {
+      const bullets = inFrame(fr);
+      const items = [createSlItem('text', { text: fr.title || '帧', style: { size: 40, bold: true, align: 'center' }, left: 10, top: 8, width: 80, height: 14 })];
+      if (bullets.length) items.push(createSlItem('text', { left: 12, top: 28, width: 76, height: 62, list: { items: bullets.slice(0, 12).map(t => ({ text: t, icon: '•' })) }, style: { size: 22 } }));
+      addSlideToDoc(doc2, createV2Slide(null, { notes: fr.note || '', items }));
+    }
+    window.MazzHost?.openTab('slide', { title: doc2.name + '.mazzslide', content: serializeSlDoc(doc2) });
+    toast(`已转演示：${frames.length} 帧→${doc2.layouts.main.frames.length} 页（本体死转，改导图不联动）`);
+  }
+
   /** 导出 SVG 矢量图 */
   async function exportSVG() {
     const L = ctl.layoutInfo;
@@ -1710,6 +2459,7 @@ function createMindmap(container) {
   ctl.fitView = fitView;
   ctl.exportPNG = exportPNG;
   ctl.exportOutline = exportOutline;
+  ctl.framesToSlide = framesToSlide; // W41 帧转演示本体
   ctl.exportSVG = exportSVG;
   ctl.exportPDF = exportPDF;
   ctl.renderToDataUrl = renderToDataUrl; // 桥接（导图→文稿/演示）取数口
@@ -1723,6 +2473,13 @@ function createMindmap(container) {
   ctl.setMode = (m) => onStyleChange('__mode', m);
   ctl.setDoc = (doc) => {
     ctl.doc = doc?.roots ? { parentLinks: [], notes: [], refLines: [], ...doc } : { mode: 'lr', scheme: 0, roots: doc?.root ? [doc.root] : [createNode('中心主题')], notes: [], refLines: [], parentLinks: [] };
+    // 懒加载折叠（性能碾压：大图默认折到第二层，点谁展谁；用户已动过的文档（_lazyTouched）不插手）
+    const total = countAll(ctl.doc.roots);
+    if (total >= 300 && !ctl.doc._lazyTouched) {
+      for (const r of ctl.doc.roots) { (function w(x, d) { if (d >= 1 && x.children.length) x.collapsed = true; for (const c of x.children) w(c, d + 1); })(r, 0); } // 折到第二层（支节点折起，露出根+支）
+      ctl.doc._lazyTouched = true;
+      ctl._lazyApplied = total;
+    }
     ctl.selected = ctl.doc.roots[0]?.id || null;
     render();
     requestAnimationFrame(fitView);
@@ -1895,6 +2652,8 @@ export default {
         run: () => current?.exportPNG() },
       { id: 'mindmap.exportOutline', title: '导出为 Markdown 大纲', group: '导图', when: "module=='mindmap'",
         run: () => current?.exportOutline() },
+      { id: 'mindmap.framesToSlide', title: '帧转演示文稿（本体）', icon: '📽', group: '导图', when: "module=='mindmap'",
+        run: () => current?.framesToSlide() },
     ],
     keybindings: [
       { command: 'mindmap.undo', key: 'ctrl+z', when: "module=='mindmap'" },

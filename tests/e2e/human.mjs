@@ -119,12 +119,35 @@ export class Human {
   }
 
   /** 收尾：报告并抛出累计异常 */
+  /** 军规⑩ 主进程日志警察：launch 后挂 stdout/stderr 收集（this.forward 连环炸盲区根治） */
+  watchMain(app) {
+    this.mainErrors = [];
+    const p = app.process?.();
+    if (!p) return;
+    const grab = (buf) => {
+      const text = String(buf || '');
+      for (const line of text.split('\n')) {
+        if (/uncaught|TypeError|ReferenceError|\[main\] .*Error|Error:/.test(line) && !/Debugger listening|inspector/.test(line)) {
+          this.mainErrors.push(line.trim().slice(0, 300));
+        }
+      }
+    };
+    p.stdout?.on?.('data', grab);
+    p.stderr?.on?.('data', grab);
+  }
+
   async finish({ allow = [] } = {}) {
     const rest = this.errors.filter(e => !allow.some(a => e.includes(a)));
     if (rest.length) {
       await this.shot('异常记账');
       throw new Error('渲染进程异常 ' + rest.length + ' 条：\n' + rest.slice(0, 5).join('\n'));
     }
-    this.log('无渲染进程异常');
+    // 主进程警察（军规⑩）：uncaught/TypeError/ReferenceError 出现即判负
+    const mrest = (this.mainErrors || []).filter(e => !allow.some(a => e.includes(a)));
+    if (mrest.length) {
+      await this.shot('主进程异常记账');
+      throw new Error('主进程异常 ' + mrest.length + ' 条：\n' + mrest.slice(0, 5).join('\n'));
+    }
+    this.log('无渲染进程异常' + (this.mainErrors ? '·主进程零异常' : ''));
   }
 }

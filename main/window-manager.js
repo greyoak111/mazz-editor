@@ -3,8 +3,12 @@
 const { BrowserWindow, screen, nativeTheme } = require('electron');
 const path = require('path');
 
+// W52：主窗底色跟随 app 主题（拖拽闪主题色不闪刺白——deepseek 方案照收；theme:changed 即换 setBackgroundColor）
+const THEME_BG = { paper: '#f7f6f3', ink: '#16181d', indigo: '#101226', moss: '#1a211c', sand: '#f4ede1', construct: '#f0e6d2' };
+
 class WindowManager {
   constructor({ store, iconPath }) {
+    this.themeBg = () => THEME_BG[this.store.get('theme')] || (nativeTheme.shouldUseDarkColors ? '#16181d' : '#f7f6f3');
     this.store = store;
     this.iconPath = iconPath;
     this.main = null;
@@ -30,7 +34,7 @@ class WindowManager {
       minWidth: 960, minHeight: 600,
       show: false,
       icon: this.iconPath,
-      backgroundColor: nativeTheme.shouldUseDarkColors ? '#0f172a' : '#f8fafc',
+      backgroundColor: this.themeBg(), // 主题底色（不再 nativeTheme 二值）
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
       titleBarOverlay: process.platform === 'win32'
         ? { color: '#00000000', symbolColor: '#94a3b8', height: 36 } : false,
@@ -92,16 +96,16 @@ class WindowManager {
   }
 
   /** 分窗（多窗口）：标签拖拽出屏 / 移到新窗口 用，与主窗同壳 */
-  createChild() {
-    const state = { width: 1100, height: 720 };
+  createChild(opts = {}) {
+    const state = { width: opts.width || 1100, height: opts.height || 720 };
     const win = new BrowserWindow({
       width: state.width, height: state.height,
       minWidth: 640, minHeight: 420,
       show: false,
       icon: this.iconPath,
-      backgroundColor: nativeTheme.shouldUseDarkColors ? '#0f172a' : '#f8fafc',
+      backgroundColor: this.themeBg(), // 主题底色（不再 nativeTheme 二值）
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
-      titleBarOverlay: process.platform === 'win32'
+      titleBarOverlay: (process.platform === 'win32')
         ? { color: '#00000000', symbolColor: '#94a3b8', height: 36 } : false,
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
@@ -111,8 +115,15 @@ class WindowManager {
     });
     this.children.add(win);
     win.once('ready-to-show', () => { win.show(); win.focus(); });
-    win.loadURL('mazz-res://app/index.html'); // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
-    win.on('closed', () => { this.children.delete(win); });
+    win.loadURL('mazz-res://app/index.html?role=child'); // 角色随 URL 落（启动首帧可知身份——协议自动弹等首启流程在子窗必须缄默，零竞态）
+    // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
+    win.on('closed', () => {
+      this.children.delete(win);
+      // 宿主死亡收尸（分窗幽灵同治）：挂在此窗上的浏览器视图全灭
+      try { const BV = require('./browser-views'); for (const bvs of BV.all) bvs.destroyByHost(win); } catch {}
+      // 焦点抢回：子窗关闭焦点归主窗（防流浪到 cmd 等 Z 序下一位——npm run dev 控制台贴脸实锤）
+      try { if (this.main && !this.main.isDestroyed() && this.children.size === 0) { this.main.show(); this.main.focus(); } } catch {}
+    });
     win.webContents.on('render-process-gone', (_e, details) => {
       if (details.reason !== 'clean-exit' && details.reason !== 'killed') {
         setTimeout(() => { if (!win.isDestroyed()) win.webContents.reload(); }, 400);
@@ -135,7 +146,7 @@ class WindowManager {
       x: Math.round(disp.width / 2 - 210), y: Math.round(disp.height / 3 - 130),
       frame: false, resizable: false, alwaysOnTop: true, skipTaskbar: true,
       show: false,
-      backgroundColor: nativeTheme.shouldUseDarkColors ? '#1e293b' : '#ffffff',
+      backgroundColor: this.themeBg(), // 快记窗同跟主题底色（三铁律③实时主题跟随）
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'quicknote-preload.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: true,

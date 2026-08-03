@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>工具坞</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:14px; flex:none; cursor:grab; border-radius:12px 12px 0 0; }
+  .p-drag:active { cursor:grabbing; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .head { display:flex; align-items:center; gap:4px; padding:8px 12px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; }
+  .head .tab { border:0; background:none; color:var(--fg-dim); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:var(--font-ui); } /* 对齐停靠坞 .sd-tab（W54 风格同盘） */
+  .head .tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .head .dock-back { margin-left:auto; border:1px solid var(--border); background:var(--bg); color:var(--fg-dim); border-radius:7px; padding:4px 10px; font-size:11.5px; cursor:pointer; font-family:var(--font-ui); }
+  .head .dock-back:hover { color:var(--accent); border-color:var(--accent); }
+  main { flex:1; min-height:0; overflow-y:auto; padding:12px 14px; }
+  /* 打开方式页 */
+  .w-drop { border:2px dashed color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius:12px; padding:22px 12px; text-align:center; cursor:pointer; transition:all .15s; background:color-mix(in srgb, var(--accent) 4%, transparent); color:var(--fg-dim); }
+  .w-drop.on, .w-drop:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); transform:scale(1.015); }
+  .w-drop-ico { font-size:30px; color:var(--accent); line-height:1; }
+  .w-drop-t { font-size:14px; font-weight:600; color:var(--fg); margin-top:8px; }
+  .w-drop-d { font-size:11.5px; color:var(--fg-dim); margin-top:3px; }
+  .w-ow-grid { margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .w-ow-card { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:10px; padding:10px 10px 8px; cursor:pointer; text-align:left; transition:all .12s; font-family:var(--font-ui); }
+  .w-ow-card:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 7%, var(--bg)); }
+  .w-ow-card .t { font-size:12.5px; font-weight:600; }
+  .w-ow-card .d { font-size:11px; color:var(--fg-dim); margin-top:2px; }
+  /* 工具页 */
+  .tg { margin-bottom:14px; }
+  .tg-t { font-size:11px; font-weight:700; color:var(--accent); letter-spacing:1px; margin-bottom:6px; } /* 对齐停靠坞 .sd-tools-label */
+  .tg-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .tg-card { display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:var(--bg); border-radius:9px; padding:8px 9px; cursor:pointer; text-align:left; transition:all .12s; color:var(--fg); font-family:var(--font-ui); }
+  .tg-card:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, var(--bg)); }
+  .tg-card .i { font-size:17px; flex:none; } /* 对齐 .sd-tool-ico */
+  .tg-card .t { font-size:12px; font-weight:600; }
+  .tg-card .d { font-size:10.5px; color:var(--fg-dim); margin-top:1px; line-height:1.35; }
+  /* 智能创作页 */
+  .fc-row { margin-bottom:8px; }
+  .fc-row select, .fc-row input { width:100%; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); }
+  .fc-provider-hint { font-size:11.5px; color:#b45309; margin:4px 0 8px; }
+  .fc-provider-hint.ok { color:var(--fg-dim); }
+  .fc-field { margin-bottom:9px; }
+  .fc-field label { display:block; font-size:12px; font-weight:600; margin-bottom:4px; }
+  .fc-field label b { color:#c2410c; }
+  .fc-field input, .fc-field textarea, .fc-field select { width:100%; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:7px; padding:6px 10px; font-size:12.5px; font-family:var(--font-ui); }
+  .fc-field textarea { resize:vertical; }
+  .fc-field input:focus, .fc-field textarea:focus { border-color:var(--accent); outline:none; }
+  .fc-gdesc { font-size:11px; color:var(--fg-dim); margin:2px 0 8px; }
+  .fc-label { font-size:12px; font-weight:600; margin:10px 0 5px; display:flex; align-items:center; justify-content:space-between; }
+  .fc-dump-text { width:100%; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:8px; padding:8px 10px; font-size:12.5px; font-family:var(--font-ui); resize:vertical; }
+  .fc-mini { border:1px solid var(--border); background:var(--bg); color:var(--fg-dim); border-radius:6px; padding:2px 9px; font-size:11px; cursor:pointer; font-family:var(--font-ui); }
+  .fc-mini:hover { color:var(--accent); border-color:var(--accent); }
+  .fc-actions { display:flex; gap:7px; margin-top:12px; }
+  .fc-btn { flex:1; border:1px solid var(--border); background:var(--bg-elev); color:var(--fg); border-radius:8px; padding:8px 10px; font-size:12.5px; cursor:pointer; font-family:var(--font-ui); }
+  .fc-btn:hover { border-color:var(--accent); }
+  .fc-btn.fc-accent { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+  .fc-check { display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--fg-dim); margin-top:8px; }
+  .fc-tasks { margin-top:12px; }
+  .fc-task { border:1px solid var(--border); border-radius:9px; padding:8px 10px; margin-bottom:7px; background:var(--bg-elev); }
+  .fc-task .tt { font-size:12px; font-weight:600; display:flex; justify-content:space-between; }
+  .fc-task .ts { font-size:11px; color:var(--fg-dim); margin-top:3px; }
+  .fc-task .bar { height:4px; background:var(--bg-active); border-radius:2px; margin-top:6px; overflow:hidden; }
+  .fc-task .bar i { display:block; height:100%; background:var(--accent); border-radius:2px; }
+  .extras { margin-top:8px; border-top:1px dashed var(--border); padding-top:8px; }
+  .extras summary { font-size:12px; color:var(--fg-dim); cursor:pointer; }
+  .chip { display:inline-block; border:1px solid var(--border); border-radius:99px; padding:2px 10px; font-size:11px; margin:2px 3px 2px 0; cursor:pointer; }
+  .chip.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
+  .note { font-size:11px; color:var(--fg-dim); margin-top:6px; line-height:1.6; }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="head">
+    <button class="tab on" data-t="factory">智能创作</button>
+    <button class="tab" data-t="openwith">打开方式</button>
+    <button class="tab" data-t="tools">工具</button>
+    <button class="dock-back" id="dock-back" title="坞回主窗停靠"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M9 5h10v14H9zM4 12h9M10 8l4 4-4 4"/></svg> 回停靠</button>
+  </div>
+  <main id="m" class="ps-scroll-y"></main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+// W54 手势三态②：自绘拖拽（跨屏自由——app-region:drag 的 transparent 跨屏病绕开）；
+// setPointerCapture 兜底页外跟手，e.screenX/Y 供屏坐标，主进程 setBounds
+{
+  const dz = document.querySelector('.p-drag');
+  dz.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return;
+    e.preventDefault();
+    try { dz.setPointerCapture(e.pointerId); } catch {}
+    window.mazz.invoke('panel:dragStart', { kind: 'dockfloat', sx: e.screenX, sy: e.screenY }).catch(() => {});
+    const move = (ev) => window.mazz.invoke('panel:move', { kind: 'dockfloat', sx: ev.screenX, sy: ev.screenY }).catch(() => {});
+    const up = (ev) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.mazz.invoke('panel:dragEnd', { kind: 'dockfloat' }).catch(() => {}); // 拽回热区=自动停靠（三态之拽回）
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+}
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+let tab = 'factory', snapshot = null, toolsData = null, localValues = {};
+function act(type, extra = {}) { window.mazz.invoke('panel:action', { type, ...extra }).catch(() => {}); }
+
+// —— 回停靠：关子窗+坞回 workspace（主窗 panel:changed 联动） ——
+$('#dock-back').addEventListener('click', () => { act('dockFloatBack'); pwb('close'); });
+
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  render();
+  if (t === 'tools' && !toolsData) act('dockToolsQuery');
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
+
+// ==================== 打开方式页 ====================
+function renderOpenWith() {
+  $('#m').innerHTML = `
+    <div class="w-drop" id="dz"><div class="w-drop-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 5v12M6 13l6 6 6-6M5 5h14"/></svg></div><div class="w-drop-t">把文件拖到这里</div><div class="w-drop-d">图片 · PDF · 音视频，立即查看</div></div>
+    <div class="w-ow-grid">
+      <button class="w-ow-card" data-cmd="file.openViewer"><div class="t"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.5"/><path d="M4 17l5-4 4 3 3-2 4 3"/></svg> 查看器预览</div><div class="d">图片/PDF/音视频</div></button>
+      <button class="w-ow-card" data-cmd="file.openWithSystem"><div class="t"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 2c4 2 6 6 6 10l-3 5H9l-3-5c0-4 2-8 6-10zM9 17c-2 1-3 3-3 5 2 0 4-1 5-3h2c1 2 3 3 5 3 0-2-1-4-3-5"/></svg> 系统默认打开</div><div class="d">调起外部程序</div></button>
+      <button class="w-ow-card" data-cmd="file.import"><div class="t"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 4v11M7 10l5 5 5-5M4 15v5h16v-5"/></svg> 导入工作区</div><div class="d">多选文件/文件夹</div></button>
+      <button class="w-ow-card" data-cmd="file.quickOpen"><div class="t"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> 快速跳转</div><div class="d">最近文件直达</div></button>
+    </div>`;
+  document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => act('dockRun', { cmd: b.dataset.cmd })));
+  const dz = document.getElementById('dz');
+  dz.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dz.classList.add('on'); e.dataTransfer.dropEffect = 'copy'; });
+  dz.addEventListener('dragleave', () => dz.classList.remove('on'));
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('on');
+    const paths = [...(e.dataTransfer?.files || [])].map(f => f.path).filter(Boolean);
+    for (const p of paths) act('dockOpenPath', { path: p });
+  });
+  dz.addEventListener('click', () => act('dockRun', { cmd: 'file.openViewer' }));
+}
+
+// ==================== 工具页 ====================
+function renderTools() {
+  if (!toolsData) { $('#m').innerHTML = '<div class="note">加载工具清单…</div>'; return; }
+  $('#m').innerHTML = toolsData.map(([g, items]) => `
+    <div class="tg"><div class="tg-t">${esc(g)}</div><div class="tg-grid">
+      ${items.map(it => `<button class="tg-card" data-cmd="${esc(it.cmd)}"><span class="i">${it.ico || ''}</span><span><span class="t">${esc(it.t)}</span><div class="d">${esc(it.d)}</div></span></button>`).join('')}
+    </div></div>`).join('');
+  document.querySelectorAll('.tg-card').forEach(b => b.addEventListener('click', () => act('dockRun', { cmd: b.dataset.cmd })));
+}
+
+// ==================== 智能创作页（状态镜像：主窗 factoryPanel 是真相源） ====================
+function fieldHtml(f) {
+  const req = f.required ? '<b>*</b>' : '';
+  const val = esc(localValues[f.id] ?? f.default ?? '');
+  if (f.type === 'textarea') return `<div class="fc-field"><label>${esc(f.label)}${req}</label><textarea data-f="${esc(f.id)}" rows="3" placeholder="${esc(f.placeholder || '')}">${val}</textarea></div>`;
+  if (f.type === 'select') return `<div class="fc-field"><label>${esc(f.label)}${req}</label><select data-f="${esc(f.id)}">${(f.options || []).map(o => `<option value="${esc(o)}" ${o === (localValues[f.id] ?? f.default) ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
+  return `<div class="fc-field"><label>${esc(f.label)}${req}</label><input data-f="${esc(f.id)}" value="${val}" placeholder="${esc(f.placeholder || '')}"></div>`;
+}
+function renderFactory() {
+  if (!snapshot) { $('#m').innerHTML = '<div class="note">同步创作面板状态…</div>'; return; }
+  const s = snapshot;
+  $('#m').innerHTML = `
+    <div class="fc-row"><select class="fc-genre">${s.genres.map(g => `<option value="${esc(g.id)}" ${g.id === s.genreId ? 'selected' : ''}>${esc(g.name)}${g.custom ? '（自定义）' : ''} — ${esc(g.description || '')}</option>`).join('')}</select></div>
+    <div class="fc-provider-hint ${s.providerConfigured ? 'ok' : ''}">${esc(s.providerHint || '')}</div>
+    <div class="fc-form">${(s.fields || []).map(fieldHtml).join('')}<div class="fc-gdesc">${esc(s.genreDesc || '')}</div></div>
+    <div class="fc-label">竹筒倒豆子 <button class="fc-mini" id="fc-fill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 4l1.5 4.5L18 10l-4.5 1.5L12 16l-1.5-4.5L6 10l4.5-1.5L12 4zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg> 智能填充</button></div>
+    <textarea class="fc-dump-text" rows="4" placeholder="把所有想法、要求、限制条件随意倒进来——会自动提取进上面的字段">${esc(s.dump || '')}</textarea>
+    <div class="fc-actions">
+      <button class="fc-btn" id="fc-copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="6" y="4" width="13" height="17" rx="2"/><path d="M9 4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 10h7M9 14h7"/></svg> 复制模板母版</button>
+      <button class="fc-btn fc-accent" id="fc-gen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> 直接生成</button>
+    </div>
+    <label class="fc-check"><input type="checkbox" id="fc-dual" ${s.dualLoop ? 'checked' : ''}> 双循环勘误</label>
+    <label class="fc-check"><input type="checkbox" id="fc-max" ${s.maxMode ? 'checked' : ''}> 连写模式 <input type="number" id="fc-maxch" min="0" max="999" value="${s.maxChapters || 0}" style="width:48px;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:5px;font-size:11px"></label>
+    <details class="extras"><summary>创作增强（插件/文风/嵌入/联网）</summary>
+      <div class="fc-label">创作插件 <span><button class="fc-mini" data-xa="plugcfg">配置字段</button></span></div>
+      <div>${(s.extras?.plugins || []).map(p => `<span class="chip ${p.on ? 'on' : ''}" data-xa="togglePlugin" data-id="${esc(p.id)}">${esc(p.name)}</span>`).join('') || '<span class="note">无（文体声明 supportsPlugins 才显示）</span>'}</div>
+      <div class="fc-label">文风素材 <span><button class="fc-mini" data-xa="styleup">上传文件</button> <button class="fc-mini" data-xa="styleonline">在线查询</button></span></div>
+      <div>${(s.extras?.styles || []).map(p => `<span class="chip ${p.on ? 'on' : ''}" data-xa="toggleStyle" data-id="${esc(p.id)}">${esc(p.name)}</span>`).join('') || '<span class="note">无</span>'}</div>
+      <div class="fc-label">嵌入资料 <span><button class="fc-mini" data-xa="embedadd">添加文件</button></span></div>
+      <div>${(s.extras?.embeds || []).map((p, i) => `<span class="chip" data-xa="embeddel" data-i="${i}" title="点击移除">${esc(p.name || p)} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18"/></svg></span>`).join('') || '<span class="note">无</span>'}</div>
+      <div class="fc-label">联网检索（SearXNG，结果注入竹筒倒豆子）</div>
+      <div style="display:flex;gap:6px"><input id="fc-q" placeholder="关键词，回车检索…" spellcheck="false" style="flex:1;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:7px;padding:5px 10px;font-size:12px;font-family:var(--font-ui)"><button class="fc-mini" data-xa="websearch">检索</button></div>
+    </details>
+    <div class="fc-tasks" id="fc-tasks">${renderTasksHtml(s.tasks)}</div>`;
+  // 绑定
+  $('.fc-genre')?.addEventListener('change', (e) => act('factoryAction', { act: 'selectGenre', id: e.target.value }));
+  document.querySelectorAll('[data-f]').forEach(el => {
+    el.addEventListener('input', () => { localValues[el.dataset.f] = el.value; act('factoryAction', { act: 'setValue', f: el.dataset.f, v: el.value }); });
+  });
+  $('.fc-dump-text')?.addEventListener('input', (e) => act('factoryAction', { act: 'setDump', v: e.target.value }));
+  $('#fc-fill')?.addEventListener('click', () => act('factoryAction', { act: 'fill' }));
+  $('#fc-copy')?.addEventListener('click', () => act('factoryAction', { act: 'copy' }));
+  $('#fc-gen')?.addEventListener('click', () => act('factoryAction', { act: 'generate' }));
+  $('#fc-dual')?.addEventListener('change', (e) => act('factoryAction', { act: 'setFlag', k: 'dualLoop', v: e.target.checked }));
+  $('#fc-max')?.addEventListener('change', (e) => act('factoryAction', { act: 'setFlag', k: 'maxMode', v: e.target.checked }));
+  $('#fc-maxch')?.addEventListener('change', (e) => act('factoryAction', { act: 'setFlag', k: 'maxChapters', v: +e.target.value }));
+  // W54 B8 增强区动作绑定（chips 切换/配置/检索——全桥主窗）
+  document.querySelectorAll('[data-xa]').forEach(el => el.addEventListener('click', () => {
+    const xa = el.dataset.xa;
+    if (xa === 'togglePlugin' || xa === 'toggleStyle') act('factoryAction', { act: xa, id: el.dataset.id });
+    else if (xa === 'embeddel') act('factoryAction', { act: 'embeddel', i: el.dataset.i });
+    else if (xa === 'websearch') act('factoryAction', { act: 'websearch', q: document.getElementById('fc-q')?.value?.trim() || '' });
+    else act('factoryAction', { act: xa });
+  }));
+  document.getElementById('fc-q')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') act('factoryAction', { act: 'websearch', q: e.target.value.trim() }); });
+}
+function renderTasksHtml(tasks) {
+  if (!tasks?.length) return '';
+  return '<div class="fc-label">任务</div>' + tasks.map(t => `
+    <div class="fc-task"><div class="tt"><span>${esc(t.title)}</span><span>${esc(t.statusText || '')}</span></div>
+    <div class="ts">${esc(t.desc || '')}</div>
+    ${t.pct != null ? `<div class="bar"><i style="width:${Math.round(t.pct)}%"></i></div>` : ''}</div>`).join('');
+}
+
+function render() {
+  if (tab === 'openwith') renderOpenWith();
+  else if (tab === 'tools') renderTools();
+  else renderFactory();
+}
+
+window.mazz.on('panel:push', (p) => {
+  if (p?.type === 'factorySnapshot') {
+    const genreChanged = snapshot && snapshot.genreId !== p.snapshot.genreId;
+    snapshot = p.snapshot;
+    if (!genreChanged) localValues = { ...(snapshot.values || {}), ...localValues };
+    else localValues = { ...(snapshot.values || {}) };
+    if (tab === 'factory') renderFactory();
+    return;
+  }
+  if (p?.type === 'factoryTasks') {
+    if (snapshot) snapshot.tasks = p.tasks;
+    const el = document.getElementById('fc-tasks');
+    if (el) el.innerHTML = renderTasksHtml(p.tasks);
+    return;
+  }
+  if (p?.type === 'dockTools') { toolsData = p.groups; if (tab === 'tools') renderTools(); return; }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+act('dockFloatInit'); // 面板就绪信号：主窗推首发快照+工具清单
+</script>
+</body></html>

@@ -1,7 +1,7 @@
 // renderer/lib/svg-icons.js —— 单色 SVG 图标库（思源风线条图标）
 // 核心原则：stroke=currentColor —— 图标颜色跟随按钮文字色，天然适配全部主题
 // （七套预置 + 图片自定义），hover/激活态随 accent 变。未映射的 emoji 原样回落。
-const S = (inner) => `<svg class="mz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+const S = (inner) => `<svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`; // 1em 内联尺寸（无尺寸=默认 300×150 或被压 0×0——dockfloat 工具栏 0×0 缺失实锤；em 随容器字号全场景自适应）
 
 const MAP = {
   // —— 新建类 ——
@@ -23,6 +23,9 @@ const MAP = {
   // —— 视图 ——
   '🗀': S('<path d="M4 4h16v16H4z"/><path d="M9 4v16M4 9h5"/>'),
   '⛶': S('<path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/>'),
+  '✥': S('<path d="M12 3v18M3 12h18M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/>'), // 十字箭头（移动模式；风格一致化 stroke 族）
+  '⬚': S('<rect x="4" y="4" width="16" height="16" rx="1.5" stroke-dasharray="3 2"/>'), // 虚线选框（选框模式）
+  '⇆': S('<path d="M8 7H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h4M8 7l-3-3M8 7L5 10M16 17h4a2 2 0 0 0 2-2v1a2 2 0 0 0-2-2h-4M16 17l3 3M16 17l3-3"/>'), // 桥接合并（导图间）
   '＋1': S('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5M11 8v6M8 11h6"/>'),
   '－': S('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5M8 11h6"/>'),
   '1:1': S('<path d="M8 8l4-4v16"/>'),
@@ -53,6 +56,7 @@ const MAP = {
   '➡': S('<path d="M5 12h14M12 5l7 7-7 7"/>'),
   '⇪': S('<path d="M12 17V5M6 11l6-6 6 6M5 19h14"/>'),
   '⇩': S('<path d="M12 5v12M6 13l6 6 6-6M5 5h14"/>'),
+  '⌫': S('<path d="M9 5h11a1 1 0 011 1v12a1 1 0 01-1 1H9l-6-7 6-7zM12 10l5 5M17 10l-5 5"/>'),
   '≣': S('<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>'),
   '◫': S('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
   '⬒': S('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 12h18"/>'),
@@ -129,6 +133,12 @@ const MAP = {
   '🎯': S('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>'),
   '✍': S('<path d="M14 5l5 5L8 21H3v-5L14 5zM12 7l5 5M7 17l2 2"/>'),
   '📦': S('<path d="M3 8l9-4 9 4v8l-9 4-9-4V8zm9-4v8m9-4-9 4M3 8l9 4"/>'),
+  // —— W58e 缺口补（五区 emoji 平反）——
+  '✂': S('<circle cx="6.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="17.5" r="2.5"/><path d="M8.6 8.1L20 19M8.6 15.9L20 5"/>'),
+  '📑': S('<path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v4h4M10 3v5l2-1.5L14 8V3"/>'),
+  '📱': S('<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18.5h2"/>'),
+  '▭': S('<rect x="4" y="7" width="16" height="10" rx="1"/>'),
+  '◯': S('<ellipse cx="12" cy="12" rx="8" ry="6"/>'),
   '⚠': S('<path d="M12 3L2 20h20L12 3zM12 10v5M12 18h.01"/>'),
   '⏺': S('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/>'),
   '⌨': S('<rect x="3" y="6" width="18" height="12" rx="1"/><path d="M7 10h.01M11 10h.01M15 10h.01M17 10h.01M7 14h.01M17 14h.01M10 14h4"/>'),
@@ -159,6 +169,7 @@ const MAP = {
   '◆': S('<path d="M12 2l7 10-7 10L5 12z"/>'),
   '⇱': S('<path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 6 6v6"/>'),
 };
+
 
 /** emoji → 主题自适应 SVG（命中映射返回 svg 字符串，否则原样返回） */
 export function iconHtml(icon) {

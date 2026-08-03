@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' mazz-res:">
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<title>选择</title>
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; }
+  body { font-family: var(--font-ui); }
+  .pwin { box-sizing: border-box; display: flex; flex-direction: column; height: 100%; background: var(--bg); color: var(--fg); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 10px 36px rgba(0,0,0,.4); }
+  .head { padding: 8px 10px 6px; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid var(--border); }
+  .head .t { font-size: 12px; color: var(--fg-dim); flex: none; }
+  .q { flex: 1; background: var(--bg-elev); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12.5px; font-family: var(--font-ui); outline: none; }
+  .q:focus { border-color: var(--accent); }
+  .list { flex: 1; overflow-y: auto; min-height: 0; padding: 4px; }
+  .it { padding: 5px 9px; border-radius: 6px; font-size: 12.5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .it:hover, .it.hot { background: var(--accent-soft); color: var(--accent); }
+  .it.cur { color: var(--accent); font-weight: 600; }
+  .it.free { color: var(--fg-dim); font-style: italic; }
+  .empty { padding: 14px; text-align: center; color: var(--fg-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="pwin">
+  <div class="head"><span class="t" id="cap">选择</span><input class="q" id="q" spellcheck="false" placeholder="输入检索…" /></div>
+  <div class="list ps-scroll" id="list"></div>
+</div>
+<script>
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+
+const $ = (s) => document.querySelector(s);
+let DATA = { title: '选择', items: [], searchable: true, allowFree: false, current: null };
+let hot = 0;
+
+function render() {
+  const q = $('#q').value.trim().toLowerCase();
+  const items = DATA.items.filter(it => !q || it.label.toLowerCase().includes(q));
+  const rows = [];
+  if (DATA.allowFree && q && !items.some(it => it.label.toLowerCase() === q)) {
+    rows.push(`<div class="it free" data-v="${q.replace(/"/g, '&quot;')}" data-free="1">使用「${$('#q').value.trim().replace(/</g, '&lt;')}」</div>`);
+  }
+  rows.push(...items.map(it => `<div class="it${it.v === DATA.current ? ' cur' : ''}" data-v="${String(it.v).replace(/"/g, '&quot;')}" ${it.font ? `style="font-family:'${it.font}'"` : ''}>${it.label}</div>`));
+  $('#list').innerHTML = rows.join('') || '<div class="empty">无匹配项</div>';
+  hot = 0;
+  $('#list').querySelectorAll('.it').forEach(el => el.addEventListener('mousedown', (e) => { e.preventDefault(); pick(el.dataset.v); }));
+}
+function markHot(d) {
+  const els = [...$('#list').querySelectorAll('.it')];
+  if (!els.length) return;
+  hot = (hot + d + els.length) % els.length;
+  els.forEach((el, i) => el.classList.toggle('hot', i === hot));
+  els[hot].scrollIntoView({ block: 'nearest' });
+}
+function pick(v) {
+  window.mazz.invoke('panel:action', { type: 'picklistPick', value: v }).catch(() => {});
+  window.mazz.invoke('window:close').catch(() => {});
+}
+$('#q').addEventListener('input', render);
+$('#q').addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') window.mazz.invoke('window:close').catch(() => {});
+  if (e.key === 'ArrowDown') { e.preventDefault(); markHot(1); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); markHot(-1); }
+  if (e.key === 'Enter') {
+    const h = $('#list .it.hot') || $('#list .it');
+    if (h) pick(h.dataset.v);
+    else if (DATA.allowFree && $('#q').value.trim()) pick($('#q').value.trim());
+  }
+});
+window.mazz.on('panel:push', (p) => {
+  if (p?.type !== 'picklistData') return;
+  DATA = { title: '选择', items: [], searchable: true, allowFree: false, current: null, ...p.data };
+  $('#cap').textContent = DATA.title;
+  $('#q').style.display = DATA.searchable ? '' : 'none';
+  $('#q').value = '';
+  render();
+  if (DATA.searchable) $('#q').focus(); else $('#list').focus?.();
+});
+window.mazz.invoke('panel:action', { type: 'picklistQuery' }).catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>局域网同步 · 更新</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动——滚动只发生在内层容器（外飘轨双滚动条实锤） */
+  * { box-sizing: border-box; }
+  body { margin:0; font:13px/1.5 var(--font-ui); }
+  .pwin { display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .p-drag { height:12px; flex:none; -webkit-app-region:drag; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; }
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .head { display:flex; align-items:center; gap:4px; padding:8px 14px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; }
+  .head .tab { border:0; background:none; color:var(--fg-dim); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:var(--font-ui); }
+  .head .tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  main { flex:1; min-height:0; padding:16px 20px; overflow-y:auto; font-size:13.5px; line-height:2; }
+  .pair { font-size:26px; letter-spacing:6px; color:var(--accent); font-weight:700; }
+  code.fp { background:var(--bg-hover); padding:2px 8px; border-radius:5px; }
+  .dim { font-size:12px; color:var(--fg-dim); }
+  .inp { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); }
+  .inp:focus { border-color:var(--accent); outline:none; }
+  .btn { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer; font-family:var(--font-ui); display:inline-flex; align-items:center; gap:5px; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn.pri { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+  .btn.stop { background:#c2410c; color:#fff; border-color:#c2410c; }
+  .row { display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .dev { border:1px solid var(--border); border-radius:9px; padding:8px 12px; margin-bottom:7px; cursor:pointer; }
+  .dev:hover { border-color:var(--accent); }
+  .msg-ok { color:#16a34a; font-weight:600; }
+  .msg-new { color:var(--accent); font-weight:600; }
+  .notes { font-size:12.5px; color:var(--fg-dim); white-space:pre-wrap; max-height:180px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:10px; }
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="head">
+    <button class="tab on" data-t="host">发起共享</button>
+    <button class="tab" data-t="join">加入共享</button>
+    <button class="tab" data-t="update">检查更新</button>
+  </div>
+  <main id="m" class="ps-scroll-y"></main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+let tab = 'host', hostTimer = null;
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  clearInterval(hostTimer); hostTimer = null;
+  render();
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
+
+function render() {
+  if (tab === 'host') renderHost();
+  else if (tab === 'join') renderJoin();
+  else renderUpdate();
+}
+
+// ==================== 发起共享 ====================
+async function renderHost() {
+  const m = $('#m');
+  m.innerHTML = '<div class="dim">启动共享…</div>';
+  try {
+    const { port, wsPort, pairCode, fingerprint, deviceId } = await window.mazz.invoke('sync:host', {});
+    m.innerHTML = `
+      <div>本机标识：<b>${esc(deviceId)}</b></div>
+      <div>证书指纹：<code class="fp">${esc(fingerprint)}</code></div>
+      <div class="dim" style="margin:14px 0 4px">在另一台设备上「加入同步」，输入下面信息：</div>
+      <div style="font-size:15px">桌面端端口：<b>${port}</b></div>
+      ${wsPort ? `<div style="font-size:15px">手机/平板端口：<b>${wsPort}</b>（移动端 App 填这个）</div>` : ''}
+      <div class="dim">IP 均填本机局域网地址</div>
+      <div style="font-size:15px">配对码：<span class="pair">${esc(pairCode)}</span></div>
+      <div class="dim" style="margin-top:12px">同步范围：整个工作区（.mazz 临时区除外）· TLS 加密通道 · 冲突时双方文件都保留</div>
+      <div id="st" class="dim" style="margin-top:14px">等待对端接入…（此窗口可关闭，共享保持）</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn stop" id="stop">停止共享</button></div>`;
+    $('#stop').addEventListener('click', async () => {
+      await window.mazz.invoke('sync:stopHost');
+      $('#st').textContent = '已停止共享';
+      clearInterval(hostTimer); hostTimer = null;
+    });
+    hostTimer = setInterval(async () => {
+      if (tab !== 'host') { clearInterval(hostTimer); return; }
+      const st = await window.mazz.invoke('sync:status').catch(() => null);
+      if (st?.connected != null && document.getElementById('st')) {
+        document.getElementById('st').textContent = st.connected ? `已接入：${st.peers ?? 1} 台设备 · ${st.lastText || '同步中'}` : '等待对端接入…（此窗口可关闭，共享保持）';
+      }
+    }, 2000);
+  } catch (e) { m.innerHTML = `<div class="dim">启动失败：${esc(e.message || e)}</div>`; }
+}
+
+// ==================== 加入共享 ====================
+async function renderJoin() {
+  const m = $('#m');
+  m.innerHTML = '<div class="dim">（mDNS 未发现设备——可手动输入主机信息；也可让对端先「发起共享」）</div><div id="devs" style="margin:8px 0"></div>'
+    + '<div class="row"><label style="width:64px">主机</label><input id="j-host" class="inp" style="flex:1" placeholder="192.168.1.100"><input id="j-port" class="inp" style="width:80px" placeholder="47820"></div>'
+    + '<div class="row"><label style="width:64px">配对码</label><input id="j-code" class="inp" style="width:140px" placeholder="6 位数字" maxlength="6"></div>'
+    + '<div class="row" style="justify-content:flex-end"><button class="btn pri" id="go">开始同步</button></div>'
+    + '<div id="j-st" class="dim"></div>';
+  try {
+    const found = await window.mazz.invoke('sync:discover').catch(() => []);
+    if (found?.length) {
+      $('#devs').innerHTML = found.map(d => `<div class="dev" data-h="${esc(d.host)}" data-p="${d.port}">📡 ${esc(d.name || d.host)} <span class="dim">${esc(d.host)}:${d.port}</span></div>`).join('');
+      document.querySelectorAll('.dev').forEach(el => el.addEventListener('click', () => { $('#j-host').value = el.dataset.h; $('#j-port').value = el.dataset.p; }));
+    }
+  } catch {}
+  $('#go').addEventListener('click', async () => {
+    const host = $('#j-host').value.trim(), port = +$('#j-port').value || 47820, pairCode = $('#j-code').value.trim();
+    if (!host || pairCode.length !== 6) { $('#j-st').textContent = '主机与 6 位配对码必填'; return; }
+    $('#j-st').textContent = '接入中…';
+    try {
+      await window.mazz.invoke('sync:join', { host, port, pairCode });
+      $('#j-st').textContent = '已接入，开始同步';
+    } catch (e) { $('#j-st').textContent = '接入失败：' + (e.message || e); }
+  });
+}
+
+// ==================== 检查更新 ====================
+async function renderUpdate() {
+  const m = $('#m');
+  m.innerHTML = '<div class="dim">检查中…</div>';
+  const r = await window.mazz.invoke('update:check').catch(() => null);
+  if (!r) { m.innerHTML = '<div class="dim">检查更新失败</div>'; return; }
+  m.innerHTML = `
+    <div>当前版本：<b>${esc(r.current)}</b></div>
+    ${r.latest ? `<div>最新版本：<b>${esc(r.latest)}</b></div>` : ''}
+    <div style="margin:8px 0" class="${r.hasUpdate ? 'msg-new' : 'msg-ok'}">${esc(r.message || '')}</div>
+    ${r.notes ? `<div class="notes">${esc(r.notes)}</div>` : ''}
+    <div class="dim" style="margin-top:12px">更新源：${r.ok ? '已配置' : '未配置（可在下方设置）'}</div>
+    <div class="row"><input id="u-url" class="inp" style="flex:1" placeholder="更新清单地址（version.json URL）" spellcheck="false"><button class="btn" id="u-save">保存</button></div>
+    <div id="u-st" class="dim"></div>`;
+  const cfg = await window.mazz.invoke('update:getConfig').catch(() => null);
+  if (cfg?.url) $('#u-url').value = cfg.url;
+  $('#u-save').addEventListener('click', async () => {
+    await window.mazz.invoke('update:setConfig', { url: $('#u-url').value });
+    $('#u-st').textContent = '更新源已保存';
+    setTimeout(() => { $('#u-st').textContent = ''; }, 1500);
+  });
+}
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+// 页签参数（dockfloat/命令带参 init）
+window.mazz.on('panel:push', (p) => { if (p?.type === 'syncInit' && p.tab) setTab(p.tab); });
+window.mazz.invoke('panel:action', { type: 'syncInitQuery' }).catch(() => {});
+render();
+</script>
+</body></html>

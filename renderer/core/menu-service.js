@@ -57,16 +57,19 @@ class MenuService {
     window.mazz.invoke('menu:setModel', { items: this.resolve(menuId) }).catch(() => {});
   }
 
-  /** 弹出上下文菜单：优先原生（Electron），回退自绘 DOM */
+  /** 弹出上下文菜单：Electron 一律 ctxmenu 并行子窗格（应用风+主题跟随+永不被浏览器视图压——W55 全软件右键收编）；网页预览回退自绘 DOM */
   async show(menuId, { x, y, preferDom = false } = {}) {
     const items = this.resolve(menuId);
     if (!items.length) return;
-    if (window.mazz?.isElectron && !preferDom) {
+    if (window.mazz?.isElectron) {
       try {
-        const id = await window.mazz.invoke('menu:context', { items, context: menuId });
-        if (id) await commands.execute(id);
+        // 尺寸估算：项高 28/分隔 9/padding 12；宽随最长项（基础 240）
+        const h = Math.min(items.reduce((a, it) => a + (it.type === 'separator' ? 9 : 28), 12), Math.round(window.innerHeight * 0.82));
+        const w = Math.max(220, Math.min(300, 14 + Math.max(...items.map(it => String(it.label || '').length)) * 13 + (items.some(it => it.accelerator) ? 64 : 0)));
+        this._ctxItems = items; // ctxmenuQuery 应答取（面板 ready 后问取）
+        await window.mazz.invoke('panel:open', { kind: 'ctxmenu', opts: { x: x ?? 100, y: y ?? 100, w, h } });
         return;
-      } catch (e) { console.warn('[menu] 原生菜单失败，回退 DOM:', e.message); }
+      } catch (e) { console.warn('[menu] 子窗格菜单失败，回退 DOM:', e.message); }
     }
     this.showDom(items, { x, y });
   }

@@ -1080,6 +1080,8 @@ function createDraw(container) {
   root.querySelector('.draw-stab').addEventListener('input', (e) => {
     ctl.stabilize = +e.target.value / 100;
   });
+  // B12b 收编：辅助线选择子窗格化（select 隐藏保留作状态单源，change 联动照旧）
+  import('../../lib/select-menu.js').then(({ selectProxy }) => selectProxy(root.querySelector('.draw-guides')));
   root.querySelector('.draw-guides').addEventListener('change', (e) => {
     const v = e.target.value;
     if (!v) { ctl.guides = null; redraw(); return; }
@@ -1497,7 +1499,7 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="工具">
-      <button class="rb-btn" data-command="draw.pen"><i class="ico">✏️</i><span>画笔</span></button>
+      <button class="rb-btn" data-command="draw.pen"><i class="ico">${iconHtml('✏')}</i><span>画笔</span></button>
       <button class="rb-btn" data-command="draw.eraser"><i class="ico">${iconHtml('🧽')}</i><span>橡皮</span></button>
       <button class="rb-btn" data-command="draw.select"><i class="ico">➤</i><span>选择</span></button>
     </div>

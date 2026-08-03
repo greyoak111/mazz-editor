@@ -1,0 +1,34 @@
+import { _electron as electron } from 'playwright';
+import fs from 'fs'; import os from 'os'; import path from 'path';
+import { Human } from './human.mjs';
+import { seedFixtures } from './fixtures.mjs';
+const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
+const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
+const WS2 = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws2-'));
+await seedFixtures(WS, WS2);
+const app = await electron.launch({ args: ['.'], env: { ...process.env, MAZZ_E2E_USER_DATA: USER_DATA, MAZZ_E2E_WORKSPACE: WS, NODE_ENV: 'test' }, timeout: 120000 });
+const win = await app.firstWindow();
+await win.waitForLoadState('domcontentloaded');
+const human = new Human(win);
+await human.until(() => !!(window.MazzCommands && window.MazzShell), { timeout: 15000, msg: '壳' });
+await win.waitForTimeout(800);
+await human.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }).catch(() => {}));
+for (let i = 0; i < 20; i++) { const s = await human.evaluate(() => !!document.querySelector('#agree-accept')); if (s) { await human.click('#agree-accept').catch(()=>{}); await win.waitForTimeout(300); continue; } break; }
+await human.evaluate(() => window.MazzCommands?.execute('factory.toggleDock'));
+await human.until(() => { const d = document.querySelector('.side-dock'); return d && d.getBoundingClientRect().width > 0; }, { timeout: 8000, msg: '坞开' });
+await human.evaluate(() => { document.querySelector('.side-dock .sd-tab[data-t="openwith"]')?.click(); });
+await win.waitForTimeout(600);
+await win.screenshot({ path: '/mnt/agents/output/w57b-停靠坞-打开方式.svg.png' }).catch(() => {});
+await human.evaluate(() => { document.querySelector('.side-dock .sd-tab[data-t="tools"]')?.click(); });
+await win.waitForTimeout(600);
+await win.screenshot({ path: '/mnt/agents/output/w57b-停靠坞-工具栏.svg.png' }).catch(() => {});
+await human.evaluate(() => { document.querySelector('.side-dock [data-a="float"]')?.click(); });
+await win.waitForTimeout(1800);
+const df = app.windows().find(w => w.url().includes('/panels/dockfloat.html'));
+if (df) {
+  await df.evaluate(() => document.querySelector('[data-t="tools"]').click());
+  await win.waitForTimeout(900);
+  await df.screenshot({ path: '/mnt/agents/output/w57b-dockfloat-工具栏.svg.png' }).catch(() => {});
+  await df.evaluate(() => document.getElementById('p-close')?.click?.()).catch(() => {});
+}
+await app.close().catch(() => {});

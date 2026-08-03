@@ -1,0 +1,29 @@
+/* renderer/panels/panel-shared.css —— 面板窗共享样式（军规④溢出必滚动条：所有子窗统一链接，禁静默裁切）
+ * W58e 滚动条统一：与主界面全局滚动条一族同款（base.css:10-12 镜像——10px 轨/--bg-active 滑块随主题换色/
+ * 2px 透明边+background-clip 的浮丸透明化观感），hover 追加 accent 美化（主界面 hover 族同款思路） */
+
+/* 全局滚动条族：面板窗内一切溢出元素统一（只 themes.css+本件，base.css 面板窗不加载） */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--bg-active); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--accent); border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-corner { background: transparent; }
+
+/* 滚动容器工具类：超框即滚（min-height:0 是 flex 子级滚动的生死线）
+ * W58g 真统一：scrollbar-width: thin 标准属性在现代 Chromium 里压死 ::-webkit-scrollbar 伪元素样式
+ * （子窗一直是系统细灰轨=与主窗主题丸不统一的真根，两波误判）——一律拔除，与主窗同走 webkit 一族 */
+.ps-scroll { overflow: auto; min-height: 0; }
+.ps-scroll-y { overflow-y: auto; overflow-x: hidden; min-height: 0; }
+
+
+/* —— W55 迁移前 modal 控件族原值（与 base.css rb 族同值——独立子窗格与迁移前样式统一） —— */
+.rb-input, .rb-select { background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 12px; font-family: var(--font-ui); }
+.rb-input:focus, .rb-select:focus { border-color: var(--accent); outline: none; }
+.rb-btn { border: 0; background: transparent; color: var(--fg); cursor: pointer; border-radius: 6px; padding: 6px 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; min-width: 40px; font-family: var(--font-ui); }
+.rb-btn:hover:not(:disabled) { background: var(--bg-hover); }
+.rb-btn:active:not(:disabled), .rb-btn.on { background: var(--accent-soft); color: var(--accent); }
+.rb-btn:disabled { opacity: .38; cursor: default; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 12.5px; }
+
+/* 文本截断提示：裁切必须带省略号，不许生吞 */
+.ps-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

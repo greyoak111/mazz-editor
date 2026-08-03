@@ -160,6 +160,8 @@ function createMath(container) {
   };
 
   const backendSel = root.querySelector('#math-backend');
+  // B12b 收编：后端选择子窗格化（select 隐藏保留作状态单源，change 联动照旧）
+  import('../../lib/select-menu.js').then(({ selectProxy }) => selectProxy(backendSel));
   backendSel.addEventListener('change', () => {
     ctl.backend = backendSel.value;
     updateStatus();

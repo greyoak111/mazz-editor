@@ -30,6 +30,8 @@ export async function insertChart(container, sheet, sel, getValue) {
     chartInst.setOption(opt, true);
   };
   chartEl.querySelector('select').addEventListener('change', rebuild);
+  // B12b 收编：图表类型子窗格化（select 隐藏保留，rebuild 读 value 照旧）
+  import('../../lib/select-menu.js').then(({ selectProxy }) => selectProxy(chartEl.querySelector('select')));
   chartEl.querySelector('[data-a=close]').addEventListener('click', closeChart);
   rebuild();
 

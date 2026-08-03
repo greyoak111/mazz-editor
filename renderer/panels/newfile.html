@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' mazz-res:">
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<title>新建文件</title>
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; } /* W58f：锁文档级滚动（外飘轨双滚动条实锤） */
+  body { font-family: var(--font-ui); }
+  .pwin { box-sizing: border-box; display:flex; flex-direction:column; height:100%; background:var(--bg); color:var(--fg); border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 36px rgba(0,0,0,.4); }
+  .head { padding: 10px 14px 8px; }
+  .head h2 { font-size: 14px; margin: 0; font-weight: 600; }
+  .p-winbtns { position:absolute; top:2px; right:8px; display:flex; gap:2px; z-index:9; } /* W58f：窗控三键归位（与其他子窗同款右上悬浮） */
+  .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor: pointer; font-size:12px; }
+  .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
+  .p-winbtns button.x:hover { background:#e81123; color:#fff; }
+  .body { padding: 4px 14px 14px; overflow: auto; min-height: 0; flex: 1; }
+  .grp { font-size: 11.5px; color: var(--fg-dim); margin: 10px 0 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 7px; }
+  .nft { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--bg-elev); cursor: pointer; font-size: 12.5px; color: var(--fg); text-align: left; font-family: var(--font-ui); }
+  .nft:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .nft .x { color: var(--accent); font-weight: 700; font-style: normal; }
+</style>
+</head>
+<body>
+<div class="pwin">
+  <div class="p-drag head"><h2>新建文件</h2></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="body ps-scroll" id="groups"></div>
+</div>
+<script>
+// 主题：快照桥初始化 + 广播跟随 + 变量内联（W58c 全家桶——自定义主题不透明化）
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+document.getElementById('p-min').addEventListener('click', () => pwb('minimize'));
+document.getElementById('p-max').addEventListener('click', () => pwb('toggleMaximize'));
+document.getElementById('p-close').addEventListener('click', () => pwb('close'));
+
+// 类型目录：主窗 panel:push 下发（NEW_FILE_TYPES 单源不复制）
+window.mazz.on('panel:push', (p) => {
+  if (p?.type !== 'newfileTypes') return;
+  const groups = [...new Set(p.types.map(t => t.group))];
+  document.getElementById('groups').innerHTML = groups.map(g => `
+    <div class="grp">${g}</div>
+    <div class="grid">${p.types.filter(t => t.group === g).map(t => `
+      <button class="nft" data-ext="${t.ext}"><i class="x">.${t.ext}</i><span>${t.label.replace(/ *\([^)]*\)/g, '')}</span></button>`).join('')}
+    </div>`).join('');
+  document.querySelectorAll('.nft').forEach(b => b.addEventListener('click', () => {
+    window.mazz.invoke('panel:action', { type: 'newfilePick', ext: b.dataset.ext }).catch(() => {});
+    pwb('close');
+  }));
+});
+window.mazz.invoke('panel:action', { type: 'newfileQuery' }).catch(() => {});
+</script>
+</body>
+</html>

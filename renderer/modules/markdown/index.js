@@ -679,6 +679,11 @@ export default {
     lh?.addEventListener('change', () => {
       window.MazzCommands.execute('markdown.setLineHeight', { lineHeight: lh.value ? parseFloat(lh.value) : null });
     });
+    // B12b 收编：段落类型/行距两 select 子窗格化（隐藏保留作状态单源，change 联动照旧）
+    import('../../lib/select-menu.js').then(({ selectProxy }) => {
+      if (sel) selectProxy(sel);
+      if (lh) selectProxy(lh);
+    });
     // 当前选区样式回显（简化：记录到面板引用）
     panel._pickers = { fp, sp, cp, hp };
   },

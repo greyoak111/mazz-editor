@@ -2,7 +2,7 @@
 // 文件树新建改名全链 / 标签管理语义 / 搜索开关与XSS净化 / 公式错误入格 / 导图键盘与撤销 /
 // 放映Esc / 音量模型 / 书库进度屏位恢复（ratio根治实证）/ 字号主题即改 / 浏览器页签 /
 // 工作区重命名同步 / 侧栏宽度钳制 / 状态栏字数跟随 / 命令面板模糊检索 / 欢迎页卡片直通
-export async function scenes5({ win, human, WS, WS2, scenario }) {
+export async function scenes5({ app, win, human, WS, WS2, scenario }) {
   const evaluate = (fn, arg) => human.evaluate(fn, arg);
   const openPath = (p) => evaluate(async ([pp]) => { await window.MazzCommands.execute('file.openPath', { path: pp }); }, [p]);
 
@@ -635,34 +635,32 @@ export async function scenes5({ win, human, WS, WS2, scenario }) {
     await human.assert(n1 > n0, `编辑后字数应增长（${c0} → ${c1}）`);
   });
 
-  // ==================== 26：命令面板·模糊检索·Esc关死 ====================
+  // ==================== 26：命令面板·模糊检索·Esc关死（W52③ 起=薄子窗形态） ====================
   await scenario('命令面板·模糊检索·Esc关死', async () => {
+    // W52③：Ctrl+Shift+P 开独立薄子窗（非 DOM 遮罩——浮层遣散定版）
     await win.keyboard.press('Control+Shift+P');
-    await win.waitForTimeout(500);
-    let opened = await evaluate(() => {
-      const mask = [...document.querySelectorAll('.mazz-palette-mask')].find(m => m.getBoundingClientRect().width > 0); // fixed 覆盖层矩形判定
-      return !!mask && !!mask.querySelector('.mazz-palette-input');
-    });
-    if (!opened) { // 焦点陷阱时退命令直调（键位总表另行覆盖）
+    await win.waitForTimeout(1200);
+    let palWin = null;
+    for (const w of app.windows()) if (w.url().includes('/panels/palette.html')) { palWin = w; break; }
+    let opened = !!palWin;
+    if (!opened) { // 焦点陷阱时退命令直调
       await evaluate(() => window.MazzCommands.execute('app.commandPalette'));
-      await win.waitForTimeout(400);
-      opened = await evaluate(() => {
-        const mask = [...document.querySelectorAll('.mazz-palette-mask')].find(m => m.getBoundingClientRect().width > 0);
-        return !!mask && !!mask.querySelector('.mazz-palette-input');
-      });
+      await win.waitForTimeout(1000);
+      for (const w of app.windows()) if (w.url().includes('/panels/palette.html')) { palWin = w; break; }
+      opened = !!palWin;
     }
-    await human.assert(opened, 'Ctrl+Shift+P 应唤出命令面板');
-    await win.keyboard.type('导图', { delay: 30 });
-    await win.waitForTimeout(500);
-    const hit = await evaluate(() => {
-      const items = [...document.querySelectorAll('.mazz-palette-item')];
+    await human.assert(opened, 'Ctrl+Shift+P 应唤出命令面板（薄子窗形态实锤）');
+    await palWin.type('#q', '导图', { delay: 30 });
+    await win.waitForTimeout(600);
+    const hit = await palWin.evaluate(() => {
+      const items = [...document.querySelectorAll('#m .row .t')];
       return items.some(i => i.textContent.includes('导图'));
     });
     await human.assert(hit, '检索「导图」应命中导图族命令');
-    await win.keyboard.press('Escape');
-    await win.waitForTimeout(400);
-    const closed = await evaluate(() => ![...document.querySelectorAll('.mazz-palette-mask')].some(m => m.getBoundingClientRect().width > 0));
-    await human.assert(closed, 'Esc 应关死面板（残留遮罩会毁后续场景）');
+    await palWin.evaluate(() => { document.querySelector('#q').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    await win.waitForTimeout(500);
+    const closed = !app.windows().some(w => w.url().includes('/panels/palette.html'));
+    await human.assert(closed, 'Esc 应关死面板（残留薄窗会毁后续场景）');
     await human.shot('命令面板');
   });
 }

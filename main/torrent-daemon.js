@@ -42,10 +42,30 @@ class TorrentDaemon {
     this.server = null;
     this.port = 0;
     this.torrents = new Map(); // infoHash -> { t, addedAt }
+    // 启动即过一遍 storeRoot（内含旧 .download→download 一次性合并迁移——不能只等 tor:add，
+    // 否则用户不加种子迁移永不触发，工作区树/媒体库扫描继续瞎（真机实锤））
+    try { this.storeRoot(); } catch {}
     this.register();
   }
 
-  storeRoot() { return path.join(this.workspace(), '媒体库', '.download'); }
+  storeRoot() {
+    // 明面化（W44：旧 .download 点目录在工作区树/媒体库扫描里全隐身——用户找不到下载物实锤）。
+    // 旧目录一次性合并迁移（rename 同卷零拷贝；.audcache 抽轨缓存不在此列，继续隐身）
+    const base = path.join(this.workspace(), '媒体库');
+    const legacy = path.join(base, '.download');
+    const dir = path.join(base, 'download');
+    try {
+      if (fs.existsSync(legacy)) {
+        fs.mkdirSync(dir, { recursive: true });
+        for (const name of fs.readdirSync(legacy)) {
+          const from = path.join(legacy, name), to = path.join(dir, name);
+          if (!fs.existsSync(to)) { try { fs.renameSync(from, to); } catch {} }
+        }
+        try { fs.rmSync(legacy, { recursive: true, force: true }); } catch {}
+      }
+    } catch {}
+    return dir;
+  }
 
   async ensureClient() {
     if (this.client) return;

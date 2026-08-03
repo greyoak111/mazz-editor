@@ -9,8 +9,13 @@ const LS_KEY = 'mazz.sideDock';
 export class SideDock {
   constructor(shell) {
     this.shell = shell;
-    this.state = { open: false, tab: 'factory', width: 380, height: 560, zoom: 1, float: null }; // float: {x, y} | null = 停靠
-    try { Object.assign(this.state, JSON.parse(localStorage.getItem(LS_KEY)) || {}); } catch {}
+    this.state = { open: false, tab: 'factory', width: 380, height: 560, zoom: 1, float: null, collapsed: false }; // float: {x, y} | null = 停靠；collapsed: 折叠轨
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY)) || {};
+      // W52f 迁移（_v<2）：margin hack 时代的 float 记忆一律回停靠——真推拉升级后老坞不该再浮着（真机实锤）
+      if (saved._v !== 2) { saved.float = null; saved._v = 2; }
+      Object.assign(this.state, saved);
+    } catch {}
     this.buildDom();
     this.registerCommands();
     if (this.state.open) this.show();
@@ -29,23 +34,27 @@ export class SideDock {
           <button class="sd-tab" data-t="tools">工具</button>
         </span>
         <span class="sd-acts">
-          <button class="sd-btn" data-a="zoom-out" title="缩小内容">－</button>
+          <button class="sd-btn" data-a="collapse" title="折叠为细轨（再点展开）">${iconHtml('›')}</button>
+          <button class="sd-btn" data-a="zoom-out" title="缩小内容">${iconHtml('－')}</button>
           <span class="sd-zoom">100%</span>
-          <button class="sd-btn" data-a="zoom-in" title="放大内容">＋</button>
-          <button class="sd-btn" data-a="float" title="停靠/浮动切换（双击标题栏同效）">⇱</button>
-          <button class="sd-btn" data-a="close" title="关闭">✕</button>
+          <button class="sd-btn" data-a="zoom-in" title="放大内容">${iconHtml('＋')}</button>
+          <button class="sd-btn" data-a="float" title="停靠/浮动切换（双击标题栏同效）">${iconHtml('⇱')}</button>
+          <button class="sd-btn" data-a="close" title="关闭">${iconHtml('✕')}</button>
         </span>
       </div>
       <div class="sd-body"></div>
+      <button class="sd-rail" data-a="expand" title="展开工具坞">${iconHtml('‹')}</button>
       <div class="sd-grip" title="拖拽调整宽度"></div>
       <div class="sd-grip-b" title="拖拽调整高度（浮动模式）"></div>
       <div class="sd-grip-c" title="拖拽调整大小（浮动模式）"></div>`;
-    document.body.appendChild(this.el);
+    this.mount(); // W52e③ 真推拉：停靠态塞 .workspace 当 flex 兄弟（布局成员），浮动/关闭才挂 body 浮层
     this.body = this.el.querySelector('.sd-body');
     this.el.style.display = 'none';
 
     this.el.querySelector('[data-a=close]').addEventListener('click', () => this.hide());
     this.el.querySelector('[data-a=float]').addEventListener('click', () => this.toggleFloat());
+    this.el.querySelector('[data-a=collapse]').addEventListener('click', () => this.setCollapsed(true));
+    this.el.querySelector('[data-a=expand]').addEventListener('click', () => this.setCollapsed(false));
     this.el.querySelector('[data-a=zoom-in]').addEventListener('click', () => this.setZoom(this.state.zoom + 0.1));
     this.el.querySelector('[data-a=zoom-out]').addEventListener('click', () => this.setZoom(this.state.zoom - 0.1));
     this.el.querySelectorAll('.sd-tab').forEach(btn => btn.addEventListener('click', () => this.showTab(btn.dataset.t)));
@@ -57,9 +66,10 @@ export class SideDock {
       const startX = e.clientX, startW = this.el.offsetWidth, isFloat = !!this.state.float;
       const move = (ev) => {
         const dw = isFloat ? (ev.clientX - startX) : (startX - ev.clientX);
-        const w = Math.min(Math.max(startW + dw, 300), Math.min(760, innerWidth - 60));
+        const w = Math.min(Math.max(startW + dw, 300), Math.min(760, Math.round(innerWidth * 0.6))); // 限位钳（窗宽 60% 封顶——全屏钮区不被挤掉同款纪律）
         this.state.width = w;
         this.el.style.width = w + 'px';
+        // 真推拉：width 一改 flex 自动让位（零 JS 推挤——布局引擎干活）
       };
       const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); this.persist(); };
       window.addEventListener('pointermove', move);
@@ -96,12 +106,33 @@ export class SideDock {
       window.addEventListener('pointerup', up);
     });
 
-    // 标题栏拖动（自由拖动 = 浮动模式）/ 双击切停靠
+    // 标题栏拖动（W54 手势三态①：停靠态按住拽出=直接开 dockfloat 子窗格并跟手——老浮动路径退役）/ 双击切停靠
     const bar = this.el.querySelector('.sd-bar');
     bar.addEventListener('pointerdown', (e) => {
       // 只拦「按钮」本身（页签/操作钮正常点击），标题栏其余一切区域（间隙/padding/文字空档）均可拖——
       // 此前拦 .sd-btn/.sd-tab 类，而页签按钮几乎占满标题栏，用户根本找不到可拖点=「工具坞拖不出去」实锤
       if (e.target.closest('button')) return;
+      if (!this.state.float && window.mazz?.isElectron) {
+        // 停靠态拽出：超阈值即浮（dockfloat 子窗格），鼠标跟手（自绘拖拽同源：e.screenX/Y → 主进程 setBounds）
+        let floated = false;
+        const move = (ev) => {
+          if (!floated) {
+            if (Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) < 8) return;
+            floated = true;
+            this.toggleFloat(); // W53 版：开 dockfloat + 坞收（跟手会话由主进程 move 容错补建）
+          }
+          window.mazz.invoke('panel:move', { kind: 'dockfloat', sx: ev.screenX, sy: ev.screenY }).catch(() => {});
+        };
+        const up = (ev) => {
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+          if (floated) window.mazz.invoke('panel:dragEnd', { kind: 'dockfloat' }).catch(() => {}); // 拽回热区=自动停靠
+        };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up);
+        return;
+      }
+      // 非 Electron 预览/已浮动态：老 body 浮层拖拽兜底
       const rect = this.el.getBoundingClientRect();
       const ox = e.clientX - rect.left, oy = e.clientY - rect.top;
       const wasDocked = !this.state.float;
@@ -111,7 +142,6 @@ export class SideDock {
           this.state.float = { x: rect.left, y: rect.top };
           this.state.height = Math.round(r.height);
         }
-        // 只保留 80px 在任一屏幕可视区内即可——允许拖到其他屏幕（v35 多屏需求）
         this.state.float.x = Math.max(-this.el.offsetWidth + 80, ev.clientX - ox);
         this.state.float.y = Math.max(-30, ev.clientY - oy);
         this.applyPos();
@@ -155,7 +185,7 @@ export class SideDock {
     const t = (s) => s;
     this.openWithEl.innerHTML = `
       <div class="w-drop" id="sd-dropzone">
-        <div class="w-drop-ico">⇩</div>
+        <div class="w-drop-ico">${iconHtml('⇩')}</div>
         <div class="w-drop-t">把文件拖到这里</div>
         <div class="w-drop-d">图片 · PDF · 音视频，立即查看</div>
       </div>
@@ -163,7 +193,7 @@ export class SideDock {
         <button class="w-ow-card" data-cmd="file.openViewer"><div class="t">${iconHtml('🖼')} 查看器预览</div><div class="d">图片/PDF/音视频</div></button>
         <button class="w-ow-card" data-cmd="file.openWithSystem"><div class="t">${iconHtml('🚀')} 系统默认打开</div><div class="d">调起外部程序</div></button>
         <button class="w-ow-card" data-cmd="file.import"><div class="t">${iconHtml('📥')} 导入工作区</div><div class="d">多选文件/文件夹</div></button>
-        <button class="w-ow-card" data-cmd="file.quickOpen"><div class="t">⚡ 快速跳转</div><div class="d">最近文件直达</div></button>
+        <button class="w-ow-card" data-cmd="file.quickOpen"><div class="t">${iconHtml('⚡')} 快速跳转</div><div class="d">最近文件直达</div></button>
       </div>`;
     this.openWithEl.querySelectorAll('[data-cmd]').forEach(b =>
       b.addEventListener('click', () => commands.execute(b.dataset.cmd)));
@@ -181,7 +211,7 @@ export class SideDock {
 
   /** 工具页：收编藏在命令面板里的全部功能（分组 + 说明） */
   buildTools() {
-    const GROUPS = [
+    const GROUPS = this._toolsGroups = [
       ['识别', [
         { cmd: 'ocr.image', ico: '🔤', t: '图片文字识别', d: '截图/照片里的文字抠出来' },
         { cmd: 'translate.panel', ico: '🌐', t: '翻译面板', d: '多语互译' },
@@ -193,7 +223,7 @@ export class SideDock {
         { cmd: 'annotate.clear', ico: '⌫', t: '批注清屏', d: '清空全部笔迹（Ctrl+Alt+Shift+X）' },
       ]],
       ['播放器', [
-        { cmd: 'player.open', ico: '🎬', t: '打开播放器', d: '音视频 · 悬停缩略图 · 无边框' },
+        { cmd: 'file.newViewer', ico: '🎬', t: '打开播放器', d: '空手起播：媒体库/网络资源选源即播 · 悬停缩略图 · 无边框' },
       ]],
       ['语音与录制', [
         { cmd: 'voice.dictate', ico: '🎙', t: '语音输入', d: '说话变文字（开始/停止）' },
@@ -262,15 +292,39 @@ export class SideDock {
 
   toggleFloat() {
     if (this.state.float) {
+      // 浮 → 停：关 dockfloat 子窗格，坞回 workspace
       this.state.float = null;
+      if (window.mazz?.isElectron) window.mazz.invoke('panel:close', { kind: 'dockfloat' }).catch(() => {});
     } else {
+      // 停 → 浮（W53：纯原生圆角独立子窗格——body 浮层时代退役，再重也迁移）
+      if (window.mazz?.isElectron) {
+        this.state.float = { x: 0, y: 0 }; // 记忆语义：浮动中（位置由子窗格自管）
+        this.state.open = false;
+        this.mount();
+        this.el.style.display = 'none';
+        window.mazz.invoke('panel:open', { kind: 'dockfloat' }).catch(() => {});
+        this.persist();
+        return;
+      }
       const r = this.el.getBoundingClientRect();
       this.state.height = Math.round(r.height);
       this.state.float = { x: r.left, y: r.top };
     }
     this.applyPos();
+    this.mount(); // 停靠/浮动换位即搬家（flex 兄弟 ⇄ body 浮层）
     this.persist();
   }
+
+  /** 坞浮动子窗格关闭/回停靠联动：坞重新上岗（panel:changed 与 dockFloatBack 双通道） */
+  backFromFloat() {
+    if (!this.state.float) { if (!this.state.open) this.show(); return; }
+    this.state.float = null;
+    this.persist();
+    this.show();
+  }
+
+  /** 工具页卡片数据出口（dockfloat 子窗格镜像用——GROUPS 单源不复制） */
+  toolsGroups() { return this._toolsGroups || []; }
 
   applyPos() {
     if (this.state.float) {
@@ -282,9 +336,9 @@ export class SideDock {
       this.el.style.height = this.state.height + 'px';
     } else {
       this.el.classList.remove('floating');
-      this.el.style.left = 'auto';
+      this.el.style.left = '';
       this.el.style.top = '';
-      this.el.style.right = '0';
+      this.el.style.right = '';
       this.el.style.bottom = '';
       this.el.style.height = '';
     }
@@ -302,17 +356,48 @@ export class SideDock {
 
   show() {
     this.state.open = true;
+    // 复活路线修正（新窗格下旧浮层坞复活实锤）：Electron 下 float 非空永远走 dockfloat 子窗格——
+    // 老 body 浮层路径只配在非 Electron 兜底；dockfloat 单例聚焦（panel-windows open 幂等）
+    if (this.state.float && window.mazz?.isElectron) {
+      this.mount(); // docked=false：坞本体挂 body 但不显示
+      this.el.style.display = 'none';
+      window.mazz.invoke('panel:open', { kind: 'dockfloat' }).catch(() => {});
+      this.persist();
+      return;
+    }
+    this.mount();
     this.el.style.display = 'flex';
     this.el.style.width = this.state.width + 'px';
     this.setZoom(this.state.zoom);
     this.applyPos();
     this.showTab(this.state.tab);
+    this.setCollapsed(this.state.collapsed, true);
+    this.mount();
     this.persist();
   }
   hide() {
     this.state.open = false;
     this.el.style.display = 'none';
+    this.mount();
     this.persist();
+  }
+
+  /** 折叠轨（W52②：‹/› SVG 钮——折叠成 36px 细轨只留展开钮/展开复宽；记忆在 state.collapsed） */
+  setCollapsed(on, silent = false) {
+    this.state.collapsed = !!on;
+    this.el.classList.toggle('collapsed', this.state.collapsed);
+    if (!this.state.collapsed) this.el.style.width = this.state.width + 'px';
+    this.mount();
+    if (!silent) this.persist();
+  }
+
+  /** 真推拉布局（W52e③）：停靠态坞是 .workspace 的 flex 兄弟——宽度即布局，让位由 flex 自动完成
+   *  （margin hack 平反：效果近似冒充结构同构=返工案）；浮动/关闭搬回 body 浮层不占位 */
+  mount() {
+    const ws = this.shell?.panesEl?.closest?.('.workspace');
+    const docked = this.state.open && !this.state.float;
+    if (docked && ws && this.el.parentElement !== ws) ws.appendChild(this.el);
+    else if (!docked && this.el.parentElement !== document.body) document.body.appendChild(this.el);
   }
   toggle() { this.state.open ? this.hide() : this.show(); }
 }
