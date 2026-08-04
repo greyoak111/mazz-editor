@@ -9,7 +9,7 @@ const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 describe('字体/字号选择格全原生独立子窗（picklist 通用格）', () => {
   test('kind 注册+定位同例+失焦收+标题', () => {
     const pw = readSrc('main/panel-windows.js');
-    assert.ok(pw.includes('|picklist)'), 'kind 白名单必须有 picklist');
+    assert.ok(/\|picklist[|)]/.test(pw), 'kind 白名单必须有 picklist（交替表增长兼容）');
     assert.ok(pw.includes("kind === 'picklist' ? (opts.w || 340)"), '尺寸默认必须有');
     assert.ok(pw.includes("kind === 'ctxmenu' || kind === 'picklist'"), '屏坐标定位+翻边必须同例');
     assert.ok(pw.includes("if (kind === 'ctxmenu' || kind === 'picklist') win.on('blur'"), '失焦收必须同例');

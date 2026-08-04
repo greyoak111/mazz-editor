@@ -480,6 +480,20 @@ export class Shell {
     toast(zone === 'right' ? '已向右分屏' : zone === 'down' ? '已向下分屏' : zone === 'left' ? '已向左分屏' : '已向上分屏');
   }
 
+  /** W58b 树拖图即插：图片节点插到 markdown 落点（posAtCoords 定位；src=mazz-res 绝对径与 insertImage 同径） */
+  async insertImageToMarkdown(inst, path, coords) {
+    const view = inst.state?.view;
+    if (!view) return;
+    const src = 'mazz-res://media/' + encodeURIComponent(String(path).replace(/\\/g, '/'));
+    // PM posAtCoords 要 {left, top} 不要 {x, y}（传 x/y=undefined 非有限=elementFromPoint 炸雷实锤）
+    const pos = (coords ? view.posAtCoords?.({ left: coords.x, top: coords.y })?.pos : null) ?? view.state.selection.head;
+    const alt = path.split(/[\\/]/).pop();
+    const node = view.state.schema.nodes.image.create({ src, alt });
+    view.dispatch(view.state.tr.insert(pos, node).scrollIntoView());
+    view.focus();
+    toast('已插入图片：' + alt);
+  }
+
   /** 磁盘内容重载到标签（外部编辑回传；脏标签只提示不覆盖） */
   async reloadTabFromDisk(tab) {
     const RELOADABLE = new Set(['markdown', 'text', 'sheet', 'slide', 'mindmap', 'code', 'notes', 'draw']);
@@ -1070,6 +1084,59 @@ export class Shell {
     R('file.newText', { title: '新建纯文本', icon: '🄣', group: '文件', run: () => this.openTab('text', { title: '未命名.txt', content: '' }) });
     R('file.newSheet', { title: '新建表格', icon: '📊', group: '文件', run: () => this.openTab('sheet', { title: '未命名.mazzsheet', content: '' }) });
     R('file.newSlide', { title: '新建演示', icon: '📽', group: '文件', run: () => this.openTab('slide', { title: '未命名.mazzslide', content: '' }) });
+    // ==================== W58b 解压缩：命令族 ====================
+    const ARCHIVE_EXTS = new Set(['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'jar', 'apk', '7zip', 'cab']);
+    this.isArchivePath = (p) => ARCHIVE_EXTS.has((p.split('.').pop() || '').toLowerCase());
+    // W66：ctxmenuPick 无载荷直执——解构必须带默认（undefined 炸=哑火实锤）+无目标人话提示
+    const archTarget = (p) => {
+      const fp = p || this.fileTree.selected?.path;
+      if (!fp) toast('请先在文件树选中压缩包或目标文件/文件夹', [], 4000);
+      return fp;
+    };
+    R('archive.view', { title: '查看压缩包内容', icon: '📦', group: '压缩包', when: 'treeArchive', run: ({ path: p } = {}) => {
+      const fp = archTarget(p);
+      if (!fp) return;
+      window.mazz.invoke('panel:action', { type: 'archiveStash', path: fp }).catch(() => {});
+      window.mazz.invoke('panel:open', { kind: 'archive' }).catch(() => {});
+    } });
+    R('archive.openPanel', { title: '压缩包面板', icon: '📦', group: '压缩包', run: () => {
+      // W66：面板可发现化——选中压缩包则直开清单，未选中开空态面板（带「打开压缩包…」门）
+      const fp = this.fileTree.selected?.path;
+      if (fp && this.isArchivePath(fp)) window.mazz.invoke('panel:action', { type: 'archiveStash', path: fp }).catch(() => {});
+      window.mazz.invoke('panel:open', { kind: 'archive' }).catch(() => {});
+    } });
+    R('archive.extractHere', { title: '解压缩到此处', icon: '📂', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {
+      const fp = archTarget(p);
+      if (!fp) return;
+      const dest = fp.replace(/[\\/][^\\/]+$/, '');
+      const r = await window.mazz.invoke('archive:extract', { path: fp, dest }).catch(e => ({ error: e.message }));
+      if (r?.jobId) toast('已排入解压队列（最多 2 并发）——进度见压缩包面板', [], 4000);
+      else toast('解压失败：' + (r?.error || '未知'), [], 4000);
+    } });
+    R('archive.extractSub', { title: '解压缩到「包名」子文件夹', icon: '🗀', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {
+      const fp = archTarget(p);
+      if (!fp) return;
+      const dir = fp.replace(/[\\/][^\\/]+$/, '');
+      const base = (fp.split(/[\\/]/).pop() || 'out').replace(/\.[^.]+$/, '');
+      const r = await window.mazz.invoke('archive:extract', { path: fp, dest: dir + '/' + base }).catch(e => ({ error: e.message }));
+      if (r?.jobId) toast('已排入解压队列（最多 2 并发）——进度见压缩包面板', [], 4000);
+      else toast('解压失败：' + (r?.error || '未知'), [], 4000);
+    } });
+    R('archive.pack', { title: '压缩为 zip…', icon: '🗜', group: '压缩包', run: async ({ path: p } = {}) => {
+      const fp = archTarget(p);
+      if (!fp) return;
+      const dir = fp.replace(/[\\/][^\\/]+$/, '');
+      const base = fp.split(/[\\/]/).pop() || 'pack';
+      let out = `${dir}/${base}.zip`;
+      for (let i = 1; ; i++) {
+        const ex = await window.mazz.invoke('fs:stat', { path: out }).catch(() => null);
+        if (!ex || ex.exists === false) break;
+        out = `${dir}/${base}-${i}.zip`;
+      }
+      const r = await window.mazz.invoke('archive:pack', { sources: [fp], out }).catch(e => ({ error: e.message }));
+      if (r?.jobId) toast('已排入打包队列（最多 2 并发）', [], 3000);
+      else toast('打包失败：' + (r?.error || '未知'), [], 4000);
+    } });
     R('file.newBrowser', { title: '打开浏览器', icon: '🌐', group: '文件', run: () => this.openTab('browser', { title: '隐私浏览器', content: '' }) });
     R('file.newCode', { title: '新建代码文件', icon: '💻', group: '文件', run: () => this.openTab('code', { title: '未命名.js', content: CODE_SAMPLE }) });
     R('file.newMath', { title: '打开计算器', icon: '🧮', group: '文件', run: () => this.openTab('math', { title: '计算 REPL', content: '' }) });
@@ -1466,6 +1533,33 @@ export class Shell {
     R('fileTree.paste', { title: '粘贴', group: '目录树', run: () => this.fileTree.paste() });
     R('fileTree.refresh', { title: '刷新', group: '目录树', run: () => this.fileTree.refresh() });
 
+    // W58b 树拖即开/树拖图即插：文件树文件拖到主窗格直接打开；图片落 markdown 窗格=直接插图
+    this.panesEl.addEventListener('dragover', (e) => {
+      if (e.target.closest?.('.tabbar')) return; // 标签栏归移签
+      if (e.dataTransfer?.types?.includes('text/plain') && !e.dataTransfer.types.includes('mazz/tab')) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      }
+    });
+    this.panesEl.addEventListener('drop', async (e) => {
+      if (e.target.closest?.('.tabbar')) return;
+      if (e.dataTransfer?.types?.includes('mazz/tab')) return;
+      const p = e.dataTransfer?.getData('text/plain');
+      if (!p || (!p.includes(':') && !p.startsWith('/'))) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const ext = (p.split('.').pop() || '').toLowerCase();
+      // 树拖图即插：图片 + 落点窗格为 markdown → 插图（mazz-res 绝对径，与 insertImage 同径）
+      if (/^(png|jpe?g|gif|webp|svg|bmp|avif|ico)$/.test(ext)) {
+        const leaf = this.paneTree.leaves().find(l => l.el.contains(e.target)) || this.paneTree.active;
+        const tab = leaf?.tabs?.active;
+        const inst = tab && modules.instances.get(tab.id);
+        // 坐标闸：合成事件/异形拖拽可无有限坐标——退化选区头（posAtCoords 收到非有限值=pageerror 实锤）
+        const coords = Number.isFinite(e.clientX) && Number.isFinite(e.clientY) ? { x: e.clientX, y: e.clientY } : null;
+        if (inst?.name === 'markdown') { await this.insertImageToMarkdown(inst, p, coords); return; }
+      }
+      await this.openFile(p);
+    }, true);
     bus.on('tab:requestClose', (id) => this.closeTabFlow(id));
     bus.on('tab:dragOut', (p) => this.moveTabToNewWindow(p?.id ?? p, Number.isFinite(p?.x) ? p : null));
     // 全部窗格都没有标签时 → 自动归一为单窗格（欢迎页）
@@ -1630,6 +1724,10 @@ export class Shell {
     // 3 号上下文：文件树·文件
     menus.contribute('fileTree/file', [
       { command: 'fileTree.open', title: '打开', group: '1_open' },
+      { command: 'archive.view', title: '查看压缩包内容', group: '1_open', when: 'treeArchive' },
+      { command: 'archive.extractHere', title: '解压缩到此处', group: '2_archive', when: 'treeArchive' },
+      { command: 'archive.extractSub', title: '解压缩到「包名」子文件夹', group: '2_archive', when: 'treeArchive' },
+      { command: 'archive.pack', title: '压缩为 zip…', group: '2_archive' },
       { command: 'fileTree.cut', title: '剪切', group: '2_clip' },
       { command: 'fileTree.copy', title: '复制', group: '2_clip' },
       { command: 'fileTree.paste', title: '粘贴', group: '2_clip', when: 'treeClip' },
@@ -1642,6 +1740,7 @@ export class Shell {
     // 4 号上下文：文件树·文件夹
     menus.contribute('fileTree/folder', [
       { command: 'fileTree.openManga', title: '作为漫画打开（图片序列 = 一话）', group: '1_open' },
+      { command: 'archive.pack', title: '压缩为 zip…', group: '1_archive' },
       { command: 'fileTree.newFile', title: '新建文件', group: '1_new' },
       { command: 'fileTree.newFolder', title: '新建文件夹', group: '1_new' },
       { command: 'fileTree.cut', title: '剪切', group: '2_clip' },
@@ -1761,6 +1860,15 @@ export class Shell {
       window.mazz.on('command:invoke', ({ id, payload }) => commands.execute(id, payload));
       window.mazz.on('window:handoff', async (snapshot) => { await this.receiveHandoff(snapshot); });
       window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });
+      // W58b 解压缩进度：主进程广播 → 压缩包面板转发 + 完工 toast（面板不开也知情）
+      window.mazz.on('archive:progress', (pl) => {
+        window.mazz.invoke('panel:push', { kind: 'archive', payload: { type: 'archiveProgress', data: pl } }).catch(() => {});
+      });
+      window.mazz.on('archive:done', (pl) => {
+        window.mazz.invoke('panel:push', { kind: 'archive', payload: { type: 'archiveDone', data: pl } }).catch(() => {});
+        if (pl?.ok) { toast('✓ ' + (pl.info || '解压缩完成')); this.fileTree?.refresh?.(); }
+        else if (pl && pl.info !== '已取消') toast('✗ ' + (pl.info || '解压缩失败'), [], 4000);
+      });
       // W52③ 薄子窗数据桥：paletteQuery/shortcutQuery 答、paletteRun 行
       // W54 B10 拽回吸附提示：进热区主窗右缘亮条
       window.mazz.on('dock:snapHint', ({ on } = {}) => {
@@ -1799,6 +1907,35 @@ export class Shell {
           const d = window.__picklistPending;
           window.__picklistPending = null;
           if (d?.onPick) d.onPick(pl.value);
+          return;
+        }
+        // W58b 解压缩桥：stash/清单/解压/取消/打包 + 进度转发面板
+        if (pl.type === 'archiveStash') { this._archivePath = pl.path; return; }
+        if (pl.type === 'archiveQuery') {
+          const p = this._archivePath;
+          if (pl.kind && p) {
+            const r = await window.mazz.invoke('archive:list', { path: p }).catch(e => ({ error: e.message }));
+            window.mazz.invoke('panel:push', { kind: pl.kind, payload: { type: 'archiveData', data: r } }).catch(() => {});
+          }
+          return;
+        }
+        if (pl.type === 'archiveExtract') {
+          const p = this._archivePath;
+          if (!p) return { error: '无包' };
+          return await window.mazz.invoke('archive:extract', { path: p, dest: pl.dest }).catch(e => ({ error: e.message }));
+        }
+        if (pl.type === 'archiveCancel') {
+          return await window.mazz.invoke('archive:cancel', { jobId: pl.jobId }).catch(e => ({ error: e.message }));
+        }
+        // W66：面板空态「打开压缩包…」门——对话框选档→stash→回推清单
+        if (pl.type === 'archiveOpenDialog') {
+          const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '压缩包', extensions: ['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'jar', 'apk', '7zip', 'cab'] }] }).catch(() => null);
+          const fp = Array.isArray(p) ? p[0] : p;
+          if (fp) {
+            this._archivePath = fp;
+            const r = await window.mazz.invoke('archive:list', { path: fp }).catch(e => ({ error: e.message }));
+            if (pl.kind) window.mazz.invoke('panel:push', { kind: pl.kind, payload: { type: 'archiveData', data: r } }).catch(() => {});
+          }
           return;
         }
         // W53 协议面板桥（全原生子窗格：文案单源在 lib/agreement.js，面板页不复制维护）

@@ -143,7 +143,7 @@ class PanelWindows {
     if (w && !w.isDestroyed()) this.bus.send(w, channel, payload);
   }
   open(kind, opts = {}) {
-    if (!/^(favmgr|pwmgr|palette|shortcuts|annotate|settings|agreement|help|translate|plugins|quickopen|recorder|dockfloat|bookmark|ctxmenu|splitpreview|sync|factorycfg|newfile|picklist)$/.test(String(kind || ''))) return { error: '未知面板' };
+    if (!/^(favmgr|pwmgr|palette|shortcuts|annotate|settings|agreement|help|translate|plugins|quickopen|recorder|dockfloat|bookmark|ctxmenu|splitpreview|sync|factorycfg|newfile|picklist|archive)$/.test(String(kind || ''))) return { error: '未知面板' };
     const exist = this.panels.get(kind);
     if (exist && !exist.isDestroyed()) { exist.show(); exist.focus(); return { already: true }; }
     const parent = this.win?.();
@@ -188,7 +188,7 @@ class PanelWindows {
       parent: parent || undefined,
       title: { favmgr: '收藏管理', pwmgr: '密码管理器', palette: '命令面板', shortcuts: '快捷键速查',
         settings: '设置', agreement: '用户服务协议及隐私政策', help: '使用指南', translate: '翻译',
-        plugins: '插件管理', quickopen: '快速跳转', recorder: '全局内录', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步 · 更新', factorycfg: 'AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择' }[kind] || '面板',
+        plugins: '插件管理', quickopen: '快速跳转', recorder: '全局内录', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步 · 更新', factorycfg: 'AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择', archive: '压缩包' }[kind] || '面板',
       autoHideMenuBar: true,
       // W47 圆角+拖拽：transparent+圆角体（Win10 原生无圆角 API 的唯一路径；拖拽=页面顶窄拖拽条 app-region:drag，
       // 窗控三键=页面右上角小件（非全套标题栏——用户定版）。thickFrame 默认保留=边框缩放在 Win10 仍有抓手

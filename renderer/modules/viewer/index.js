@@ -76,11 +76,28 @@ function createViewer(container) {
   root.querySelector('[data-a=fit]').addEventListener('click', () => { ctl.fitMode = true; applyZoom(); });
   ctl.body.addEventListener('wheel', (e) => {
     if (ctl.kind !== 'image') return;
-    e.preventDefault();
+    e.preventDefault(); // 滚轮=缩放不滚屏（查看态滚动条不绑滚轮，拖条专用）；横向手势一并压死（左右滚动不绑滚轮）
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // 59d：触控板横滑只压默认，不缩放
     setZoom(ctl.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
   }, { passive: false });
 
-  /** 媒体源：桌面走 mazz-res://media/ 协议（页面同源化：file:// 页面 media loader 零请求实锤根治，
+  /** W59：进入图片编辑模式（浏览→编辑双态切换——编辑态藏图与缩放族，退出还原） */
+async function enterImageEdit(ctl, img, path, ext) {
+  if (ctl._imgEditor) return;
+  const { ImageEditor } = await import('./imgedit.js');
+  // 编辑态：隐藏浏览图与缩放族（退出时还原——浏览/编辑双态不互毁）
+  img.style.display = 'none';
+  const zoomKids = [...ctl.barEl.children].filter(el => el.dataset.a !== 'imgedit' && el.dataset.a !== 'external');
+  zoomKids.forEach(el => { el._ieHide = el.style.display; el.style.display = 'none'; });
+  ctl._imgEditor = new ImageEditor(ctl.body, { path, imgSrc: img.src, natW: ctl.natW || img.naturalWidth, natH: ctl.natH || img.naturalHeight, ext });
+  ctl._imgEditor.onDestroy = () => {
+    img.style.display = '';
+    zoomKids.forEach(el => { el.style.display = el._ieHide ?? ''; });
+    ctl._imgEditor = null;
+  };
+}
+
+/** 媒体源：桌面走 mazz-res://media/ 协议（页面同源化：file:// 页面 media loader 零请求实锤根治，
    *  同源 video 画 canvas 不污染——截图/GIF 录制命门；range 206 由主进程流式供）；网页/移动读 base64 建 Blob URL */
   async function mediaUrl(path) {
     if (window.mazz?.isElectron) return 'mazz-res://media/' + encodeURIComponent(path.replace(/\\/g, '/'));
@@ -208,11 +225,13 @@ function createViewer(container) {
     const ext = (name.split('.').pop() || '').toLowerCase();
     ctl.kind = IMAGE_EXTS.has(ext) ? 'image' : ext === 'pdf' ? 'pdf' : VIDEO_EXTS.has(ext) ? 'video' : AUDIO_EXTS.has(ext) ? 'audio' : 'other';
     ctl.nameEl.textContent = name;
-    ctl.pctEl.parentElement.querySelectorAll('[data-a=in],[data-a=out],[data-a=fit],[data-a=actual]').forEach(b => b.style.display = ctl.kind === 'image' ? '' : 'none');
+    ctl.pctEl.parentElement.querySelectorAll('[data-a=in],[data-a=out],[data-a=fit],[data-a=actual],[data-a=imgedit]').forEach(b => b.style.display = ctl.kind === 'image' ? '' : 'none');
     ctl.pctEl.style.display = ctl.kind === 'image' ? '' : 'none';
     extBtn.style.display = 'none';
 
     try {
+      // W59：换片即收编辑器（防键位泄漏+旧画布占尸——load 统一入口收尸）
+      if (ctl._imgEditor) { try { ctl._imgEditor.destroy(); } catch {} ctl._imgEditor = null; }
       if (ctl.kind === 'image' || ctl.kind === 'pdf') {
         // W58d：竞态上台的裸播放器收尸（连带根绝——_player 悬挂还会误导 activate 的空片判活）
         try { ctl._player?.destroy?.(); } catch {}
@@ -228,6 +247,20 @@ function createViewer(container) {
         img.onerror = () => showFallback(name, ext, '图片解码失败');
         img.src = url;
         ctl.body.appendChild(img);
+        // W59：图片编辑模式入口（浏览/编辑双态——Canvas 全本地零 Sharp）
+        if (!root.querySelector('[data-a=imgedit]')) {
+          const eb = document.createElement('button');
+          eb.dataset.a = 'imgedit';
+          eb.title = '图片编辑模式（裁剪/网格分割/变换/滤镜/绘画/取色/另存副本/撤销重做）';
+          eb.textContent = '编辑';
+          eb.addEventListener('click', () => {
+            const cur = ctl.body.querySelector('img');
+            if (!cur || ctl.kind !== 'image') return;
+            const curExt = (ctl.path.split('.').pop() || 'png').toLowerCase();
+            enterImageEdit(ctl, cur, ctl.path, curExt);
+          });
+          root.querySelector('.viewer-bar').appendChild(eb);
+        }
         return;
       }
       if (ctl.kind === 'pdf') {

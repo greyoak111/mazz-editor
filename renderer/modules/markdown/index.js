@@ -507,7 +507,8 @@ export default {
   create(container) {
     const ctl = createEditor(container, '');
     instances.set(container, ctl);
-    return { container };
+    // W58b 根治：create 必须返回 ctl 本体（军规⑰第四起——树拖图即插读 inst.state.view 拿空壳=插图静默失效实锤）
+    return ctl;
   },
   activate(container, state) {
     const ctl = instances.get(container);

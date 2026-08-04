@@ -157,6 +157,8 @@ export class FileTree {
     this.selectedPath = sel?.path || null;
     contextKeys.set('treePath', sel?.path || '');
     contextKeys.set('treeIsDir', !!sel?.isDir);
+    // W58b：压缩包选中态（右键菜单显隐凭据——扩展名白名单，魔数在 list/extract 才动）
+    contextKeys.set('treeArchive', !!sel && !sel.isDir && /^(zip|rar|7z|tar|gz|tgz|bz2|xz|jar|apk|7zip|cab)$/i.test((sel.path.split('.').pop() || '')));
     this.treeEl.querySelectorAll('.ft-node').forEach(n =>
       n.classList.toggle('on', !!sel && n.dataset.path === sel.path));
   }

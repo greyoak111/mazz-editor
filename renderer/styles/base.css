@@ -919,7 +919,8 @@ html.m-touch .ft-node { min-height: 34px; display: flex; align-items: center; }
 .viewer-bar button:hover { background: var(--bg-hover); }
 .viewer-pct { min-width: 44px; text-align: center; color: var(--fg-dim); }
 .viewer-name { margin-left: auto; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.viewer-body { flex: 1; overflow: auto; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 92%, #000 8%); }
+.viewer-body { flex: 1; overflow: auto; display: grid; place-items: start; background: color-mix(in srgb, var(--bg) 92%, #000 8%); } /* 59d：place-items 改 start——居中压钉负空间回弹会裁掉上/左缘（滚动条永不可达实锤），居中交给 margin:auto 安全吸收 */
+.viewer-body > * { margin: auto; } /* 59d 安全居中：小于容器 auto 吸收居中，大于容器 auto 归零=start 对齐全向可滚 */
 .viewer-body img { display: block; }
 .viewer-pdf { width: 100%; height: 100%; border: 0; }
 .viewer-err { color: var(--fg-dim); padding: 30px; }
@@ -1147,6 +1148,27 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }
 .mz-thumb canvas { display: block; border-radius: 5px; background: #000; }
 .mz-thumb span { display: block; text-align: center; font-size: 11px; color: var(--fg-dim); margin-top: 3px; }
+
+/* ==================== W59 图片编辑模式（ie 族） ==================== */
+.ie-root { display: flex; flex-direction: column; height: 100%; width: 100%; min-width: 0; min-height: 0; } /* 59d：width:100% 命门——grid 起对齐下根 fit-content 逃逸宿主（台面板永无横向溢出实锤），溢出必须钉在台面板 */
+.ie-bar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; padding: 6px 10px; border-bottom: 1px solid var(--border); flex: none; }
+.ie-bar .rb-btn span { max-width: none; }
+.ie-sep { width: 1px; height: 18px; background: var(--border); flex: none; margin: 0 2px; }
+.ie-grp { display: inline-flex; gap: 3px; flex-wrap: wrap; }
+.ie-flt { font-size: 12px; padding: 4px 7px; }
+.ie-size { width: 70px; accent-color: var(--accent); }
+.ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }
+.ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
+.ie-fmt { font-size: 12px; padding: 3px 5px; }
+.ie-stage { position: relative; flex: 1; min-height: 0; overflow: auto; display: grid; place-items: start; padding: 14px; } /* 59d：justify-items:center 压钉拔除——负空间回弹裁左缘（横向滚动不可达实锤），横向居中由 viewwrap 的 margin:0 auto 安全吸收 */
+.ie-viewwrap { position: relative; display: block; width: fit-content; margin: 0 auto; } /* W66：包裹即画布=选区坐标唯一真源；59c：块级自然高（line-height:0 塌高吃滚动条实锤） */
+.ie-view { display: block; box-shadow: 0 2px 14px rgba(0,0,0,.25); image-rendering: auto; }
+.ie-crop { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; z-index: 4; }
+.ie-crop .ie-ch { position: absolute; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; }
+.ie-crop .ie-ch.tl { left: -5px; top: -5px; } .ie-crop .ie-ch.tr { right: -5px; top: -5px; }
+.ie-crop .ie-ch.bl { left: -5px; bottom: -5px; } .ie-crop .ie-ch.br { right: -5px; bottom: -5px; }
+.ie-bar .rb-btn.on { background: var(--accent-soft); color: var(--accent); }
+.ie-bar .rb-btn:disabled { opacity: .35; cursor: default; }
 .mz-bar { display: flex; align-items: center; gap: 7px; margin-top: 4px; min-width: max-content; } /* W58c：窗口态最低宽度=全组件自然宽（不再挤没滑块/尾钮） */
 .mz-btn { border: 0; background: none; color: var(--fg-dim); font-size: 15px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
 .mz-btn:hover { color: var(--accent); background: var(--bg-hover); }

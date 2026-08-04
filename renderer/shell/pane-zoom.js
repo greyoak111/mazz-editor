@@ -4,7 +4,7 @@
 const MIN = 0.5, MAX = 2;
 const zoomOf = new WeakMap(); // editor-area 元素 -> 当前倍率
 
-const EXCLUDE_SEL = '.mazz-palette-mask, .mazz-menu, .mazz-toast, .titlebar, .ribbon, .statusbar, .sidebar, .tabbar, .lib-content';
+const EXCLUDE_SEL = '.mazz-palette-mask, .mazz-menu, .mazz-toast, .titlebar, .ribbon, .statusbar, .sidebar, .tabbar, .lib-content, .ie-root'; // 59e：.ie-root 图片编辑器滚轮自留地（Ctrl+滚轮缩图片本体，不缩编辑栏——用户点名）
 
 /** 事件命中判定：落在模块窗格内 → 返回该窗格编辑区；落在固定 UI 上 → null（不处理） */
 function targetArea(e) {

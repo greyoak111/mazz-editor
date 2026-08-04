@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' mazz-res:">
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<title>压缩包</title>
+<style>
+  html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; }
+  body { font-family: var(--font-ui); }
+  .pwin { box-sizing: border-box; display: flex; flex-direction: column; height: 100%; background: var(--bg); color: var(--fg); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 10px 36px rgba(0,0,0,.4); }
+  .head { padding: 10px 14px 8px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  .head h2 { font-size: 14px; margin: 0; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .p-winbtns { position: absolute; top: 2px; right: 8px; display: flex; gap: 2px; z-index: 9; }
+  .p-winbtns button { display: inline-flex; align-items: center; justify-content: center; -webkit-app-region: no-drag; width: 30px; height: 22px; border: 0; border-radius: 6px; background: transparent; color: var(--fg-dim); cursor: pointer; font-size: 12px; }
+  .p-winbtns button:hover { background: var(--bg-hover); color: var(--fg); }
+  .p-winbtns button.x:hover { background: #e81123; color: #fff; }
+  .meta { font-size: 11.5px; color: var(--fg-dim); padding: 6px 14px 2px; }
+  .list { flex: 1; overflow: auto; min-height: 0; padding: 4px 10px; }
+  .row { display: flex; gap: 8px; font-size: 12px; padding: 3px 6px; border-radius: 5px; align-items: baseline; }
+  .row:hover { background: var(--bg-hover); }
+  .row .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; }
+  .row .s { color: var(--fg-dim); font-size: 11px; flex: none; font-variant-numeric: tabular-nums; }
+  .row.d .n { color: var(--accent); }
+  .acts { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--border); align-items: center; }
+  .btn { background: var(--bg-elev); color: var(--fg); border: 1px solid var(--border); border-radius: 7px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; font-family: var(--font-ui); }
+  .btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .btn.pri { background: var(--accent); color: var(--accent-fg, #fff); border-color: var(--accent); }
+  .prog { display: none; align-items: center; gap: 8px; flex: 1; }
+  .prog .bar { flex: 1; height: 6px; background: var(--bg-active); border-radius: 3px; overflow: hidden; }
+  .prog .fill { height: 100%; background: var(--accent); width: 0%; transition: width .15s; }
+  .prog .t { font-size: 11px; color: var(--fg-dim); max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .err { color: var(--danger); font-size: 12px; padding: 8px 14px; }
+</style>
+</head>
+<body>
+<div class="pwin">
+  <div class="p-drag head"><h2 id="ttl">压缩包</h2></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="meta" id="meta">读取中…</div>
+  <div class="list ps-scroll" id="list"></div>
+  <div class="acts">
+    <button class="btn pri" id="b-all">全部解压缩到此处</button>
+    <button class="btn" id="b-sub">解压缩到「包名」子文件夹</button>
+    <div class="prog" id="prog"><div class="bar"><div class="fill" id="fill"></div></div><span class="t" id="pt"></span><button class="btn" id="b-cancel">取消</button></div>
+    <span style="flex:1"></span>
+    <button class="btn" id="b-close">关闭</button>
+  </div>
+</div>
+<script>
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
+
+const $ = (s) => document.querySelector(s);
+const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+$('#b-close').addEventListener('click', () => pwb('close'));
+
+const fmtSize = (n) => n == null ? '' : n > 1048576 ? (n / 1048576).toFixed(1) + 'M' : n > 1024 ? (n / 1024).toFixed(0) + 'K' : n + 'B';
+let ARCH = null, jobId = null;
+
+function renderList(r) {
+  ARCH = r;
+  $('#ttl').textContent = (r.path || '').split(/[\\/]/).pop();
+  $('#meta').textContent = `格式 ${r.fmt} · ${r.entries.length} 项 · 引擎 ${r.engine}`;
+  $('#list').innerHTML = r.entries.map(e =>
+    `<div class="row${e.dir ? ' d' : ''}"><span class="n">${e.dir ? '🗀 ' : ''}${e.name}</span><span class="s">${fmtSize(e.size)}${e.packed != null ? ' / ' + fmtSize(e.packed) : ''}</span></div>`).join('') || '<div class="err">空包</div>';
+}
+
+window.mazz.on('panel:push', (p) => {
+  if (p?.type === 'archiveData') { if (p.data?.error) { $('#meta').innerHTML = `<span class="err">${p.data.error}</span>`; } else renderList(p.data); }
+  if (p?.type === 'archiveProgress') {
+    const d = p.data;
+    if (!jobId || d.jobId !== jobId) return;
+    $('#prog').style.display = 'flex';
+    $('#fill').style.width = (d.percent || 0) + '%';
+    $('#pt').textContent = (d.name || '') + ' ' + (d.percent || 0) + '%';
+  }
+  if (p?.type === 'archiveDone') {
+    const d = p.data;
+    if (!jobId || d.jobId !== jobId) return;
+    jobId = null;
+    $('#prog').style.display = 'none';
+    $('#fill').style.width = '0%';
+    $('#meta').textContent = d.ok ? ('✓ ' + (d.info || '完成')) : ('✗ ' + (d.info || '失败'));
+    $('#b-all').disabled = $('#b-sub').disabled = false;
+  }
+});
+
+function extract(sub) {
+  if (!ARCH || jobId) return;
+  const dir = ARCH.path.replace(/[\\/][^\\/]+$/, '');
+  const base = (ARCH.path.split(/[\\/]/).pop() || 'out').replace(/\.[^.]+$/, '');
+  const dest = sub ? dir + '/' + base : dir;
+  $('#prog').style.display = 'flex';
+  $('#b-all').disabled = $('#b-sub').disabled = true;
+  window.mazz.invoke('panel:action', { type: 'archiveExtract', dest }).then((r) => { jobId = r?.jobId || null; }).catch(() => {});
+}
+$('#b-all').addEventListener('click', () => extract(false));
+$('#b-sub').addEventListener('click', () => extract(true));
+$('#b-cancel').addEventListener('click', () => {
+  if (jobId) window.mazz.invoke('panel:action', { type: 'archiveCancel', jobId }).catch(() => {});
+});
+// W66 空态开门：无 stash 时显示引导（「压根找不到面板」实锤平反）——开档按钮直连对话框
+(function showEmptyIfIdle() {
+  const meta = document.getElementById('meta');
+  const list = document.getElementById('list');
+  meta.innerHTML = '从文件树选中压缩包右键「查看压缩包内容」，或直接——';
+  list.innerHTML = `<div style="display:grid;place-items:center;padding:36px 10px;gap:12px">
+    <div style="font-size:34px;opacity:.5">📦</div>
+    <button class="btn pri" id="b-open">打开压缩包…</button>
+    <div style="font-size:11.5px;color:var(--fg-dim)">支持 zip / rar / 7z / tar / gz（JSZip 主力 + 7zip 兜底，GBK 文件名已修复）</div>
+  </div>`;
+  document.getElementById('b-open')?.addEventListener('click', () => {
+    window.mazz.invoke('panel:action', { type: 'archiveOpenDialog' }).catch(() => {});
+  });
+})();
+window.mazz.invoke('panel:action', { type: 'archiveQuery' }).catch(() => {});
+</script>
+</body>
+</html>

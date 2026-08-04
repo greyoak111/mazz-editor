@@ -1214,6 +1214,8 @@ app.whenReady().then(() => {
   new SlideRemote({ bus, win: () => wm.main });
   // —— 衍生面板原生子窗（W43 并行进程：收藏管理/密码管理器独立合成，与 WebContentsView 永不相见——白屏病根除） ——
   new PanelWindows({ bus, win: () => wm.main });
+  // W58b 解压缩服务（魔数识别+JSZip 主力+7zip-bin 兜底+GBK 修复+打包+进度取消+2 并发）
+  try { const ArchiveService = require('./archive'); new ArchiveService({ bus, win: () => wm.main }); } catch (e) { console.error('[archive] 装配失败:', e.message); }
   new ShareService({ bus, store, startMenuApps });
   new Updater({ bus, store, version: require('../package.json').version });
   const bs = new BrowserSession({ session: browserSess, bus });
