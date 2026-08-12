@@ -17,6 +17,7 @@ import { FileTree } from './file-tree.js';
 import { SidebarCtl } from './sidebar-ctl.js';
 import { t, onLanguageChange } from '../i18n/index.js';
 import { StatusBar } from './statusbar.js';
+import { ALL_CODE_EXTENSIONS, CODE_FILE_EXTENSIONS, CODE_FILE_DEFAULTS, CODE_NEW_FILE_TYPES, LANGUAGE_BY_EXT } from '../modules/code/language-catalog.js';
 
 const CODE_SAMPLE = `// Mazz Editor · 编程内核
 // F5 调试 · Ctrl+\` 终端 · Ctrl+Enter 运行选区 · F12 跳定义 · Shift+F12 引用
@@ -48,10 +49,8 @@ const EXT_MODULE = {
   json: 'code', css: 'code', html: 'code', py: 'code', sh: 'code',
   yml: 'code', yaml: 'code', xml: 'code',
 };
-const LANG_BY_EXT = {
-  js: 'javascript', mjs: 'javascript', cjs: 'javascript', ts: 'typescript', tsx: 'typescriptreact', jsx: 'javascriptreact',
-  json: 'json', css: 'css', html: 'html', py: 'python', sh: 'shell', yml: 'yaml', yaml: 'yaml', xml: 'xml',
-};
+// W59c：底层 RUNNERS 已覆盖的扩展名统一进代码模块；已有专用查看器/文档路由保持优先。
+for (const ext of ALL_CODE_EXTENSIONS) if (!EXT_MODULE[ext]) EXT_MODULE[ext] = 'code';
 
 function defaultExt(moduleId) {
   return { text: '.txt', mindmap: '.mindmap', draw: '.mazzdraw' }[moduleId] || '.md';
@@ -68,7 +67,7 @@ const SAVE_FORMATS = {
   notes: [['Markdown 笔记', ['md']], ['纯文本', ['txt']]],
   math: [['纯文本', ['txt']], ['Markdown', ['md']]],
 };
-const CODE_EXTS = ['js', 'ts', 'py', 'css', 'html', 'json', 'sh', 'xml', 'yml', 'txt'];
+const CODE_EXTS = CODE_FILE_EXTENSIONS;
 
 export function saveFiltersFor(inst, tabTitle = '') {
   let formats;
@@ -954,8 +953,8 @@ export class Shell {
     catch (e) { toast(`打开失败：${e.message}`); return; }
     const name = filePath.split(/[\\/]/).pop();
     const { tab, inst } = this.openTab(moduleId, { title: name, filePath, content });
-    if (moduleId === 'code' && LANG_BY_EXT[ext] && inst?.def.setLanguage) {
-      inst.def.setLanguage(LANG_BY_EXT[ext], inst.state);
+    if (moduleId === 'code' && LANGUAGE_BY_EXT[ext] && inst?.def.setLanguage) {
+      inst.def.setLanguage(LANGUAGE_BY_EXT[ext], inst.state);
     }
     tab.forceClose = false;
     this.tabs.setDirty(tab.id, false);
@@ -1653,7 +1652,7 @@ export class Shell {
       window.mazz.invoke('panel:open', { kind: 'newfile' }).catch(() => {});
       return;
     }
-    // 类型选择弹窗：五组 17 种（二进制办公格式自动生成合法空文档）——非 Electron 兜底
+    // 类型选择弹窗：办公/创作 + 代码四档全族（二进制办公格式自动生成合法空文档）——非 Electron 兜底
     const ext = await pickNewFileType();
     if (!ext) return;
     // 资源管理器式：自动名落位 + 行内改名（后缀下拉）
@@ -2671,8 +2670,6 @@ export class Shell {
 // ==================== 通用工具 ====================
 // —— 新建文件类型（覆盖全部可导出格式；二进制办公格式生成合法空文档）——
 export const NEW_FILE_TYPES = [
-  { label: 'Markdown 文档', ext: 'md', group: '文档' },
-  { label: '纯文本', ext: 'txt', group: '文档' },
   { label: 'Word 文档 (.docx)', ext: 'docx', group: '文档', binary: true },
   { label: 'Mazz 表格', ext: 'mazzsheet', group: '表格' },
   { label: 'CSV 表格', ext: 'csv', group: '表格' },
@@ -2682,13 +2679,7 @@ export const NEW_FILE_TYPES = [
   { label: 'PowerPoint (.pptx)', ext: 'pptx', group: '演示', binary: true },
   { label: '思维导图', ext: 'mindmap', group: '创作' },
   { label: '画板', ext: 'mazzdraw', group: '创作' },
-  { label: 'JavaScript', ext: 'js', group: '代码' },
-  { label: 'TypeScript', ext: 'ts', group: '代码' },
-  { label: 'Python', ext: 'py', group: '代码' },
-  { label: 'HTML', ext: 'html', group: '代码' },
-  { label: 'CSS', ext: 'css', group: '代码' },
-  { label: 'JSON', ext: 'json', group: '代码' },
-  { label: 'Shell 脚本', ext: 'sh', group: '代码' },
+  ...CODE_NEW_FILE_TYPES,
 ];
 
 export const BINARY_EXTS = new Set(['docx', 'xlsx', 'pptx']);
@@ -2698,8 +2689,7 @@ export const NEW_FILE_DEFAULTS = {
   mazzslide: () => '# 第 1 页\n',
   mindmap: () => '中心主题\n',
   csv: () => '', tsv: () => '', mazzsheet: () => '', txt: () => '', mazzdraw: () => '',
-  js: () => '', ts: () => '', py: () => '', html: () => '<!DOCTYPE html>\n<html>\n<head><meta charset="utf-8"><title></title></head>\n<body>\n</body>\n</html>\n',
-  css: () => '', json: () => '{}\n', sh: () => '#!/bin/sh\n',
+  ...CODE_FILE_DEFAULTS,
 };
 
 /** 生成二进制空办公文档（docx/xlsx/pptx），返回 base64 */
@@ -2770,7 +2760,7 @@ export function modal(title) {
   return { el: mask, body: mask.querySelector('.modal-body'), close: () => mask.remove() };
 }
 
-/** 新建文件类型选择弹窗：分组展示 17 种类型，resolve 扩展名（不含点）或 null（取消） */
+/** 新建文件类型选择弹窗：分组展示全量类型，resolve 扩展名（不含点）或 null（取消） */
 export function pickNewFileType() {
   return new Promise((resolve) => {
     const m = modal('新建文件');

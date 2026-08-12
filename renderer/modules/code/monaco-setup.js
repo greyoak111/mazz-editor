@@ -12,7 +12,6 @@ function injectMonacoCss() {
   style.textContent = monacoCss.replace(/url\([^)]*codicon\.ttf[^)]*\)/g, 'url(./codicon.ttf)');
   document.head.appendChild(style);
 }
-
 export async function getMonaco() {
   if (!monacoPromise) {
     monacoPromise = (async () => {
@@ -45,10 +44,3 @@ export async function getMonaco() {
   }
   return monacoPromise;
 }
-
-export const LANG_BY_EXT = {
-  js: 'javascript', mjs: 'javascript', cjs: 'javascript',
-  ts: 'typescript', tsx: 'typescriptreact', jsx: 'javascriptreact',
-  json: 'json', css: 'css', html: 'html', md: 'markdown',
-  py: 'python', sh: 'shell', yml: 'yaml', yaml: 'yaml', xml: 'xml', txt: 'plaintext',
-};

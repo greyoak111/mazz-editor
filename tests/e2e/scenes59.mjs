@@ -11,15 +11,15 @@ export async function scenes59({ app, win, human, WS, WS2, scenario }) {
     human.log('windows:', urls.map(u => u.split('/').pop()).join('|'));
     const pw = app.windows().find(w => w.url().includes('/panels/newfile.html'));
     await human.assert(!!pw, '新建文件必须开原生独立子窗（DOM modal 漏网平反）');
-    // 17 类型五组真渲染（单源下发）
+    // W59c 后：办公创作四组 + 代码四档，共 54 类型八组（单源下发）
     const st = await pw.evaluate(() => ({
       cards: document.querySelectorAll('.nft').length,
       groups: [...document.querySelectorAll('.grp')].map(g => g.textContent),
       bg: getComputedStyle(document.querySelector('.pwin')).backgroundColor,
     })).catch(() => null);
     human.log('子窗内容:', JSON.stringify(st));
-    await human.assert(st && st.cards === 18, `18 类型必须全列（NEW_FILE_TYPES 实数——旧注释 17 滞后实锤，实拿 ${st?.cards}）`);
-    await human.assert(st.groups.length === 5, `五组必须全（实拿 ${st?.groups}）`);
+    await human.assert(st && st.cards === 54, `54 类型必须全列（W59c 代码全族 45 + 办公创作 9，实拿 ${st?.cards}）`);
+    await human.assert(st.groups.length === 8, `八组必须全（实拿 ${st?.groups}）`);
     await human.assert(st.bg && st.bg !== 'rgba(0, 0, 0, 0)' && st.bg !== 'transparent', '子窗必须不透明');
     // 点 .py → 子窗自闭 + 树行内新建起手
     await pw.evaluate(() => { for (const b of document.querySelectorAll('.nft')) if (b.dataset.ext === 'py') { b.click(); return; } });

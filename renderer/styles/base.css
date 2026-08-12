@@ -129,6 +129,7 @@ body.platform-mac .tb-win-controls { display: none; }
 .mazz-menu-item:hover { background: var(--accent); color: var(--accent-fg); }
 .mazz-menu-item.disabled { opacity: .4; cursor: default; }
 .mazz-menu-item.disabled:hover { background: none; color: inherit; }
+.mazz-menu-heading { padding: 6px 10px 4px; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .02em; }
 .mazz-menu-icon { width: 17px; text-align: center; flex: none; }
 .mazz-menu-label { flex: 1; }
 .mazz-menu-key { color: var(--fg-dim); font-size: 11px; }

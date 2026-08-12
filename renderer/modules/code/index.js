@@ -1,6 +1,7 @@
 // renderer/modules/code/index.js —— 编程内核（Monaco + 集成终端）
 // Monaco：JS/TS 内置智能（补全/跳转/诊断/格式化）；终端：node-pty + xterm 多标签
-import { getMonaco, LANG_BY_EXT } from './monaco-setup.js';
+import { getMonaco } from './monaco-setup.js';
+import { LANGUAGE_CATALOG, LANGUAGE_TIERS, LANGUAGE_BY_EXT, PRIMARY_EXT_BY_LANGUAGE, languageName } from './language-catalog.js';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { TerminalPanel } from './terminal-view.js';
 import { DebugService } from './debug.js';
@@ -50,6 +51,9 @@ const RUNNERS = {
   csharp: { type: 'compile', exe: ['csc', 'dotnet'], cmd: (p, tmp) => `csc /nologo /out:"${tmp}" "${p}" && "${tmp}"` },
   fsharp: { type: 'run', exe: ['dotnet'], cmd: p => `dotnet fsi "${p}"` },
   kotlin: { type: 'compile', exe: 'kotlinc', cmd: (p, tmp) => `kotlinc "${p}" -include-runtime -d "${tmp}.jar" && java -jar "${tmp}.jar"` },
+  fortran: { type: 'compile', exe: ['gfortran', 'flang'], cmd: (p, tmp, exe) => `${exe} "${p}" -o "${tmp}" && "${tmp}"` },
+  pascal: { type: 'compile', exe: 'fpc', cmd: (p, tmp) => `fpc "${p}" -o"${tmp}" && "${tmp}"` },
+  'objective-c': { type: 'compile', exe: ['clang', 'gcc'], cmd: (p, tmp, exe) => `${exe} "${p}" -o "${tmp}" && "${tmp}"` },
   html: { type: 'preview', cmd: p => p },
   markdown: { type: 'none', reason: 'Markdown 是文档不是程序——请用文档模块打开预览' },
   svg: { type: 'none', reason: 'SVG 是图形不是程序——请用查看器打开' },
@@ -62,17 +66,7 @@ const RUNNERS = {
 };
 
 /** 扩展名→语言映射（保存/打开/运行三处同步——plaintext 只留无扩展名/未知） */
-const EXT_LANG = {
-  js: 'javascript', mjs: 'javascript', cjs: 'javascript', ts: 'typescript', mts: 'typescript',
-  py: 'python', sh: 'shell', ps1: 'powershell', bat: 'bat', cmd: 'bat',
-  rb: 'ruby', php: 'php', pl: 'perl', lua: 'lua', r: 'r', jl: 'julia', groovy: 'groovy', dart: 'dart',
-  go: 'go', rs: 'rust', c: 'c', h: 'c', cpp: 'cpp', cc: 'cpp', cxx: 'cpp', java: 'java',
-  cs: 'csharp', fs: 'fsharp', kt: 'kotlin', swift: 'swift', zig: 'zig', hs: 'haskell',
-  scala: 'scala', clj: 'clojure', ex: 'elixir', exs: 'elixir', erl: 'erlang', ml: 'ocaml',
-  cr: 'crystal', nim: 'nim', d: 'd', sql: 'sql', html: 'html', htm: 'html', css: 'css',
-  json: 'json', yaml: 'yaml', yml: 'yaml', xml: 'xml', md: 'markdown', svg: 'svg',
-};
-const langOf = (p) => EXT_LANG[(String(p || '').split('.').pop() || '').toLowerCase()] || null;
+const langOf = (p) => LANGUAGE_BY_EXT[(String(p || '').split('.').pop() || '').toLowerCase()] || null;
 
 function createCode(container, { filePath = null, language = null } = {}) {
   const root = document.createElement('div');
@@ -352,10 +346,10 @@ export default {
       getMonaco().then(monaco => monaco.editor.setModelLanguage(ctl.model, lang));
     }
     // W58⑥：语言按钮文本同步 + 表外语动态插项（扩展名同步出表外语时 UI 不错乱）
-    const NAMES = { javascript: 'JavaScript', typescript: 'TypeScript', python: 'Python', json: 'JSON', css: 'CSS', html: 'HTML', shell: 'Shell', yaml: 'YAML', xml: 'XML', markdown: 'Markdown', plaintext: '纯文本' };
-    const name = NAMES[lang] || lang;
+    const known = LANGUAGE_CATALOG.some(x => x.id === lang);
+    const name = languageName(lang);
     for (const t of document.querySelectorAll('#code-lang-text')) t.textContent = name;
-    if (!NAMES[lang]) {
+    if (!known) {
       import('../../core/menu-service.js').then(({ menus }) => {
         menus.contribute('code/langMenu', [{ command: 'code.lang.' + lang, title: lang, group: 'lang', source: 'code-lang' }]);
       }).catch(() => {});
@@ -380,17 +374,7 @@ export default {
     <div class="rb-group" data-label="语言">
       <button class="rb-btn" id="code-lang-btn" title="编程语言（点击切换——子窗格选择格，分屏不被压）"><i class="ico">≣</i><span id="code-lang-text">JavaScript</span><i class="ico">▾</i></button>
       <select class="rb-select" id="code-lang" title="编程语言" style="display:none">
-        <option value="javascript">JavaScript</option>
-        <option value="typescript">TypeScript</option>
-        <option value="python">Python</option>
-        <option value="json">JSON</option>
-        <option value="css">CSS</option>
-        <option value="html">HTML</option>
-        <option value="shell">Shell</option>
-        <option value="yaml">YAML</option>
-        <option value="xml">XML</option>
-        <option value="markdown">Markdown</option>
-        <option value="plaintext">纯文本</option>
+        ${LANGUAGE_CATALOG.map(x => `<option value="${x.id}">${x.label}</option>`).join('')}
       </select>
     </div>
     <div class="rb-group" data-label="运行">
@@ -407,20 +391,21 @@ export default {
       btn.addEventListener('click', () => window.MazzCommands.execute(btn.dataset.command));
     });
     // W58 B12：语言下拉子窗格化（select 弹出层分屏被压——按钮+ctxmenu 选择格；select 留暗桩兼容）
-    const LANG_MENU = [
-      ['javascript', 'JavaScript'], ['typescript', 'TypeScript'], ['python', 'Python'],
-      ['json', 'JSON'], ['css', 'CSS'], ['html', 'HTML'], ['shell', 'Shell'],
-      ['yaml', 'YAML'], ['xml', 'XML'], ['markdown', 'Markdown'], ['plaintext', '纯文本'],
-    ];
+    const LANG_MENU = LANGUAGE_CATALOG.map(x => [x.id, x.label, x.tier]);
     const langBtn = panel.querySelector('#code-lang-btn');
     const langText = panel.querySelector('#code-lang-text');
     const curName = (id) => (LANG_MENU.find(x => x[0] === id) || [null, id])[1] || id;
     if (langText && current) langText.textContent = curName(current.language || 'javascript');
     const { menus } = await import('../../core/menu-service.js');
     menus.removeBySource?.('code-lang');
-    menus.contribute('code/langMenu', LANG_MENU.map(([id, name]) => ({
-      command: 'code.lang.' + id, title: name, group: 'lang', source: 'code-lang',
-    })));
+    const tierItems = LANGUAGE_TIERS.flatMap(tier => {
+      const rows = LANG_MENU.filter(([, , rowTier]) => rowTier === tier.id);
+      return [
+        { command: `code.lang.header.${tier.id}`, title: `${tier.code} · ${tier.label}（${rows.length}）`, type: 'heading', group: tier.group, order: -1, source: 'code-lang' },
+        ...rows.map(([id, name], order) => ({ command: 'code.lang.' + id, title: name, group: tier.group, order, source: 'code-lang' })),
+      ];
+    });
+    menus.contribute('code/langMenu', tierItems);
     const { commands } = await import('../../core/command-registry.js');
     for (const [id] of LANG_MENU) {
       const cmdId = 'code.lang.' + id;
@@ -453,15 +438,13 @@ export default {
           ctl.language = lang;
           getMonaco().then(monaco => monaco.editor.setModelLanguage(ctl.model, lang));
           // 未命名文件的扩展名跟随语言
-          const extMap = { javascript: 'js', typescript: 'ts', python: 'py', json: 'json', css: 'css', html: 'html', shell: 'sh', yaml: 'yml', xml: 'xml', markdown: 'md', plaintext: 'txt' };
-          const ext = extMap[lang] || 'txt';
+          const ext = PRIMARY_EXT_BY_LANGUAGE[lang] || 'txt';
           const tabName = document.querySelector('.tab.on .t-name')?.textContent || '';
           if (tabName.startsWith('未命名.')) {
             window.MazzHost?.setTabTitle(ctl.container, `未命名.${ext}`);
           }
           // W58 按钮文本同步统一出口（菜单/code.setLanguage 命令双通道都过这层——def.setLanguage 的同步是 API 层另一半）
-          const NAMES = { javascript: 'JavaScript', typescript: 'TypeScript', python: 'Python', json: 'JSON', css: 'CSS', html: 'HTML', shell: 'Shell', yaml: 'YAML', xml: 'XML', markdown: 'Markdown', plaintext: '纯文本' };
-          for (const t of document.querySelectorAll('#code-lang-text')) t.textContent = NAMES[lang] || lang;
+          for (const t of document.querySelectorAll('#code-lang-text')) t.textContent = languageName(lang);
           toast(`语言已切换：${lang}`);
         })() },
       { id: 'code.toggleTerminal', title: '切换集成终端', icon: '▗', group: '编程',

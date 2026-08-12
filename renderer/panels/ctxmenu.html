@@ -20,6 +20,7 @@
   .mi kbd { font-size:11px; color:var(--fg-dim); font-family:var(--font-mono); background:var(--bg-active); border-radius:4px; padding:0 6px; }
   .mi .sub { color:var(--fg-dim); font-size:11px; }
   .sep { height:1px; background:var(--border); margin:5px 8px; }
+  .heading { position:sticky; top:-5px; z-index:2; padding:6px 10px 4px; color:var(--accent); background:var(--bg-elev); font-weight:700; letter-spacing:.02em; }
   /* 子菜单飞行列 */
   .submenu { position:fixed; z-index:9; background:var(--bg-elev); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.32); padding:5px; min-width:190px; display:none; }
   .submenu.open { display:block; }
@@ -48,6 +49,7 @@ function render() {
   const m = $('#m');
   m.innerHTML = items.map((it, i) => {
     if (it.type === 'separator') return '<div class="sep"></div>';
+    if (it.type === 'heading') return `<div class="heading">${esc(it.label)}</div>`;
     return `<div class="mi${it.enabled === false ? ' dis' : ''}${i === sel ? ' on' : ''}" data-i="${i}">
       ${iconOf(it)}<span class="t">${esc(it.label)}</span>
       ${it.accelerator ? `<kbd>${esc(it.accelerator)}</kbd>` : ''}
@@ -84,7 +86,7 @@ function pick(it) {
 }
 // 键控：↑↓ 循环 / Enter 执行 / → 开子菜单 / ← 收 / Esc 关窗
 document.addEventListener('keydown', (e) => {
-  const acts = items.map((it, i) => ({ it, i })).filter(x => x.it.type !== 'separator' && x.it.enabled !== false);
+  const acts = items.map((it, i) => ({ it, i })).filter(x => x.it.type !== 'separator' && x.it.type !== 'heading' && x.it.enabled !== false);
   if (!acts.length) return;
   const cur = acts.findIndex(x => x.i === sel);
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

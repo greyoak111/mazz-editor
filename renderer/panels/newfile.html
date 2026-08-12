@@ -18,6 +18,7 @@
   .p-winbtns button.x:hover { background:#e81123; color:#fff; }
   .body { padding: 4px 14px 14px; overflow: auto; min-height: 0; flex: 1; }
   .grp { font-size: 11.5px; color: var(--fg-dim); margin: 10px 0 6px; }
+  .grp.code-tier { position:sticky; top:-4px; z-index:2; padding:5px 7px; margin-left:-7px; margin-right:-7px; border-radius:6px; background:color-mix(in srgb,var(--bg) 92%,transparent); color:var(--accent); font-weight:700; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 7px; }
   .nft { display: flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--bg-elev); cursor: pointer; font-size: 12.5px; color: var(--fg); text-align: left; font-family: var(--font-ui); }
   .nft:hover { border-color: var(--accent); background: var(--accent-soft); }
@@ -47,7 +48,7 @@ window.mazz.on('panel:push', (p) => {
   if (p?.type !== 'newfileTypes') return;
   const groups = [...new Set(p.types.map(t => t.group))];
   document.getElementById('groups').innerHTML = groups.map(g => `
-    <div class="grp">${g}</div>
+    <div class="grp${g.startsWith('代码 ·') ? ' code-tier' : ''}">${g}</div>
     <div class="grid">${p.types.filter(t => t.group === g).map(t => `
       <button class="nft" data-ext="${t.ext}"><i class="x">.${t.ext}</i><span>${t.label.replace(/ *\([^)]*\)/g, '')}</span></button>`).join('')}
     </div>`).join('');

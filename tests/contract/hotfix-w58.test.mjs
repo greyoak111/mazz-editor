@@ -13,7 +13,9 @@ describe('W57 全语言运行体系（四级 RUNNERS）', () => {
     assert.ok(src.includes("type: 'compile'"), 'B 档编译运行必须有');
     assert.ok(src.includes("type: 'preview'"), 'C 档预览必须有');
     assert.ok(src.includes("type: 'none'"), 'D 档明示不可运行必须有');
-    assert.ok(src.includes('const EXT_LANG = {'), '扩展名→语言权威映射必须有');
+    assert.ok(src.includes('LANGUAGE_BY_EXT'), '扩展名→语言权威映射必须有');
+    const catalog = readSrc('renderer/modules/code/language-catalog.js');
+    assert.ok(catalog.includes('export const LANGUAGE_BY_EXT'), 'W59c 后权威映射必须集中在代码格式目录');
     assert.ok(src.includes('langOfPath(p) { return langOf(p); }'), 'langOfPath 必须导出（saveTab 语言同步凭据）');
     assert.ok(src.includes('const runner = RUNNERS[lang];'), 'runFile 必须走 RUNNERS 单源');
   });
@@ -38,7 +40,7 @@ describe('B12 语言选择格子窗化', () => {
   test('select 退役+按钮开 ctxmenu+模块页激活', () => {
     const src = readSrc('renderer/modules/code/index.js');
     assert.ok(src.includes('id="code-lang-btn"'), '语言按钮必须在');
-    assert.ok(src.includes('const LANG_MENU = ['), 'LANG_MENU 贡献必须有');
+    assert.ok(src.includes('const LANG_MENU = LANGUAGE_CATALOG.map'), 'LANG_MENU 必须由代码格式目录生成');
     assert.ok(!src.includes('<select id="code-lang"'), '老 select 必须退役');
     const sh = readSrc('renderer/shell/shell.js');
     assert.ok(sh.includes("this.ribbon.showPage?.('module')"), 'ribbon 模块页激活必须有（B12 按钮不在的总根）');

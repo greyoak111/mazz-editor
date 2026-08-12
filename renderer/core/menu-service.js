@@ -85,6 +85,13 @@ class MenuService {
         menu.appendChild(sep);
         continue;
       }
+      if (it.type === 'heading') {
+        const heading = document.createElement('div');
+        heading.className = 'mazz-menu-heading';
+        heading.textContent = it.label;
+        menu.appendChild(heading);
+        continue;
+      }
       const row = document.createElement('div');
       row.className = 'mazz-menu-item' + (it.enabled ? '' : ' disabled');
       row.innerHTML = `<span class="mazz-menu-icon">${iconHtml(it.icon || '')}</span><span class="mazz-menu-label"></span><span class="mazz-menu-key">${it.accelerator || ''}</span>`;
