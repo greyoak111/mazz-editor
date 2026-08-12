@@ -68,14 +68,17 @@ describe('④ B12b select 普查收编', () => {
       ['renderer/modules/sheet/index.js', "'#sg-border', '#sg-border-width', '#sg-fmt'"],
       ['renderer/modules/sheet/charts.js', "selectProxy(chartEl.querySelector('select')"],
       ['renderer/modules/viewer/player.js', "selectProxy(root.querySelector('.mz-speed')"],
-      ['renderer/modules/markdown/index.js', 'selectProxy(sel);\n      if (lh) selectProxy(lh)'],
+      ['renderer/modules/markdown/index.js', /selectProxy\(sel\);\r?\n\s*if \(lh\) selectProxy\(lh\)/],
       ['renderer/modules/library/index.js', "'.lib-cat-filter', '.lib-mode', '.lib-read-theme', '.lib-pagew', '.lib-zh'"],
       ['renderer/modules/math/index.js', 'selectProxy(backendSel)'],
       ['renderer/modules/search/index.js', 'selectProxy(typeEl); selectProxy(scopeEl)'],
       ['renderer/modules/factory/index.js', 'selectProxy(this.genreSel'],
       ['renderer/modules/mindmap/index.js', 'proxyStylebarSelects'],
     ];
-    for (const [f, pin] of pins) assert.ok(readSrc(f).includes(pin), f + ' 收编钉必须在');
+    for (const [f, pin] of pins) {
+      const src = readSrc(f);
+      assert.ok(pin instanceof RegExp ? pin.test(src) : src.includes(pin), f + ' 收编钉必须在');
+    }
     const mm = readSrc('renderer/modules/mindmap/index.js');
     assert.ok(mm.includes('stylebar._selProxies'), '导图重写前收尸必须有');
   });
