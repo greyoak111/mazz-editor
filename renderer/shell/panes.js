@@ -13,6 +13,7 @@ class Leaf {
     this.tree = tree;
     this.el = document.createElement('div');
     this.el.className = 'pane';
+    this.el.dataset.paneId = this.id;
     this.el.innerHTML = `<div class="tabbar"></div><div class="editor-area"></div>
       <div class="pane-empty">空窗格 · 拖标签到此，或从命令面板（Ctrl+Shift+P）新建</div>`;
     this.tabs = new Tabs(this.el.querySelector('.tabbar'), this.el.querySelector('.editor-area'));

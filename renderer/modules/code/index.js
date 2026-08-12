@@ -10,6 +10,9 @@ import { toast } from '../../shell/shell.js';
 const MODULE = 'code';
 const instances = new Map();
 let current = null;
+const TERMINAL_MIN_HEIGHT = 72; // 约两行终端（含标签栏），不得再压
+const TERMINAL_DEFAULT_HEIGHT = 260;
+const TERMINAL_MAX_RATIO = 0.6;
 
 // W58 全语言运行体系：四档分级（A 解释直跑 / B 先编后跑 / C 预览型 / D 明示不可运行）
 // exe 支持候选数组（toolchain:detect 取首中）；cmd(p, tmp) 中 tmp=编译产物路径（B 档用）
@@ -76,6 +79,7 @@ function createCode(container, { filePath = null, language = null } = {}) {
   root.className = 'code-root';
   root.innerHTML = `
     <div class="code-editor"></div>
+    <div class="code-term-grip" role="separator" aria-label="调整终端高度" aria-orientation="horizontal" title="上下拖动调整终端高度；双击恢复默认"></div>
     <div class="code-bottom collapsed"></div>`;
   container.appendChild(root);
 
@@ -88,9 +92,64 @@ function createCode(container, { filePath = null, language = null } = {}) {
     filePath,
     terminal: null,
     bottomEl: root.querySelector('.code-bottom'),
+    termGripEl: root.querySelector('.code-term-grip'),
     editorEl: root.querySelector('.code-editor'),
     ready: false,
   };
+
+  const paneId = () => container.closest('.pane')?.dataset.paneId || 'default';
+  const terminalHeightKey = () => `code.terminalHeight.${paneId()}`;
+  const terminalBounds = () => {
+    const rootHeight = root.getBoundingClientRect().height || root.clientHeight || TERMINAL_DEFAULT_HEIGHT / TERMINAL_MAX_RATIO;
+    return { min: TERMINAL_MIN_HEIGHT, max: Math.max(TERMINAL_MIN_HEIGHT, Math.floor(rootHeight * TERMINAL_MAX_RATIO)) };
+  };
+  const clampTerminalHeight = (height) => {
+    const { min, max } = terminalBounds();
+    const n = Number.isFinite(+height) ? +height : TERMINAL_DEFAULT_HEIGHT;
+    return Math.round(Math.max(min, Math.min(max, n)));
+  };
+  const applyTerminalHeight = (height, { persist = false } = {}) => {
+    const next = clampTerminalHeight(height);
+    ctl.bottomEl.style.height = `${next}px`;
+    ctl.bottomEl.dataset.height = String(next);
+    ctl.editor?.layout?.();
+    ctl.terminal?.resize();
+    if (persist) window.mazz?.invoke('settings:set', { key: terminalHeightKey(), value: next }).catch(() => {});
+    return next;
+  };
+  const restoreTerminalHeight = async () => {
+    const saved = await window.mazz?.invoke('settings:get', { key: terminalHeightKey() }).catch(() => null);
+    applyTerminalHeight(saved ?? TERMINAL_DEFAULT_HEIGHT);
+  };
+  const setTerminalOpen = (open) => {
+    ctl.bottomEl.classList.toggle('collapsed', !open);
+    ctl.termGripEl.hidden = !open;
+    root.classList.toggle('terminal-open', open);
+  };
+  ctl.termGripEl.hidden = true;
+  restoreTerminalHeight();
+
+  // W59f：终端上缘 grip。向上拖增高，按当前代码窗格 60% 限位；松手才落盘，避免 IO 风暴。
+  ctl.termGripEl.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = ctl.bottomEl.getBoundingClientRect().height || +ctl.bottomEl.dataset.height || TERMINAL_DEFAULT_HEIGHT;
+    try { ctl.termGripEl.setPointerCapture?.(e.pointerId); } catch {}
+    root.classList.add('term-resizing');
+    const move = (ev) => applyTerminalHeight(startHeight + startY - ev.clientY);
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      root.classList.remove('term-resizing');
+      applyTerminalHeight(+ctl.bottomEl.dataset.height, { persist: true });
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  });
+  ctl.termGripEl.addEventListener('dblclick', () => applyTerminalHeight(TERMINAL_DEFAULT_HEIGHT, { persist: true }));
 
   async function init() {
     const monaco = await getMonaco();
@@ -146,11 +205,12 @@ function createCode(container, { filePath = null, language = null } = {}) {
   // 终端面板（默认折叠；最后一个终端被关闭时自动收起，重新展开时若无终端自动新建）
   ctl.toggleTerminal = async (show) => {
     const want = show ?? ctl.bottomEl.classList.contains('collapsed');
-    ctl.bottomEl.classList.toggle('collapsed', !want);
+    if (want) await restoreTerminalHeight();
+    setTerminalOpen(want);
     const cwd = ctl.filePath ? ctl.filePath.replace(/[\\/][^\\/]*$/, '') : undefined;
     if (want && !ctl.terminal) {
       ctl.terminal = new TerminalPanel(ctl.bottomEl, {
-        onCountChange: (n) => { if (n === 0) ctl.bottomEl.classList.add('collapsed'); },
+        onCountChange: (n) => { if (n === 0) setTerminalOpen(false); },
       });
       await ctl.terminal.create({ cwd });
     } else if (want && ctl.terminal && !ctl.terminal.count()) {

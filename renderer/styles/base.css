@@ -508,7 +508,13 @@ body.pane-resizing .pane-divider { pointer-events: auto !important; }
 /* ---------- 编程内核（code.js） ---------- */
 .code-root { display: flex; flex-direction: column; height: 100%; background: var(--bg); }
 .code-editor { flex: 1; min-height: 0; }
+.code-term-grip { flex:none; position:relative; height:7px; margin-bottom:-7px; transform:translateY(-3px); cursor:ns-resize; z-index:8; touch-action:none; }
+.code-term-grip::before { content:""; position:absolute; left:calc(50% - 28px); top:2px; width:56px; height:3px; border-radius:3px; background:var(--border); transition:background .12s,width .12s,left .12s; }
+.code-term-grip:hover::before, .code-root.term-resizing .code-term-grip::before { left:calc(50% - 42px); width:84px; background:var(--accent); }
+.code-term-grip[hidden] { display:none; }
 .code-bottom { flex: none; height: 260px; border-top: 1px solid var(--border); display: flex; flex-direction: column; transition: height .15s; }
+.code-root.term-resizing { cursor:ns-resize; user-select:none; }
+.code-root.term-resizing .code-bottom { transition:none; }
 .code-bottom.collapsed { height: 0; border-top: 0; overflow: hidden; }
 .term-panel { display: flex; flex-direction: column; height: 100%; }
 .term-tabs { flex: none; display: flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--bg-elev); border-bottom: 1px solid var(--border); }
