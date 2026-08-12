@@ -252,28 +252,28 @@ ${chapterNo > 1 ? `以下是截至上一章的叙事状态快照，请严格衔�
 }
 
 /** 叙事状态快照生成提示词（每章写完后滚动摘要） */
-export function buildStateSummaryPrompt(prevSummary, chapterText, chapterNo) {
+export function buildStateSummaryPrompt(prevSummary, chapterText, chapterNo, schema = {}) {
+  const snapshot = getSnapshotSchema(schema);
   return {
-    system: '你是小说连载的叙事状态记录员。把故事状态压缩成精确摘要，供下一章无缝衔接。只输出结构化摘要，不要评论。',
-    user: `【此前状态】\n${prevSummary || '（第一章前）'}\n\n【刚写完的第 ${chapterNo} 章】\n${chapterText.slice(-3000)}\n\n请输出截至第 ${chapterNo} 章的叙事状态快照：\n1. 主要人物当前状态（位置/关系/心理）\n2. 已埋伏笔与未回收线索\n3. 当前冲突与时间线\n4. 下一章必须延续的要点`,
+    system: `你是长篇写作的状态记录员。把当前${snapshot.unitName}状态压缩成精确摘要，供下一${snapshot.unitName}无缝衔接。只输出结构化摘要，不要评论。`,
+    user: `【此前状态】\n${prevSummary || `（第一${snapshot.unitName}前）`}\n\n【刚写完的第 ${chapterNo} ${snapshot.unitName}】\n${String(chapterText || '').slice(-3000)}\n\n请输出截至第 ${chapterNo} ${snapshot.unitName}的状态快照，严格保留以下分区：\n${snapshot.sections.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n累计台账纪律：既有条目只增不减；已解决的伏笔保留原条目并加回收标注，已完成的论据或事项保留原条目并加完成标注，禁止静默删除。`,
   };
 }
 
 /** 读取连写任务进度（文件夹内已有章节与最新快照） */
-export async function readMaxTaskProgress(folder) {
+export async function readMaxTaskProgress(folder, schema = {}) {
   const entries = await window.mazz.invoke('fs:listDir', { path: folder }).catch(() => []);
-  let lastChapter = 0, lastSnap = '';
+  const { unitName } = getSnapshotSchema(schema);
+  const unitRe = new RegExp(`^第(\\d+)${escapeRegExp(unitName)}`);
+  const snapshotRe = new RegExp(`状态快照_第(\\d+)${escapeRegExp(unitName)}后`);
+  let lastChapter = 0, lastSnap = '', lastSnapNo = 0;
   for (const e of entries) {
-    const m = /^第(\d+)章/.exec(e.name);
+    const m = unitRe.exec(e.name);
     if (m) lastChapter = Math.max(lastChapter, parseInt(m[1], 10));
-    if (e.name.includes('叙事状态快照')) {
-      const m2 = /第(\d+)章后/.exec(e.name);
-      if (m2 && parseInt(m2[1], 10) >= lastChapter - 1) {
-        const m3 = /第(\d+)章后/.exec(e.name);
-        if (m3 && parseInt(m3[1], 10) === lastChapter) {
-          lastSnap = await window.mazz.invoke('fs:readFile', { path: e.path }).catch(() => '');
-        }
-      }
+    const sm = snapshotRe.exec(e.name);
+    if (sm && parseInt(sm[1], 10) >= lastSnapNo) {
+      lastSnapNo = parseInt(sm[1], 10);
+      lastSnap = await window.mazz.invoke('fs:readFile', { path: e.path }).catch(() => '');
     }
   }
   return { lastChapter, lastSnap };
@@ -361,25 +361,159 @@ ${chapterRule}
 请控制每个部分的篇幅，确保以上9个部分全部完整输出，不要中途截断。最后以「## 创作启动指令」收尾，给出写作时必须遵守的视角、句法、对话、描写规则与绝对禁止事项。`;
 }
 
-/** 蓝图结构完整性校验（原版关键词计数法：≥6 命中为完整） */
-export function blueprintStructureOk(blueprint) {
-  const KEYS = ['故事标题', '简介', '核心价值', '价值取向', '主角', '人设', '配角', '群像',
-    '世界观', '设定', '三幕', '结构', '大纲', '章节', '纲要', '文风', '执行方案', '节奏', '控制表'];
+export const NOVEL_BLUEPRINT_KEYS = ['故事标题', '简介', '核心价值', '价值取向', '主角', '人设', '配角', '群像',
+  '世界观', '设定', '三幕', '结构', '大纲', '章节', '纲要', '文风', '执行方案', '节奏', '控制表'];
+export const META_BLUEPRINT_KEYS = ['任务目标', '目标读者', '核心材料', '结构大纲', '核心要点', '论据数据', '术语口径', '质量校验'];
+export const DEFAULT_SNAPSHOT_SCHEMA = Object.freeze({
+  unitName: '章', type: 'narrative', sections: Object.freeze(['人物状态', '伏笔台账', '时间线', '冲突线']),
+});
+export const EXPOSITORY_SNAPSHOT_SECTIONS = Object.freeze(['要点台账', '术语与数据一致性', '论据与引用台账', '结构完成度']);
+
+/** 文体的蓝图家族；第三方旧文体未声明时双表任选其一通过。 */
+export function blueprintFamily(tpl = {}) {
+  if (['novel', 'meta', 'auto'].includes(tpl.blueprintFamily)) return tpl.blueprintFamily;
+  const snapshotType = tpl.snapshotType || tpl.type;
+  if (snapshotType === 'expository') return 'meta';
+  if (snapshotType === 'narrative') return 'novel';
+  return 'auto';
+}
+
+/** 结构单元快照约定；旧文体不声明时保持「章/narrative」行为。 */
+export function getSnapshotSchema(tpl = {}) {
+  const type = (tpl.snapshotType || tpl.type) === 'expository' ? 'expository' : 'narrative';
+  return {
+    unitName: String(tpl.unitName || (type === 'expository' ? '节' : DEFAULT_SNAPSHOT_SCHEMA.unitName)),
+    type,
+    sections: type === 'expository' ? [...EXPOSITORY_SNAPSHOT_SECTIONS] : [...DEFAULT_SNAPSHOT_SCHEMA.sections],
+  };
+}
+
+export function canUseUnlimited(tpl = {}) {
+  return getSnapshotSchema(tpl).type === 'narrative';
+}
+
+/** 非叙事文体的 META 蓝图。 */
+export function buildMetaBlueprintPrompt(tpl, values, opts = {}) {
+  const schema = getSnapshotSchema(tpl);
+  const title = fieldValue(tpl, values, 'title', 'subject', 'task', 'premise') || tpl.name || '未命名任务';
+  const fieldLines = (tpl.input_fields || []).map(f => `- ${f.label}：${values[f.id] || '（未填）'}`).join('\n');
+  const count = opts.chapters || values['计划章节数'] || 10;
+  return `你是一位资深${tpl.name || '说明文'}编撰顾问。请生成可执行的结构蓝图（Markdown）。
+
+## 已确认材料
+${fieldLines || '（未提供）'}
+${opts.embedBlocks ? `\n${opts.embedBlocks}` : ''}
+
+## META 蓝图生成要求
+1. 任务目标：说明《${title}》要解决的问题与交付边界
+2. 目标读者：读者已有知识、决策需求与阅读顺序
+3. 核心材料：事实、约束和缺口清单
+4. 结构大纲：列出 ${count} 个${schema.unitName}，格式为「第N${schema.unitName}：……」
+5. 核心要点：每${schema.unitName}必须完成的论述任务
+6. 论据数据：每项结论对应的事实、数字或引用
+7. 术语口径：关键术语、单位、时间与统计口径
+8. 质量校验：完整性、一致性、可追溯性检查
+
+最后以「## 创作启动指令」收尾；正文只能使用已确认材料，缺证处明确标记待核。`;
+}
+
+export function buildBlueprintPrompt(tpl, values, opts = {}) {
+  return blueprintFamily(tpl) === 'meta'
+    ? buildMetaBlueprintPrompt(tpl, values, opts)
+    : buildNovelBlueprintPrompt(values, opts);
+}
+
+/** 蓝图结构完整性双通道：novel 19 键≥6 / META 8 键≥4。 */
+export function blueprintStructureOk(blueprint, family = 'auto') {
   const text = String(blueprint || '').toLowerCase();
-  return KEYS.filter(s => text.includes(s.toLowerCase())).length >= 6;
+  const hits = keys => keys.filter(s => text.includes(s.toLowerCase())).length;
+  const novelOk = hits(NOVEL_BLUEPRINT_KEYS) >= 6;
+  const metaOk = hits(META_BLUEPRINT_KEYS) >= 4;
+  if (family === 'novel') return novelOk;
+  if (family === 'meta') return metaOk;
+  return novelOk || metaOk;
 }
 
 /** 从蓝图解析章节大纲（移植原版 _parse_chapters：第N章：… 每章一行） */
-export function parseChapterOutlines(blueprint, fallbackCount = 10) {
-  let outlines = String(blueprint || '').match(/^[#\s>*-]*第[一二三四五六七八九十\d]+章\s*[：:]\s*[^\n]+/gm) || [];
+export function parseChapterOutlines(blueprint, fallbackCount = 10, schema = {}) {
+  const { unitName } = getSnapshotSchema(schema);
+  const unit = escapeRegExp(unitName);
+  const strictRe = new RegExp(`^[#\\s>*-]*第[一二三四五六七八九十百千\\d]+${unit}\\s*[：:]\\s*[^\\n]+`, 'gm');
+  let outlines = String(blueprint || '').match(strictRe) || [];
   if (!outlines.length) {
-    // 退化分支：必须是「第+数字/中文数字+章」开头的行——防散文句（"第一人称…"）误匹配
+    const looseRe = new RegExp(`^第[0-9一二三四五六七八九十百千]+${unit}(?![^\\s：:，。]*人称)`);
     outlines = String(blueprint || '').split('\n')
       .map(l => l.trim())
-      .filter(l => /^第[0-9一二三四五六七八九十百千]+章(?![^\s：:，。]*人称)/.test(l) && l.length < 80);
+      .filter(l => looseRe.test(l) && l.length < 80);
   }
-  if (!outlines.length) return Array.from({ length: fallbackCount }, (_, i) => `第${i + 1}章`);
+  if (!outlines.length) return Array.from({ length: fallbackCount }, (_, i) => `第${i + 1}${unitName}`);
   return outlines.map(l => l.replace(/^[#\s>*-]+/, '').trim()).slice(0, 999);
+}
+
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 三次蓝图调用全败后的确定性兜底，保证仍能产出并通过对应家族校验。 */
+export function buildFallbackBlueprint(task, total = 0, tpl = {}) {
+  const schema = getSnapshotSchema(tpl);
+  const count = total || 10;
+  const units = Array.from({ length: count }, (_, i) => `第${i + 1}${schema.unitName}：根据已确认材料自然推进`).join('\n');
+  const values = task.values || {};
+  if (schema.type === 'expository') {
+    return `# 《${task.label}》结构蓝图（兜底）
+
+## 任务目标
+完成《${task.label}》并保持结论可追溯。
+
+## 目标读者
+以任务表单中指定的受众为准。
+
+## 核心材料
+${Object.values(values).filter(Boolean).join('；') || '以用户已确认材料为准；缺证处标记待核。'}
+
+## 结构大纲
+${units}
+
+## 核心要点
+每${schema.unitName}只承担一个明确论述任务。
+
+## 论据数据
+结论必须对应事实、数字或引用；不得补造。
+
+## 术语口径
+术语、单位、时间范围与统计口径前后一致。
+
+## 质量校验
+逐项检查完整性、一致性、可追溯性与结构完成度。
+
+## 创作启动指令
+按大纲逐${schema.unitName}写透；缺证处明确标记待核。`;
+  }
+  return `# 《${task.label}》创作蓝图（兜底）
+
+## 故事标题与简介
+《${task.label}》；围绕用户给定核心设定展开。
+
+## 核心价值取向
+以用户填写的价值取向和核心追问为准。
+
+## 主角人设与配角群像
+主角：${values.protagonist || '以表单设定为准'}。配角按冲突需要设置，不篡改用户锚点。
+
+## 世界观设定与三幕结构大纲
+- 作品类型：${values['作品类型'] || '小说'}
+- 篇幅：${values['篇幅长短'] || '中篇'}
+- 计划章节数：${total || '不限'}
+
+## 章节详细纲要
+${units}
+
+## 文风执行方案与节奏控制表
+文风参考：${values['文风学习对象'] || '未指定'}；每${schema.unitName}字数约 ${values['每章字数'] || 2000} 字。
+
+## 创作启动指令
+保持一致的叙事视角和语气基调，写场景不写梗概。`;
 }
 
 /** 提取蓝图核心设定（创作启动指令之前的部分） */
@@ -406,44 +540,122 @@ export function stripMdFence(text) {
   return t.trim();
 }
 
-/** 四层章节引导（原版 chapter_guide 结构：蓝图核心 / 启动指令 / 状态快照 / 本章任务） */
-export function buildChapterPromptV2({ blueprintCore, writingDirective, stateSummary, outline, chapterNo, total, wordsPerChapter, title }) {
-  const system = `你是小说作家。以下是你必须始终遵守的全部创作规范。
+/** 恒定锚：核心与启动指令分别留配额，总长最多 800 字，生成一次后随任务缓存。 */
+export function buildConstantAnchor(blueprintCore, writingDirective = '') {
+  const core = String(blueprintCore || '').trim();
+  const directive = String(writingDirective || '').trim();
+  if (!directive) return core.length <= 800 ? core : core.slice(0, 797) + '…';
+  const directiveBudget = Math.min(300, directive.length);
+  const coreBudget = Math.max(0, 800 - directiveBudget - 20);
+  const corePart = core.length <= coreBudget ? core : core.slice(0, Math.max(0, coreBudget - 1)) + '…';
+  const directivePart = directive.length <= directiveBudget ? directive : directive.slice(0, Math.max(0, directiveBudget - 1)) + '…';
+  return `${corePart}\n\n【执行规约】\n${directivePart}`.slice(0, 800);
+}
+
+/** 窗口锚：当前结构单元 N±3。 */
+export function buildOutlineWindow(outlines = [], chapterNo = 1, radius = 3) {
+  const at = Math.max(0, Number(chapterNo || 1) - 1);
+  return outlines.slice(Math.max(0, at - radius), at + radius + 1).join('\n');
+}
+
+/** 从滚动快照提取累计台账，避免把整份快照在第三/四层重复注入。 */
+export function extractLedgerFromSnapshot(summary, schema = {}) {
+  const snapshot = getSnapshotSchema(schema);
+  const heading = snapshot.type === 'narrative' ? '伏笔台账' : '论据与引用台账';
+  const text = String(summary || '');
+  const re = new RegExp(`(?:^|\\n)#{0,3}\\s*${escapeRegExp(heading)}\\s*\\n([\\s\\S]*?)(?=\\n#{1,3}\\s*[^\\n]+|$)`, 'i');
+  const hit = re.exec(text)?.[1]?.trim();
+  return hit ? `## ${heading}\n${hit}` : '';
+}
+
+export const TOKEN_DECLARATION_RE = /\n?\[本次续写字数[：:]\s*(\d+)\]\s*$/;
+
+export function tokenDeclarationOf(text) {
+  const m = TOKEN_DECLARATION_RE.exec(String(text || '').trim());
+  return m ? Number(m[1]) : null;
+}
+
+export function stripTokenDeclaration(text) {
+  return String(text || '').trim().replace(TOKEN_DECLARATION_RE, '').trimEnd();
+}
+
+export function ensureTokenDeclaration(text) {
+  const src = String(text || '').trim();
+  if (tokenDeclarationOf(src) != null) return src;
+  return `${src}\n[本次续写字数：${stripTokenDeclaration(src).length}]`.trim();
+}
+
+/** 声明是续写终止信号；未声明时才继续走去重合并。 */
+export function mergeDeclaredContinuation(prev, next = '') {
+  const prevCount = tokenDeclarationOf(prev);
+  if (prevCount != null) return { text: ensureTokenDeclaration(prev), declared: prevCount, complete: true };
+  const nextCount = tokenDeclarationOf(next);
+  const merged = dedupMerge(stripTokenDeclaration(prev), stripTokenDeclaration(next));
+  return { text: nextCount == null ? merged : ensureTokenDeclaration(merged), declared: nextCount, complete: nextCount != null };
+}
+
+/** 六层章节引导：恒定锚 / N±3 窗口 / 滚动快照 / 累计台账 / 本章+TOKEN / 纠偏。 */
+export function buildChapterPromptV2({
+  blueprintCore, constantAnchor, writingDirective, outlines = [], stateSummary, foreshadowLedger,
+  outline, chapterNo, total, wordsPerChapter, title, correctionDirective, snapshotSchema,
+}) {
+  const schema = getSnapshotSchema(snapshotSchema || {});
+  const anchor = constantAnchor || buildConstantAnchor(blueprintCore, writingDirective);
+  const windowAnchor = buildOutlineWindow(outlines.length ? outlines : [outline].filter(Boolean), chapterNo);
+  const ledger = foreshadowLedger || (schema.type === 'narrative'
+    ? '（尚无独立伏笔条目；从滚动快照继承，累计只增不减，回收项保留并标注已回收）'
+    : '（尚无独立论据条目；从滚动快照继承，累计只增不减，完成项保留并标注已完成）');
+  const system = `你是${schema.type === 'narrative' ? '小说作家' : '严谨的结构化写作者'}。以下六层锚按顺序生效，后层不得篡改前层。
 
 ---
 
-## 第一层：蓝图核心设定
+## 第一层：恒定锚
 
-这些是世界观、人物、主题和叙事框架的完整设定。你在写作时不得偏离以下任何已确立的设定。
+这是从蓝图核心契约压缩并缓存的恒定锚。不得偏离。
 
-${blueprintCore}
-
----
-
-## 第二层：创作启动指令
-
-这是从蓝图中提取的完整写作规范——视角、句法、对话规则、描写规则、文风执行方案、绝对禁止事项。每条规则都必须严格遵守。
-
-${writingDirective}
+${anchor}
 
 ---
 
-## 第三层：当前叙事状态
+## 第二层：窗口锚
 
-这是上一章结束后的精确状态快照。你必须从快照所描述的场景断点处开始续写。快照中记录的所有人物状态、伏笔状态、冲突线状态均为当前事实。
+只看当前第 ${chapterNo}${schema.unitName}前后 N±3 的结构窗口，保证局部推进与全局衔接：
 
-${stateSummary || '（故事尚未开始，这是第一章）'}
+${windowAnchor || outline || `第${chapterNo}${schema.unitName}`}
 
 ---
 
-## 第四层：接续写作指令
+## 第三层：滚动快照
 
-**本章大纲**: ${outline}
+这是上一${schema.unitName}结束后的精确状态。必须从此处衔接。
 
-本章字数请根据大纲内容与节奏自行把控，用户参考 ${wordsPerChapter || 2000} 字但不必严格遵循。
-请严格遵循以上全部规范，完成《${title}》第 ${chapterNo} 章${total ? '（共 ' + total + ' 章）' : ''}正文。
-【重要】直接输出正文内容，不要输出章节标题（如「第X章」），不要输出任何前言或说明文字。`;
-  return { system, user: `请写第 ${chapterNo} 章正文。直接输出正文，不要输出章节标题。` };
+${stateSummary || `（作品尚未开始，这是第一${schema.unitName}）`}
+
+---
+
+## 第四层：伏笔台账
+
+跨${schema.unitName}累计只增不减；回收/完成只加标注，不删除旧项。
+
+${ledger}
+
+---
+
+## 第五层：本章任务与 TOKEN 声明
+
+**本${schema.unitName}大纲**：${outline}
+
+本${schema.unitName}字数按任务与节奏自行把控，用户参考 ${wordsPerChapter || 2000} 字但不必严格修剪。
+完成《${title}》第 ${chapterNo}${schema.unitName}${total ? `（共 ${total}${schema.unitName}）` : ''}正文。
+正文最后必须单独输出声明，格式严格为：[本次续写字数：N]。N 为本次实际输出正文字符数。
+【重要】直接输出正文，不要输出「第X${schema.unitName}」标题、前言或说明。
+
+---
+
+## 第六层：纠偏指令
+
+${correctionDirective || '（本轮未触发纠偏；每 10 个结构单元只做一致性自检，不重写既有正文。）'}`;
+  return { system, user: `请写第 ${chapterNo} ${schema.unitName}正文。直接输出正文，末尾带 TOKEN_DECLARATION 声明。` };
 }
 
 /** 续写去重合并（原版 _dedup_merge：找最长重叠前缀） */

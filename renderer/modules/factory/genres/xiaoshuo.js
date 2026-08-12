@@ -3,6 +3,9 @@ export default {
   id: 'xiaoshuo',
   name: '小说',
   description: '短篇小说/章节创作（人物弧光、场景描写、节奏控制）',
+  blueprintFamily: 'novel',
+  unitName: '章',
+  snapshotType: 'narrative',
   input_fields: [
     { id: 'premise', label: '核心设定/一句话故事', type: 'textarea', required: true, placeholder: '谁，在什么处境下，必须做什么，否则怎样' },
     { id: '书名', label: '书名（连写用）', type: 'text', placeholder: '可留空，由AI在蓝图中生成' },

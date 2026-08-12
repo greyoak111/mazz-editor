@@ -3,6 +3,9 @@ export default {
   id: 'gongwen',
   name: '公文',
   description: '格式规范的机关公文（通知/请示/报告/函），遵循 GB/T 9704 体例',
+  blueprintFamily: 'meta',
+  unitName: '节',
+  snapshotType: 'expository',
   input_fields: [
     { id: 'title', label: '公文标题', type: 'text', required: true, placeholder: '关于……的……' },
     { id: 'recipient', label: '主送机关', type: 'text', required: true, placeholder: '各市、县（区）人民政府，……' },

@@ -3,6 +3,9 @@ export default {
   id: 'caiwu',
   name: '财务报告',
   description: '数据驱动的财务/经营分析报告（同比环比、异常解释、行动建议）',
+  blueprintFamily: 'meta',
+  unitName: '节',
+  snapshotType: 'expository',
   input_fields: [
     { id: 'title', label: '报告标题', type: 'text', required: true },
     { id: 'period', label: '报告期间', type: 'text', required: true, placeholder: '2026 年第二季度' },

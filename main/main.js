@@ -9,6 +9,10 @@ const fs = require('fs');
 const { Readable } = require('stream'); // mazz-res media/ 分支：range 流式响应（GB 级不整读）
 const path = require('path');
 
+// E2E 用户目录必须在单实例锁之前切换；Chromium 的锁文件按当时 userData 定位。
+// 放在 requestSingleInstanceLock 之后会先碰正常用户目录，在受限 Windows 环境直接拒绝访问。
+if (process.env.MAZZ_E2E_USER_DATA) app.setPath('userData', process.env.MAZZ_E2E_USER_DATA);
+
 // Windows 任务栏/开始菜单图标与分组归属（不设会回落成 Electron 默认图标）
 app.setAppUserModelId('com.mazz.editor');
 
@@ -80,9 +84,6 @@ const PROTOCOL = 'mazz';
 // ---------- 单实例：第二实例的命令行文件参数转发给主实例开新标签 ----------
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) { app.quit(); return; }
-
-// E2E 测试隔离钩子（仅显式注入环境变量时生效；正常启动零影响）
-if (process.env.MAZZ_E2E_USER_DATA) app.setPath('userData', process.env.MAZZ_E2E_USER_DATA);
 
 const store = new Store(path.join(app.getPath('userData'), 'mazz-settings.json'), {
   recentFiles: [],
@@ -380,7 +381,30 @@ function registerChannels() {
     if (typeof m.reasoning_content === 'string' && m.reasoning_content.trim()) return m.reasoning_content;
     return typeof c === 'string' ? c : '';
   };
+  const factoryMockEnabled = process.env.NODE_ENV === 'test' && process.env.MAZZ_E2E_FACTORY_MOCK === '1';
+  const factoryMock = { blueprintAttempts: 0, unitNo: 0 };
+  const factoryMockReply = ({ system = '', user = '', stream = false }) => {
+    if (!factoryMockEnabled) return null;
+    if (stream && user.includes('META 蓝图生成要求')) {
+      if (user.includes('META直过报告')) {
+        return `# META直过报告结构蓝图\n\n## 任务目标\n验证说明类蓝图直过。\n\n## 目标读者\n验收人员。\n\n## 核心材料\n模拟台架记录。${'已确认材料用于支撑结构化写作。'.repeat(35)}\n\n## 结构大纲\n第1节：完成直过验收\n\n## 核心要点\n保持口径一致。\n\n## 论据数据\n模拟读数101。\n\n## 术语口径\n统一使用样本口径。\n\n## 质量校验\n完整性与可追溯性。\n\n## 创作启动指令\n按已确认材料写作。`;
+      }
+      factoryMock.blueprintAttempts++;
+      return `# 残缺蓝图 ${factoryMock.blueprintAttempts}\n\n${'这是一份故意不含结构关键词的残缺材料。'.repeat(40)}`;
+    }
+    if (stream) {
+      factoryMock.unitNo++;
+      return `本节记录实验报告第 ${factoryMock.unitNo} 个结构单元。测量值 ${100 + factoryMock.unitNo}，术语口径沿用既定定义，论据来自模拟台架。${'这一段用于验证正文在缺少声明时仍能自动收口并可靠落盘。'.repeat(6)}`;
+    }
+    if (system.includes('一致性校验员')) return '纠偏：下一节继续沿用统一单位与实验口径，补明论据来源；既有正文不重写。';
+    if (system.includes('状态记录员')) {
+      return `## 要点台账\n- 第 ${factoryMock.unitNo} 节测量完成\n\n## 术语与数据一致性\n- 单位与口径一致\n\n## 论据与引用台账\n- 模拟台架记录（已核）\n\n## 结构完成度\n- ${factoryMock.unitNo}/11；既有条目只增不减`;
+    }
+    return '测试响应';
+  };
   bus.handle('factory:aiChat', async ({ baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192 }) => {
+    const mocked = factoryMockReply({ system, user, stream: false });
+    if (mocked != null) return mocked;
     // messages 直通（多模态：content 数组含 image_url）；否则 system/user 组装
     const msgs = messages || [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }];
     const resp = await net.fetch(aiUrl(baseURL), {
@@ -408,6 +432,12 @@ function registerChannels() {
   bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }) => {
     const push = (payload) => { if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'factory:aiChunk', { requestId, ...payload }); };
     try {
+      const mocked = factoryMockReply({ system, user, stream: true });
+      if (mocked != null) {
+        for (let i = 0; i < mocked.length; i += 120) push({ delta: mocked.slice(i, i + 120) });
+        push({ done: true });
+        return { ok: true };
+      }
       const resp = await net.fetch(aiUrl(baseURL), {
         method: 'POST', headers: aiHeaders(apiKey),
         body: JSON.stringify({

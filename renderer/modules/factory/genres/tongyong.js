@@ -3,6 +3,9 @@ export default {
   id: 'tongyong',
   name: '通用',
   description: '通用写作/改写/扩写（演讲稿、总结、说明、邮件等不设限文体）',
+  blueprintFamily: 'meta',
+  unitName: '节',
+  snapshotType: 'expository',
   input_fields: [
     { id: 'task', label: '写作任务', type: 'textarea', required: true, placeholder: '想写什么？给谁看？要达到什么效果？' },
     { id: 'tone', label: '语气', type: 'select', options: ['正式', '中性', '亲切', '有力'], default: '中性' },

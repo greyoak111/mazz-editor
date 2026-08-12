@@ -3,6 +3,9 @@ export default {
   id: 'jiaoan',
   name: '教案',
   description: '课堂教学设计（目标-重难点-过程-评价闭环）',
+  blueprintFamily: 'meta',
+  unitName: '节',
+  snapshotType: 'expository',
   input_fields: [
     { id: 'subject', label: '学科与课题', type: 'text', required: true, placeholder: '初中物理《浮力》' },
     { id: 'grade', label: '学段', type: 'text', required: true, placeholder: '八年级' },
