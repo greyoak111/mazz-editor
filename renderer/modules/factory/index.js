@@ -9,6 +9,8 @@ import { listStyles, uploadStyleFile, queryOnlineStyle, deleteStyle, assembleSty
 import { exportMaz, importMaz } from './maz.js';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { aiRolePicker } from '../../lib/ai-role-picker.js';
+import { commands } from '../../core/command-registry.js';
+import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown, normalizeLedger } from './agent.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
@@ -48,6 +50,8 @@ export class FactoryPanel {
     this.embeds = [];             // 嵌入资料 [{name, text, note}]
     this.resumables = [];         // 启动扫描到的可恢复任务
     this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
+    this.agentLedger = normalizeLedger(this.loadJSON(AGENT_LEDGER_KEY, null));
+    this.agentRuntime = null;
     this.render();
     this.reload();
   }
@@ -225,6 +229,19 @@ export class FactoryPanel {
           <div class="fc-live" style="max-height:220px;overflow-y:auto;border:1px solid var(--bd,#ddd);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.8;white-space:pre-wrap;background:var(--card,#fff)"></div>
           <div class="fc-livechaps" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
         </div>
+        <section class="fc-command-dock" aria-label="指令台">
+          <div class="fc-command-head">
+            <div><b>指令台</b><span class="fc-agent-status">命令闭集待命</span></div>
+            <span class="fc-agent-role"></span>
+          </div>
+          <div class="fc-agent-chips" aria-label="高频交办"></div>
+          <div class="fc-agent-feed" aria-live="polite"></div>
+          <div class="fc-agent-inputrow">
+            <textarea class="fc-agent-input" rows="2" placeholder="交办一件事；Ctrl+Enter 执行。多步任务会逐步回报，危险操作必须确认。" spellcheck="false"></textarea>
+            <button class="fc-btn fc-accent" data-a="agent-submit">交办</button>
+          </div>
+          <div class="fc-agent-foot"><span class="fc-agent-toolcount"></span><span>台账同步进工作区全文索引</span></div>
+        </section>
         <div class="fc-logwrap">
           <div class="fc-label">主控台日志 <button class="fc-mini" data-a="clearlog">清空</button></div>
           <div class="fc-log"></div>
@@ -240,12 +257,24 @@ export class FactoryPanel {
       </div>`;
     const roleHost = this.el.querySelector('.fc-role-pickers');
     this.rolePickers = ['blueprint', 'chapter', 'snapshot'].map(role => aiRolePicker(role, roleHost, { className: 'fc-mini' }));
+    this.agentRolePicker = aiRolePicker('agent', this.el.querySelector('.fc-agent-role'), { className: 'fc-mini' });
     this.formEl = this.el.querySelector('.fc-form');
     this.taskListEl = this.el.querySelector('.fc-tasklist');
     this.hisListEl = this.el.querySelector('.fc-hislist');
     this.logEl = this.el.querySelector('.fc-log');
     this.dumpEl = this.el.querySelector('.fc-dump-text');
     this.genreSel = this.el.querySelector('.fc-genre');
+    this.agentInputEl = this.el.querySelector('.fc-agent-input');
+    this.agentFeedEl = this.el.querySelector('.fc-agent-feed');
+    this.agentStatusEl = this.el.querySelector('.fc-agent-status');
+    this.agentSubmitEl = this.el.querySelector('[data-a=agent-submit]');
+    this.agentRuntime = new AgentRuntime({
+      registry: commands, ledger: this.agentLedger,
+      saveLedger: async ledger => this.persistAgentLedger(ledger),
+      onEvent: event => this.renderAgentEvent(event),
+    });
+    this.el.querySelector('.fc-agent-toolcount').textContent = `${commands.toolCards().length} 项登记命令`;
+    this.renderAgentChips();
     // B12b 收编：模板/导出格式两 select 子窗格化（隐藏保留作状态单源；genre 选项重建 MutationObserver 自带保鲜）
     import('../../lib/select-menu.js').then(({ selectProxy }) => {
       selectProxy(this.genreSel, { btnClass: 'fc-selmenu' });
@@ -306,7 +335,111 @@ export class FactoryPanel {
     this.el.querySelector('.fc-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.webSearch(); });
     this.el.querySelector('[data-a=mazimport]').addEventListener('click', () => this.importMazPack());
     this.el.querySelector('[data-a=mazexport]').addEventListener('click', () => this.exportMazPack());
+    this.agentSubmitEl.addEventListener('click', () => this.submitAgent());
+    this.agentInputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.submitAgent(); }
+    });
     this.syncLengthControls(false);
+  }
+
+  // ==================== W62a 指令台：最小 agent 环 + 台账 ====================
+  async persistAgentLedger(ledger) {
+    this.agentLedger = normalizeLedger(ledger);
+    this.saveJSON(AGENT_LEDGER_KEY, this.agentLedger);
+    this.renderAgentChips();
+    try {
+      const ws = String(await window.mazz.invoke('workspace:get') || '').replace(/\\/g, '/').replace(/\/$/, '');
+      if (!ws) return;
+      const dir = `${ws}/Output/_系统`;
+      await window.mazz.invoke('fs:mkdir', { path: dir });
+      await window.mazz.invoke('fs:writeFile', { path: `${dir}/交办台账.md`, content: ledgerToMarkdown(this.agentLedger) });
+    } catch { /* 没工作区时 localStorage 台账仍有效 */ }
+  }
+
+  renderAgentChips() {
+    const host = this.el.querySelector('.fc-agent-chips');
+    if (!host) return;
+    const rows = frequentLedgerInputs(this.agentLedger);
+    host.innerHTML = '';
+    host.style.display = rows.length ? 'flex' : 'none';
+    for (const row of rows) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'fc-agent-chip';
+      b.textContent = `${row.input} ×${row.count}`;
+      b.title = '高频交办；点一下回填';
+      b.addEventListener('click', () => { this.agentInputEl.value = row.input; this.agentInputEl.focus(); });
+      host.appendChild(b);
+    }
+  }
+
+  addAgentCard(kind, title, text = '') {
+    const card = document.createElement('div');
+    card.className = `fc-agent-card ${kind}`;
+    const head = document.createElement('div'); head.className = 'fc-agent-card-head'; head.textContent = title;
+    const body = document.createElement('div'); body.className = 'fc-agent-card-body'; body.textContent = String(text || '');
+    card.append(head, body); this.agentFeedEl.appendChild(card);
+    while (this.agentFeedEl.children.length > 20) this.agentFeedEl.firstElementChild.remove();
+    card.scrollIntoView({ block: 'nearest' });
+    return card;
+  }
+
+  renderAgentEvent(event) {
+    if (!this.agentStatusEl) return;
+    if (event.type === 'start') {
+      this.agentStatusEl.textContent = event.replay ? '回放上次交办…' : '受理中…';
+      this.addAgentCard('user', '厂主交办', event.input);
+    } else if (event.type === 'thinking') {
+      this.agentStatusEl.textContent = `规划第 ${event.step} 步…`;
+    } else if (event.type === 'tool-start') {
+      this.agentStatusEl.textContent = `第 ${event.step} 步执行中…`;
+      this.addAgentCard('tool', `步骤 ${event.step} · ${event.title}`, JSON.stringify(event.args || {}));
+    } else if (event.type === 'tool-result') {
+      this.addAgentCard(event.ok ? 'result' : 'error', event.ok ? `✓ ${event.command}` : `✗ ${event.command}`, event.result);
+    } else if (event.type === 'clarify') {
+      this.agentStatusEl.textContent = '等你二选一';
+      const card = this.addAgentCard('clarify', '需要澄清', event.question);
+      const acts = document.createElement('div'); acts.className = 'fc-agent-card-actions';
+      event.options.forEach((opt, i) => {
+        const b = document.createElement('button'); b.className = 'fc-mini'; b.textContent = `${String.fromCharCode(65 + i)}. ${opt.label}`;
+        b.addEventListener('click', async () => { acts.querySelectorAll('button').forEach(x => { x.disabled = true; }); await this.agentRuntime.answer(opt.value); });
+        acts.appendChild(b);
+      });
+      card.appendChild(acts);
+      card.scrollIntoView({ block: 'nearest' });
+    } else if (event.type === 'confirm') {
+      this.agentStatusEl.textContent = '危险操作待确认';
+      const card = this.addAgentCard('confirm', `确认执行 · ${event.title}`, JSON.stringify(event.args || {}));
+      const acts = document.createElement('div'); acts.className = 'fc-agent-card-actions';
+      const yes = document.createElement('button'); yes.className = 'fc-mini danger'; yes.textContent = '确认执行';
+      const no = document.createElement('button'); no.className = 'fc-mini'; no.textContent = '取消';
+      yes.addEventListener('click', async () => { yes.disabled = no.disabled = true; await this.agentRuntime.approve(); });
+      no.addEventListener('click', async () => { yes.disabled = no.disabled = true; await this.agentRuntime.cancel(); });
+      acts.append(yes, no); card.appendChild(acts);
+      card.scrollIntoView({ block: 'nearest' });
+    } else if (event.type === 'finish') {
+      this.agentStatusEl.textContent = event.status === 'done' ? '已完成' : '已收口';
+      this.addAgentCard('finish', event.status === 'undo' ? '撤销完成' : '交办结果', event.message);
+      this.agentSubmitEl.disabled = false;
+    } else if (event.type === 'cancelled') {
+      this.agentStatusEl.textContent = '已取消，未执行';
+    } else if (event.type === 'error') {
+      this.agentStatusEl.textContent = '交办失败';
+      this.addAgentCard('error', '未执行', event.message);
+      this.agentSubmitEl.disabled = false;
+    }
+  }
+
+  async submitAgent() {
+    const input = this.agentInputEl.value.trim();
+    if (!input) { this.agentInputEl.focus(); return; }
+    this.agentSubmitEl.disabled = true;
+    this.agentInputEl.value = '';
+    try { await this.agentRuntime.submit(input); }
+    catch (e) {
+      // runtime 已发 error；同步入口错误（空白/并发）在此补卡。
+      if (!/上一项交办尚未结束/.test(e.message || '')) this.log('指令台：' + (e.message || e));
+      this.agentSubmitEl.disabled = !!(this.agentRuntime.session || this.agentRuntime.pending);
+    }
   }
 
   // ==================== 创作增强：插件 / 文风 / 嵌入 / 检索 ====================

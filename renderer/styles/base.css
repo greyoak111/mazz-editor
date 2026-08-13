@@ -998,6 +998,32 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .fc-projectbar .fc-btn { flex: none; padding: 6px 10px; }
 .fc-role-pickers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .fc-role-pickers .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-command-dock { border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border)); border-radius: 11px; padding: 9px; background: color-mix(in srgb, var(--accent) 4%, var(--bg-elev)); display: flex; flex-direction: column; gap: 7px; }
+.fc-command-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.fc-command-head > div { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.fc-command-head b { font-size: 13px; }
+.fc-agent-status { font-size: 10.5px; color: var(--fg-dim); }
+.fc-agent-role { flex: none; max-width: 60%; }
+.fc-agent-role .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-agent-feed { max-height: 260px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.fc-agent-card { border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; background: var(--bg); }
+.fc-agent-card.user { border-left: 3px solid var(--accent); }
+.fc-agent-card.tool { border-left: 3px solid #64748b; }
+.fc-agent-card.result, .fc-agent-card.finish { border-left: 3px solid #22c55e; }
+.fc-agent-card.clarify { border-left: 3px solid #f59e0b; }
+.fc-agent-card.confirm, .fc-agent-card.error { border-left: 3px solid #ef4444; }
+.fc-agent-card-head { font-size: 11.5px; font-weight: 700; }
+.fc-agent-card-body { margin-top: 3px; color: var(--fg-dim); font-size: 11px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.fc-agent-card-actions { display: flex; gap: 6px; margin-top: 7px; }
+.fc-agent-card-actions .danger { border-color: #ef4444; color: #ef4444; }
+.fc-agent-inputrow { display: flex; align-items: stretch; gap: 6px; }
+.fc-agent-input { flex: 1; min-width: 0; resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; background: var(--bg); color: var(--fg); font: 12px/1.5 var(--font-ui); }
+.fc-agent-input:focus { border-color: var(--accent); outline: none; }
+.fc-agent-inputrow .fc-btn { flex: none; width: 58px; padding: 5px; }
+.fc-agent-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.fc-agent-chip { border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg-dim); padding: 2px 7px; font: 10.5px var(--font-ui); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-agent-chip:hover { color: var(--accent); border-color: var(--accent); }
+.fc-agent-foot { display: flex; justify-content: space-between; gap: 8px; color: var(--fg-dim); font-size: 9.5px; }
 .fc-length-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
 .fc-length-cards button { min-width: 0; border: 1px solid var(--border); border-radius: 9px; padding: 8px 5px; background: var(--bg); color: var(--fg); cursor: pointer; display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
 .fc-length-cards button span { color: var(--fg-dim); font-size: 10.5px; }

@@ -3,7 +3,9 @@
 import { Emitter } from './events.js';
 import { contextKeys } from './contextkey-service.js';
 
-class CommandRegistry {
+const DANGEROUS_COMMAND = /(?:delete|remove|clear|overwrite|publish|post|upload|删除|移除|清空|覆盖|投稿|发布)/i;
+
+export class CommandRegistry {
   constructor() {
     this.commands = new Map(); // id -> {id, title, run, icon, group, source}
     this.events = new Emitter();
@@ -23,6 +25,13 @@ class CommandRegistry {
       id, title: def.title || id, run: def.run,
       icon: def.icon || null, group: def.group || '', source: def.source || 'core',
       when: def.when || null,
+      // W62a：所有入口仍以命令注册表为单源；agent 只拿脱敏工具卡，不接触 run 函数。
+      agent: def.agent === false ? false : {
+        description: def.agent?.description || def.title || id,
+        argsSchema: def.agent?.argsSchema || { type: 'object', additionalProperties: false },
+        danger: def.agent?.danger ?? DANGEROUS_COMMAND.test(`${id} ${def.title || ''}`),
+        undo: def.agent?.undo || null,
+      },
     });
     this.events.emit('changed');
     return true;
@@ -35,12 +44,16 @@ class CommandRegistry {
 
   has(id) { return this.commands.has(id); }
   get(id) { return this.commands.get(id); }
+  isEnabled(id) {
+    const cmd = this.commands.get(id);
+    return !!cmd && (!cmd.when || contextKeys.evaluate(cmd.when));
+  }
 
   /** 执行命令：when 不满足时拒绝 */
   async execute(id, ...args) {
     const cmd = this.commands.get(id);
     if (!cmd) { console.warn(`[commands] 未注册: ${id}`); return undefined; }
-    if (cmd.when && !contextKeys.evaluate(cmd.when)) return undefined;
+    if (!this.isEnabled(id)) return undefined;
     return await cmd.run(...args);
   }
 
@@ -49,6 +62,17 @@ class CommandRegistry {
     return [...this.commands.values()]
       .filter(c => includeDisabled || !c.when || contextKeys.evaluate(c.when))
       .sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'));
+  }
+
+  /** 导出给 AI 路由器的闭集工具卡；函数体、来源内部状态一律不外泄。 */
+  toolCards({ includeDisabled = true } = {}) {
+    return this.list({ includeDisabled })
+      .filter(c => c.agent !== false)
+      .map(c => ({
+        id: c.id, title: c.title, group: c.group || '', when: c.when || '',
+        description: c.agent.description, argsSchema: c.agent.argsSchema,
+        danger: !!c.agent.danger, undo: c.agent.undo || null,
+      }));
   }
 }
 

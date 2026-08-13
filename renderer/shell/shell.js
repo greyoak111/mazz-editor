@@ -1079,8 +1079,8 @@ export class Shell {
     const R = (id, def) => commands.register(id, { ...def, source: 'shell' });
 
     // —— 文件 ——
-    R('file.new', { title: '新建文档', icon: '＋', group: '文件', run: () => this.openTab('markdown', { title: '未命名.md', content: '' }) });
-    R('file.newText', { title: '新建纯文本', icon: '🄣', group: '文件', run: () => this.openTab('text', { title: '未命名.txt', content: '' }) });
+    R('file.new', { title: '新建文档', icon: '＋', group: '文件', agent: { undo: { command: 'file.closeTab', args: {} } }, run: () => this.openTab('markdown', { title: '未命名.md', content: '' }) });
+    R('file.newText', { title: '新建纯文本', icon: '🄣', group: '文件', agent: { undo: { command: 'file.closeTab', args: {} } }, run: () => this.openTab('text', { title: '未命名.txt', content: '' }) });
     R('file.newSheet', { title: '新建表格', icon: '📊', group: '文件', run: () => this.openTab('sheet', { title: '未命名.mazzsheet', content: '' }) });
     R('file.newSlide', { title: '新建演示', icon: '📽', group: '文件', run: () => this.openTab('slide', { title: '未命名.mazzslide', content: '' }) });
     // ==================== W58b 解压缩：命令族 ====================

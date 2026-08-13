@@ -421,6 +421,28 @@ function registerChannels() {
   const factoryMock = { blueprintAttempts: 0, unitNo: 0 };
   const factoryMockReply = ({ system = '', user = '', stream = false }) => {
     if (!factoryMockEnabled) return null;
+    // W62a：E2E 专用的确定性 agent 路由台。按同一轮 transcript 推进，验证真工具循环而非假聊天。
+    if (system.includes('MAZZ_AGENT_ROUTER_V1')) {
+      const original = (/【原始交办】\s*([\s\S]*?)\s*【台账最近记录】/.exec(user) || [])[1] || '';
+      const steps = (/【本次已执行步骤】\s*([\s\S]*?)\s*只回一个 JSON/.exec(user) || [])[1] || '';
+      const untouched = !steps.trim() || steps.trim() === '无';
+      if (original.includes('W62连续交办')) {
+        if (untouched) return '{"command":"file.new","args":{}}';
+        if (steps.includes('file.new(') && !steps.includes('file.newText(')) return '{"command":"file.newText","args":{}}';
+        return '{"command":"agent.finish","args":{"message":"连续交办两步完成"}}';
+      }
+      if (original.includes('W62澄清任务')) {
+        if (untouched) return '{"command":"agent.clarify","args":{"question":"请选择成品格式","options":[{"label":"Markdown","value":"A"},{"label":"纯文本","value":"B"}]}}';
+        if (steps.includes('用户选择：B') && !steps.includes('file.newText(')) return '{"command":"file.newText","args":{}}';
+        return '{"command":"agent.finish","args":{"message":"已按澄清选项完成"}}';
+      }
+      if (original.includes('W62危险删除')) return '{"command":"fileTree.delete","args":{}}';
+      if (original.includes('W62打开新文档')) {
+        if (untouched) return '{"command":"file.new","args":{}}';
+        return '{"command":"agent.finish","args":{"message":"新文档已打开"}}';
+      }
+      return '{"command":"agent.finish","args":{"message":"模拟交办已收口"}}';
+    }
     if (stream && user.includes('META 蓝图生成要求')) {
       if (user.includes('META直过报告')) {
         return `# META直过报告结构蓝图\n\n## 任务目标\n验证说明类蓝图直过。\n\n## 目标读者\n验收人员。\n\n## 核心材料\n模拟台架记录。${'已确认材料用于支撑结构化写作。'.repeat(35)}\n\n## 结构大纲\n第1节：完成直过验收\n\n## 核心要点\n保持口径一致。\n\n## 论据数据\n模拟读数101。\n\n## 术语口径\n统一使用样本口径。\n\n## 质量校验\n完整性与可追溯性。\n\n## 创作启动指令\n按已确认材料写作。`;
