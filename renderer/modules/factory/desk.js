@@ -12,6 +12,7 @@ import {
   computeFactoryHealth, evaluateBudgetCap, makeBudgetCard, makeClarificationCard,
   makeDiffConfirmationCard,
 } from './command-gate.js';
+import { productFileName, productText } from './terms.js';
 
 const MODULE = 'factorydesk';
 const TASKS_KEY = 'mazz.factory.tasks';
@@ -22,7 +23,7 @@ let current = null;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const pathName = p => String(p || '').replace(/\\/g, '/').split('/').pop();
 const normPath = p => String(p || '').replace(/\\/g, '/').replace(/\/$/, '');
-const typeLabel = Object.freeze({ body: '正文', skeleton: '骨架', review: '审理', verdict: '裁决', help: '求助', system: '系统' });
+const typeLabel = Object.freeze({ body: '正文', skeleton: '总纲', review: '交叉审校', verdict: '仲裁', help: '协助', system: '系统' });
 
 async function readOptional(path) {
   if (!path) return '';
@@ -97,30 +98,30 @@ function makeRoot(container) {
   root.className = 'factory-desk';
   root.innerHTML = `
     <header class="fd-topbar">
-      <div class="fd-brand"><b>Factory Desk</b><span>活稿车间</span></div>
-      <select class="fd-task-select" aria-label="选择工厂项目"></select>
+      <div class="fd-brand"><b>智能创作台</b><span>创作流</span></div>
+      <select class="fd-task-select" aria-label="选择创作项目"></select>
       <div class="fd-views" role="tablist">
-        <button data-view="body">只看正文</button><button data-view="workshop">车间全景</button><button data-view="summary">摘要折叠</button>
+        <button data-view="body">只看正文</button><button data-view="workshop">创作流全景</button><button data-view="summary">摘要折叠</button>
       </div>
       <label class="fd-search">⌕ <input placeholder="窗内搜索并展开…" spellcheck="false"><span></span></label>
-      <button class="fd-icon" data-a="refresh" title="从工厂群档案重载">↻</button>
+      <button class="fd-icon" data-a="refresh" title="从创作流档案重载">↻</button>
     </header>
     <section class="fd-pins">
-      <button class="fd-pin" data-pin="bible"><i>圣经</i><b>等待载入</b><span>—</span></button>
-      <button class="fd-pin" data-pin="precedent"><i>判例</i><b>等待载入</b><span>—</span></button>
-      <button class="fd-stat fd-budget-pin" data-a="budget"><i>成本</i><b data-stat="cost">0</b><span>预算帽</span></button>
-      <div class="fd-stat"><i>回稿率</i><b data-stat="return">0%</b><span>已裁决单元</span></div>
+      <button class="fd-pin" data-pin="bible"><i>设定集</i><b>等待载入</b><span>—</span></button>
+      <button class="fd-pin" data-pin="precedent"><i>先例库</i><b>等待载入</b><span>—</span></button>
+      <button class="fd-stat fd-budget-pin" data-a="budget"><i>成本</i><b data-stat="cost">0</b><span>预算上限</span></button>
+      <div class="fd-stat"><i>退回率</i><b data-stat="return">0%</b><span>已审结单元</span></div>
       <div class="fd-stat"><i>在途</i><b data-stat="flight">0</b><span>项目</span></div>
-      <button class="fd-stat fd-health-pin" data-a="health"><i>健康</i><b>7 项</b><span>点开展开</span></button>
+      <button class="fd-stat fd-health-pin" data-a="health"><i>运行</i><b>7 项</b><span>点开展开</span></button>
     </section>
-    <section class="fd-health" hidden><header><b>健康看板</b><span>质控尾气自动记账</span><button type="button" data-a="health-close">收起</button></header><div class="fd-health-grid"></div></section>
+    <section class="fd-health" hidden><header><b>运行看板</b><span>质量指标自动汇总</span><button type="button" data-a="health-close">收起</button></header><div class="fd-health-grid"></div></section>
     <main class="fd-grid">
       <aside class="fd-directory"><div class="fd-pane-head"><b>章节目录</b><span data-dir-count>0</span></div><div class="fd-dir-list"></div></aside>
       <section class="fd-center">
-        <div class="fd-stream" tabindex="0"><div class="fd-vtop"></div><div class="fd-vitems"></div><div class="fd-vbottom"></div><div class="fd-empty">选择一个已有输出目录的工厂任务</div></div>
-        <form class="fd-instruction"><textarea rows="2" placeholder="自然语言经指令闸分为生产／立法／质检／闲聊；模糊必反问。Ctrl+Enter 发送" spellcheck="false"></textarea><button>过闸</button></form>
+        <div class="fd-stream" tabindex="0"><div class="fd-vtop"></div><div class="fd-vitems"></div><div class="fd-vbottom"></div><div class="fd-empty">选择一个已有输出目录的创作项目</div></div>
+        <form class="fd-instruction"><textarea rows="2" placeholder="指令将分为创作／规则／校验／咨询；含义不清时会先确认。Ctrl+Enter 发送" spellcheck="false"></textarea><button>提交</button></form>
       </section>
-      <aside class="fd-compare"><div class="fd-pane-head"><b>工件对照</b><button data-a="close-compare">收起</button></div><div class="fd-files"></div><article class="fd-preview"><div class="fd-preview-empty">点目录或卡片工件，在此对照</div></article></aside>
+      <aside class="fd-compare"><div class="fd-pane-head"><b>产物对照</b><button data-a="close-compare">收起</button></div><div class="fd-files"></div><article class="fd-preview"><div class="fd-preview-empty">点目录或卡片文件，在此对照</div></article></aside>
     </main>`;
   container.appendChild(root);
   return root;
@@ -173,26 +174,26 @@ function createDesk(container) {
     }
     const rows = [...units.values()].sort((a, b) => a.no - b.no);
     root.querySelector('[data-dir-count]').textContent = `${rows.length} 节`;
-    host.innerHTML = rows.length ? rows.map(unit => `<div class="fd-dir-unit"><button data-jump="${esc(unit.events[0].id)}"><b>${unit.no ? `第 ${unit.no} ${esc(unit.unitName)}` : '公共区'}</b><span>${unit.events.length} 件</span></button>${unit.events.map(e => `<button class="fd-dir-event type-${e.type}" data-jump="${esc(e.id)}"><i>${esc(typeLabel[e.type])}</i>${esc(e.title)}</button>`).join('')}</div>`).join('') : '<div class="fd-side-empty">群档暂无事件</div>';
+    host.innerHTML = rows.length ? rows.map(unit => `<div class="fd-dir-unit"><button data-jump="${esc(unit.events[0].id)}"><b>${unit.no ? `第 ${unit.no} ${esc(unit.unitName)}` : '公共区'}</b><span>${unit.events.length} 件</span></button>${unit.events.map(e => `<button class="fd-dir-event type-${e.type}" data-jump="${esc(e.id)}"><i>${esc(typeLabel[e.type])}</i>${esc(productText(e.title))}</button>`).join('')}</div>`).join('') : '<div class="fd-side-empty">创作流暂无事件</div>';
     host.querySelectorAll('[data-jump]').forEach(btn => btn.addEventListener('click', () => jumpToEvent(btn.dataset.jump, true)));
   }
 
   function cardHtml(item) {
     const e = item.event;
     const thread = ctl.threadMap.get(e.id);
-    const threadBadge = thread ? `<button class="fd-thread" data-thread="${esc(thread.id)}" data-event="${esc(e.id)}" title="跳到本辩论线程下一件">↕ ${thread.index + 1}/${thread.total}</button>` : '';
+    const threadBadge = thread ? `<button class="fd-thread" data-thread="${esc(thread.id)}" data-event="${esc(e.id)}" title="跳到本复核线程下一件">↕ ${thread.index + 1}/${thread.total}</button>` : '';
     const continuation = item.chunkCount > 1 ? `<span class="fd-chunk">${item.chunkIndex + 1}/${item.chunkCount}</span>` : '';
     const progress = e.progress == null ? '' : `<div class="fd-progress"><i style="width:${e.progress}%"></i><span>${e.progress}%</span></div>`;
-    if (item.collapsed) return `<article class="fd-card collapsed type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><button class="fd-fold" title="就地展开">›</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(e.title)}</b>${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time>${progress}</article>`;
+    if (item.collapsed) return `<article class="fd-card collapsed type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><button class="fd-fold" title="就地展开">›</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time>${progress}</article>`;
     const resolution = [...ctl.events].reverse().find(row => row.refId === e.id && ['instruction-choice', 'lock-decision', 'final-human', 'budget-decision', 'help-decision'].includes(row.stage));
-    const resolved = resolution ? `<div class="fd-resolution">已处理：${esc(resolution.title)}</div>` : '';
+    const resolved = resolution ? `<div class="fd-resolution">已处理：${esc(productText(resolution.title))}</div>` : '';
     let actions = '';
     if (!resolution && e.card?.kind === 'clarify') actions = `<div class="fd-card-actions">${(e.card.options || []).map(option => `<button data-card-action="clarify:${esc(option.id)}">按「${esc(option.label)}」处理</button>`).join('')}</div>`;
-    if (!resolution && e.card?.kind === 'diff-confirm') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="diff:confirm">确认写入圣经</button><button data-card-action="diff:reject">驳回变更</button></div>';
-    if (!resolution && e.card?.kind === 'final-review') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="final:seal">入库</button><button class="danger" data-card-action="final:return">打回</button><button data-card-action="final:hold">先放着</button></div>';
-    if (!resolution && e.card?.kind === 'budget') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="budget:degrade">降级继续</button><button class="danger" data-card-action="budget:stop">停摆</button></div>';
-    if (!resolution && e.card?.kind === 'help-moment') actions = '<div class="fd-card-actions"><button data-card-action="help:approve">批准升级</button><button data-card-action="help:return">打回重做</button><button data-card-action="help:evidence">要求补证</button></div>';
-    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">⌄</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(e.title)}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" data-path="${esc(e.artifactPath)}">工件 ↗ ${esc(pathName(e.artifactPath))}</button>` : ''}${resolved}${actions}</article>`;
+    if (!resolution && e.card?.kind === 'diff-confirm') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="diff:confirm">确认写入设定集</button><button data-card-action="diff:reject">拒绝变更</button></div>';
+    if (!resolution && e.card?.kind === 'final-review') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="final:seal">入库定本</button><button class="danger" data-card-action="final:return">退回修订</button><button data-card-action="final:hold">暂缓</button></div>';
+    if (!resolution && e.card?.kind === 'budget') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="budget:degrade">降级继续</button><button class="danger" data-card-action="budget:stop">暂停</button></div>';
+    if (!resolution && e.card?.kind === 'help-moment') actions = '<div class="fd-card-actions"><button data-card-action="help:approve">批准升级</button><button data-card-action="help:return">退回修订</button><button data-card-action="help:evidence">要求补证</button></div>';
+    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">⌄</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" data-path="${esc(e.artifactPath)}">产物 ↗ ${esc(productFileName(pathName(e.artifactPath)))}</button>` : ''}${resolved}${actions}</article>`;
   }
 
   function bindCards() {
@@ -272,20 +273,20 @@ function createDesk(container) {
   function renderHealth() {
     const rows = computeFactoryHealth(ctl.events);
     const host = root.querySelector('.fd-health-grid');
-    host.innerHTML = rows.map(row => `<div class="fd-health-metric trend-${row.trend}"><i>${esc(row.label)}</i><b>${esc(row.display)}</b><span>${esc(row.target)}</span><small>${row.trend === 'good' ? '趋势改善' : row.trend === 'bad' ? '趋势需看' : '本周基线'}</small></div>`).join('');
+    host.innerHTML = rows.map(row => `<div class="fd-health-metric trend-${row.trend}"><i>${esc(productText(row.label))}</i><b>${esc(row.display)}</b><span>${esc(productText(row.target))}</span><small>${row.trend === 'good' ? '趋势改善' : row.trend === 'bad' ? '趋势需看' : '本周基线'}</small></div>`).join('');
   }
 
   async function renderFiles() {
     ctl.files = await listFiles(ctl.folder);
     const host = root.querySelector('.fd-files');
-    host.innerHTML = ctl.files.length ? ctl.files.map(row => `<button data-file="${esc(row.path)}" style="--depth:${row.level}"><span>${/\.json$/i.test(row.name) ? '{}' : '¶'}</span>${esc(row.name)}</button>`).join('') : '<div class="fd-side-empty">暂无可对照工件</div>';
+    host.innerHTML = ctl.files.length ? ctl.files.map(row => `<button data-file="${esc(row.path)}" style="--depth:${row.level}"><span>${/\.json$/i.test(row.name) ? '{}' : '¶'}</span>${esc(productFileName(row.name))}</button>`).join('') : '<div class="fd-side-empty">暂无可对照产物</div>';
     host.querySelectorAll('[data-file]').forEach(btn => btn.addEventListener('click', () => openCompare(btn.dataset.file)));
   }
 
   async function openCompare(path) {
     const text = await readOptional(path);
     const preview = root.querySelector('.fd-preview');
-    preview.innerHTML = `<header><b>${esc(pathName(path))}</b><button data-open>在编辑器打开</button></header><div class="fd-md">${/\.json$/i.test(path) ? `<pre><code>${esc(text)}</code></pre>` : renderMarkdown(text)}</div>`;
+    preview.innerHTML = `<header><b>${esc(productFileName(pathName(path)))}</b><button data-open>在编辑器打开</button></header><div class="fd-md">${/\.json$/i.test(path) ? `<pre><code>${esc(text)}</code></pre>` : renderMarkdown(text)}</div>`;
     preview.querySelector('[data-open]').addEventListener('click', () => window.MazzCommands.execute('file.openPath', { path }).catch(() => {}));
     root.classList.remove('compare-closed');
   }
@@ -301,7 +302,10 @@ function createDesk(container) {
     renderHealth();
     rebuildItems();
     if (ctl.events.length) jumpToEvent(ctl.events.at(-1).id, false);
-    window.MazzHost?.setTabTitle(container, `${ctl.task?.label || '工厂'} · 活稿车间`);
+    window.MazzHost?.setTabTitle(
+      container,
+      ctl.task?.label ? `${ctl.task.label} · 智能创作台` : '智能创作台',
+    );
   }
 
   async function appendEvents(events) {
@@ -351,7 +355,7 @@ function createDesk(container) {
       const before = await readOptional(targetPath);
       const proposal = buildLockedBibleProposal(before, text);
       const card = makeDiffConfirmationCard({ targetPath, before: proposal.before, after: proposal.after, instruction: text });
-      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '锁定变更 · 等待 diff 确认', content: `立法指令：**${text}**\n\n\`\`\`diff\n${card.diff}\n\`\`\`\n\n点头前不会写入圣经。`, stage: 'lock-pending', family: 'legislation', refId, card }));
+      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '锁定变更 · 等待差异确认', content: `规则指令：**${text}**\n\n\`\`\`diff\n${card.diff}\n\`\`\`\n\n确认前不会写入设定集。`, stage: 'lock-pending', family: 'legislation', refId, card }));
       return false;
     }
     const label = FACTORY_COMMAND_LABELS[decision.family];
@@ -391,14 +395,14 @@ function createDesk(container) {
           const proposal = buildLockedBibleProposal(currentText, target.card.instruction);
           const card = makeDiffConfirmationCard({ targetPath: target.card.targetPath, before: proposal.before, after: proposal.after, instruction: target.card.instruction });
           await appendEvents([
-            normalizeFactoryEvent({ type: 'verdict', title: '旧 diff 已过期', content: '确认期间圣经另有更新，旧提案未写入。', stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }),
-            normalizeFactoryEvent({ type: 'help', title: '圣经已变化 · diff 重新确认', content: `检测到确认期间圣经另有更新，已按当前版本重算。\n\n\`\`\`diff\n${card.diff}\n\`\`\``, stage: 'lock-pending', family: 'legislation', card }),
+            normalizeFactoryEvent({ type: 'verdict', title: '旧差异已过期', content: '确认期间设定集另有更新，旧提案未写入。', stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }),
+            normalizeFactoryEvent({ type: 'help', title: '设定集已变化 · 差异重新确认', content: `检测到确认期间设定集另有更新，已按当前版本重算。\n\n\`\`\`diff\n${card.diff}\n\`\`\``, stage: 'lock-pending', family: 'legislation', card }),
           ]);
           return false;
         }
         await window.mazz.invoke('fs:writeFile', { path: target.card.targetPath, content: target.card.after });
       }
-      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'confirm' ? '锁定变更已确认入典' : '锁定变更已驳回', content: value === 'confirm' ? `圣经已按确认 diff 写入：${target.card.instruction}` : `圣经保持原样：${target.card.instruction}`, stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }));
+      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'confirm' ? '锁定变更已写入设定集' : '锁定变更已拒绝', content: value === 'confirm' ? `设定集已按确认差异写入：${target.card.instruction}` : `设定集保持原样：${target.card.instruction}`, stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }));
       return true;
     }
     if (kind === 'final') {
@@ -415,7 +419,7 @@ function createDesk(container) {
         updateTask({ finalDecision: 'returned', finalDecisionAt: Date.now(), status: 'paused', reviewState: { ...(ctl.task?.reviewState || {}), finalStatus: 'returned' } });
       } else updateTask({ finalDecision: 'held', finalDecisionAt: Date.now(), reviewState: { ...(ctl.task?.reviewState || {}), finalStatus: 'held' } });
       await writeFinalLedger(target, value);
-      const labels = { seal: '入库', return: '打回', hold: '先放着' };
+      const labels = { seal: '入库定本', return: '退回修订', hold: '暂缓' };
       await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: `人工终审 · ${labels[value]}`, content: `@human 对「${target.title}」作出：**${labels[value]}**。`, unitNo: target.unitNo, unitName: target.unitName, stage: 'final-human', refId: target.id, tone: 'verdict' }));
       return true;
     }
@@ -423,12 +427,12 @@ function createDesk(container) {
       if (!['degrade', 'stop'].includes(value)) return false;
       if (value === 'degrade') updateTask({ reviewRitual: 'light', reviewBudgetDecision: 'degrade' });
       else updateTask({ status: 'paused', reviewBudgetDecision: 'stop' });
-      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'degrade' ? '预算帽 · 降级继续' : '预算帽 · 停摆', content: value === 'degrade' ? '改用轻仪式，保留外部红队席；不绕过审理。' : '生产已暂停；待补预算或人工改令。', stage: 'budget-decision', refId: target.id, tone: 'verdict' }));
+      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'degrade' ? '预算上限 · 降级继续' : '预算上限 · 暂停', content: value === 'degrade' ? '改用标准流程，保留外部反向核查；不绕过交叉审校。' : '创作已暂停；待补预算或人工改令。', stage: 'budget-decision', refId: target.id, tone: 'verdict' }));
       return true;
     }
     if (kind === 'help') {
       if (!['approve', 'return', 'evidence'].includes(value)) return false;
-      const labels = { approve: '批准升级', return: '打回重做', evidence: '要求补证' };
+      const labels = { approve: '批准升级', return: '退回修订', evidence: '要求补证' };
       await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: `人工升级 · ${labels[value]}`, content: `@human 对「${target.title}」作出：**${labels[value]}**。`, unitNo: target.unitNo, unitName: target.unitName, stage: 'help-decision', refId: target.id, tone: 'verdict' }));
       return true;
     }
@@ -441,7 +445,7 @@ function createDesk(container) {
     const budget = evaluateBudgetCap({ capTokens: latest.budget?.capTokens || ctl.task?.reviewBudgetCap || 32000, usedTokens: latest.budget?.usedTokens || 0, requestedRitual: ctl.task?.reviewRitual || latest.ritual?.requested || 'light' });
     if (budget.status === 'ok') { toast(`预算正常：余 ${budget.remainingTokens.toLocaleString()} token`); return; }
     const card = makeBudgetCard({ ...budget, requestedRitual: ctl.task?.reviewRitual || 'light' });
-    await appendEvents(normalizeFactoryEvent({ id: `w68c-budget-manual-${ctl.task?.id || tinyHash(ctl.folder)}-${budget.capTokens}-${budget.usedTokens}`, type: 'help', title: `${budget.label} · 请选择`, content: `- 上限：${budget.capTokens.toLocaleString()} token\n- 已用：${budget.usedTokens.toLocaleString()} token\n- 余额：${budget.remainingTokens.toLocaleString()} token\n\n${budget.reason}`, stage: 'budget-pending', card }));
+    await appendEvents(normalizeFactoryEvent({ id: `w68c-budget-manual-${ctl.task?.id || tinyHash(ctl.folder)}-${budget.capTokens}-${budget.usedTokens}`, type: 'help', title: `${budget.label} · 请选择`, content: `- 上限：${budget.capTokens.toLocaleString()} token\n- 已用：${budget.usedTokens.toLocaleString()} token\n- 余额：${budget.remainingTokens.toLocaleString()} token\n\n${productText(budget.reason)}`, stage: 'budget-pending', card }));
   }
 
   async function submitInstruction() {
@@ -500,7 +504,7 @@ function createDesk(container) {
 }
 
 export default {
-  displayName: '活稿车间', icon: '🏭', readOnly: true, _forTests: { instances },
+  displayName: '智能创作台', icon: '🏭', readOnly: true, _forTests: { instances },
   create(container) { const ctl = createDesk(container); instances.set(container, ctl); return { container }; },
   activate(container) { const ctl = instances.get(container); if (!ctl) return; current = ctl; contextKeys.set('module', MODULE); window.MazzShell?.sideDock?.showTab?.('factory'); },
   deactivate(container) { if (current === instances.get(container)) current = null; },
@@ -509,16 +513,16 @@ export default {
   setContent(data, state) { const ctl = instances.get(state.container); if (!ctl || !data) return; if (ctl.startTimer) { clearTimeout(ctl.startTimer); ctl.startTimer = 0; } try { const obj = typeof data === 'string' ? JSON.parse(data) : data; if (obj?.view) ctl.setView(obj.view); ctl.loadProject({ taskId: obj?.taskId, folder: obj?.folder }); } catch {} },
   newDocument(state) { instances.get(state.container)?.loadProject({}); },
   getCharCount(state) { return instances.get(state.container)?.events.reduce((n, e) => n + e.content.length, 0) || 0; },
-  getCursorPos() { return '活稿流'; },
-  toolbarHTML: `<div class="rb-group" data-label="车间"><button class="rb-btn" data-command="factorydesk.refresh"><i class="ico">↻</i><span>重载群档</span></button><button class="rb-btn" data-command="factory.toggleDock"><i class="ico">🔥</i><span>调度坞</span></button></div><div class="rb-group" data-label="视图"><button class="rb-btn" data-command="factorydesk.body"><i class="ico">¶</i><span>只看正文</span></button><button class="rb-btn" data-command="factorydesk.workshop"><i class="ico">🏭</i><span>车间全景</span></button><button class="rb-btn" data-command="factorydesk.summary"><i class="ico">≡</i><span>摘要折叠</span></button></div>`,
+  getCursorPos() { return '创作流'; },
+  toolbarHTML: `<div class="rb-group" data-label="创作流"><button class="rb-btn" data-command="factorydesk.refresh"><i class="ico">↻</i><span>重载档案</span></button><button class="rb-btn" data-command="factory.toggleDock"><i class="ico">🔥</i><span>指令台</span></button></div><div class="rb-group" data-label="视图"><button class="rb-btn" data-command="factorydesk.body"><i class="ico">¶</i><span>只看正文</span></button><button class="rb-btn" data-command="factorydesk.workshop"><i class="ico">🏭</i><span>创作流全景</span></button><button class="rb-btn" data-command="factorydesk.summary"><i class="ico">≡</i><span>摘要折叠</span></button></div>`,
   bindToolbar(panel) { panel.querySelectorAll('[data-command]').forEach(btn => btn.addEventListener('click', () => window.MazzCommands.execute(btn.dataset.command))); },
   contributes: {
     commands: [
-      { id: 'factory.openDesk', title: '打开 Factory Desk 活稿车间', icon: '🏭', group: '智能创作', run: ({ taskId = '', folder = '', title = '' } = {}) => window.MazzHost?.openTab('factorydesk', { title: title || 'Factory Desk · 活稿车间', content: JSON.stringify({ mark: 'mazz-factorydesk-v1', taskId, folder, view: 'workshop' }) }) },
-      { id: 'factorydesk.refresh', title: '重载活稿车间', group: '智能创作', when: "module=='factorydesk'", run: () => current?.loadProject({ taskId: current.task?.id, folder: current.folder }) },
-      { id: 'factorydesk.body', title: '活稿车间：只看正文', group: '智能创作', when: "module=='factorydesk'", run: () => current?.setView('body') },
-      { id: 'factorydesk.workshop', title: '活稿车间：车间全景', group: '智能创作', when: "module=='factorydesk'", run: () => current?.setView('workshop') },
-      { id: 'factorydesk.summary', title: '活稿车间：摘要折叠', group: '智能创作', when: "module=='factorydesk'", run: () => current?.setView('summary') },
+      { id: 'factory.openDesk', title: '打开智能创作台', icon: '🏭', group: '智能创作', run: ({ taskId = '', folder = '', title = '' } = {}) => window.MazzHost?.openTab('factorydesk', { title: title || '智能创作台', content: JSON.stringify({ mark: 'mazz-factorydesk-v1', taskId, folder, view: 'workshop' }) }) },
+      { id: 'factorydesk.refresh', title: '重载智能创作台', group: '智能创作', when: "module=='factorydesk'", run: () => current?.loadProject({ taskId: current.task?.id, folder: current.folder }) },
+      { id: 'factorydesk.body', title: '智能创作台：只看正文', group: '智能创作', when: "module=='factorydesk'", run: () => current?.setView('body') },
+      { id: 'factorydesk.workshop', title: '智能创作台：创作流全景', group: '智能创作', when: "module=='factorydesk'", run: () => current?.setView('workshop') },
+      { id: 'factorydesk.summary', title: '智能创作台：摘要折叠', group: '智能创作', when: "module=='factorydesk'", run: () => current?.setView('summary') },
     ],
     keybindings: [{ command: 'factorydesk.refresh', key: 'ctrl+r', when: "module=='factorydesk'" }], menus: {}, bridges: [], aiActions: [],
   },

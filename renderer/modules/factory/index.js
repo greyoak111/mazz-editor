@@ -14,6 +14,7 @@ import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown,
 import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Review } from './review.js';
 import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, normalizeFactoryEvent } from './workshop.js';
 import { detectHumanHelpMoments, evaluateBudgetCap, makeBudgetCard, makeFinalReviewCard } from './command-gate.js';
+import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
@@ -167,8 +168,8 @@ export class FactoryPanel {
         </span></div>
       <div class="factory-body">
         <div class="fc-projectbar">
-          <div><b>车间执行台</b><span class="fc-daily-hint">新项目统一进入 Output 目录协议</span><span class="fc-role-pickers" aria-label="AI 岗位就地指派"></span></div>
-          <span class="fc-project-actions"><button class="fc-btn" data-a="desk">🏭 活稿车间</button><button class="fc-btn fc-accent" data-a="project">＋ 新建立项</button></span>
+          <div><b>智能创作执行台</b><span class="fc-daily-hint">新项目统一进入 Output 目录协议</span><span class="fc-role-pickers" aria-label="AI 岗位就地指派"></span></div>
+          <span class="fc-project-actions"><button class="fc-btn" data-a="desk">🏭 智能创作台</button><button class="fc-btn fc-accent" data-a="project">＋ 新建立项</button></span>
         </div>
         <div class="fc-project-stash" aria-hidden="true">
         <div class="fc-row">
@@ -177,8 +178,8 @@ export class FactoryPanel {
         <div class="fc-provider-hint"></div>
         <div class="fc-form"></div>
         <div class="fc-dump">
-          <div class="fc-label">竹筒倒豆子 <button class="fc-mini" data-a="fill">${iconHtml('✨')} 智能填充</button></div>
-          <textarea class="fc-dump-text" rows="4" placeholder="把所有想法、要求、限制条件随意倒进来——会自动提取进上面的字段"></textarea>
+          <div class="fc-label">自由补充 <button class="fc-mini" data-a="fill">${iconHtml('✨')} 智能填充</button></div>
+          <textarea class="fc-dump-text" rows="4" placeholder="补充想法、要求和限制条件，系统会自动整理到对应字段。"></textarea>
         </div>
         <div class="fc-length-planner">
           <div class="fc-label">篇幅档 <span>立项后自动换算内容单元数</span></div>
@@ -198,8 +199,8 @@ export class FactoryPanel {
           <summary>高级设置 <span class="fc-extra-badge"></span></summary>
           <div class="fc-sec fc-advanced-row">
             <label class="fc-check" title="双循环勘误：生成后自检+修订一轮"><input type="checkbox" class="fc-dualloop"> 双循环勘误</label>
-            <label class="fc-check" title="W68a 双环审理仪式">审理 <select class="fc-review-ritual"><option value="light">轻仪式</option><option value="full">全仪式</option></select></label>
-            <label class="fc-check" title="每任务审理 token 硬顶；不足时全仪式降级，低于 8000 硬停">预算 <input type="number" class="fc-review-budget" min="8000" step="1000" value="32000" style="width:72px"> token</label>
+            <label class="fc-check" title="交叉审校流程">审校 <select class="fc-review-ritual"><option value="light">标准流程</option><option value="full">完整流程</option></select></label>
+            <label class="fc-check" title="每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停">预算 <input type="number" class="fc-review-budget" min="8000" step="1000" value="32000" style="width:72px"> token</label>
             <label class="fc-check" title="由篇幅档决定是否连写"><input type="checkbox" class="fc-maxmode" checked> 连写模式</label>
             <label class="fc-check" title="每个任务自动打开独立只读预览窗"><input type="checkbox" class="fc-autopreview" ${this.autoPreview ? 'checked' : ''}> 生成自动开预览</label>
             <label class="fc-check" title="任务并发额度 1～4；默认 1 最稳">并发 <input type="number" class="fc-concurrency" min="1" max="4" step="1" value="${this.concurrency}" style="width:46px"> 路</label>
@@ -266,16 +267,16 @@ export class FactoryPanel {
             <div><b>指令台</b><span class="fc-agent-status">命令闭集待命</span></div>
             <span class="fc-agent-role"></span>
           </div>
-          <div class="fc-agent-chips" aria-label="高频交办"></div>
+          <div class="fc-agent-chips" aria-label="常用指令"></div>
           <div class="fc-agent-feed" aria-live="polite"></div>
           <div class="fc-agent-inputrow">
-            <textarea class="fc-agent-input" rows="2" placeholder="交办一件事；Ctrl+Enter 执行。多步任务会逐步回报，危险操作必须确认。" spellcheck="false"></textarea>
-            <button class="fc-btn fc-accent" data-a="agent-submit">交办</button>
+            <textarea class="fc-agent-input" rows="2" placeholder="下达一项指令；Ctrl+Enter 执行。多步任务会逐步回报，危险操作必须确认。" spellcheck="false"></textarea>
+            <button class="fc-btn fc-accent" data-a="agent-submit">执行</button>
           </div>
           <div class="fc-agent-foot"><span class="fc-agent-toolcount"></span><span>台账同步进工作区全文索引</span></div>
         </section>
         <div class="fc-logwrap">
-          <div class="fc-label">主控台日志 <button class="fc-mini" data-a="clearlog">清空</button></div>
+          <div class="fc-label">运行日志 <button class="fc-mini" data-a="clearlog">清空</button></div>
           <div class="fc-log"></div>
         </div>
         <div class="fc-history">
@@ -399,7 +400,7 @@ export class FactoryPanel {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'fc-agent-chip';
       b.textContent = `${row.input} ×${row.count}`;
-      b.title = '高频交办；点一下回填';
+      b.title = '常用指令；点一下回填';
       b.addEventListener('click', () => { this.agentInputEl.value = row.input; this.agentInputEl.focus(); });
       host.appendChild(b);
     }
@@ -419,8 +420,8 @@ export class FactoryPanel {
   renderAgentEvent(event) {
     if (!this.agentStatusEl) return;
     if (event.type === 'start') {
-      this.agentStatusEl.textContent = event.replay ? '回放上次交办…' : '受理中…';
-      this.addAgentCard('user', '厂主交办', event.input);
+      this.agentStatusEl.textContent = event.replay ? '回放上次指令…' : '受理中…';
+      this.addAgentCard('user', '用户指令', event.input);
     } else if (event.type === 'thinking') {
       this.agentStatusEl.textContent = `规划第 ${event.step} 步…`;
     } else if (event.type === 'tool-start') {
@@ -451,12 +452,12 @@ export class FactoryPanel {
       card.scrollIntoView({ block: 'nearest' });
     } else if (event.type === 'finish') {
       this.agentStatusEl.textContent = event.status === 'done' ? '已完成' : '已收口';
-      this.addAgentCard('finish', event.status === 'undo' ? '撤销完成' : '交办结果', event.message);
+      this.addAgentCard('finish', event.status === 'undo' ? '撤销完成' : '执行结果', event.message);
       this.agentSubmitEl.disabled = false;
     } else if (event.type === 'cancelled') {
       this.agentStatusEl.textContent = '已取消，未执行';
     } else if (event.type === 'error') {
-      this.agentStatusEl.textContent = '交办失败';
+      this.agentStatusEl.textContent = '执行失败';
       this.addAgentCard('error', '未执行', event.message);
       this.agentSubmitEl.disabled = false;
     }
@@ -808,14 +809,14 @@ export class FactoryPanel {
     const time = new Date().toTimeString().slice(0, 8);
     const line = document.createElement('div');
     line.className = 'fc-log-line';
-    line.textContent = `[${time}] ${msg}`;
+    line.textContent = `[${time}] ${productText(msg)}`;
     this.logEl.appendChild(line);
     this.logEl.scrollTop = this.logEl.scrollHeight;
   }
 
   openFactoryDesk(task = null) {
     const target = task || [...this.tasks].reverse().find(row => row.folder) || null;
-    commands.execute('factory.openDesk', { taskId: target?.id || '', folder: target?.folder || '', title: target ? `${target.label} · 活稿车间` : 'Factory Desk · 活稿车间' });
+    commands.execute('factory.openDesk', { taskId: target?.id || '', folder: target?.folder || '', title: target ? `${target.label} · 智能创作台` : '智能创作台' });
   }
 
   async appendWorkshop(task, events) {
@@ -1217,7 +1218,7 @@ export class FactoryPanel {
     if (!target || !text.trim()) { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '文件路径或内容无效' }); return false; }
     if (task.status === 'running') { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '任务生成中，暂不允许回写' }); return false; }
     if (task.reviewProtocol === W68_PROTOCOL && /\/工件\//.test(target.replace(/\\/g, '/'))) {
-      this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: 'W68a 审理工件封存只读；更正请对正文另立补遗' });
+      this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '交叉审校产物已封存为只读；更正请对正文另立补遗' });
       return false;
     }
     if (task.reviewProtocol === W68_PROTOCOL && task.reviewState?.sealed && !/(?:创作蓝图|章节大纲|圣经|判例库|状态快照)[^/]*\.md$/i.test(target)) {
@@ -1358,14 +1359,14 @@ export class FactoryPanel {
     if (result.ritual?.downgraded || result.verdict === 'budget-stop' || budgetGate.status !== 'ok') {
       workshopEvents.push(normalizeFactoryEvent({
         id: `w68c-budget-${task.id}-${unitNo}`, type: 'help', title: `${budgetGate.label} · 人工选择`,
-        content: `- 上限：${budgetGate.capTokens} token\n- 已用：${budgetGate.usedTokens} token\n- 余额：${budgetGate.remainingTokens} token\n\n${result.ritual?.reason || budgetGate.reason}`,
+        content: `- 上限：${budgetGate.capTokens} token\n- 已用：${budgetGate.usedTokens} token\n- 余额：${budgetGate.remainingTokens} token\n\n${productText(result.ritual?.reason || budgetGate.reason)}`,
         unitNo, unitName, stage: 'budget-pending', card: makeBudgetCard({ ...budgetGate, requestedRitual: result.ritual?.requested || task.reviewRitual || 'light' }),
       }));
     }
     for (const moment of detectHumanHelpMoments(result)) {
       workshopEvents.push(normalizeFactoryEvent({
-        id: `w68c-help-${task.id}-${unitNo}-${moment.id}`, type: 'help', title: `@human · ${moment.label}`,
-        content: `${moment.reason}\n\n这是允许主动求助的三种时刻之一；请人工决定升级、打回或补证。`, unitNo, unitName,
+        id: `w68c-help-${task.id}-${unitNo}-${moment.id}`, type: 'help', title: `@human · ${productText(moment.label)}`,
+        content: `${productText(moment.reason)}\n\n这是允许主动求助的三种时刻之一；请人工决定升级、退回或补证。`, unitNo, unitName,
         stage: 'help-moment', card: { kind: 'help-moment', moment: moment.id, reason: moment.reason },
       }));
     }

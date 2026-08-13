@@ -7,6 +7,7 @@ import { menus } from '../../core/menu-service.js';
 import { toast, modal, inputModal } from '../../shell/shell.js';
 import { snapshotScript } from './clipper.js';
 import { createClipRuntime } from './clip-runtime.js';
+import { createHarvestRuntime } from './harvest-runtime.js';
 
 const MODULE = 'browser';
 const instances = new Map();
@@ -944,11 +945,32 @@ function createBrowser(container) {
       if (pl?.kind !== 'favmgr') return;
       loadStore().then(() => { for (const t of ctl.tabs || []) if (t.url === HOME) renderHome(t); });
     });
+    async function handleHarvestPanelAction(pl) {
+      const push = payload => window.mazz.invoke('panel:push', { kind: 'harvest', payload }).catch(() => {});
+      try {
+        if (pl.type === 'harvestExport') {
+          const result = await ctl.harvester.exportSelection(pl);
+          push({ type: 'harvestResult', message: `已导出：${result.path.split('/').pop()}` });
+          toast(`AI 对话已导出：${result.path.split('/').pop()}`);
+        } else if (pl.type === 'harvestStyle') {
+          const result = await ctl.harvester.feedStyle(pl);
+          push({ type: 'harvestResult', message: `已加入文风素材：${result.entry.label}` });
+          toast(`已加入文风素材（${result.count} 条）`);
+        } else if (pl.type === 'harvestMindmap') {
+          await ctl.harvester.distillSelection(pl);
+        }
+      } catch (error) {
+        const message = error?.message || String(error);
+        push({ type: 'harvestError', message });
+        toast('AI 对话整理失败：' + message);
+      }
+    }
     window.mazz.on('panel:action', (pl) => {
       if (pl?.type === 'openUrl' && pl.url) openTab(pl.url);
       else if (pl?.type === 'fillPassword' && pl.id) fillPassword(pl.id);
       // 每个浏览器实例都订阅同一主窗信道；只允许当前实例响应一次，否则开过 N 个浏览器就会启动 N 份批队列。
       else if (pl?.type === 'clipBookmarks' && ctl === current) window.MazzCommands?.execute('browser.clipBookmarks');
+      else if (/^harvest(?:Export|Style|Mindmap)$/.test(pl?.type || '') && ctl === current) handleHarvestPanelAction(pl);
       // W54 B3 收藏当前页桥（panel 子窗格：预填+保存，ctl 真相源）
       else if (pl?.type === 'bookmarkQuery') {
         const t = activeTab();
@@ -1217,6 +1239,7 @@ function createBrowser(container) {
   ctl.fillPassword = fillPassword;
   ctl.reloadTab = reloadTab; // 命令注册在模块顶层够不着 createBrowser 内部函数——实例方法出口（ReferenceError 实锤平反）
   ctl.clipper = createClipRuntime({ ctl, toast });
+  ctl.harvester = createHarvestRuntime({ ctl, toast });
 
   // 初始
   loadStore().then(() => openTab(HOME));
@@ -1318,6 +1341,7 @@ export default {
     <div class="rb-group" data-label="协同">
       <button class="rb-btn" data-command="browser.clipToNote"><i class="ico">${iconHtml('✂')}</i><span>摘录到笔记</span></button>
       <button class="rb-btn" data-command="browser.pageToLibrary"><i class="ico">${iconHtml('📥')}</i><span>网页剪藏</span></button>
+      <button class="rb-btn" data-command="browser.harvestAiChat"><i class="ico">☷</i><span>AI 对话整理</span></button>
       <button class="rb-btn" data-command="browser.clipBookmarks"><i class="ico">⇊</i><span>批量剪藏</span></button>
       <button class="rb-btn" data-command="browser.shareLocal"><i class="ico">⌁</i><span>局域网分享</span></button>
       <button class="rb-btn" data-command="browser.manageBookmarks"><i class="ico">${iconHtml('📁')}</i><span>收藏管理</span></button>
@@ -1371,6 +1395,19 @@ export default {
             const result = await current.clipper.clipCurrent();
             toast(`已剪藏：${result.stem}.md · ${result.assets} 图${result.ocr ? ' · OCR 已补正文' : ''}`);
           } catch (error) { toast('剪藏失败：' + (error?.message || error)); }
+        } },
+      { id: 'browser.harvestAiChat', title: 'AI 对话整理（全量采集、导出与回喂）', icon: '☷', group: '桥接',
+        when: "module=='browser'", run: async () => {
+          if (!current) return;
+          await window.mazz.invoke('panel:open', { kind: 'harvest' });
+          const push = payload => window.mazz.invoke('panel:push', { kind: 'harvest', payload }).catch(() => {});
+          push({ type: 'harvestLoading', message: '正在循环滚顶并识别对话结构…' });
+          try {
+            const result = await current.harvester.collectCurrent();
+            push({ type: 'harvestSnapshot', ...result });
+          } catch (error) {
+            push({ type: 'harvestError', message: error?.message || String(error) });
+          }
         } },
       { id: 'browser.clipBookmarks', title: '批量剪藏全部收藏（严格 2 并发）', icon: '⇊', group: '桥接',
         when: "module=='browser'", run: async () => {

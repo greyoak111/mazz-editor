@@ -76,6 +76,29 @@ export async function uploadStyleFile({ path, note = '', chatFn }) {
   return entry;
 }
 
+/** W62f：把网页对话中的选定消息直接登记为文风素材；不额外消耗模型额度。 */
+export async function saveStyleText({ label = 'AI 对话', text, note = '', sourceUrl = '' }) {
+  let sample = String(text || '').trim();
+  if (!sample) throw new Error('没有可加入文风素材的文字');
+  if (sample.length > MAX_CHARS_PER_FILE) sample = sample.slice(0, MAX_CHARS_PER_FILE) + '\n\n[文本过长，已截断至前8000字]';
+  const entry = {
+    id: mkId(sourceUrl || label),
+    type: 'harvest',
+    label: `💬 ${String(label || 'AI 对话').trim()}`,
+    text: sample,
+    textPreview: sample.slice(0, 200).replace(/\n/g, ' '),
+    charCount: sample.length,
+    note: String(note || '').trim(),
+    sourceUrl: String(sourceUrl || ''),
+    analysis: '',
+    createdAt: Date.now(),
+  };
+  const list = await loadIndex();
+  list.unshift(entry);
+  await saveIndex(list);
+  return entry;
+}
+
 /** 在线作家/作品风格查询（AI 回忆分析，无需联网） */
 export async function queryOnlineStyle({ authorWork, note = '', chatFn }) {
   if (!authorWork.trim()) throw new Error('请输入作家/作品信息');

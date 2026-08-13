@@ -83,6 +83,7 @@ const files = [
   'tests/contract/r1r2-progress-notif.test.mjs',
   'tests/contract/hotfix-w62-search.test.mjs',
   'tests/contract/hotfix-w62b.test.mjs',
+  'tests/contract/hotfix-w62f.test.mjs',
   'tests/contract/hotfix-w62c.test.mjs',
   'tests/contract/hotfix-w62d.test.mjs',
   'tests/contract/help.test.mjs',

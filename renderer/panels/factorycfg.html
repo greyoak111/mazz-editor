@@ -139,11 +139,11 @@ function projectFieldHtml(f) {
 function renderProject() {
   const m = $('#m');
   const s = projectSnapshot;
-  if (!s) { m.innerHTML = '<div class="hint">正在读取车间立项状态…</div>'; return; }
+  if (!s) { m.innerHTML = '<div class="hint">正在读取智能创作立项状态…</div>'; return; }
   const plan = s.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000, maxChapters: 5 };
   const presets = s.lengthPresets || [];
   m.innerHTML = `
-    <div class="project-head"><div><h2>新项目立项</h2><p>本向导只在建项目时出现一次；入队后回到车间执行台。</p></div><div class="hint">${esc(s.providerHint || '')}</div></div>
+    <div class="project-head"><div><h2>新项目立项</h2><p>本向导只在建项目时出现一次；入队后回到智能创作执行台。</p></div><div class="hint">${esc(s.providerHint || '')}</div></div>
     <div class="project-grid">
       <div>
         <div class="project-card">
@@ -174,7 +174,7 @@ function renderProject() {
           <details class="advanced">
             <summary>高级设置</summary>
             <div class="advanced-body">
-              <div class="inline-row"><label><input id="pj-dual" type="checkbox" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id="pj-max" type="checkbox" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>W68a 审理 <select id="pj-review-ritual" class="sel"><option value="light" ${(s.reviewRitual || 'light') === 'light' ? 'selected' : ''}>轻仪式</option><option value="full" ${s.reviewRitual === 'full' ? 'selected' : ''}>全仪式</option></select></label><label>审理预算 <input id="pj-review-budget" class="inp" type="number" min="8000" step="1000" value="${s.reviewBudgetCap || 32000}" style="width:90px"> token</label><label><input id="pj-autopreview" type="checkbox" ${s.autoPreview !== false ? 'checked' : ''}> 生成自动开预览</label><label>并发 <select id="pj-concurrency" class="sel" title="同时运行的独立任务数；默认 1">${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === (s.concurrency || 1) ? 'selected' : ''}>${n} 路</option>`).join('')}</select></label><label>导出 <select id="pj-format" class="sel">${(s.exportFormats || []).map(x => `<option value="${attr(x.id)}" ${x.id === s.exportFmt ? 'selected' : ''}>.${esc(x.ext)}</option>`).join('')}</select></label></div>
+              <div class="inline-row"><label><input id="pj-dual" type="checkbox" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id="pj-max" type="checkbox" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>交叉审校 <select id="pj-review-ritual" class="sel"><option value="light" ${(s.reviewRitual || 'light') === 'light' ? 'selected' : ''}>标准流程</option><option value="full" ${s.reviewRitual === 'full' ? 'selected' : ''}>完整流程</option></select></label><label>审校预算 <input id="pj-review-budget" class="inp" type="number" min="8000" step="1000" value="${s.reviewBudgetCap || 32000}" style="width:90px"> token</label><label><input id="pj-autopreview" type="checkbox" ${s.autoPreview !== false ? 'checked' : ''}> 生成自动开预览</label><label>并发 <select id="pj-concurrency" class="sel" title="同时运行的独立任务数；默认 1">${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === (s.concurrency || 1) ? 'selected' : ''}>${n} 路</option>`).join('')}</select></label><label>导出 <select id="pj-format" class="sel">${(s.exportFormats || []).map(x => `<option value="${attr(x.id)}" ${x.id === s.exportFmt ? 'selected' : ''}>.${esc(x.ext)}</option>`).join('')}</select></label></div>
               <div class="sec">创作插件 <button class="btn" data-pa="plugcfg">配置字段</button></div>
               <div class="chip-row">${(s.extras?.plugins || []).map(x => `<button class="choice-chip ${x.on ? 'on' : ''}" data-pa="togglePlugin" data-id="${attr(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="hint">当前文体无插件</span>'}</div>
               <div class="sec">文风素材 <button class="btn" data-pa="styleup">上传</button> <button class="btn" data-pa="styleonline">在线查询</button></div>

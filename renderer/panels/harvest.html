@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<title>AI 对话整理</title>
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<style>
+  html, body { background:transparent; margin:0; height:100%; overflow: hidden }*{box-sizing:border-box}
+  body{font:13px/1.55 var(--font-ui)}button{font:inherit}
+  .pwin{display:flex;flex-direction:column;height:100vh;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 10px 36px rgba(0,0,0,.4)}
+  .p-drag{height:12px;flex:none;-webkit-app-region:drag}.p-winbtns{position:absolute;top:2px;right:8px;display:flex;gap:2px;z-index:9}
+  .p-winbtns button{display:inline-flex;align-items:center;justify-content:center;-webkit-app-region:no-drag;width:30px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--fg-dim);cursor:pointer}
+  .p-winbtns button:hover{background:var(--bg-hover);color:var(--fg)}.p-winbtns .x:hover{background:#e81123;color:#fff}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg-elev);flex:none}
+  header b{font-size:15px}.head-meta{color:var(--fg-dim);font-size:11.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .controls{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:9px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
+  button{border:1px solid var(--border);background:var(--bg-elev);color:var(--fg);border-radius:7px;padding:4px 9px;cursor:pointer}
+  button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}button.on,button.pri{background:var(--accent);color:var(--accent-fg,#fff);border-color:var(--accent)}
+  button:disabled{opacity:.42;cursor:default}.split{width:1px;height:20px;background:var(--border);margin:0 2px}.count{margin-left:auto;color:var(--fg-dim);font-size:12px}
+  main{flex:1;min-height:0;overflow:auto;padding:11px 16px}.empty{padding:46px 18px;text-align:center;color:var(--fg-dim)}
+  .msg{display:grid;grid-template-columns:24px 76px minmax(0,1fr);gap:9px;align-items:start;padding:10px 8px;border-bottom:1px solid var(--border)}
+  .msg:hover{background:var(--bg-hover)}.msg input{margin-top:6px}.role{border-radius:999px;padding:3px 7px;font-size:11.5px;white-space:nowrap}
+  .role.user{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));color:var(--accent)}.role.assistant{border-color:#16a085;color:#16856f}
+  .text{white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto;font-size:12.5px}.uncertain{opacity:.72}
+  footer{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border);background:var(--bg-elev);flex:none}
+  #status{flex:1;color:var(--fg-dim);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style></head><body>
+<div class="pwin">
+  <div class="p-drag"></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化">—</button><button id="p-max" title="最大化/还原">□</button><button class="x" id="p-close" title="关闭">×</button></div>
+  <header><b>AI 对话整理</b><span class="head-meta" id="meta">等待读取当前网页…</span></header>
+  <div class="controls">
+    <button data-mode="single">单选</button><button class="on" data-mode="batch">批量选择</button><span class="split"></span>
+    <button id="select-all">全选</button><button id="select-invert">反选</button>
+    <span class="count" id="count">0 / 0 条</span>
+  </div>
+  <main class="mazz-scroll" id="list"><div class="empty">正在循环滚顶并识别对话结构…</div></main>
+  <footer>
+    <span id="status">角色后的“?”表示启发式推断；点击角色标签可翻转。</span>
+    <button id="style">添加到文风素材</button><button id="mindmap">AI 提炼成图</button><button class="pri" id="export">导出 Markdown</button>
+  </footer>
+</div>
+<script>
+const $=selector=>document.querySelector(selector);
+const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const DATA={meta:null,messages:[],mode:'batch',busy:false};
+const pwb=action=>window.mazz.invoke('window:'+action).catch(()=>{});
+$('#p-min').addEventListener('click',()=>pwb('minimize'));$('#p-max').addEventListener('click',()=>pwb('toggleMaximize'));$('#p-close').addEventListener('click',()=>pwb('close'));
+const applyTheme=(id,vars)=>{if(id)document.documentElement.dataset.theme=id;if(vars)for(const[key,value]of Object.entries(vars))if(value)document.documentElement.style.setProperty('--'+key,value)};
+window.mazz.invoke('panel:action',{type:'themeSnapshot'}).catch(()=>{});
+window.mazz.on('theme:changed',({id,vars})=>applyTheme(id,vars));
+
+function selected(){return DATA.messages.filter(row=>row.selected)}
+function syncCount(){
+  $('#count').textContent=`${selected().length} / ${DATA.messages.length} 条`;
+  const disabled=DATA.busy||!selected().length;
+  $('#export').disabled=disabled;$('#style').disabled=disabled;$('#mindmap').disabled=disabled;
+}
+function render(){
+  if(!DATA.messages.length){$('#list').innerHTML='<div class="empty">没有识别到对话消息</div>';syncCount();return}
+  $('#list').innerHTML=DATA.messages.map(row=>`<label class="msg ${row.uncertain?'uncertain':''}" data-id="${esc(row.id)}">
+    <input type="checkbox" ${row.selected?'checked':''}>
+    <button type="button" class="role ${row.role}" data-role-flip title="点击翻转用户 / AI">${esc(row.roleLabel)}</button>
+    <span class="text">${esc(row.text)}</span>
+  </label>`).join('');
+  syncCount();
+}
+$('#list').addEventListener('change',event=>{
+  const host=event.target.closest('.msg');if(!host||event.target.type!=='checkbox')return;
+  const row=DATA.messages.find(item=>item.id===host.dataset.id);if(!row)return;
+  if(DATA.mode==='single'&&event.target.checked)DATA.messages.forEach(item=>{item.selected=item===row});
+  else row.selected=event.target.checked;
+  render();
+});
+$('#list').addEventListener('click',event=>{
+  const button=event.target.closest('[data-role-flip]');if(!button)return;
+  event.preventDefault();const host=button.closest('.msg');const row=DATA.messages.find(item=>item.id===host?.dataset.id);if(!row)return;
+  row.role=row.role==='user'?'assistant':'user';row.uncertain=false;row.roleLabel=row.role==='user'?'用户':'AI';render();
+});
+document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>{
+  DATA.mode=button.dataset.mode;document.querySelectorAll('[data-mode]').forEach(item=>item.classList.toggle('on',item===button));
+  if(DATA.mode==='single'&&selected().length>1){let keep=true;DATA.messages.forEach(row=>{if(row.selected){row.selected=keep;keep=false}});render()}
+}));
+$('#select-all').addEventListener('click',()=>{DATA.messages.forEach((row,index)=>row.selected=DATA.mode==='single'?index===0:true);render()});
+$('#select-invert').addEventListener('click',()=>{if(DATA.mode==='single'){const index=DATA.messages.findIndex(row=>row.selected);DATA.messages.forEach((row,i)=>row.selected=i===((index+1)%DATA.messages.length))}else DATA.messages.forEach(row=>row.selected=!row.selected);render()});
+
+async function send(type,label){
+  const messages=selected().map(({id,role,roleLabel,uncertain,text})=>({id,role,roleLabel,uncertain,text}));
+  if(!messages.length)return;
+  DATA.busy=true;$('#status').textContent=label;syncCount();
+  await window.mazz.invoke('panel:action',{type,meta:DATA.meta,messages}).catch(error=>{$('#status').textContent=error.message||String(error);DATA.busy=false;syncCount()});
+}
+$('#export').addEventListener('click',()=>send('harvestExport','正在写入工作区…'));
+$('#style').addEventListener('click',()=>send('harvestStyle','正在加入文风素材…'));
+$('#mindmap').addEventListener('click',()=>send('harvestMindmap','正在建立无损提炼预览…'));
+
+window.mazz.on('panel:push',payload=>{
+  if(payload?.type==='themeInit'){applyTheme(payload.id,payload.vars);return}
+  if(payload?.type==='harvestLoading'){$('#status').textContent=payload.message||'正在读取网页…';return}
+  if(payload?.type==='harvestSnapshot'){
+    DATA.meta=payload.meta||{};DATA.messages=(payload.messages||[]).map(row=>({...row,selected:true}));
+    $('#meta').textContent=`${DATA.meta.site||'通用网页对话'} · ${DATA.meta.topic||DATA.meta.title||'未命名'} · 滚顶 ${DATA.meta.scrollPasses||0} 轮`;
+    $('#status').textContent=`识别到 ${DATA.messages.length} 条消息；“?”角色可点击翻转。`;DATA.busy=false;render();return;
+  }
+  if(payload?.type==='harvestResult'){DATA.busy=false;$('#status').textContent=payload.message||'处理完成';syncCount();return}
+  if(payload?.type==='harvestError'){DATA.busy=false;DATA.messages=[];$('#list').innerHTML=`<div class="empty">${esc(payload.message||'读取失败')}</div>`;$('#status').textContent=payload.message||'读取失败';syncCount()}
+});
+</script></body></html>
