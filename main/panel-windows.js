@@ -105,6 +105,8 @@ class PanelWindows {
       for (const p of this._windowsFor(kind, instanceId)) this._send(p, payload);
       return true;
     });
+    // W61b：自由拖动后，一键把同族多实例收回左右阶梯位。
+    bus.handle('panel:arrange', async ({ kind }) => this.arrange(kind));
   }
 
   _instanceId(value) {
@@ -148,16 +150,33 @@ class PanelWindows {
     while (used.has(n)) n++;
     return n;
   }
-  _stairBounds(parent, width, height, index) {
+  _stairBounds(parent, width, height, index, side = 'right') {
     const anchor = parent?.getBounds?.() || { x: 0, y: 0, width: 1440, height: 900 };
     const area = screen.getDisplayMatching(anchor).workArea;
     const step = 44;
     const rows = Math.max(1, Math.floor((area.height - height - 32) / step) + 1);
     const row = index % rows, col = Math.floor(index / rows);
     return {
-      x: Math.max(area.x, area.x + area.width - width - 16 - col * step),
+      x: side === 'left'
+        ? Math.min(area.x + area.width - width, area.x + 16 + col * step)
+        : Math.max(area.x, area.x + area.width - width - 16 - col * step),
       y: Math.min(area.y + area.height - height, area.y + 16 + row * step),
     };
+  }
+  arrange(kind) {
+    kind = String(kind || '');
+    if (!PanelWindows.MULTI_KINDS.has(kind)) return { error: '仅多实例窗可收拢' };
+    const parent = this.win?.();
+    const side = kind === 'fedit' ? 'left' : 'right';
+    const wins = [...this.panels.values()].filter(w => !w.isDestroyed() && w.__panelKind === kind)
+      .sort((a, b) => (a.__stairIndex ?? 0) - (b.__stairIndex ?? 0));
+    wins.forEach((win, index) => {
+      win.__stairIndex = index;
+      const b = win.getBounds();
+      const pos = this._stairBounds(parent, b.width, b.height, index, side);
+      win.setBounds({ ...pos, width: b.width, height: b.height });
+    });
+    return { ok: true, kind, count: wins.length, side };
   }
   /** 批注墨迹子窗（W52④：透明 alwaysOnTop 全屏罩——下层浏览器视图全程活着，墨迹画布只管收笔画） */
   openAnnotate(parent) {
@@ -240,12 +259,13 @@ class PanelWindows {
         : kind === 'picklist' ? (opts.h || 420)
         : kind === 'palette' ? 480 : kind === 'quickopen' ? 480 : kind === 'dockfloat' ? 620 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : 560;
     const stairIndex = PanelWindows.MULTI_KINDS.has(kind) ? this._nextStairIndex(kind) : -1;
-    const stair = PanelWindows.MULTI_KINDS.has(kind) ? this._stairBounds(parent, panelWidth, panelHeight, stairIndex) : {};
+    const stairSide = kind === 'fedit' ? 'left' : 'right';
+    const stair = PanelWindows.MULTI_KINDS.has(kind) ? this._stairBounds(parent, panelWidth, panelHeight, stairIndex, stairSide) : {};
     const win = new BrowserWindow({
       width: panelWidth,
       height: panelHeight,
-      minWidth: kind === 'ctxmenu' ? 160 : kind === 'picklist' ? 240 : kind === 'fpreview' ? 560 : 480,
-      minHeight: kind === 'ctxmenu' ? 60 : kind === 'picklist' ? 200 : kind === 'fpreview' ? 420 : 360,
+      minWidth: kind === 'ctxmenu' ? 160 : kind === 'picklist' ? 240 : kind === 'fpreview' ? 560 : kind === 'fedit' ? 620 : 480,
+      minHeight: kind === 'ctxmenu' ? 60 : kind === 'picklist' ? 200 : kind === 'fpreview' ? 420 : kind === 'fedit' ? 440 : 360,
       // W55 右键菜单子窗格：屏坐标定位（主窗内容区坐标→屏坐标）+防出屏翻边（W58i picklist 字体/字号格同例）
       ...stair,
       ...((kind === 'ctxmenu' || kind === 'picklist') ? (() => {
@@ -272,6 +292,7 @@ class PanelWindows {
     });
     this._prepare(win, kind, instanceId, panelKey);
     win.__stairIndex = stairIndex;
+    win.__stairSide = stairSide;
     this.panels.set(panelKey, win);
     if (kind === 'ctxmenu' || kind === 'picklist') win.on('blur', () => { try { win.close(); } catch {} }); // 菜单惯例：失焦即收（W58i picklist 字体/字号选择格同例）
     win.on('closed', () => {

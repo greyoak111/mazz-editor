@@ -44,6 +44,9 @@
   .reader { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
   .reader-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-bottom: 1px solid var(--border); color: var(--fg-dim); font-size: 11px; }
   .reader-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .editbtn { flex: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; background: var(--bg-elev); color: var(--fg); font: 10.5px var(--font-ui); cursor: pointer; }
+  .editbtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .editbtn:disabled { opacity: .38; cursor: not-allowed; }
   .readonly { margin-left: auto; flex: none; padding: 2px 7px; border: 1px solid var(--border); border-radius: 999px; font-size: 10px; }
   .doc { flex: 1; min-height: 0; overflow: auto; padding: 22px 30px 70px; overflow-wrap: anywhere; }
   .doc h1, .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 { line-height: 1.3; margin: 1.25em 0 .55em; }
@@ -70,7 +73,7 @@
   </div>
   <div class="body">
     <aside class="rail"><div class="rail-label">任务目录 · 只读</div><nav class="files" id="files"><div class="empty">等待文件落盘…</div></nav></aside>
-    <main class="reader"><div class="reader-head"><span id="path">实时生成内容</span><b class="readonly">READ ONLY</b></div><article class="doc" id="doc"><div class="empty">正在连接生成任务…</div></article></main>
+    <main class="reader"><div class="reader-head"><span id="path">实时生成内容</span><button class="editbtn" id="edit" disabled>✎ 去编辑</button><b class="readonly">READ ONLY</b></div><article class="doc" id="doc"><div class="empty">正在连接生成任务…</div></article></main>
   </div>
 </div>
 <script>
@@ -85,7 +88,7 @@ $('#p-close').addEventListener('click', () => pwb('close'));
 window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
 window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
 
-let taskId = '', currentPath = '', fileList = [], streamText = '', running = false;
+let taskId = '', currentPath = '', fileList = [], streamText = '', taskRunning = false;
 function inlineMd(s) {
   return esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
 }
@@ -130,9 +133,11 @@ function renderFiles() {
   $('#files').innerHTML = order.filter(g => groups.has(g)).map(g => `<section><div class="group">${g}</div>${groups.get(g).map(f => `<button class="file ${f.status || ''} ${f.path === currentPath ? 'on' : ''}" data-path="${attr(f.path)}" title="${attr(f.name)}"><span>${f.ico}</span><span class="name">${esc(f.name)}</span><span class="mark">${f.status === 'running' ? '●' : '✓'}</span></button>`).join('')}</section>`).join('') || '<div class="empty">等待文件落盘…</div>';
   $('#files').querySelectorAll('[data-path]').forEach(b => b.addEventListener('click', () => {
     currentPath = b.dataset.path; renderFiles();
+    updateEdit();
     window.mazz.invoke('panel:action', { type: 'factoryPreviewRead', taskId, path: currentPath }).catch(() => {});
   }));
 }
+function updateEdit() { const virtual = fileList.find(f => f.path === currentPath)?.status === 'running'; $('#edit').disabled = !taskId || !currentPath || taskRunning || virtual; }
 function setStatus(text, state) { $('#status').textContent = text || '等待任务'; $('#status').className = 'status ' + (state || ''); }
 function showText(text, path, isRunning = false) {
   if (path) currentPath = path;
@@ -140,7 +145,9 @@ function showText(text, path, isRunning = false) {
   $('#doc').innerHTML = markdown(text) + (isRunning ? '<span class="caret"></span>' : '');
   if (isRunning) $('#doc').scrollTop = $('#doc').scrollHeight;
   renderFiles();
+  updateEdit();
 }
+$('#edit').addEventListener('click', () => { if (!$('#edit').disabled) window.mazz.invoke('panel:action', { type: 'factoryPreviewEdit', taskId, path: currentPath }).catch(() => {}); });
 window.mazz.on('panel:push', p => {
   if (!p) return;
   if (p.type === 'themeInit') { applyTheme(p.id, p.vars); return; }
@@ -149,23 +156,25 @@ window.mazz.on('panel:push', p => {
     taskId = p.taskId || taskId; document.body.dataset.taskId = taskId;
     $('#title').textContent = p.title || '生成预览'; $('#folder').textContent = p.folder || '';
     fileList = p.files || []; currentPath = p.currentPath || currentPath;
+    taskRunning = p.status === 'running';
     setStatus(p.statusText || '生成中…', p.status || 'running');
     if (p.content != null) showText(p.content, currentPath, p.status === 'running'); else renderFiles();
     return;
   }
-  if (p.type === 'factoryPreviewFiles') { fileList = p.files || []; renderFiles(); return; }
+  if (p.type === 'factoryPreviewFiles') { fileList = p.files || []; renderFiles(); updateEdit(); return; }
   if (p.type === 'factoryPreviewStream') {
-    taskId = p.taskId || taskId; running = true; streamText = p.text || ''; currentPath = p.path || currentPath;
+    taskId = p.taskId || taskId; taskRunning = true; streamText = p.text || ''; currentPath = p.path || currentPath;
     if (currentPath && !fileList.some(f => f.path === currentPath)) fileList.push({ name: currentPath.split(/[\\/]/).pop(), path: currentPath, status: 'running' });
     setStatus(p.phase === 'blueprint' ? '蓝图 · 生成中…' : `第${p.chapterNo || 1}${p.unitName || '章'} · 生成中…`, 'running'); showText(streamText, currentPath, true); return;
   }
-  if (p.type === 'factoryPreviewFile') { running = false; showText(p.content || '', p.path || currentPath, false); return; }
+  if (p.type === 'factoryPreviewFile') { showText(p.content || '', p.path || currentPath, false); return; }
   if (p.type === 'factoryPreviewDone') {
-    running = false; fileList = p.files || fileList;
+    fileList = p.files || fileList;
     setStatus(`第${p.chapterNo || 1}${p.unitName || '章'} · ✓完成`, 'done'); showText(p.text || streamText, p.path || currentPath, false); return;
   }
-  if (p.type === 'factoryPreviewTaskDone') { running = false; fileList = p.files || fileList; setStatus('✓ 全部完成', 'done'); renderFiles(); return; }
-  if (p.type === 'factoryPreviewFail') { running = false; fileList = p.files || fileList; setStatus('✗ ' + (p.message || '生成失败'), 'failed'); renderFiles(); }
+  if (p.type === 'factoryPreviewTaskDone') { taskRunning = false; fileList = p.files || fileList; setStatus('✓ 全部完成', 'done'); renderFiles(); updateEdit(); return; }
+  if (p.type === 'factoryPreviewFail') { taskRunning = false; fileList = p.files || fileList; setStatus('✗ ' + (p.message || '生成失败'), 'failed'); renderFiles(); updateEdit(); return; }
+  if (p.type === 'factoryPreviewSynced') { taskRunning = false; fileList = p.files || fileList; setStatus('预览已同步 ✓', 'done'); showText(p.content || '', p.path || currentPath, false); }
 });
 window.mazz.invoke('panel:action', { type: 'factoryPreviewQuery' }).catch(() => {});
 </script>

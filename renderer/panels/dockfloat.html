@@ -176,7 +176,7 @@ function renderFactory() {
   $('#m').innerHTML = `
     <div class="fc-provider-hint ${s.providerConfigured ? 'ok' : ''}">${esc(s.providerHint || '')}</div>
     <div class="fc-task" style="margin-top:8px"><div class="tt"><span>车间执行台</span><button class="fc-mini" id="fc-project">＋ 新建立项</button></div><div class="ts">立项表单只在独立向导出现；这里保留任务、进度与日常执行。</div></div>
-    <div class="fc-actions"><button class="fc-btn fc-accent" id="fc-runall">▶▶ 全部启动</button><button class="fc-btn" id="fc-autopreview">${s.autoPreview !== false ? '●' : '○'} 自动预览</button></div>
+    <div class="fc-actions"><button class="fc-btn fc-accent" id="fc-runall">▶▶ 全部启动</button><button class="fc-btn" id="fc-autopreview">${s.autoPreview !== false ? '●' : '○'} 自动预览</button><span class="note">并发 ${s.runningCount || 0}/${s.concurrency || 1}</span></div>
     <div class="fc-tasks" id="fc-tasks">${renderTasksHtml(s.tasks)}</div>`;
   $('#fc-project')?.addEventListener('click', () => act('factoryAction', { act: 'project' }));
   $('#fc-runall')?.addEventListener('click', () => act('factoryAction', { act: 'runall' }));

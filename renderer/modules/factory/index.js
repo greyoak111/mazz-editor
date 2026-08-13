@@ -12,6 +12,7 @@ import { iconHtml } from '../../lib/svg-icons.js';
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
 const AUTO_PREVIEW_KEY = 'mazz.factory.autoPreview';
+const CONCURRENCY_KEY = 'mazz.factory.concurrency';
 const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
 
 // 首次生成前探测蓝图/大纲/快照/checkpoint 属于正常分支；先 stat，避免用异常充当流程控制并污染主进程错误账。
@@ -32,9 +33,12 @@ export class FactoryPanel {
     this.tasks = this.loadJSON(TASKS_KEY, []);
     this.history = this.loadJSON(HISTORY_KEY, []);
     this.running = false;
+    this.runningTasks = new Set();
     this.stopRequested = false;
     this.autoPreview = this.loadJSON(AUTO_PREVIEW_KEY, true) !== false;
+    this.concurrency = Math.max(1, Math.min(4, Number(this.loadJSON(CONCURRENCY_KEY, 1)) || 1));
     this.previewTasks = new Map(); // taskId -> { task, tpl, folder, currentPath }
+    this.editorTasks = new Map();  // taskId -> { task, path }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
     this.pluginValues = {};       // {pluginId: {fieldId: value}}
@@ -64,6 +68,8 @@ export class FactoryPanel {
       maxMode: !!this.el.querySelector('.fc-maxmode')?.checked,
       maxChapters: +(this.el.querySelector('.fc-maxchapters')?.value || 0),
       autoPreview: this.autoPreview,
+      concurrency: this.concurrency,
+      runningCount: this.runningTasks.size,
       lengthPlan: { ...this.lengthPlan },
       lengthPresets: FACTORY_LENGTH_PRESETS.map(x => ({ ...x })),
       wordsPerUnitChips: [2000, 4000, 6000, 8000],
@@ -82,7 +88,7 @@ export class FactoryPanel {
   tasksSnapshot() {
     const STATUS = { pending: '⏳ 等待', running: '⚡ 执行中', done: '✓ 完成', 'done-warn': '⚠ 完成(有警告)', failed: '✗ 失败', paused: '⏸ 已终止' };
     return (this.tasks || []).map(t => ({
-      title: (t.mode === 'max' ? '📖 ' : '📄 ') + t.label + (t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}章]` : ''),
+      title: (t.mode === 'max' ? '📖 ' : '📄 ') + t.label + (t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}章]` : '') + (t.manualRevision?.count ? ` · ✎人工修订×${t.manualRevision.count}` : ''),
       statusText: STATUS[t.status] || t.status, desc: t.desc || '', pct: t.pct ?? null,
     }));
   }
@@ -159,6 +165,7 @@ export class FactoryPanel {
             <label class="fc-check" title="双循环勘误：生成后自检+修订一轮"><input type="checkbox" class="fc-dualloop"> 双循环勘误</label>
             <label class="fc-check" title="由篇幅档决定是否连写"><input type="checkbox" class="fc-maxmode" checked> 连写模式</label>
             <label class="fc-check" title="每个任务自动打开独立只读预览窗"><input type="checkbox" class="fc-autopreview" ${this.autoPreview ? 'checked' : ''}> 生成自动开预览</label>
+            <label class="fc-check" title="任务并发额度 1～4；默认 1 最稳">并发 <input type="number" class="fc-concurrency" min="1" max="4" step="1" value="${this.concurrency}" style="width:46px"> 路</label>
             <select class="fc-exportfmt" title="内容单元导出格式">
               ${FACTORY_EXPORT_FORMATS.map(fmt => `<option value="${fmt}">${fmt}</option>`).join('')}
             </select>
@@ -271,6 +278,7 @@ export class FactoryPanel {
     this.el.querySelector('.fc-totalwords').addEventListener('change', e => this.setTotalWords(+e.target.value));
     this.el.querySelector('.fc-wordsperunit').addEventListener('change', e => this.setWordsPerUnit(+e.target.value));
     this.el.querySelector('.fc-autopreview').addEventListener('change', e => this.setAutoPreview(e.target.checked));
+    this.el.querySelector('.fc-concurrency').addEventListener('change', e => this.setConcurrency(e.target.value));
     // —— 实时预览（连写直播 + 编辑并应用回去） ——
     this.liveWrapEl = this.el.querySelector('.fc-livewrap');
     this.liveEl = this.el.querySelector('.fc-live');
@@ -521,7 +529,6 @@ export class FactoryPanel {
 
   async resumeFromState(st) {
     if (!providerReady(this.cfg)) { toast('先配置 AI 服务'); return; }
-    if (this.running) { toast('有任务正在执行'); return; }
     const tpl = this.genres.find(g => g.id === st.genreId) || this.genres.find(g => g.supportsPlugins) || this.genre;
     const task = {
       id: st.id || ('t' + Date.now().toString(36)),
@@ -535,22 +542,27 @@ export class FactoryPanel {
       styleIds: st.styleIds || [], exportFmt: st.exportFmt || 'md',
       createdAt: st.createdAt, outputProtocol: st.outputProtocol,
       totalWords: st.totalWords, wordsPerUnit: st.wordsPerUnit, lengthPreset: st.lengthPreset,
+      manualRevision: st.manualRevision,
     };
     this.tasks.push(task);
     this.persistTasks();
+    if (!this.claimTask(task)) {
+      this.tasks = this.tasks.filter(t => t !== task);
+      this.persistTasks();
+      return;
+    }
     this.log(`恢复中断任务：「${task.label}」从第 ${task.doneChapters + 1} 章续写`);
     await writeTaskState(st.outDir, { ...st, status: 'running' });
-    this.running = true;
-    this.stopRequested = false;
     try {
-      await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked);
+      const progress = await readMaxTaskProgress(st.outDir, tpl);
+      await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, progress);
+      if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
     } catch (e) {
       task.status = 'failed';
       this.log(`✗ 恢复失败：${e.message}`);
+      await this.finishTaskPreview(task, e.message).catch(() => {});
     } finally {
-      this.running = false;
-      this.stopRequested = false;
-      this.persistTasks();
+      this.releaseTask(task);
       this.resumables = await scanResumableTasks();
       this.renderResumables();
     }
@@ -649,6 +661,15 @@ export class FactoryPanel {
     const el = this.el.querySelector('.fc-autopreview');
     if (el) el.checked = this.autoPreview;
     this.pushSnapshot();
+  }
+
+  setConcurrency(value) {
+    this.concurrency = Math.max(1, Math.min(4, Number(value) || 1));
+    this.saveJSON(CONCURRENCY_KEY, this.concurrency);
+    const el = this.el.querySelector('.fc-concurrency');
+    if (el) el.value = String(this.concurrency);
+    this.pushSnapshot();
+    return this.concurrency;
   }
 
   // ==================== 动态表单 ====================
@@ -890,16 +911,96 @@ export class FactoryPanel {
     return true;
   }
 
+  taskById(taskId) {
+    return this.previewTasks.get(taskId)?.task || this.editorTasks.get(taskId)?.task || this.tasks.find(t => t.id === taskId);
+  }
+
+  safeTaskPath(task, filePath) {
+    const folder = String(task?.folder || '').replace(/\\/g, '/').replace(/\/$/, '');
+    const target = String(filePath || '').replace(/\\/g, '/');
+    if (!folder || target.includes('/../') || !target.toLowerCase().startsWith((folder + '/').toLowerCase()) || !/\.(md|markdown)$/i.test(target)) return '';
+    return target;
+  }
+
+  editorPush(taskId, payload) {
+    if (!taskId || !window.mazz?.isElectron) return;
+    window.mazz.invoke('panel:push', { kind: 'fedit', instanceId: taskId, payload: { taskId, ...payload } }).catch(() => {});
+  }
+
+  async openTaskEditor(taskId, filePath) {
+    const task = this.taskById(taskId);
+    const target = this.safeTaskPath(task, filePath);
+    if (!target) return false;
+    const stat = await window.mazz.invoke('fs:stat', { path: target }).catch(() => ({ exists: false }));
+    if (!stat?.exists || stat.isDir || task.status === 'running') return false;
+    const content = await window.mazz.invoke('fs:readFile', { path: target }).catch(() => null);
+    if (content == null) return false;
+    this.editorTasks.set(taskId, { task, path: target });
+    await window.mazz.invoke('panel:open', { kind: 'fedit', opts: { instanceId: taskId, title: `${task.label} · 编辑` } });
+    this.editorPush(taskId, { type: 'factoryEditInit', title: target.split(/[\\/]/).pop(), path: target, content, revisionCount: task.manualRevision?.count || 0 });
+    return true;
+  }
+
+  async editorSnapshot(taskId, instanceId = taskId) {
+    const ctx = this.editorTasks.get(taskId || instanceId);
+    if (!ctx) return false;
+    const content = await window.mazz.invoke('fs:readFile', { path: ctx.path }).catch(() => null);
+    if (content == null) return false;
+    this.editorPush(instanceId || taskId, { type: 'factoryEditInit', taskId: taskId || instanceId, title: ctx.path.split(/[\\/]/).pop(), path: ctx.path, content, revisionCount: ctx.task.manualRevision?.count || 0 });
+    return true;
+  }
+
+  async saveTaskEditor(taskId, filePath, content, instanceId = taskId) {
+    const task = this.taskById(taskId || instanceId);
+    const target = this.safeTaskPath(task, filePath);
+    const text = String(content ?? '');
+    if (!target || !text.trim()) { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '文件路径或内容无效' }); return false; }
+    if (task.status === 'running') { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '任务生成中，暂不允许回写' }); return false; }
+    await window.mazz.invoke('fs:writeFile', { path: target, content: text });
+    const previous = task.manualRevision || {};
+    task.manualRevision = { count: (previous.count || 0) + 1, lastAt: Date.now(), path: target };
+    task.revised = true;
+    const statePath = `${task.folder}/${task.outputProtocol === 'W60b' || /(^|[\\/])Output([\\/]|$)/i.test(task.folder) ? '任务状态.json' : 'task_state.json'}`;
+    let state = {};
+    try { state = JSON.parse(await window.mazz.invoke('fs:readFile', { path: statePath })); } catch {}
+    await writeTaskState(task.folder, { ...state, id: task.id, title: task.label, genreId: task.genreId, status: state.status || task.status || 'done', values: task.values, manualRevision: task.manualRevision });
+    this.persistTasks();
+    const files = await this.previewFiles(task.folder, target, 'done');
+    this.previewPush(task.id, { type: 'factoryPreviewSynced', path: target, content: text, files, revisionCount: task.manualRevision.count });
+    this.editorPush(instanceId || task.id, { type: 'factoryEditSaved', taskId: task.id, path: target, content: text, revisionCount: task.manualRevision.count });
+    this.log(`✎ 「${task.label}」人工修订已回写：${target.split(/[\\/]/).pop()}（第 ${task.manualRevision.count} 次）`);
+    return true;
+  }
+
   // ==================== 任务执行 ====================
-  async runTask(task) {
-    if (this.running) { toast('有任务正在执行'); return; }
-    if (!providerReady(this.cfg)) { toast('先配置 AI 服务'); return; }
+  claimTask(task, { scheduled = false } = {}) {
+    if (!task || this.runningTasks.has(task.id)) return false;
+    if (this.runningTasks.size >= this.concurrency) {
+      if (!scheduled) toast(`并发额度已满（${this.concurrency}）`);
+      return false;
+    }
+    if (!this.running) this.stopRequested = false;
+    this.runningTasks.add(task.id);
     this.running = true;
-    this.stopRequested = false;
+    this.pushSnapshot();
+    return true;
+  }
+
+  releaseTask(task, { scheduled = false } = {}) {
+    if (task) this.runningTasks.delete(task.id);
+    this.running = this.runningTasks.size > 0;
+    this.persistTasks();
+    this.pushSnapshot();
+    if (!scheduled && !this.running) this.stopRequested = false;
+  }
+
+  async runTask(task, { scheduled = false } = {}) {
+    if (!providerReady(this.cfg)) { toast('先配置 AI 服务'); return false; }
+    if (!this.claimTask(task, { scheduled })) return false;
     const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
     task.status = 'running';
-    this._activeTask = task;
     this.renderTasks();
+    this.pushSnapshot();
     const dual = this.el.querySelector('.fc-dualloop').checked;
     this.log(`开始任务：「${task.label}」（${tpl.name} · ${task.mode === 'max' ? '连写' : '单次'}模式）`);
     try {
@@ -912,20 +1013,34 @@ export class FactoryPanel {
       this.log(`✗ 任务「${task.label}」失败：${e.message}`);
       await this.finishTaskPreview(task, e.message).catch(() => {});
     } finally {
-      this.running = false;
-      this.stopRequested = false;
-      this.persistTasks();
-      if (this._activeTask === task) this._activeTask = null;
+      this.releaseTask(task, { scheduled });
     }
+    return true;
+  }
+
+  async runTaskPool(tasks) {
+    const queue = (tasks || []).filter(t => !this.runningTasks.has(t.id));
+    const slots = Math.max(0, this.concurrency - this.runningTasks.size);
+    if (!queue.length || !slots) { if (!slots) toast(`并发额度已满（${this.concurrency}）`); return false; }
+    if (!this.running) this.stopRequested = false;
+    let cursor = 0;
+    const worker = async () => {
+      while (!this.stopRequested) {
+        const i = cursor++;
+        if (i >= queue.length) break;
+        await this.runTask(queue[i], { scheduled: true });
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(slots, queue.length) }, worker));
+    if (!this.running) this.stopRequested = false;
+    return true;
   }
 
   async runSingleTask(task, tpl, dual) {
     const folder = await this.ensureTaskFolder(task, tpl);
-    this._activeTask = task;
-    this._runFolder = folder;
     const m = buildMantra(tpl, task.values, task.dump);
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/创作蓝图.md`, content: m.doc });
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt });
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, manualRevision: task.manualRevision });
     await this.openTaskPreview(task, tpl, folder);
     // 创作增强注入：嵌入资料（最高优先级）+ 插件规则 + 文风包
     const embedBlocks = buildEmbedBlocks(task.embeds || []);
@@ -942,14 +1057,14 @@ export class FactoryPanel {
     if (extra) m.user += `\n\n${extra}`;
     this.log('⚡ AI 生成中…');
     // 单次模式同样走流式直播（此前用非流式 chat 干等全文=「没办法实时看到进度」总根）
-    this.liveStart(1, '');
+    this.liveStart(task, 1, '');
     let full = '';
     let text = '';
     try {
       text = await chatStream({
         cfg: this.cfg, system: m.system, user: m.user, temperature: 0.8, maxTokens: 8192,
         shouldStop: () => this.stopRequested,
-        onChunk: (_, f) => { full = f; this.liveUpdate(full); },
+        onChunk: (_, f) => { full = f; this.liveUpdate(task, full); },
       });
       full = text;
     } catch (e) { this.liveWrapEl && (this.liveWrapEl.style.display = 'none'); throw e; }
@@ -976,8 +1091,8 @@ export class FactoryPanel {
     const snapshotSchema = getSnapshotSchema(tpl);
     const snapshot = `# ${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照\n\n- 状态：${fails.length ? '完成（有警告）' : '完成'}\n- 字数：${text.length}\n- 文体：${tpl.name}\n- 更新时间：${new Date().toISOString()}\n`;
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第001${unitName}后.md`, content: snapshot });
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt });
-    this.liveDone(1, mdPath, text, getSnapshotSchema(tpl).unitName);
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, manualRevision: task.manualRevision });
+    this.liveDone(task, 1, mdPath, text, getSnapshotSchema(tpl).unitName);
     if (!this.previewEnabled(task)) this.shell.openTab('markdown', { title: task.label + '.md', filePath: mdPath, content: text });
     this.pushHistory({ label: task.label, genre: tpl.name, ok: !fails.length, when: Date.now(), text });
     task.status = fails.length ? 'done-warn' : 'done';
@@ -986,14 +1101,11 @@ export class FactoryPanel {
 
   async runMaxTask(task, tpl, dual, resumeFrom = null, retryChapter = null) {
     const folder = await this.ensureTaskFolder(task, tpl);
-    this._activeTask = task;
-    this._runFolder = folder;
     const total = task.maxChapters || (canUseUnlimited(tpl) ? 0 : 10);
     if (!task.maxChapters && total) task.maxChapters = total; // 执行层再钉：旧任务/恢复态不得绕过说明类无限连写禁令
     const family = blueprintFamily(tpl);
     const snapshotSchema = getSnapshotSchema(tpl);
     const unitName = snapshotSchema.unitName;
-    this._runSnapshotSchema = snapshotSchema;
     await this.openTaskPreview(task, tpl, folder);
     const stateFor = (status, ch) => writeTaskState(folder, {
       id: task.id, title: task.label, genreId: task.genreId, status,
@@ -1003,6 +1115,7 @@ export class FactoryPanel {
       createdAt: task.createdAt, outputProtocol: task.outputProtocol || 'legacy',
       totalWords: task.totalWords, wordsPerUnit: task.wordsPerUnit, lengthPreset: task.lengthPreset,
       exportFmt: task.exportFmt || 'md',
+      manualRevision: task.manualRevision,
     });
 
     // ══ 阶段一：全书蓝图（原版蓝图生成器：插件+文风+嵌入注入，结构校验+3次重试+兜底） ══
@@ -1075,12 +1188,12 @@ export class FactoryPanel {
     let startAt = 1, stateSummary = '';
     if (retryChapter > 0) {
       startAt = retryChapter;
-      stateSummary = await this.loadSnapshot(folder, retryChapter - 1);
+      stateSummary = await this.loadSnapshot(folder, retryChapter - 1, snapshotSchema);
     } else if (resumeFrom) {
       startAt = resumeFrom.lastChapter + 1;
       stateSummary = resumeFrom.lastSnap;
     } else {
-      stateSummary = await this.loadSnapshot(folder, 0);
+      stateSummary = await this.loadSnapshot(folder, 0, snapshotSchema);
     }
     const endAt = retryChapter > 0 ? retryChapter : chapterCount;
 
@@ -1144,8 +1257,7 @@ export class FactoryPanel {
       }
 
       // 流式生成 + checkpoint 节流写（800ms 一次，避开原版每 token 写盘的 IO 风暴）+ 实时预览直播
-      this._runFolder = folder;
-      this.liveStart(i, previous, unitName);
+      this.liveStart(task, i, previous, unitName);
       let full = previous;
       let lastFlush = 0;
       const flushCkpt = async () => {
@@ -1162,7 +1274,7 @@ export class FactoryPanel {
             shouldStop: () => this.stopRequested,
             onChunk: (_, f) => {
               full = mergeDeclaredContinuation(previous, f).text;
-              this.liveUpdate(stripTokenDeclaration(full));
+              this.liveUpdate(task, stripTokenDeclaration(full));
               if (Date.now() - lastFlush > 800) flushCkpt();
             },
           });
@@ -1196,7 +1308,7 @@ export class FactoryPanel {
         const mdContent = `# ${task.label} 第${i}${unitName}\n\n${text}`;
         await window.mazz.invoke('fs:writeFile', { path: mdPath, content: mdContent });
         await window.mazz.invoke('fs:delete', { path: ckptPath }).catch(() => {});
-        this.liveDone(i, mdPath, mdContent, unitName);
+        this.liveDone(task, i, mdPath, mdContent, unitName);
         // 多格式导出（pandoc 可用时）
         if (task.exportFmt && task.exportFmt !== 'md') {
           try {
@@ -1236,7 +1348,7 @@ export class FactoryPanel {
     this.log(`✅ 任务「${task.label}」全部 ${task.doneChapters} ${unitName}完成`);
   }
 
-  async loadSnapshot(folder, ch, schema = this._runSnapshotSchema || {}) {
+  async loadSnapshot(folder, ch, schema = {}) {
     const snapshot = getSnapshotSchema(schema);
     const prefix = snapshot.type === 'narrative' ? '叙事' : '结构';
     const name = ch <= 0 ? `${prefix}状态快照_初始.md` : `${prefix}状态快照_第${String(ch).padStart(3, '0')}${snapshot.unitName}后.md`;
@@ -1245,15 +1357,19 @@ export class FactoryPanel {
 
   // ==================== 实时预览（原版精髓：直播 + 实时编辑并应用回去） ====================
   /** 章节开写：直播面板亮起 */
-  liveStart(chapterNo, seedText = '', unitName = '章') {
-    this.liveCur = { chapterNo, unitName, mdPath: null, folder: this._runFolder, text: seedText };
-    const task = this._activeTask;
-    this._previewPath = `${this._runFolder}/第${String(chapterNo).padStart(3, '0')}${unitName}_生成中.md`;
+  liveStart(task, chapterNo, seedText = '', unitName = '章') {
+    if (!task) return;
+    const ctx = {
+      taskId: task.id, chapterNo, unitName, mdPath: null, folder: task.folder,
+      text: seedText, previewPath: `${task.folder}/第${String(chapterNo).padStart(3, '0')}${unitName}_生成中.md`,
+      lastPaint: 0,
+    };
+    Object.defineProperty(task, '_live', { value: ctx, writable: true, configurable: true });
+    this.liveCur = ctx;
     if (task && this.previewEnabled(task)) {
-      this.refreshTaskPreview(task, this._previewPath, 'running').catch(() => {});
-      this.previewPush(task.id, { type: 'factoryPreviewStream', chapterNo, unitName, path: this._previewPath, text: seedText, status: 'running' });
+      this.refreshTaskPreview(task, ctx.previewPath, 'running').catch(() => {});
+      this.previewPush(task.id, { type: 'factoryPreviewStream', chapterNo, unitName, path: ctx.previewPath, text: seedText, status: 'running' });
     }
-    this._livePaint = 0;
     if (!this.liveWrapEl) return;
     this.liveWrapEl.style.display = '';
     this.liveEl.innerHTML = `<div style="color:var(--mut,#888);font-size:12px;margin-bottom:4px">⚡ 第 ${chapterNo} ${unitName}生成中…</div><div class="fc-live-text"></div>`;
@@ -1262,28 +1378,29 @@ export class FactoryPanel {
   }
 
   /** 流式更新（300ms 节流绘制，自动滚底） */
-  liveUpdate(text) {
-    if (!this.liveCur) return;
-    this.liveCur.text = text;
+  liveUpdate(task, text) {
+    const ctx = task?._live;
+    if (!ctx) return;
+    ctx.text = text;
     const now = Date.now();
-    if (now - this._livePaint < 300) return;
-    this._livePaint = now;
-    const task = this._activeTask;
-    if (task && this.previewEnabled(task)) this.previewPush(task.id, { type: 'factoryPreviewStream', chapterNo: this.liveCur.chapterNo, unitName: this.liveCur.unitName, path: this._previewPath, text, status: 'running' });
-    if (this.liveTextEl) this.liveTextEl.textContent = text;
-    if (this.liveEl) this.liveEl.scrollTop = this.liveEl.scrollHeight;
+    if (now - ctx.lastPaint < 300) return;
+    ctx.lastPaint = now;
+    if (this.previewEnabled(task)) this.previewPush(task.id, { type: 'factoryPreviewStream', chapterNo: ctx.chapterNo, unitName: ctx.unitName, path: ctx.previewPath, text, status: 'running' });
+    if (this.liveCur === ctx && this.liveTextEl) this.liveTextEl.textContent = text;
+    if (this.liveCur === ctx && this.liveEl) this.liveEl.scrollTop = this.liveEl.scrollHeight;
   }
 
   /** 章节落盘：定版 + 进章节快列 */
-  liveDone(chapterNo, mdPath, text, unitName = this.liveCur?.unitName || '章') {
-    this.liveCur ||= { chapterNo, unitName, folder: this._runFolder, text: '' };
-    this.liveCur.mdPath = mdPath;
-    this.liveCur.text = text;
-    const task = this._activeTask;
+  liveDone(task, chapterNo, mdPath, text, unitName = task?._live?.unitName || '章') {
+    if (!task) return;
+    const ctx = task._live || { taskId: task.id, chapterNo, unitName, folder: task.folder, text: '' };
+    ctx.mdPath = mdPath;
+    ctx.text = text;
+    Object.defineProperty(task, '_live', { value: ctx, writable: true, configurable: true });
     if (task && this.previewEnabled(task)) {
       this.refreshTaskPreview(task, mdPath).then(files => this.previewPush(task.id, { type: 'factoryPreviewDone', chapterNo, unitName, path: mdPath, text, files, status: 'done' })).catch(() => {});
     }
-    if (this.liveEl) {
+    if (this.liveCur === ctx && this.liveEl) {
       this.liveEl.innerHTML = `<div style="color:var(--ok,#3d6b35);font-size:12px;margin-bottom:4px">✓ 第 ${chapterNo} ${unitName}完成（${text.length} 字）——可直接点「编辑并应用回去」改稿</div><div class="fc-live-text"></div>`;
       this.liveTextEl = this.liveEl.querySelector('.fc-live-text');
       this.liveTextEl.textContent = text;
@@ -1296,7 +1413,14 @@ export class FactoryPanel {
     tag.textContent = `第${chapterNo}${unitName}`;
     tag.addEventListener('click', async () => {
       const t = await window.mazz.invoke('fs:readFile', { path: mdPath }).catch(() => '');
-      if (t) { this.liveCur = { chapterNo, unitName, mdPath, folder: this._runFolder, text: t }; this.liveTextEl.textContent = t; }
+      if (t) {
+        ctx.text = t;
+        this.liveCur = ctx;
+        this.liveWrapEl.style.display = '';
+        this.liveEl.innerHTML = '<div class="fc-live-text"></div>';
+        this.liveTextEl = this.liveEl.querySelector('.fc-live-text');
+        this.liveTextEl.textContent = t;
+      }
     });
     this.liveChapsEl.appendChild(tag);
   }
@@ -1326,20 +1450,23 @@ export class FactoryPanel {
     this.liveEl.querySelector('[data-l=save]').addEventListener('click', async () => {
       const edited = ta.value;
       if (!edited.trim()) { toast('内容不能为空'); return; }
-      await window.mazz.invoke('fs:writeFile', { path: c.mdPath, content: edited });
+      const task = this.taskById(c.taskId);
+      if (task) await this.saveTaskEditor(task.id, c.mdPath, edited, task.id);
+      else await window.mazz.invoke('fs:writeFile', { path: c.mdPath, content: edited });
       this.liveCur.text = edited;
       this.liveEl.innerHTML = `<div class="fc-live-text"></div>`;
       this.liveTextEl = this.liveEl.querySelector('.fc-live-text');
       this.liveTextEl.textContent = edited;
       toast('已写回文件');
       // 应用回去的精髓：用编辑后正文重建本章叙事快照，后续章节按修订正典走
-      const folder = c.folder || this._runFolder;
+      const folder = c.folder || task?.folder;
       if (folder && this.cfg?.apiKey) {
         this.log(`… 第 ${c.chapterNo} ${unitName}已人工修订，正在重建状态快照`);
         try {
-          const prevSnap = await this.loadSnapshot(folder, c.chapterNo - 1);
+          const tpl = this.genres.find(g => g.id === task?.genreId) || this.genre || {};
+          const snapshot = getSnapshotSchema(tpl);
+          const prevSnap = await this.loadSnapshot(folder, c.chapterNo - 1, snapshot);
           const body = edited.replace(/^#[^\n]*\n/, ''); // 去标题行
-          const snapshot = getSnapshotSchema(this._runSnapshotSchema || {});
           const sp = buildStateSummaryPrompt(prevSnap, body, c.chapterNo, snapshot);
           const snap = await chat({ cfg: this.cfg, system: sp.system, user: sp.user, temperature: 0.3 });
           await window.mazz.invoke('fs:writeFile', {
@@ -1398,19 +1525,13 @@ export class FactoryPanel {
   async startSelected() {
     const sel = this.selectedTasks().filter(t => t.status !== 'running' && t.status !== 'done');
     if (!sel.length) { toast('先勾选要执行的任务'); return; }
-    for (const t of sel) {
-      await this.runTask(t);
-      if (this.stopRequested) break;
-    }
+    await this.runTaskPool(sel);
   }
 
   async runAllTasks() {
     const pendings = this.tasks.filter(t => t.status === 'pending' || t.status === 'failed' || t.status === 'paused');
     if (!pendings.length) { toast('没有待执行任务'); return; }
-    for (const t of pendings) {
-      await this.runTask(t);
-      if (this.stopRequested) break;
-    }
+    await this.runTaskPool(pendings);
     toast('队列执行完毕');
   }
 
@@ -1433,20 +1554,18 @@ export class FactoryPanel {
       const prog = await readMaxTaskProgress(folder, tpl);
       if (!prog.lastChapter) { toast(`该任务还没有已写${unitName}，直接「开始选中」即可`); return; }
       this.log(`恢复任务：「${task.label}」从第 ${prog.lastChapter + 1} ${unitName}续写`);
-      if (this.running) { toast('有任务正在执行'); return; }
-      this.running = true;
-      this.stopRequested = false;
+      if (!this.claimTask(task)) return;
       task.status = 'running';
       this.renderTasks();
       try {
         await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, prog);
+        if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
       } catch (e) {
         task.status = 'failed';
         this.log(`✗ 恢复失败：${e.message}`);
+        await this.finishTaskPreview(task, e.message).catch(() => {});
       } finally {
-        this.running = false;
-        this.stopRequested = false;
-        this.persistTasks();
+        this.releaseTask(task);
       }
     }
   }
@@ -1504,7 +1623,7 @@ export class FactoryPanel {
       ? this.tasks.map((t, i) => `
         <div class="fc-task ${t.status}" data-i="${i}">
           <input type="checkbox" data-i="${i}">
-          <span class="fc-task-label" title="${t.label}">${t.mode === 'max' ? '📖 ' : '📄 '}${t.label}${t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}${getSnapshotSchema(this.genres.find(g => g.id === t.genreId) || {}).unitName}]` : ''}</span>
+          <span class="fc-task-label" title="${t.label}">${t.mode === 'max' ? '📖 ' : '📄 '}${t.label}${t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}${getSnapshotSchema(this.genres.find(g => g.id === t.genreId) || {}).unitName}]` : ''}${t.manualRevision?.count ? ` · ✎人工修订×${t.manualRevision.count}` : ''}</span>
           <span class="fc-task-status">${STATUS[t.status] || t.status}</span>
           ${t.mode === 'max' && t.doneChapters ? `<button class="fc-mini" data-retry="${i}" title="重试某一内容单元/蓝图">↻</button>` : ''}
         </div>`).join('')
@@ -1517,17 +1636,16 @@ export class FactoryPanel {
       if (ans == null) return;
       const n = parseInt(ans, 10);
       if (isNaN(n) || n < 0) { toast('输入无效'); return; }
-      if (this.running) { toast('有任务正在执行'); return; }
       const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
-      this.running = true;
-      this.stopRequested = false;
+      if (!this.claimTask(task)) return;
       task.status = 'running';
       this.renderTasks();
       try {
         if (n === 0) await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, null, -1);
         else await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, null, n);
-      } catch (err) { task.status = 'failed'; this.log('重试失败：' + err.message); }
-      finally { this.running = false; this.stopRequested = false; this.persistTasks(); }
+        if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
+      } catch (err) { task.status = 'failed'; this.log('重试失败：' + err.message); await this.finishTaskPreview(task, err.message).catch(() => {}); }
+      finally { this.releaseTask(task); }
     }));
     this.hisListEl.innerHTML = this.history.length
       ? this.history.slice(0, 8).map((h, i) => `

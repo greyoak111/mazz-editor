@@ -1892,6 +1892,21 @@ export class Shell {
           if (fp) await fp.readPreviewFile(pl.taskId || pl.instanceId, pl.path, pl.instanceId).catch(() => {});
           return;
         }
+        if (pl.type === 'factoryPreviewEdit') {
+          const fp = this.sideDock?.factoryPanel;
+          if (fp) await fp.openTaskEditor(pl.taskId || pl.instanceId, pl.path).catch(() => {});
+          return;
+        }
+        if (pl.type === 'factoryEditQuery') {
+          const fp = this.sideDock?.factoryPanel;
+          if (fp) await fp.editorSnapshot(pl.taskId || pl.instanceId, pl.instanceId).catch(() => {});
+          return;
+        }
+        if (pl.type === 'factoryEditSave') {
+          const fp = this.sideDock?.factoryPanel;
+          if (fp) await fp.saveTaskEditor(pl.taskId || pl.instanceId, pl.path, pl.content, pl.instanceId).catch(() => {});
+          return;
+        }
         // W58c 主题快照桥：面板窗初始化取 id+变量一把抓（预设/主题包/图片自定义通吃——子窗透明化根治）
         if (pl.type === 'themeSnapshot') {
           if (pl.kind) window.mazz.invoke('panel:push', { kind: pl.kind, payload: { type: 'themeInit', ...this._themeVarsSnapshot() } }).catch(() => {});
@@ -2240,6 +2255,8 @@ export class Shell {
               else if (map[pl.k]) { const el = fp.el.querySelector(map[pl.k]); if (el) el.checked = !!pl.v; }
             } else if (pl.act === 'setAutoPreview') {
               fp.setAutoPreview(pl.value);
+            } else if (pl.act === 'setConcurrency') {
+              fp.setConcurrency(pl.value);
             } else if (pl.act === 'fill') {
               await fp.smartFill();
               fp.pushSnapshot();
@@ -2261,6 +2278,7 @@ export class Shell {
               const dual = fp.el.querySelector('.fc-dualloop'); if (dual) dual.checked = !!draft.dualLoop;
               const max = fp.el.querySelector('.fc-maxmode'); if (max) max.checked = !!draft.maxMode;
               fp.setAutoPreview(draft.autoPreview !== false);
+              fp.setConcurrency(draft.concurrency);
               fp.setExportFormat(draft.exportFmt);
               if (draft.batchTitles?.length) await fp.addBatchTitles(draft.batchTitles);
               else if (pl.mode === 'generate') await fp.generateNow();

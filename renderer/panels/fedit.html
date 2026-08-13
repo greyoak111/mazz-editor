@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' mazz-res:">
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<title>章节编辑</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  body { color: var(--fg); font: 12.5px/1.55 var(--font-ui); }
+  .pwin { height: 100%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); box-shadow: 0 12px 40px rgba(0,0,0,.38); }
+  .head { min-height: 51px; display: flex; align-items: center; padding: 7px 108px 7px 14px; border-bottom: 1px solid var(--border); background: var(--bg-elev); -webkit-app-region: drag; }
+  .head-main { min-width: 0; flex: 1; }
+  .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 700; }
+  .path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-dim); font-size: 10.5px; direction: rtl; text-align: left; }
+  .dirty { display: none; width: 8px; height: 8px; margin-left: 8px; border-radius: 50%; background: #e8a317; box-shadow: 0 0 0 4px rgba(232,163,23,.13); }
+  body.is-dirty .dirty { display: block; }
+  .p-winbtns { position: absolute; top: 4px; right: 8px; z-index: 9; display: flex; gap: 2px; }
+  .p-winbtns button { width: 30px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: transparent; color: var(--fg-dim); cursor: pointer; -webkit-app-region: no-drag; }
+  .p-winbtns button:hover { color: var(--fg); background: var(--bg-hover); }
+  .p-winbtns .x:hover { color: #fff; background: #e81123; }
+  .bar { flex: none; display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  .btn { border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px; background: var(--bg-elev); color: var(--fg); font: 11.5px var(--font-ui); cursor: pointer; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .btn.pri { border-color: var(--accent); color: var(--accent-fg); background: var(--accent); }
+  .status { margin-left: auto; color: var(--fg-dim); font-size: 11px; }
+  .status.ok { color: var(--ok, #3d6b35); }
+  .status.err { color: var(--danger, #dc2626); }
+  .stage { min-height: 0; flex: 1; display: grid; grid-template-columns: 52px minmax(0,1fr); overflow: hidden; background: color-mix(in srgb, var(--bg) 96%, #000); }
+  .lines { overflow: hidden; padding: 14px 9px 80px 0; border-right: 1px solid var(--border); color: var(--fg-dim); background: var(--bg-elev); text-align: right; white-space: pre; user-select: none; font: 13px/1.72 var(--font-mono); }
+  .codebox { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+  .syntax, .editor { position: absolute; inset: 0; margin: 0; padding: 14px 18px 80px; border: 0; outline: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: normal; tab-size: 2; font: 13px/1.72 var(--font-mono); }
+  .syntax { pointer-events: none; color: var(--fg); background: transparent; }
+  .editor { z-index: 2; resize: none; color: transparent; caret-color: var(--fg); background: transparent; -webkit-text-fill-color: transparent; }
+  .editor::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); -webkit-text-fill-color: transparent; }
+  .syn-head { color: #7c8cff; font-weight: 700; }
+  .syn-mark { color: #c084fc; }
+  .syn-bold { color: #f59e0b; font-weight: 700; }
+  .syn-code { color: #34d399; }
+  .syn-link { color: #38bdf8; text-decoration: underline; }
+  .syn-quote { color: #94a3b8; font-style: italic; }
+  .foot { flex: none; display: flex; align-items: center; gap: 10px; padding: 4px 11px; border-top: 1px solid var(--border); color: var(--fg-dim); font-size: 10.5px; }
+  .foot .spacer { flex: 1; }
+</style>
+</head>
+<body>
+<div class="pwin">
+  <header class="head"><div class="head-main"><div class="title" id="title">章节编辑</div><div class="path" id="path"></div></div><i class="dirty" title="尚未保存"></i></header>
+  <div class="p-winbtns"><button id="p-min" title="最小化">—</button><button id="p-max" title="最大化/还原">□</button><button class="x" id="p-close" title="关闭">×</button></div>
+  <div class="bar"><button class="btn pri" id="save">保存并回写 <kbd>Ctrl+S</kbd></button><button class="btn" id="arrange">收拢左列</button><span class="status" id="status">只编辑已落盘文件</span></div>
+  <div class="stage"><div class="lines" id="lines">1</div><div class="codebox"><pre class="syntax" id="syntax" aria-hidden="true"></pre><textarea class="editor" id="editor" wrap="off" spellcheck="false" aria-label="Markdown 源码编辑器"></textarea></div></div>
+  <footer class="foot"><span id="pos">Ln 1, Col 1</span><span id="count">0 字</span><span class="spacer"></span><span>Markdown · 轻量语法色 · 无 ProseMirror</span></footer>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+const pwb = a => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+
+let taskId = '', filePath = '', baseline = '', saving = false;
+function highlightLine(raw) {
+  let s = esc(raw);
+  if (/^#{1,6}\s/.test(raw)) return `<span class="syn-head">${s}</span>`;
+  if (/^\s*&gt;/.test(s)) return `<span class="syn-quote">${s}</span>`;
+  s = s.replace(/(\*\*|__)(.+?)\1/g, '<span class="syn-bold">$1$2$1</span>');
+  s = s.replace(/(`+)(.+?)\1/g, '<span class="syn-code">$1$2$1</span>');
+  s = s.replace(/(\[[^\]]+\]\([^\)]+\))/g, '<span class="syn-link">$1</span>');
+  s = s.replace(/^(\s*(?:[-*+] |\d+[.)] ))/, '<span class="syn-mark">$1</span>');
+  return s || ' ';
+}
+function paint() {
+  const text = $('#editor').value;
+  const rows = text.replace(/\r/g, '').split('\n');
+  $('#syntax').innerHTML = rows.map(highlightLine).join('\n') + '\n';
+  $('#lines').textContent = rows.map((_, i) => i + 1).join('\n');
+  $('#count').textContent = `${text.length} 字`;
+  document.body.classList.toggle('is-dirty', text !== baseline);
+  updatePos();
+}
+function syncScroll() { $('#syntax').scrollTop = $('#editor').scrollTop; $('#syntax').scrollLeft = $('#editor').scrollLeft; $('#lines').scrollTop = $('#editor').scrollTop; }
+function updatePos() { const e = $('#editor'), p = e.selectionStart; const before = e.value.slice(0, p).split('\n'); $('#pos').textContent = `Ln ${before.length}, Col ${before.at(-1).length + 1}`; }
+function status(text, cls = '') { $('#status').textContent = text; $('#status').className = 'status ' + cls; }
+async function save() {
+  if (saving || !taskId || !filePath || $('#editor').value === baseline) return;
+  saving = true; status('保存中…');
+  await window.mazz.invoke('panel:action', { type: 'factoryEditSave', taskId, path: filePath, content: $('#editor').value }).catch(e => status('✗ ' + e.message, 'err'));
+  saving = false;
+}
+$('#editor').addEventListener('input', paint);
+$('#editor').addEventListener('scroll', syncScroll);
+$('#editor').addEventListener('click', updatePos);
+$('#editor').addEventListener('keyup', updatePos);
+$('#save').addEventListener('click', save);
+$('#arrange').addEventListener('click', () => window.mazz.invoke('panel:arrange', { kind: 'fedit' }).catch(() => {}));
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); } });
+window.mazz.on('panel:push', p => {
+  if (!p) return;
+  if (p.type === 'themeInit') { applyTheme(p.id, p.vars); return; }
+  if (p.type === 'factoryEditInit') {
+    taskId = p.taskId || taskId; filePath = p.path || filePath; baseline = String(p.content || '');
+    document.body.dataset.taskId = taskId; document.body.dataset.path = filePath;
+    $('#title').textContent = p.title || filePath.split(/[\\/]/).pop() || '章节编辑'; $('#path').textContent = filePath;
+    $('#editor').value = baseline; paint(); status(p.revisionCount ? `人工修订 × ${p.revisionCount}` : '只编辑已落盘文件'); $('#editor').focus();
+    return;
+  }
+  if (p.type === 'factoryEditSaved') {
+    baseline = String(p.content || $('#editor').value); paint(); status('预览已同步 ✓', 'ok');
+  }
+  if (p.type === 'factoryEditError') status('✗ ' + (p.message || '保存失败'), 'err');
+});
+window.mazz.invoke('panel:action', { type: 'factoryEditQuery' }).catch(() => {});
+</script>
+</body>
+</html>
