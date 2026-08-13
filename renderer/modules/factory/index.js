@@ -2,7 +2,7 @@
 // 任务队列中心（原版 PySide 思路）：创作模板 → 需求澄清 → 任务队列 → 主控台日志 → 连写快照/断点续写
 import { toast, modal, inputModal } from '../../shell/shell.js';
 import { menus } from '../../core/menu-service.js';
-import { listGenres, saveCustomGenre, buildMantra, runQualityChecks, parseCsvTasks, fieldValue, buildStateSummaryPrompt, readMaxTaskProgress, renderPluginPrompt, buildEmbedBlocks, buildBlueprintPrompt, blueprintFamily, blueprintStructureOk, getSnapshotSchema, canUseUnlimited, buildFallbackBlueprint, parseChapterOutlines, extractBlueprintCore, extractWritingDirective, buildConstantAnchor, extractLedgerFromSnapshot, stripMdFence, buildChapterPromptV2, writeTaskState, scanResumableTasks, mergeDeclaredContinuation, ensureTokenDeclaration, stripTokenDeclaration } from './engine.js';
+import { listGenres, saveCustomGenre, buildMantra, runQualityChecks, parseCsvTasks, fieldValue, buildStateSummaryPrompt, readMaxTaskProgress, renderPluginPrompt, buildEmbedBlocks, buildBlueprintPrompt, blueprintFamily, blueprintStructureOk, getSnapshotSchema, canUseUnlimited, buildFallbackBlueprint, parseChapterOutlines, extractBlueprintCore, extractWritingDirective, buildConstantAnchor, extractLedgerFromSnapshot, stripMdFence, buildChapterPromptV2, writeTaskState, scanResumableTasks, mergeDeclaredContinuation, ensureTokenDeclaration, stripTokenDeclaration, FACTORY_LENGTH_PRESETS, resolveFactoryLengthPlan, factoryBatchGate, buildFactoryOutputFolder, buildFactoryUnitStem, factoryExportSpec, serializeFactoryText } from './engine.js';
 import { getProviderConfig, saveProviderConfig, providerReady, chat, chatStream, extractFields, PRESETS } from './provider.js';
 import { NOVEL_PLUGINS } from './plugins.js';
 import { listStyles, uploadStyleFile, queryOnlineStyle, deleteStyle, assembleStylePackage } from './style-studio.js';
@@ -11,7 +11,7 @@ import { iconHtml } from '../../lib/svg-icons.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
-const FMT_EXTS = { md: 'md', txt: 'txt', html: 'html', docx: 'docx', epub: 'epub', odt: 'odt', rtf: 'rtf' };
+const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
 
 // 首次生成前探测蓝图/大纲/快照/checkpoint 属于正常分支；先 stat，避免用异常充当流程控制并污染主进程错误账。
 async function readOptionalFile(filePath) {
@@ -39,6 +39,7 @@ export class FactoryPanel {
     this.styles = [];             // 全部文风素材
     this.embeds = [];             // 嵌入资料 [{name, text, note}]
     this.resumables = [];         // 启动扫描到的可恢复任务
+    this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
     this.render();
     this.reload();
   }
@@ -59,6 +60,13 @@ export class FactoryPanel {
       dualLoop: !!this.el.querySelector('.fc-dualloop')?.checked,
       maxMode: !!this.el.querySelector('.fc-maxmode')?.checked,
       maxChapters: +(this.el.querySelector('.fc-maxchapters')?.value || 0),
+      lengthPlan: { ...this.lengthPlan },
+      lengthPresets: FACTORY_LENGTH_PRESETS.map(x => ({ ...x })),
+      wordsPerUnitChips: [2000, 4000, 6000, 8000],
+      unlimitedAllowed: canUseUnlimited(this.genre || {}),
+      unitName: getSnapshotSchema(this.genre || {}).unitName,
+      exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
+      exportFormats: FACTORY_EXPORT_FORMATS.map(id => ({ id, ext: factoryExportSpec(id).ext })),
       extras: {
         plugins: (this.genre?.supportsPlugins ? NOVEL_PLUGINS.map(p => ({ id: p.id, name: p.name, on: this.pluginSel.has(p.id) })) : []),
         styles: (this.styles || []).map(st => ({ id: st.id, name: st.label, on: this.styleIds.has(st.id) })),
@@ -76,7 +84,9 @@ export class FactoryPanel {
   }
   pushSnapshot() {
     if (!window.mazz?.isElectron) return;
-    window.mazz.invoke('panel:push', { kind: 'dockfloat', payload: { type: 'factorySnapshot', snapshot: this.snapshot() } }).catch(() => {});
+    const snapshot = this.snapshot();
+    window.mazz.invoke('panel:push', { kind: 'dockfloat', payload: { type: 'factorySnapshot', snapshot } }).catch(() => {});
+    window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProjectSnapshot', snapshot } }).catch(() => {});
   }
   pushTasks() {
     if (!window.mazz?.isElectron) return;
@@ -111,6 +121,11 @@ export class FactoryPanel {
           <button data-a="newgenre" title="新建创作模板">${iconHtml('✚')}</button>
         </span></div>
       <div class="factory-body">
+        <div class="fc-projectbar">
+          <div><b>车间执行台</b><span class="fc-daily-hint">新项目统一进入 Output 目录协议</span></div>
+          <button class="fc-btn fc-accent" data-a="project">＋ 新建立项</button>
+        </div>
+        <div class="fc-project-stash" aria-hidden="true">
         <div class="fc-row">
           <select class="fc-genre" title="创作模板"></select>
         </div>
@@ -120,8 +135,29 @@ export class FactoryPanel {
           <div class="fc-label">竹筒倒豆子 <button class="fc-mini" data-a="fill">${iconHtml('✨')} 智能填充</button></div>
           <textarea class="fc-dump-text" rows="4" placeholder="把所有想法、要求、限制条件随意倒进来——会自动提取进上面的字段"></textarea>
         </div>
+        <div class="fc-length-planner">
+          <div class="fc-label">篇幅档 <span>立项后自动换算内容单元数</span></div>
+          <div class="fc-length-cards">
+            ${FACTORY_LENGTH_PRESETS.map(x => `<button type="button" data-length="${x.id}"><b>${x.label}</b><span>${x.id === 'unlimited' ? '写到手动终止' : (x.totalWords / 10000) + ' 万字'}</span></button>`).join('')}
+          </div>
+          <div class="fc-length-smart">
+            <label>总字数 <input class="fc-totalwords" type="number" min="1" step="1000" value="${this.lengthPlan.totalWords}"></label>
+            <span>÷</span>
+            <label>每单元 <input class="fc-wordsperunit" type="number" min="100" step="100" value="${this.lengthPlan.wordsPerUnit}"></label>
+            <span>=</span>
+            <label>单元数 <input class="fc-maxchapters" type="number" min="0" max="999" value="${this.lengthPlan.maxChapters}" readonly></label>
+          </div>
+          <div class="fc-length-chips">${[2000, 4000, 6000, 8000].map(n => `<button type="button" data-words="${n}">${n}</button>`).join('')}</div>
+        </div>
         <details class="fc-extra">
-          <summary>创作增强 <span class="fc-extra-badge"></span></summary>
+          <summary>高级设置 <span class="fc-extra-badge"></span></summary>
+          <div class="fc-sec fc-advanced-row">
+            <label class="fc-check" title="双循环勘误：生成后自检+修订一轮"><input type="checkbox" class="fc-dualloop"> 双循环勘误</label>
+            <label class="fc-check" title="由篇幅档决定是否连写"><input type="checkbox" class="fc-maxmode" checked> 连写模式</label>
+            <select class="fc-exportfmt" title="内容单元导出格式">
+              ${FACTORY_EXPORT_FORMATS.map(fmt => `<option value="${fmt}">${fmt}</option>`).join('')}
+            </select>
+          </div>
           <div class="fc-sec" data-sec="plugins">
             <div class="fc-label">创作插件（注入蓝图，可多选） <button class="fc-mini" data-a="plugcfg">配置字段</button></div>
             <div class="fc-chips fc-plugins"></div>
@@ -150,16 +186,8 @@ export class FactoryPanel {
           <button class="fc-btn" data-a="copy" title="生成创作模板母版并复制到剪贴板（可粘到任意 AI 对话）">${iconHtml('📋')} 复制模板母版</button>
           <button class="fc-btn fc-accent" data-a="generate" title="调用配置的 AI 直接生成内容进编辑器">${iconHtml('⚡')} 直接生成</button>
         </div>
-        <div class="fc-actions">
-          <label class="fc-check" title="双循环勘误：生成后自检+修订一轮"><input type="checkbox" class="fc-dualloop"> 双循环勘误</label>
-          <label class="fc-check" title="连写模式：全篇蓝图→逐单元连续生成，状态快照衔接，断点双防线"><input type="checkbox" class="fc-maxmode"> 连写模式</label>
-          <input class="fc-maxchapters" type="number" min="0" max="999" value="0" title="章数上限（0 = 写到手动终止）" style="width:44px">
-          <select class="fc-exportfmt" title="内容单元导出格式（md 始终落盘；docx/epub 等需 pandoc）">
-            <option value="md">md</option><option value="docx">docx</option><option value="epub">epub</option>
-            <option value="txt">txt</option><option value="html">html</option><option value="odt">odt</option><option value="rtf">rtf</option>
-          </select>
-        </div>
         <button class="fc-btn" data-a="addtask">＋ 加入任务队列</button>
+        </div>
         <div class="fc-resume"></div>
         <div class="fc-batch">
           <div class="fc-label">写作任务队列 <span class="fc-batch-acts">
@@ -211,8 +239,11 @@ export class FactoryPanel {
     this.genreSel.addEventListener('change', () => {
       this.genre = this.genres.find(g => g.id === this.genreSel.value) || this.genres[0];
       this.values = {};
+      this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
       this.renderForm();
+      this.syncLengthControls();
     });
+    this.el.querySelector('[data-a=project]').addEventListener('click', () => this.openProjectWizard());
     this.el.querySelector('[data-a=provider]').addEventListener('click', () => this.openProviderDialog());
     this.el.querySelector('[data-a=newgenre]').addEventListener('click', () => this.openGenreEditor());
     this.el.querySelector('[data-a=fill]').addEventListener('click', () => this.smartFill());
@@ -230,6 +261,10 @@ export class FactoryPanel {
       this.persistTasks();
     });
     this.el.querySelector('[data-a=clearlog]').addEventListener('click', () => { this.logEl.innerHTML = ''; });
+    this.el.querySelectorAll('[data-length]').forEach(b => b.addEventListener('click', () => this.applyLengthPreset(b.dataset.length)));
+    this.el.querySelectorAll('[data-words]').forEach(b => b.addEventListener('click', () => this.setWordsPerUnit(+b.dataset.words)));
+    this.el.querySelector('.fc-totalwords').addEventListener('change', e => this.setTotalWords(+e.target.value));
+    this.el.querySelector('.fc-wordsperunit').addEventListener('change', e => this.setWordsPerUnit(+e.target.value));
     // —— 实时预览（连写直播 + 编辑并应用回去） ——
     this.liveWrapEl = this.el.querySelector('.fc-livewrap');
     this.liveEl = this.el.querySelector('.fc-live');
@@ -254,6 +289,7 @@ export class FactoryPanel {
     this.el.querySelector('.fc-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.webSearch(); });
     this.el.querySelector('[data-a=mazimport]').addEventListener('click', () => this.importMazPack());
     this.el.querySelector('[data-a=mazexport]').addEventListener('click', () => this.exportMazPack());
+    this.syncLengthControls(false);
   }
 
   // ==================== 创作增强：插件 / 文风 / 嵌入 / 检索 ====================
@@ -490,7 +526,9 @@ export class FactoryPanel {
       status: 'running', doneChapters: st.currentChapter || 0,
       folder: st.outDir, blueprintReady: true,
       embeds: st.embeds || [], pluginSel: st.pluginSel || [], pluginValues: st.pluginValues || {},
-      styleIds: st.styleIds || [],
+      styleIds: st.styleIds || [], exportFmt: st.exportFmt || 'md',
+      createdAt: st.createdAt, outputProtocol: st.outputProtocol,
+      totalWords: st.totalWords, wordsPerUnit: st.wordsPerUnit, lengthPreset: st.lengthPreset,
     };
     this.tasks.push(task);
     this.persistTasks();
@@ -523,11 +561,80 @@ export class FactoryPanel {
 
   updateProviderBadge() {
     const hint = this.el.querySelector('.fc-provider-hint');
+    const daily = this.el.querySelector('.fc-daily-hint');
     if (providerReady(this.cfg)) {
       hint.innerHTML = `<span class="fc-ok">● ${this.cfg.model} 已就绪</span>`;
+      if (daily) daily.textContent = `${this.cfg.model} 已就绪 · 新项目走 Output 协议`;
     } else {
       hint.innerHTML = `<span class="fc-warn">未配置 AI 服务（点齿轮钮配置；不配也能「复制模板母版」去别的 AI 用）</span>`;
+      if (daily) daily.textContent = 'AI 未配置 · 可先立项并复制模板母版';
     }
+  }
+
+  // ==================== W60b 一次性立项向导 ====================
+  async openProjectWizard() {
+    if (!window.mazz?.isElectron) {
+      toast('当前环境不支持独立立项窗');
+      return;
+    }
+    await window.mazz.invoke('panel:action', { type: 'factoryStashTab', tab: 'project' }).catch(() => {});
+    await window.mazz.invoke('panel:open', { kind: 'factorycfg' }).catch(() => {});
+    // 已存在的配置窗不会重载、也不会再次 factoryInitQuery；主动推页签才能保证每次都进入立项。
+    await window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryInit', tab: 'project' } }).catch(() => {});
+    this.pushSnapshot();
+  }
+
+  syncLengthControls(push = true) {
+    const p = this.lengthPlan;
+    const total = this.el.querySelector('.fc-totalwords');
+    const words = this.el.querySelector('.fc-wordsperunit');
+    const chapters = this.el.querySelector('.fc-maxchapters');
+    const maxMode = this.el.querySelector('.fc-maxmode');
+    if (total) { total.value = p.totalWords || ''; total.disabled = p.preset === 'unlimited'; }
+    if (words) words.value = p.wordsPerUnit;
+    if (chapters) chapters.value = p.maxChapters;
+    if (maxMode) maxMode.checked = true;
+    this.el.querySelectorAll('[data-length]').forEach(b => {
+      b.classList.toggle('on', b.dataset.length === p.preset);
+      b.disabled = b.dataset.length === 'unlimited' && !canUseUnlimited(this.genre || {});
+    });
+    this.el.querySelectorAll('[data-words]').forEach(b => b.classList.toggle('on', +b.dataset.words === p.wordsPerUnit));
+    this.values['每章字数'] = String(p.wordsPerUnit);
+    const lengthName = { short: '短篇（1万字以内）', medium: '中篇（1-5万字）', long: '长篇（5万字以上）', unlimited: '无限' }[p.preset];
+    if (lengthName) this.values['篇幅长短'] = lengthName;
+    const perUnitField = this.formEl?.querySelector('[data-f="每章字数"]');
+    if (perUnitField) perUnitField.value = String(p.wordsPerUnit);
+    const lengthField = this.formEl?.querySelector('[data-f="篇幅长短"]');
+    if (lengthField && [...lengthField.options].some(o => o.value === lengthName)) lengthField.value = lengthName;
+    if (push) this.pushSnapshot();
+  }
+
+  applyLengthPreset(preset) {
+    if (preset === 'unlimited' && !canUseUnlimited(this.genre || {})) {
+      toast(`${this.genre?.name || '当前文体'}属于说明类结构单元，不能选择无限档`);
+      return false;
+    }
+    this.lengthPlan = resolveFactoryLengthPlan({ preset });
+    this.syncLengthControls();
+    return true;
+  }
+
+  setTotalWords(totalWords) {
+    const preset = this.lengthPlan.preset === 'unlimited' ? 'short' : this.lengthPlan.preset;
+    this.lengthPlan = resolveFactoryLengthPlan({ ...this.lengthPlan, preset, totalWords });
+    this.syncLengthControls();
+  }
+
+  setWordsPerUnit(wordsPerUnit) {
+    this.lengthPlan = resolveFactoryLengthPlan({ ...this.lengthPlan, wordsPerUnit });
+    this.syncLengthControls();
+  }
+
+  setExportFormat(format) {
+    const value = FACTORY_EXPORT_FORMATS.includes(format) ? format : 'md';
+    const el = this.el.querySelector('.fc-exportfmt');
+    if (el) el.value = value;
+    this.pushSnapshot();
   }
 
   // ==================== 动态表单 ====================
@@ -627,20 +734,25 @@ export class FactoryPanel {
     await this.runTask(task);
   }
 
-  makeTask(maxMode, maxChapters) {
+  makeTask(maxMode, maxChapters, valueOverrides = null) {
     this.collectValues();
     if (maxMode && maxChapters === 0 && !canUseUnlimited(this.genre)) {
       toast(`${this.genre.name}属于说明类结构单元，不能无限连写；已按 10 ${getSnapshotSchema(this.genre).unitName}执行`);
       maxChapters = 10;
     }
+    const values = { ...this.values, ...(valueOverrides || {}) };
     return {
       id: 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-      label: fieldValue(this.genre, this.values, 'title', 'subject', 'task', 'premise') || this.values['书名'] || this.genre.name,
+      createdAt: Date.now(),
+      label: fieldValue(this.genre, values, '书名', 'title', 'subject', 'task', 'premise') || this.genre.name,
       genreId: this.genre.id,
-      values: { ...this.values },
+      values,
       dump: this.dumpEl.value,
       mode: maxMode ? 'max' : 'single',
       maxChapters,
+      totalWords: this.lengthPlan.totalWords,
+      wordsPerUnit: this.lengthPlan.wordsPerUnit,
+      lengthPreset: this.lengthPlan.preset,
       status: 'pending',
       doneChapters: 0,
       // 创作增强随行
@@ -650,6 +762,35 @@ export class FactoryPanel {
       embeds: this.embeds.map(e => ({ ...e })),
       exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
     };
+  }
+
+  async ensureTaskFolder(task, tpl) {
+    if (!task.folder) {
+      const ws = await window.mazz.invoke('workspace:get');
+      task.createdAt ||= Date.now();
+      task.folder = buildFactoryOutputFolder(ws, {
+        genreName: tpl?.name,
+        workType: task.values?.['作品类型'] || task.values?.workType,
+        title: task.values?.['书名'] || task.label,
+        timestamp: task.createdAt,
+      });
+      task.outputProtocol = 'W60b';
+    }
+    await window.mazz.invoke('fs:mkdir', { path: task.folder });
+    return task.folder;
+  }
+
+  async exportTaskFormat(task, markdown, outStem) {
+    const fmt = task.exportFmt || 'md';
+    if (fmt === 'md') return null;
+    const spec = factoryExportSpec(fmt);
+    const outPath = `${outStem}.${spec.ext}`;
+    if (spec.text) {
+      await window.mazz.invoke('fs:writeFile', { path: outPath, content: serializeFactoryText(markdown, fmt, task.label) });
+    } else {
+      await window.mazz.invoke('factory:pandocExport', { markdown, to: spec.pandoc, outPath, title: task.label });
+    }
+    return outPath;
   }
 
   // ==================== 任务执行 ====================
@@ -668,6 +809,7 @@ export class FactoryPanel {
       else await this.runSingleTask(task, tpl, dual);
     } catch (e) {
       task.status = 'failed';
+      if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values }).catch(() => {});
       this.log(`✗ 任务「${task.label}」失败：${e.message}`);
     } finally {
       this.running = false;
@@ -677,7 +819,10 @@ export class FactoryPanel {
   }
 
   async runSingleTask(task, tpl, dual) {
+    const folder = await this.ensureTaskFolder(task, tpl);
     const m = buildMantra(tpl, task.values, task.dump);
+    await window.mazz.invoke('fs:writeFile', { path: `${folder}/创作蓝图.md`, content: m.doc });
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt });
     // 创作增强注入：嵌入资料（最高优先级）+ 插件规则 + 文风包
     const embedBlocks = buildEmbedBlocks(task.embeds || []);
     const plugBlocks = (task.pluginSel || []).map(id => {
@@ -704,7 +849,6 @@ export class FactoryPanel {
       });
       full = text;
     } catch (e) { this.liveWrapEl && (this.liveWrapEl.style.display = 'none'); throw e; }
-    this.liveDone(1, null, full);
     let checks = runQualityChecks(tpl, text);
     if (dual) {
       const failed = checks.filter(c => !c.pass);
@@ -717,17 +861,27 @@ export class FactoryPanel {
       }
     }
     const fails = checks.filter(c => !c.pass);
-    this.shell.openTab('markdown', { title: task.label + '.md', content: text });
+    const unitName = getSnapshotSchema(tpl).unitName;
+    const outline = `第1${unitName}：${task.label}`;
+    await window.mazz.invoke('fs:writeFile', { path: `${folder}/章节大纲.md`, content: outline });
+    const stem = buildFactoryUnitStem(1, unitName, outline);
+    const mdPath = `${folder}/${stem}.md`;
+    await window.mazz.invoke('fs:writeFile', { path: mdPath, content: text });
+    try { await this.exportTaskFormat(task, text, `${folder}/${stem}`); }
+    catch (e) { this.log(`⚠ ${task.exportFmt} 导出跳过：${e.message}`); }
+    const snapshotSchema = getSnapshotSchema(tpl);
+    const snapshot = `# ${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照\n\n- 状态：${fails.length ? '完成（有警告）' : '完成'}\n- 字数：${text.length}\n- 文体：${tpl.name}\n- 更新时间：${new Date().toISOString()}\n`;
+    await window.mazz.invoke('fs:writeFile', { path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第001${unitName}后.md`, content: snapshot });
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt });
+    this.liveDone(1, mdPath, text, getSnapshotSchema(tpl).unitName);
+    this.shell.openTab('markdown', { title: task.label + '.md', filePath: mdPath, content: text });
     this.pushHistory({ label: task.label, genre: tpl.name, ok: !fails.length, when: Date.now(), text });
     task.status = fails.length ? 'done-warn' : 'done';
     this.log(fails.length ? `⚠ 完成但有 ${fails.length} 项校验未过：${fails[0].label}` : `✅ 完成，全部校验通过（${text.length} 字）`);
   }
 
   async runMaxTask(task, tpl, dual, resumeFrom = null, retryChapter = null) {
-    const ws = await window.mazz.invoke('workspace:get');
-    const folder = task.folder || `${ws}/创作产出/${task.label.replace(/[\\/:*?"<>|]/g, '-')}`;
-    task.folder = folder;
-    await window.mazz.invoke('fs:mkdir', { path: folder });
+    const folder = await this.ensureTaskFolder(task, tpl);
     const total = task.maxChapters || (canUseUnlimited(tpl) ? 0 : 10);
     if (!task.maxChapters && total) task.maxChapters = total; // 执行层再钉：旧任务/恢复态不得绕过说明类无限连写禁令
     const family = blueprintFamily(tpl);
@@ -739,6 +893,9 @@ export class FactoryPanel {
       currentChapter: ch ?? task.doneChapters ?? 0, maxChapters: total,
       values: task.values, dump: task.dump, pluginSel: task.pluginSel,
       pluginValues: task.pluginValues, styleIds: task.styleIds, embeds: task.embeds,
+      createdAt: task.createdAt, outputProtocol: task.outputProtocol || 'legacy',
+      totalWords: task.totalWords, wordsPerUnit: task.wordsPerUnit, lengthPreset: task.lengthPreset,
+      exportFmt: task.exportFmt || 'md',
     });
 
     // ══ 阶段一：全书蓝图（原版蓝图生成器：插件+文风+嵌入注入，结构校验+3次重试+兜底） ══
@@ -823,7 +980,9 @@ export class FactoryPanel {
         this.log(`📝 自动生成第 ${i} ${unitName}大纲`);
       }
       const outline = outlines[i - 1];
-      const stem = `第${String(i).padStart(3, '0')}${unitName}`;
+      const stem = task.outputProtocol === 'W60b'
+        ? buildFactoryUnitStem(i, unitName, outline)
+        : `第${String(i).padStart(3, '0')}${unitName}`;
       const mdPath = `${folder}/${stem}.md`;
       const ckptPath = `${folder}/${stem}.checkpoint`;
 
@@ -928,12 +1087,9 @@ export class FactoryPanel {
         // 多格式导出（pandoc 可用时）
         if (task.exportFmt && task.exportFmt !== 'md') {
           try {
-            await window.mazz.invoke('factory:pandocExport', {
-              markdown: mdContent, to: task.exportFmt,
-              outPath: `${folder}/${stem}.${FMT_EXTS[task.exportFmt]}`, title: task.label,
-            });
+            await this.exportTaskFormat(task, mdContent, `${folder}/${stem}`);
             this.log(`✓ 第 ${i} ${unitName} ${task.exportFmt.toUpperCase()} 已导出`);
-          } catch { /* pandoc 不可用静默跳过 */ }
+          } catch (e) { this.log(`⚠ 第 ${i} ${unitName} ${task.exportFmt} 导出跳过：${e.message}`); }
         }
         task.doneChapters = i;
         this.renderTasks();
@@ -1080,6 +1236,32 @@ export class FactoryPanel {
     toast('已加入任务队列');
   }
 
+  async addBatchTitles(names) {
+    const titles = (names || []).map(x => String(x || '').trim()).filter(Boolean);
+    const gate = factoryBatchGate(titles.length);
+    if (!gate.allowed) { toast(gate.message); return false; }
+    if (!titles.length) { this.addTask(); return true; }
+    if (!(await this.confirmBatchImport(gate))) return false;
+    this.collectValues();
+    const fields = this.genre?.input_fields || [];
+    const titleField = fields.find(f => /^(书名|标题|title|subject|task|premise)$/i.test(String(f.id || '')) || /书名|标题/.test(String(f.label || '')));
+    if (!titleField) { toast('当前文体没有可批量替换的书名/标题字段'); return false; }
+    const missing = fields.find(f => f.required && f.id !== titleField.id && !String(this.values[f.id] ?? f.default ?? '').trim());
+    if (missing) { toast(`请填写：${missing.label || missing.id}`); return false; }
+    const maxMode = this.el.querySelector('.fc-maxmode').checked;
+    const maxChapters = +this.el.querySelector('.fc-maxchapters').value || 0;
+    const now = Date.now();
+    for (let i = 0; i < titles.length; i++) {
+      const task = this.makeTask(maxMode, maxChapters, { [titleField.id]: titles[i] });
+      task.createdAt = now + i;
+      this.tasks.push(task);
+    }
+    this.persistTasks();
+    this.log(`批量名单已入队 ${titles.length} 本（共用当前立项设置）`);
+    toast(`已批量加入 ${titles.length} 个任务`);
+    return true;
+  }
+
   selectedTasks() {
     return [...this.taskListEl.querySelectorAll('.fc-task input[type=checkbox]:checked')]
       .map(cb => this.tasks[+cb.dataset.i]).filter(Boolean);
@@ -1119,8 +1301,7 @@ export class FactoryPanel {
     for (const task of sel.slice(0, 1) /* 一次恢复一个 */) {
       const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
       const unitName = getSnapshotSchema(tpl).unitName;
-      const folder = task.folder || `${await window.mazz.invoke('workspace:get')}/创作产出/${task.label.replace(/[\\/:*?"<>|]/g, '-')}`;
-      task.folder = folder;
+      const folder = await this.ensureTaskFolder(task, tpl);
       const prog = await readMaxTaskProgress(folder, tpl);
       if (!prog.lastChapter) { toast(`该任务还没有已写${unitName}，直接「开始选中」即可`); return; }
       this.log(`恢复任务：「${task.label}」从第 ${prog.lastChapter + 1} ${unitName}续写`);
@@ -1142,18 +1323,44 @@ export class FactoryPanel {
     }
   }
 
+  confirmBatchImport(gate) {
+    if (!gate?.warning || !gate.allowed) return Promise.resolve(!!gate?.allowed);
+    return new Promise(resolve => {
+      const m = modal('批量名单软提示');
+      let settled = false;
+      m.body.innerHTML = `<div style="min-width:360px"><p>${gate.message}</p><p style="color:var(--fg-dim);font-size:12px">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style="display:flex;justify-content:flex-end;gap:8px"><button class="rb-btn" data-b="cancel">取消</button><button class="rb-btn" data-b="ok" style="background:var(--accent);color:var(--accent-fg)">确认导入</button></div></div>`;
+      const done = value => { if (settled) return; settled = true; resolve(value); m.close(); };
+      m.body.querySelector('[data-b=cancel]').addEventListener('click', () => done(false));
+      m.body.querySelector('[data-b=ok]').addEventListener('click', () => done(true));
+      const obs = new MutationObserver(() => {
+        if (!document.body.contains(m.el)) { obs.disconnect(); if (!settled) { settled = true; resolve(false); } }
+      });
+      obs.observe(document.body, { childList: true });
+    });
+  }
+
   async importCsv() {
     const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: 'CSV', extensions: ['csv', 'tsv'] }] }).catch(() => null);
     if (!p) return;
     try {
       const text = await window.mazz.invoke('fs:readFile', { path: p });
       const rows = parseCsvTasks(text, this.genre);
-      for (const values of rows) {
+      const gate = factoryBatchGate(rows.length);
+      if (!(await this.confirmBatchImport(gate))) return;
+      const baseTime = Date.now();
+      const maxMode = this.el.querySelector('.fc-maxmode').checked;
+      const maxChapters = +this.el.querySelector('.fc-maxchapters').value || 0;
+      const exportFmt = this.el.querySelector('.fc-exportfmt')?.value || 'md';
+      for (const [i, rowValues] of rows.entries()) {
+        const values = { ...rowValues, 每章字数: rowValues['每章字数'] || String(this.lengthPlan.wordsPerUnit) };
         this.tasks.push({
-          id: 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+          id: 't' + (baseTime + i).toString(36) + Math.random().toString(36).slice(2, 5),
+          createdAt: baseTime + i,
           genreId: this.genre.id,
-          label: fieldValue(this.genre, values, 'title', 'subject', 'task', 'premise') || this.genre.name,
-          values, dump: '', mode: 'single', maxChapters: 0, status: 'pending', doneChapters: 0,
+          label: fieldValue(this.genre, values, '书名', 'title', 'subject', 'task', 'premise') || this.genre.name,
+          values, dump: '', mode: maxMode ? 'max' : 'single', maxChapters, status: 'pending', doneChapters: 0,
+          totalWords: this.lengthPlan.totalWords, wordsPerUnit: this.lengthPlan.wordsPerUnit,
+          lengthPreset: this.lengthPlan.preset, exportFmt,
         });
       }
       this.persistTasks();
@@ -1173,7 +1380,7 @@ export class FactoryPanel {
           <span class="fc-task-status">${STATUS[t.status] || t.status}</span>
           ${t.mode === 'max' && t.doneChapters ? `<button class="fc-mini" data-retry="${i}" title="重试某一内容单元/蓝图">↻</button>` : ''}
         </div>`).join('')
-      : '<div class="fc-empty">（队列为空——填好表单点「加入任务队列」）</div>';
+      : '<div class="fc-empty">（队列为空——点上方「新建立项」创建一次性项目）</div>';
     this.taskListEl.querySelectorAll('[data-retry]').forEach(b => b.addEventListener('click', async (e) => {
       e.stopPropagation();
       const task = this.tasks[+b.dataset.retry];

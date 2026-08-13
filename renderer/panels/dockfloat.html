@@ -174,49 +174,12 @@ function renderFactory() {
   if (!snapshot) { $('#m').innerHTML = '<div class="note">同步创作面板状态…</div>'; return; }
   const s = snapshot;
   $('#m').innerHTML = `
-    <div class="fc-row"><select class="fc-genre">${s.genres.map(g => `<option value="${esc(g.id)}" ${g.id === s.genreId ? 'selected' : ''}>${esc(g.name)}${g.custom ? '（自定义）' : ''} — ${esc(g.description || '')}</option>`).join('')}</select></div>
     <div class="fc-provider-hint ${s.providerConfigured ? 'ok' : ''}">${esc(s.providerHint || '')}</div>
-    <div class="fc-form">${(s.fields || []).map(fieldHtml).join('')}<div class="fc-gdesc">${esc(s.genreDesc || '')}</div></div>
-    <div class="fc-label">竹筒倒豆子 <button class="fc-mini" id="fc-fill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 4l1.5 4.5L18 10l-4.5 1.5L12 16l-1.5-4.5L6 10l4.5-1.5L12 4zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg> 智能填充</button></div>
-    <textarea class="fc-dump-text" rows="4" placeholder="把所有想法、要求、限制条件随意倒进来——会自动提取进上面的字段">${esc(s.dump || '')}</textarea>
-    <div class="fc-actions">
-      <button class="fc-btn" id="fc-copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="6" y="4" width="13" height="17" rx="2"/><path d="M9 4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 10h7M9 14h7"/></svg> 复制模板母版</button>
-      <button class="fc-btn fc-accent" id="fc-gen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> 直接生成</button>
-    </div>
-    <label class="fc-check"><input type="checkbox" id="fc-dual" ${s.dualLoop ? 'checked' : ''}> 双循环勘误</label>
-    <label class="fc-check"><input type="checkbox" id="fc-max" ${s.maxMode ? 'checked' : ''}> 连写模式 <input type="number" id="fc-maxch" min="0" max="999" value="${s.maxChapters || 0}" style="width:48px;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:5px;font-size:11px"></label>
-    <details class="extras"><summary>创作增强（插件/文风/嵌入/联网）</summary>
-      <div class="fc-label">创作插件 <span><button class="fc-mini" data-xa="plugcfg">配置字段</button></span></div>
-      <div>${(s.extras?.plugins || []).map(p => `<span class="chip ${p.on ? 'on' : ''}" data-xa="togglePlugin" data-id="${esc(p.id)}">${esc(p.name)}</span>`).join('') || '<span class="note">无（文体声明 supportsPlugins 才显示）</span>'}</div>
-      <div class="fc-label">文风素材 <span><button class="fc-mini" data-xa="styleup">上传文件</button> <button class="fc-mini" data-xa="styleonline">在线查询</button></span></div>
-      <div>${(s.extras?.styles || []).map(p => `<span class="chip ${p.on ? 'on' : ''}" data-xa="toggleStyle" data-id="${esc(p.id)}">${esc(p.name)}</span>`).join('') || '<span class="note">无</span>'}</div>
-      <div class="fc-label">嵌入资料 <span><button class="fc-mini" data-xa="embedadd">添加文件</button></span></div>
-      <div>${(s.extras?.embeds || []).map((p, i) => `<span class="chip" data-xa="embeddel" data-i="${i}" title="点击移除">${esc(p.name || p)} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18"/></svg></span>`).join('') || '<span class="note">无</span>'}</div>
-      <div class="fc-label">联网检索（SearXNG，结果注入竹筒倒豆子）</div>
-      <div style="display:flex;gap:6px"><input id="fc-q" placeholder="关键词，回车检索…" spellcheck="false" style="flex:1;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:7px;padding:5px 10px;font-size:12px;font-family:var(--font-ui)"><button class="fc-mini" data-xa="websearch">检索</button></div>
-    </details>
+    <div class="fc-task" style="margin-top:8px"><div class="tt"><span>车间执行台</span><button class="fc-mini" id="fc-project">＋ 新建立项</button></div><div class="ts">立项表单只在独立向导出现；这里保留任务、进度与日常执行。</div></div>
+    <div class="fc-actions"><button class="fc-btn fc-accent" id="fc-runall">▶▶ 全部启动</button></div>
     <div class="fc-tasks" id="fc-tasks">${renderTasksHtml(s.tasks)}</div>`;
-  // 绑定
-  $('.fc-genre')?.addEventListener('change', (e) => act('factoryAction', { act: 'selectGenre', id: e.target.value }));
-  document.querySelectorAll('[data-f]').forEach(el => {
-    el.addEventListener('input', () => { localValues[el.dataset.f] = el.value; act('factoryAction', { act: 'setValue', f: el.dataset.f, v: el.value }); });
-  });
-  $('.fc-dump-text')?.addEventListener('input', (e) => act('factoryAction', { act: 'setDump', v: e.target.value }));
-  $('#fc-fill')?.addEventListener('click', () => act('factoryAction', { act: 'fill' }));
-  $('#fc-copy')?.addEventListener('click', () => act('factoryAction', { act: 'copy' }));
-  $('#fc-gen')?.addEventListener('click', () => act('factoryAction', { act: 'generate' }));
-  $('#fc-dual')?.addEventListener('change', (e) => act('factoryAction', { act: 'setFlag', k: 'dualLoop', v: e.target.checked }));
-  $('#fc-max')?.addEventListener('change', (e) => act('factoryAction', { act: 'setFlag', k: 'maxMode', v: e.target.checked }));
-  $('#fc-maxch')?.addEventListener('change', (e) => act('factoryAction', { act: 'setFlag', k: 'maxChapters', v: +e.target.value }));
-  // W54 B8 增强区动作绑定（chips 切换/配置/检索——全桥主窗）
-  document.querySelectorAll('[data-xa]').forEach(el => el.addEventListener('click', () => {
-    const xa = el.dataset.xa;
-    if (xa === 'togglePlugin' || xa === 'toggleStyle') act('factoryAction', { act: xa, id: el.dataset.id });
-    else if (xa === 'embeddel') act('factoryAction', { act: 'embeddel', i: el.dataset.i });
-    else if (xa === 'websearch') act('factoryAction', { act: 'websearch', q: document.getElementById('fc-q')?.value?.trim() || '' });
-    else act('factoryAction', { act: xa });
-  }));
-  document.getElementById('fc-q')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') act('factoryAction', { act: 'websearch', q: e.target.value.trim() }); });
+  $('#fc-project')?.addEventListener('click', () => act('factoryAction', { act: 'project' }));
+  $('#fc-runall')?.addEventListener('click', () => act('factoryAction', { act: 'runall' }));
 }
 function renderTasksHtml(tasks) {
   if (!tasks?.length) return '';

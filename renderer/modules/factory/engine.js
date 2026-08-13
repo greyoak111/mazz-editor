@@ -45,6 +45,136 @@ export function fieldValue(tpl, values, ...idsOrLabels) {
   return '';
 }
 
+// ==================== W60b 立项与产出协议 ====================
+export const FACTORY_LENGTH_PRESETS = Object.freeze([
+  Object.freeze({ id: 'short', label: '短篇', totalWords: 10000, wordsPerUnit: 2000 }),
+  Object.freeze({ id: 'medium', label: '中篇', totalWords: 100000, wordsPerUnit: 4000 }),
+  Object.freeze({ id: 'long', label: '长篇', totalWords: 500000, wordsPerUnit: 6000 }),
+  Object.freeze({ id: 'unlimited', label: '无限', totalWords: 0, wordsPerUnit: 4000 }),
+]);
+
+/** 篇幅卡 + 总字数智能行 + 每单元字数 chips 的单源联动。 */
+export function resolveFactoryLengthPlan({ preset = 'short', totalWords, wordsPerUnit } = {}) {
+  const base = FACTORY_LENGTH_PRESETS.find(x => x.id === preset) || FACTORY_LENGTH_PRESETS[0];
+  const unlimited = base.id === 'unlimited';
+  const safeWords = Math.max(100, Math.round(Number(wordsPerUnit) || base.wordsPerUnit));
+  const safeTotal = unlimited ? 0 : Math.max(1, Math.round(Number(totalWords) || base.totalWords));
+  return {
+    preset: base.id,
+    totalWords: safeTotal,
+    wordsPerUnit: safeWords,
+    maxMode: true,
+    maxChapters: unlimited ? 0 : Math.ceil(safeTotal / safeWords),
+  };
+}
+
+/** 批量名单闸：30 条后提醒，100 条硬顶。 */
+export function factoryBatchGate(count) {
+  const n = Math.max(0, Math.floor(Number(count) || 0));
+  if (n > 100) return { allowed: false, warning: true, count: n, message: `批量名单共 ${n} 条，超过 100 条硬顶，已拒绝导入` };
+  if (n > 30) return { allowed: true, warning: true, count: n, message: `批量名单共 ${n} 条；超过 30 条，确认后再入队` };
+  return { allowed: true, warning: false, count: n, message: '' };
+}
+
+function safeFactorySegment(value, fallback) {
+  const cleaned = String(value || '').trim()
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
+    .replace(/[. ]+$/g, '')
+    .slice(0, 80);
+  return cleaned || fallback;
+}
+
+/** {ws}/Output/{文体}/{作品类型|未分类}/{书名}_{ts尾5}/ */
+export function buildFactoryOutputFolder(ws, { genreName, workType, title, timestamp = Date.now() } = {}) {
+  const root = String(ws || '').replace(/[\\/]+$/g, '');
+  const genre = safeFactorySegment(genreName, '通用');
+  const type = safeFactorySegment(workType, '未分类');
+  const book = safeFactorySegment(title, '未命名');
+  const tail = String(Math.max(0, Math.floor(Number(timestamp) || Date.now()))).slice(-5).padStart(5, '0');
+  return `${root}/Output/${genre}/${type}/${book}_${tail}`;
+}
+
+/** 第NNN章-{章题剥#}：同一大纲输入始终得到同一文件名，便于断点恢复。 */
+export function buildFactoryUnitStem(chapterNo, unitName = '章', outline = '') {
+  const no = Math.max(1, Math.floor(Number(chapterNo) || 1));
+  const prefix = `第${String(no).padStart(3, '0')}${safeFactorySegment(unitName, '章')}`;
+  const title = String(outline || '')
+    .replace(/^\s*#{1,6}\s*/, '')
+    .replace(/^\s*第\s*[零〇一二三四五六七八九十百千万两\d]+\s*[章节篇回幕节卷部集单元]*\s*[：:、.．\-—]?\s*/i, '')
+    .replace(/#+/g, '')
+    .trim();
+  return `${prefix}-${safeFactorySegment(title, '未命名')}`;
+}
+
+const FACTORY_EXPORT_SPECS = Object.freeze({
+  md: Object.freeze({ ext: 'md', pandoc: 'markdown', text: true }),
+  txt: Object.freeze({ ext: 'txt', pandoc: 'plain', text: true }),
+  html: Object.freeze({ ext: 'html', pandoc: 'html', text: false }),
+  docx: Object.freeze({ ext: 'docx', pandoc: 'docx', text: false }),
+  epub: Object.freeze({ ext: 'epub', pandoc: 'epub', text: false }),
+  odt: Object.freeze({ ext: 'odt', pandoc: 'odt', text: false }),
+  rtf: Object.freeze({ ext: 'rtf', pandoc: 'rtf', text: false }),
+  rst: Object.freeze({ ext: 'rst', pandoc: 'rst', text: true }),
+  adoc: Object.freeze({ ext: 'adoc', pandoc: 'asciidoc', text: true }),
+  textile: Object.freeze({ ext: 'textile', pandoc: 'textile', text: true }),
+  opml: Object.freeze({ ext: 'opml', pandoc: 'opml', text: true }),
+  org: Object.freeze({ ext: 'org', pandoc: 'org', text: true }),
+  mw: Object.freeze({ ext: 'mw', pandoc: 'mediawiki', text: true }),
+});
+
+export function factoryExportSpec(format) {
+  return FACTORY_EXPORT_SPECS[format] || FACTORY_EXPORT_SPECS.md;
+}
+
+function stripInlineMarkdown(line) {
+  return String(line || '')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/(`{1,3}|\*\*|__|~~)/g, '');
+}
+
+function xmlEsc(value) {
+  return String(value || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
+}
+
+/** 六种长尾文本格式的无依赖保底序列化；Pandoc 不在场也保证可读真落盘。 */
+export function serializeFactoryText(markdown, format, title = '未命名') {
+  const src = String(markdown || '').replace(/\r\n?/g, '\n');
+  const lines = src.split('\n');
+  if (format === 'opml') {
+    const outlines = lines.filter(x => x.trim()).map(line => {
+      const text = stripInlineMarkdown(line.replace(/^#{1,6}\s+/, '').replace(/^[-*+]\s+/, ''));
+      return `      <outline text="${xmlEsc(text)}"/>`;
+    }).join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<opml version="2.0">\n  <head><title>${xmlEsc(title)}</title></head>\n  <body>\n${outlines}\n  </body>\n</opml>\n`;
+  }
+  if (format === 'rst') {
+    const marks = ['=', '-', '~', '^', '"', "'"];
+    const out = [];
+    for (const line of lines) {
+      const h = /^(#{1,6})\s+(.+)$/.exec(line);
+      if (!h) { out.push(stripInlineMarkdown(line)); continue; }
+      const text = stripInlineMarkdown(h[2]);
+      out.push(text, marks[h[1].length - 1].repeat(Math.max(1, [...text].length)));
+    }
+    return out.join('\n');
+  }
+  const heading = {
+    adoc: n => '='.repeat(n),
+    textile: n => `h${n}.`,
+    org: n => '*'.repeat(n),
+    mw: n => '='.repeat(Math.min(6, n + 1)),
+  }[format];
+  if (!heading) return lines.map(stripInlineMarkdown).join('\n');
+  return lines.map(line => {
+    const h = /^(#{1,6})\s+(.+)$/.exec(line);
+    if (!h) return stripInlineMarkdown(line);
+    const mark = heading(h[1].length);
+    const text = stripInlineMarkdown(h[2]);
+    return format === 'mw' ? `${mark} ${text} ${mark}` : `${mark} ${text}`;
+  }).join('\n');
+}
+
 /**
  * 组装完整创作焚诀（生成提示词阶段的产物，也是直接生成时的 system+user 蓝本）
  * 结构遵循元焚诀：需求痛点 → 核心契约 → 文体规范（元变量）→ 结构蓝图（篇幅预算）→ 维度规则 → 校验 → 启动指令
@@ -222,6 +352,8 @@ export function parseCsvTasks(text, tpl) {
   }
   pushRow();
   if (rows.length < 2) throw new Error('CSV 至少需要表头 + 一行数据');
+  const gate = factoryBatchGate(rows.length - 1);
+  if (!gate.allowed) throw new Error(gate.message);
   const headers = rows[0];
   const colToField = headers.map(h => {
     const f = tpl.input_fields.find(x => x.label === h || x.id === h);
@@ -668,32 +800,50 @@ export function dedupMerge(prev, next) {
   return prev + next;
 }
 
-// ==================== 任务状态持久化（原版 task_state.json） ====================
+// ==================== 任务状态持久化（W60b 新协议 + 旧名兼容） ====================
 /** 写任务状态到产出目录（供启动扫描恢复） */
 export async function writeTaskState(folder, state) {
   try {
+    const filename = /(^|[\\/])Output([\\/]|$)/i.test(String(folder || '')) ? '任务状态.json' : 'task_state.json';
     await window.mazz.invoke('fs:writeFile', {
-      path: `${folder}/task_state.json`,
+      path: `${folder}/${filename}`,
       content: JSON.stringify({ ...state, updatedAt: new Date().toISOString() }, null, 2),
     });
   } catch {}
 }
 
-/** 扫描工作区可恢复任务（task_state.json 且 status ∈ running/paused/stopped） */
+/** 扫描工作区可恢复任务（新任务状态.json / 旧 task_state.json）。 */
 export async function scanResumableTasks() {
   const results = [];
   try {
     const ws = await window.mazz.invoke('workspace:get');
-    const root = `${ws}/创作产出`;
-    const dirs = await window.mazz.invoke('fs:listDir', { path: root }).catch(() => []);
-    for (const d of dirs) {
-      if (!d.isDir) continue;
-      try {
-        const raw = await window.mazz.invoke('fs:readFile', { path: `${d.path}/task_state.json` });
-        const st = JSON.parse(raw);
-        if (['running', 'paused', 'stopped'].includes(st.status)) results.push({ ...st, outDir: d.path });
-      } catch {}
-    }
+    const seen = new Set();
+    const walk = async (root, depth) => {
+      const dirs = await window.mazz.invoke('fs:listDir', { path: root }).catch(() => []);
+      for (const d of dirs) {
+        if (!d.isDir) continue;
+        let found = false;
+        for (const filename of ['任务状态.json', 'task_state.json']) {
+          try {
+            const statePath = `${d.path}/${filename}`;
+            const stat = await window.mazz.invoke('fs:stat', { path: statePath }).catch(() => ({ exists: false }));
+            if ((stat?.exists && !stat.isDir) || stat == null) { // null 仅兼容老测试桥；真桥始终返回 exists
+              const raw = await window.mazz.invoke('fs:readFile', { path: statePath });
+              const st = JSON.parse(raw);
+              if (['running', 'paused', 'stopped'].includes(st.status) && !seen.has(d.path)) {
+                seen.add(d.path);
+                results.push({ ...st, outDir: d.path });
+              }
+              found = true;
+              break;
+            }
+          } catch { /* 缺少候选名时继续尝试另一状态文件 */ }
+        }
+        if (!found && depth > 1) await walk(d.path, depth - 1);
+      }
+    };
+    await walk(`${ws}/Output`, 3);
+    await walk(`${ws}/创作产出`, 1); // 旧任务只读兼容，不迁移、不截断
   } catch {}
   return results.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }

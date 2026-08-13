@@ -67,13 +67,15 @@ describe('收藏当前页收编（B3）', () => {
 });
 
 describe('坞浮动增强区全桥（B8）', () => {
-  test('chips 切换+配置+检索桥', () => {
+  test('chips 切换+配置+检索桥（W60b 迁入一次性立项向导）', () => {
     const sh = readSrc('renderer/shell/shell.js');
     for (const a of ['togglePlugin', 'toggleStyle', 'plugcfg', 'styleup', 'embedadd', 'embeddel', 'websearch']) {
       assert.ok(sh.includes(a), `factoryAction 必须有 ${a}`);
     }
     const df = readSrc('renderer/panels/dockfloat.html');
-    assert.ok(df.includes('data-xa="togglePlugin"') && df.includes('fc-q'), '增强区必须可交互');
+    assert.ok(df.includes('id="fc-project"') && df.includes("act: 'project'"), '浮动坞必须能进入一次性立项向导');
+    const cfg = readSrc('renderer/panels/factorycfg.html');
+    assert.ok(cfg.includes('data-pa="togglePlugin"') && cfg.includes('id="pj-search"'), '立项向导增强区必须可交互');
     assert.ok(!df.includes('配置请在主窗坞'), '「回主窗配置」妥协文案必须退役');
   });
 });

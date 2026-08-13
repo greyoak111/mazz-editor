@@ -31,13 +31,20 @@ export async function scenes71({ win, human, WS, scenario, shotDir }) {
     await evaluate(() => { const cb = [...document.querySelectorAll('.fc-task input[type=checkbox]')].at(-1); if (cb) cb.checked = true; document.querySelector('[data-a=startsel]')?.click(); });
     await human.until(async () => {
       const ws = await window.mazz.invoke('workspace:get');
-      const path = ws + '/创作产出/META直过报告/task_state.json';
+      const dirs = await window.mazz.invoke('fs:listDir', { path: ws + '/Output/财务报告/未分类' }).catch(() => []);
+      const root = dirs.find(x => x.isDir && x.name.startsWith('META直过报告_'))?.path;
+      if (!root) return false;
+      const path = root + '/任务状态.json';
       const stat = await window.mazz.invoke('fs:stat', { path }).catch(() => null);
       if (!stat?.exists || stat.isDir) return false;
       const raw = await window.mazz.invoke('fs:readFile', { path }).catch(() => '');
       try { return JSON.parse(raw).status === 'done'; } catch { return false; }
     }, { timeout: 15000, msg: 'META 直过状态落盘' });
-    const bp = await evaluate(async ws => window.mazz.invoke('fs:readFile', { path: ws + '/创作产出/META直过报告/创作蓝图.md' }), WS);
+    const bp = await evaluate(async ws => {
+      const dirs = await window.mazz.invoke('fs:listDir', { path: ws + '/Output/财务报告/未分类' });
+      const root = dirs.find(x => x.isDir && x.name.startsWith('META直过报告_')).path;
+      return window.mazz.invoke('fs:readFile', { path: root + '/创作蓝图.md' });
+    }, WS);
     await human.assert(bp.includes('META直过报告结构蓝图') && !bp.includes('兜底'), '完整 META 蓝图必须一次直过，不可误走兜底');
   });
 
@@ -81,7 +88,10 @@ export async function scenes71({ win, human, WS, scenario, shotDir }) {
     });
     await human.until(async () => {
       const ws = await window.mazz.invoke('workspace:get');
-      const path = ws + '/创作产出/W60a实验报告/task_state.json';
+      const dirs = await window.mazz.invoke('fs:listDir', { path: ws + '/Output/财务报告/未分类' }).catch(() => []);
+      const root = dirs.find(x => x.isDir && x.name.startsWith('W60a实验报告_'))?.path;
+      if (!root) return false;
+      const path = root + '/任务状态.json';
       const stat = await window.mazz.invoke('fs:stat', { path }).catch(() => null);
       if (!stat?.exists || stat.isDir) return false;
       const raw = await window.mazz.invoke('fs:readFile', { path }).catch(() => '');
@@ -89,12 +99,13 @@ export async function scenes71({ win, human, WS, scenario, shotDir }) {
     }, { timeout: 40000, msg: 'W60a mock 11节状态落盘' });
 
     const evidence = await evaluate(async (ws) => {
-      const root = ws + '/创作产出/W60a实验报告';
+      const dirs = await window.mazz.invoke('fs:listDir', { path: ws + '/Output/财务报告/未分类' });
+      const root = dirs.find(x => x.isDir && x.name.startsWith('W60a实验报告_')).path;
       const files = await window.mazz.invoke('fs:listDir', { path: root });
       const names = files.map(f => f.name);
       const read = n => window.mazz.invoke('fs:readFile', { path: root + '/' + n });
       const bpName = names.find(n => n === '创作蓝图.md');
-      const lastName = names.find(n => /第0*11节\.md$/.test(n));
+      const lastName = names.find(n => /第0*11节-[^/]+\.md$/.test(n));
       const snapName = names.find(n => /结构状态快照_第0*11节后/.test(n));
       return {
         root, names, bp: await read(bpName), last: await read(lastName), snap: await read(snapName),
@@ -102,7 +113,7 @@ export async function scenes71({ win, human, WS, scenario, shotDir }) {
       };
     }, WS);
     await human.assert(evidence.bp.includes('结构蓝图（兜底）') && evidence.bp.includes('任务目标'), '三败后必须落 META 兜底蓝图');
-    await human.assert(evidence.names.filter(n => /第0*\d+节\.md$/.test(n)).length === 11, '必须落盘 11 节');
+    await human.assert(evidence.names.filter(n => /第0*\d+节-[^/]+\.md$/.test(n)).length === 11, '必须落盘 11 节');
     await human.assert(!evidence.last.includes('本次续写字数'), 'TOKEN 声明是协议元数据，不得污染最终正文');
     for (const key of ['要点台账', '术语与数据一致性', '论据与引用台账', '结构完成度']) {
       await human.assert(evidence.snap.includes(key), '结构快照缺 ' + key);

@@ -1318,8 +1318,8 @@ export class Shell {
       palette.open('files');
     } });
     // —— 智能创作（Factory，右侧工具坞承载）——
-    R('factory.copyMantra', { title: '复制创作模板母版（当前表单）', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.copyMantra() });
-    R('factory.generate', { title: '直接生成（当前表单）', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.generateNow() });
+    R('factory.copyMantra', { title: '新建立项并复制模板母版', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });
+    R('factory.generate', { title: '新建立项并开始创作', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });
     R('factory.runAll', { title: '全部启动创作任务', icon: '▶', group: '智能创作', run: () => this.sideDock?.factoryPanel?.runAllTasks() });
     R('factory.newGenre', { title: '新建创作模板', icon: '✚', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openGenreEditor() });
     R('factory.provider', { title: 'AI 服务设置（智能创作）', icon: '⚙', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProviderDialog() });
@@ -2218,7 +2218,7 @@ export class Shell {
           try {
             if (pl.act === 'selectGenre') {
               const g = (fp.genres || []).find(x => x.id === pl.id);
-              if (g) { fp.genre = g; fp.values = {}; fp.renderForm(); }
+              if (g) { fp.genre = g; fp.values = {}; fp.lengthPlan = (await import('../modules/factory/engine.js')).resolveFactoryLengthPlan({ preset: 'short' }); fp.renderForm(); fp.syncLengthControls(); }
             } else if (pl.act === 'setValue') {
               fp.values[pl.f] = pl.v;
             } else if (pl.act === 'setDump') {
@@ -2234,6 +2234,33 @@ export class Shell {
               await fp.copyMantra();
             } else if (pl.act === 'generate') {
               fp.generateNow();
+            } else if (pl.act === 'addtask') {
+              fp.addTask();
+            } else if (pl.act === 'projectSubmit') {
+              const draft = pl.draft || {};
+              fp.values = { ...fp.values, ...(draft.values || {}) };
+              fp.lengthPlan = (await import('../modules/factory/engine.js')).resolveFactoryLengthPlan({
+                preset: draft.preset, totalWords: draft.totalWords, wordsPerUnit: draft.wordsPerUnit,
+              });
+              fp.renderForm();
+              fp.syncLengthControls(false);
+              if (fp.dumpEl) fp.dumpEl.value = String(draft.dump || '');
+              const dual = fp.el.querySelector('.fc-dualloop'); if (dual) dual.checked = !!draft.dualLoop;
+              const max = fp.el.querySelector('.fc-maxmode'); if (max) max.checked = !!draft.maxMode;
+              fp.setExportFormat(draft.exportFmt);
+              if (draft.batchTitles?.length) await fp.addBatchTitles(draft.batchTitles);
+              else if (pl.mode === 'generate') await fp.generateNow();
+              else fp.addTask();
+            } else if (pl.act === 'project') {
+              await fp.openProjectWizard();
+            } else if (pl.act === 'setLengthPreset') {
+              fp.applyLengthPreset(pl.preset);
+            } else if (pl.act === 'setTotalWords') {
+              fp.setTotalWords(pl.value);
+            } else if (pl.act === 'setWordsPerUnit') {
+              fp.setWordsPerUnit(pl.value);
+            } else if (pl.act === 'setExportFmt') {
+              fp.setExportFormat(pl.value);
             } else if (pl.act === 'runall') {
               fp.runAllTasks();
             } else if (pl.act === 'togglePlugin') {
@@ -2298,6 +2325,10 @@ export class Shell {
           const tab = this._factoryInitTab || 'provider';
           this._factoryInitTab = null;
           window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryInit', tab } }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'factoryProjectQuery') {
+          this.sideDock?.factoryPanel?.pushSnapshot();
           return;
         }
         if (pl.type === 'factoryStashTab') { this._factoryInitTab = pl.tab || 'provider'; return; }

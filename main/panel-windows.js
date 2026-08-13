@@ -171,10 +171,10 @@ class PanelWindows {
         : kind === 'picklist' ? (opts.w || 340)
         : kind === 'palette' ? 640 : kind === 'shortcuts' ? 720 : kind === 'favmgr' ? 780
         : kind === 'help' ? 860 : kind === 'settings' ? 760 : kind === 'plugins' ? 740
-        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? 400 : kind === 'quickopen' ? 640 : kind === 'bookmark' ? 520 : 700,
+        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? 400 : kind === 'quickopen' ? 640 : kind === 'bookmark' ? 520 : kind === 'factorycfg' ? 920 : 700,
       height: kind === 'ctxmenu' ? (opts.h || 300)
         : kind === 'picklist' ? (opts.h || 420)
-        : kind === 'palette' ? 480 : kind === 'quickopen' ? 480 : kind === 'dockfloat' ? 620 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : 560,
+        : kind === 'palette' ? 480 : kind === 'quickopen' ? 480 : kind === 'dockfloat' ? 620 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : 560,
       minWidth: kind === 'ctxmenu' ? 160 : kind === 'picklist' ? 240 : 480, minHeight: kind === 'ctxmenu' ? 60 : kind === 'picklist' ? 200 : 360,
       // W55 右键菜单子窗格：屏坐标定位（主窗内容区坐标→屏坐标）+防出屏翻边（W58i picklist 字体/字号格同例）
       ...((kind === 'ctxmenu' || kind === 'picklist') ? (() => {
@@ -188,7 +188,7 @@ class PanelWindows {
       parent: parent || undefined,
       title: { favmgr: '收藏管理', pwmgr: '密码管理器', palette: '命令面板', shortcuts: '快捷键速查',
         settings: '设置', agreement: '用户服务协议及隐私政策', help: '使用指南', translate: '翻译',
-        plugins: '插件管理', quickopen: '快速跳转', recorder: '全局内录', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步 · 更新', factorycfg: 'AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择', archive: '压缩包' }[kind] || '面板',
+        plugins: '插件管理', quickopen: '快速跳转', recorder: '全局内录', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步 · 更新', factorycfg: '项目立项 · AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择', archive: '压缩包' }[kind] || '面板',
       autoHideMenuBar: true,
       // W47 圆角+拖拽：transparent+圆角体（Win10 原生无圆角 API 的唯一路径；拖拽=页面顶窄拖拽条 app-region:drag，
       // 窗控三键=页面右上角小件（非全套标题栏——用户定版）。thickFrame 默认保留=边框缩放在 Win10 仍有抓手

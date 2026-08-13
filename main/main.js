@@ -8,10 +8,46 @@ const {
 const fs = require('fs');
 const { Readable } = require('stream'); // mazz-res media/ 分支：range 流式响应（GB 级不整读）
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 // E2E 用户目录必须在单实例锁之前切换；Chromium 的锁文件按当时 userData 定位。
 // 放在 requestSingleInstanceLock 之后会先碰正常用户目录，在受限 Windows 环境直接拒绝访问。
 if (process.env.MAZZ_E2E_USER_DATA) app.setPath('userData', process.env.MAZZ_E2E_USER_DATA);
+
+// Windows 无人值守：Chromium/子进程即使异常也只退进程、记日志，不弹系统级「确定/取消」阻塞框。
+// --noerrdialogs 是 Chromium 官方开关；禁用 Breakpad/Crashpad 可避免崩溃处理器再拉起交互 UI。
+app.commandLine.appendSwitch('noerrdialogs');
+app.commandLine.appendSwitch('disable-breakpad');
+app.commandLine.appendSwitch('disable-crash-reporter');
+
+function detectUnsafeGraphicsHost() {
+  if (process.env.MAZZ_GPU_MODE === 'hardware') return { safe: false, reason: '用户强制硬件模式' };
+  if (process.env.MAZZ_GPU_MODE === 'safe' || process.env.MAZZ_E2E_DISABLE_GPU === '1' || process.argv.includes('--disable-gpu')) {
+    return { safe: true, reason: '显式安全图形模式' };
+  }
+  if (process.platform !== 'win32') return { safe: false, reason: '' };
+  if (/^(rdp|ica|pcoip)/i.test(process.env.SESSIONNAME || '')) return { safe: true, reason: `远程会话 ${process.env.SESSIONNAME}` };
+  try {
+    // spacedesk/虚拟显示镜像驱动与 Chromium GPU 子进程在锁屏、切换会话后会形成已实证的崩溃环。
+    // 只在 Windows 启动期查一次，1.5 秒硬超时；查询失败即保持正常硬件模式。
+    const adapters = execFileSync('wmic.exe', ['path', 'win32_videocontroller', 'get', 'name'], {
+      encoding: 'utf8', windowsHide: true, timeout: 1500, stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    const hit = String(adapters).match(/spacedesk|mirror driver|virtual display|remote display|indirect display|parsec|dummy display/i);
+    if (hit) return { safe: true, reason: `检测到虚拟显示驱动 ${hit[0]}` };
+  } catch {}
+  return { safe: false, reason: '' };
+}
+
+const GRAPHICS_MODE = detectUnsafeGraphicsHost();
+if (GRAPHICS_MODE.safe) {
+  // app.disableHardwareAcceleration 之外再钉三道命令行闸：不让 Chromium 用 SwiftShader 另起 GPU 子进程兜底。
+  app.disableHardwareAcceleration();
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-gpu-compositing');
+  app.commandLine.appendSwitch('disable-software-rasterizer');
+  app.commandLine.appendSwitch('disable-direct-composition');
+}
 
 // Windows 任务栏/开始菜单图标与分组归属（不设会回落成 Electron 默认图标）
 app.setAppUserModelId('com.mazz.editor');
@@ -31,7 +67,7 @@ app.commandLine.appendSwitch('disable-background-media-suspend'); // 后台静�
 // 平台硬解显式开（扒 NipaPlay 老版所得"硬解 HEVC"全部秘密：它裸 HTML5 video 零解码代码，
 // 吃的就是 Chromium 平台解码器默认红利——H264/AAC 由 Electron 官方 Chrome-branding ffmpeg 软解（Linux 沙箱试播实证），
 // HEVC 走 OS 平台解码器：Win 需系统 HEVC 组件（PlatformHEVCDecoderSupport M107+），mac 走 VideoToolbox，Linux 需 VAAPI——显式开幂等保险）
-app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,VaapiVideoDecoder');
+if (!GRAPHICS_MODE.safe) app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport,VaapiVideoDecoder');
 
 // mazz-res:// 资源协议：wasm worker 唯一活路——jassub 等 ES module worker 在 blob:/file:// 源下全被
 // Chromium 掐死（module worker 源策略实锤），标准+安全+CORS 特权自定义协议是 Electron 里的正道
@@ -1210,10 +1246,7 @@ function applySettings() {
 
 // ---------- 启动 ----------
 // GPU 异常环境（远程桌面/老显卡/虚拟机）可用 --disable-gpu 兜底
-if (process.argv.includes('--disable-gpu')) {
-  app.disableHardwareAcceleration();
-  console.log('[mazz] 已禁用硬件加速（--disable-gpu）');
-}
+if (GRAPHICS_MODE.safe) console.log(`[mazz] 安全图形模式：${GRAPHICS_MODE.reason}；GPU 子进程/系统错误框已禁用`);
 app.whenReady().then(() => {
   bus.start();
   registerChannels();
