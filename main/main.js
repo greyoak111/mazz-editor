@@ -470,7 +470,11 @@ function registerChannels() {
     try {
       const mocked = factoryMockReply({ system, user, stream: true });
       if (mocked != null) {
-        for (let i = 0; i < mocked.length; i += 120) push({ delta: mocked.slice(i, i + 120) });
+        const mockDelay = Math.max(0, Math.min(1000, Number(process.env.MAZZ_E2E_FACTORY_DELAY_MS) || 0));
+        for (let i = 0; i < mocked.length; i += 120) {
+          push({ delta: mocked.slice(i, i + 120) });
+          if (mockDelay) await new Promise(resolve => setTimeout(resolve, mockDelay));
+        }
         push({ done: true });
         return { ok: true };
       }

@@ -11,6 +11,7 @@ import { iconHtml } from '../../lib/svg-icons.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
+const AUTO_PREVIEW_KEY = 'mazz.factory.autoPreview';
 const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
 
 // 首次生成前探测蓝图/大纲/快照/checkpoint 属于正常分支；先 stat，避免用异常充当流程控制并污染主进程错误账。
@@ -32,6 +33,8 @@ export class FactoryPanel {
     this.history = this.loadJSON(HISTORY_KEY, []);
     this.running = false;
     this.stopRequested = false;
+    this.autoPreview = this.loadJSON(AUTO_PREVIEW_KEY, true) !== false;
+    this.previewTasks = new Map(); // taskId -> { task, tpl, folder, currentPath }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
     this.pluginValues = {};       // {pluginId: {fieldId: value}}
@@ -60,6 +63,7 @@ export class FactoryPanel {
       dualLoop: !!this.el.querySelector('.fc-dualloop')?.checked,
       maxMode: !!this.el.querySelector('.fc-maxmode')?.checked,
       maxChapters: +(this.el.querySelector('.fc-maxchapters')?.value || 0),
+      autoPreview: this.autoPreview,
       lengthPlan: { ...this.lengthPlan },
       lengthPresets: FACTORY_LENGTH_PRESETS.map(x => ({ ...x })),
       wordsPerUnitChips: [2000, 4000, 6000, 8000],
@@ -154,6 +158,7 @@ export class FactoryPanel {
           <div class="fc-sec fc-advanced-row">
             <label class="fc-check" title="双循环勘误：生成后自检+修订一轮"><input type="checkbox" class="fc-dualloop"> 双循环勘误</label>
             <label class="fc-check" title="由篇幅档决定是否连写"><input type="checkbox" class="fc-maxmode" checked> 连写模式</label>
+            <label class="fc-check" title="每个任务自动打开独立只读预览窗"><input type="checkbox" class="fc-autopreview" ${this.autoPreview ? 'checked' : ''}> 生成自动开预览</label>
             <select class="fc-exportfmt" title="内容单元导出格式">
               ${FACTORY_EXPORT_FORMATS.map(fmt => `<option value="${fmt}">${fmt}</option>`).join('')}
             </select>
@@ -265,6 +270,7 @@ export class FactoryPanel {
     this.el.querySelectorAll('[data-words]').forEach(b => b.addEventListener('click', () => this.setWordsPerUnit(+b.dataset.words)));
     this.el.querySelector('.fc-totalwords').addEventListener('change', e => this.setTotalWords(+e.target.value));
     this.el.querySelector('.fc-wordsperunit').addEventListener('change', e => this.setWordsPerUnit(+e.target.value));
+    this.el.querySelector('.fc-autopreview').addEventListener('change', e => this.setAutoPreview(e.target.checked));
     // —— 实时预览（连写直播 + 编辑并应用回去） ——
     this.liveWrapEl = this.el.querySelector('.fc-livewrap');
     this.liveEl = this.el.querySelector('.fc-live');
@@ -637,6 +643,14 @@ export class FactoryPanel {
     this.pushSnapshot();
   }
 
+  setAutoPreview(enabled) {
+    this.autoPreview = enabled !== false;
+    this.saveJSON(AUTO_PREVIEW_KEY, this.autoPreview);
+    const el = this.el.querySelector('.fc-autopreview');
+    if (el) el.checked = this.autoPreview;
+    this.pushSnapshot();
+  }
+
   // ==================== 动态表单 ====================
   renderForm() {
     const tpl = this.genre;
@@ -761,6 +775,7 @@ export class FactoryPanel {
       styleIds: [...this.styleIds],
       embeds: this.embeds.map(e => ({ ...e })),
       exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
+      autoPreview: this.autoPreview,
     };
   }
 
@@ -793,6 +808,88 @@ export class FactoryPanel {
     return outPath;
   }
 
+  previewEnabled(task) {
+    return task?.autoPreview == null ? this.autoPreview : task.autoPreview !== false;
+  }
+
+  async previewFiles(folder, activePath = '', activeStatus = 'done') {
+    const rows = await window.mazz.invoke('fs:listDir', { path: folder }).catch(() => []);
+    const rank = name => name === '创作蓝图.md' ? 0 : name === '章节大纲.md' ? 1
+      : /^第\d+/.test(name) ? 2 : /状态快照/.test(name) ? 3 : 4;
+    const files = rows.filter(x => !x.isDir && /\.(md|markdown)$/i.test(x.name || ''))
+      .map(x => ({ name: x.name, path: x.path || `${folder}/${x.name}`, status: (x.path || `${folder}/${x.name}`) === activePath ? activeStatus : 'done' }))
+      .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name, 'zh-CN'));
+    if (activePath && !files.some(x => x.path === activePath)) {
+      files.push({ name: activePath.split(/[\\/]/).pop(), path: activePath, status: activeStatus });
+      files.sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name, 'zh-CN'));
+    }
+    return files;
+  }
+
+  previewPush(taskId, payload) {
+    if (!taskId || !window.mazz?.isElectron) return;
+    window.mazz.invoke('panel:push', { kind: 'fpreview', instanceId: taskId, payload: { taskId, ...payload } }).catch(() => {});
+  }
+
+  async openTaskPreview(task, tpl, folder, status = 'running') {
+    if (!this.previewEnabled(task) || !window.mazz?.isElectron) return false;
+    const ctx = { task, tpl, folder, currentPath: `${folder}/创作蓝图.md` };
+    this.previewTasks.set(task.id, ctx);
+    await window.mazz.invoke('panel:open', { kind: 'fpreview', opts: { instanceId: task.id, title: `${task.label} · 只读预览` } });
+    const files = await this.previewFiles(folder);
+    const content = await readOptionalFile(ctx.currentPath).catch(() => '');
+    this.previewPush(task.id, {
+      type: 'factoryPreviewInit', title: task.label, folder, files, currentPath: ctx.currentPath,
+      content, status, statusText: status === 'running' ? '生成中…' : '等待任务',
+    });
+    return true;
+  }
+
+  async refreshTaskPreview(task, activePath = '', activeStatus = 'done') {
+    if (!this.previewEnabled(task)) return [];
+    const ctx = this.previewTasks.get(task.id);
+    const folder = ctx?.folder || task.folder;
+    if (!folder) return [];
+    if (ctx && activePath) ctx.currentPath = activePath;
+    const files = await this.previewFiles(folder, activePath, activeStatus);
+    this.previewPush(task.id, { type: 'factoryPreviewFiles', files });
+    return files;
+  }
+
+  async finishTaskPreview(task, failedMessage = '') {
+    if (!this.previewEnabled(task) || !task.folder) return;
+    const files = await this.previewFiles(task.folder);
+    this.previewPush(task.id, failedMessage
+      ? { type: 'factoryPreviewFail', message: failedMessage, files }
+      : { type: 'factoryPreviewTaskDone', files });
+  }
+
+  async previewSnapshot(taskId, instanceId = taskId) {
+    const id = taskId || instanceId;
+    const task = this.previewTasks.get(id)?.task || this.tasks.find(t => t.id === id);
+    if (!task?.folder) return false;
+    const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
+    const ctx = this.previewTasks.get(id) || { task, tpl, folder: task.folder, currentPath: `${task.folder}/创作蓝图.md` };
+    this.previewTasks.set(id, ctx);
+    const files = await this.previewFiles(ctx.folder);
+    const currentPath = ctx.currentPath && files.some(f => f.path === ctx.currentPath) ? ctx.currentPath : (files[0]?.path || '');
+    const content = currentPath ? await readOptionalFile(currentPath).catch(() => '') : '';
+    this.previewPush(instanceId || id, { type: 'factoryPreviewInit', taskId: id, title: task.label, folder: ctx.folder, files, currentPath, content, status: task.status === 'failed' ? 'failed' : task.status === 'done' || task.status === 'done-warn' ? 'done' : 'running', statusText: task.status === 'failed' ? '✗ 失败' : task.status === 'done' || task.status === 'done-warn' ? '✓ 完成' : '生成中…' });
+    return true;
+  }
+
+  async readPreviewFile(taskId, filePath, instanceId = taskId) {
+    const id = taskId || instanceId;
+    const task = this.previewTasks.get(id)?.task || this.tasks.find(t => t.id === id);
+    const folder = String(task?.folder || '').replace(/\\/g, '/').replace(/\/$/, '');
+    const target = String(filePath || '').replace(/\\/g, '/');
+    if (!folder || target.includes('/../') || !target.toLowerCase().startsWith((folder + '/').toLowerCase())) return false;
+    const content = await readOptionalFile(target).catch(() => '');
+    const ctx = this.previewTasks.get(id); if (ctx) ctx.currentPath = target;
+    this.previewPush(instanceId || id, { type: 'factoryPreviewFile', taskId: id, path: target, content });
+    return true;
+  }
+
   // ==================== 任务执行 ====================
   async runTask(task) {
     if (this.running) { toast('有任务正在执行'); return; }
@@ -801,28 +898,35 @@ export class FactoryPanel {
     this.stopRequested = false;
     const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
     task.status = 'running';
+    this._activeTask = task;
     this.renderTasks();
     const dual = this.el.querySelector('.fc-dualloop').checked;
     this.log(`开始任务：「${task.label}」（${tpl.name} · ${task.mode === 'max' ? '连写' : '单次'}模式）`);
     try {
       if (task.mode === 'max') await this.runMaxTask(task, tpl, dual);
       else await this.runSingleTask(task, tpl, dual);
+      if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
     } catch (e) {
       task.status = 'failed';
       if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values }).catch(() => {});
       this.log(`✗ 任务「${task.label}」失败：${e.message}`);
+      await this.finishTaskPreview(task, e.message).catch(() => {});
     } finally {
       this.running = false;
       this.stopRequested = false;
       this.persistTasks();
+      if (this._activeTask === task) this._activeTask = null;
     }
   }
 
   async runSingleTask(task, tpl, dual) {
     const folder = await this.ensureTaskFolder(task, tpl);
+    this._activeTask = task;
+    this._runFolder = folder;
     const m = buildMantra(tpl, task.values, task.dump);
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/创作蓝图.md`, content: m.doc });
     await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt });
+    await this.openTaskPreview(task, tpl, folder);
     // 创作增强注入：嵌入资料（最高优先级）+ 插件规则 + 文风包
     const embedBlocks = buildEmbedBlocks(task.embeds || []);
     const plugBlocks = (task.pluginSel || []).map(id => {
@@ -874,7 +978,7 @@ export class FactoryPanel {
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第001${unitName}后.md`, content: snapshot });
     await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt });
     this.liveDone(1, mdPath, text, getSnapshotSchema(tpl).unitName);
-    this.shell.openTab('markdown', { title: task.label + '.md', filePath: mdPath, content: text });
+    if (!this.previewEnabled(task)) this.shell.openTab('markdown', { title: task.label + '.md', filePath: mdPath, content: text });
     this.pushHistory({ label: task.label, genre: tpl.name, ok: !fails.length, when: Date.now(), text });
     task.status = fails.length ? 'done-warn' : 'done';
     this.log(fails.length ? `⚠ 完成但有 ${fails.length} 项校验未过：${fails[0].label}` : `✅ 完成，全部校验通过（${text.length} 字）`);
@@ -882,12 +986,15 @@ export class FactoryPanel {
 
   async runMaxTask(task, tpl, dual, resumeFrom = null, retryChapter = null) {
     const folder = await this.ensureTaskFolder(task, tpl);
+    this._activeTask = task;
+    this._runFolder = folder;
     const total = task.maxChapters || (canUseUnlimited(tpl) ? 0 : 10);
     if (!task.maxChapters && total) task.maxChapters = total; // 执行层再钉：旧任务/恢复态不得绕过说明类无限连写禁令
     const family = blueprintFamily(tpl);
     const snapshotSchema = getSnapshotSchema(tpl);
     const unitName = snapshotSchema.unitName;
     this._runSnapshotSchema = snapshotSchema;
+    await this.openTaskPreview(task, tpl, folder);
     const stateFor = (status, ch) => writeTaskState(folder, {
       id: task.id, title: task.label, genreId: task.genreId, status,
       currentChapter: ch ?? task.doneChapters ?? 0, maxChapters: total,
@@ -925,7 +1032,10 @@ export class FactoryPanel {
         blueprint = stripMdFence(await chatStream({
           cfg: this.cfg, user: bpUser, temperature: 0.7, maxTokens: 8192,
           shouldStop: () => this.stopRequested,
-          onChunk: (_, full) => { if (full.length - shown >= 600) { shown = full.length; this.log(`… 蓝图 ${full.length} 字`); } },
+          onChunk: (_, full) => {
+            this.previewPush(task.id, { type: 'factoryPreviewStream', phase: 'blueprint', chapterNo: 0, unitName: '蓝图', path: bpPath, text: full, status: 'running' });
+            if (full.length - shown >= 600) { shown = full.length; this.log(`… 蓝图 ${full.length} 字`); }
+          },
         }));
         ok = blueprint.length >= 500 && blueprintStructureOk(blueprint, family);
         this.log(ok ? `✅ 蓝图完整（${blueprint.length} 字，结构通过）` : `⚠ 蓝图不完整（长度 ${blueprint.length}），${attempt < 3 ? '重试 ' + attempt + '/3' : '启用兜底'}`);
@@ -935,7 +1045,9 @@ export class FactoryPanel {
         this.log('🔧 已使用兜底蓝图');
       }
       await window.mazz.invoke('fs:writeFile', { path: bpPath, content: blueprint });
-      this.shell.openTab('markdown', { title: '创作蓝图.md', filePath: bpPath, content: blueprint });
+      await this.refreshTaskPreview(task, bpPath);
+      this.previewPush(task.id, { type: 'factoryPreviewFile', path: bpPath, content: blueprint });
+      if (!this.previewEnabled(task)) this.shell.openTab('markdown', { title: '创作蓝图.md', filePath: bpPath, content: blueprint });
       if (retryChapter === -1) { task.status = 'pending'; this.log('蓝图重试完成，任务待启动'); await stateFor('paused', 0); return; }
     }
 
@@ -952,6 +1064,7 @@ export class FactoryPanel {
         else while (outlines.length < total) outlines.push(`第${outlines.length + 1}${unitName}：根据内容发展自然推进`);
       }
       await window.mazz.invoke('fs:writeFile', { path: `${folder}/章节大纲.md`, content: outlines.join('\n') });
+      await this.refreshTaskPreview(task);
     }
     const chapterCount = total || 999999; // 0 = max 模式写到手动终止（上限 999 章防失控）
     const bpCore = extractBlueprintCore(blueprint);
@@ -1094,7 +1207,7 @@ export class FactoryPanel {
         task.doneChapters = i;
         this.renderTasks();
         this.log(`✓ 第 ${i} ${unitName}落盘（${text.length} 字）`);
-        if (i === startAt || (total && i === total)) {
+        if (!this.previewEnabled(task) && (i === startAt || (total && i === total))) {
           this.shell.openTab('markdown', { title: `${stem}.md`, filePath: mdPath, content: mdContent });
         }
       } else {
@@ -1133,36 +1246,51 @@ export class FactoryPanel {
   // ==================== 实时预览（原版精髓：直播 + 实时编辑并应用回去） ====================
   /** 章节开写：直播面板亮起 */
   liveStart(chapterNo, seedText = '', unitName = '章') {
-    if (!this.liveWrapEl) return;
     this.liveCur = { chapterNo, unitName, mdPath: null, folder: this._runFolder, text: seedText };
+    const task = this._activeTask;
+    this._previewPath = `${this._runFolder}/第${String(chapterNo).padStart(3, '0')}${unitName}_生成中.md`;
+    if (task && this.previewEnabled(task)) {
+      this.refreshTaskPreview(task, this._previewPath, 'running').catch(() => {});
+      this.previewPush(task.id, { type: 'factoryPreviewStream', chapterNo, unitName, path: this._previewPath, text: seedText, status: 'running' });
+    }
+    this._livePaint = 0;
+    if (!this.liveWrapEl) return;
     this.liveWrapEl.style.display = '';
     this.liveEl.innerHTML = `<div style="color:var(--mut,#888);font-size:12px;margin-bottom:4px">⚡ 第 ${chapterNo} ${unitName}生成中…</div><div class="fc-live-text"></div>`;
     this.liveTextEl = this.liveEl.querySelector('.fc-live-text');
     this.liveTextEl.textContent = seedText;
-    this._livePaint = 0;
   }
 
   /** 流式更新（300ms 节流绘制，自动滚底） */
   liveUpdate(text) {
-    if (!this.liveTextEl || !this.liveCur) return;
+    if (!this.liveCur) return;
     this.liveCur.text = text;
     const now = Date.now();
     if (now - this._livePaint < 300) return;
     this._livePaint = now;
-    this.liveTextEl.textContent = text;
-    this.liveEl.scrollTop = this.liveEl.scrollHeight;
+    const task = this._activeTask;
+    if (task && this.previewEnabled(task)) this.previewPush(task.id, { type: 'factoryPreviewStream', chapterNo: this.liveCur.chapterNo, unitName: this.liveCur.unitName, path: this._previewPath, text, status: 'running' });
+    if (this.liveTextEl) this.liveTextEl.textContent = text;
+    if (this.liveEl) this.liveEl.scrollTop = this.liveEl.scrollHeight;
   }
 
   /** 章节落盘：定版 + 进章节快列 */
   liveDone(chapterNo, mdPath, text, unitName = this.liveCur?.unitName || '章') {
-    if (!this.liveCur) return;
+    this.liveCur ||= { chapterNo, unitName, folder: this._runFolder, text: '' };
     this.liveCur.mdPath = mdPath;
     this.liveCur.text = text;
-    this.liveEl.innerHTML = `<div style="color:var(--ok,#3d6b35);font-size:12px;margin-bottom:4px">✓ 第 ${chapterNo} ${unitName}完成（${text.length} 字）——可直接点「编辑并应用回去」改稿</div><div class="fc-live-text"></div>`;
-    this.liveTextEl = this.liveEl.querySelector('.fc-live-text');
-    this.liveTextEl.textContent = text;
-    this.liveEl.scrollTop = 0;
+    const task = this._activeTask;
+    if (task && this.previewEnabled(task)) {
+      this.refreshTaskPreview(task, mdPath).then(files => this.previewPush(task.id, { type: 'factoryPreviewDone', chapterNo, unitName, path: mdPath, text, files, status: 'done' })).catch(() => {});
+    }
+    if (this.liveEl) {
+      this.liveEl.innerHTML = `<div style="color:var(--ok,#3d6b35);font-size:12px;margin-bottom:4px">✓ 第 ${chapterNo} ${unitName}完成（${text.length} 字）——可直接点「编辑并应用回去」改稿</div><div class="fc-live-text"></div>`;
+      this.liveTextEl = this.liveEl.querySelector('.fc-live-text');
+      this.liveTextEl.textContent = text;
+      this.liveEl.scrollTop = 0;
+    }
     // 章节快列（点哪章看哪章）
+    if (!this.liveChapsEl) return;
     const tag = document.createElement('button');
     tag.className = 'fc-mini';
     tag.textContent = `第${chapterNo}${unitName}`;
@@ -1360,7 +1488,7 @@ export class FactoryPanel {
           label: fieldValue(this.genre, values, '书名', 'title', 'subject', 'task', 'premise') || this.genre.name,
           values, dump: '', mode: maxMode ? 'max' : 'single', maxChapters, status: 'pending', doneChapters: 0,
           totalWords: this.lengthPlan.totalWords, wordsPerUnit: this.lengthPlan.wordsPerUnit,
-          lengthPreset: this.lengthPlan.preset, exportFmt,
+          lengthPreset: this.lengthPlan.preset, exportFmt, autoPreview: this.autoPreview,
         });
       }
       this.persistTasks();

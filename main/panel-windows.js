@@ -4,9 +4,11 @@
 // W47 追加：主题跟随主界面（all 静态注册表收 theme:changed 广播）+ 圆角透明窗+窄拖拽条（Win10 无圆角 API 的唯一路径）
 'use strict';
 const path = require('path');
-const { BrowserWindow, nativeTheme } = require('electron');
+const { BrowserWindow, nativeTheme, screen } = require('electron');
 
 class PanelWindows {
+  // W61a：只有预览/编辑两族允许多实例；其余面板继续严格单例。
+  static MULTI_KINDS = new Set(['fpreview', 'fedit']);
   /** 静态注册表：kind -> Set<BrowserWindow>（theme:broadcast 广播面——主窗换主题全部面板跟随） */
   static all = new Map();
   static register(kind, win) {
@@ -27,27 +29,26 @@ class PanelWindows {
   constructor({ bus, win }) {
     this.bus = bus;
     this.win = win; // () => 主窗
-    this.panels = new Map(); // kind -> BrowserWindow（单例，再点聚焦）
+    this.panels = new Map(); // singleton: kind；multi: kind:instanceId
     bus.handle('panel:open', async ({ kind, opts }) => this.open(kind, opts));
-    bus.handle('panel:close', async ({ kind }) => {
-      const p = this.panels.get(kind);
-      if (p && !p.isDestroyed()) p.close();
+    bus.handle('panel:close', async ({ kind, instanceId }) => {
+      for (const p of this._windowsFor(kind, instanceId)) if (!p.isDestroyed()) p.close();
       return true;
     });
     // 面板 → 主窗回推：数据已变（主窗浏览器模块刷新收藏/密码）与动作请求（打开网址/填充密码/工具坞命令/密码保存询问）
     bus.handle('panel:changed', async (payload) => { this.forward('panel:changed', payload); return true; });
     // W54 B10 坞拖拽手势三态（自绘拖拽：transparent+app-region 跨屏病绕开——面板页 e.screenX/Y 供屏坐标，主进程 setBounds 跟手）
-    bus.handle('panel:dragStart', async ({ kind, sx, sy }) => {
-      const win = this.panels.get(kind);
+    bus.handle('panel:dragStart', async ({ kind, instanceId, sx, sy }) => {
+      const win = this._panelFor(kind, instanceId);
       if (!win || win.isDestroyed()) return false;
       const b = win.getBounds();
       this._drag = { win, dx: sx - b.x, dy: sy - b.y, w: b.width, h: b.height, lastMove: 0, snap: false };
       return true;
     });
-    bus.handle('panel:move', async ({ kind, sx, sy }) => {
+    bus.handle('panel:move', async ({ kind, instanceId, sx, sy }) => {
       // 容错补建：拖出场景（坞 bar 起拖）子窗格可能刚开未 dragStart——按现 bounds 补建会话
       if (!this._drag && kind) {
-        const win = this.panels.get(kind);
+        const win = this._panelFor(kind, instanceId);
         if (win && !win.isDestroyed()) {
           const b = win.getBounds();
           this._drag = { win, dx: sx - b.x, dy: sy - b.y, w: b.width, h: b.height, lastMove: 0, snap: false };
@@ -87,19 +88,76 @@ class PanelWindows {
     // W58c：标注发件面板 kind（主题快照等通用桥的回推寻址——17 面板免逐一手带 kind；视图宿主化同款思路）
     bus.handle('panel:action', async (payload, event) => {
       if (payload && !payload.kind) {
-        for (const [kind, w] of this.panels) {
-          if (!w.isDestroyed() && w.webContents === event?.sender) { payload.kind = kind; break; }
+        for (const w of this.panels.values()) {
+          if (!w.isDestroyed() && w.webContents === event?.sender) {
+            const kind = w.__panelKind;
+            payload.kind = kind;
+            if (w.__panelInstanceId) payload.instanceId = w.__panelInstanceId;
+            break;
+          }
         }
       }
       this.forward('panel:action', payload);
       return true;
     });
     // W52③ 薄子窗回推（paletteQuery/shortcutQuery 的答案信道：主窗渲染层 → 指定面板窗）
-    bus.handle('panel:push', async ({ kind, payload }) => {
-      const p = this.panels.get(kind);
-      if (p && !p.isDestroyed()) p.webContents.send('mazz:event', { channel: 'panel:push', payload });
+    bus.handle('panel:push', async ({ kind, instanceId, payload }) => {
+      for (const p of this._windowsFor(kind, instanceId)) this._send(p, payload);
       return true;
     });
+  }
+
+  _instanceId(value) {
+    return String(value || 'default').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 96) || 'default';
+  }
+  _key(kind, instanceId) {
+    return PanelWindows.MULTI_KINDS.has(kind) ? `${kind}:${this._instanceId(instanceId)}` : kind;
+  }
+  _panelFor(kind, instanceId) {
+    return this.panels.get(this._key(String(kind || ''), instanceId));
+  }
+  _windowsFor(kind, instanceId) {
+    kind = String(kind || '');
+    if (!PanelWindows.MULTI_KINDS.has(kind) || instanceId != null) {
+      const one = this._panelFor(kind, instanceId);
+      return one && !one.isDestroyed() ? [one] : [];
+    }
+    return [...this.panels.values()].filter(w => !w.isDestroyed() && w.__panelKind === kind);
+  }
+  _send(win, payload) {
+    if (!win || win.isDestroyed()) return;
+    if (!win.__panelReady) { (win.__panelQueue ||= []).push(payload); return; }
+    win.webContents.send('mazz:event', { channel: 'panel:push', payload });
+  }
+  _prepare(win, kind, instanceId, key) {
+    win.__panelKind = kind;
+    win.__panelInstanceId = PanelWindows.MULTI_KINDS.has(kind) ? this._instanceId(instanceId) : '';
+    win.__panelKey = key;
+    win.__panelReady = false;
+    win.__panelQueue = [];
+    win.webContents.on('did-finish-load', () => {
+      if (win.isDestroyed()) return;
+      win.__panelReady = true;
+      const queue = win.__panelQueue.splice(0);
+      for (const payload of queue) this._send(win, payload);
+    });
+  }
+  _nextStairIndex(kind) {
+    const used = new Set([...this.panels.values()].filter(w => !w.isDestroyed() && w.__panelKind === kind).map(w => w.__stairIndex));
+    let n = 0;
+    while (used.has(n)) n++;
+    return n;
+  }
+  _stairBounds(parent, width, height, index) {
+    const anchor = parent?.getBounds?.() || { x: 0, y: 0, width: 1440, height: 900 };
+    const area = screen.getDisplayMatching(anchor).workArea;
+    const step = 44;
+    const rows = Math.max(1, Math.floor((area.height - height - 32) / step) + 1);
+    const row = index % rows, col = Math.floor(index / rows);
+    return {
+      x: Math.max(area.x, area.x + area.width - width - 16 - col * step),
+      y: Math.min(area.y + area.height - height, area.y + 16 + row * step),
+    };
   }
   /** 批注墨迹子窗（W52④：透明 alwaysOnTop 全屏罩——下层浏览器视图全程活着，墨迹画布只管收笔画） */
   openAnnotate(parent) {
@@ -118,6 +176,7 @@ class PanelWindows {
         contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: false,
       },
     });
+    this._prepare(win, 'annotate', '', 'annotate');
     this.panels.set('annotate', win);
     win.on('closed', () => { this.panels.delete('annotate'); this._unfollow(parent, win); });
     PanelWindows.register('annotate', win);
@@ -143,8 +202,11 @@ class PanelWindows {
     if (w && !w.isDestroyed()) this.bus.send(w, channel, payload);
   }
   open(kind, opts = {}) {
-    if (!/^(favmgr|pwmgr|palette|shortcuts|annotate|settings|agreement|help|translate|plugins|quickopen|recorder|dockfloat|bookmark|ctxmenu|splitpreview|sync|factorycfg|newfile|picklist|archive)$/.test(String(kind || ''))) return { error: '未知面板' };
-    const exist = this.panels.get(kind);
+    kind = String(kind || '');
+    if (!/^(favmgr|pwmgr|palette|shortcuts|annotate|settings|agreement|help|translate|plugins|quickopen|recorder|dockfloat|bookmark|ctxmenu|splitpreview|sync|factorycfg|newfile|picklist|fpreview|fedit|archive)$/.test(kind)) return { error: '未知面板' };
+    const instanceId = PanelWindows.MULTI_KINDS.has(kind) ? this._instanceId(opts.instanceId) : '';
+    const panelKey = this._key(kind, instanceId);
+    const exist = this.panels.get(panelKey);
     if (exist && !exist.isDestroyed()) { exist.show(); exist.focus(); return { already: true }; }
     const parent = this.win?.();
     if (kind === 'annotate') return this.openAnnotate(parent);
@@ -161,22 +223,31 @@ class PanelWindows {
       const follow = () => { if (!win.isDestroyed() && host && !host.isDestroyed()) win.setBounds(host.getBounds()); };
       follow(); win.showInactive();
       if (host) { host.on('move', follow); host.on('resize', follow); win.on('closed', () => { try { host.off('move', follow); host.off('resize', follow); } catch {} }); }
-      this.panels.set(kind, win);
-      PanelWindows.register(kind, win);
+      this._prepare(win, kind, '', panelKey);
+      this.panels.set(panelKey, win);
+      PanelWindows.register(panelKey, win);
       win.loadURL('mazz-res://app/panels/splitpreview.html');
       return { ok: true };
     }
-    const win = new BrowserWindow({
-      width: kind === 'ctxmenu' ? (opts.w || 240)
+    const panelWidth = kind === 'fpreview' ? (opts.w || 760) : kind === 'fedit' ? (opts.w || 820)
+      : kind === 'ctxmenu' ? (opts.w || 240)
         : kind === 'picklist' ? (opts.w || 340)
         : kind === 'palette' ? 640 : kind === 'shortcuts' ? 720 : kind === 'favmgr' ? 780
         : kind === 'help' ? 860 : kind === 'settings' ? 760 : kind === 'plugins' ? 740
-        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? 400 : kind === 'quickopen' ? 640 : kind === 'bookmark' ? 520 : kind === 'factorycfg' ? 920 : 700,
-      height: kind === 'ctxmenu' ? (opts.h || 300)
+        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? 400 : kind === 'quickopen' ? 640 : kind === 'bookmark' ? 520 : kind === 'factorycfg' ? 920 : 700;
+    const panelHeight = kind === 'fpreview' ? (opts.h || 640) : kind === 'fedit' ? (opts.h || 700)
+      : kind === 'ctxmenu' ? (opts.h || 300)
         : kind === 'picklist' ? (opts.h || 420)
-        : kind === 'palette' ? 480 : kind === 'quickopen' ? 480 : kind === 'dockfloat' ? 620 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : 560,
-      minWidth: kind === 'ctxmenu' ? 160 : kind === 'picklist' ? 240 : 480, minHeight: kind === 'ctxmenu' ? 60 : kind === 'picklist' ? 200 : 360,
+        : kind === 'palette' ? 480 : kind === 'quickopen' ? 480 : kind === 'dockfloat' ? 620 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : 560;
+    const stairIndex = PanelWindows.MULTI_KINDS.has(kind) ? this._nextStairIndex(kind) : -1;
+    const stair = PanelWindows.MULTI_KINDS.has(kind) ? this._stairBounds(parent, panelWidth, panelHeight, stairIndex) : {};
+    const win = new BrowserWindow({
+      width: panelWidth,
+      height: panelHeight,
+      minWidth: kind === 'ctxmenu' ? 160 : kind === 'picklist' ? 240 : kind === 'fpreview' ? 560 : 480,
+      minHeight: kind === 'ctxmenu' ? 60 : kind === 'picklist' ? 200 : kind === 'fpreview' ? 420 : 360,
       // W55 右键菜单子窗格：屏坐标定位（主窗内容区坐标→屏坐标）+防出屏翻边（W58i picklist 字体/字号格同例）
+      ...stair,
       ...((kind === 'ctxmenu' || kind === 'picklist') ? (() => {
         const cb = (parent || (typeof this.win === 'function' ? this.win() : this.win))?.getContentBounds?.() || { x: 0, y: 0, width: 1440, height: 900 };
         let x = Math.round(cb.x + (opts.x || 0)), y = Math.round(cb.y + (opts.y || 0));
@@ -186,9 +257,9 @@ class PanelWindows {
         return { x, y };
       })() : {}),
       parent: parent || undefined,
-      title: { favmgr: '收藏管理', pwmgr: '密码管理器', palette: '命令面板', shortcuts: '快捷键速查',
+      title: opts.title || { favmgr: '收藏管理', pwmgr: '密码管理器', palette: '命令面板', shortcuts: '快捷键速查',
         settings: '设置', agreement: '用户服务协议及隐私政策', help: '使用指南', translate: '翻译',
-        plugins: '插件管理', quickopen: '快速跳转', recorder: '全局内录', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步 · 更新', factorycfg: '项目立项 · AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择', archive: '压缩包' }[kind] || '面板',
+        plugins: '插件管理', quickopen: '快速跳转', recorder: '全局内录', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步 · 更新', factorycfg: '项目立项 · AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择', archive: '压缩包', fpreview: '生成预览', fedit: '章节编辑' }[kind] || '面板',
       autoHideMenuBar: true,
       // W47 圆角+拖拽：transparent+圆角体（Win10 原生无圆角 API 的唯一路径；拖拽=页面顶窄拖拽条 app-region:drag，
       // 窗控三键=页面右上角小件（非全套标题栏——用户定版）。thickFrame 默认保留=边框缩放在 Win10 仍有抓手
@@ -199,18 +270,20 @@ class PanelWindows {
         contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: false,
       },
     });
-    this.panels.set(kind, win);
+    this._prepare(win, kind, instanceId, panelKey);
+    win.__stairIndex = stairIndex;
+    this.panels.set(panelKey, win);
     if (kind === 'ctxmenu' || kind === 'picklist') win.on('blur', () => { try { win.close(); } catch {} }); // 菜单惯例：失焦即收（W58i picklist 字体/字号选择格同例）
     win.on('closed', () => {
-      this.panels.delete(kind);
+      this.panels.delete(panelKey);
       // 坞浮动子窗格关闭 → 主窗联动坞回停靠（W53 纯原生浮动——关窗即收队；open() 系真钩，15 行那个是 annotate 系）
       if (kind === 'dockfloat') this.forward('panel:changed', { kind: 'dockfloat', closed: true });
       // 焦点抢回：子窗一关焦点归主窗（防流浪到 cmd 等 Z 序下一位）
       try { const m = typeof this.win === 'function' ? this.win() : this.win; if (m && !m.isDestroyed()) { m.show(); m.focus(); } } catch {}
     });
-    PanelWindows.register(kind, win); // 主题广播面
+    PanelWindows.register(panelKey, win); // 主题广播面；多实例按 kind:instanceId 注册
     win.loadURL(`mazz-res://app/panels/${kind}.html`);
-    return { ok: true };
+    return { ok: true, kind, instanceId: instanceId || undefined, key: panelKey, bounds: win.getBounds() };
   }
 }
 module.exports = PanelWindows;

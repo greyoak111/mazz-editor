@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' mazz-res:">
+<link rel="stylesheet" href="../styles/themes.css">
+<link rel="stylesheet" href="panel-shared.css">
+<title>生成预览</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  body { font: 13px/1.6 var(--font-ui); color: var(--fg); }
+  .pwin { height: 100%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); box-shadow: 0 12px 40px rgba(0,0,0,.38); }
+  .head { min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 8px 112px 8px 14px; border-bottom: 1px solid var(--border); background: var(--bg-elev); -webkit-app-region: drag; }
+  .head-main { min-width: 0; flex: 1; }
+  .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 700; }
+  .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-dim); font-size: 10.5px; direction: rtl; text-align: left; }
+  .status { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 3px 8px; border-radius: 999px; color: var(--fg-dim); background: var(--bg-active); font-size: 11px; }
+  .status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
+  .status.running { color: var(--accent); background: var(--accent-soft); }
+  .status.running::before { background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); animation: pulse 1.1s infinite; }
+  .status.done { color: var(--ok, #3d6b35); }
+  .status.done::before { background: var(--ok, #3d6b35); }
+  .status.failed { color: var(--danger, #dc2626); }
+  .status.failed::before { background: var(--danger, #dc2626); }
+  @keyframes pulse { 50% { opacity: .42; } }
+  .p-winbtns { position: absolute; top: 4px; right: 8px; z-index: 9; display: flex; gap: 2px; }
+  .p-winbtns button { width: 30px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: transparent; color: var(--fg-dim); cursor: pointer; -webkit-app-region: no-drag; }
+  .p-winbtns button:hover { color: var(--fg); background: var(--bg-hover); }
+  .p-winbtns .x:hover { color: #fff; background: #e81123; }
+  .body { min-height: 0; flex: 1; display: grid; grid-template-columns: 218px minmax(0, 1fr); }
+  .rail { min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--bg-elev); }
+  .rail-label { padding: 9px 12px 5px; color: var(--fg-dim); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+  .files { flex: 1; min-height: 0; overflow: auto; padding: 2px 7px 10px; }
+  .group { margin-top: 8px; padding: 0 6px 3px; color: var(--fg-dim); font-size: 10.5px; font-weight: 700; }
+  .file { width: 100%; display: grid; grid-template-columns: 18px minmax(0,1fr) auto; align-items: center; gap: 4px; padding: 6px 7px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); cursor: pointer; text-align: left; font: 11.5px var(--font-ui); }
+  .file:hover { background: var(--bg-hover); }
+  .file.on { color: var(--accent); background: var(--accent-soft); }
+  .file .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file .mark { color: var(--fg-dim); font-size: 10px; }
+  .file.running .mark { color: var(--accent); }
+  .file.done .mark { color: var(--ok, #3d6b35); }
+  .empty { padding: 22px 10px; color: var(--fg-dim); font-size: 11.5px; text-align: center; }
+  .reader { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .reader-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-bottom: 1px solid var(--border); color: var(--fg-dim); font-size: 11px; }
+  .reader-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .readonly { margin-left: auto; flex: none; padding: 2px 7px; border: 1px solid var(--border); border-radius: 999px; font-size: 10px; }
+  .doc { flex: 1; min-height: 0; overflow: auto; padding: 22px 30px 70px; overflow-wrap: anywhere; }
+  .doc h1, .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 { line-height: 1.3; margin: 1.25em 0 .55em; }
+  .doc h1 { font-size: 1.65em; border-bottom: 1px solid var(--border); padding-bottom: .35em; }
+  .doc h2 { font-size: 1.35em; }
+  .doc h3 { font-size: 1.16em; }
+  .doc p { margin: .65em 0; }
+  .doc ul, .doc ol { margin: .5em 0 .8em; padding-left: 1.8em; }
+  .doc code { padding: .1em .32em; border-radius: 4px; background: var(--bg-active); font-family: var(--font-mono); font-size: .92em; }
+  .doc pre { overflow: auto; margin: .9em 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg-active); }
+  .doc pre code { padding: 0; background: none; }
+  .caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -.16em; background: var(--accent); animation: pulse .8s infinite; }
+  @media (max-width: 640px) { .body { grid-template-columns: 178px minmax(0,1fr); } .doc { padding: 18px 20px 56px; } }
+</style>
+</head>
+<body>
+<div class="pwin">
+  <header class="head">
+    <div class="head-main"><div class="title" id="title">生成预览</div><div class="sub" id="folder"></div></div>
+    <div class="status" id="status">等待任务</div>
+  </header>
+  <div class="p-winbtns">
+    <button id="p-min" title="最小化">—</button><button id="p-max" title="最大化/还原">□</button><button class="x" id="p-close" title="关闭">×</button>
+  </div>
+  <div class="body">
+    <aside class="rail"><div class="rail-label">任务目录 · 只读</div><nav class="files" id="files"><div class="empty">等待文件落盘…</div></nav></aside>
+    <main class="reader"><div class="reader-head"><span id="path">实时生成内容</span><b class="readonly">READ ONLY</b></div><article class="doc" id="doc"><div class="empty">正在连接生成任务…</div></article></main>
+  </div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const attr = s => esc(s).replace(/'/g, '&#39;');
+const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
+const pwb = a => window.mazz.invoke('window:' + a).catch(() => {});
+$('#p-min').addEventListener('click', () => pwb('minimize'));
+$('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
+$('#p-close').addEventListener('click', () => pwb('close'));
+window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
+window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
+
+let taskId = '', currentPath = '', fileList = [], streamText = '', running = false;
+function inlineMd(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+function markdown(text) {
+  const lines = String(text || '').replace(/\r/g, '').split('\n');
+  let html = '', list = '', code = false, codeLines = [];
+  const closeList = () => { if (list) { html += `</${list}>`; list = ''; } };
+  for (const line of lines) {
+    if (/^```/.test(line.trim())) {
+      closeList();
+      if (code) { html += `<pre><code>${esc(codeLines.join('\n'))}</code></pre>`; codeLines = []; }
+      code = !code; continue;
+    }
+    if (code) { codeLines.push(line); continue; }
+    const h = line.match(/^(#{1,6})\s+(.+)$/);
+    if (h) { closeList(); const n = h[1].length; html += `<h${n}>${inlineMd(h[2])}</h${n}>`; continue; }
+    const ul = line.match(/^\s*[-*+]\s+(.+)$/), ol = line.match(/^\s*\d+[.)]\s+(.+)$/);
+    if (ul || ol) {
+      const next = ul ? 'ul' : 'ol';
+      if (list !== next) { closeList(); list = next; html += `<${list}>`; }
+      html += `<li>${inlineMd((ul || ol)[1])}</li>`; continue;
+    }
+    closeList();
+    if (!line.trim()) { html += '<p></p>'; continue; }
+    html += `<p>${inlineMd(line)}</p>`;
+  }
+  closeList();
+  if (codeLines.length) html += `<pre><code>${esc(codeLines.join('\n'))}</code></pre>`;
+  return html || '<div class="empty">空文件</div>';
+}
+function groupOf(name) {
+  if (name === '创作蓝图.md') return ['蓝图', '▣'];
+  if (name === '章节大纲.md') return ['大纲', '≡'];
+  if (/状态快照/.test(name)) return ['快照', '◫'];
+  if (/^第\d+/.test(name)) return ['正文', '¶'];
+  return ['其他', '·'];
+}
+function renderFiles() {
+  const groups = new Map();
+  for (const f of fileList) { const [g, ico] = groupOf(f.name); if (!groups.has(g)) groups.set(g, []); groups.get(g).push({ ...f, ico }); }
+  const order = ['蓝图', '大纲', '正文', '快照', '其他'];
+  $('#files').innerHTML = order.filter(g => groups.has(g)).map(g => `<section><div class="group">${g}</div>${groups.get(g).map(f => `<button class="file ${f.status || ''} ${f.path === currentPath ? 'on' : ''}" data-path="${attr(f.path)}" title="${attr(f.name)}"><span>${f.ico}</span><span class="name">${esc(f.name)}</span><span class="mark">${f.status === 'running' ? '●' : '✓'}</span></button>`).join('')}</section>`).join('') || '<div class="empty">等待文件落盘…</div>';
+  $('#files').querySelectorAll('[data-path]').forEach(b => b.addEventListener('click', () => {
+    currentPath = b.dataset.path; renderFiles();
+    window.mazz.invoke('panel:action', { type: 'factoryPreviewRead', taskId, path: currentPath }).catch(() => {});
+  }));
+}
+function setStatus(text, state) { $('#status').textContent = text || '等待任务'; $('#status').className = 'status ' + (state || ''); }
+function showText(text, path, isRunning = false) {
+  if (path) currentPath = path;
+  $('#path').textContent = currentPath ? currentPath.split(/[\\/]/).pop() : '实时生成内容';
+  $('#doc').innerHTML = markdown(text) + (isRunning ? '<span class="caret"></span>' : '');
+  if (isRunning) $('#doc').scrollTop = $('#doc').scrollHeight;
+  renderFiles();
+}
+window.mazz.on('panel:push', p => {
+  if (!p) return;
+  if (p.type === 'themeInit') { applyTheme(p.id, p.vars); return; }
+  if (p.taskId && taskId && p.taskId !== taskId) return;
+  if (p.type === 'factoryPreviewInit') {
+    taskId = p.taskId || taskId; document.body.dataset.taskId = taskId;
+    $('#title').textContent = p.title || '生成预览'; $('#folder').textContent = p.folder || '';
+    fileList = p.files || []; currentPath = p.currentPath || currentPath;
+    setStatus(p.statusText || '生成中…', p.status || 'running');
+    if (p.content != null) showText(p.content, currentPath, p.status === 'running'); else renderFiles();
+    return;
+  }
+  if (p.type === 'factoryPreviewFiles') { fileList = p.files || []; renderFiles(); return; }
+  if (p.type === 'factoryPreviewStream') {
+    taskId = p.taskId || taskId; running = true; streamText = p.text || ''; currentPath = p.path || currentPath;
+    if (currentPath && !fileList.some(f => f.path === currentPath)) fileList.push({ name: currentPath.split(/[\\/]/).pop(), path: currentPath, status: 'running' });
+    setStatus(p.phase === 'blueprint' ? '蓝图 · 生成中…' : `第${p.chapterNo || 1}${p.unitName || '章'} · 生成中…`, 'running'); showText(streamText, currentPath, true); return;
+  }
+  if (p.type === 'factoryPreviewFile') { running = false; showText(p.content || '', p.path || currentPath, false); return; }
+  if (p.type === 'factoryPreviewDone') {
+    running = false; fileList = p.files || fileList;
+    setStatus(`第${p.chapterNo || 1}${p.unitName || '章'} · ✓完成`, 'done'); showText(p.text || streamText, p.path || currentPath, false); return;
+  }
+  if (p.type === 'factoryPreviewTaskDone') { running = false; fileList = p.files || fileList; setStatus('✓ 全部完成', 'done'); renderFiles(); return; }
+  if (p.type === 'factoryPreviewFail') { running = false; fileList = p.files || fileList; setStatus('✗ ' + (p.message || '生成失败'), 'failed'); renderFiles(); }
+});
+window.mazz.invoke('panel:action', { type: 'factoryPreviewQuery' }).catch(() => {});
+</script>
+</body>
+</html>

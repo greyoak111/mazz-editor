@@ -68,6 +68,7 @@ const files = [
   'tests/contract/w65-plan-intake.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
+  'tests/contract/hotfix-w61a.test.mjs',
   'tests/contract/hotfix-remote-gpu.test.mjs',
   'tests/contract/library.test.mjs',
   'tests/contract/library-ui.test.mjs',
