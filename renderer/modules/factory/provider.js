@@ -29,6 +29,7 @@ export const AI_ROLES = Object.freeze([
   { id: 'translation', label: '翻译', card: 'fast' },
   { id: 'style', label: '文风分析', card: 'long-context' },
   { id: 'search', label: '检索摘要', card: 'fast' },
+  { id: 'research', label: '证据合成', card: 'reasoning' },
   { id: 'vision', label: '视觉识别', card: 'vision' },
   { id: 'companion', label: '剧搭子', card: 'reasoning' },
   { id: 'video', label: '视频剖析', card: 'vision' },

@@ -23,7 +23,7 @@ const INVOKE_CHANNELS = new Set([
   'snapshot:write', 'snapshot:list', 'snapshot:clear', 'snapshot:clearAll', 'crash:lastExitUnclean',
   'power:block',
   'menu:context', 'menu:setModel', 'appmenu:sync',
-  'searx:search', 'searx:selfcheck', 'searx:getMaskedConfig', 'searx:setConfig',
+  'searx:search', 'searx:extract', 'searx:selfcheck', 'searx:getMaskedConfig', 'searx:setConfig',
   'term:create', 'term:write', 'term:resize', 'term:kill', 'term:list',
   'py:exec', 'py:status', 'py:restart',
   'debug:start', 'debug:stop', 'debug:request', 'debug:status',

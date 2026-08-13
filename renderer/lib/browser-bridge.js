@@ -394,6 +394,8 @@ export function installBrowserBridge() {
         // —— 搜索（浏览器预览受 CORS 限制，无法直连自签实例）——
         case 'searx:search':
           return { ok: false, error: '浏览器预览无法直连搜索实例（跨域限制），请在桌面版使用搜索', results: [] };
+        case 'searx:extract':
+          return { ok: false, error: '浏览器预览不能代抓网页正文，请在桌面版使用研究检索', text: '' };
         case 'searx:selfcheck':
           return { ok: false, checks: [{ name: '预览限制', pass: false, detail: '桌面版可用' }] };
         case 'searx:getMaskedConfig': return { masked: '（桌面版配置）', user: '', hasPass: false };

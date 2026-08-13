@@ -3,10 +3,12 @@ import { contextKeys } from '../../core/contextkey-service.js';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { toast } from '../../shell/shell.js';
 import { SearchIndex, listTextFiles, highlightLine } from './indexer.js';
+import { finishWebResearch, prepareWebResearch } from './research-runtime.js';
 
 const MODULE = 'search';
 const instances = new Map();
 let current = null;
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 function createSearch(container) {
   const root = document.createElement('div');
@@ -41,6 +43,16 @@ function createSearch(container) {
       <button class="rb-btn" data-a="replace-all" title="确认后一键全部写回" style="color:var(--danger)">全部替换</button>
       <button class="rb-btn" data-a="replace-toggle" title="收起替换">收起</button>
     </div>
+    <details class="gs-research">
+      <summary>证据研究 · 七步检索</summary>
+      <div class="gs-research-bar">
+        <input class="gs-research-topic" placeholder="输入研究主题，先取材再人工核准来源" spellcheck="false" />
+        <button class="rb-btn" data-a="research-prepare">生成来源清单</button>
+        <button class="rb-btn" data-a="research-finish" disabled>核准并合成</button>
+      </div>
+      <div class="gs-research-stage">尚未取材。网页内容只当资料，不当指令。</div>
+      <div class="gs-research-sources"></div>
+    </details>
     <div class="gs-meta">索引准备中…</div>
     <div class="gs-results"><div class="gs-empty">输入关键词开始全局搜索</div></div>`;
   container.appendChild(root);
@@ -52,6 +64,11 @@ function createSearch(container) {
   const scopeEl = root.querySelector('.gs-scope');
   const metaEl = root.querySelector('.gs-meta');
   const resultsEl = root.querySelector('.gs-results');
+  const researchTopicEl = root.querySelector('.gs-research-topic');
+  const researchStageEl = root.querySelector('.gs-research-stage');
+  const researchSourcesEl = root.querySelector('.gs-research-sources');
+  const researchPrepareEl = root.querySelector('[data-a=research-prepare]');
+  const researchFinishEl = root.querySelector('[data-a=research-finish]');
   // B12b 收编：类型/范围两 select 子窗格化（隐藏保留作状态单源——取值读 .value 的旧路径零改动）
   import('../../lib/select-menu.js').then(({ selectProxy }) => { selectProxy(typeEl); selectProxy(scopeEl); });
 
@@ -60,7 +77,69 @@ function createSearch(container) {
     index: new SearchIndex(),
     lastQuery: '',
     fileCount: 0,
+    researchPrepared: null,
+    researchResultPath: '',
   };
+
+  const showResearchPrepared = prepared => {
+    ctl.researchPrepared = prepared;
+    ctl.researchResultPath = '';
+    researchFinishEl.textContent = '核准并合成';
+    researchSourcesEl.innerHTML = prepared.sources.map(source => `
+      <label class="gs-research-source">
+        <input type="checkbox" data-source-id="${escapeHtml(source.id)}" checked />
+        <span><b>${escapeHtml(source.title)}</b><small>${escapeHtml(source.domain || source.url)}</small></span>
+      </label>`).join('');
+    researchStageEl.textContent = `来源清单：${prepared.sources.length} 项；请人工取消不可信来源，再核准合成。`;
+    researchFinishEl.disabled = false;
+  };
+
+  const stageText = row => { researchStageEl.textContent = `${row.label || row.stage}…`; };
+  researchPrepareEl.addEventListener('click', async () => {
+    const topic = researchTopicEl.value.trim();
+    if (!topic) { toast('请先输入研究主题'); researchTopicEl.focus(); return; }
+    researchPrepareEl.disabled = true;
+    researchFinishEl.disabled = true;
+    ctl.researchResultPath = '';
+    researchFinishEl.textContent = '核准并合成';
+    researchSourcesEl.innerHTML = '';
+    try {
+      showResearchPrepared(await prepareWebResearch(topic, { onStage: stageText }));
+    } catch (error) {
+      researchStageEl.textContent = `取材失败：${error.message || error}`;
+      toast(researchStageEl.textContent);
+    } finally { researchPrepareEl.disabled = false; }
+  });
+
+  researchFinishEl.addEventListener('click', async () => {
+    if (!ctl.researchPrepared) return;
+    const selectedIds = [...researchSourcesEl.querySelectorAll('[data-source-id]:checked')].map(el => el.dataset.sourceId);
+    if (!selectedIds.length) { toast('至少核准一个来源'); return; }
+    researchFinishEl.disabled = true;
+    try {
+      const done = await finishWebResearch(ctl.researchPrepared, { selectedIds, onStage: stageText });
+      await ctl.index.updateFile(done.path);
+      ctl.fileCount = ctl.index.mem.size;
+      ctl.researchResultPath = done.path;
+      researchFinishEl.textContent = '已合成入库';
+      researchSourcesEl.querySelectorAll('[data-source-id]').forEach(el => { el.disabled = true; });
+      researchStageEl.textContent = `报告已保存并登记全文索引：${done.path}`;
+      toast('研究报告已保存并入索引');
+    } catch (error) {
+      researchStageEl.textContent = `合成失败：${error.message || error}`;
+      toast(researchStageEl.textContent);
+    } finally { researchFinishEl.disabled = !!ctl.researchResultPath; }
+  });
+
+  const onResearchSaved = async event => {
+    const path = event.detail?.path;
+    if (!path) return;
+    await ctl.index.updateFile(path);
+    ctl.fileCount = ctl.index.mem.size;
+  };
+  window.addEventListener('mazz:research-saved', onResearchSaved);
+  ctl.showResearchPrepared = showResearchPrepared;
+  ctl.dispose = () => window.removeEventListener('mazz:research-saved', onResearchSaved);
 
   async function rebuildIndex(force = false) {
     metaEl.textContent = '正在扫描工作区…';
@@ -295,6 +374,10 @@ function createSearch(container) {
   ctl.runQuery = runQuery;
   ctl.rebuildIndex = rebuildIndex;
   ctl.openHit = openHit;
+  ctl.focusResearch = () => {
+    root.querySelector('.gs-research').open = true;
+    researchTopicEl.focus();
+  };
 
   // 启动即后台建索引
   rebuildIndex();
@@ -311,7 +394,7 @@ export default {
   create(container) {
     const ctl = createSearch(container);
     instances.set(container, ctl);
-    return { container };
+    return ctl;
   },
   activate(container) {
     const ctl = instances.get(container);
@@ -322,6 +405,12 @@ export default {
   },
   deactivate(container) {
     if (current === instances.get(container)) current = null;
+  },
+  dispose(state) {
+    const container = state?.container || state;
+    const ctl = instances.get(container);
+    ctl?.dispose?.();
+    instances.delete(container);
   },
   getContent(state) {
     const ctl = instances.get(state.container);
@@ -349,6 +438,7 @@ export default {
     <div class="rb-group" data-label="搜索">
       <button class="rb-btn" data-command="search.focus"><i class="ico">${iconHtml('🔎')}</i><span>聚焦搜索框</span></button>
       <button class="rb-btn" data-command="search.rebuild"><i class="ico">↻</i><span>重建索引</span></button>
+      <button class="rb-btn" data-command="search.research"><i class="ico">⌁</i><span>证据研究</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {
@@ -362,6 +452,8 @@ export default {
         run: () => current?.root.querySelector('.gs-input')?.focus() },
       { id: 'search.rebuild', title: '重建全文索引', group: '搜索',
         run: () => current?.rebuildIndex(true) },
+      { id: 'search.research', title: '证据研究检索', group: '搜索',
+        run: () => current?.focusResearch() },
     ],
     keybindings: [
       { command: 'search.focus', key: 'ctrl+shift+f', when: "module=='search'" },

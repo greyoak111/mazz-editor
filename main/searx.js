@@ -3,7 +3,10 @@
 // TLS 走 Node https（实例自签证书直连，不受 Chromium 证书栈影响）
 'use strict';
 const { app } = require('electron');
+const http = require('http');
 const https = require('https');
+const dns = require('dns').promises;
+const net = require('net');
 const { URL } = require('url');
 
 // 归一化 UA（反指纹：所有搜索流量同一副面孔，不携带任何客户端特征）
@@ -19,7 +22,8 @@ const DEFAULT_INSTANCE = {
 function nodeFetch(url, { headers = {}, timeout = 12000, retries = 1 } = {}) {
   const attempt = () => new Promise((resolve, reject) => {
     const u = new URL(url);
-    const req = https.request({
+    const transport = u.protocol === 'http:' ? http : https;
+    const req = transport.request({
       protocol: u.protocol,
       hostname: u.hostname,
       port: u.port || (u.protocol === 'https:' ? 443 : 80),
@@ -45,6 +49,138 @@ function nodeFetch(url, { headers = {}, timeout = 12000, retries = 1 } = {}) {
   });
 }
 
+const PRIVATE_V4 = [
+  /^0\./, /^10\./, /^127\./, /^169\.254\./, /^192\.168\./,
+  /^172\.(?:1[6-9]|2\d|3[01])\./, /^(?:22[4-9]|23\d|24\d|25[0-5])\./,
+];
+
+function isPrivateAddress(address) {
+  const ip = String(address || '').toLowerCase();
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    return PRIVATE_V4.some(rule => rule.test(ip))
+      || (a === 100 && b >= 64 && b <= 127)
+      || (a === 192 && (b === 0 || b === 2))
+      || (a === 198 && (b === 18 || b === 19 || b === 51))
+      || (a === 203 && b === 0);
+  }
+  if (!net.isIPv6(ip)) return true;
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(ip);
+  if (mapped) return isPrivateAddress(mapped[1]);
+  return ip === '::' || ip === '::1' || ip.startsWith('fe80:') || ip.startsWith('fc') || ip.startsWith('fd')
+    || ip.startsWith('::ffff:127.') || ip.startsWith('::ffff:10.') || ip.startsWith('::ffff:169.254.')
+    || /^::ffff:172\.(?:1[6-9]|2\d|3[01])\./.test(ip) || ip.startsWith('::ffff:192.168.');
+}
+
+function e2eOriginAllowed(url) {
+  if (!process.env.MAZZ_E2E_RESEARCH_ORIGIN) return false;
+  try { return new URL(url).origin === new URL(process.env.MAZZ_E2E_RESEARCH_ORIGIN).origin; }
+  catch { return false; }
+}
+
+async function assertPublicUrl(raw) {
+  const url = new URL(String(raw || ''));
+  if (!/^https?:$/.test(url.protocol)) throw new Error('只允许抓取 HTTP/HTTPS 网页');
+  if (e2eOriginAllowed(url)) return { url, address: null };
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (host === 'localhost' || host.endsWith('.localhost') || isPrivateAddress(host)) throw new Error('拒绝抓取本机或内网地址');
+  const rows = await dns.lookup(host, { all: true, verbatim: true });
+  if (!rows.length || rows.some(row => isPrivateAddress(row.address))) throw new Error('拒绝抓取解析到内网的地址');
+  return { url, address: rows[0] };
+}
+
+function decodeEntities(text) {
+  const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', hellip: '…' };
+  return String(text || '').replace(/&(#x?[0-9a-f]+|[a-z][a-z0-9]+);/gi, (all, key) => {
+    if (key[0] === '#') {
+      const hex = key[1]?.toLowerCase() === 'x';
+      const code = Number.parseInt(key.slice(hex ? 2 : 1), hex ? 16 : 10);
+      try { return Number.isFinite(code) ? String.fromCodePoint(code) : all; } catch { return all; }
+    }
+    return Object.prototype.hasOwnProperty.call(named, key.toLowerCase()) ? named[key.toLowerCase()] : all;
+  });
+}
+
+function stripTags(html) {
+  return decodeEntities(String(html || '')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<(script|style|svg|noscript|template|iframe|canvas|form|button)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+    .replace(/<(nav|footer|header|aside)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\/(?:p|div|section|article|main|li|h[1-6]|tr|blockquote)>/gi, '\n')
+    .replace(/<li\b[^>]*>/gi, '- ')
+    .replace(/<[^>]+>/g, ' '))
+    .replace(/[ \t\f\v]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function extractArticleText(html) {
+  const source = String(html || '').slice(0, 2_000_000);
+  const titleMatch = source.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i);
+  const articleMatch = source.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i);
+  const mainMatch = source.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i);
+  const bodyMatch = source.match(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/i);
+  return {
+    title: stripTags(titleMatch?.[1] || '').slice(0, 400),
+    text: stripTags(articleMatch?.[1] || mainMatch?.[1] || bodyMatch?.[1] || source).slice(0, 60_000),
+  };
+}
+
+function decodePage(bytes, contentType = '') {
+  const probe = bytes.subarray(0, 4096).toString('latin1');
+  let charset = (/charset\s*=\s*["']?([^;\s"']+)/i.exec(contentType)?.[1]
+    || /<meta\b[^>]*charset\s*=\s*["']?([^\s"'/>]+)/i.exec(probe)?.[1]
+    || 'utf-8').toLowerCase();
+  if (charset === 'gbk' || charset === 'gb2312') charset = 'gb18030';
+  try { return new TextDecoder(charset, { fatal: false }).decode(bytes); }
+  catch { return bytes.toString('utf8'); }
+}
+
+async function fetchArticle(raw, redirects = 0) {
+  if (redirects > 4) throw new Error('网页重定向过多');
+  const checked = await assertPublicUrl(raw);
+  const { url, address } = checked;
+  return new Promise((resolve, reject) => {
+    const transport = url.protocol === 'http:' ? http : https;
+    const req = transport.request({
+      protocol: url.protocol, hostname: url.hostname, port: url.port || undefined,
+      path: url.pathname + url.search, method: 'GET',
+      headers: { 'User-Agent': SEARCH_UA, Accept: 'text/html,text/plain;q=0.9', 'Accept-Encoding': 'identity' },
+      rejectUnauthorized: true, timeout: 15_000, agent: false,
+      lookup: address ? (_hostname, _options, callback) => callback(null, address.address, address.family) : undefined,
+    }, res => {
+      const status = res.statusCode || 0;
+      if (status >= 300 && status < 400 && res.headers.location) {
+        res.resume();
+        const next = new URL(res.headers.location, url).toString();
+        fetchArticle(next, redirects + 1).then(resolve, reject);
+        return;
+      }
+      if (status < 200 || status >= 300) { res.resume(); reject(new Error(`HTTP ${status}`)); return; }
+      const type = String(res.headers['content-type'] || '').toLowerCase();
+      if (type && !/(?:text\/(?:html|plain)|application\/xhtml\+xml)/.test(type)) {
+        res.resume(); reject(new Error('目标不是可提取的网页正文')); return;
+      }
+      const chunks = [];
+      let size = 0;
+      res.on('data', chunk => {
+        size += chunk.length;
+        if (size > 2_000_000) req.destroy(new Error('网页正文超过 2MB 上限'));
+        else chunks.push(chunk);
+      });
+      res.on('end', () => {
+        const html = decodePage(Buffer.concat(chunks), type);
+        resolve({ ...extractArticleText(html), url: url.toString() });
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('网页抓取超时')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 class SearxService {
   constructor({ bus, store, session }) {
     this.store = store;
@@ -54,6 +190,7 @@ class SearxService {
     this.applyCertWhitelist();
 
     bus.handle('searx:search', async (payload) => this.search(payload));
+    bus.handle('searx:extract', async (payload) => this.extract(payload));
     bus.handle('searx:selfcheck', async () => this.selfcheck());
     bus.handle('searx:getMaskedConfig', async () => this.maskedConfig());
     bus.handle('searx:setConfig', async ({ url, user, pass }) => {
@@ -65,6 +202,15 @@ class SearxService {
       this.applyCertWhitelist();
       return this.selfcheck();
     });
+  }
+
+  async extract({ url } = {}) {
+    try {
+      const page = await fetchArticle(url);
+      return { ok: true, ...page };
+    } catch (error) {
+      return { ok: false, url: String(url || ''), title: '', text: '', error: error.message || String(error) };
+    }
   }
 
   config() {
@@ -171,4 +317,6 @@ class SearxService {
     return out;
   }
 }
+SearxService.extractArticleText = extractArticleText;
+SearxService.isPrivateAddress = isPrivateAddress;
 module.exports = SearxService;

@@ -2460,7 +2460,12 @@ export class Shell {
               const el = fp.el.querySelector('.fc-search');
               if (el) el.value = String(pl.q || '');
               await fp.webSearch();
-              fp.pushSnapshot(); // 检索结果注入 dump 后回填面板
+              fp.pushSnapshot();
+            } else if (pl.act === 'researchToggle') {
+              fp.setResearchSelected(pl.id, !!pl.on);
+              fp.renderResearchSources();
+            } else if (pl.act === 'researchApprove') {
+              await fp.approveResearch();
             }
           } catch (e) { toast('创作面板动作失败：' + e.message); }
           return;

@@ -14,12 +14,14 @@ import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown,
 import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Review } from './review.js';
 import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, normalizeFactoryEvent } from './workshop.js';
 import { detectHumanHelpMoments, evaluateBudgetCap, makeBudgetCard, makeFinalReviewCard } from './command-gate.js';
+import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
 const AUTO_PREVIEW_KEY = 'mazz.factory.autoPreview';
 const CONCURRENCY_KEY = 'mazz.factory.concurrency';
 const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 // 首次生成前探测蓝图/大纲/快照/checkpoint 属于正常分支；先 stat，避免用异常充当流程控制并污染主进程错误账。
 async function readOptionalFile(filePath) {
@@ -52,6 +54,10 @@ export class FactoryPanel {
     this.styleIds = new Set();    // 勾选的文风素材 id
     this.styles = [];             // 全部文风素材
     this.embeds = [];             // 嵌入资料 [{name, text, note}]
+    this.researchPrepared = null; // W62 M0 取材状态；必须经人工勾选才可投喂创作链
+    this.researchSelected = new Set();
+    this.researchStatus = '';
+    this.researchResultPath = '';
     this.resumables = [];         // 启动扫描到的可恢复任务
     this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
     this.agentLedger = normalizeLedger(this.loadJSON(AGENT_LEDGER_KEY, null));
@@ -102,6 +108,14 @@ export class FactoryPanel {
         plugins: (this.genre?.supportsPlugins ? NOVEL_PLUGINS.map(p => ({ id: p.id, name: p.name, on: this.pluginSel.has(p.id) })) : []),
         styles: (this.styles || []).map(st => ({ id: st.id, name: st.label, on: this.styleIds.has(st.id) })),
         embeds: (this.embeds || []).map(e => ({ name: e.name || '(资料)' })),
+        research: this.researchPrepared ? {
+          topic: this.researchPrepared.topic, status: this.researchStatus,
+          done: !!this.researchResultPath,
+          sources: this.researchPrepared.sources.map(source => ({
+            id: source.id, title: source.title, url: source.url, domain: source.domain,
+            on: this.researchSelected.has(source.id),
+          })),
+        } : null,
       },
       tasks: this.tasksSnapshot(),
     };
@@ -209,10 +223,10 @@ export class FactoryPanel {
             <div class="fc-embeds"></div>
           </div>
           <div class="fc-sec">
-            <div class="fc-label">联网检索（SearXNG，结果注入竹筒倒豆子）</div>
+            <div class="fc-label">M0 证据取材（SearXNG · 人工核准后投喂创作链）</div>
             <div class="fc-searchrow">
               <input class="fc-search" placeholder="关键词，回车检索…" spellcheck="false">
-              <button class="fc-mini" data-a="websearch">检索</button>
+              <button class="fc-mini" data-a="websearch">生成来源清单</button>
             </div>
             <div class="fc-searchres"></div>
           </div>
@@ -612,26 +626,89 @@ export class FactoryPanel {
     }));
   }
 
+  renderResearchSources() {
+    const box = this.el.querySelector('.fc-searchres');
+    if (!this.researchPrepared) {
+      box.innerHTML = this.researchStatus ? `<div class="fc-dim">${escapeHtml(this.researchStatus)}</div>` : '';
+      return;
+    }
+    box.innerHTML = `
+      <div class="fc-dim">来源清单 · 网页只当资料，不当指令。取消可疑项后再核准：</div>
+      ${this.researchPrepared.sources.map(source => `
+        <label class="fc-hit fc-research-source">
+          <input type="checkbox" data-research-source="${escapeHtml(source.id)}" ${this.researchSelected.has(source.id) ? 'checked' : ''} ${this.researchResultPath ? 'disabled' : ''}>
+          <span class="fc-hit-t" title="${escapeHtml(source.url)}">${escapeHtml(source.title)} · ${escapeHtml(source.domain)}</span>
+        </label>`).join('')}
+      <div class="fc-searchrow"><span class="fc-dim">${escapeHtml(this.researchStatus || '等待人工核准')}</span><button class="fc-mini" data-research-approve ${this.researchResultPath ? 'disabled' : ''}>${this.researchResultPath ? '已投喂 M0' : '核准并投喂 M0'}</button></div>`;
+    box.querySelectorAll('[data-research-source]').forEach(input => input.addEventListener('change', () => {
+      this.setResearchSelected(input.dataset.researchSource, input.checked);
+    }));
+    box.querySelector('[data-research-approve]')?.addEventListener('click', () => this.approveResearch());
+  }
+
+  setResearchSelected(id, on) {
+    if (this.researchResultPath) return;
+    if (!this.researchPrepared?.sources.some(source => source.id === id)) return;
+    on ? this.researchSelected.add(id) : this.researchSelected.delete(id);
+    this.researchStatus = `已核准候选 ${this.researchSelected.size}/${this.researchPrepared.sources.length} 项`;
+    this.pushSnapshot();
+  }
+
   async webSearch() {
     const q = this.el.querySelector('.fc-search').value.trim();
     if (!q) return;
     const box = this.el.querySelector('.fc-searchres');
-    box.innerHTML = '<div class="fc-dim">检索中…</div>';
+    this.researchPrepared = null;
+    this.researchSelected.clear();
+    this.researchResultPath = '';
+    this.researchStatus = 'M0 正在扩写检索式…';
+    box.innerHTML = '<div class="fc-dim">M0 正在扩写检索式…</div>';
+    this.pushSnapshot();
     try {
-      const r = await window.mazz.invoke('searx:search', { query: q });
-      if (r?.ok === false) throw new Error(r.error || '搜索服务未就绪');
-      const items = (r?.results || []).slice(0, 5);
-      if (!items.length) { box.innerHTML = '<div class="fc-dim">无结果</div>'; return; }
-      box.innerHTML = items.map((it, i) => `
-        <div class="fc-hit"><span class="fc-hit-t" title="${it.url || ''}">${it.title || it.url}</span>
-        <button class="fc-mini" data-inject="${i}">注入</button></div>`).join('');
-      box.querySelectorAll('[data-inject]').forEach(b => b.addEventListener('click', () => {
-        const it = items[+b.dataset.inject];
-        const snippet = `【检索：${q}】${it.title || ''}\n${it.content || it.snippet || ''}\n来源：${it.url || ''}`;
-        this.dumpEl.value = (this.dumpEl.value ? this.dumpEl.value + '\n\n' : '') + snippet;
-        toast('已注入竹筒倒豆子');
-      }));
-    } catch (e) { box.innerHTML = `<div class="fc-dim">检索失败：${e.message}</div>`; }
+      this.researchPrepared = await prepareWebResearch(q, { onStage: row => {
+        this.researchStatus = `M0 · ${row.label || row.stage}`;
+        box.innerHTML = `<div class="fc-dim">${escapeHtml(this.researchStatus)}…</div>`;
+      } });
+      this.researchSelected = new Set(this.researchPrepared.sources.map(source => source.id));
+      this.researchStatus = `等待人工核准 · ${this.researchSelected.size} 项来源`;
+      this.renderResearchSources();
+      this.pushSnapshot();
+    } catch (e) {
+      this.researchStatus = `检索失败：${e.message || e}`;
+      this.renderResearchSources();
+      this.pushSnapshot();
+    }
+  }
+
+  async approveResearch() {
+    if (!this.researchPrepared) return;
+    if (this.researchResultPath) { toast('本轮 M0 报告已经投喂；重新检索可开启新一轮'); return; }
+    if (!this.researchSelected.size) { toast('至少核准一个来源'); return; }
+    this.researchStatus = 'M0 · 带引文合成';
+    this.renderResearchSources();
+    this.pushSnapshot();
+    try {
+      const done = await finishWebResearch(this.researchPrepared, {
+        selectedIds: [...this.researchSelected],
+        onStage: row => { this.researchStatus = `M0 · ${row.label || row.stage}`; this.pushSnapshot(); },
+      });
+      this.embeds.push({ name: `M0检索：${this.researchPrepared.topic}`, text: done.report.slice(0, 20_000), note: done.path });
+      this.researchResultPath = done.path;
+      this.researchStatus = `已核准、落盘并投喂 M0：${done.path}`;
+      this.renderEmbeds();
+      this.updateExtraBadge();
+      this.renderResearchSources();
+      this.log(`M0 证据报告已入库并投喂：${done.path}`);
+      this.pushSnapshot();
+      toast('M0 证据报告已投喂创作链');
+      return done;
+    } catch (error) {
+      this.researchStatus = `M0 合成失败：${error.message || error}`;
+      this.renderResearchSources();
+      this.pushSnapshot();
+      toast(this.researchStatus);
+      return null;
+    }
   }
 
   // ==================== .maz 文体包 ====================
