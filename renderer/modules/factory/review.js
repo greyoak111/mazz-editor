@@ -20,6 +20,7 @@ export const REVIEW_RULES = Object.freeze({
 export const REVIEW_ARTIFACT_NAMES = Object.freeze({
   skeleton: '01-骨架与验收点.md',
   draft: '02-扩写稿.md',
+  polish: '02b-润色记录.md',
   machine: '03-机检报告.md',
   point: '04-对点报告.md',
   repair: '05-修订单.md',
@@ -30,6 +31,21 @@ export const REVIEW_ARTIFACT_NAMES = Object.freeze({
   verdict: '10-裁决书.md',
   manifest: '工件清单.json',
 });
+
+export const TLC_RULES = Object.freeze([
+  { id: 'E1', label: '年份先后', layer: 'time', since: '2026-08-13' },
+  { id: 'E2', label: '届次有效性', layer: 'term', since: '2026-08-13' },
+  { id: 'E3', label: '历法日期', layer: 'calendar', since: '2026-08-13' },
+  { id: 'E4', label: '月份与季节', layer: 'season', since: '2026-08-13' },
+  { id: 'E5', label: '时区范围', layer: 'timezone', since: '2026-08-13' },
+  { id: 'E6', label: '人物在任区间', layer: 'office', since: '2026-08-13' },
+  { id: 'E7', label: '技术代际年份', layer: 'technology', since: '2026-08-13' },
+  { id: 'E8', label: '制度任期区间', layer: 'institution', since: '2026-08-13' },
+  { id: 'E9', label: '地理海拔范围', layer: 'geography', since: '2026-08-13' },
+  { id: 'E10', label: '文档结构闭合', layer: 'document', since: '2026-08-13' },
+  { id: 'E11', label: '公历干支匹配', layer: 'sexagenary', since: '2026-08-13' },
+  { id: 'E12', label: '机构编号格式', layer: 'identifier', since: '2026-08-13' },
+]);
 
 const asText = value => String(value ?? '').trim();
 const list = value => Array.isArray(value) ? value : [];
@@ -150,6 +166,61 @@ export function styleFingerprint(text) {
 
 const finding = (id, severity, message, artifactRef, ruleRef, extra = {}) => ({ id, severity, message, artifactRef, ruleRef, ...extra });
 
+export function runTlcInspection(text) {
+  const raw = asText(text);
+  const findings = [];
+  for (const hit of raw.matchAll(/(\d{3,4})\s*年?\s*(?:至|到|—|-|~|～)\s*(\d{3,4})\s*年/g)) {
+    if (+hit[1] > +hit[2]) findings.push(finding(`tlc-e1-${hit.index}`, 'critical', `年份区间倒置：${hit[0]}`, 'draft', 'TLC-E1'));
+  }
+  for (const hit of raw.matchAll(/第\s*(-?\d+)\s*届/g)) {
+    if (+hit[1] < 1) findings.push(finding(`tlc-e2-${hit.index}`, 'critical', `届次必须为正整数：${hit[0]}`, 'draft', 'TLC-E2'));
+  }
+  for (const hit of raw.matchAll(/(\d{4})年(\d{1,2})月(\d{1,2})日/g)) {
+    const y = +hit[1], m = +hit[2], d = +hit[3];
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) findings.push(finding(`tlc-e3-${hit.index}`, 'critical', `无效公历日期：${hit[0]}`, 'draft', 'TLC-E3'));
+  }
+  const seasons = { 春: [3, 4, 5], 夏: [6, 7, 8], 秋: [9, 10, 11], 冬: [12, 1, 2] };
+  for (const hit of raw.matchAll(/(\d{1,2})月[^。；;\n]{0,12}([春夏秋冬])季/g)) {
+    if (!seasons[hit[2]].includes(+hit[1])) findings.push(finding(`tlc-e4-${hit.index}`, 'critical', `月份与季节冲突：${hit[0]}`, 'draft', 'TLC-E4'));
+  }
+  for (const hit of raw.matchAll(/(?:UTC|GMT)\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?/gi)) {
+    const hour = +hit[2], minute = +(hit[3] || 0);
+    if (hour > 14 || minute > 59 || (hour === 14 && minute > 0)) findings.push(finding(`tlc-e5-${hit.index}`, 'critical', `无效时区偏移：${hit[0]}`, 'draft', 'TLC-E5'));
+  }
+  for (const hit of raw.matchAll(/(?:任期|在任|服役期|代际|制度期)[：:]?\s*(\d{3,4})\s*(?:至|到|—|-|~|～)\s*(\d{3,4})/g)) {
+    if (+hit[1] > +hit[2]) findings.push(finding(`tlc-range-${hit.index}`, 'critical', `有效期区间倒置：${hit[0]}`, 'draft', /代际/.test(hit[0]) ? 'TLC-E7' : /制度/.test(hit[0]) ? 'TLC-E8' : 'TLC-E6'));
+  }
+  for (const hit of raw.matchAll(/海拔\s*([+-]?\d+(?:\.\d+)?)\s*(?:米|m)/gi)) {
+    if (+hit[1] < -500 || +hit[1] > 9000) findings.push(finding(`tlc-e9-${hit.index}`, 'warning', `海拔超出地球常见现实锚：${hit[0]}`, 'draft', 'TLC-E9'));
+  }
+  if ((raw.match(/```/g) || []).length % 2) findings.push(finding('tlc-e10-fence', 'critical', 'Markdown 代码围栏未闭合', 'draft', 'TLC-E10'));
+  const stems = '甲乙丙丁戊己庚辛壬癸', branches = '子丑寅卯辰巳午未申酉戌亥';
+  for (const hit of raw.matchAll(/(\d{4})年[^。；;\n]{0,10}([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])年?/g)) {
+    const offset = ((+hit[1] - 1984) % 60 + 60) % 60;
+    const expected = stems[offset % 10] + branches[offset % 12];
+    if (hit[2] !== expected) findings.push(finding(`tlc-e11-${hit.index}`, 'critical', `公历 ${hit[1]} 年干支应为 ${expected}，正文写作 ${hit[2]}`, 'draft', 'TLC-E11'));
+  }
+  for (const hit of raw.matchAll(/机构编号[：:]\s*([^，。；;\s]+)/g)) {
+    if (!/^[A-Z]{2,8}-\d{2,12}$/i.test(hit[1])) findings.push(finding(`tlc-e12-${hit.index}`, 'critical', `机构编号格式非法：${hit[1]}`, 'draft', 'TLC-E12'));
+  }
+  return { pass: !findings.some(x => x.severity === 'critical'), findings, rules: TLC_RULES };
+}
+
+function runArithmeticInspection(text) {
+  const raw = asText(text);
+  const findings = [];
+  for (const hit of raw.matchAll(/([\d,.]+)\s*(?:÷|\/)\s*([\d,.]+)\s*=\s*([\d,.]+)/g)) {
+    const a = +hit[1].replace(/,/g, ''), b = +hit[2].replace(/,/g, ''), stated = +hit[3].replace(/,/g, '');
+    if (!b || !Number.isFinite(a / b) || !Number.isFinite(stated)) continue;
+    const actual = a / b;
+    const factor = Math.max(Math.abs(actual / stated), Math.abs(stated / actual));
+    if (factor >= 9.5) findings.push(finding(`math-10x-${hit.index}`, 'critical', `10× 嗅探命中：${hit[0]}，机器复算=${+actual.toFixed(6)}`, 'draft', 'W68-Q3', { vertical: `${a}\n÷ ${b}\n= ${+actual.toFixed(6)}` }));
+    else if (Math.abs(actual - stated) > Math.max(0.01, Math.abs(actual) * 0.01)) findings.push(finding(`math-${hit.index}`, 'critical', `算式不相等：${hit[0]}，机器复算=${+actual.toFixed(6)}`, 'draft', 'W68-Q4', { vertical: `${a}\n÷ ${b}\n= ${+actual.toFixed(6)}` }));
+  }
+  return findings;
+}
+
 export function runDeterministicInspection(text, schema = {}, { previousText = '', repairOrder = null } = {}) {
   const raw = asText(text);
   const findings = [];
@@ -182,15 +253,28 @@ export function runDeterministicInspection(text, schema = {}, { previousText = '
   if (/(?:已|全部)?(?:通过|满足)(?:所有|全部)?(?:校验|验收)|无任何问题/.test(raw)) {
     findings.push(finding('self-certification', 'critical', '正文含自我认证式通过声明', 'draft', REVIEW_RULES.noSelfCertification));
   }
+  for (const hit of raw.matchAll(/\{\{[^}]+\}\}|\[(?:待填|待核实|TODO)\]|\b(?:TBD|TODO)\b|以系统核验为准/gi)) findings.push(finding(`placeholder-${hit.index}`, 'critical', `占位符未被真实结果替换：${hit[0]}`, 'draft', 'W68-D1'));
+  for (const hit of raw.matchAll(/(?:本项|此处|该条)?(?:可不改|予以豁免|无需校验)/g)) findings.push(finding(`exemption-${hit.index}`, 'critical', `自我豁免归零：${hit[0]}`, 'draft', 'W68-D5'));
+  const tlc = runTlcInspection(raw);
+  findings.push(...tlc.findings);
+  findings.push(...runArithmeticInspection(raw));
   const metrics = styleFingerprint(raw);
   if (metrics.sentenceCount >= 6 && metrics.sentenceStdDev < 6) findings.push(finding('style-flat', 'warning', `句长标准差仅 ${metrics.sentenceStdDev}，节奏可能机械`, 'draft', 'W68-S2'));
   if (metrics.psychologyPer10k > 45) findings.push(finding('style-psychology', 'warning', `心理动词密度 ${metrics.psychologyPer10k}/万字，建议改为动作或感官证据`, 'draft', 'W68-S3'));
+  if (/(?:镜头|视角)(?:拉近|推进|切到|转向)/.test(raw)) findings.push(finding('style-camera', 'warning', '命中特写运镜化表述，需回到事实层', 'draft', 'W68-S4'));
+  if (metrics.sentenceCount >= 8 && !/[—]/.test(raw)) findings.push(finding('style-rhythm', 'warning', '长段落未出现破折号且句长变化偏低，需抽审节奏匀死风险', 'draft', 'W68-S5'));
   if (previousText && repairOrder) {
     const stability = validateRepairRevision(previousText, raw, repairOrder);
     findings.push(...stability.findings);
   }
   const blocking = findings.filter(x => x.severity === 'critical');
-  return { pass: blocking.length === 0, findings, blocking, metrics, checkedAt: new Date().toISOString() };
+  const pressureStages = [
+    { id: 'density', label: '信息密度', pass: !findings.some(x => ['style-flat', 'style-psychology'].includes(x.id)) },
+    { id: 'numeric-purity', label: '数字纯度', pass: !findings.some(x => /^(?:math|source|basis|tlc-)/.test(x.id)) },
+    { id: 'consistency', label: '自洽与稳定', pass: !findings.some(x => /^(?:lock|protected|ban)-/.test(x.id)) },
+    { id: 'final', label: '终审态', pass: blocking.length === 0 },
+  ];
+  return { pass: blocking.length === 0, findings, blocking, metrics, tlc, pressureStages, blindSpots: ['语义方向由 M2 对点席判断', '正典引用存在性由外围审理席开卷核对', '未登记现实锚不由机器臆测'], checkedAt: new Date().toISOString() };
 }
 
 export function buildRepairOrder(machineReport, { protectionList = [], source = 'machine' } = {}) {
@@ -243,6 +327,10 @@ export function machineReportMarkdown(report) {
     '',
     '## 文风指纹', '',
     '```json', JSON.stringify(report?.metrics || {}, null, 2), '```',
+    '', '## 四轮加压', '',
+    ...list(report?.pressureStages).map(x => `- [${x.pass ? '通过' : '待审'}] ${x.label}`),
+    '', '## 盲区声明', '',
+    ...list(report?.blindSpots).map(x => `- ${x}`),
   ].join('\n');
 }
 
@@ -313,6 +401,11 @@ function pointReportMarkdown(packet, round) {
   return ['# 对点报告', '', line('主环轮次', round), line('决定', packet.decision), line('解析降级', packet.parseWarning ? '是' : '否'), '', '## 判断', '', ...(list(packet.findings).length ? list(packet.findings).map((x, i) => `- P${i + 1}｜${asText(x.message || x)}`) : ['- 未提出调整项'])].join('\n');
 }
 
+function polishRecordMarkdown(record) {
+  if (!record) return '# 润色记录\n\n- 轻仪式或本轮未启用独立润色站。';
+  return ['# 润色记录', '', line('结论', record.accepted ? '采用' : '回退原稿'), line('理由', record.reason), '', '## 润色前指纹', '', '```json', JSON.stringify(record.before || {}, null, 2), '```', '', '## 润色后指纹', '', '```json', JSON.stringify(record.after || {}, null, 2), '```'].join('\n');
+}
+
 function consultationMarkdown(packet) {
   return ['# 请示单', '', line('提案', packet?.proposal), line('理由', packet?.reason), line('M2 决定', packet?.approved ? '批准；先改骨架/圣经再动正文' : '不批准'), line('骨架变更', packet?.skeletonPatch), line('圣经变更', packet?.biblePatch)].join('\n');
 }
@@ -358,6 +451,8 @@ export async function runW68Review({
   const machineHistory = [];
   let point = null;
   let consultation = null;
+  let polishRecord = null;
+  let polishAttempted = false;
   const repairs = [];
   const pointReports = [];
   const reviews = [];
@@ -414,6 +509,26 @@ export async function runW68Review({
         text = revised || text;
         continue;
       }
+      if (ritualPlan.effective === 'full' && !polishAttempted) {
+        polishAttempted = true;
+        transitions.push(`polish:${round}`);
+        const before = text;
+        const polished = await invoke({
+          seat: '润色席', role: 'factory_polish', phase: `polish-${round}`, expected: 2200,
+          system: 'MAZZ_W68_POLISH\n你是独立润色席，不得改变事实、数值、事件顺序或验收点。依次处理：删直接心理报告、打散重复段首、替换粗俗比喻、补一个不抢戏的具体死物、让结尾留有余波；对话只改语气不改信息。只输出完整正文。',
+          user: `【锁定验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【正文】\n${before}`,
+          temperature: 0.3, maxTokens: 8192,
+        });
+        const polishedMachine = inspectText(polished);
+        const lengthStable = polished.length >= Math.max(10, before.length * 0.7);
+        const accepted = polishedMachine.pass && lengthStable;
+        polishRecord = { accepted, before: styleFingerprint(before), after: styleFingerprint(polished), reason: accepted ? '润色后确定性机检仍通过' : (!lengthStable ? '润色删改超过 30%，自动回退' : '润色引入关键机检错误，自动回退'), text: accepted ? polished : before };
+        if (accepted) {
+          text = polished;
+          machine = polishedMachine;
+          machineHistory.push({ round: `polish-${round}`, report: machine });
+        } else transitions.push(`polish-reverted:${round}`);
+      }
       transitions.push(`point:${round}`);
       const pointRaw = await invoke({
         seat: 'M2', role: 'factory_point', phase: `point-${round}`, expected: 1600,
@@ -463,8 +578,8 @@ export async function runW68Review({
     const mainConverged = machine.pass && point?.decision === 'pass';
     if (!mainConverged) {
       transitions.push('nonconvergence:skeleton');
-      const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'return-skeleton', reason: '主环三轮未收敛；依规则推定骨架/验收点需重开', ritual: ritualPlan, gates: { machine: machine.pass, point: false, review: false, objection: false }, text, schema, machine, machineHistory, point, transitions, budget: ledger.summary(), bible };
-      result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, machine: machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n'), point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n---\n\n'), repair: repairs.map(repairOrderMarkdown).join('\n\n---\n\n'), consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', verdict: verdictMarkdown(result) };
+      const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'return-skeleton', reason: '主环三轮未收敛；依规则推定骨架/验收点需重开', ritual: ritualPlan, gates: { machine: machine.pass, point: false, review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, transitions, budget: ledger.summary(), bible };
+      result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n'), point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n---\n\n'), repair: repairs.map(repairOrderMarkdown).join('\n\n---\n\n'), consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', verdict: verdictMarkdown(result) };
       return result;
     }
 
@@ -553,12 +668,12 @@ export async function runW68Review({
     transitions.push(sealed ? 'sealed' : 'blocked');
     const result = {
       protocol: W68_PROTOCOL, sealed, verdict: sealed ? 'pass' : 'block', reason: final.reason || (sealed ? '四闸全开' : '四闸未全开'),
-      ritual: ritualPlan, gates, text, schema, machine, machineHistory, point, consultation, repairs, reviews, objections, answers,
+      ritual: ritualPlan, gates, text, schema, machine, machineHistory, polishRecord, point, consultation, repairs, reviews, objections, answers,
       transitions, budget: ledger.summary(), bible,
       precedent: precedentMarkdown({ unitRef, objections, verdict: sealed ? 'pass' : 'block' }),
     };
     result.artifacts = {
-      skeleton: acceptanceSchemaMarkdown(schema), draft: text, machine: machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n'),
+      skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n'),
       point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n---\n\n'),
       repair: repairs.length ? repairs.map(repairOrderMarkdown).join('\n\n---\n\n') : '# 修订单\n\n- 无',
       consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无',
@@ -567,8 +682,8 @@ export async function runW68Review({
     return result;
   } catch (error) {
     if (error?.code !== 'W68_BUDGET_STOP') throw error;
-    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: error.message, ritual: ritualPlan, gates: { machine: !!machine?.pass, point: point?.decision === 'pass', review: false, objection: false }, text, schema, machine, machineHistory, point, transitions: [...transitions, 'budget-stop'], budget: ledger.summary(), bible };
-    result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, machine: machineHistory.length ? machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n') : '# 机检报告\n\n- 未执行', point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n') || '# 对点报告\n\n- 未执行', repair: repairs.map(repairOrderMarkdown).join('\n\n') || '# 修订单\n\n- 无', consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', review: reviewMarkdown(reviews), objection: objectionMarkdown(objections), answer: answerMarkdown(answers), verdict: verdictMarkdown(result) };
+    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: error.message, ritual: ritualPlan, gates: { machine: !!machine?.pass, point: point?.decision === 'pass', review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, transitions: [...transitions, 'budget-stop'], budget: ledger.summary(), bible };
+    result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.length ? machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n') : '# 机检报告\n\n- 未执行', point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n') || '# 对点报告\n\n- 未执行', repair: repairs.map(repairOrderMarkdown).join('\n\n') || '# 修订单\n\n- 无', consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', review: reviewMarkdown(reviews), objection: objectionMarkdown(objections), answer: answerMarkdown(answers), verdict: verdictMarkdown(result) };
     return result;
   }
 }

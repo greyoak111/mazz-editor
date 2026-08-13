@@ -1201,7 +1201,7 @@ export class FactoryPanel {
     const artifactDir = `${folder}/工件/${unitRef}${safeOutline ? '-' + safeOutline : ''}`;
     await window.mazz.invoke('fs:mkdir', { path: artifactDir });
     const artifactLabels = {
-      skeleton: '骨架与验收点', draft: '扩写稿', machine: '机检报告', point: '对点报告', repair: '修订单',
+      skeleton: '骨架与验收点', draft: '扩写稿', polish: '润色记录', machine: '机检报告', point: '对点报告', repair: '修订单',
       consultation: '请示单', review: '审理表', objection: '质询单', answer: '答辩书', verdict: '裁决书',
     };
     for (const [key, filename] of Object.entries(REVIEW_ARTIFACT_NAMES)) {
@@ -1279,6 +1279,7 @@ export class FactoryPanel {
     const extra = [embedBlocks, plugBlocks && `## 创作插件规则\n${plugBlocks}`,
       stylePkg.includes('未提供') ? '' : `## 文风参考素材\n${stylePkg}`].filter(Boolean).join('\n\n');
     if (extra) m.user += `\n\n${extra}`;
+    if (task.reviewProtocol === W68_PROTOCOL) m.system += '\n\n【W68a 防偷懒协议】动笔前通读全部锁定材料；每个内容单元达到项目配额；本单元重新读取验收点，不得凭上单元惯性续写。';
     this.log('⚡ AI 生成中…');
     // 单次模式同样走流式直播（此前用非流式 chat 干等全文=「没办法实时看到进度」总根）
     this.liveStart(task, 1, '');
@@ -1474,6 +1475,7 @@ export class FactoryPanel {
         wordsPerChapter: task.values['每章字数'], title: task.label,
         correctionDirective, snapshotSchema,
       });
+      if (task.reviewProtocol === W68_PROTOCOL) cp.system += '\n\n【W68a 防偷懒协议】续写前通读恒定锚、滚动快照与当前验收点；完成本单元配额；逐单元重置锚点，禁止沿用未经登记的上一单元惯性。';
       if (previous) {
         const declared = mergeDeclaredContinuation(previous, '');
         if (declared.complete) {

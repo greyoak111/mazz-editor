@@ -3,9 +3,9 @@ import fs from 'fs';
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import {
-  REVIEW_ARTIFACT_NAMES, REVIEW_RULES, W68_PROTOCOL,
+  REVIEW_ARTIFACT_NAMES, REVIEW_RULES, TLC_RULES, W68_PROTOCOL,
   buildAcceptanceSchema, buildRepairOrder, planReviewRitual,
-  reviewArtifactManifest, runDeterministicInspection, runW68Review,
+  reviewArtifactManifest, runDeterministicInspection, runTlcInspection, runW68Review,
   validateObjection, validateRepairRevision,
 } from '../../renderer/modules/factory/review.js';
 
@@ -43,6 +43,23 @@ describe('W68a 骨架验收点与确定性机检', () => {
     const order = buildRepairOrder(report, { protectionList: ['蓝钥匙'] });
     assert.deepEqual(Object.keys(order.items[0]), ['id', 'position', 'error', 'change', 'reason']);
     assert.equal(validateRepairRevision('保留蓝钥匙。', '删掉了。', order).pass, false);
+  });
+
+  test('TLC E1-E12 注册齐全，日期/干支/区间与 10× 算术走确定性硬闸', () => {
+    assert.deepEqual(TLC_RULES.map(x => x.id), Array.from({ length: 12 }, (_, i) => `E${i + 1}`));
+    assert.equal(runTlcInspection('1984年甲子年，UTC+8，2024年2月29日。').pass, true);
+    const report = runDeterministicInspection('任期：2028年至2024年。2024年2月30日。1984年乙丑年。1000÷10=10。', {});
+    assert.equal(report.pass, false);
+    for (const pin of ['TLC-E1', 'TLC-E3', 'TLC-E11', 'W68-Q3']) assert(report.findings.some(x => x.ruleRef === pin), `缺确定性规则 ${pin}`);
+  });
+
+  test('终稿占位符与自我豁免一律阻断，四轮加压和盲区声明可落报告', () => {
+    const report = runDeterministicInspection('读数以系统核验为准，本项可不改。', {});
+    assert.equal(report.pass, false);
+    assert.equal(report.pressureStages.length, 4);
+    assert(report.blindSpots.length >= 3);
+    assert(report.findings.some(x => x.ruleRef === 'W68-D1'));
+    assert(report.findings.some(x => x.ruleRef === 'W68-D5'));
   });
 });
 

@@ -37,6 +37,8 @@ export async function scenes79({ app, win, human, scenario, shotDir }) {
     if (!(await panel.locator('details.advanced').evaluate(node => node.open))) await panel.click('details.advanced summary');
     await panel.fill('#pj-review-budget', '40000');
     await panel.dispatchEvent('#pj-review-budget', 'change');
+    await panel.waitForTimeout(250);
+    if (!(await panel.locator('details.advanced').evaluate(node => node.open))) await panel.click('details.advanced summary');
     const routeState = await human.evaluate(async () => {
       const { AI_ROLES } = await import('./modules/factory/provider.js');
       return AI_ROLES.filter(x => x.id.startsWith('factory_')).map(x => x.id);

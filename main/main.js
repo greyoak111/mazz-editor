@@ -444,6 +444,10 @@ function registerChannels() {
       return '{"command":"agent.finish","args":{"message":"模拟交办已收口"}}';
     }
     // W68a：六席确定性剧本。覆盖机检退回、请示先改骨架、撤回、两轮后开庭与终审。
+    if (system.includes('MAZZ_W68_POLISH')) {
+      const body = user.split('【正文】').at(-1)?.trim() || '';
+      return body.replace(/(?:觉得|感到|意识到|心想)/g, '看见');
+    }
     if (system.includes('MAZZ_W68_REPAIR')) {
       factoryMock.w68Repair++;
       const destination = factoryMock.w68Repair > 1 ? '星港' : '北闸港';
