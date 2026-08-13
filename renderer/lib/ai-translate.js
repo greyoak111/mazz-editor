@@ -52,7 +52,7 @@ async function getSysOverride() {
  * @returns {{text, engine: 'ai'} | null} AI 不可用（未配置 Provider）时返回 null，调用方回落免费引擎
  */
 export async function aiTranslate({ text, from = 'auto', to = '' }) {
-  const cfg = await getProviderConfig();
+  const cfg = await getProviderConfig('translation');
   if (!providerReady(cfg)) return null;
   const source = from === 'auto' ? (looksChinese(text) ? 'zh-CN' : 'en') : from;
   const target = to || (source.startsWith('zh') ? 'en' : 'zh-CN');
@@ -62,7 +62,7 @@ export async function aiTranslate({ text, from = 'auto', to = '' }) {
   let glossary = '';
   for (let i = 0; i < chunks.length; i++) {
     const prompts = buildTranslatePrompts({ source, target, chunk: chunks[i], index: i, total: chunks.length, glossary, sysOverride });
-    const r = await chat({ cfg, system: prompts.system, user: prompts.user, temperature: 0.3 });
+    const r = await chat({ cfg, role: 'translation', system: prompts.system, user: prompts.user, temperature: 0.3 });
     out.push(r.trim());
     // 上文结尾 200 字作下一块的术语/语气衔接
     glossary = r.trim().slice(-200);

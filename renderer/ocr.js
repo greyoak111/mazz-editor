@@ -62,7 +62,7 @@ export function registerOcrCommands(commands) {
           status.textContent = 'AI 多模态识别中（比本地模型更懂版式与手写）';
           try {
             const { getProviderConfig, providerReady, visionChat } = await import('./modules/factory/provider.js');
-            const cfg = await getProviderConfig();
+            const cfg = await getProviderConfig('vision');
             if (!providerReady(cfg)) {
               out.value = '未配置 AI 服务——请先在智能创作 ⚙ 配置（或把引擎切回「本地 Tesseract」）';
               status.textContent = '';
@@ -70,7 +70,7 @@ export function registerOcrCommands(commands) {
             }
             const langName = { 'chi_sim+eng': '中文和英文', chi_sim: '中文', eng: '英文', jpn: '日文', kor: '韩文' }[m.body.querySelector('.ocr-lang').value] || '中文和英文';
             const text = await visionChat({
-              cfg,
+              cfg, role: 'vision',
               prompt: `请精确识别这张图片中的全部文字（主要是${langName}）。要求：1. 按原图版式与阅读顺序逐行输出原文；2. 表格按行以「|」分列；3. 不翻译、不解释、不评价、不补充任何内容；4. 看不清的字用 □ 标出。`,
               imageDataUrl: dataUrl,
             });

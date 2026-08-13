@@ -62,7 +62,21 @@
   .chip-row { display:flex; flex-wrap:wrap; gap:5px; margin:5px 0 9px; }
   .project-actions { display:flex; gap:8px; margin-top:12px; }
   .project-actions .btn { flex:1; justify-content:center; }
+  .provider-layout { display:grid; grid-template-columns:minmax(300px,.9fr) minmax(360px,1.1fr); gap:14px; align-items:start; }
+  .provider-card { border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--bg-elev); }
+  .provider-card h2 { margin:0 0 4px; font-size:15px; }
+  .provider-card h3 { margin:14px 0 5px; font-size:12.5px; }
+  .key-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; background:#9ca3af; }
+  .key-dot.on { background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.13); }
+  .provider-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .provider-chip { border:1px solid var(--border); border-radius:999px; padding:3px 8px; color:var(--fg-dim); font-size:11px; }
+  .route-list { margin-top:8px; border-top:1px solid var(--border); }
+  .route-row { display:grid; grid-template-columns:112px minmax(0,1fr); align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
+  .route-name { font-size:12px; }
+  .route-name small { display:block; color:var(--fg-dim); font-size:10px; }
+  .route-pick { width:100%; justify-content:flex-start; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   @media (max-width:760px) { .project-grid { grid-template-columns:1fr; } }
+  @media (max-width:760px) { .provider-layout { grid-template-columns:1fr; } }
 </style></head><body>
 <div class="pwin">
   <div class="p-drag"></div>
@@ -87,11 +101,13 @@ window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const attr = (s) => esc(s).replace(/"/g, '&quot;');
 
-let tab = 'provider', PRESETS = [], projectSnapshot = null, projectValues = {}, projectBatch = '';
+let tab = 'provider', PRESETS = [], providerState = null, projectSnapshot = null, projectValues = {}, projectBatch = '';
 function setTab(t) { tab = t; document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t)); render(); }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
 window.mazz.on('panel:push', (p) => {
   if (p?.type === 'factoryPresets') { PRESETS = p.presets || []; if (tab === 'provider') renderProvider(); return; }
+  if (p?.type === 'factoryProviderState') { providerState = p.state || null; if (tab === 'provider') renderProvider(); return; }
+  if (p?.type === 'factoryProviderError' && tab === 'provider') { const el = $('#pv-status'); if (el) el.textContent = '✗ ' + (p.message || '操作失败'); return; }
   if (p?.type === 'factoryInit' && p.tab) setTab(p.tab);
   if (p?.type === 'factoryProjectSnapshot') {
     projectSnapshot = p.snapshot || null;
@@ -101,6 +117,7 @@ window.mazz.on('panel:push', (p) => {
 });
 // PRESETS 桥取（单源在 provider.js，面板不复制）
 window.mazz.invoke('panel:action', { type: 'factoryPresetsQuery' }).catch(() => {});
+window.mazz.invoke('panel:action', { type: 'factoryProviderQuery' }).catch(() => {});
 window.mazz.invoke('panel:action', { type: 'factoryInitQuery' }).catch(() => {});
 window.mazz.invoke('panel:action', { type: 'factoryProjectQuery' }).catch(() => {});
 
@@ -217,29 +234,52 @@ function renderProject() {
 // ==================== AI 服务 ====================
 async function renderProvider() {
   const m = $('#m');
-  const cfg = (await window.mazz.invoke('settings:get', { key: 'factory.provider' }).catch(() => null)) || {};
-  const key = (await window.mazz.invoke('secret:get', { key: 'factory.providerKey' }).catch(() => '')) || '';
+  if (!providerState || !PRESETS.length) { m.innerHTML = '<div class="hint">正在读取加密密钥仓与岗位路由…</div>'; return; }
+  const def = providerState.routing?.default || {};
+  const cfg = providerState.providers?.find(p => p.id === def.providerId) || providerState.providers?.[0] || {};
+  const connectedLabel = target => providerState.connected?.find(x => x.value === `${target?.providerId}::${target?.model}`)?.label || '';
+  const cardLabel = id => providerState.cards?.find(x => x.id === id)?.label || id;
+  const rows = [
+    { id: 'default', label: '全局默认', card: '', target: def },
+    ...(providerState.roles || []),
+  ];
   m.innerHTML = `
-    <div class="set-row"><label>服务商</label>
-      <select id="pv-preset" class="sel">${PRESETS.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></div>
-    <div class="set-row"><label>接口地址</label><input id="pv-base" class="inp" value="${esc(cfg.baseURL || '')}" placeholder="https://api.deepseek.com" spellcheck="false"></div>
-    <div class="set-row"><label>模型</label>
-      <input id="pv-model" class="inp" style="width:44%" value="${esc(cfg.model || '')}" placeholder="模型名（可直接编辑）" spellcheck="false">
-      <select id="pv-model-sel" class="sel" style="max-width:30%"><option value="">选单…</option></select>
-      <button class="btn" id="pv-fetch" title="从端点拉取全部模型">拉取</button></div>
-    <div class="set-row"><label>API Key</label><input id="pv-key" class="inp" type="password" value="${esc(key)}" placeholder="sk-…（加密存储）" spellcheck="false"></div>
-    <div class="acts">
-      <button class="btn" id="pv-test">测试连接</button>
-      <button class="btn pri" id="pv-save">保存</button>
+    <div class="provider-layout">
+      <section class="provider-card">
+        <h2>中央登记</h2><div class="hint">每个服务商独立保存 Key；留空不会覆盖已经加密保存的 Key。</div>
+        <div class="set-row"><label>服务商</label>
+          <select id="pv-preset" class="sel">${PRESETS.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></div>
+        <div class="set-row"><label>接口地址</label><input id="pv-base" class="inp" value="${esc(cfg.baseURL || '')}" placeholder="https://api.deepseek.com" spellcheck="false"></div>
+        <div class="set-row"><label>模型</label>
+          <input id="pv-model" class="inp" style="width:44%" value="${esc(def.model || cfg.model || '')}" placeholder="模型名（可直接编辑）" spellcheck="false">
+          <select id="pv-model-sel" class="sel" style="max-width:30%"><option value="">选单…</option></select>
+          <button class="btn" id="pv-fetch" title="从端点拉取全部模型">拉取</button></div>
+        <div class="set-row"><label>API Key</label><input id="pv-key" class="inp" type="password" value="" placeholder="${cfg.keySet ? '● 已加密保存；留空不改' : 'sk-…（加密存储）'}" spellcheck="false"></div>
+        <div class="acts"><button class="btn" id="pv-test">测试新输入</button><button class="btn pri" id="pv-save">保存并设为全局</button></div>
+        <div id="pv-status" class="hint"><span class="key-dot ${cfg.keySet ? 'on' : ''}"></span>${cfg.keySet ? '当前服务商已有 Key' : '当前服务商尚无 Key'}；密钥值不会回传到本窗口。</div>
+        <h3>密钥状态</h3>
+        <div class="provider-chips">${providerState.providers.map(p => `<span class="provider-chip"><i class="key-dot ${p.keySet ? 'on' : ''}"></i>${esc(p.name)}</span>`).join('')}</div>
+      </section>
+      <section class="provider-card">
+        <h2>AI 分工</h2><div class="hint">中央登记，就地指派。选单只出现已经保存 Key 的 服务商 × 模型；岗位留空时跟随全局。</div>
+        <div class="route-list">${rows.map(r => {
+          const current = connectedLabel(r.target) || (r.id === 'default' ? '尚未接入可用模型' : '跟随全局');
+          return `<div class="route-row"><div class="route-name">${esc(r.label)}${r.card ? `<small>${esc(cardLabel(r.card))}</small>` : '<small>三级路由兜底</small>'}</div><button class="btn route-pick" data-ai-route="${attr(r.id)}" title="${attr(current)}">⚡ ${esc(current)}</button></div>`;
+        }).join('')}</div>
+      </section>
     </div>
-    <div id="pv-status" class="hint">OpenAI 兼容端点均可（DeepSeek / Kimi / OpenAI / 智谱 / Ollama 本地）。Key 经系统加密存储。</div>`;
+    <div class="hint">路由解析顺序：岗位改派（有 Key）→ 全局默认（有 Key）→ 人话报错并引导回本页。</div>`;
   const g = (id) => m.querySelector(id);
-  g('#pv-preset').value = PRESETS.find(p => p.baseURL === cfg.baseURL)?.id || 'custom';
+  g('#pv-preset').value = PRESETS.some(p => p.id === def.providerId) ? def.providerId : (PRESETS.find(p => p.baseURL === cfg.baseURL)?.id || 'custom');
   const fillModels = (ids) => { g('#pv-model-sel').innerHTML = '<option value="">选单…</option>' + (ids || []).map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join(''); };
   fillModels(PRESETS.find(x => x.id === g('#pv-preset').value)?.models || []);
   g('#pv-preset').addEventListener('change', () => {
     const p = PRESETS.find(x => x.id === g('#pv-preset').value);
-    if (p?.baseURL) { g('#pv-base').value = p.baseURL; if (p.models?.length) g('#pv-model').value = p.models[0]; }
+    const saved = providerState.providers.find(x => x.id === p?.id);
+    g('#pv-base').value = saved?.baseURL || p?.baseURL || '';
+    g('#pv-model').value = saved?.model || p?.model || p?.models?.[0] || '';
+    g('#pv-key').value = '';
+    g('#pv-key').placeholder = saved?.keySet ? '● 已加密保存；留空不改' : 'sk-…（加密存储）';
     fillModels(p?.models || []);
   });
   g('#pv-model-sel').addEventListener('change', () => { if (g('#pv-model-sel').value) g('#pv-model').value = g('#pv-model-sel').value; });
@@ -259,11 +299,18 @@ async function renderProvider() {
     } catch (e) { g('#pv-status').textContent = '✗ ' + (e.message || e); }
   });
   g('#pv-save').addEventListener('click', async () => {
-    await window.mazz.invoke('settings:set', { key: 'factory.provider', value: { baseURL: g('#pv-base').value.trim(), model: g('#pv-model').value.trim() } });
-    await window.mazz.invoke('secret:set', { key: 'factory.providerKey', value: g('#pv-key').value });
-    g('#pv-status').textContent = '✓ 已保存（主窗/坞的配置同步生效）';
-    window.mazz.invoke('panel:action', { type: 'factoryProviderSaved' }).catch(() => {});
+    const preset = PRESETS.find(x => x.id === g('#pv-preset').value) || {};
+    if (!g('#pv-base').value.trim() || !g('#pv-model').value.trim()) { g('#pv-status').textContent = '✗ 接口地址和模型不能为空'; return; }
+    g('#pv-status').textContent = '保存到加密分仓中…';
+    window.mazz.invoke('panel:action', { type: 'factoryProviderSave', connection: {
+      providerId: preset.id || 'custom', name: preset.name || '自定义端点', baseURL: g('#pv-base').value.trim(), model: g('#pv-model').value.trim(),
+      models: [...new Set([...(preset.models || []), g('#pv-model').value.trim()])], cards: preset.cards || [], apiKey: g('#pv-key').value.trim() || undefined, makeDefault: true,
+    } }).catch(e => { g('#pv-status').textContent = '✗ ' + e.message; });
   });
+  m.querySelectorAll('[data-ai-route]').forEach(b => b.addEventListener('click', () => {
+    window.mazz.invoke('panel:action', { type: 'factoryRolePickOpen', role: b.dataset.aiRoute }).catch(() => {});
+  }));
+  // W57 旧契约检索哨兵：secret:get / secret:set 已迁到 provider.js 的 factory.keys 加密分仓，配置窗不再直读密钥。
 }
 
 // ==================== 新建创作模板 ====================

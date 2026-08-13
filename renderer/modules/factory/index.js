@@ -8,6 +8,7 @@ import { NOVEL_PLUGINS } from './plugins.js';
 import { listStyles, uploadStyleFile, queryOnlineStyle, deleteStyle, assembleStylePackage } from './style-studio.js';
 import { exportMaz, importMaz } from './maz.js';
 import { iconHtml } from '../../lib/svg-icons.js';
+import { aiRolePicker } from '../../lib/ai-role-picker.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
@@ -132,7 +133,7 @@ export class FactoryPanel {
         </span></div>
       <div class="factory-body">
         <div class="fc-projectbar">
-          <div><b>车间执行台</b><span class="fc-daily-hint">新项目统一进入 Output 目录协议</span></div>
+          <div><b>车间执行台</b><span class="fc-daily-hint">新项目统一进入 Output 目录协议</span><span class="fc-role-pickers" aria-label="AI 岗位就地指派"></span></div>
           <button class="fc-btn fc-accent" data-a="project">＋ 新建立项</button>
         </div>
         <div class="fc-project-stash" aria-hidden="true">
@@ -237,6 +238,8 @@ export class FactoryPanel {
           <button class="fc-mini" data-a="mazexport">导出当前文体 .maz</button>
         </div>
       </div>`;
+    const roleHost = this.el.querySelector('.fc-role-pickers');
+    this.rolePickers = ['blueprint', 'chapter', 'snapshot'].map(role => aiRolePicker(role, roleHost, { className: 'fc-mini' }));
     this.formEl = this.el.querySelector('.fc-form');
     this.taskListEl = this.el.querySelector('.fc-tasklist');
     this.hisListEl = this.el.querySelector('.fc-hislist');
@@ -387,7 +390,7 @@ export class FactoryPanel {
     if (!p) return;
     try {
       this.log('文风素材：提取文本并分析中…');
-      const chatFn = providerReady(this.cfg) ? (opts) => chat({ cfg: this.cfg, ...opts }) : null;
+      const chatFn = providerReady(this.cfg) ? (opts) => chat({ cfg: this.cfg, role: 'style', ...opts }) : null;
       const entry = await uploadStyleFile({ path: p, chatFn });
       this.styles = await listStyles();
       this.styleIds.add(entry.id);
@@ -403,7 +406,7 @@ export class FactoryPanel {
     if (!name?.trim()) return;
     try {
       this.log(`在线文风查询：${name}…`);
-      const entry = await queryOnlineStyle({ authorWork: name, chatFn: (opts) => chat({ cfg: this.cfg, ...opts }) });
+      const entry = await queryOnlineStyle({ authorWork: name, chatFn: (opts) => chat({ cfg: this.cfg, role: 'style', ...opts }) });
       this.styles = await listStyles();
       this.styleIds.add(entry.id);
       this.renderExtras();
@@ -1062,7 +1065,7 @@ export class FactoryPanel {
     let text = '';
     try {
       text = await chatStream({
-        cfg: this.cfg, system: m.system, user: m.user, temperature: 0.8, maxTokens: 8192,
+        cfg: this.cfg, role: 'chapter', system: m.system, user: m.user, temperature: 0.8, maxTokens: 8192,
         shouldStop: () => this.stopRequested,
         onChunk: (_, f) => { full = f; this.liveUpdate(task, full); },
       });
@@ -1075,7 +1078,7 @@ export class FactoryPanel {
         this.log('🔁 双循环勘误：自检未过，修订中…');
         const fixSys = m.system + '\n\n【勘误】你将收到初稿与未通过的校验项，请输出修订后的完整正文（不要解释）。';
         const fixUser = `【初稿】\n${text}\n\n【未通过校验项】\n${failed.map(f => '- ' + f.label + (f.detail ? '（' + f.detail + '）' : '')).join('\n')}`;
-        text = await chat({ cfg: this.cfg, system: fixSys, user: fixUser });
+        text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: fixUser });
         checks = runQualityChecks(tpl, text);
       }
     }
@@ -1143,7 +1146,7 @@ export class FactoryPanel {
         if (this.stopRequested) { task.status = 'paused'; await stateFor('stopped', 0); return; }
         let shown = 0;
         blueprint = stripMdFence(await chatStream({
-          cfg: this.cfg, user: bpUser, temperature: 0.7, maxTokens: 8192,
+          cfg: this.cfg, role: 'blueprint', user: bpUser, temperature: 0.7, maxTokens: 8192,
           shouldStop: () => this.stopRequested,
           onChunk: (_, full) => {
             this.previewPush(task.id, { type: 'factoryPreviewStream', phase: 'blueprint', chapterNo: 0, unitName: '蓝图', path: bpPath, text: full, status: 'running' });
@@ -1229,7 +1232,7 @@ export class FactoryPanel {
         this.log(`… 第 ${i} ${unitName}开写前启动纠偏闸（只校正本${unitName}，不重写既有正文）`);
         try {
           correctionDirective = await chat({
-            cfg: this.cfg,
+            cfg: this.cfg, role: 'snapshot',
             system: '你是长篇一致性校验员。只指出下一个结构单元需要纠正的偏差；禁止改写既有正文。',
             user: `【恒定锚】\n${constantAnchor}\n\n【滚动快照】\n${stateSummary}\n\n【下一${unitName}任务】\n${outline}`,
             temperature: 0.1, maxTokens: 1200,
@@ -1270,7 +1273,7 @@ export class FactoryPanel {
       } else {
         try {
           aiText = await chatStream({
-            cfg: this.cfg, system: cp.system, user: cp.user, temperature: 0.8, maxTokens: 8192,
+            cfg: this.cfg, role: 'chapter', system: cp.system, user: cp.user, temperature: 0.8, maxTokens: 8192,
             shouldStop: () => this.stopRequested,
             onChunk: (_, f) => {
               full = mergeDeclaredContinuation(previous, f).text;
@@ -1300,7 +1303,7 @@ export class FactoryPanel {
         if (failed.length) {
           this.log(`🔁 第 ${i} ${unitName}自检未过，修订中…`);
           const fixSys = cp.system + '\n\n【勘误】请修订初稿使未过校验项全部通过，只输出修订后正文。';
-          text = await chat({ cfg: this.cfg, system: fixSys, user: `【初稿】\n${text}\n\n【未过项】\n${failed.map(f => '- ' + f.label).join('\n')}` });
+          text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: `【初稿】\n${text}\n\n【未过项】\n${failed.map(f => '- ' + f.label).join('\n')}` });
         }
       }
 
@@ -1333,7 +1336,7 @@ export class FactoryPanel {
       this.log(`… 正在更新${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照（第 ${i} ${unitName}后）`);
       const sp = buildStateSummaryPrompt(stateSummary, text, i, snapshotSchema);
       try {
-        stateSummary = await chat({ cfg: this.cfg, system: sp.system, user: sp.user, temperature: 0.3 });
+        stateSummary = await chat({ cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3 });
       } catch { /* 快照失败沿用旧快照 */ }
       await window.mazz.invoke('fs:writeFile', {
         path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第${String(i).padStart(3, '0')}${unitName}后.md`, content: stateSummary,
@@ -1468,7 +1471,7 @@ export class FactoryPanel {
           const prevSnap = await this.loadSnapshot(folder, c.chapterNo - 1, snapshot);
           const body = edited.replace(/^#[^\n]*\n/, ''); // 去标题行
           const sp = buildStateSummaryPrompt(prevSnap, body, c.chapterNo, snapshot);
-          const snap = await chat({ cfg: this.cfg, system: sp.system, user: sp.user, temperature: 0.3 });
+          const snap = await chat({ cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3 });
           await window.mazz.invoke('fs:writeFile', {
             path: `${folder}/${snapshot.type === 'narrative' ? '叙事' : '结构'}状态快照_第${String(c.chapterNo).padStart(3, '0')}${snapshot.unitName}后.md`, content: snap,
           });
@@ -1812,7 +1815,7 @@ export function registerFactoryExtras(commands) {
     toast(`智能${mode}中…`);
     try {
       const out = await chat({
-        cfg,
+        cfg, role: 'chapter',
         system: tpl.system_prompt + `\n你现在的任务是${mode}用户选中的文字。保持原意与事实，只输出${mode}后的文字本身。`,
         user: `【待${mode}的文字】\n${selText}\n\n【要求】\n${mode === '改写' ? '更通顺、更精炼、更贴合语境；长度与原文相当。' : '在原意基础上扩写充实细节与层次，篇幅约为原文 2-3 倍；保持上下文衔接。'}`,
       });

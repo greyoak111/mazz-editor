@@ -996,6 +996,8 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .fc-projectbar b { font-size: 13px; }
 .fc-daily-hint { color: var(--fg-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-projectbar .fc-btn { flex: none; padding: 6px 10px; }
+.fc-role-pickers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.fc-role-pickers .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-length-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
 .fc-length-cards button { min-width: 0; border: 1px solid var(--border); border-radius: 9px; padding: 8px 5px; background: var(--bg); color: var(--fg); cursor: pointer; display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
 .fc-length-cards button span { color: var(--fg-dim); font-size: 10.5px; }

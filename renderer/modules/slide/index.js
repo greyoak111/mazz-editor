@@ -953,13 +953,13 @@ async function aiSplitMarkdownToSlides(md, title, { skipConfirm = false } = {}) 
     if (!(r === 0 || r?.button === 0 || r === true)) return;
   }
   const { getProviderConfig, providerReady, chat } = await import('../factory/provider.js');
-  const cfg = await getProviderConfig();
+  const cfg = await getProviderConfig('blueprint');
   if (!providerReady(cfg)) { toast('请先在「智能创作」配置 AI（baseURL/模型/Key）'); return; }
   toast('AI 拆段中…');
   let text;
   try {
     text = await chat({
-      cfg, temperature: 0.3,
+      cfg, role: 'blueprint', temperature: 0.3,
       system: '你是演示文稿排版助手。把用户文稿拆成演示页序列，只回 JSON 数组，每项 {"title":"页标题","bullets":["要点"],"notes":"讲者备注"}。3–12 页，每页 3–6 条要点，要点 ≤20 字。不输出任何 JSON 以外的文字。',
       user: String(md || '').slice(0, 12000),
     });

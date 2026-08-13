@@ -160,7 +160,7 @@ class SubtitleTrack {
     if (!this.lines.length) return false;
     try {
       const { getProviderConfig, providerReady, chat } = await import('../modules/factory/provider.js');
-      const cfg = await getProviderConfig();
+      const cfg = await getProviderConfig('video');
       if (!providerReady(cfg)) return false;
       const raw = this.lines.map((l, i) => `[${i + 1}] ${l.text}`).join('\n');
       const prompt = `你是字幕润色助手。下面是语音识别出的字幕行（带行号），请：
@@ -171,7 +171,7 @@ class SubtitleTrack {
 
 字幕原文：
 ${raw}`;
-      const out = await chat({ cfg, system: '你是专业字幕润色助手，只输出润色后的带行号文本。', user: prompt, temperature: 0.2 });
+      const out = await chat({ cfg, role: 'video', system: '你是专业字幕润色助手，只输出润色后的带行号文本。', user: prompt, temperature: 0.2 });
       const map = new Map();
       for (const line of out.split('\n')) {
         const m = /^\s*\[(\d+)\]\s*(.+)$/.exec(line.trim());

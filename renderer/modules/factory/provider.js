@@ -1,32 +1,228 @@
 // renderer/modules/factory/provider.js —— AI Provider：OpenAI 兼容端点（DeepSeek/Kimi/OpenAI/Ollama）
 // Key 用 safeStorage 加密落盘（secret 通道），配置在 settings，Key 不明文存储
-const CFG_KEY = 'factory.provider';
-const SECRET_KEY = 'factory.apiKey';
+const CFG_KEY = 'factory.provider'; // 旧默认配置镜像，迁移期保留
+const PROVIDERS_KEY = 'factory.providers';
+const ROUTING_KEY = 'factory.routing';
+const KEYS_SECRET = 'factory.keys';
+const LEGACY_SECRET_KEYS = ['factory.apiKey', 'factory.providerKey'];
+
+export const PROVIDER_CARDS = Object.freeze([
+  { id: 'reasoning', label: '推理', desc: '规划、裁决与复杂分析' },
+  { id: 'fast', label: '快速', desc: '低延迟批处理' },
+  { id: 'vision', label: '视觉', desc: '图片与视频理解' },
+  { id: 'long-context', label: '长上下文', desc: '长篇、资料包与连续创作' },
+  { id: 'embedding', label: '向量', desc: '语义索引与检索' },
+  { id: 'privacy', label: '隐私', desc: '本机或私有端点' },
+]);
+
+export const AI_ROLES = Object.freeze([
+  { id: 'blueprint', label: '工厂·蓝图', card: 'reasoning' },
+  { id: 'chapter', label: '工厂·章节', card: 'long-context' },
+  { id: 'snapshot', label: '工厂·快照', card: 'fast' },
+  { id: 'translation', label: '翻译', card: 'fast' },
+  { id: 'style', label: '文风分析', card: 'long-context' },
+  { id: 'search', label: '检索摘要', card: 'fast' },
+  { id: 'vision', label: '视觉识别', card: 'vision' },
+  { id: 'companion', label: '剧搭子', card: 'reasoning' },
+  { id: 'video', label: '视频剖析', card: 'vision' },
+  { id: 'agent', label: '交办栏本体', card: 'reasoning' },
+  { id: 'embedding', label: '语义索引', card: 'embedding' },
+]);
 
 /** 主流 AI 服务商预置（2026 版库：国内外前排厂商全收编，模型选单 + /v1/models 自动拉取） */
 export const PRESETS = [
   // —— 国内 ——
-  { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com', model: 'deepseek-v4-flash', models: ['deepseek-v4-flash', 'deepseek-v4-pro'] },
-  { id: 'kimi', name: 'Kimi（月之暗面）', baseURL: 'https://api.moonshot.cn', model: 'kimi-k3', models: ['kimi-k3', 'kimi-k2.6', 'kimi-k2.7-code', 'kimi-k2.7-code-highspeed', 'moonshot-v1-128k'] },
-  { id: 'zhipu', name: '智谱 GLM', baseURL: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-5.2', models: ['glm-5.2', 'glm-5.2-fast-preview', 'glm-5.1', 'glm-5', 'glm-5v-turbo', 'glm-4.7'] },
-  { id: 'qwen', name: '阿里通义 Qwen', baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', models: ['qwen-plus', 'qwen3.8-max-preview', 'qwen3.7-max', 'qwen3.7-plus', 'qwen3.6-plus', 'qwen3.6-flash', 'qwen-max', 'qwen-turbo', 'qwen-vl-max'] },
-  { id: 'doubao', name: '字节豆包', baseURL: 'https://ark.cn-beijing.volces.com/api/v3', model: 'doubao-seed-1.6', models: ['doubao-seed-1.6', 'doubao-seed-1.6-flash', 'doubao-seed-2.0-pro', 'doubao-vision-pro-32k'] },
-  { id: 'minimax', name: 'MiniMax', baseURL: 'https://api.minimax.chat/v1', model: 'MiniMax-M3', models: ['MiniMax-M3', 'MiniMax-M1', 'MiniMax-Text-01', 'abab6.5s-chat'] },
-  { id: 'spark', name: '讯飞星火', baseURL: 'https://spark-api-open.xf-yun.com/v1', model: 'generalv3.5', models: ['generalv3.5', 'generalv3', '4.0Ultra'] },
-  { id: 'baidu', name: '百度文心', baseURL: 'https://qianfan.baidubce.com/v2', model: 'ernie-4.0-turbo-8k', models: ['ernie-4.0-turbo-8k', 'ernie-speed-128k', 'ernie-lite-8k'] },
-  { id: 'stepfun', name: '阶跃星辰', baseURL: 'https://api.stepfun.com/v1', model: 'step-2-16k', models: ['step-2-16k', 'step-1-128k', 'step-1v-32k'] },
-  { id: 'hunyuan', name: '腾讯混元', baseURL: 'https://api.hunyuan.cloud.tencent.com/v1', model: 'hunyuan-hy3', models: ['hunyuan-hy3', 'hunyuan-turbo', 'hunyuan-pro', 'hunyuan-lite'] },
+  { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com', model: 'deepseek-v4-flash', models: ['deepseek-v4-flash', 'deepseek-v4-pro'], cards: ['reasoning', 'fast', 'long-context'] },
+  { id: 'kimi', name: 'Kimi（月之暗面）', baseURL: 'https://api.moonshot.cn', model: 'kimi-k3', models: ['kimi-k3', 'kimi-k2.6', 'kimi-k2.7-code', 'kimi-k2.7-code-highspeed', 'moonshot-v1-128k'], cards: ['reasoning', 'fast', 'long-context'] },
+  { id: 'zhipu', name: '智谱 GLM', baseURL: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-5.2', models: ['glm-5.2', 'glm-5.2-fast-preview', 'glm-5.1', 'glm-5', 'glm-5v-turbo', 'glm-4.7'], cards: ['reasoning', 'fast', 'vision', 'long-context'] },
+  { id: 'qwen', name: '阿里通义 Qwen', baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', models: ['qwen-plus', 'qwen3.8-max-preview', 'qwen3.7-max', 'qwen3.7-plus', 'qwen3.6-plus', 'qwen3.6-flash', 'qwen-max', 'qwen-turbo', 'qwen-vl-max'], cards: ['reasoning', 'fast', 'vision', 'long-context', 'embedding'] },
+  { id: 'doubao', name: '字节豆包', baseURL: 'https://ark.cn-beijing.volces.com/api/v3', model: 'doubao-seed-1.6', models: ['doubao-seed-1.6', 'doubao-seed-1.6-flash', 'doubao-seed-2.0-pro', 'doubao-vision-pro-32k'], cards: ['reasoning', 'fast', 'vision', 'long-context'] },
+  { id: 'minimax', name: 'MiniMax', baseURL: 'https://api.minimax.chat/v1', model: 'MiniMax-M3', models: ['MiniMax-M3', 'MiniMax-M1', 'MiniMax-Text-01', 'abab6.5s-chat'], cards: ['reasoning', 'fast', 'long-context'] },
+  { id: 'spark', name: '讯飞星火', baseURL: 'https://spark-api-open.xf-yun.com/v1', model: 'generalv3.5', models: ['generalv3.5', 'generalv3', '4.0Ultra'], cards: ['fast', 'long-context'] },
+  { id: 'baidu', name: '百度文心', baseURL: 'https://qianfan.baidubce.com/v2', model: 'ernie-4.0-turbo-8k', models: ['ernie-4.0-turbo-8k', 'ernie-speed-128k', 'ernie-lite-8k'], cards: ['reasoning', 'fast', 'long-context'] },
+  { id: 'stepfun', name: '阶跃星辰', baseURL: 'https://api.stepfun.com/v1', model: 'step-2-16k', models: ['step-2-16k', 'step-1-128k', 'step-1v-32k'], cards: ['reasoning', 'vision', 'long-context'] },
+  { id: 'hunyuan', name: '腾讯混元', baseURL: 'https://api.hunyuan.cloud.tencent.com/v1', model: 'hunyuan-hy3', models: ['hunyuan-hy3', 'hunyuan-turbo', 'hunyuan-pro', 'hunyuan-lite'], cards: ['reasoning', 'fast', 'long-context'] },
   // —— 国外 ——
-  { id: 'openai', name: 'OpenAI', baseURL: 'https://api.openai.com', model: 'gpt-5.5', models: ['gpt-5.6-sol', 'gpt-5.5', 'gpt-5-mini', 'gpt-4o', 'gpt-4o-mini', 'o4-mini'] },
-  { id: 'anthropic', name: 'Anthropic（OpenAI 兼容网关）', baseURL: 'https://api.anthropic.com/v1', model: 'claude-opus-4.8', models: ['claude-fable-5', 'claude-opus-4.8', 'claude-opus-4.7', 'claude-sonnet-5', 'claude-opus-4.6'] },
-  { id: 'gemini', name: 'Google Gemini', baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash', models: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'] },
-  { id: 'xai', name: 'xAI Grok', baseURL: 'https://api.x.ai/v1', model: 'grok-4.5', models: ['grok-4.5', 'grok-4', 'grok-3', 'grok-3-mini'] },
-  { id: 'groq', name: 'Groq', baseURL: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'qwen-qwq-32b'] },
-  { id: 'openrouter', name: 'OpenRouter（聚合）', baseURL: 'https://openrouter.ai/api/v1', model: 'auto', models: ['auto'] },
-  { id: 'siliconflow', name: '硅基流动', baseURL: 'https://api.siliconflow.cn/v1', model: 'Qwen/Qwen2.5-72B-Instruct', models: ['Qwen/Qwen2.5-72B-Instruct', 'deepseek-ai/DeepSeek-V3', 'Pro/deepseek-ai/DeepSeek-R1'] },
-  { id: 'ollama', name: 'Ollama（本地）', baseURL: 'http://127.0.0.1:11434', model: 'qwen2.5:7b', models: ['qwen2.5:7b', 'llama3.1:8b', 'deepseek-r1:7b'] },
-  { id: 'custom', name: '自定义端点', baseURL: '', model: '', models: [] },
+  { id: 'openai', name: 'OpenAI', baseURL: 'https://api.openai.com', model: 'gpt-5.5', models: ['gpt-5.6-sol', 'gpt-5.5', 'gpt-5-mini', 'gpt-4o', 'gpt-4o-mini', 'o4-mini'], cards: ['reasoning', 'fast', 'vision', 'long-context', 'embedding'] },
+  { id: 'anthropic', name: 'Anthropic（OpenAI 兼容网关）', baseURL: 'https://api.anthropic.com/v1', model: 'claude-opus-4.8', models: ['claude-fable-5', 'claude-opus-4.8', 'claude-opus-4.7', 'claude-sonnet-5', 'claude-opus-4.6'], cards: ['reasoning', 'fast', 'vision', 'long-context'] },
+  { id: 'gemini', name: 'Google Gemini', baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash', models: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'], cards: ['reasoning', 'fast', 'vision', 'long-context', 'embedding'] },
+  { id: 'xai', name: 'xAI Grok', baseURL: 'https://api.x.ai/v1', model: 'grok-4.5', models: ['grok-4.5', 'grok-4', 'grok-3', 'grok-3-mini'], cards: ['reasoning', 'fast', 'long-context'] },
+  { id: 'groq', name: 'Groq', baseURL: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'qwen-qwq-32b'], cards: ['fast'] },
+  { id: 'openrouter', name: 'OpenRouter（聚合）', baseURL: 'https://openrouter.ai/api/v1', model: 'auto', models: ['auto'], cards: ['reasoning', 'fast', 'vision', 'long-context', 'embedding'] },
+  { id: 'siliconflow', name: '硅基流动', baseURL: 'https://api.siliconflow.cn/v1', model: 'Qwen/Qwen2.5-72B-Instruct', models: ['Qwen/Qwen2.5-72B-Instruct', 'deepseek-ai/DeepSeek-V3', 'Pro/deepseek-ai/DeepSeek-R1'], cards: ['reasoning', 'fast', 'embedding'] },
+  { id: 'ollama', name: 'Ollama（本地）', baseURL: 'http://127.0.0.1:11434', model: 'qwen2.5:7b', models: ['qwen2.5:7b', 'llama3.1:8b', 'deepseek-r1:7b'], cards: ['privacy', 'fast', 'embedding'] },
+  { id: 'custom', name: '自定义端点', baseURL: '', model: '', models: [], cards: ['reasoning', 'fast', 'vision', 'long-context', 'embedding', 'privacy'] },
 ];
+
+const presetById = (id) => PRESETS.find(p => p.id === id);
+export function inferProviderId(baseURL = '') {
+  const url = String(baseURL).replace(/\/+$/, '').toLowerCase();
+  return PRESETS.find(p => p.id !== 'custom' && p.baseURL.replace(/\/+$/, '').toLowerCase() === url)?.id || 'custom';
+}
+const safeObject = (value) => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+const normalizeTarget = (value) => value?.providerId && value?.model ? { providerId: String(value.providerId), model: String(value.model) } : null;
+
+export function normalizeRouting(raw, fallback = null) {
+  const source = safeObject(raw);
+  const routes = {};
+  for (const role of AI_ROLES) {
+    const target = normalizeTarget(source.routes?.[role.id]);
+    if (target) routes[role.id] = target;
+  }
+  return { version: 1, default: normalizeTarget(source.default) || normalizeTarget(fallback), routes };
+}
+
+function connectionOf(providerId, providers = {}) {
+  const custom = safeObject(providers)[providerId];
+  const preset = presetById(providerId);
+  if (!custom && !preset) return null;
+  return {
+    id: providerId,
+    name: custom?.name || preset?.name || providerId,
+    baseURL: custom?.baseURL || preset?.baseURL || '',
+    model: custom?.model || preset?.model || '',
+    models: [...new Set([...(custom?.models || []), ...(preset?.models || []), custom?.model, preset?.model].filter(Boolean))],
+    cards: [...new Set([...(custom?.cards || []), ...(preset?.cards || [])])],
+  };
+}
+
+function parseKeys(raw) {
+  try { return safeObject(typeof raw === 'string' ? JSON.parse(raw) : raw); }
+  catch { return {}; }
+}
+
+async function readStore() {
+  const [providerRows, routingRaw, keyRaw, legacyCfg, legacyApiKey, legacyPanelKey] = await Promise.all([
+    window.mazz.invoke('settings:get', { key: PROVIDERS_KEY }).catch(() => null),
+    window.mazz.invoke('settings:get', { key: ROUTING_KEY }).catch(() => null),
+    window.mazz.invoke('secret:get', { key: KEYS_SECRET }).catch(() => null),
+    window.mazz.invoke('settings:get', { key: CFG_KEY }).catch(() => null),
+    window.mazz.invoke('secret:get', { key: LEGACY_SECRET_KEYS[0] }).catch(() => null),
+    window.mazz.invoke('secret:get', { key: LEGACY_SECRET_KEYS[1] }).catch(() => null),
+  ]);
+  const providers = { ...safeObject(providerRows) };
+  const keys = { ...parseKeys(keyRaw) };
+  const legacy = safeObject(legacyCfg);
+  let fallback = null, migrated = false;
+  if (legacy.baseURL && legacy.model) {
+    const providerId = legacy.providerId || inferProviderId(legacy.baseURL);
+    const preset = presetById(providerId);
+    providers[providerId] = {
+      ...(providers[providerId] || {}), id: providerId,
+      name: providers[providerId]?.name || preset?.name || (providerId === 'custom' ? '自定义端点' : providerId),
+      baseURL: legacy.baseURL, model: legacy.model,
+      models: [...new Set([...(providers[providerId]?.models || []), legacy.model])],
+      cards: providers[providerId]?.cards || preset?.cards || [],
+    };
+    const legacyKey = legacyApiKey || legacyPanelKey || '';
+    if (legacyKey && !keys[providerId]) keys[providerId] = legacyKey;
+    fallback = { providerId, model: legacy.model };
+    migrated = !providerRows || !keyRaw || !routingRaw;
+  }
+  const routing = normalizeRouting(routingRaw, fallback || { providerId: PRESETS[0].id, model: PRESETS[0].model });
+  if (migrated) {
+    await Promise.all([
+      window.mazz.invoke('settings:set', { key: PROVIDERS_KEY, value: providers }).catch(() => {}),
+      window.mazz.invoke('settings:set', { key: ROUTING_KEY, value: routing }).catch(() => {}),
+      Object.keys(keys).length ? window.mazz.invoke('secret:set', { key: KEYS_SECRET, value: JSON.stringify(keys) }).catch(() => {}) : null,
+    ]);
+  }
+  return { providers, keys, routing };
+}
+
+export function connectedProviderModels({ providers = {}, keys = {} } = {}) {
+  const ids = new Set([...PRESETS.map(p => p.id), ...Object.keys(safeObject(providers))]);
+  const rows = [];
+  for (const providerId of ids) {
+    const provider = connectionOf(providerId, providers);
+    if (!provider?.baseURL || !keys[providerId]) continue;
+    for (const model of provider.models.length ? provider.models : [provider.model]) {
+      if (model) rows.push({ value: `${providerId}::${model}`, providerId, model, label: `${provider.name} · ${model}`, cards: provider.cards });
+    }
+  }
+  return rows;
+}
+
+export function resolveProviderRoute({ role = '', routing, providers = {}, keys = {} } = {}) {
+  const table = normalizeRouting(routing);
+  const candidates = [role && table.routes[role], table.default].filter(Boolean);
+  for (const target of candidates) {
+    const provider = connectionOf(target.providerId, providers);
+    const apiKey = keys[target.providerId] || '';
+    if (provider?.baseURL && target.model && apiKey) {
+      return { providerId: target.providerId, baseURL: provider.baseURL, model: target.model, apiKey, role: role || 'default' };
+    }
+  }
+  const target = candidates[0] || table.default;
+  const provider = target ? connectionOf(target.providerId, providers) : PRESETS[0];
+  return { providerId: target?.providerId || provider?.id || '', baseURL: provider?.baseURL || '', model: target?.model || provider?.model || '', apiKey: '', role: role || 'default' };
+}
+
+export async function getProviderAdminSnapshot() {
+  const state = await readStore();
+  const connected = connectedProviderModels(state);
+  const allIds = new Set([...PRESETS.map(p => p.id), ...Object.keys(state.providers)]);
+  return {
+    routing: state.routing,
+    roles: AI_ROLES.map(role => ({ ...role, target: state.routing.routes[role.id] || null })),
+    cards: PROVIDER_CARDS,
+    connected,
+    providers: [...allIds].map(id => {
+      const provider = connectionOf(id, state.providers);
+      return provider ? { ...provider, keySet: !!state.keys[id] } : null;
+    }).filter(Boolean),
+  };
+}
+
+export async function saveProviderConfig({ providerId, name, baseURL, model, models, cards, apiKey, makeDefault = true }) {
+  if (!String(baseURL || '').trim() || !String(model || '').trim()) throw new Error('接口地址和模型不能为空');
+  const state = await readStore();
+  const id = providerId || inferProviderId(baseURL);
+  const preset = presetById(id);
+  state.providers[id] = {
+    id, name: name || preset?.name || (id === 'custom' ? '自定义端点' : id), baseURL, model,
+    models: [...new Set([...(models || []), model].filter(Boolean))], cards: cards || preset?.cards || [],
+  };
+  if (apiKey) state.keys[id] = apiKey;
+  if (apiKey === null) delete state.keys[id];
+  if (makeDefault) state.routing.default = { providerId: id, model };
+  await Promise.all([
+    window.mazz.invoke('settings:set', { key: PROVIDERS_KEY, value: state.providers }),
+    window.mazz.invoke('settings:set', { key: ROUTING_KEY, value: state.routing }),
+    window.mazz.invoke('secret:set', { key: KEYS_SECRET, value: JSON.stringify(state.keys) }),
+    // 旧版读取口只镜像默认连接，密钥真相源仍是 factory.keys。
+    makeDefault ? window.mazz.invoke('settings:set', { key: CFG_KEY, value: { providerId: id, baseURL, model } }) : null,
+    makeDefault && state.keys[id] ? window.mazz.invoke('secret:set', { key: LEGACY_SECRET_KEYS[0], value: state.keys[id] }) : null,
+  ]);
+  return await getProviderAdminSnapshot();
+}
+
+export async function saveProviderRoute(role, target) {
+  const state = await readStore();
+  if (role === 'default') {
+    const next = normalizeTarget(target);
+    if (!next) throw new Error('全局默认必须指向已接入模型');
+    state.routing.default = next;
+  } else {
+    if (!AI_ROLES.some(r => r.id === role)) throw new Error('未知 AI 岗位');
+    const next = normalizeTarget(target);
+    if (next) state.routing.routes[role] = next;
+    else delete state.routing.routes[role];
+  }
+  const allowed = new Set(connectedProviderModels(state).map(x => x.value));
+  const chosen = role === 'default' ? state.routing.default : state.routing.routes[role];
+  if (chosen && !allowed.has(`${chosen.providerId}::${chosen.model}`)) throw new Error('只能指派已接入且有 Key 的模型');
+  await window.mazz.invoke('settings:set', { key: ROUTING_KEY, value: state.routing });
+  if (role === 'default') {
+    const cfg = resolveProviderRoute(state);
+    await Promise.all([
+      window.mazz.invoke('settings:set', { key: CFG_KEY, value: { providerId: cfg.providerId, baseURL: cfg.baseURL, model: cfg.model } }),
+      // 兼容仍直接读取旧 secret 名的扩展；新代码只认 factory.keys。
+      cfg.apiKey ? window.mazz.invoke('secret:set', { key: LEGACY_SECRET_KEYS[0], value: cfg.apiKey }) : null,
+    ]);
+  }
+  return await getProviderAdminSnapshot();
+}
 
 /** 拉取端点模型列表（GET /v1/models；失败返回 null 走预置选单） */
 export async function fetchModels(cfg) {
@@ -45,16 +241,8 @@ export async function fetchModels(cfg) {
   } catch { return null; }
 }
 
-export async function getProviderConfig() {
-  const cfg = (await window.mazz.invoke('settings:get', { key: CFG_KEY }).catch(() => null)) || null;
-  const key = (await window.mazz.invoke('secret:get', { key: SECRET_KEY }).catch(() => null)) || '';
-  return cfg ? { ...cfg, apiKey: key } : { ...PRESETS[0], apiKey: key };
-}
-
-export async function saveProviderConfig({ baseURL, model, apiKey }) {
-  await window.mazz.invoke('settings:set', { key: CFG_KEY, value: { baseURL, model } });
-  await window.mazz.invoke('secret:set', { key: SECRET_KEY, value: apiKey || '' });
-  return true;
+export async function getProviderConfig(role = '') {
+  return resolveProviderRoute({ ...(await readStore()), role });
 }
 
 export function providerReady(cfg) {
@@ -62,7 +250,17 @@ export function providerReady(cfg) {
 }
 
 /** Chat Completions（非流式；Electron 走主进程代理避开 CORS，网页桥直连） */
-export async function chat({ cfg, system, user, temperature = 0.7, maxTokens = 8192 }) {
+async function routedConfig(cfg, role = '') {
+  const resolved = role ? await getProviderConfig(role) : (cfg || await getProviderConfig());
+  if (!providerReady(resolved)) {
+    const label = AI_ROLES.find(r => r.id === role)?.label || '全局默认';
+    throw new Error(`${label}没有可用 AI：请到「AI 服务 → AI 分工」接入并指派模型`);
+  }
+  return resolved;
+}
+
+export async function chat({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192 }) {
+  cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
     return await window.mazz.invoke('factory:aiChat', {
       baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
@@ -113,7 +311,8 @@ async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 81
 }
 
 /** Chat Completions 流式（SSE）：onChunk 逐 token 回调，返回全文；shouldStop() 返回 true 时中止 */
-export async function chatStream({ cfg, system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop }) {
+export async function chatStream({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop }) {
+  cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
     // 主进程代理流式：factory:aiChunk 事件逐 delta 推流
     const requestId = 'ai' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -195,7 +394,8 @@ async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxToken
 }
 
 /** 多模态识别（vision）：图片 + 提示词 → 文本（OpenAI 兼容 vision 消息格式） */
-export async function visionChat({ cfg, prompt, imageDataUrl, temperature = 0.2, maxTokens = 4096 }) {
+export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, temperature = 0.2, maxTokens = 4096 }) {
+  cfg = await routedConfig(cfg, role);
   const messages = [{
     role: 'user',
     content: [
@@ -229,7 +429,7 @@ export async function extractFields({ cfg, tpl, dump }) {
     const schema = tpl.input_fields.map(f => `- ${f.id}（${f.label}${f.required ? '，必填' : ''}）`).join('\n');
     const sys = '你是需求分析助手。从用户的原始想法中提取要素，只输出 JSON 对象，键为字段 id，值为字符串。不确定的字段留空字符串。不要输出其他内容。';
     const usr = `字段清单：\n${schema}\n\n用户想法：\n${dump}`;
-    const text = await chat({ cfg, system: sys, user: usr, temperature: 0.2, maxTokens: 2000 });
+    const text = await chat({ cfg, role: 'blueprint', system: sys, user: usr, temperature: 0.2, maxTokens: 2000 });
     const m = /\{[\s\S]*\}/.exec(text);
     if (m) { try { return JSON.parse(m[0]); } catch {} }
     throw new Error('智能填充解析失败，请手动填写');

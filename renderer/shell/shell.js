@@ -2353,6 +2353,64 @@ export class Shell {
           } catch {}
           return;
         }
+        // W62a-0 AI 分工桥：配置窗永不直读 Key，只接收脱敏登记表与路由表；写入统一回 provider.js。
+        if (pl.type === 'factoryProviderQuery') {
+          try {
+            const { getProviderAdminSnapshot } = await import('../modules/factory/provider.js');
+            const state = await getProviderAdminSnapshot();
+            window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProviderState', state } }).catch(() => {});
+          } catch (e) {
+            window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProviderError', message: e.message } }).catch(() => {});
+          }
+          return;
+        }
+        if (pl.type === 'factoryProviderSave') {
+          try {
+            const { saveProviderConfig } = await import('../modules/factory/provider.js');
+            const state = await saveProviderConfig(pl.connection || {});
+            window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProviderState', state } }).catch(() => {});
+            this.sideDock?.factoryPanel?.reload?.();
+            toast('AI 服务已登记，并设为全局默认');
+          } catch (e) {
+            window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProviderError', message: e.message } }).catch(() => {});
+          }
+          return;
+        }
+        if (pl.type === 'factoryRolePickOpen') {
+          try {
+            const { AI_ROLES, getProviderAdminSnapshot, saveProviderRoute } = await import('../modules/factory/provider.js');
+            const state = await getProviderAdminSnapshot();
+            const role = pl.role || '';
+            const meta = AI_ROLES.find(x => x.id === role);
+            if (role !== 'default' && !meta) throw new Error('未知 AI 岗位');
+            const target = role === 'default' ? state.routing.default : state.routing.routes?.[role];
+            const current = target?.providerId && target?.model ? `${target.providerId}::${target.model}` : '__follow_global__';
+            const items = [
+              ...(role === 'default' ? [] : [{ v: '__follow_global__', label: '跟随全局' }]),
+              ...state.connected.map(x => ({ v: x.value, label: x.label })),
+            ];
+            if (!items.length) throw new Error('尚无已保存 Key 的可用模型，请先在中央登记中接入');
+            window.__picklistPending = {
+              title: `AI 指派 · ${role === 'default' ? '全局默认' : meta.label}`,
+              searchable: true, allowFree: false, current, items,
+              onPick: async value => {
+                try {
+                  const at = String(value || '').indexOf('::');
+                  const next = value === '__follow_global__' ? null : (at > 0 ? { providerId: value.slice(0, at), model: value.slice(at + 2) } : null);
+                  const updated = await saveProviderRoute(role, next);
+                  window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProviderState', state: updated } }).catch(() => {});
+                  this.sideDock?.factoryPanel?.reload?.();
+                } catch (e) {
+                  window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProviderError', message: e.message } }).catch(() => {});
+                }
+              },
+            };
+            window.mazz.invoke('panel:open', { kind: 'picklist', opts: { w: 410, h: 430 } }).catch(() => {});
+          } catch (e) {
+            window.mazz.invoke('panel:push', { kind: 'factorycfg', payload: { type: 'factoryProviderError', message: e.message } }).catch(() => {});
+          }
+          return;
+        }
         if (pl.type === 'factoryInitQuery') {
           const tab = this._factoryInitTab || 'provider';
           this._factoryInitTab = null;
