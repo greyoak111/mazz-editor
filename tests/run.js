@@ -72,6 +72,7 @@ const files = [
   'tests/contract/hotfix-w61b.test.mjs',
   'tests/contract/hotfix-w62a0.test.mjs',
   'tests/contract/hotfix-w62a.test.mjs',
+  'tests/contract/hotfix-w68a.test.mjs',
   'tests/contract/hotfix-remote-gpu.test.mjs',
   'tests/contract/library.test.mjs',
   'tests/contract/library-ui.test.mjs',

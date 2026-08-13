@@ -11,6 +11,7 @@ import { iconHtml } from '../../lib/svg-icons.js';
 import { aiRolePicker } from '../../lib/ai-role-picker.js';
 import { commands } from '../../core/command-registry.js';
 import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown, normalizeLedger } from './agent.js';
+import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Review } from './review.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
@@ -70,6 +71,8 @@ export class FactoryPanel {
       providerHint: providerReady(this.cfg) ? `● ${this.cfg.model} 已就绪` : '未配置 AI 服务（主窗坞齿轮配置；不配也能「复制模板母版」去别的 AI 用）',
       dump: this.el.querySelector('.fc-dump-text')?.value || '',
       dualLoop: !!this.el.querySelector('.fc-dualloop')?.checked,
+      reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
+      reviewBudgetCap: +(this.el.querySelector('.fc-review-budget')?.value || 32000),
       maxMode: !!this.el.querySelector('.fc-maxmode')?.checked,
       maxChapters: +(this.el.querySelector('.fc-maxchapters')?.value || 0),
       autoPreview: this.autoPreview,
@@ -168,6 +171,8 @@ export class FactoryPanel {
           <summary>高级设置 <span class="fc-extra-badge"></span></summary>
           <div class="fc-sec fc-advanced-row">
             <label class="fc-check" title="双循环勘误：生成后自检+修订一轮"><input type="checkbox" class="fc-dualloop"> 双循环勘误</label>
+            <label class="fc-check" title="W68a 双环审理仪式">审理 <select class="fc-review-ritual"><option value="light">轻仪式</option><option value="full">全仪式</option></select></label>
+            <label class="fc-check" title="每任务审理 token 硬顶；不足时全仪式降级，低于 8000 硬停">预算 <input type="number" class="fc-review-budget" min="8000" step="1000" value="32000" style="width:72px"> token</label>
             <label class="fc-check" title="由篇幅档决定是否连写"><input type="checkbox" class="fc-maxmode" checked> 连写模式</label>
             <label class="fc-check" title="每个任务自动打开独立只读预览窗"><input type="checkbox" class="fc-autopreview" ${this.autoPreview ? 'checked' : ''}> 生成自动开预览</label>
             <label class="fc-check" title="任务并发额度 1～4；默认 1 最稳">并发 <input type="number" class="fc-concurrency" min="1" max="4" step="1" value="${this.concurrency}" style="width:46px"> 路</label>
@@ -678,6 +683,10 @@ export class FactoryPanel {
       styleIds: st.styleIds || [], exportFmt: st.exportFmt || 'md',
       createdAt: st.createdAt, outputProtocol: st.outputProtocol,
       totalWords: st.totalWords, wordsPerUnit: st.wordsPerUnit, lengthPreset: st.lengthPreset,
+      reviewProtocol: st.reviewProtocol,
+      reviewRitual: st.reviewRitual,
+      reviewBudgetCap: st.reviewBudgetCap,
+      reviewState: st.reviewState,
       manualRevision: st.manualRevision,
     };
     this.tasks.push(task);
@@ -931,6 +940,9 @@ export class FactoryPanel {
       pluginValues: JSON.parse(JSON.stringify(this.pluginValues)),
       styleIds: [...this.styleIds],
       embeds: this.embeds.map(e => ({ ...e })),
+      reviewProtocol: W68_PROTOCOL,
+      reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
+      reviewBudgetCap: Math.max(0, +(this.el.querySelector('.fc-review-budget')?.value || 32000)),
       exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
       autoPreview: this.autoPreview,
     };
@@ -1088,10 +1100,20 @@ export class FactoryPanel {
 
   async saveTaskEditor(taskId, filePath, content, instanceId = taskId) {
     const task = this.taskById(taskId || instanceId);
-    const target = this.safeTaskPath(task, filePath);
-    const text = String(content ?? '');
+    let target = this.safeTaskPath(task, filePath);
+    let text = String(content ?? '');
     if (!target || !text.trim()) { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '文件路径或内容无效' }); return false; }
     if (task.status === 'running') { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '任务生成中，暂不允许回写' }); return false; }
+    if (task.reviewProtocol === W68_PROTOCOL && /\/工件\//.test(target.replace(/\\/g, '/'))) {
+      this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: 'W68a 审理工件封存只读；更正请对正文另立补遗' });
+      return false;
+    }
+    if (task.reviewProtocol === W68_PROTOCOL && task.reviewState?.sealed && !/(?:创作蓝图|章节大纲|圣经|判例库|状态快照)[^/]*\.md$/i.test(target)) {
+      const original = target;
+      target = target.replace(/\.(md|markdown)$/i, `.补遗-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}.md`);
+      text = `> W68a 补遗：封存原件保持只读。原件：${original.split(/[\\/]/).pop()}\n\n${text}`;
+      const editorCtx = this.editorTasks.get(taskId || instanceId); if (editorCtx) editorCtx.path = target;
+    }
     await window.mazz.invoke('fs:writeFile', { path: target, content: text });
     const previous = task.manualRevision || {};
     task.manualRevision = { count: (previous.count || 0) + 1, lastAt: Date.now(), path: target };
@@ -1105,7 +1127,7 @@ export class FactoryPanel {
     this.previewPush(task.id, { type: 'factoryPreviewSynced', path: target, content: text, files, revisionCount: task.manualRevision.count });
     this.editorPush(instanceId || task.id, { type: 'factoryEditSaved', taskId: task.id, path: target, content: text, revisionCount: task.manualRevision.count });
     this.log(`✎ 「${task.label}」人工修订已回写：${target.split(/[\\/]/).pop()}（第 ${task.manualRevision.count} 次）`);
-    return true;
+    return target;
   }
 
   // ==================== 任务执行 ====================
@@ -1145,7 +1167,7 @@ export class FactoryPanel {
       if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
     } catch (e) {
       task.status = 'failed';
-      if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values }).catch(() => {});
+      if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
       this.log(`✗ 任务「${task.label}」失败：${e.message}`);
       await this.finishTaskPreview(task, e.message).catch(() => {});
     } finally {
@@ -1172,11 +1194,77 @@ export class FactoryPanel {
     return true;
   }
 
+  async writeW68Artifacts(task, result, { unitNo = 1, unitName = '单元', outline = '' } = {}) {
+    const folder = task.folder;
+    const unitRef = `第${String(unitNo).padStart(3, '0')}${unitName}`;
+    const safeOutline = String(outline || '').replace(/^第[^：:]+[：:]\s*/, '').replace(/[\\/:*?"<>|]/g, '-').slice(0, 36);
+    const artifactDir = `${folder}/工件/${unitRef}${safeOutline ? '-' + safeOutline : ''}`;
+    await window.mazz.invoke('fs:mkdir', { path: artifactDir });
+    const artifactLabels = {
+      skeleton: '骨架与验收点', draft: '扩写稿', machine: '机检报告', point: '对点报告', repair: '修订单',
+      consultation: '请示单', review: '审理表', objection: '质询单', answer: '答辩书', verdict: '裁决书',
+    };
+    for (const [key, filename] of Object.entries(REVIEW_ARTIFACT_NAMES)) {
+      if (key === 'manifest') continue;
+      const content = result.artifacts?.[key] || `# ${artifactLabels[key] || key}\n\n- 本轮未执行；详见裁决书。`;
+      await window.mazz.invoke('fs:writeFile', { path: `${artifactDir}/${filename}`, content });
+    }
+    const manifest = reviewArtifactManifest(result, { unitRef });
+    await window.mazz.invoke('fs:writeFile', { path: `${artifactDir}/${REVIEW_ARTIFACT_NAMES.manifest}`, content: JSON.stringify(manifest, null, 2) });
+
+    const locked = (result.schema?.lockedFacts || []).map(x => `- ${x.label}＝${x.value}｜来源：${(x.sources || []).join(' / ') || '未登记'}｜口径：${x.basis || '未登记'}`).join('\n');
+    const bibleText = String(result.bible || '').trim() || `# 圣经\n\n## 锁定事实\n\n${locked || '- 暂无锁定事实'}\n`;
+    await window.mazz.invoke('fs:writeFile', { path: `${folder}/圣经.md`, content: bibleText.startsWith('#') ? bibleText : `# 圣经\n\n${bibleText}` });
+
+    if (result.precedent) {
+      const precedentPath = `${folder}/判例库.md`;
+      const old = await readOptionalFile(precedentPath);
+      const next = old.trim() ? `${old.trim()}\n\n---\n\n${result.precedent}\n` : `# 判例库\n\n${result.precedent}\n`;
+      await window.mazz.invoke('fs:writeFile', { path: precedentPath, content: next });
+    }
+    const costPath = `${folder}/成本台账.json`;
+    let costs = { protocol: W68_PROTOCOL, units: [] };
+    try { costs = JSON.parse(await readOptionalFile(costPath)) || costs; } catch {}
+    if (!Array.isArray(costs.units)) costs.units = [];
+    costs.units = costs.units.filter(x => x.unitNo !== unitNo);
+    costs.units.push({ unitNo, unitName, outline, ritual: result.ritual, verdict: result.verdict, sealed: result.sealed, budget: result.budget, at: new Date().toISOString() });
+    costs.totalTokens = costs.units.reduce((sum, x) => sum + (Number(x.budget?.usedTokens) || 0), 0);
+    await window.mazz.invoke('fs:writeFile', { path: costPath, content: JSON.stringify(costs, null, 2) });
+    return artifactDir;
+  }
+
+  async runW68UnitReview(task, tpl, { blueprint, outline, text, unitNo = 1, unitName = '单元' } = {}) {
+    if (task.reviewProtocol !== W68_PROTOCOL) return { sealed: true, text, legacy: true };
+    const bible = await readOptionalFile(`${task.folder}/圣经.md`);
+    const precedents = await readOptionalFile(`${task.folder}/判例库.md`);
+    this.log(`⚖ ${unitName} ${unitNo} 进入 W68a ${task.reviewRitual === 'full' ? '全仪式' : '轻仪式'}双环审理…`);
+    const result = await runW68Review({
+      draft: text, blueprint, outline, bible, unitRef: `第${String(unitNo).padStart(3, '0')}${unitName}`,
+      ritual: task.reviewRitual || 'light', budgetCap: Number(task.reviewBudgetCap) || 32000, precedents,
+      protectionList: [task.label, ...(task.values?.['主要人物'] ? [task.values['主要人物']] : [])].filter(Boolean),
+      additionalMachineChecks: current => runQualityChecks(tpl, current),
+      ask: req => chat({ cfg: this.cfg, ...req }),
+    });
+    const artifactDir = await this.writeW68Artifacts(task, result, { unitNo, unitName, outline });
+    task.reviewState = {
+      protocol: W68_PROTOCOL, ritual: result.ritual, verdict: result.verdict, sealed: result.sealed,
+      gates: result.gates, budget: result.budget, unitNo, artifactDir, updatedAt: Date.now(),
+    };
+    this.persistTasks();
+    if (!result.sealed) {
+      const error = new Error(`W68a 未准落盘：${result.reason || result.verdict}；中间工件已保存`);
+      error.code = 'W68_REVIEW_BLOCK';
+      throw error;
+    }
+    this.log(`✓ ${unitName} ${unitNo} 四闸全开并封存（审理 ${result.budget?.usedTokens || 0} token）`);
+    return result;
+  }
+
   async runSingleTask(task, tpl, dual) {
     const folder = await this.ensureTaskFolder(task, tpl);
     const m = buildMantra(tpl, task.values, task.dump);
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/创作蓝图.md`, content: m.doc });
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, manualRevision: task.manualRevision });
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision });
     await this.openTaskPreview(task, tpl, folder);
     // 创作增强注入：嵌入资料（最高优先级）+ 插件规则 + 文风包
     const embedBlocks = buildEmbedBlocks(task.embeds || []);
@@ -1204,8 +1292,14 @@ export class FactoryPanel {
       });
       full = text;
     } catch (e) { this.liveWrapEl && (this.liveWrapEl.style.display = 'none'); throw e; }
+    const unitName = getSnapshotSchema(tpl).unitName;
+    const outline = `第1${unitName}：${task.label}`;
+    if (task.reviewProtocol === W68_PROTOCOL) {
+      const reviewed = await this.runW68UnitReview(task, tpl, { blueprint: m.doc, outline, text, unitNo: 1, unitName });
+      text = reviewed.text;
+    }
     let checks = runQualityChecks(tpl, text);
-    if (dual) {
+    if (dual && task.reviewProtocol !== W68_PROTOCOL) {
       const failed = checks.filter(c => !c.pass);
       if (failed.length) {
         this.log('🔁 双循环勘误：自检未过，修订中…');
@@ -1216,8 +1310,6 @@ export class FactoryPanel {
       }
     }
     const fails = checks.filter(c => !c.pass);
-    const unitName = getSnapshotSchema(tpl).unitName;
-    const outline = `第1${unitName}：${task.label}`;
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/章节大纲.md`, content: outline });
     const stem = buildFactoryUnitStem(1, unitName, outline);
     const mdPath = `${folder}/${stem}.md`;
@@ -1227,7 +1319,7 @@ export class FactoryPanel {
     const snapshotSchema = getSnapshotSchema(tpl);
     const snapshot = `# ${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照\n\n- 状态：${fails.length ? '完成（有警告）' : '完成'}\n- 字数：${text.length}\n- 文体：${tpl.name}\n- 更新时间：${new Date().toISOString()}\n`;
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第001${unitName}后.md`, content: snapshot });
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, manualRevision: task.manualRevision });
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision });
     this.liveDone(task, 1, mdPath, text, getSnapshotSchema(tpl).unitName);
     if (!this.previewEnabled(task)) this.shell.openTab('markdown', { title: task.label + '.md', filePath: mdPath, content: text });
     this.pushHistory({ label: task.label, genre: tpl.name, ok: !fails.length, when: Date.now(), text });
@@ -1250,6 +1342,10 @@ export class FactoryPanel {
       pluginValues: task.pluginValues, styleIds: task.styleIds, embeds: task.embeds,
       createdAt: task.createdAt, outputProtocol: task.outputProtocol || 'legacy',
       totalWords: task.totalWords, wordsPerUnit: task.wordsPerUnit, lengthPreset: task.lengthPreset,
+      reviewProtocol: task.reviewProtocol,
+      reviewRitual: task.reviewRitual,
+      reviewBudgetCap: task.reviewBudgetCap,
+      reviewState: task.reviewState,
       exportFmt: task.exportFmt || 'md',
       manualRevision: task.manualRevision,
     });
@@ -1430,7 +1526,11 @@ export class FactoryPanel {
 
       full = ensureTokenDeclaration(full);
       let text = stripTokenDeclaration(full);
-      if (dual) {
+      if (task.reviewProtocol === W68_PROTOCOL) {
+        const reviewed = await this.runW68UnitReview(task, tpl, { blueprint, outline, text, unitNo: i, unitName });
+        text = reviewed.text;
+      }
+      if (dual && task.reviewProtocol !== W68_PROTOCOL) {
         const checks = runQualityChecks(tpl, text);
         const failed = checks.filter(c => !c.pass);
         if (failed.length) {
@@ -1587,7 +1687,11 @@ export class FactoryPanel {
       const edited = ta.value;
       if (!edited.trim()) { toast('内容不能为空'); return; }
       const task = this.taskById(c.taskId);
-      if (task) await this.saveTaskEditor(task.id, c.mdPath, edited, task.id);
+      if (task) {
+        const savedPath = await this.saveTaskEditor(task.id, c.mdPath, edited, task.id);
+        if (!savedPath) return;
+        c.mdPath = savedPath;
+      }
       else await window.mazz.invoke('fs:writeFile', { path: c.mdPath, content: edited });
       this.liveCur.text = edited;
       this.liveEl.innerHTML = `<div class="fc-live-text"></div>`;
@@ -1744,6 +1848,9 @@ export class FactoryPanel {
           values, dump: '', mode: maxMode ? 'max' : 'single', maxChapters, status: 'pending', doneChapters: 0,
           totalWords: this.lengthPlan.totalWords, wordsPerUnit: this.lengthPlan.wordsPerUnit,
           lengthPreset: this.lengthPlan.preset, exportFmt, autoPreview: this.autoPreview,
+          reviewProtocol: W68_PROTOCOL,
+          reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
+          reviewBudgetCap: Math.max(0, +(this.el.querySelector('.fc-review-budget')?.value || 32000)),
         });
       }
       this.persistTasks();

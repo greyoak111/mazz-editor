@@ -418,7 +418,7 @@ function registerChannels() {
     return typeof c === 'string' ? c : '';
   };
   const factoryMockEnabled = process.env.NODE_ENV === 'test' && process.env.MAZZ_E2E_FACTORY_MOCK === '1';
-  const factoryMock = { blueprintAttempts: 0, unitNo: 0 };
+  const factoryMock = { blueprintAttempts: 0, unitNo: 0, w68Repair: 0, w68Point: 0 };
   const factoryMockReply = ({ system = '', user = '', stream = false }) => {
     if (!factoryMockEnabled) return null;
     // W62a：E2E 专用的确定性 agent 路由台。按同一轮 transcript 推进，验证真工具循环而非假聊天。
@@ -442,6 +442,35 @@ function registerChannels() {
         return '{"command":"agent.finish","args":{"message":"新文档已打开"}}';
       }
       return '{"command":"agent.finish","args":{"message":"模拟交办已收口"}}';
+    }
+    // W68a：六席确定性剧本。覆盖机检退回、请示先改骨架、撤回、两轮后开庭与终审。
+    if (system.includes('MAZZ_W68_REPAIR')) {
+      factoryMock.w68Repair++;
+      const destination = factoryMock.w68Repair > 1 ? '星港' : '北闸港';
+      return `林澈在黎明启航，旧船穿过${destination}外的雾带。${`潮声撞在舷板上，他核对罗盘刻度与值班簿，把每一次偏航都记在纸边；远处信标逐盏亮起，甲板上的人用动作交换判断，没有谁替证据发言。`.repeat(12)}终点的${destination}终于显出轮廓。`;
+    }
+    if (system.includes('MAZZ_W68_POINT')) {
+      factoryMock.w68Point++;
+      if (factoryMock.w68Point === 1) return JSON.stringify({ decision: 'adjust', findings: [{ message: '更优方向需先请示', artifactRef: 'draft:终点', ruleRef: 'W68-C1' }], consultation: { proposal: '把终点改为星港', reason: '与信标意象形成闭环', approved: true, skeletonPatch: '新增星港验收点', biblePatch: '终点＝星港' } });
+      return JSON.stringify({ decision: 'pass', findings: [] });
+    }
+    if (system.includes('MAZZ_W68_CONSULTATION')) return '- [必达] port::抵达星港::星港\n- [锁定] destination::终点=星港::航海日志|信标记录::本次航程终点';
+    if (system.includes('MAZZ_W68_REVIEW')) {
+      if (system.includes('M4')) return JSON.stringify({ objections: [
+        { id: 'O-WITHDRAW', severity: 'major', claim: '启航动作是否有正文证据', artifactRef: 'draft:首句', ruleRef: 'W68-E1' },
+        { id: 'O-HEARING', severity: 'critical', claim: '终点口径是否与批准请示一致', artifactRef: 'skeleton:destination', ruleRef: 'W68-R4' },
+      ] });
+      return JSON.stringify({ objections: [] });
+    }
+    if (system.includes('MAZZ_W68_ANSWER')) {
+      const id = user.includes('O-HEARING') ? 'O-HEARING' : 'O-WITHDRAW';
+      return JSON.stringify({ answer: id === 'O-HEARING' ? '正文末句与圣经均登记星港' : '正文首句明确记录黎明启航', evidenceRef: id === 'O-HEARING' ? 'draft:末句+skeleton:destination' : 'draft:首句' });
+    }
+    if (system.includes('MAZZ_W68_RECONSIDER')) return JSON.stringify({ outcome: user.includes('O-WITHDRAW') ? 'withdraw' : 'hold', reason: user.includes('O-WITHDRAW') ? '证据充分，撤回' : '交终审席核验全局锁定' });
+    if (system.includes('MAZZ_W68_HEARING')) return JSON.stringify({ decision: 'overrule', reason: '圣经、骨架、正文三处同值', ruleRef: 'W68-R4' });
+    if (system.includes('MAZZ_W68_FINAL')) return JSON.stringify({ decision: 'pass', reason: '四闸全开，圣经无冲突' });
+    if (stream && user.includes('W68双环实证')) {
+      return `本文已通过所有校验。林澈在黎明启航。${'潮水托起旧船，信标在雾里明灭；他把读数写进值班簿，船员依次复核航向，所有判断都留下可追查的动作与记录。'.repeat(12)}船驶向北闸港。`;
     }
     if (stream && user.includes('META 蓝图生成要求')) {
       if (user.includes('META直过报告')) {

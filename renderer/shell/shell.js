@@ -2257,6 +2257,12 @@ export class Shell {
               fp.setAutoPreview(pl.value);
             } else if (pl.act === 'setConcurrency') {
               fp.setConcurrency(pl.value);
+            } else if (pl.act === 'setReviewRitual') {
+              const el = fp.el.querySelector('.fc-review-ritual'); if (el) el.value = pl.value === 'full' ? 'full' : 'light';
+              fp.pushSnapshot();
+            } else if (pl.act === 'setReviewBudget') {
+              const el = fp.el.querySelector('.fc-review-budget'); if (el) el.value = String(Math.max(0, Number(pl.value) || 32000));
+              fp.pushSnapshot();
             } else if (pl.act === 'fill') {
               await fp.smartFill();
               fp.pushSnapshot();
@@ -2277,6 +2283,8 @@ export class Shell {
               if (fp.dumpEl) fp.dumpEl.value = String(draft.dump || '');
               const dual = fp.el.querySelector('.fc-dualloop'); if (dual) dual.checked = !!draft.dualLoop;
               const max = fp.el.querySelector('.fc-maxmode'); if (max) max.checked = !!draft.maxMode;
+              const ritual = fp.el.querySelector('.fc-review-ritual'); if (ritual) ritual.value = draft.reviewRitual === 'full' ? 'full' : 'light';
+              const budget = fp.el.querySelector('.fc-review-budget'); if (budget) budget.value = String(Math.max(0, Number(draft.reviewBudgetCap) || 32000));
               fp.setAutoPreview(draft.autoPreview !== false);
               fp.setConcurrency(draft.concurrency);
               fp.setExportFormat(draft.exportFmt);
