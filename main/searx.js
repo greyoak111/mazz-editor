@@ -116,7 +116,30 @@ function stripTags(html) {
     .trim();
 }
 
-function extractArticleText(html) {
+function extractImageSources(html, baseUrl = '') {
+  const source = String(html || '').slice(0, 2_000_000);
+  const out = [];
+  for (const match of source.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = match[0];
+    const attr = (name) => {
+      const found = new RegExp(`\\b${name}\\s*=\\s*(?:["']([^"']*)["']|([^\\s>]+))`, 'i').exec(tag);
+      return decodeEntities(found?.[1] || found?.[2] || '').trim();
+    };
+    let raw = attr('data-original') || attr('data-src') || attr('data-lazy-src') || attr('src');
+    if (!raw) raw = (attr('srcset').split(',')[0] || '').trim().split(/\s+/)[0] || '';
+    if (!raw || /^(?:data|blob):/i.test(raw)) continue;
+    try {
+      const url = new URL(raw, baseUrl || undefined);
+      if (!/^https?:$/.test(url.protocol)) continue;
+      const normalized = url.toString();
+      if (!out.includes(normalized)) out.push(normalized);
+    } catch {}
+    if (out.length >= 24) break;
+  }
+  return out;
+}
+
+function extractArticleText(html, baseUrl = '') {
   const source = String(html || '').slice(0, 2_000_000);
   const titleMatch = source.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i);
   const articleMatch = source.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i);
@@ -125,6 +148,7 @@ function extractArticleText(html) {
   return {
     title: stripTags(titleMatch?.[1] || '').slice(0, 400),
     text: stripTags(articleMatch?.[1] || mainMatch?.[1] || bodyMatch?.[1] || source).slice(0, 60_000),
+    images: extractImageSources(source, baseUrl),
   };
 }
 
@@ -172,10 +196,55 @@ async function fetchArticle(raw, redirects = 0) {
       });
       res.on('end', () => {
         const html = decodePage(Buffer.concat(chunks), type);
-        resolve({ ...extractArticleText(html), url: url.toString() });
+        resolve({ ...extractArticleText(html, url.toString()), url: url.toString(), adapter: 'server-generic' });
       });
     });
     req.on('timeout', () => req.destroy(new Error('网页抓取超时')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+const IMAGE_MIME_EXT = Object.freeze({
+  'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif',
+  'image/avif': 'avif', 'image/bmp': 'bmp', 'image/x-icon': 'ico',
+});
+
+async function fetchImage(raw, redirects = 0) {
+  if (redirects > 4) throw new Error('图片重定向过多');
+  const checked = await assertPublicUrl(raw);
+  const { url, address } = checked;
+  return new Promise((resolve, reject) => {
+    const transport = url.protocol === 'http:' ? http : https;
+    const req = transport.request({
+      protocol: url.protocol, hostname: url.hostname, port: url.port || undefined,
+      path: url.pathname + url.search, method: 'GET',
+      headers: { 'User-Agent': SEARCH_UA, Accept: 'image/avif,image/webp,image/png,image/jpeg,image/gif,image/bmp;q=0.8', 'Accept-Encoding': 'identity' },
+      rejectUnauthorized: true, timeout: 15_000, agent: false,
+      lookup: address ? (_hostname, _options, callback) => callback(null, address.address, address.family) : undefined,
+    }, res => {
+      const status = res.statusCode || 0;
+      if (status >= 300 && status < 400 && res.headers.location) {
+        res.resume();
+        fetchImage(new URL(res.headers.location, url).toString(), redirects + 1).then(resolve, reject);
+        return;
+      }
+      if (status < 200 || status >= 300) { res.resume(); reject(new Error(`图片 HTTP ${status}`)); return; }
+      const mime = String(res.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+      if (!IMAGE_MIME_EXT[mime]) { res.resume(); reject(new Error('目标不是受支持的安全图片格式')); return; }
+      const chunks = [];
+      let size = 0;
+      res.on('data', chunk => {
+        size += chunk.length;
+        if (size > 8 * 1024 * 1024) req.destroy(new Error('图片超过 8MB 上限'));
+        else chunks.push(chunk);
+      });
+      res.on('end', () => {
+        const bytes = Buffer.concat(chunks);
+        resolve({ url: url.toString(), mime, ext: IMAGE_MIME_EXT[mime], size: bytes.length, base64: bytes.toString('base64') });
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('图片抓取超时')));
     req.on('error', reject);
     req.end();
   });
@@ -191,6 +260,7 @@ class SearxService {
 
     bus.handle('searx:search', async (payload) => this.search(payload));
     bus.handle('searx:extract', async (payload) => this.extract(payload));
+    bus.handle('clip:fetchImage', async (payload) => this.fetchImage(payload));
     bus.handle('searx:selfcheck', async () => this.selfcheck());
     bus.handle('searx:getMaskedConfig', async () => this.maskedConfig());
     bus.handle('searx:setConfig', async ({ url, user, pass }) => {
@@ -211,6 +281,11 @@ class SearxService {
     } catch (error) {
       return { ok: false, url: String(url || ''), title: '', text: '', error: error.message || String(error) };
     }
+  }
+
+  async fetchImage({ url } = {}) {
+    try { return { ok: true, ...(await fetchImage(url)) }; }
+    catch (error) { return { ok: false, url: String(url || ''), error: error.message || String(error) }; }
   }
 
   config() {
@@ -318,5 +393,6 @@ class SearxService {
   }
 }
 SearxService.extractArticleText = extractArticleText;
+SearxService.extractImageSources = extractImageSources;
 SearxService.isPrivateAddress = isPrivateAddress;
 module.exports = SearxService;

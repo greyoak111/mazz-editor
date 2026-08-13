@@ -40,7 +40,7 @@
 <div class="pwin">
   <div class="p-drag"></div>
   <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <header><b>收藏管理</b><span id="st" style="color:var(--fg-dim);font-size:12px"></span></header>
+  <header><b>收藏管理</b><span id="st" style="color:var(--fg-dim);font-size:12px"></span><button class="pri" id="clipall" title="将全部收藏按严格 2 并发写入网页剪藏">整批剪藏</button></header>
   <main class="mazz-scroll">
     <div class="newrow"><input id="nf" placeholder="新收藏夹名称（回车创建）"><button class="pri" id="nfbtn">新建收藏夹</button></div>
     <div id="list"></div>
@@ -59,13 +59,24 @@ $('#p-close').addEventListener('click',()=>pwb('close'));
 const applyTheme=(id,vars)=>{ if(id) document.documentElement.dataset.theme=id; if(vars) for(const [k,v] of Object.entries(vars)) if(v) document.documentElement.style.setProperty('--'+k,v); };
 window.mazz.invoke('panel:action',{type:'themeSnapshot'}).catch(()=>{});
 window.mazz.on('theme:changed',({id,vars})=>applyTheme(id,vars));
-window.mazz.on('panel:push',(p)=>{ if(p?.type==='themeInit') applyTheme(p.id,p.vars); });
+window.mazz.on('panel:push',(p)=>{
+  if(p?.type==='themeInit') applyTheme(p.id,p.vars);
+  if(p?.type==='clipProgress') {
+    $('#st').textContent = `${p.source}剪藏 ${p.done}/${p.total}`;
+    $('#clipall').disabled = true;
+  }
+  if(p?.type==='clipDone') {
+    $('#st').textContent = `完成：成功 ${p.ok}，失败 ${p.failed}`;
+    $('#clipall').disabled = false;
+  }
+});
 let bookmarks = [], folders = [];
 async function load() {
   bookmarks = (await window.mazz.invoke('settings:get', { key: 'browser.bookmarks' }).catch(() => [])) || [];
   folders = (await window.mazz.invoke('settings:get', { key: 'browser.folders' }).catch(() => null)) || [{ id: 'default', name: '默认收藏夹' }];
   if (!folders.some(f => f.id === 'default')) folders.unshift({ id: 'default', name: '默认收藏夹' });
   render();
+  $('#clipall').disabled = !bookmarks.length;
 }
 async function save(msg) {
   await window.mazz.invoke('settings:set', { key: 'browser.bookmarks', value: bookmarks }).catch(() => {});
@@ -76,6 +87,7 @@ async function save(msg) {
   render();
 }
 function render() {
+  $('#clipall').disabled = !bookmarks.length;
   $('#list').innerHTML = folders.map(f => {
     const items = bookmarks.filter(b => (b.folder || 'default') === f.id);
     return '<div class="folder"><div class="fhead" data-fid="' + f.id + '">'
@@ -121,5 +133,11 @@ document.querySelector('#list').addEventListener('change', (e) => {
 const mk = () => { const v = $('#nf').value.trim(); if (!v) return; folders.push({ id: 'f' + Date.now().toString(36), name: v }); $('#nf').value = ''; save('已新建'); };
 $('#nfbtn').addEventListener('click', mk);
 $('#nf').addEventListener('keydown', (e) => { if (e.key === 'Enter') mk(); });
+$('#clipall').addEventListener('click', () => {
+  if (!bookmarks.length) { $('#st').textContent = '暂无收藏'; return; }
+  $('#clipall').disabled = true;
+  $('#st').textContent = `准备剪藏 ${bookmarks.length} 项…`;
+  window.mazz.invoke('panel:action', { type: 'clipBookmarks' }).catch(() => { $('#clipall').disabled = false; });
+});
 load();
 </script></body></html>

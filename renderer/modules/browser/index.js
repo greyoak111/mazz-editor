@@ -5,6 +5,8 @@ import { contextKeys } from '../../core/contextkey-service.js';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { menus } from '../../core/menu-service.js';
 import { toast, modal, inputModal } from '../../shell/shell.js';
+import { snapshotScript } from './clipper.js';
+import { createClipRuntime } from './clip-runtime.js';
 
 const MODULE = 'browser';
 const instances = new Map();
@@ -945,6 +947,8 @@ function createBrowser(container) {
     window.mazz.on('panel:action', (pl) => {
       if (pl?.type === 'openUrl' && pl.url) openTab(pl.url);
       else if (pl?.type === 'fillPassword' && pl.id) fillPassword(pl.id);
+      // 每个浏览器实例都订阅同一主窗信道；只允许当前实例响应一次，否则开过 N 个浏览器就会启动 N 份批队列。
+      else if (pl?.type === 'clipBookmarks' && ctl === current) window.MazzCommands?.execute('browser.clipBookmarks');
       // W54 B3 收藏当前页桥（panel 子窗格：预填+保存，ctl 真相源）
       else if (pl?.type === 'bookmarkQuery') {
         const t = activeTab();
@@ -1017,15 +1021,13 @@ function createBrowser(container) {
     const r = await window.mazz.invoke('bv:js', { tabId: t.viewId, code: 'window.getSelection().toString()' }).catch(() => null);
     return (r && typeof r === 'object' && r.__err) ? '' : (r ?? '');
   };
-  ctl.getPageText = async () => {
+  ctl.getPageSnapshot = async () => {
     const t = activeTab();
     if (!t || !isElectron()) return null;
-    const r = await window.mazz.invoke('bv:js', { tabId: t.viewId, code: `(() => {
-      const art = document.querySelector('article') || document.body;
-      return { title: document.title, url: location.href, text: art.innerText.slice(0, 20000) };
-    })()` }).catch(() => null);
+    const r = await window.mazz.invoke('bv:js', { tabId: t.viewId, code: snapshotScript(t.url) }).catch(() => null);
     return (r && typeof r === 'object' && r.__err) ? null : r;
   };
+  ctl.getPageText = ctl.getPageSnapshot; // 旧桥兼容：返回值只增 images/adapter，不破坏调用方
   /** 测试口：在指定（或活动）视图客页执行 JS（E2E 探查唯一通道——webview 标签已死） */
   ctl.execJs = async (tabId, code) => {
     const id = tabId || activeTab()?.viewId;
@@ -1214,6 +1216,7 @@ function createBrowser(container) {
   ctl.openPasswordManager = openPasswordManager;
   ctl.fillPassword = fillPassword;
   ctl.reloadTab = reloadTab; // 命令注册在模块顶层够不着 createBrowser 内部函数——实例方法出口（ReferenceError 实锤平反）
+  ctl.clipper = createClipRuntime({ ctl, toast });
 
   // 初始
   loadStore().then(() => openTab(HOME));
@@ -1315,6 +1318,8 @@ export default {
     <div class="rb-group" data-label="协同">
       <button class="rb-btn" data-command="browser.clipToNote"><i class="ico">${iconHtml('✂')}</i><span>摘录到笔记</span></button>
       <button class="rb-btn" data-command="browser.pageToLibrary"><i class="ico">${iconHtml('📥')}</i><span>网页剪藏</span></button>
+      <button class="rb-btn" data-command="browser.clipBookmarks"><i class="ico">⇊</i><span>批量剪藏</span></button>
+      <button class="rb-btn" data-command="browser.shareLocal"><i class="ico">⌁</i><span>局域网分享</span></button>
       <button class="rb-btn" data-command="browser.manageBookmarks"><i class="ico">${iconHtml('📁')}</i><span>收藏管理</span></button>
       <button class="rb-btn" data-command="browser.exportBookmarks"><i class="ico">${iconHtml('📑')}</i><span>导出收藏</span></button>
     </div>
@@ -1361,15 +1366,38 @@ export default {
         when: "module=='browser'",
         run: async () => {
           if (!current) return;
-          const page = await current.getPageText();
-          if (!page?.text) { toast('正文提取失败'); return; }
-          const ws = await window.mazz.invoke('workspace:get');
-          const dir = `${ws}/网页剪藏`;
-          await window.mazz.invoke('fs:mkdir', { path: dir });
-          const name = page.title.replace(/[\\/:*?"<>|]/g, '_').slice(0, 60) || '剪藏';
-          const md = `# ${page.title}\n\n> 来源：${page.url}\n> 剪藏时间：${new Date().toLocaleString('zh-CN')}\n\n${page.text}\n`;
-          await window.mazz.invoke('fs:writeFile', { path: `${dir}/${name}.md`, content: md });
-          toast(`已剪藏：${name}.md`);
+          toast('正在剪藏正文并本地化图片…');
+          try {
+            const result = await current.clipper.clipCurrent();
+            toast(`已剪藏：${result.stem}.md · ${result.assets} 图${result.ocr ? ' · OCR 已补正文' : ''}`);
+          } catch (error) { toast('剪藏失败：' + (error?.message || error)); }
+        } },
+      { id: 'browser.clipBookmarks', title: '批量剪藏全部收藏（严格 2 并发）', icon: '⇊', group: '桥接',
+        when: "module=='browser'", run: async () => {
+          if (!current?.bookmarks?.length) { toast('暂无收藏'); return; }
+          toast(`开始批量剪藏 ${current.bookmarks.length} 个收藏（2 并发）…`);
+          try {
+            const result = await current.clipper.clipBookmarks();
+            toast(`收藏剪藏完成：成功 ${result.ok}，失败 ${result.failed}`);
+          } catch (error) { toast('批量剪藏失败：' + (error?.message || error)); }
+        } },
+      { id: 'browser.clipUrlList', title: '批量剪藏剪贴板 URL 清单（严格 2 并发）', group: '桥接',
+        when: "module=='browser'", run: async () => {
+          try {
+            const result = await current?.clipper.clipClipboardList();
+            toast(`URL 清单剪藏完成：成功 ${result.ok}，失败 ${result.failed}`);
+          } catch (error) { toast('URL 清单剪藏失败：' + (error?.message || error)); }
+        } },
+      { id: 'browser.shareLocal', title: '当前网页生成 10 分钟局域网链接', icon: '⌁', group: '桥接',
+        when: "module=='browser'", run: async () => {
+          if (!current) return;
+          try {
+            const share = await current.clipper.shareCurrent();
+            await window.mazz.invoke('clipboard:write', { text: share.url });
+            const m = modal('局域网临时分享');
+            m.body.innerHTML = `<div style="min-width:440px;max-width:620px"><p style="margin:0 0 10px">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class="rb-input" style="width:100%;padding:7px 9px" readonly value="${escapeAttr(share.url)}"><div style="font-size:12px;color:#83817a;margin-top:8px">到期：${new Date(share.expiresAt).toLocaleString('zh-CN')} · 不经过云端</div></div>`;
+            toast('局域网临时链接已复制');
+          } catch (error) { toast('分享失败：' + (error?.message || error)); }
         } },
       { id: 'browser.manageBookmarks', title: '收藏管理', icon: '📁', group: '浏览器',
         when: "module=='browser'", run: () => current?.openBookmarkManager() },

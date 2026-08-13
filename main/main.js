@@ -859,6 +859,20 @@ function registerChannels() {
         const mime = APP_MIME[path.extname(full).toLowerCase()] || 'application/octet-stream';
         return new Response(buf, { headers: { 'Content-Type': mime, 'Content-Length': String(buf.length), 'Access-Control-Allow-Origin': '*' } });
       }
+      // W62b：剪藏图片用工作区相对协议，不把本机盘符写进 Markdown；同步到另一台机器仍能显示。
+      if (rel.startsWith('workspace/')) {
+        const base = path.resolve(store.get('workspace'));
+        const full = path.resolve(base, rel.slice('workspace/'.length));
+        if (full !== base && !full.startsWith(base + path.sep)) return new Response('forbidden', { status: 403 });
+        let stat;
+        try { stat = fs.statSync(full); } catch { return new Response('not found', { status: 404 }); }
+        if (!stat.isFile() || stat.size > 8 * 1024 * 1024) return new Response('not found', { status: 404 });
+        const ext = path.extname(full).toLowerCase();
+        const mime = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.bmp': 'image/bmp', '.ico': 'image/x-icon', '.avif': 'image/avif' }[ext];
+        if (!mime) return new Response('unsupported', { status: 415 });
+        const buf = fs.readFileSync(full);
+        return new Response(buf, { headers: { 'Content-Type': mime, 'Content-Length': String(buf.length), 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-cache' } });
+      }
       // —— media/ 分支：本地媒体文件 range 流（页面同源化后 file:// 视频反被拦——媒体全走协议同源自洽，
       //    连带白拿：同源 video 画 canvas 不污染（截图/GIF 录制命门）；range 206 是 mp4 非 faststart/seek 的命脉；
       //    任意绝对路径=设计意图（播放用户磁盘任意媒体，只读不写） ——
@@ -1336,12 +1350,13 @@ app.whenReady().then(() => {
   new SearxService({ bus, store, session: browserSess });
   new TranslateService({ bus, store });
   // —— 局域网同步 + 自动更新入口 ——
-  new LanSync({
+  const lanSync = new LanSync({
     bus,
     store,
     workspace: () => store.get('workspace'),
     notify: (channel, payload) => { if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, channel, payload); },
   });
+  app.on('before-quit', () => { lanSync.stop().catch(() => {}); });
   // —— 演示手机遥控伺服（W40：单端口单页面+WS 指令道+心跳） ——
   const SlideRemote = require('./slide-remote');
   new SlideRemote({ bus, win: () => wm.main });

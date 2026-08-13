@@ -5,6 +5,7 @@ const tls = require('tls');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const forge = require('node-forge');
 
 const SYNC_PORT = 47820;
@@ -38,6 +39,32 @@ function safeRel(p) {
   const norm = p.replace(/\\/g, '/');
   if (norm.startsWith('/') || /^[a-zA-Z]:/.test(norm) || norm.split('/').includes('..')) return null;
   return norm;
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[ch]);
+}
+
+function lanIPv4Addresses() {
+  const physical = [], virtual = [];
+  for (const [name, rows] of Object.entries(os.networkInterfaces())) {
+    for (const row of rows || []) {
+      if (row.family !== 'IPv4' || row.internal) continue;
+      if (!/^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.|169\.254\.)/.test(row.address)) continue;
+      const target = /(?:vethernet|wsl|docker|hyper-v|virtualbox|vmware|loopback|蓝牙|bluetooth)/i.test(name) ? virtual : physical;
+      target.push(row.address);
+    }
+  }
+  // 手机应先拿物理网卡；虚拟网段仅在机器没有其它 LAN 地址时兜底。
+  return [...new Set(physical.length ? physical : virtual)];
+}
+
+function shareHtml(entry) {
+  const title = escapeHtml(entry.title || 'Mazz 临时分享');
+  const content = escapeHtml(entry.content || '');
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${title}</title><style>body{margin:0;background:#f5f3ee;color:#262521;font:16px/1.75 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:860px;margin:auto;padding:28px 20px 64px}h1{font-size:24px;line-height:1.3;margin:0 0 8px}.meta{color:#77736b;font-size:13px;margin-bottom:22px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd8cf;border-radius:12px;padding:18px;box-shadow:0 6px 20px #0000000c;font:15px/1.75 ui-monospace,SFMono-Regular,Consolas,monospace}@media(prefers-color-scheme:dark){body{background:#1d1c1a;color:#ece8df}.meta{color:#aaa49a}pre{background:#272522;border-color:#444039}}</style></head><body><main class="wrap"><h1>${title}</h1><div class="meta">由 Mazz Editor 临时分享 · 到期后链接自动失效</div><pre>${content}</pre></main></body></html>`;
 }
 
 // ==================== WebSocket 通道（手机/平板端；零依赖 RFC6455 极简实现） ====================
@@ -174,6 +201,8 @@ class LanSync {
     this.workspace = workspace;
     this.notify = typeof notify === 'function' ? notify : null;
     this.server = null;
+    this.shareServer = null;
+    this.shares = new Map();
     this.mdnsStop = null;
     this.state = 'idle'; // idle | hosting | syncing
     this.lastResult = null;
@@ -455,6 +484,76 @@ class LanSync {
     if (this.state === 'hosting') this.state = 'idle';
   }
 
+  async _ensureShareServer() {
+    if (this.shareServer?.listening) return this.shareServer.address().port;
+    this.shareServer = http.createServer((req, res) => {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      let pathname = '';
+      try { pathname = new URL(req.url || '/', 'http://127.0.0.1').pathname; } catch {}
+      const match = /^\/s\/([a-f0-9]{32})(\.md)?$/.exec(pathname);
+      const entry = match && this.shares.get(match[1]);
+      if (!entry || entry.expiresAt <= Date.now()) {
+        if (match) this._dropShare(match[1]);
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('链接不存在或已过期');
+        return;
+      }
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        res.writeHead(405, { Allow: 'GET, HEAD' }); res.end(); return;
+      }
+      const body = match[2] ? entry.content : shareHtml(entry);
+      res.writeHead(200, { 'Content-Type': match[2] ? 'text/markdown; charset=utf-8' : 'text/html; charset=utf-8' });
+      if (req.method === 'HEAD') res.end(); else res.end(body);
+    });
+    await new Promise((resolve, reject) => {
+      this.shareServer.once('error', reject);
+      this.shareServer.listen(0, '0.0.0.0', resolve);
+    });
+    return this.shareServer.address().port;
+  }
+
+  _dropShare(token) {
+    const entry = this.shares.get(token);
+    if (entry?.timer) clearTimeout(entry.timer);
+    this.shares.delete(token);
+  }
+
+  async createTempShare({ title, content, ttlMs = 10 * 60_000 } = {}) {
+    const body = String(content || '');
+    if (!body.trim()) throw new Error('没有可分享的内容');
+    if (Buffer.byteLength(body, 'utf8') > 1024 * 1024) throw new Error('临时分享内容超过 1MB 上限');
+    const ttl = Math.max(60_000, Math.min(24 * 60 * 60_000, Math.floor(Number(ttlMs) || 10 * 60_000)));
+    const port = await this._ensureShareServer();
+    const token = crypto.randomBytes(16).toString('hex');
+    const entry = {
+      title: String(title || 'Mazz 临时分享').slice(0, 240), content: body,
+      createdAt: Date.now(), expiresAt: Date.now() + ttl, timer: null,
+    };
+    entry.timer = setTimeout(() => this._dropShare(token), ttl);
+    entry.timer.unref?.();
+    this.shares.set(token, entry);
+    const pathPart = `/s/${token}`;
+    const urls = lanIPv4Addresses().map(address => `http://${address}:${port}${pathPart}`);
+    const loopbackUrl = `http://127.0.0.1:${port}${pathPart}`;
+    const url = urls[0] || loopbackUrl;
+    return { token, title: entry.title, expiresAt: entry.expiresAt, ttlMs: ttl, urls, loopbackUrl, url, markdownUrl: url + '.md' };
+  }
+
+  async stopTempShare() {
+    for (const token of [...this.shares.keys()]) this._dropShare(token);
+    const server = this.shareServer;
+    this.shareServer = null;
+    if (server) await new Promise(resolve => { try { server.close(() => resolve()); } catch { resolve(); } });
+    return true;
+  }
+
+  async stop() {
+    await this.stopHost();
+    await this.stopTempShare();
+  }
+
   handleIncoming(sock, pairCode) {
     let sync = null;
     // 单 decoder 路由：hello 与后续消息可能粘包，认证后必须把剩余消息移交同步会话
@@ -636,6 +735,7 @@ class LanSync {
       // 实时进度：{phase, sent, received, want, total}（sync.js 进度条/计数用）
       progress: this.progress || null,
       positionCount: this.listPositions().length,
+      tempShareCount: this.shares.size,
     };
   }
 
@@ -658,6 +758,8 @@ class LanSync {
     bus.handle('sync:positionGet', async (payload) => this.getPosition(payload));
     bus.handle('sync:positions', async () => this.listPositions());
     bus.handle('sync:positionsMerge', async ({ entries } = {}) => this.mergePositions(entries));
+    bus.handle('sync:tempShare', async (payload) => this.createTempShare(payload));
+    bus.handle('sync:tempShareStop', async () => this.stopTempShare());
   }
 }
 
@@ -666,3 +768,4 @@ module.exports.SYNC_PORT = SYNC_PORT;
 module.exports.safeRel = safeRel;
 module.exports.encodeFrame = encodeFrame;
 module.exports.makeDecoder = makeDecoder;
+module.exports.lanIPv4Addresses = lanIPv4Addresses;
