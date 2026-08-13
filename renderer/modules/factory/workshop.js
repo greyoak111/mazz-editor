@@ -17,6 +17,10 @@ const END = '<!-- /MAZZ_FACTORY_EVENT -->';
 
 const cleanText = value => String(value ?? '').replace(/\r\n?/g, '\n');
 const safeType = type => FACTORY_EVENT_TYPES.includes(type) ? type : 'system';
+const safeCard = value => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  try { return JSON.parse(JSON.stringify(value)); } catch { return null; }
+};
 const safeMeta = event => {
   const meta = { ...event };
   delete meta.content;
@@ -41,6 +45,7 @@ export function normalizeFactoryEvent(event = {}) {
     unitNo, unitName: String(event.unitName || '单元'),
     stage: String(event.stage || ''), artifactPath: String(event.artifactPath || ''),
     threadId: String(event.threadId || ''), tone: String(event.tone || ''),
+    family: String(event.family || ''), refId: String(event.refId || ''), card: safeCard(event.card),
     progress: Number.isFinite(Number(event.progress)) ? Math.max(0, Math.min(100, Number(event.progress))) : null,
   };
   normalized.id = factoryEventId({ ...event, ...normalized });

@@ -74,11 +74,22 @@ body.platform-mac .tb-win-controls { display: none; }
 .fd-pins { flex:none; min-height:58px; display:flex; align-items:stretch; gap:7px; padding:7px 10px; border-bottom:1px solid var(--border); background:color-mix(in srgb, var(--bg-elev) 84%, transparent); overflow-x:auto; user-select:none; }
 .fd-pin, .fd-stat { min-width:112px; display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; gap:2px 7px; align-items:center; padding:6px 9px; border:1px solid var(--border); border-radius:9px; background:var(--bg); color:var(--fg); text-align:left; font:inherit; }
 .fd-pin { cursor:pointer; }
-.fd-pin:hover { border-color:var(--accent); }
+.fd-pin:hover,.fd-budget-pin:hover,.fd-health-pin:hover { border-color:var(--accent); }
+.fd-budget-pin,.fd-health-pin { cursor:pointer; }
 .fd-pin.changed { box-shadow:inset 3px 0 var(--accent); }
 .fd-pin i, .fd-stat i { grid-row:1/3; align-self:stretch; display:grid; place-items:center; padding-right:7px; border-right:1px solid var(--border); color:var(--fg-dim); font-style:normal; font-size:10px; }
 .fd-pin b, .fd-stat b { font-size:12px; line-height:1.2; white-space:nowrap; }
 .fd-pin span, .fd-stat span { color:var(--fg-dim); font-size:9px; white-space:nowrap; }
+.fd-health { flex:none; max-height:162px; overflow:auto; padding:7px 10px 9px; border-bottom:1px solid var(--border); background:var(--bg-elev); }
+.fd-health[hidden] { display:none; }
+.fd-health > header { display:flex; align-items:center; gap:8px; margin-bottom:7px; color:var(--fg-dim); font-size:10px; }
+.fd-health > header b { color:var(--fg); font-size:12px; }.fd-health > header span { flex:1; }
+.fd-health > header button { border:0; background:transparent; color:var(--accent); cursor:pointer; font:inherit; font-size:10px; }
+.fd-health-grid { display:grid; grid-template-columns:repeat(7,minmax(105px,1fr)); gap:6px; }
+.fd-health-metric { min-width:0; display:grid; grid-template-columns:1fr auto; gap:2px 7px; padding:7px 8px; border:1px solid var(--border); border-radius:8px; background:var(--bg); }
+.fd-health-metric i { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--fg-dim); font-style:normal; font-size:9px; }
+.fd-health-metric b { color:var(--fg); font-size:13px; }.fd-health-metric span,.fd-health-metric small { grid-column:1/3; color:var(--fg-dim); font-size:8px; }
+.fd-health-metric.trend-good { border-bottom-color:#4f9d69; }.fd-health-metric.trend-bad { border-bottom-color:#c95b62; }
 .fd-grid { flex:1; min-height:0; display:grid; grid-template-columns:minmax(150px, 18%) minmax(320px, 1fr) minmax(190px, 27%); }
 .fd-directory, .fd-compare { min-width:0; display:flex; flex-direction:column; background:var(--bg-elev); overflow:hidden; }
 .fd-directory { border-right:1px solid var(--border); }
@@ -136,9 +147,12 @@ body.platform-mac .tb-win-controls { display: none; }
 .fd-progress i { display:block; height:100%; background:var(--accent); }
 .fd-progress span { position:absolute; right:4px; top:-14px; color:var(--fg-dim); font-size:8px; }
 .fd-artifact { margin:0 15px 12px; border:0; background:transparent; color:var(--accent); cursor:pointer; font:inherit; font-size:10px; }
-.fd-human { display:flex; gap:6px; padding:0 15px 13px; }
-.fd-human button { border:1px solid var(--border); border-radius:6px; padding:4px 8px; background:var(--bg); color:var(--fg); cursor:pointer; font:inherit; font-size:10px; }
-.fd-human button:hover { border-color:var(--accent); color:var(--accent); }
+.fd-card-actions { display:flex; flex-wrap:wrap; gap:6px; padding:0 15px 13px; }
+.fd-card-actions button { border:1px solid var(--border); border-radius:7px; padding:5px 9px; background:var(--bg); color:var(--fg); cursor:pointer; font:inherit; font-size:10px; }
+.fd-card-actions button:hover { border-color:var(--accent); color:var(--accent); }
+.fd-card-actions button.primary { border-color:var(--accent); background:var(--accent); color:var(--accent-fg); }
+.fd-card-actions button.danger { border-color:#c95b62; color:#c95b62; }
+.fd-resolution { margin:0 15px 13px; padding:6px 9px; border-radius:7px; background:color-mix(in srgb,#4f9d69 14%,var(--bg)); color:#4f9d69; font-size:10px; }
 .fd-instruction { flex:none; display:flex; gap:7px; padding:8px 10px; border-top:1px solid var(--border); background:var(--bg-elev); }
 .fd-instruction textarea { flex:1; min-width:0; resize:none; border:1px solid var(--border); border-radius:8px; padding:7px 9px; outline:0; background:var(--bg); color:var(--fg); font:inherit; user-select:text; }
 .fd-instruction textarea:focus { border-color:var(--accent); }
@@ -164,6 +178,7 @@ body.platform-mac .tb-win-controls { display: none; }
   .fd-directory { left:0; transform:translateX(calc(-100% + 34px)); transition:transform .18s; }.fd-directory:hover,.fd-directory:focus-within { transform:none; }
   .fd-compare { right:0; transform:translateX(calc(100% - 34px)); transition:transform .18s; }.fd-compare:hover,.fd-compare:focus-within { transform:none; }
   .fd-center { height:100%; padding:0 34px; }.fd-pins { min-height:52px; }.fd-pin,.fd-stat { min-width:102px; }
+  .fd-health-grid { grid-template-columns:repeat(4,minmax(105px,1fr)); }
 }
 .factory-desk.narrow .fd-topbar { flex-wrap:wrap; }
 .factory-desk.narrow .fd-brand { display:none; }
@@ -177,6 +192,7 @@ body.platform-mac .tb-win-controls { display: none; }
 .factory-desk.narrow .fd-center { height:100%; padding:0 34px; }
 .factory-desk.narrow .fd-pins { min-height:52px; }
 .factory-desk.narrow .fd-pin,.factory-desk.narrow .fd-stat { min-width:102px; }
+.factory-desk.narrow .fd-health-grid { grid-template-columns:repeat(4,minmax(105px,1fr)); }
 
 /* ---------- 工作区 ---------- */
 .workspace { flex: 1; display: flex; min-height: 0; } /* W52e③ 坞真推拉：坞停靠态是 workspace 的 flex 兄弟（布局成员），让位由 flex 自动完成——margin hack 平反 */

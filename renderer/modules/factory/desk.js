@@ -7,6 +7,11 @@ import {
   buildFactoryVirtualItems, computeFactoryVirtualWindow, filterFactoryEvents,
   findFactoryMatches, normalizeFactoryEvent, parseFactoryArchive,
 } from './workshop.js';
+import {
+  FACTORY_COMMAND_LABELS, buildLockedBibleProposal, classifyFactoryInstruction,
+  computeFactoryHealth, evaluateBudgetCap, makeBudgetCard, makeClarificationCard,
+  makeDiffConfirmationCard,
+} from './command-gate.js';
 
 const MODULE = 'factorydesk';
 const TASKS_KEY = 'mazz.factory.tasks';
@@ -103,15 +108,17 @@ function makeRoot(container) {
     <section class="fd-pins">
       <button class="fd-pin" data-pin="bible"><i>圣经</i><b>等待载入</b><span>—</span></button>
       <button class="fd-pin" data-pin="precedent"><i>判例</i><b>等待载入</b><span>—</span></button>
-      <div class="fd-stat"><i>成本</i><b data-stat="cost">0</b><span>token</span></div>
+      <button class="fd-stat fd-budget-pin" data-a="budget"><i>成本</i><b data-stat="cost">0</b><span>预算帽</span></button>
       <div class="fd-stat"><i>回稿率</i><b data-stat="return">0%</b><span>已裁决单元</span></div>
       <div class="fd-stat"><i>在途</i><b data-stat="flight">0</b><span>项目</span></div>
+      <button class="fd-stat fd-health-pin" data-a="health"><i>健康</i><b>7 项</b><span>点开展开</span></button>
     </section>
+    <section class="fd-health" hidden><header><b>健康看板</b><span>质控尾气自动记账</span><button type="button" data-a="health-close">收起</button></header><div class="fd-health-grid"></div></section>
     <main class="fd-grid">
       <aside class="fd-directory"><div class="fd-pane-head"><b>章节目录</b><span data-dir-count>0</span></div><div class="fd-dir-list"></div></aside>
       <section class="fd-center">
         <div class="fd-stream" tabindex="0"><div class="fd-vtop"></div><div class="fd-vitems"></div><div class="fd-vbottom"></div><div class="fd-empty">选择一个已有输出目录的工厂任务</div></div>
-        <form class="fd-instruction"><textarea rows="2" placeholder="向车间交办；@human 请示会保留为卡片。Ctrl+Enter 发送" spellcheck="false"></textarea><button>交办</button></form>
+        <form class="fd-instruction"><textarea rows="2" placeholder="自然语言经指令闸分为生产／立法／质检／闲聊；模糊必反问。Ctrl+Enter 发送" spellcheck="false"></textarea><button>过闸</button></form>
       </section>
       <aside class="fd-compare"><div class="fd-pane-head"><b>工件对照</b><button data-a="close-compare">收起</button></div><div class="fd-files"></div><article class="fd-preview"><div class="fd-preview-empty">点目录或卡片工件，在此对照</div></article></aside>
     </main>`;
@@ -124,7 +131,7 @@ function createDesk(container) {
   const ctl = {
     root, container, task: null, folder: '', events: [], view: localStorage.getItem(VIEW_KEY) || 'workshop',
     memory: {}, items: [], heights: {}, files: [], query: '', activeEventId: '', archiveHash: '', disposed: false,
-    threads: [], threadMap: new Map(), startTimer: 0, reloadTimer: 0,
+    threads: [], threadMap: new Map(), costs: {}, startTimer: 0, reloadTimer: 0, suppressReloadUntil: 0,
   };
   const stream = root.querySelector('.fd-stream');
   const itemHost = root.querySelector('.fd-vitems');
@@ -133,6 +140,11 @@ function createDesk(container) {
   const memoryKey = () => `mazz.factory.desk.collapse.${tinyHash(ctl.folder)}`;
   const loadMemory = () => { try { ctl.memory = JSON.parse(localStorage.getItem(memoryKey())) || {}; } catch { ctl.memory = {}; } };
   const saveMemory = () => localStorage.setItem(memoryKey(), JSON.stringify(ctl.memory));
+  const withinProject = path => {
+    const target = normPath(path).toLocaleLowerCase();
+    const base = `${ctl.folder}/`.toLocaleLowerCase();
+    return !!ctl.folder && target.startsWith(base) && !target.includes('/../');
+  };
 
   function populateTasks(prefer = '') {
     const tasks = tasksWithFolders();
@@ -172,8 +184,15 @@ function createDesk(container) {
     const continuation = item.chunkCount > 1 ? `<span class="fd-chunk">${item.chunkIndex + 1}/${item.chunkCount}</span>` : '';
     const progress = e.progress == null ? '' : `<div class="fd-progress"><i style="width:${e.progress}%"></i><span>${e.progress}%</span></div>`;
     if (item.collapsed) return `<article class="fd-card collapsed type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><button class="fd-fold" title="就地展开">›</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(e.title)}</b>${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time>${progress}</article>`;
-    const actions = e.type === 'help' ? '<div class="fd-human"><button data-human="批准">批准</button><button data-human="驳回">驳回</button><button data-human="补证">要求补证</button></div>' : '';
-    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">⌄</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(e.title)}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" data-path="${esc(e.artifactPath)}">工件 ↗ ${esc(pathName(e.artifactPath))}</button>` : ''}${actions}</article>`;
+    const resolution = [...ctl.events].reverse().find(row => row.refId === e.id && ['instruction-choice', 'lock-decision', 'final-human', 'budget-decision', 'help-decision'].includes(row.stage));
+    const resolved = resolution ? `<div class="fd-resolution">已处理：${esc(resolution.title)}</div>` : '';
+    let actions = '';
+    if (!resolution && e.card?.kind === 'clarify') actions = `<div class="fd-card-actions">${(e.card.options || []).map(option => `<button data-card-action="clarify:${esc(option.id)}">按「${esc(option.label)}」处理</button>`).join('')}</div>`;
+    if (!resolution && e.card?.kind === 'diff-confirm') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="diff:confirm">确认写入圣经</button><button data-card-action="diff:reject">驳回变更</button></div>';
+    if (!resolution && e.card?.kind === 'final-review') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="final:seal">入库</button><button class="danger" data-card-action="final:return">打回</button><button data-card-action="final:hold">先放着</button></div>';
+    if (!resolution && e.card?.kind === 'budget') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="budget:degrade">降级继续</button><button class="danger" data-card-action="budget:stop">停摆</button></div>';
+    if (!resolution && e.card?.kind === 'help-moment') actions = '<div class="fd-card-actions"><button data-card-action="help:approve">批准升级</button><button data-card-action="help:return">打回重做</button><button data-card-action="help:evidence">要求补证</button></div>';
+    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">⌄</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(e.title)}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" data-path="${esc(e.artifactPath)}">工件 ↗ ${esc(pathName(e.artifactPath))}</button>` : ''}${resolved}${actions}</article>`;
   }
 
   function bindCards() {
@@ -183,7 +202,7 @@ function createDesk(container) {
       });
       card.querySelector('[data-path]')?.addEventListener('click', () => openCompare(card.querySelector('[data-path]').dataset.path));
       card.querySelector('[data-thread]')?.addEventListener('click', event => { event.stopPropagation(); jumpThread(event.currentTarget.dataset.thread, event.currentTarget.dataset.event); });
-      card.querySelectorAll('[data-human]').forEach(btn => btn.addEventListener('click', () => appendHumanDecision(card.dataset.event, btn.dataset.human)));
+      card.querySelectorAll('[data-card-action]').forEach(btn => btn.addEventListener('click', () => performCardAction(card.dataset.event, btn.dataset.cardAction)));
     });
     requestAnimationFrame(() => {
       itemHost.querySelectorAll('[data-item]').forEach(node => { ctl.heights[node.dataset.item] = Math.max(24, node.getBoundingClientRect().height + 10); });
@@ -235,6 +254,7 @@ function createDesk(container) {
     const precedent = await readOptional(`${ctl.folder}/判例库.md`);
     const costsText = await readOptional(`${ctl.folder}/成本台账.json`);
     let costs = {}; try { costs = JSON.parse(costsText) || {}; } catch {}
+    ctl.costs = costs;
     const setPin = (name, text) => {
       const btn = root.querySelector(`[data-pin=${name}]`); const old = btn.dataset.hash || '';
       const hash = tinyHash(text); btn.dataset.hash = hash;
@@ -247,6 +267,12 @@ function createDesk(container) {
     const verdictUnits = new Set(ctl.events.filter(e => e.type === 'verdict').map(e => e.unitNo || e.id));
     const returnedUnits = new Set(ctl.events.filter(e => e.tone === 'disagreement' || (e.stage === 'repair' && !/(?:^|\n)\s*-\s*(?:无|本轮未执行)/.test(e.content))).map(e => e.unitNo || e.id));
     root.querySelector('[data-stat=return]').textContent = verdictUnits.size ? `${Math.min(100, Math.round(returnedUnits.size / verdictUnits.size * 100))}%` : '0%';
+  }
+
+  function renderHealth() {
+    const rows = computeFactoryHealth(ctl.events);
+    const host = root.querySelector('.fd-health-grid');
+    host.innerHTML = rows.map(row => `<div class="fd-health-metric trend-${row.trend}"><i>${esc(row.label)}</i><b>${esc(row.display)}</b><span>${esc(row.target)}</span><small>${row.trend === 'good' ? '趋势改善' : row.trend === 'bad' ? '趋势需看' : '本周基线'}</small></div>`).join('');
   }
 
   async function renderFiles() {
@@ -272,6 +298,7 @@ function createDesk(container) {
     ctl.archiveHash = tinyHash(archive);
     ctl.events = parseFactoryArchive(archive);
     await Promise.all([renderPins(), renderFiles()]);
+    renderHealth();
     rebuildItems();
     if (ctl.events.length) jumpToEvent(ctl.events.at(-1).id, false);
     window.MazzHost?.setTabTitle(container, `${ctl.task?.label || '工厂'} · 活稿车间`);
@@ -279,6 +306,8 @@ function createDesk(container) {
 
   async function appendEvents(events) {
     if (!ctl.folder) return false;
+    ctl.suppressReloadUntil = Date.now() + 700;
+    clearTimeout(ctl.reloadTimer); ctl.reloadTimer = 0;
     const path = `${ctl.folder}/${FACTORY_ARCHIVE_FILE}`;
     const old = await readOptional(path);
     const next = appendFactoryArchiveText(old, events, { title: `${ctl.task?.label || 'Mazz'} · 工厂群` });
@@ -287,19 +316,139 @@ function createDesk(container) {
     return true;
   }
 
-  async function appendHumanDecision(eventId, decision) {
+  function updateTask(patch) {
+    let tasks = [];
+    try { tasks = JSON.parse(localStorage.getItem(TASKS_KEY)) || []; } catch {}
+    const index = tasks.findIndex(row => row.id === ctl.task?.id);
+    if (index < 0) return null;
+    tasks[index] = { ...tasks[index], ...patch };
+    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+    ctl.task = tasks[index];
+    window.dispatchEvent(new CustomEvent('mazz:factory-task-updated', { detail: { taskId: ctl.task.id, folder: ctl.folder, patch } }));
+    return ctl.task;
+  }
+
+  async function forwardProduction(text) {
+    const panel = window.MazzShell?.sideDock?.factoryPanel;
+    if (panel?.agentInputEl) { panel.agentInputEl.value = text; panel.submitAgent?.(); }
+    else { window.MazzCommands.execute('factory.toggleDock').catch(() => {}); toast('生产指令已过闸；智能创作坞已打开'); }
+  }
+
+  async function processInstruction(text, { forcedFamily = '', refId = '' } = {}) {
+    if (!cleanInstruction(text) || !ctl.folder) return false;
+    const decision = classifyFactoryInstruction(text, { forcedFamily });
+    if (decision.ambiguous) {
+      const card = makeClarificationCard(text, decision.options);
+      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '指令闸 · 请二选一', content: `原话：**${text}**\n\n${decision.reason}。系统不猜，不触发任何生产动作。`, stage: 'instruction-clarify', family: 'ambiguous', refId, card }));
+      return false;
+    }
+    if (decision.family === 'chat') {
+      await appendEvents(normalizeFactoryEvent({ type: 'system', title: '闲聊收讫 · 零动作', content: `> ${text}\n\n已归为闲聊；**未调用模型、未触发生产、未改动文件**。`, stage: 'instruction-chat', family: 'chat', refId }));
+      return true;
+    }
+    if (decision.family === 'legislation') {
+      const targetPath = `${ctl.folder}/圣经.md`;
+      const before = await readOptional(targetPath);
+      const proposal = buildLockedBibleProposal(before, text);
+      const card = makeDiffConfirmationCard({ targetPath, before: proposal.before, after: proposal.after, instruction: text });
+      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '锁定变更 · 等待 diff 确认', content: `立法指令：**${text}**\n\n\`\`\`diff\n${card.diff}\n\`\`\`\n\n点头前不会写入圣经。`, stage: 'lock-pending', family: 'legislation', refId, card }));
+      return false;
+    }
+    const label = FACTORY_COMMAND_LABELS[decision.family];
+    await appendEvents(normalizeFactoryEvent({ type: 'system', title: `${label}指令 · 已过闸`, content: `> ${text}\n\n分类：**${label}**。${decision.family === 'quality' ? '已登记为独立质检请求，不改正文。' : '已送生产闭集执行。'}`, stage: `instruction-${decision.family}`, family: decision.family, refId }));
+    if (decision.family === 'production') await forwardProduction(text);
+    else toast('质检请求已登记；不会冒充生产指令改稿');
+    return true;
+  }
+
+  function cleanInstruction(value) { return String(value || '').trim(); }
+
+  async function writeFinalLedger(target, action) {
+    const statePath = `${ctl.folder}/终审状态.json`;
+    let state = { version: 1, decisions: [] };
+    try { state = JSON.parse(await readOptional(statePath)) || state; } catch {}
+    if (!Array.isArray(state.decisions)) state.decisions = [];
+    state.decisions = state.decisions.filter(row => row.cardId !== target.id);
+    state.decisions.push({ cardId: target.id, taskId: ctl.task?.id || '', unitNo: target.card?.unitNo || target.unitNo || 0, action, targetPath: target.card?.targetPath || '', at: new Date().toISOString() });
+    state.updatedAt = new Date().toISOString();
+    await window.mazz.invoke('fs:writeFile', { path: statePath, content: JSON.stringify(state, null, 2) });
+  }
+
+  async function performCardAction(eventId, action) {
     const target = ctl.events.find(e => e.id === eventId);
-    await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: `人工席 · ${decision}`, content: `@human 对「${target?.title || eventId}」作出：**${decision}**。`, unitNo: target?.unitNo || 0, unitName: target?.unitName || '单元', stage: 'hearing', tone: 'verdict', threadId: target?.threadId || `human-${eventId}` }));
+    if (!target?.card || ctl.events.some(e => e.refId === eventId && ['instruction-choice', 'lock-decision', 'final-human', 'budget-decision', 'help-decision'].includes(e.stage))) return false;
+    const [kind, value] = String(action || '').split(':');
+    if (kind === 'clarify') {
+      if (!(target.card.options || []).some(option => option.id === value)) return false;
+      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: `澄清为${FACTORY_COMMAND_LABELS[value] || value}`, content: `人工将「${target.card.original}」明确归入 **${FACTORY_COMMAND_LABELS[value] || value}**。`, stage: 'instruction-choice', family: value, refId: target.id, tone: 'verdict' }));
+      return processInstruction(target.card.original, { forcedFamily: value, refId: target.id });
+    }
+    if (kind === 'diff') {
+      if (!['confirm', 'reject'].includes(value) || normPath(target.card.targetPath).toLocaleLowerCase() !== `${ctl.folder}/圣经.md`.toLocaleLowerCase()) return false;
+      if (value === 'confirm') {
+        const currentText = await readOptional(target.card.targetPath);
+        if (currentText.trimEnd() !== String(target.card.before || '').trimEnd()) {
+          const proposal = buildLockedBibleProposal(currentText, target.card.instruction);
+          const card = makeDiffConfirmationCard({ targetPath: target.card.targetPath, before: proposal.before, after: proposal.after, instruction: target.card.instruction });
+          await appendEvents([
+            normalizeFactoryEvent({ type: 'verdict', title: '旧 diff 已过期', content: '确认期间圣经另有更新，旧提案未写入。', stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }),
+            normalizeFactoryEvent({ type: 'help', title: '圣经已变化 · diff 重新确认', content: `检测到确认期间圣经另有更新，已按当前版本重算。\n\n\`\`\`diff\n${card.diff}\n\`\`\``, stage: 'lock-pending', family: 'legislation', card }),
+          ]);
+          return false;
+        }
+        await window.mazz.invoke('fs:writeFile', { path: target.card.targetPath, content: target.card.after });
+      }
+      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'confirm' ? '锁定变更已确认入典' : '锁定变更已驳回', content: value === 'confirm' ? `圣经已按确认 diff 写入：${target.card.instruction}` : `圣经保持原样：${target.card.instruction}`, stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }));
+      return true;
+    }
+    if (kind === 'final') {
+      if (!['seal', 'return', 'hold'].includes(value)) return false;
+      if (![target.card.targetPath, target.card.draftPath, target.card.artifactDir].filter(Boolean).every(withinProject)) return false;
+      if (value === 'seal') {
+        const draft = await readOptional(target.card.draftPath);
+        if (!target.card.targetPath || !draft) { toast('终审入库失败：正文工件缺失'); return false; }
+        await window.mazz.invoke('fs:writeFile', { path: target.card.targetPath, content: `${target.card.targetPrefix || ''}${draft}` });
+        updateTask({ finalDecision: 'sealed', finalDecisionAt: Date.now(), reviewState: { ...(ctl.task?.reviewState || {}), finalStatus: 'sealed' } });
+      } else if (value === 'return') {
+        const path = `${target.card.artifactDir || ctl.folder}/11-人工终审.md`;
+        await window.mazz.invoke('fs:writeFile', { path, content: `# 人工终审\n\n- 决定：打回\n- 时间：${new Date().toISOString()}\n- 对应卡：${target.id}\n` });
+        updateTask({ finalDecision: 'returned', finalDecisionAt: Date.now(), status: 'paused', reviewState: { ...(ctl.task?.reviewState || {}), finalStatus: 'returned' } });
+      } else updateTask({ finalDecision: 'held', finalDecisionAt: Date.now(), reviewState: { ...(ctl.task?.reviewState || {}), finalStatus: 'held' } });
+      await writeFinalLedger(target, value);
+      const labels = { seal: '入库', return: '打回', hold: '先放着' };
+      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: `人工终审 · ${labels[value]}`, content: `@human 对「${target.title}」作出：**${labels[value]}**。`, unitNo: target.unitNo, unitName: target.unitName, stage: 'final-human', refId: target.id, tone: 'verdict' }));
+      return true;
+    }
+    if (kind === 'budget') {
+      if (!['degrade', 'stop'].includes(value)) return false;
+      if (value === 'degrade') updateTask({ reviewRitual: 'light', reviewBudgetDecision: 'degrade' });
+      else updateTask({ status: 'paused', reviewBudgetDecision: 'stop' });
+      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'degrade' ? '预算帽 · 降级继续' : '预算帽 · 停摆', content: value === 'degrade' ? '改用轻仪式，保留外部红队席；不绕过审理。' : '生产已暂停；待补预算或人工改令。', stage: 'budget-decision', refId: target.id, tone: 'verdict' }));
+      return true;
+    }
+    if (kind === 'help') {
+      if (!['approve', 'return', 'evidence'].includes(value)) return false;
+      const labels = { approve: '批准升级', return: '打回重做', evidence: '要求补证' };
+      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: `人工升级 · ${labels[value]}`, content: `@human 对「${target.title}」作出：**${labels[value]}**。`, unitNo: target.unitNo, unitName: target.unitName, stage: 'help-decision', refId: target.id, tone: 'verdict' }));
+      return true;
+    }
+    return false;
+  }
+
+  async function openBudgetCard() {
+    if (!ctl.folder) return;
+    const latest = (ctl.costs.units || []).at(-1) || {};
+    const budget = evaluateBudgetCap({ capTokens: latest.budget?.capTokens || ctl.task?.reviewBudgetCap || 32000, usedTokens: latest.budget?.usedTokens || 0, requestedRitual: ctl.task?.reviewRitual || latest.ritual?.requested || 'light' });
+    if (budget.status === 'ok') { toast(`预算正常：余 ${budget.remainingTokens.toLocaleString()} token`); return; }
+    const card = makeBudgetCard({ ...budget, requestedRitual: ctl.task?.reviewRitual || 'light' });
+    await appendEvents(normalizeFactoryEvent({ id: `w68c-budget-manual-${ctl.task?.id || tinyHash(ctl.folder)}-${budget.capTokens}-${budget.usedTokens}`, type: 'help', title: `${budget.label} · 请选择`, content: `- 上限：${budget.capTokens.toLocaleString()} token\n- 已用：${budget.usedTokens.toLocaleString()} token\n- 余额：${budget.remainingTokens.toLocaleString()} token\n\n${budget.reason}`, stage: 'budget-pending', card }));
   }
 
   async function submitInstruction() {
     const input = root.querySelector('.fd-instruction textarea'); const text = input.value.trim();
     if (!text || !ctl.folder) return;
     input.value = '';
-    await appendEvents(normalizeFactoryEvent({ type: text.includes('@human') ? 'help' : 'system', title: text.includes('@human') ? '人工请示' : '指令台交办', content: text, stage: text.includes('@human') ? 'consultation' : 'instruction' }));
-    const panel = window.MazzShell?.sideDock?.factoryPanel;
-    if (panel?.agentInputEl) { panel.agentInputEl.value = text; panel.submitAgent?.(); }
-    else { window.MazzCommands.execute('factory.toggleDock').catch(() => {}); toast('指令已归档；智能创作坞已打开'); }
+    await processInstruction(text);
   }
 
   let scrollTick = 0;
@@ -308,6 +457,9 @@ function createDesk(container) {
   root.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
   root.querySelector('[data-a=refresh]').addEventListener('click', () => loadProject({ taskId: ctl.task?.id, folder: ctl.folder }));
   root.querySelector('[data-a=close-compare]').addEventListener('click', () => root.classList.toggle('compare-closed'));
+  root.querySelector('[data-a=budget]').addEventListener('click', openBudgetCard);
+  root.querySelector('[data-a=health]').addEventListener('click', () => { const board = root.querySelector('.fd-health'); board.hidden = !board.hidden; });
+  root.querySelector('[data-a=health-close]').addEventListener('click', () => { root.querySelector('.fd-health').hidden = true; });
   root.querySelectorAll('[data-pin]').forEach(btn => btn.addEventListener('click', () => openCompare(`${ctl.folder}/${btn.dataset.pin === 'bible' ? '圣经.md' : '判例库.md'}`)));
   const search = root.querySelector('.fd-search input');
   search.addEventListener('input', () => {
@@ -326,19 +478,21 @@ function createDesk(container) {
   };
   ctl.liveListener = event => {
     const detail = event.detail || {};
+    if (Date.now() < ctl.suppressReloadUntil) return;
     if (detail.taskId === ctl.task?.id || normPath(detail.folder) === ctl.folder) scheduleReload();
   };
   window.addEventListener('mazz:factory-workshop', ctl.liveListener);
   ctl.stopFileChanged = window.mazz?.on?.('file:changed', ({ path = '' } = {}) => {
+    if (Date.now() < ctl.suppressReloadUntil) return;
     const target = normPath(path);
-    if ([FACTORY_ARCHIVE_FILE, '圣经.md', '判例库.md', '成本台账.json'].some(name => target.toLowerCase() === `${ctl.folder}/${name}`.toLowerCase())) scheduleReload();
+    if ([FACTORY_ARCHIVE_FILE, '圣经.md', '判例库.md', '成本台账.json', '终审状态.json'].some(name => target.toLowerCase() === `${ctl.folder}/${name}`.toLowerCase())) scheduleReload();
   });
   ctl.resizeObserver = new ResizeObserver(entries => {
     const width = entries[0]?.contentRect?.width || root.clientWidth;
     root.classList.toggle('narrow', width < 820);
   });
   ctl.resizeObserver.observe(root);
-  ctl.loadProject = loadProject; ctl.appendEvents = appendEvents; ctl.openCompare = openCompare; ctl.setView = setView;
+  ctl.loadProject = loadProject; ctl.appendEvents = appendEvents; ctl.openCompare = openCompare; ctl.setView = setView; ctl.processInstruction = processInstruction; ctl.performCardAction = performCardAction;
   ctl.dispose = () => { ctl.disposed = true; clearTimeout(ctl.reloadTimer); ctl.stopFileChanged?.(); ctl.resizeObserver?.disconnect(); window.removeEventListener('mazz:factory-workshop', ctl.liveListener); if (scrollTick) cancelAnimationFrame(scrollTick); };
   setView(ctl.view); populateTasks();
   ctl.startTimer = setTimeout(() => { ctl.startTimer = 0; loadProject({ taskId: taskSelect.value }); }, 0);

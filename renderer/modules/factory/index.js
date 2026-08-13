@@ -13,6 +13,7 @@ import { commands } from '../../core/command-registry.js';
 import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown, normalizeLedger } from './agent.js';
 import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Review } from './review.js';
 import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, normalizeFactoryEvent } from './workshop.js';
+import { detectHumanHelpMoments, evaluateBudgetCap, makeBudgetCard, makeFinalReviewCard } from './command-gate.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
@@ -55,6 +56,16 @@ export class FactoryPanel {
     this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
     this.agentLedger = normalizeLedger(this.loadJSON(AGENT_LEDGER_KEY, null));
     this.agentRuntime = null;
+    this.taskUpdateListener = event => {
+      const { taskId = '', patch = {} } = event.detail || {};
+      const task = this.tasks.find(row => row.id === taskId);
+      if (!task || !patch || typeof patch !== 'object') return;
+      Object.assign(task, patch);
+      if (patch.status === 'paused' && this.runningTasks.has(taskId)) this.stopRequested = true;
+      this.persistTasks();
+      this.pushSnapshot();
+    };
+    window.addEventListener('mazz:factory-task-updated', this.taskUpdateListener);
     this.render();
     this.reload();
   }
@@ -1260,8 +1271,49 @@ export class FactoryPanel {
     costs.units.push({ unitNo, unitName, outline, ritual: result.ritual, verdict: result.verdict, sealed: result.sealed, budget: result.budget, at: new Date().toISOString() });
     costs.totalTokens = costs.units.reduce((sum, x) => sum + (Number(x.budget?.usedTokens) || 0), 0);
     await window.mazz.invoke('fs:writeFile', { path: costPath, content: JSON.stringify(costs, null, 2) });
+    const budgetGate = evaluateBudgetCap({ capTokens: result.budget?.capTokens || task.reviewBudgetCap || 32000, usedTokens: result.budget?.usedTokens || 0, requestedRitual: result.ritual?.requested || task.reviewRitual || 'light' });
+    if (result.ritual?.downgraded || result.verdict === 'budget-stop' || budgetGate.status !== 'ok') {
+      workshopEvents.push(normalizeFactoryEvent({
+        id: `w68c-budget-${task.id}-${unitNo}`, type: 'help', title: `${budgetGate.label} · 人工选择`,
+        content: `- 上限：${budgetGate.capTokens} token\n- 已用：${budgetGate.usedTokens} token\n- 余额：${budgetGate.remainingTokens} token\n\n${result.ritual?.reason || budgetGate.reason}`,
+        unitNo, unitName, stage: 'budget-pending', card: makeBudgetCard({ ...budgetGate, requestedRitual: result.ritual?.requested || task.reviewRitual || 'light' }),
+      }));
+    }
+    for (const moment of detectHumanHelpMoments(result)) {
+      workshopEvents.push(normalizeFactoryEvent({
+        id: `w68c-help-${task.id}-${unitNo}-${moment.id}`, type: 'help', title: `@human · ${moment.label}`,
+        content: `${moment.reason}\n\n这是允许主动求助的三种时刻之一；请人工决定升级、打回或补证。`, unitNo, unitName,
+        stage: 'help-moment', card: { kind: 'help-moment', moment: moment.id, reason: moment.reason },
+      }));
+    }
     await this.appendWorkshop(task, workshopEvents);
     return artifactDir;
+  }
+
+  async appendW68FinalReview(task, result, { unitNo = 1, unitName = '单元', targetPath = '', targetPrefix = '' } = {}) {
+    if (!result || task.reviewProtocol !== W68_PROTOCOL) return false;
+    const artifactDir = task.reviewState?.artifactDir || '';
+    const finalCardId = `w68c-final-${task.id}-${unitNo}-${task.reviewState?.updatedAt || Date.now()}`;
+    const card = makeFinalReviewCard({
+      unitNo, unitName, targetPath, targetPrefix, artifactDir,
+      draftPath: `${artifactDir}/${REVIEW_ARTIFACT_NAMES.draft}`,
+      reviewPath: `${artifactDir}/${REVIEW_ARTIFACT_NAMES.review}`,
+      machinePath: `${artifactDir}/${REVIEW_ARTIFACT_NAMES.machine}`,
+      eventDay: /事件日/.test(task.label || '') || !!task.values?.['事件日'],
+    });
+    const content = [
+      card.eventDay ? '> **事件日必审：本卡不得静默越过。**' : '> 四闸已完成，等待人工终审。',
+      '', '## 全文', '', result.text || result.artifacts?.draft || '- 无',
+      '', '## 双审意见', '', result.artifacts?.review || '- 无',
+      '', '## 机检报告', '', result.artifacts?.machine || '- 无',
+    ].join('\n');
+    await this.appendWorkshop(task, normalizeFactoryEvent({
+      id: finalCardId, type: 'help', title: `${card.eventDay ? '事件日 · ' : ''}待终审 · 第 ${unitNo} ${unitName}`,
+      content, unitNo, unitName, stage: 'final-pending', artifactPath: card.draftPath, card,
+    }));
+    task.reviewState = { ...(task.reviewState || {}), finalStatus: 'pending', finalCardId, targetPath };
+    this.persistTasks();
+    return true;
   }
 
   async runW68UnitReview(task, tpl, { blueprint, outline, text, unitNo = 1, unitName = '单元' } = {}) {
@@ -1327,9 +1379,10 @@ export class FactoryPanel {
     } catch (e) { this.liveWrapEl && (this.liveWrapEl.style.display = 'none'); throw e; }
     const unitName = getSnapshotSchema(tpl).unitName;
     const outline = `第1${unitName}：${task.label}`;
+    let reviewedResult = null;
     if (task.reviewProtocol === W68_PROTOCOL) {
-      const reviewed = await this.runW68UnitReview(task, tpl, { blueprint: m.doc, outline, text, unitNo: 1, unitName });
-      text = reviewed.text;
+      reviewedResult = await this.runW68UnitReview(task, tpl, { blueprint: m.doc, outline, text, unitNo: 1, unitName });
+      text = reviewedResult.text;
     }
     let checks = runQualityChecks(tpl, text);
     if (dual && task.reviewProtocol !== W68_PROTOCOL) {
@@ -1347,6 +1400,7 @@ export class FactoryPanel {
     const stem = buildFactoryUnitStem(1, unitName, outline);
     const mdPath = `${folder}/${stem}.md`;
     await window.mazz.invoke('fs:writeFile', { path: mdPath, content: text });
+    if (reviewedResult) await this.appendW68FinalReview(task, reviewedResult, { unitNo: 1, unitName, targetPath: mdPath });
     try { await this.exportTaskFormat(task, text, `${folder}/${stem}`); }
     catch (e) { this.log(`⚠ ${task.exportFmt} 导出跳过：${e.message}`); }
     const snapshotSchema = getSnapshotSchema(tpl);
@@ -1560,9 +1614,10 @@ export class FactoryPanel {
 
       full = ensureTokenDeclaration(full);
       let text = stripTokenDeclaration(full);
+      let reviewedResult = null;
       if (task.reviewProtocol === W68_PROTOCOL) {
-        const reviewed = await this.runW68UnitReview(task, tpl, { blueprint, outline, text, unitNo: i, unitName });
-        text = reviewed.text;
+        reviewedResult = await this.runW68UnitReview(task, tpl, { blueprint, outline, text, unitNo: i, unitName });
+        text = reviewedResult.text;
       }
       if (dual && task.reviewProtocol !== W68_PROTOCOL) {
         const checks = runQualityChecks(tpl, text);
@@ -1577,6 +1632,7 @@ export class FactoryPanel {
       if (text.trim().length >= 10) {
         const mdContent = `# ${task.label} 第${i}${unitName}\n\n${text}`;
         await window.mazz.invoke('fs:writeFile', { path: mdPath, content: mdContent });
+        if (reviewedResult) await this.appendW68FinalReview(task, reviewedResult, { unitNo: i, unitName, targetPath: mdPath, targetPrefix: `# ${task.label} 第${i}${unitName}\n\n` });
         await window.mazz.invoke('fs:delete', { path: ckptPath }).catch(() => {});
         this.liveDone(task, i, mdPath, mdContent, unitName);
         // 多格式导出（pandoc 可用时）
