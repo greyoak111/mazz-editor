@@ -12,6 +12,7 @@ import { aiRolePicker } from '../../lib/ai-role-picker.js';
 import { commands } from '../../core/command-registry.js';
 import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown, normalizeLedger } from './agent.js';
 import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Review } from './review.js';
+import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, normalizeFactoryEvent } from './workshop.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
@@ -42,6 +43,7 @@ export class FactoryPanel {
     this.autoPreview = this.loadJSON(AUTO_PREVIEW_KEY, true) !== false;
     this.concurrency = Math.max(1, Math.min(4, Number(this.loadJSON(CONCURRENCY_KEY, 1)) || 1));
     this.previewTasks = new Map(); // taskId -> { task, tpl, folder, currentPath }
+    this.workshopWrites = new Map(); // folder -> Promise；同项目归档串行，任务并发不互踩
     this.editorTasks = new Map();  // taskId -> { task, path }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
@@ -141,7 +143,7 @@ export class FactoryPanel {
       <div class="factory-body">
         <div class="fc-projectbar">
           <div><b>车间执行台</b><span class="fc-daily-hint">新项目统一进入 Output 目录协议</span><span class="fc-role-pickers" aria-label="AI 岗位就地指派"></span></div>
-          <button class="fc-btn fc-accent" data-a="project">＋ 新建立项</button>
+          <span class="fc-project-actions"><button class="fc-btn" data-a="desk">🏭 活稿车间</button><button class="fc-btn fc-accent" data-a="project">＋ 新建立项</button></span>
         </div>
         <div class="fc-project-stash" aria-hidden="true">
         <div class="fc-row">
@@ -293,6 +295,7 @@ export class FactoryPanel {
       this.syncLengthControls();
     });
     this.el.querySelector('[data-a=project]').addEventListener('click', () => this.openProjectWizard());
+    this.el.querySelector('[data-a=desk]').addEventListener('click', () => this.openFactoryDesk());
     this.el.querySelector('[data-a=provider]').addEventListener('click', () => this.openProviderDialog());
     this.el.querySelector('[data-a=newgenre]').addEventListener('click', () => this.openGenreEditor());
     this.el.querySelector('[data-a=fill]').addEventListener('click', () => this.smartFill());
@@ -720,6 +723,27 @@ export class FactoryPanel {
     line.textContent = `[${time}] ${msg}`;
     this.logEl.appendChild(line);
     this.logEl.scrollTop = this.logEl.scrollHeight;
+  }
+
+  openFactoryDesk(task = null) {
+    const target = task || [...this.tasks].reverse().find(row => row.folder) || null;
+    commands.execute('factory.openDesk', { taskId: target?.id || '', folder: target?.folder || '', title: target ? `${target.label} · 活稿车间` : 'Factory Desk · 活稿车间' });
+  }
+
+  async appendWorkshop(task, events) {
+    if (!task?.folder) return false;
+    const folder = String(task.folder).replace(/\\/g, '/').replace(/\/$/, '');
+    const path = `${folder}/${FACTORY_ARCHIVE_FILE}`;
+    const before = this.workshopWrites.get(folder) || Promise.resolve();
+    const write = before.catch(() => {}).then(async () => {
+      const old = await readOptionalFile(path);
+      const next = appendFactoryArchiveText(old, events, { title: `${task.label} · 工厂群` });
+      if (next !== old) await window.mazz.invoke('fs:writeFile', { path, content: next });
+      window.dispatchEvent(new CustomEvent('mazz:factory-workshop', { detail: { taskId: task.id, folder, path } }));
+      return true;
+    });
+    this.workshopWrites.set(folder, write);
+    try { return await write; } finally { if (this.workshopWrites.get(folder) === write) this.workshopWrites.delete(folder); }
   }
 
   updateProviderBadge() {
@@ -1162,6 +1186,8 @@ export class FactoryPanel {
     const dual = this.el.querySelector('.fc-dualloop').checked;
     this.log(`开始任务：「${task.label}」（${tpl.name} · ${task.mode === 'max' ? '连写' : '单次'}模式）`);
     try {
+      await this.ensureTaskFolder(task, tpl);
+      await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务开工', content: `「${task.label}」进入生产线。\n\n- 模式：${task.mode === 'max' ? '连写' : '单次'}\n- 审理：${task.reviewRitual === 'full' ? '全仪式' : '轻仪式'}\n- 预算：${task.reviewBudgetCap || 32000} token`, stage: 'start', progress: 0 }));
       if (task.mode === 'max') await this.runMaxTask(task, tpl, dual);
       else await this.runSingleTask(task, tpl, dual);
       if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
@@ -1169,6 +1195,7 @@ export class FactoryPanel {
       task.status = 'failed';
       if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
       this.log(`✗ 任务「${task.label}」失败：${e.message}`);
+      await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务中断', content: e.message, stage: 'failed', progress: 100 })).catch(() => {});
       await this.finishTaskPreview(task, e.message).catch(() => {});
     } finally {
       this.releaseTask(task, { scheduled });
@@ -1204,10 +1231,13 @@ export class FactoryPanel {
       skeleton: '骨架与验收点', draft: '扩写稿', polish: '润色记录', machine: '机检报告', point: '对点报告', repair: '修订单',
       consultation: '请示单', review: '审理表', objection: '质询单', answer: '答辩书', verdict: '裁决书',
     };
+    const workshopEvents = [];
     for (const [key, filename] of Object.entries(REVIEW_ARTIFACT_NAMES)) {
       if (key === 'manifest') continue;
       const content = result.artifacts?.[key] || `# ${artifactLabels[key] || key}\n\n- 本轮未执行；详见裁决书。`;
-      await window.mazz.invoke('fs:writeFile', { path: `${artifactDir}/${filename}`, content });
+      const artifactPath = `${artifactDir}/${filename}`;
+      await window.mazz.invoke('fs:writeFile', { path: artifactPath, content });
+      workshopEvents.push(factoryArtifactEvent(key, content, { unitNo, unitName, artifactPath }));
     }
     const manifest = reviewArtifactManifest(result, { unitRef });
     await window.mazz.invoke('fs:writeFile', { path: `${artifactDir}/${REVIEW_ARTIFACT_NAMES.manifest}`, content: JSON.stringify(manifest, null, 2) });
@@ -1230,6 +1260,7 @@ export class FactoryPanel {
     costs.units.push({ unitNo, unitName, outline, ritual: result.ritual, verdict: result.verdict, sealed: result.sealed, budget: result.budget, at: new Date().toISOString() });
     costs.totalTokens = costs.units.reduce((sum, x) => sum + (Number(x.budget?.usedTokens) || 0), 0);
     await window.mazz.invoke('fs:writeFile', { path: costPath, content: JSON.stringify(costs, null, 2) });
+    await this.appendWorkshop(task, workshopEvents);
     return artifactDir;
   }
 
@@ -1257,6 +1288,7 @@ export class FactoryPanel {
       throw error;
     }
     this.log(`✓ ${unitName} ${unitNo} 四闸全开并封存（审理 ${result.budget?.usedTokens || 0} token）`);
+    await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: `${unitName} ${unitNo} 已封存`, content: `四闸全开；审理使用 ${result.budget?.usedTokens || 0} token。`, unitNo, unitName, stage: 'sealed', progress: 100 }));
     return result;
   }
 
