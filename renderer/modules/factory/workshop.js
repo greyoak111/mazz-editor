@@ -10,7 +10,7 @@ export const FACTORY_VIEW_FILTERS = Object.freeze({
 });
 
 const LABELS = Object.freeze({
-  body: '正文', skeleton: '骨架', review: '审理', verdict: '裁决', help: '请示', system: '系统',
+  body: '正文', skeleton: '骨架', review: '审理', verdict: '裁决', help: '求助', system: '系统',
 });
 const START = '<!-- MAZZ_FACTORY_EVENT ';
 const END = '<!-- /MAZZ_FACTORY_EVENT -->';

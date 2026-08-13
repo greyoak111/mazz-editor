@@ -17,7 +17,7 @@ let current = null;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const pathName = p => String(p || '').replace(/\\/g, '/').split('/').pop();
 const normPath = p => String(p || '').replace(/\\/g, '/').replace(/\/$/, '');
-const typeLabel = Object.freeze({ body: '正文', skeleton: '骨架', review: '审理', verdict: '裁决', help: '请示', system: '系统' });
+const typeLabel = Object.freeze({ body: '正文', skeleton: '骨架', review: '审理', verdict: '裁决', help: '求助', system: '系统' });
 
 async function readOptional(path) {
   if (!path) return '';
@@ -124,7 +124,7 @@ function createDesk(container) {
   const ctl = {
     root, container, task: null, folder: '', events: [], view: localStorage.getItem(VIEW_KEY) || 'workshop',
     memory: {}, items: [], heights: {}, files: [], query: '', activeEventId: '', archiveHash: '', disposed: false,
-    threads: [], threadMap: new Map(), startTimer: 0,
+    threads: [], threadMap: new Map(), startTimer: 0, reloadTimer: 0,
   };
   const stream = root.querySelector('.fd-stream');
   const itemHost = root.querySelector('.fd-vitems');
@@ -320,18 +320,26 @@ function createDesk(container) {
   form.addEventListener('submit', e => { e.preventDefault(); submitInstruction(); });
   form.querySelector('textarea').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitInstruction(); } });
   root.addEventListener('focusin', e => { if (current !== ctl && root.contains(e.target)) { current = ctl; contextKeys.set('module', MODULE); } });
+  const scheduleReload = () => {
+    clearTimeout(ctl.reloadTimer);
+    ctl.reloadTimer = setTimeout(() => { ctl.reloadTimer = 0; loadProject({ taskId: ctl.task?.id, folder: ctl.folder }); }, 180);
+  };
   ctl.liveListener = event => {
     const detail = event.detail || {};
-    if (detail.taskId === ctl.task?.id || normPath(detail.folder) === ctl.folder) loadProject({ taskId: ctl.task?.id, folder: ctl.folder });
+    if (detail.taskId === ctl.task?.id || normPath(detail.folder) === ctl.folder) scheduleReload();
   };
   window.addEventListener('mazz:factory-workshop', ctl.liveListener);
+  ctl.stopFileChanged = window.mazz?.on?.('file:changed', ({ path = '' } = {}) => {
+    const target = normPath(path);
+    if ([FACTORY_ARCHIVE_FILE, '圣经.md', '判例库.md', '成本台账.json'].some(name => target.toLowerCase() === `${ctl.folder}/${name}`.toLowerCase())) scheduleReload();
+  });
   ctl.resizeObserver = new ResizeObserver(entries => {
     const width = entries[0]?.contentRect?.width || root.clientWidth;
     root.classList.toggle('narrow', width < 820);
   });
   ctl.resizeObserver.observe(root);
   ctl.loadProject = loadProject; ctl.appendEvents = appendEvents; ctl.openCompare = openCompare; ctl.setView = setView;
-  ctl.dispose = () => { ctl.disposed = true; ctl.resizeObserver?.disconnect(); window.removeEventListener('mazz:factory-workshop', ctl.liveListener); if (scrollTick) cancelAnimationFrame(scrollTick); };
+  ctl.dispose = () => { ctl.disposed = true; clearTimeout(ctl.reloadTimer); ctl.stopFileChanged?.(); ctl.resizeObserver?.disconnect(); window.removeEventListener('mazz:factory-workshop', ctl.liveListener); if (scrollTick) cancelAnimationFrame(scrollTick); };
   setView(ctl.view); populateTasks();
   ctl.startTimer = setTimeout(() => { ctl.startTimer = 0; loadProject({ taskId: taskSelect.value }); }, 0);
   return ctl;

@@ -90,7 +90,7 @@ body.platform-mac .tb-win-controls { display: none; }
 .fd-dir-unit > button { width:100%; border:0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:5px; padding:6px 7px; background:transparent; color:var(--fg); text-align:left; cursor:pointer; font:inherit; }
 .fd-dir-unit > button:last-child { border-bottom:0; }
 .fd-dir-unit > button:hover { background:var(--bg-hover); }
-.fd-dir-unit > button:first-child { justify-content:space-between; background:var(--bg-elev); font-size:11px; }
+.fd-dir-unit > button:first-child { position:sticky; top:0; z-index:1; justify-content:space-between; background:var(--bg-elev); font-size:11px; }
 .fd-dir-unit > button:first-child span { color:var(--fg-dim); font-size:9px; }
 .fd-dir-event { min-width:0; font-size:10px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fd-dir-event i { flex:none; min-width:28px; font-style:normal; color:var(--accent); }
