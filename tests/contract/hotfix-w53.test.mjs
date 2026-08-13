@@ -17,8 +17,9 @@ describe('七面板全原生子窗格', () => {
       assert.ok(html.includes('p-drag'), `${f} 必须有拖拽条（无框移动手段）`);
       assert.ok(html.includes('theme:changed'), `${f} 必须听主题广播（主题变窗格变）`);
     }
-    assert.ok(exists('renderer/panels/palette.html'), 'palette（含快速跳转页签）必须存在');
-    assert.ok(readSrc('renderer/panels/palette.html').includes("data-t=\"files\""), 'palette 必须有文件页签（快速跳转收编）');
+    assert.ok(exists('renderer/panels/palette.html'), 'palette（W62c 四路 Quick Switcher）必须存在');
+    const palette = readSrc('renderer/panels/palette.html');
+    assert.ok(palette.includes('quickSwitcherQuery') && palette.includes('kind-file'), 'palette 必须收编文件路并与其他来源同框');
   });
   test('kind 白名单+尺寸标题表', () => {
     const pw = readSrc('main/panel-windows.js');
@@ -42,7 +43,8 @@ describe('调用点收编（浏览器前台零 DOM modal）', () => {
     assert.ok(readSrc('renderer/translate.js').includes("kind: 'translate'"), '翻译收编');
     assert.ok(readSrc('renderer/plugins/manager.js').includes("kind: 'plugins'"), '插件收编');
     assert.ok(readSrc('renderer/shell/shell.js').includes("kind: 'recorder'"), '内录收编');
-    assert.ok(readSrc('renderer/shell/shell.js').includes("_paletteInitTab = 'files'"), '快速跳转收编');
+    const shell = readSrc('renderer/shell/shell.js');
+    assert.ok(shell.includes("R('file.quickOpen'") && shell.includes("kind: 'palette'"), '快速跳转收编到统一 palette');
   });
 });
 

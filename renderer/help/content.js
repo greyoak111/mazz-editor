@@ -17,7 +17,7 @@ export const HELP_SECTIONS = [
 
 ## 2. 一个快捷键走天下：Ctrl + Shift + P
 
-按下 **Ctrl + Shift + P** 会弹出「命令面板」——软件里**每一个功能**都能在这里搜到。忘记按钮在哪？直接搜！比如输入「导出」「表格」「翻译」，回车就执行。
+按下 **Ctrl + P** 会弹出「Quick Switcher」——文件名、命令、最近打开、全文命中四路同框。忘记按钮在哪或文件在哪？直接搜，回车直达。**Ctrl + Shift + P** 也打开同一入口。
 
 ## 3. 新建文件的方法
 
@@ -1013,13 +1013,13 @@ Mazz Editor 可以编译成 Android / iOS 应用（源码仓库 mobile/ 目录�
 
 | 键 | 功能 |
 | --- | --- |
-| **Ctrl+Shift+P** | 命令面板（万能入口） |
+| **Ctrl+P / Ctrl+Shift+P** | Quick Switcher（文件 / 命令 / 最近 / 全文） |
 | **F1** | 打开本帮助 |
 | Ctrl+N | 新建文档 |
 | Ctrl+O | 打开文件 |
 | Ctrl+S / Ctrl+Shift+S | 保存 / 另存为 |
 | Ctrl+W | 关闭当前标签 |
-| Ctrl+P | 打印 |
+| Ctrl+Alt+P | 打印 |
 | Ctrl+Alt+M | 全局唤起主窗口（托盘） |
 | Ctrl+Alt+N | 快速笔记（托盘） |
 

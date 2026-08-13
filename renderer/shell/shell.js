@@ -6,6 +6,7 @@ import { keymap } from '../core/keymap-service.js';
 import { menus } from '../core/menu-service.js';
 import { contextKeys } from '../core/contextkey-service.js';
 import { palette, registerCommandSource } from '../core/command-palette.js';
+import { rankQuickCandidates } from '../core/quick-switcher.js';
 import { modules } from '../core/module-registry.js';
 import { snapshots } from '../core/snapshot-service.js';
 import { createTitlebar } from './titlebar.js';
@@ -260,7 +261,7 @@ export class Shell {
     this.ribbon.addPage('view', '视图', () => {
       this.ribbon.group('面板', [
         { command: 'view.toggleSidebar', icon: '🗀', label: '目录树' },
-        { command: 'app.commandPalette', icon: '⌘', label: '命令面板' },
+        { command: 'app.commandPalette', icon: '⌘', label: 'Quick Switcher' },
       ]);
       this.ribbon.group('界面', [
         { command: 'view.cycleTheme', icon: '🎨', label: '换主题' },
@@ -601,6 +602,7 @@ export class Shell {
     }
     this.setTheme(theme);
     await this.fileTree.refresh();
+    await this.rebuildFileIndex();
     this.syncAppMenu();
     installPaneZoom(); // Ctrl+滚轮 / 双指捏合：模块窗格内容缩放（固定 UI 除外）
     this.installSplitPreview();
@@ -709,7 +711,7 @@ export class Shell {
     w.className = 'welcome module-view on';
     w.innerHTML = `
       <h1>◆ <b>Mazz</b> Editor</h1>
-      <div>${t('一站式超级编辑器 · 一切操作皆命令 · Ctrl+Shift+P 唤起命令面板')}</div>
+      <div>${t('一站式超级编辑器 · 文件/命令/最近/全文 · Ctrl+P 一框直达')}</div>
       <div class="w-grid">
           <button class="w-card" data-cmd="file.new"><div class="t">${iconHtml('＋')} ${t('新建文档')}</div><div class="d">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>
           <button class="w-card" data-cmd="file.newSheet"><div class="t">${iconHtml('📊')} ${t('新建表格')}</div><div class="d">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>
@@ -1432,10 +1434,9 @@ export class Shell {
         toast(r?.apps?.length ? `发现 ${r.apps.length} 个可用软件` : '未发现可用软件（或非 Windows 平台）');
       },
     });
-    R('file.quickOpen', { title: '快速跳转（最近/项目文件）', icon: '⚡', group: '文件', run: () => {
-      // W53：命令面板子窗格文件页（DOM palette.open('files') 浏览器前台必被压——漏网收编）
+    R('file.quickOpen', { title: 'Quick Switcher（文件/命令/最近/全文）', icon: '⚡', group: '文件', run: () => {
+      // W62c：Ctrl+P 四路同框；浏览器预览保留旧内嵌文件源兜底。
       if (window.mazz?.isElectron) {
-        this._paletteInitTab = 'files';
         window.mazz.invoke('panel:open', { kind: 'palette' }).catch(() => palette.open('files'));
         return;
       }
@@ -1566,8 +1567,8 @@ export class Shell {
       } });
 
     // —— 应用 ——
-    R('app.commandPalette', { title: '命令面板', icon: '⌘', group: '应用', run: () => {
-      // W52③ 薄子窗（Quick Open 体感——不占主窗 DOM 零遮盖；网页预览留内嵌兜底）
+    R('app.commandPalette', { title: 'Quick Switcher', icon: '⌘', group: '应用', run: () => {
+      // W62c：命令入口与文件入口合流到同一四路子窗；网页预览留内嵌命令源兜底。
       if (window.mazz?.isElectron) { window.mazz.invoke('panel:open', { kind: 'palette' }).catch(() => palette.open('commands')); return; }
       palette.open('commands');
     } });
@@ -1794,7 +1795,7 @@ export class Shell {
     // 6.2 文件
     K('ctrl+n', 'file.new'); K('ctrl+o', 'file.open'); K('ctrl+s', 'file.save');
     K('ctrl+shift+s', 'file.saveAs'); K('ctrl+shift+o', 'file.quickOpen');
-    K('ctrl+p', 'file.print'); K('ctrl+w', 'file.closeTab');
+    K('ctrl+p', 'file.quickOpen'); K('ctrl+alt+p', 'file.print'); K('ctrl+w', 'file.closeTab');
     // 6.3 编辑与导航
     K('ctrl+shift+p', 'app.commandPalette');
     K('ctrl+tab', 'tab.next'); K('ctrl+shift+tab', 'tab.prev');
@@ -1887,37 +1888,113 @@ export class Shell {
     window.mazz?.invoke('settings:get', { key: 'keybindings' }).then(ov => { if (ov) keymap.setOverlay(ov); }).catch(() => {});
   }
 
-  // ==================== 命令面板：文件源 ====================
+  // ==================== Quick Switcher：四路候选 ====================
   registerFileSource() {
     palette.addProvider({
       id: 'files', label: '文件', placeholder: '输入文件名…（最近文件 + 工作区）',
-      getItems: () => this.fileIndex || [],
+      getItems: () => [...(this.recentIndex || []), ...(this.fileIndex || [])],
       onPick: async (item) => { if (item.path) await this.openFile(item.path); },
     });
     this.rebuildFileIndex();
     bus.on('filetree:externallyChanged', () => this.rebuildFileIndex());
   }
   async rebuildFileIndex() {
-    const items = [];
+    const recentItems = [];
     try {
       const recent = await window.mazz.invoke('recent:list');
-      for (const p of (recent || []).slice(0, 15)) {
-        items.push({ label: p.split(/[\\/]/).pop(), detail: `最近 · ${p}`, path: p, icon: '🕘' });
+      for (const [recentOrder, p] of (recent || []).slice(0, 30).entries()) {
+        recentItems.push({ label: p.split(/[\\/]/).pop(), detail: p, path: p, icon: '🕘', recentOrder });
       }
     } catch {}
+    const items = [];
     const walk = async (dir, depth) => {
-      if (depth > 3) return;
+      if (depth > 7 || items.length >= 5000) return;
       let entries = [];
       try { entries = await window.mazz.invoke('fs:listDir', { path: dir }); } catch { return; }
       for (const e of entries) {
-        if (e.isDir) await walk(e.path, depth + 1);
-        else if (/\.(md|markdown|txt|mazz)$/i.test(e.name)) {
+        if (e.isDir) {
+          if (!e.name.startsWith('.') && e.name !== 'node_modules') await walk(e.path, depth + 1);
+        } else {
           items.push({ label: e.name, detail: e.path, path: e.path, icon: '📄' });
         }
       }
     };
     if (this.workspace) await walk(this.workspace, 0);
+    this.recentIndex = recentItems;
     this.fileIndex = items;
+  }
+
+  async queryQuickSwitcher(q) {
+    // 最近记录独立刷新；文件树扫描不跟着每次击键重跑。
+    try {
+      const recent = await window.mazz.invoke('recent:list');
+      this.recentIndex = (recent || []).slice(0, 30).map((path, recentOrder) => ({
+        label: path.split(/[\\/]/).pop(), detail: path, path, icon: '🕘', recentOrder,
+      }));
+    } catch {}
+    const candidates = [];
+    for (const [recentOrder, item] of (this.recentIndex || []).entries()) candidates.push({
+      kind: 'recent', title: item.label, detail: item.path, path: item.path,
+      recentOrder: item.recentOrder ?? recentOrder,
+    });
+    for (const item of (this.fileIndex || [])) candidates.push({
+      kind: 'file', title: item.label, detail: item.detail || item.path, path: item.path,
+    });
+    const { keymap, displayKey } = await import('../core/keymap-service.js');
+    for (const command of commands.list()) candidates.push({
+      kind: 'command', id: command.id, title: command.title || command.id,
+      detail: command.group || '命令', group: command.group || '',
+      key: displayKey(keymap.keyForCommand(command.id)) || '',
+    });
+    const query = String(q || '').trim();
+    if (query.length >= 2) {
+      try {
+        const { ensureSharedSearchIndex } = await import('../modules/search/shared-index.js');
+        const index = await ensureSharedSearchIndex();
+        const found = index.query(query, { scope: 'content', maxFileHits: 2, maxFiles: 20 });
+        for (const result of found.results || []) for (const hit of result.hits || []) candidates.push({
+          kind: 'content', path: result.path, title: result.name,
+          detail: `${result.path} · 第 ${hit.ln} 行`, line: hit.ln,
+          preview: String(hit.text || '').trim(), query,
+        });
+      } catch {}
+    }
+    return rankQuickCandidates(query, candidates, { limit: 60 });
+  }
+
+  async runQuickSwitcher(item) {
+    if (!item) return;
+    if (item.kind === 'command' && item.id) {
+      await commands.execute(item.id);
+      return;
+    }
+    if (!item.path) return;
+    await this.openFile(item.path);
+    if (item.kind !== 'content' || !item.line) return;
+    const line = Math.max(1, Number(item.line) || 1);
+    const query = String(item.query || '').trim();
+    setTimeout(() => {
+      if (window.__activeTextCtl?.jumpToLine) {
+        window.__activeTextCtl.jumpToLine(line);
+        return;
+      }
+      const editor = window.__activeCodeCtl?.editor;
+      if (editor?.setPosition) {
+        editor.setPosition({ lineNumber: line, column: 1 });
+        editor.revealLineInCenter?.(line);
+        editor.focus?.();
+        return;
+      }
+      if (!query) return;
+      try { commands.execute('edit.find'); } catch {}
+      setTimeout(() => {
+        const input = document.querySelector('.f-find-input');
+        if (!input) return;
+        input.value = query;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.focus();
+      }, 120);
+    }, 350);
   }
 
   // ==================== 事件接线 ====================
@@ -2324,7 +2401,19 @@ export class Shell {
           window.mazz.invoke('panel:push', { kind: 'recorder', payload: { type: 'recState', recording: false, msg: '已停止，保存中…' } }).catch(() => {});
           return;
         }
-        // W53 快速跳转桥（fileIndex 缓存索引单源——命令面板文件页）
+        // W62c Quick Switcher 四路同框桥（请求号回传，旧异步答案不会覆盖新查询）
+        if (pl.type === 'quickSwitcherQuery') {
+          const items = await this.queryQuickSwitcher(pl.q).catch(() => []);
+          window.mazz.invoke('panel:push', {
+            kind: 'palette', payload: { type: 'quickSwitcherItems', requestId: pl.requestId, items },
+          }).catch(() => {});
+          return;
+        }
+        if (pl.type === 'quickSwitcherRun') {
+          await this.runQuickSwitcher(pl.item).catch(() => {});
+          return;
+        }
+        // 旧面板协议兼容（回滚/缓存中的 palette.html 仍可取数）
         if (pl.type === 'paletteInitQuery') {
           const tab = this._paletteInitTab || 'commands';
           this._paletteInitTab = null;
@@ -2644,9 +2733,16 @@ export class Shell {
         if (this.workspace) window.mazz.invoke('fs:watch', { paths: [this.workspace] }).catch(() => {});
         if (this.fileTree) this.fileTree._closedDirs = null; // 已关闭列表按工作区隔离：换区必须清缓存重读（此前换区不跟随）
         await this.fileTree?.refresh?.();
+        await this.rebuildFileIndex();
+        try { const { invalidateSharedSearchIndex } = await import('../modules/search/shared-index.js'); invalidateSharedSearchIndex(); } catch {}
       });
       window.mazz.on('window:role', ({ role }) => { contextKeys.set('windowRole', role); });
       window.mazz.on('file:changed', ({ path: p, event }) => {
+        if (event === 'unlink' || event === 'unlinkDir') {
+          import('../modules/search/shared-index.js').then(m => m.removeSharedIndexPath(p)).catch(() => {});
+        } else if (event === 'change' || event === 'add') {
+          import('../modules/search/shared-index.js').then(m => m.refreshSharedIndexFile(p)).catch(() => {});
+        }
         // 删除治理：文件/目录被删（回收站/外部/脚本）→ 打开中的标签不再虚空存在
         if (event === 'unlink' || event === 'unlinkDir') { this.closeGhostTabs(p); return; }
         const tab = this.tabs.tabs.find(t => t.filePath === p);
@@ -2705,7 +2801,7 @@ export class Shell {
           item('file.newMindmap'), item('file.newDraw'), item('file.newLibrary'),
           item('file.open', 'CmdOrCtrl+O'), item('file.save', 'CmdOrCtrl+S'),
           item('file.saveAs', 'CmdOrCtrl+Shift+S'), { type: 'separator' },
-          item('file.print', 'CmdOrCtrl+P'), item('file.exportPDF'), { type: 'separator' },
+          item('file.quickOpen', 'CmdOrCtrl+P'), item('file.print', 'CmdOrCtrl+Alt+P'), item('file.exportPDF'), { type: 'separator' },
           item('file.closeTab', 'CmdOrCtrl+W'),
         ] },
         { label: '编辑', items: [

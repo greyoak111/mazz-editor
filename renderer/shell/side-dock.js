@@ -193,7 +193,7 @@ export class SideDock {
         <button class="w-ow-card" data-cmd="file.openViewer"><div class="t">${iconHtml('🖼')} 查看器预览</div><div class="d">图片/PDF/音视频</div></button>
         <button class="w-ow-card" data-cmd="file.openWithSystem"><div class="t">${iconHtml('🚀')} 系统默认打开</div><div class="d">调起外部程序</div></button>
         <button class="w-ow-card" data-cmd="file.import"><div class="t">${iconHtml('📥')} 导入工作区</div><div class="d">多选文件/文件夹</div></button>
-        <button class="w-ow-card" data-cmd="file.quickOpen"><div class="t">${iconHtml('⚡')} 快速跳转</div><div class="d">最近文件直达</div></button>
+        <button class="w-ow-card" data-cmd="file.quickOpen"><div class="t">${iconHtml('⚡')} Quick Switcher</div><div class="d">文件 / 命令 / 最近 / 全文直达</div></button>
       </div>`;
     this.openWithEl.querySelectorAll('[data-cmd]').forEach(b =>
       b.addEventListener('click', () => commands.execute(b.dataset.cmd)));
