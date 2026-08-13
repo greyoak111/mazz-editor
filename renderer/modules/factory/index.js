@@ -1202,12 +1202,18 @@ export class FactoryPanel {
       if (task.mode === 'max') await this.runMaxTask(task, tpl, dual);
       else await this.runSingleTask(task, tpl, dual);
       if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
+      if (task.status === 'done' || task.status === 'done-warn') window.MazzActivity?.publish?.({
+        id: `factory-${task.id}`, source: 'factory', title: `AI 写作完成：${task.label}`,
+        detail: task.status === 'done-warn' ? '正文已落盘，存在质量警告，可点开复核。' : '正文与任务状态已落盘。',
+        status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder },
+      });
     } catch (e) {
       task.status = 'failed';
       if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
       this.log(`✗ 任务「${task.label}」失败：${e.message}`);
       await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务中断', content: e.message, stage: 'failed', progress: 100 })).catch(() => {});
       await this.finishTaskPreview(task, e.message).catch(() => {});
+      window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
     } finally {
       this.releaseTask(task, { scheduled });
     }
@@ -1890,10 +1896,12 @@ export class FactoryPanel {
       try {
         await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, prog);
         if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
+        if (task.status === 'done' || task.status === 'done-warn') window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作完成：${task.label}`, detail: '续写任务已收口并落盘。', status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder } });
       } catch (e) {
         task.status = 'failed';
         this.log(`✗ 恢复失败：${e.message}`);
         await this.finishTaskPreview(task, e.message).catch(() => {});
+        window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
       } finally {
         this.releaseTask(task);
       }

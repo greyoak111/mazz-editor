@@ -502,6 +502,8 @@ const wordCommands = [
 export default {
   displayName: 'Markdown 文档',
   icon: 'Ⓜ',
+  progressKind: 'editor',
+  progressPath(state) { return state?.filePath || ''; },
 
   // —— 生命周期 ——
   create(container) {
@@ -579,6 +581,20 @@ export default {
     const line = before.split('\n').length;
     const col = from - before.lastIndexOf('\n');
     return `行 ${line}，列 ${col}`;
+  },
+  captureProgress(state) {
+    const ctl = instances.get(state.container);
+    if (!ctl) return null;
+    const { from, to } = ctl.view.state.selection;
+    return { from, to };
+  },
+  applyProgress(value, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl || !value) return;
+    const max = Math.max(1, ctl.view.state.doc.content.size);
+    const from = Math.max(1, Math.min(max, Number(value.from) || 1));
+    const to = Math.max(from, Math.min(max, Number(value.to) || from));
+    ctl.view.dispatch(ctl.view.state.tr.setSelection(TextSelection.create(ctl.view.state.doc, from, to)).scrollIntoView());
   },
 
   // —— 工具栏（Ribbon「开始」页由外壳调度）——

@@ -290,6 +290,8 @@ function withCtl(fn) { return () => { if (current?.ready) fn(current); } }
 export default {
   displayName: '代码',
   icon: '💻',
+  progressKind: 'editor',
+  progressPath(state) { return state?.filePath || ''; },
 
   create(container) {
     const ctl = createCode(container, {});
@@ -368,6 +370,29 @@ export default {
     const ctl = instances.get(state.container);
     const pos = ctl?.editor?.getPosition();
     return pos ? `行 ${pos.lineNumber}，列 ${pos.column}` : '';
+  },
+  captureProgress(state) {
+    const ctl = instances.get(state.container);
+    const sel = ctl?.editor?.getSelection?.();
+    if (!sel) return null;
+    return {
+      startLine: sel.startLineNumber, startColumn: sel.startColumn,
+      endLine: sel.endLineNumber, endColumn: sel.endColumn,
+      scrollTop: ctl.editor.getScrollTop?.() || 0,
+    };
+  },
+  async applyProgress(value, state) {
+    const ctl = instances.get(state.container);
+    if (!ctl || !value) return;
+    for (let i = 0; i < 30 && !ctl.editor; i++) await new Promise(r => setTimeout(r, 50));
+    if (!ctl.editor) return;
+    const model = ctl.editor.getModel();
+    const line = (n) => Math.max(1, Math.min(model.getLineCount(), Number(n) || 1));
+    const sl = line(value.startLine), el = line(value.endLine || value.startLine);
+    const col = (ln, n) => Math.max(1, Math.min(model.getLineMaxColumn(ln), Number(n) || 1));
+    ctl.editor.setSelection({ startLineNumber: sl, startColumn: col(sl, value.startColumn), endLineNumber: el, endColumn: col(el, value.endColumn || value.startColumn) });
+    ctl.editor.revealPositionInCenter({ lineNumber: sl, column: col(sl, value.startColumn) });
+    if (Number.isFinite(Number(value.scrollTop))) ctl.editor.setScrollTop(Math.max(0, Number(value.scrollTop)));
   },
 
   toolbarHTML: `

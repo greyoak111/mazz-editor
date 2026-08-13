@@ -17,6 +17,8 @@ import { FileTree } from './file-tree.js';
 import { SidebarCtl } from './sidebar-ctl.js';
 import { t, onLanguageChange } from '../i18n/index.js';
 import { StatusBar } from './statusbar.js';
+import { ProgressRelay } from '../core/progress-relay.js';
+import { ActivityCenter } from '../core/activity-center.js';
 import { ALL_CODE_EXTENSIONS, CODE_FILE_EXTENSIONS, CODE_FILE_DEFAULTS, CODE_NEW_FILE_TYPES, LANGUAGE_BY_EXT } from '../modules/code/language-catalog.js';
 
 const CODE_SAMPLE = `// Mazz Editor · 编程内核
@@ -102,6 +104,22 @@ export class Shell {
       <div class="editor-host"><div class="panes"></div></div>`;
     root.appendChild(ws);
     this.statusbar = new StatusBar(root);
+    this.progressRelay = new ProgressRelay(window.mazz?.invoke?.bind(window.mazz));
+    window.MazzProgress = {
+      put: (kind, path, value, opts) => this.progressRelay.put(kind, path, value, opts),
+      get: (kind, path) => this.progressRelay.get(kind, path),
+      flush: () => this.progressRelay.flushAll(),
+    };
+    this.activity = new ActivityCenter({
+      persist: (snapshot) => window.mazz?.invoke('settings:set', { key: 'activity.center.v1', value: snapshot }).catch(() => {}),
+      onChange: (snapshot) => this.syncActivityUi(snapshot),
+    });
+    window.MazzActivity = {
+      publish: (payload) => this.activity.publish(payload),
+      markRead: (id) => this.activity.markRead(id),
+      snapshot: () => this.activity.snapshot(),
+    };
+    this.loadActivityCenter();
     this.sidebar = ws.querySelector('.sidebar');
     this.panesEl = ws.querySelector('.panes');
     this.paneTree = new PaneTree(this.panesEl);
@@ -162,7 +180,13 @@ export class Shell {
         if (!tabId) return;
         const pane = this.paneTree.paneOfTab(tabId);
         const t = (pane ? pane.tabs : this.tabs).get(tabId);
-        if (t) { t.filePath = filePath; this.syncTitle(); }
+        if (t) {
+          t.filePath = filePath;
+          const inst = modules.instances.get(tabId);
+          if (inst?.state) inst.state.filePath = filePath;
+          this.syncTitle();
+          this.restoreProgressFor(t, inst);
+        }
       },
       toast,
     };
@@ -171,6 +195,11 @@ export class Shell {
     this.registerMenusAndKeys();
     this.registerRibbonPages();
     this.wireEvents();
+    this._progressTimer = setInterval(() => {
+      const active = this.tabs?.active;
+      if (active) this.captureProgressFor(active.id);
+    }, 1500);
+    window.addEventListener('beforeunload', () => this.progressRelay.flushAll(), { once: true });
     registerCommandSource();
     this.registerFileSource();
   }
@@ -720,6 +749,8 @@ export class Shell {
     // W58 路径同步另一半：打开即把 filePath 写进模块 state（attach 单参丢路径——打开时实例路径盲=runFile fp=null 实锤）
     try { if (filePath) inst.state.filePath = filePath; } catch {}
     this.containerTab.set(tab.view, tab.id);
+    // attach() 首次 activate 早于 filePath 注入；由壳在内容与路径都到位后统一恢复位置。
+    setTimeout(() => this.restoreProgressFor(tab, inst), 0);
     tab.forceClose = false;
     if (!inst.def.readOnly) {
       snapshots.track(tab.id, () => ({
@@ -1075,9 +1106,100 @@ export class Shell {
       count != null ? `${count} 字符` : '', pos || '');
   }
 
+  progressMeta(tab, inst) {
+    if (!tab || !inst) return null;
+    const kind = inst.def.progressKind;
+    const path = safeGet(() => inst.def.progressPath?.(inst.state)) || tab.filePath;
+    return kind && path ? { kind, path } : null;
+  }
+
+  captureProgressFor(tabId, { immediate = false } = {}) {
+    const inst = modules.instances.get(tabId);
+    const tab = this.paneTree.leaves().flatMap(x => x.tabs.tabs).find(x => x.id === tabId);
+    const meta = this.progressMeta(tab, inst);
+    if (!meta || typeof inst.def.captureProgress !== 'function') return;
+    if (inst._progressRestoring) return;
+    const value = safeGet(() => inst.def.captureProgress(inst.state));
+    if (value != null) this.progressRelay.put(meta.kind, meta.path, value, { immediate });
+  }
+
+  async restoreProgressFor(tab, inst, { force = false } = {}) {
+    const meta = this.progressMeta(tab, inst);
+    if (!meta || typeof inst?.def?.applyProgress !== 'function') return;
+    const token = `${meta.kind}:${meta.path}`;
+    if (!force && inst._progressApplied === token) return;
+    if (inst._progressRestoring === token) return;
+    inst._progressRestoring = token;
+    try {
+      const entry = await this.progressRelay.get(meta.kind, meta.path);
+      if (!entry?.value) return;
+      // await 期间标签可能换片/改路径；只给仍指向同一逻辑对象的实例落锤。
+      const live = this.progressMeta(tab, inst);
+      if (!live || `${live.kind}:${live.path}` !== token) return;
+      await inst.def.applyProgress(entry.value, inst.state);
+      inst._progressApplied = token;
+    } finally {
+      if (inst._progressRestoring === token) inst._progressRestoring = null;
+    }
+  }
+
+  refreshOpenProgress() {
+    for (const leaf of this.paneTree.leaves()) {
+      for (const tab of leaf.tabs.tabs) this.restoreProgressFor(tab, modules.instances.get(tab.id), { force: true });
+    }
+  }
+
+  async loadActivityCenter() {
+    const saved = await window.mazz?.invoke('settings:get', { key: 'activity.center.v1' }).catch(() => null);
+    this.activity.hydrate(saved);
+  }
+
+  syncActivityUi(snapshot = this.activity.snapshot()) {
+    this.statusbar?.setNotifications(snapshot.unread);
+    if (window.mazz?.isElectron) {
+      window.mazz.invoke('panel:push', { kind: 'notif', payload: { type: 'notifSnapshot', data: snapshot } }).catch(() => {});
+    }
+  }
+
+  pushActivity(payload) { return this.activity.publish(payload); }
+
+  async openActivityTarget(item) {
+    if (!item) return;
+    this.activity.markRead(item.id);
+    const target = item.target || {};
+    if (target.kind === 'file' && target.path) return this.openFile(target.path);
+    if (target.kind === 'folder' && target.path) return window.mazz.invoke('shell:openPath', { path: target.path }).catch(() => {});
+    if (target.kind === 'panel' && target.panel) return window.mazz.invoke('panel:open', { kind: target.panel, opts: target.opts || {} }).catch(() => {});
+    if (target.kind === 'library') {
+      let found = null;
+      for (const [tabId, inst] of modules.instances) if (inst.name === 'library') { found = { tabId, inst }; break; }
+      if (!found) {
+        const opened = this.openTab('library', { title: '书库', content: '' });
+        found = { tabId: opened.tab.id, inst: opened.inst };
+      }
+      const pane = this.paneTree.paneOfTab(found.tabId);
+      pane?.tabs.activate(found.tabId); if (pane) this.paneTree.setActive(pane);
+      const ctl = found.inst.def._forTests?.instances?.get(found.inst.container);
+      if (target.bookId) await ctl?.openBook?.(target.bookId);
+      return;
+    }
+    if (target.kind === 'factory') {
+      this.sideDock?.showTab?.('factory');
+      const fp = this.sideDock?.factoryPanel;
+      const task = fp?.tasks?.find?.(x => x.id === target.taskId);
+      if (task) {
+        const tpl = fp.genres?.find?.(x => x.id === task.genreId) || fp.genre;
+        await fp.openTaskPreview?.(task, tpl, task.folder).catch(() => {});
+      }
+      return;
+    }
+  }
+
   // ==================== 核心命令 ====================
   registerCoreCommands() {
     const R = (id, def) => commands.register(id, { ...def, source: 'shell' });
+
+    R('app.notifications', { title: '通知中心', group: '应用', run: () => window.mazz?.invoke('panel:open', { kind: 'notif' }).catch(() => {}) });
 
     // —— 文件 ——
     R('file.new', { title: '新建文档', icon: '＋', group: '文件', agent: { undo: { command: 'file.closeTab', args: {} } }, run: () => this.openTab('markdown', { title: '未命名.md', content: '' }) });
@@ -1806,8 +1928,9 @@ export class Shell {
       contextKeys.set('hasTabs', true);
       this.rebuildModuleRibbon(tab);
       this.syncZoomDisplay(); // 切换窗格/标签时刷新百分比
+      this.restoreProgressFor(tab, modules.instances.get(tab.id));
     });
-    bus.on('tab:deactivate', (id) => modules.deactivateTab(id));
+    bus.on('tab:deactivate', (id) => { this.captureProgressFor(id, { immediate: true }); modules.deactivateTab(id); });
     // W58c 分屏穿帮根治：移签跨窗格后——①等布局落稳重同步视图边界（activate 时可能拿到旧几何）
     // ②浏览器页自动刷新（用户定版药方：挪窝的 GPU 表面不重绘=渲染穿帮，reload 强制重画）
     bus.on('pane:tabMoved', ({ tabId }) => {
@@ -1860,6 +1983,12 @@ export class Shell {
       window.mazz.on('command:invoke', ({ id, payload }) => commands.execute(id, payload));
       window.mazz.on('window:handoff', async (snapshot) => { await this.receiveHandoff(snapshot); });
       window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });
+      window.mazz.on('sync:positionChanged', () => this.refreshOpenProgress());
+      window.mazz.on('sync:completed', (pl = {}) => {
+        this.refreshOpenProgress();
+        this.pushActivity({ id: `sync-${Date.now()}`, source: 'sync', title: '局域网同步完成', detail: `发出 ${pl.sent || 0} · 接收 ${pl.received || 0} · 位置接力 ${pl.positions || 0}`, status: 'done', target: { kind: 'panel', panel: 'sync' } });
+      });
+      window.mazz.on('sync:failed', (pl = {}) => this.pushActivity({ id: `sync-failed-${Date.now()}`, source: 'sync', title: '局域网同步未完成', detail: pl.error || '连接中断', status: 'failed', target: { kind: 'panel', panel: 'sync' } }));
       // W58b 解压缩进度：主进程广播 → 压缩包面板转发 + 完工 toast（面板不开也知情）
       window.mazz.on('archive:progress', (pl) => {
         window.mazz.invoke('panel:push', { kind: 'archive', payload: { type: 'archiveProgress', data: pl } }).catch(() => {});
@@ -1868,6 +1997,12 @@ export class Shell {
         window.mazz.invoke('panel:push', { kind: 'archive', payload: { type: 'archiveDone', data: pl } }).catch(() => {});
         if (pl?.ok) { toast('✓ ' + (pl.info || '解压缩完成')); this.fileTree?.refresh?.(); }
         else if (pl && pl.info !== '已取消') toast('✗ ' + (pl.info || '解压缩失败'), [], 4000);
+        if (pl && pl.info !== '已取消') this.pushActivity({
+          id: `archive-${pl.jobId}`, source: 'archive',
+          title: pl.ok ? (pl.kind === 'pack' ? '压缩打包完成' : '解压完成') : '解压缩任务失败',
+          detail: pl.info || '', status: pl.ok ? 'done' : 'failed',
+          target: pl.targetPath ? { kind: pl.kind === 'pack' ? 'file' : 'folder', path: pl.targetPath } : { kind: 'panel', panel: 'archive' },
+        });
       });
       // W52③ 薄子窗数据桥：paletteQuery/shortcutQuery 答、paletteRun 行
       // W54 B10 拽回吸附提示：进热区主窗右缘亮条
@@ -2362,6 +2497,10 @@ export class Shell {
           } catch {}
           return;
         }
+        if (pl.type === 'notifQuery') { this.syncActivityUi(); return; }
+        if (pl.type === 'notifRead') { this.activity.markRead(pl.id || '*'); return; }
+        if (pl.type === 'notifClearRead') { this.activity.clearRead(); return; }
+        if (pl.type === 'notifOpen') { await this.openActivityTarget(this.activity.get(pl.id)); return; }
         // W62a-0 AI 分工桥：配置窗永不直读 Key，只接收脱敏登记表与路由表；写入统一回 provider.js。
         if (pl.type === 'factoryProviderQuery') {
           try {

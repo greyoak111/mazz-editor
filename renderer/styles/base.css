@@ -254,6 +254,7 @@ body.platform-mac .tb-win-controls { display: none; }
 .statusbar .st:hover { background: var(--bg-hover); color: var(--fg); }
 .statusbar .st.plain { cursor: default; }
 .statusbar .st.plain:hover { background: none; color: var(--fg-dim); }
+.statusbar .st.unread { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); font-weight: 700; }
 .statusbar .spacer { flex: 1; }
 
 /* ---------- 自绘菜单 ---------- */

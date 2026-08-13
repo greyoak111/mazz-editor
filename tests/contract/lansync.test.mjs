@@ -151,6 +151,48 @@ describe('局域网同步', () => {
     assert.equal(id1.cert, id2.cert, '同 store 应复用同一证书');
     assert.ok(s.fingerprint().includes('-'), '指纹应格式化');
   });
+
+  test('R1 位置键：不同工作区根的同一相对路径必须会合', () => {
+    const wsA = mkWorkspace('pos-key-a');
+    const wsB = mkWorkspace('pos-key-b');
+    const a = new LanSync({ store: memStore(), workspace: wsA });
+    const b = new LanSync({ store: memStore(), workspace: wsB });
+    assert.equal(
+      a.positionKey('editor', path.join(wsA, '文稿', '同一篇.md')),
+      b.positionKey('editor', path.join(wsB, '文稿', '同一篇.md')),
+      '工作区根不同也应按相对路径归一',
+    );
+  });
+
+  test('R1 LWW：新时间胜、同毫秒设备号裁决、陈旧位置不得倒灌', () => {
+    const ws = mkWorkspace('pos-lww');
+    const store = memStore();
+    const s = new LanSync({ store, workspace: ws });
+    const key = s.positionKey('player', path.join(ws, '媒体', '片.mp4'));
+    s.mergePositions([{ key, kind: 'player', value: { seconds: 90 }, updatedAt: 200, deviceId: 'dev-b' }]);
+    s.mergePositions([{ key, kind: 'player', value: { seconds: 12 }, updatedAt: 100, deviceId: 'dev-z' }]);
+    assert.equal(s.positions()[key].value.seconds, 90, '旧时间不得覆盖新位置');
+    s.mergePositions([{ key, kind: 'player', value: { seconds: 91 }, updatedAt: 200, deviceId: 'dev-a' }]);
+    assert.equal(s.positions()[key].value.seconds, 90, '同毫秒较小设备号不得覆盖');
+    s.mergePositions([{ key, kind: 'player', value: { seconds: 92 }, updatedAt: 200, deviceId: 'dev-z' }]);
+    assert.equal(s.positions()[key].value.seconds, 92, '同毫秒较大设备号应胜出并收敛');
+  });
+
+  test('R1 双实例只交换位置：零文件传输也能把编辑光标接到对端', async () => {
+    const wsA = mkWorkspace('pos-sync-a');
+    const wsB = mkWorkspace('pos-sync-b');
+    const sA = new LanSync({ store: memStore(), workspace: wsA });
+    const sB = new LanSync({ store: memStore(), workspace: wsB });
+    sA.putPosition({ kind: 'editor', path: path.join(wsA, '文稿', '接力.md'), value: { from: 321, to: 321 } });
+    const h = await sA.host({ port: 0 });
+    const result = await sB.join({ host: '127.0.0.1', port: h.port, pairCode: h.pairCode });
+    await sA.stopHost();
+    assert.equal(result.sent, 0);
+    assert.equal(result.received, 0);
+    assert.ok(result.positions >= 1, '位置对象应随 manifest 合入');
+    const got = sB.getPosition({ kind: 'editor', path: path.join(wsB, '文稿', '接力.md') });
+    assert.equal(got.value.from, 321, '对端按自己的工作区根应取到同一光标');
+  });
 });
 
 describe('自动更新：版本比较', () => {

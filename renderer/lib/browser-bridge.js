@@ -52,6 +52,30 @@ function normalizePath(p) {
   return ('/' + String(p).replace(/\\/g, '/').replace(/^\/+/, '')).replace(/\/+$/, '') || '/';
 }
 
+function browserPositionKey(kind, p) {
+  kind = String(kind || '').toLowerCase();
+  if (!['library', 'player', 'editor'].includes(kind) || !p) return null;
+  const n = normalizePath(p).normalize('NFC').toLowerCase();
+  const rel = n === '/workspace' ? '.' : n.startsWith('/workspace/') ? n.slice('/workspace/'.length) : n;
+  return `${kind}:${n.startsWith('/workspace') ? 'workspace:' : 'absolute:'}${rel}`;
+}
+
+function mergeBrowserPositions(settings, entries) {
+  const all = settings['sync.positions'] && typeof settings['sync.positions'] === 'object' ? settings['sync.positions'] : {};
+  const changed = [];
+  for (const raw of Array.isArray(entries) ? entries : []) {
+    if (!raw?.key || !raw?.kind || !raw?.updatedAt || !raw?.deviceId) continue;
+    const prev = all[raw.key];
+    if (prev && (Number(prev.updatedAt) > Number(raw.updatedAt)
+      || (Number(prev.updatedAt) === Number(raw.updatedAt) && String(prev.deviceId) >= String(raw.deviceId)))) continue;
+    let value; try { value = JSON.parse(JSON.stringify(raw.value ?? null)); } catch { continue; }
+    all[raw.key] = { key: String(raw.key), kind: String(raw.kind), value, updatedAt: Number(raw.updatedAt), deviceId: String(raw.deviceId) };
+    changed.push(all[raw.key]);
+  }
+  settings['sync.positions'] = Object.fromEntries(Object.entries(all).sort((a,b)=>Number(b[1]?.updatedAt||0)-Number(a[1]?.updatedAt||0)).slice(0,2000));
+  return changed;
+}
+
 // ==================== 工作区存储后端（双实现） ====================
 // Capacitor（Android/iOS）：真·文件系统（应用私有目录，无容量上限、无需权限弹窗）
 // 纯浏览器：localStorage 虚拟文件系统（约 5MB，预览够用）
@@ -282,6 +306,18 @@ export function installBrowserBridge() {
         case 'recent:clear': saveJSON(RECENT_KEY, []); return true;
         case 'settings:get': return settings[payload.key];
         case 'settings:set': { settings[payload.key] = payload.value; saveJSON(SETTINGS_KEY, settings); return true; }
+        case 'sync:positionPut': {
+          const key = browserPositionKey(payload.kind, payload.path);
+          if (!key) throw new Error('进度对象缺少有效 kind/path');
+          const all = settings['sync.positions'] || {};
+          const deviceId = settings['sync.deviceId'] || (settings['sync.deviceId'] = 'mazz-mobile-' + Math.random().toString(16).slice(2, 8));
+          const updatedAt = Math.max(Date.now(), Number(all[key]?.updatedAt || 0) + 1);
+          const entry = { key, kind: payload.kind, value: payload.value, updatedAt, deviceId };
+          mergeBrowserPositions(settings, [entry]); saveJSON(SETTINGS_KEY, settings); return entry;
+        }
+        case 'sync:positionGet': { const key = browserPositionKey(payload.kind, payload.path); return key ? (settings['sync.positions'] || {})[key] || null : null; }
+        case 'sync:positions': return Object.values(settings['sync.positions'] || {});
+        case 'sync:positionsMerge': { const changed = mergeBrowserPositions(settings, payload.entries); saveJSON(SETTINGS_KEY, settings); for (const entry of changed) emit('sync:positionChanged', entry); return changed; }
 
         // —— 主题/窗口 ——
         case 'theme:isDark': return matchMedia('(prefers-color-scheme: dark)').matches;

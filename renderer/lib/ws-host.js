@@ -155,7 +155,7 @@ export async function startMobileHost({ transport, pairCode, port = 47822, onRes
 
   function createSession(id) {
     const state = { finished: false, gotFiles: false, sentFiles: false };
-    const result = { sent: 0, received: 0, conflicts: [], skipped: 0 };
+    const result = { sent: 0, received: 0, conflicts: [], skipped: 0, positions: 0 };
     let mine = [];
     const baselineNext = new Map();
     // 就绪门闩：清单扫描完成前不处理任何消息（否则会用空清单算出错误的 want）
@@ -172,7 +172,8 @@ export async function startMobileHost({ transport, pairCode, port = 47822, onRes
     (async () => {
       mine = await wsx.scanFiles();
       for (const f of mine) baselineNext.set(f.path, f.hash);
-      await sendEncrypted(id, { op: 'manifest', files: mine });
+      const positions = await mazz.invoke('sync:positions').catch(() => []);
+      await sendEncrypted(id, { op: 'manifest', files: mine, positions });
       readyResolve();
     })().catch(() => { readyResolve(); });
     return {
@@ -182,7 +183,9 @@ export async function startMobileHost({ transport, pairCode, port = 47822, onRes
         try {
           if (msg.op === 'reject') { state.finished = true; clearTimeout(timer); return; }
           if (msg.op === 'manifest') {
-            await sendEncrypted(id, { op: 'want', paths: diffWant(mine, msg.files) });
+            const merged = await mazz.invoke('sync:positionsMerge', { entries: msg.positions || [] }).catch(() => []);
+            result.positions += merged?.length || 0;
+            await sendEncrypted(id, { op: 'want', paths: diffWant(mine, Array.isArray(msg.files) ? msg.files : []) });
           } else if (msg.op === 'want') {
             const items = [];
             for (const p of msg.paths) {

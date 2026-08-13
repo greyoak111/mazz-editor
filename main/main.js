@@ -1330,7 +1330,12 @@ app.whenReady().then(() => {
   new SearxService({ bus, store, session: browserSess });
   new TranslateService({ bus, store });
   // —— 局域网同步 + 自动更新入口 ——
-  new LanSync({ bus, store, workspace: () => store.get('workspace') });
+  new LanSync({
+    bus,
+    store,
+    workspace: () => store.get('workspace'),
+    notify: (channel, payload) => { if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, channel, payload); },
+  });
   // —— 演示手机遥控伺服（W40：单端口单页面+WS 指令道+心跳） ——
   const SlideRemote = require('./slide-remote');
   new SlideRemote({ bus, win: () => wm.main });

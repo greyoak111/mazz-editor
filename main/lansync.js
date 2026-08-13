@@ -160,14 +160,19 @@ class WsServer {
   close() { for (const a of [...this.adapters]) a.end(); try { this.server?.close(); } catch {} }
 }
 
+const POSITION_KINDS = new Set(['library', 'player', 'editor']);
+const POSITION_STORE_KEY = 'sync.positions';
+const POSITION_LIMIT = 2000;
+
 class LanSync {
   /**
-   * @param {{bus?: any, store: any, workspace: (() => string) | string}} opts
+   * @param {{bus?: any, store: any, workspace: (() => string) | string, notify?: Function}} opts
    * bus 可空（测试时不注册 IPC）
    */
-  constructor({ bus, store, workspace }) {
+  constructor({ bus, store, workspace, notify }) {
     this.store = store;
     this.workspace = workspace;
+    this.notify = typeof notify === 'function' ? notify : null;
     this.server = null;
     this.mdnsStop = null;
     this.state = 'idle'; // idle | hosting | syncing
@@ -176,6 +181,103 @@ class LanSync {
   }
 
   ws() { return typeof this.workspace === 'function' ? this.workspace() : this.workspace; }
+
+  _emit(channel, payload) {
+    try { this.notify?.(channel, payload); } catch {}
+  }
+
+  /**
+   * 阅读/播放/编辑位置按工作区相对路径归一。两台机器即使工作区根目录不同，
+   * 同一份文件仍得到同一个 key；工作区外文件保留绝对路径命名空间。
+   */
+  positionPathKey(input) {
+    const raw = String(input || '').trim();
+    if (!raw) return null;
+    const slash = (value) => value.replace(/\\/g, '/').replace(/\/{2,}/g, '/').normalize('NFC');
+    const rootRaw = this.ws();
+    try {
+      if (rootRaw) {
+        const root = path.resolve(rootRaw);
+        const abs = path.resolve(raw);
+        const rel = path.relative(root, abs);
+        if (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) return 'workspace:' + slash(rel).toLowerCase();
+        if (!rel) return 'workspace:.';
+      }
+    } catch {}
+    return 'absolute:' + slash(raw).toLowerCase();
+  }
+
+  positionKey(kind, filePath) {
+    kind = String(kind || '').toLowerCase();
+    if (!POSITION_KINDS.has(kind)) return null;
+    const p = this.positionPathKey(filePath);
+    return p ? `${kind}:${p}` : null;
+  }
+
+  positions() {
+    const src = this.store.get(POSITION_STORE_KEY, {}) || {};
+    return src && typeof src === 'object' && !Array.isArray(src) ? src : {};
+  }
+
+  listPositions() {
+    return Object.values(this.positions()).filter(Boolean);
+  }
+
+  _cleanPosition(entry) {
+    if (!entry || typeof entry !== 'object') return null;
+    const kind = String(entry.kind || '').toLowerCase();
+    const key = String(entry.key || '');
+    const updatedAt = Math.floor(Number(entry.updatedAt) || 0);
+    const deviceId = String(entry.deviceId || '').slice(0, 96);
+    if (!POSITION_KINDS.has(kind) || !key.startsWith(kind + ':') || !updatedAt || !deviceId) return null;
+    let value;
+    try {
+      const json = JSON.stringify(entry.value ?? null);
+      if (json.length > 16 * 1024) return null;
+      value = JSON.parse(json);
+    } catch { return null; }
+    return { key: key.slice(0, 2048), kind, value, updatedAt, deviceId };
+  }
+
+  /** last-write-win：时间戳优先；同毫秒以设备号字典序裁决，保证两端收敛。 */
+  mergePositions(entries, { remote = true } = {}) {
+    const all = this.positions();
+    const changed = [];
+    for (const raw of Array.isArray(entries) ? entries : []) {
+      const next = this._cleanPosition(raw);
+      if (!next) continue;
+      const prev = all[next.key];
+      const wins = !prev || next.updatedAt > Number(prev.updatedAt || 0)
+        || (next.updatedAt === Number(prev.updatedAt || 0) && next.deviceId > String(prev.deviceId || ''));
+      if (!wins) continue;
+      all[next.key] = next;
+      changed.push(next);
+    }
+    if (changed.length) {
+      const kept = Object.fromEntries(Object.entries(all)
+        .sort((a, b) => Number(b[1]?.updatedAt || 0) - Number(a[1]?.updatedAt || 0))
+        .slice(0, POSITION_LIMIT));
+      this.store.set(POSITION_STORE_KEY, kept);
+      if (remote) for (const entry of changed) this._emit('sync:positionChanged', entry);
+    }
+    return changed;
+  }
+
+  putPosition({ kind, path: filePath, value, updatedAt } = {}) {
+    const key = this.positionKey(kind, filePath);
+    if (!key) throw new Error('进度对象缺少有效 kind/path');
+    const prev = this.positions()[key];
+    const stamp = Math.max(Math.floor(Number(updatedAt) || Date.now()), Number(prev?.updatedAt || 0) + 1);
+    const entry = this._cleanPosition({ key, kind, value, updatedAt: stamp, deviceId: this.identity().deviceId });
+    if (!entry) throw new Error('进度对象无效或过大');
+    this.mergePositions([entry], { remote: false });
+    return entry;
+  }
+
+  getPosition({ kind, path: filePath } = {}) {
+    const key = this.positionKey(kind, filePath);
+    return key ? (this.positions()[key] || null) : null;
+  }
 
   // ==================== 身份（自签证书，首次生成并持久化） ====================
   identity() {
@@ -366,11 +468,13 @@ class LanSync {
           (result) => {
             this.lastResult = result;
             this.state = 'hosting';
+            this._emit('sync:completed', result);
             try { sock.end(); } catch {}
           },
           (e) => {
             this.lastResult = { error: e.message };
             this.state = 'hosting';
+            this._emit('sync:failed', { error: e.message });
             try { sock.end(); } catch {}
           });
       }
@@ -398,6 +502,7 @@ class LanSync {
         sock.on('error', reject);
       });
       this.lastResult = result;
+      this._emit('sync:completed', result);
       // 记住对端便于下次一键同步
       this.store.set('sync.lastPeer', { host, port });
       return result;
@@ -412,7 +517,7 @@ class LanSync {
     const mine = this.scanFiles();
     // 新基线：从会话开始时的清单出发，随写入事件逐项推演（不受会话后本地修改污染）
     const baselineNext = new Map(mine.map(f => [f.path, f.hash]));
-    const result = { sent: 0, received: 0, conflicts: [], skipped: 0 };
+    const result = { sent: 0, received: 0, conflicts: [], skipped: 0, positions: 0 };
     let gotFilesMsg = false;
     let sentFilesMsg = false;
     let finished = false;
@@ -435,7 +540,7 @@ class LanSync {
       if (!finished) settle(onError, new Error('连接中断'));
     });
     // 开场：发送己方清单
-    try { sock.write(encodeFrame({ op: 'manifest', files: mine })); } catch (e) { settle(onError, e); }
+    try { sock.write(encodeFrame({ op: 'manifest', files: mine, positions: this.listPositions() })); } catch (e) { settle(onError, e); }
 
     return {
       push: (msg) => {
@@ -444,7 +549,8 @@ class LanSync {
           if (msg.op === 'reject') {
             settle(onError, new Error(msg.reason || '被拒绝'));
           } else if (msg.op === 'manifest') {
-            const want = LanSync.diffWant(mine, msg.files);
+            result.positions += this.mergePositions(msg.positions).length;
+            const want = LanSync.diffWant(mine, Array.isArray(msg.files) ? msg.files : []);
             this.setProgress({ phase: 'transfer', want: want.length, total: want.length });
             sock.write(encodeFrame({ op: 'want', paths: want }));
           } else if (msg.op === 'want') {
@@ -529,6 +635,7 @@ class LanSync {
       lastResult: this.lastResult,
       // 实时进度：{phase, sent, received, want, total}（sync.js 进度条/计数用）
       progress: this.progress || null,
+      positionCount: this.listPositions().length,
     };
   }
 
@@ -547,6 +654,10 @@ class LanSync {
     bus.handle('sync:join', async ({ host, port, pairCode }) => this.join({ host, port, pairCode }));
     bus.handle('sync:discover', async () => this.discover());
     bus.handle('sync:status', async () => this.status());
+    bus.handle('sync:positionPut', async (payload) => this.putPosition(payload));
+    bus.handle('sync:positionGet', async (payload) => this.getPosition(payload));
+    bus.handle('sync:positions', async () => this.listPositions());
+    bus.handle('sync:positionsMerge', async ({ entries } = {}) => this.mergePositions(entries));
   }
 }
 

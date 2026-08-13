@@ -187,11 +187,16 @@ async function enterImageEdit(ctl, img, path, ext) {
       }
       ctl._tcCache = ctl._tcCache || new Map();
       ctl._tcCache.set(cacheKey, url);
+      window.MazzActivity?.publish?.({
+        id: `transcode-${cacheKey}`, source: 'transcode', title: '媒体转码完成',
+        detail: name, status: 'done', target: { kind: 'file', path: ctl.path },
+      });
       toast('转码完成，开始播放');
       playUrl(url, VIDEO_EXTS.has(ext) ? 'video' : 'audio').catch(e => toast('播放失败：' + e.message));
     } catch (e) {
       btn.disabled = false;
       prog.innerHTML = `<div style="font-size:12px;color:var(--danger,#dc2626)">转码失败：${e.message}</div>`;
+      window.MazzActivity?.publish?.({ id: `transcode-${cacheKey}`, source: 'transcode', title: '媒体转码失败', detail: `${name} · ${e.message}`, status: 'failed', target: { kind: 'file', path: ctl.path } });
     }
   }
 
@@ -276,6 +281,7 @@ async function enterImageEdit(ctl, img, path, ext) {
         if (ctl._player && ctl._playerKind === ctl.kind && ctl._player.setSource) {
           if (gen !== ctl._loadGen) return;
           ctl._player.setSource(url, name, path, st.size || 0);
+          if (ctl._pendingProgress) { ctl._player.applyProgress?.(ctl._pendingProgress); ctl._pendingProgress = null; }
           return;
         }
         const { createPlayer } = await import('./player.js');
@@ -329,6 +335,7 @@ async function enterImageEdit(ctl, img, path, ext) {
         }, { once: true });
         ctl._player = player;
         ctl._playerKind = ctl.kind; // 记录类型（切歌复用判定：同类才换源不重建）
+        if (ctl._pendingProgress) { player.applyProgress?.(ctl._pendingProgress); ctl._pendingProgress = null; }
         return;
       }
       showFallback(name, ext, '暂不支持预览此格式');
@@ -361,6 +368,8 @@ async function bootEmptyPlayer(ctl) {
 export default {
   displayName: '播放器',
   icon: '🖼',
+  progressKind: 'player',
+  progressPath(state) { return state?.path || ''; },
   readOnly: true, // 只读模块：禁止保存/另存（防止空内容写回媒体文件）
   create(container) {
     const ctl = createViewer(container);
@@ -402,5 +411,11 @@ export default {
   newDocument() {},
   getCharCount() { return null; },
   getCursorPos() { return '查看'; },
+  captureProgress(state) { return state?._player?.captureProgress?.() || null; },
+  applyProgress(value, state) {
+    if (!state || !value) return;
+    if (state._player?.applyProgress) state._player.applyProgress(value);
+    else state._pendingProgress = value;
+  },
   contributes: { commands: [], keybindings: [], menus: {}, bridges: [], aiActions: [] },
 };

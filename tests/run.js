@@ -80,6 +80,7 @@ const files = [
   'tests/contract/library-ui.test.mjs',
   'tests/contract/word-v2-plugins.test.mjs',
   'tests/contract/lansync.test.mjs',
+  'tests/contract/r1r2-progress-notif.test.mjs',
   'tests/contract/help.test.mjs',
   'tests/contract/ui-theme.test.mjs',
   'tests/contract/i18n.test.mjs',

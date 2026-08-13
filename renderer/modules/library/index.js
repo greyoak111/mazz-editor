@@ -376,6 +376,9 @@ function createLibrary(container) {
       ctl._frame?.remove?.(); ctl._frame = null; ctl._fdoc = null; // 沙箱帧随书重建
       ctl.book = { meta: book };
       const progress = (await window.mazz.invoke('settings:get', { key: PROGRESS_KEY }).catch(() => ({}))) || {};
+      // R1：同步位置账按文件路径取件，覆盖旧版仅按 bookId 的单机记忆。
+      const synced = window.MazzProgress?.get ? await window.MazzProgress.get('library', book.path).catch(() => null) : null;
+      if (synced?.value) progress[id] = { ...(progress[id] || {}), ...synced.value };
       // 分栏屏位比例（重开恢复用；只在分栏横排布局完成后消费一次）
       ctl._pendingRatio = (typeof progress[id]?.ratio === 'number') ? progress[id].ratio : null;
       // 内容锚（重开恢复最高优先级：xpath+章号+文本指纹，重排免疫——koodo 模型）
@@ -435,19 +438,27 @@ function createLibrary(container) {
     }
   }
 
+  function progressRecord() {
+    if (!ctl.book?.meta) return null;
+    // 分栏比例统一存储：epub 存 chapter、文本类存 page，分栏横排一律附 ratio（屏位比例 0..1）
+    const rec = ctl.book.meta.format === 'epub' ? { chapter: ctl.chapterIdx } : { page: ctl.pageIdx };
+    if (ctl._flowWrap && typeof ctl._flowRatio === 'number') rec.ratio = +ctl._flowRatio.toFixed(5);
+    if (ctl.zhMode) rec.zh = ctl.zhMode; // 简繁偏好随书记忆
+    // 内容锚 + 字数加权百分比（koodo handleRecord 模型：锚内容不锚屏位，改字号/页宽/单双页后恢复不漂）
+    const anch = captureAnchor();
+    if (anch) { rec.anchor = anch; rec.pct = +weightedPct(anch).toFixed(5); }
+    return rec;
+  }
+
   function saveProgress() {
+    const rec = progressRecord();
+    if (!rec) return;
     window.mazz.invoke('settings:get', { key: PROGRESS_KEY }).then((all) => {
       all = all || {};
-      // 分栏比例统一存储：epub 存 chapter、文本类存 page，分栏横排一律附 ratio（屏位比例 0..1）
-      const rec = ctl.book.meta.format === 'epub' ? { chapter: ctl.chapterIdx } : { page: ctl.pageIdx };
-      if (ctl._flowWrap && typeof ctl._flowRatio === 'number') rec.ratio = +ctl._flowRatio.toFixed(5);
-      if (ctl.zhMode) rec.zh = ctl.zhMode; // 简繁偏好随书记忆
-      // 内容锚 + 字数加权百分比（koodo handleRecord 模型：锚内容不锚屏位，改字号/页宽/单双页后恢复不漂）
-      const anch = captureAnchor();
-      if (anch) { rec.anchor = anch; rec.pct = +weightedPct(anch).toFixed(5); }
       all[ctl.book.meta.id] = rec;
       window.mazz.invoke('settings:set', { key: PROGRESS_KEY, value: all });
     }).catch(() => {});
+    window.MazzProgress?.put?.('library', ctl.book.meta.path, rec);
   }
 
   /** 当前格式可分页总数 */
@@ -1441,10 +1452,15 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
   if (window.mazz?.on) {
     window.mazz.on('library:download', async ({ path, name }) => {
       try {
-        await importPath(path);
+        const bookId = await importPath(path);
+        if (!bookId) throw new Error('文件未能写入书架');
         toast(`📚 已自动入库：${name}`);
+        window.MazzActivity?.publish?.({ id: `download-${path}`, source: 'download', title: '下载已入书库', detail: name || path.split(/[\\/]/).pop(), status: 'done', target: { kind: 'library', bookId, path } });
         renderShelf();
-      } catch (e) { toast('入库失败：' + e.message); }
+      } catch (e) {
+        toast('入库失败：' + e.message);
+        window.MazzActivity?.publish?.({ id: `download-${path}`, source: 'download', title: '下载入库失败', detail: e.message, status: 'failed', target: { kind: 'file', path } });
+      }
     });
   }
 
@@ -1454,6 +1470,16 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
   ctl.renderShelf = renderShelf;
   ctl.openBook = openBook;
   ctl.exportBookMarkdown = exportBookMarkdown;
+  ctl.captureProgress = progressRecord;
+  ctl.applyProgress = async (rec) => {
+    if (!ctl.book || !rec) return;
+    ctl._pendingRatio = typeof rec.ratio === 'number' ? rec.ratio : null;
+    ctl._pendingAnchor = rec.anchor || null;
+    if (ctl.book.meta.format === 'epub') ctl.chapterIdx = Math.max(0, Math.min(Number(rec.chapter) || 0, totalPages() - 1));
+    else ctl.pageIdx = Math.max(0, Math.min(Number(rec.page) || 0, totalPages() - 1));
+    if (rec.zh != null) ctl.zhMode = rec.zh || '';
+    await showCurrent();
+  };
 
   renderShelf();
   return ctl;
@@ -1462,6 +1488,8 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
 export default {
   displayName: '书库',
   icon: '📚',
+  progressKind: 'library',
+  progressPath(state) { return instances.get(state.container)?.book?.meta?.path || ''; },
   _forTests: { instances },
 
   create(container) {
@@ -1497,6 +1525,8 @@ export default {
   },
   getCharCount() { return 0; },
   getCursorPos() { return '书库'; },
+  captureProgress(state) { return instances.get(state.container)?.captureProgress?.() || null; },
+  applyProgress(value, state) { return instances.get(state.container)?.applyProgress?.(value); },
   /** 从文件路径直接入库并打开 */
   async importPath(path, state) {
     const ctl = instances.get(state.container);

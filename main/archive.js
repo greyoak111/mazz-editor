@@ -72,11 +72,16 @@ class ArchiveService {
     if (w && !w.isDestroyed()) this.bus.send(w, 'archive:progress', { jobId, phase, i, n, name, percent: Math.round(percent ?? (n ? (i / n) * 100 : 0)) });
   }
   _end(jobId, ok, info) {
+    const job = this.jobs.get(jobId);
     this.jobs.delete(jobId);
     this.running.delete(jobId);
     this._pump();
     const w = typeof this.win === 'function' ? this.win() : this.win;
-    if (w && !w.isDestroyed()) this.bus.send(w, 'archive:done', { jobId, ok, info });
+    if (w && !w.isDestroyed()) this.bus.send(w, 'archive:done', {
+      jobId, ok, info, kind: job?.kind || '',
+      targetPath: job?.kind === 'extract' ? job?.payload?.dest : job?.payload?.out,
+      sourcePath: job?.payload?.path || null,
+    });
   }
   _pump() {
     while (this.running.size < 2 && this.queue.length) { // 2 并发
@@ -87,7 +92,7 @@ class ArchiveService {
   }
   enqueue(kind, payload) {
     const id = 'arc-' + (++this.seq);
-    const job = { id, kind, cancelled: false, proc: null };
+    const job = { id, kind, payload, cancelled: false, proc: null };
     job.run = () => kind === 'extract' ? this._extractZipFirst(job, payload) : this._pack(job, payload);
     this.jobs.set(id, job);
     this.queue.push(job);

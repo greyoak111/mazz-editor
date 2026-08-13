@@ -130,6 +130,20 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       window.mazz.invoke('settings:set', { key: PROGMEM_KEY, value: all }).catch(() => {});
     }).catch(() => {});
   };
+  const captureProgress = () => {
+    if (!curPath || !isFinite(media.currentTime)) return null;
+    return { seconds: Math.max(0, Math.floor(media.currentTime)), duration: isFinite(media.duration) ? Math.floor(media.duration) : 0 };
+  };
+  const applyProgress = (value) => {
+    const seconds = Math.max(0, Number(value?.seconds) || 0);
+    if (!seconds) return;
+    const seek = () => {
+      if (!isFinite(media.duration) || seconds >= media.duration - 2) return;
+      media.currentTime = seconds;
+    };
+    if (media.readyState >= 1) seek();
+    else media.addEventListener('loadedmetadata', seek, { once: true });
+  };
   const progMemTimer = setInterval(saveProgMem, 4000);
   media.addEventListener('pause', saveProgMem);
   // 打开即恢复：该片有记录且开关开 → 元数据就绪后跳回（用户在别处接着看的体验）
@@ -1201,6 +1215,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   return {
     setSource,
+    captureProgress,
+    applyProgress,
     /** 外挂字幕直挂（设置面板/E2E 通道——bundle 内模块裸 import 进不来，此口是唯一真源） */
     loadSub: async (p) => { await attachSubtitle(media, { subPath: p }); subVisible = true; syncSubBtn(); return true; },
     destroy() {

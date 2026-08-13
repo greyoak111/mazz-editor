@@ -11,6 +11,8 @@ function getSelection(ta) { return ta.selectionStart !== ta.selectionEnd; }
 export default {
   displayName: '纯文本',
   icon: '🄣',
+  progressKind: 'editor',
+  progressPath(state) { return state?.filePath || ''; },
 
   create(container) {
     const ta = document.createElement('textarea');
@@ -74,6 +76,18 @@ export default {
     const line = before.split('\n').length;
     const col = ta.selectionStart - before.lastIndexOf('\n');
     return `行 ${line}，列 ${col}`;
+  },
+  captureProgress(state) {
+    const ta = instances.get(state.container)?.ta;
+    return ta ? { start: ta.selectionStart, end: ta.selectionEnd, scrollTop: ta.scrollTop } : null;
+  },
+  applyProgress(value, state) {
+    const ta = instances.get(state.container)?.ta;
+    if (!ta || !value) return;
+    const start = Math.max(0, Math.min(ta.value.length, Number(value.start) || 0));
+    const end = Math.max(start, Math.min(ta.value.length, Number(value.end) || start));
+    ta.setSelectionRange(start, end);
+    if (Number.isFinite(Number(value.scrollTop))) ta.scrollTop = Math.max(0, Number(value.scrollTop));
   },
 
   toolbarHTML: `

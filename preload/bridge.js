@@ -35,6 +35,7 @@ const INVOKE_CHANNELS = new Set([
   'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut',
   'tr:translate', 'tr:getConfig', 'tr:setConfig',
   'sync:identity', 'sync:host', 'sync:stopHost', 'sync:join', 'sync:discover', 'sync:status',
+  'sync:positionPut', 'sync:positionGet', 'sync:positions', 'sync:positionsMerge',
   'toolchain:detect', 'toolchain:detectAll',
   'archive:sniff', 'archive:list', 'archive:extract', 'archive:pack', 'archive:cancel',
   'slideRemote:start', 'slideRemote:stop', 'slideRemote:state', 'slideRemote:status', 'panel:push',
@@ -61,7 +62,7 @@ const EVENT_CHANNELS = new Set([
   'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'library:download',
   'workspace:changed', 'window:fullscreen', 'bv:event', 'bv:frame', 'slideRemote:cmd', 'slideRemote:client',
   'panel:changed', 'panel:action', 'panel:push', 'dock:snapHint',
-  'archive:progress', 'archive:done',
+  'archive:progress', 'archive:done', 'sync:positionChanged', 'sync:completed', 'sync:failed',
 ]);
 
 const listeners = new Map(); // channel -> Set<callback>

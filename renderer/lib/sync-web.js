@@ -213,12 +213,13 @@ export async function joinSync({ host, port, pairCode, deviceId }) {
     const wsx = makeWorkspace(mazz);
     const mine = await wsx.scanFiles();
     const baselineNext = new Map(mine.map(f => [f.path, f.hash]));
-    const result = { sent: 0, received: 0, conflicts: [], skipped: 0 };
+    const result = { sent: 0, received: 0, conflicts: [], skipped: 0, positions: 0 };
     let gotFiles = false, sentFiles = false, finished = false;
     const maybeDone = async () => {
       if (gotFiles && sentFiles && !finished) { finished = true; await send({ op: 'done', result }); }
     };
-    await send({ op: 'manifest', files: mine });
+    const positions = await mazz.invoke('sync:positions').catch(() => []);
+    await send({ op: 'manifest', files: mine, positions });
 
     const final = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('同步超时（60s）')), 60000);
@@ -228,7 +229,9 @@ export async function joinSync({ host, port, pairCode, deviceId }) {
           const msg = await nextMsg(60000);
           if (msg.op === 'reject') throw new Error(msg.reason || '被拒绝');
           if (msg.op === 'manifest') {
-            await send({ op: 'want', paths: diffWant(mine, msg.files) });
+            const merged = await mazz.invoke('sync:positionsMerge', { entries: msg.positions || [] }).catch(() => []);
+            result.positions += merged?.length || 0;
+            await send({ op: 'want', paths: diffWant(mine, Array.isArray(msg.files) ? msg.files : []) });
           } else if (msg.op === 'want') {
             const items = [];
             for (const p of msg.paths) {
