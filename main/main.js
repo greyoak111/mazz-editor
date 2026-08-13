@@ -421,6 +421,12 @@ function registerChannels() {
   const factoryMock = { blueprintAttempts: 0, unitNo: 0, w68Repair: 0, w68Point: 0 };
   const factoryMockReply = ({ system = '', user = '', stream = false }) => {
     if (!factoryMockEnabled) return null;
+    // W62d：第一次故意破坏块守恒，逼出“解析失败只重试一次”；纠错轮再按原块 ID 全量回供。
+    if (system.includes('MAZZ_MAP_DISTILL_V1')) {
+      const ids = [...new Set([...String(user).matchAll(/"id"\s*:\s*"(B\d+)"/g)].map(match => match[1]))];
+      if (!user.includes('上次输出不合格')) return JSON.stringify(ids.slice(0, Math.max(1, ids.length - 1)).map((id, index) => ({ id, depth: index ? 2 : 1 })));
+      return JSON.stringify(ids.map((id, index) => ({ id, depth: index === 0 || index % 3 === 0 ? 1 : 2 })));
+    }
     // W62a：E2E 专用的确定性 agent 路由台。按同一轮 transcript 推进，验证真工具循环而非假聊天。
     if (system.includes('MAZZ_AGENT_ROUTER_V1')) {
       const original = (/【原始交办】\s*([\s\S]*?)\s*【台账最近记录】/.exec(user) || [])[1] || '';

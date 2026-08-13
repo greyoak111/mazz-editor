@@ -408,6 +408,7 @@ export function serializeDoc(doc) {
     frames: doc.frames || [], // 演示叙事帧（w33 Prezi 式圈帧）
     linkStyle: doc.linkStyle || null,
     showGrid: !!doc.showGrid,
+    sourceRef: doc.sourceRef || null, // W62d：提炼导图根回跳源文档
   });
 }
 export function parseDoc(text) {
@@ -424,6 +425,7 @@ export function parseDoc(text) {
         frames: obj.frames || [],
         linkStyle: obj.linkStyle || null,
         showGrid: !!obj.showGrid,
+        sourceRef: obj.sourceRef || null,
       };
     }
     if (obj && obj.root) return { mode: 'lr', scheme: 0, roots: [obj.root], notes: [], refLines: [], parentLinks: [], swimlanes: [], linkStyle: null }; // 旧单根 JSON

@@ -209,6 +209,102 @@ function scheduleModelPush() {
   pushTimer = setTimeout(() => menus.pushModel('editor/context'), 180);
 }
 
+function activeMarkdownSourceRef(scope) {
+  const shell = window.MazzShell;
+  const tabId = shell?.containerTab?.get?.(current?.container) || '';
+  const tab = tabId ? shell?.tabs?.get?.(tabId) : null;
+  const size = current?.view?.state?.doc?.content?.size || 1;
+  const selection = scope === 'selection'
+    ? { from: current.view.state.selection.from, to: current.view.state.selection.to }
+    : { from: 1, to: Math.max(1, size) };
+  return {
+    tabId,
+    filePath: tab?.filePath || current?.filePath || '',
+    title: tab?.title || current?.title || '未命名.md',
+    selection,
+  };
+}
+
+async function showDistillPreview({ blocks, plan, attempts, sourceRef }) {
+  const [{ planToPreview, previewToPlan, planToRoots }, mindmap] = await Promise.all([
+    import('../mindmap/distill.js'), import('../mindmap/index.js'),
+  ]);
+  const targets = mindmap.listDistillGraftTargets();
+  const m = modal('AI 提炼成图 · 无损预览');
+  m.el.classList.add('distill-preview-modal');
+  m.body.innerHTML = `
+    <div class="distill-contract-note">正文已锁定：只能调整行序与 <code>#</code> 层级；创建前会再次执行无增删校验。</div>
+    <div class="distill-meta"></div>
+    <textarea class="distill-outline" spellcheck="false" aria-label="提炼层级预览"></textarea>
+    <div class="distill-target-row"><label>嫁接目标</label><select class="rb-select distill-target"></select></div>
+    <div class="distill-error" role="alert"></div>
+    <div class="modal-actions">
+      <button class="rb-btn distill-action" data-act="cancel">取消</button>
+      <button class="rb-btn distill-action" data-act="graft">嫁接到已选节点</button>
+      <button class="rb-btn distill-action primary" data-act="new">新建导图</button>
+    </div>`;
+  m.body.querySelector('.distill-meta').textContent = `${blocks.length} 个原文块 · AI 第 ${attempts} 次输出通过契约`;
+  const area = m.body.querySelector('.distill-outline');
+  area.value = planToPreview(plan, blocks);
+  const select = m.body.querySelector('.distill-target');
+  for (const target of targets) {
+    const option = document.createElement('option');
+    option.value = target.tabId;
+    option.textContent = `${target.title} → ${target.nodeText}`;
+    select.appendChild(option);
+  }
+  const graftButton = m.body.querySelector('[data-act="graft"]');
+  graftButton.disabled = !targets.length;
+  if (!targets.length) {
+    const option = document.createElement('option');
+    option.textContent = '请先在一个导图中选中节点';
+    select.appendChild(option);
+  }
+  const errorEl = m.body.querySelector('.distill-error');
+  const finish = (kind) => {
+    try {
+      const checked = previewToPlan(area.value, blocks);
+      const roots = planToRoots(checked, blocks, sourceRef);
+      if (kind === 'graft') {
+        mindmap.graftDistillRoots(select.value, roots);
+        shellToast(`已嫁接 ${blocks.length} 个原文块`);
+      } else {
+        const title = String(sourceRef.title || '文档').replace(/\.[^.]*$/, '');
+        const doc = { v: 4, mode: 'lr', scheme: 0, roots, notes: [], refLines: [], parentLinks: [], sourceRef };
+        window.MazzHost?.openTab('mindmap', { title: `${title} · AI提炼.mindmap`, content: JSON.stringify(doc) });
+        shellToast(`已生成导图：${blocks.length} 个原文块，零增删`);
+      }
+      m.close();
+    } catch (error) {
+      errorEl.textContent = error.message;
+      area.focus();
+    }
+  };
+  m.body.querySelector('[data-act="cancel"]').addEventListener('click', () => m.close());
+  graftButton.addEventListener('click', () => finish('graft'));
+  m.body.querySelector('[data-act="new"]').addEventListener('click', () => finish('new'));
+  area.focus();
+}
+
+async function distillMarkdownToMindmap(scope) {
+  if (!current?.view) return;
+  const { view } = current;
+  if (scope === 'selection' && view.state.selection.empty) throw new Error('请先选择要提炼的文字');
+  const text = scope === 'selection' ? selectionSliceMarkdown(view) : serializeMarkdown(view.state.doc);
+  const sourceRef = activeMarkdownSourceRef(scope);
+  shellToast('AI 正在整理标题层级…');
+  try {
+    const [{ distillWithRetry }, { chat }] = await Promise.all([
+      import('../mindmap/distill.js'), import('../factory/provider.js'),
+    ]);
+    const result = await distillWithRetry(text, (request) => chat({ role: 'mindmap_distill', ...request }));
+    shellToast(`无损契约已通过：${result.blocks.length} 个原文块`, [], 1600);
+    await showDistillPreview({ ...result, sourceRef });
+  } catch (error) {
+    shellToast(`提炼失败：${error.message}`);
+  }
+}
+
 // —— 命令操作助手（作用于当前激活编辑器）——
 function withView(fn) { return () => { if (current?.view) { fn(current.view); current.view.focus(); } }; }
 function toggle(markName) {
@@ -831,6 +927,10 @@ export default {
           if (text) current.view.pasteText(text);
           current.view.focus();
         } },
+      { id: 'markdown.distillSelectionToMindmap', title: 'AI 提炼选区成图…', icon: '⌘', group: 'AI',
+        when: "module=='markdown' && hasSelection", run: () => distillMarkdownToMindmap('selection') },
+      { id: 'markdown.distillDocumentToMindmap', title: 'AI 提炼全文成图…', icon: '⌘', group: 'AI',
+        when: "module=='markdown'", run: () => distillMarkdownToMindmap('document') },
     ],
 
     keybindings: [
@@ -894,7 +994,8 @@ export default {
         { command: 'edit.find', title: '查找…', group: '5_tool' },
         { command: 'file.print', title: '打印…', when: '!hasSelection', group: '5_tool' },
         { command: 'markdown.exportDocx', title: '导出为 Word (docx)', group: '5_tool' },
-        { command: 'ai.placeholder', title: 'AI ▸（未配置）', group: '6_ai' },
+        { command: 'markdown.distillSelectionToMindmap', title: 'AI 提炼选区成图…', when: 'hasSelection', group: '6_ai' },
+        { command: 'markdown.distillDocumentToMindmap', title: 'AI 提炼全文成图…', group: '6_ai' },
       ],
     },
 

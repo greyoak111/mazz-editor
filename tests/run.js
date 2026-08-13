@@ -82,6 +82,7 @@ const files = [
   'tests/contract/lansync.test.mjs',
   'tests/contract/r1r2-progress-notif.test.mjs',
   'tests/contract/hotfix-w62-search.test.mjs',
+  'tests/contract/hotfix-w62d.test.mjs',
   'tests/contract/help.test.mjs',
   'tests/contract/ui-theme.test.mjs',
   'tests/contract/i18n.test.mjs',

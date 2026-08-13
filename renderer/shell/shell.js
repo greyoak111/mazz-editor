@@ -746,6 +746,7 @@ export class Shell {
     const tab = this.tabs.add({ title, moduleId, filePath });
     // 空内容视为 null：让模块用自身默认初始内容（如演示模板），不触发 setContent('') 清空
     const inst = modules.attach(tab.id, moduleId, tab.view, content ? content : null);
+    try { inst.state.title = title; } catch {}
     // W58 路径同步另一半：打开即把 filePath 写进模块 state（attach 单参丢路径——打开时实例路径盲=runFile fp=null 实锤）
     try { if (filePath) inst.state.filePath = filePath; } catch {}
     this.containerTab.set(tab.view, tab.id);

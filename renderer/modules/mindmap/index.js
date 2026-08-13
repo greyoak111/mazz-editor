@@ -41,6 +41,9 @@ function createMindmap(container) {
   root.innerHTML = `
     <div class="mm-stylebar" style="display:none"></div>
     <div class="mm-canvas-wrap" tabindex="-1">
+      <button class="mm-source-hook" type="button" hidden title="回到提炼来源">
+        <span class="mm-source-hook-icon">↩</span><span class="mm-source-hook-label"></span>
+      </button>
       <svg class="mm-svg"><defs>
         <pattern id="mmGrid" width="40" height="40" patternUnits="userSpaceOnUse">
           <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--bd, #d8d6cf)" stroke-width="0.5" opacity="0.55"/>
@@ -67,6 +70,7 @@ function createMindmap(container) {
   wrap.insertBefore(linkCanvas, svg);
   const editor = root.querySelector('.mm-editor');
   const stylebar = root.querySelector('.mm-stylebar');
+  const sourceHook = root.querySelector('.mm-source-hook');
 
   const ctl = {
     root, container, stylebar,
@@ -84,6 +88,32 @@ function createMindmap(container) {
     linkMode: null,     // 引用线创建中：null | {from:{id,k}}
   };
   ctl.selectedNode = () => findNode(ctl.doc?.roots || [], ctl.selected); // deals 命令消费口
+
+  function activeSourceRef() {
+    return ctl.selectedNode()?.sourceRef || ctl.doc?.sourceRef || ctl.doc?.roots?.find(r => r.sourceRef)?.sourceRef || null;
+  }
+
+  async function openSourceRef() {
+    const ref = activeSourceRef();
+    if (!ref) return;
+    const shell = window.MazzShell;
+    const sourcePane = ref.tabId && shell?.paneTree?.paneOfTab?.(ref.tabId);
+    const existing = sourcePane?.tabs?.get?.(ref.tabId) || (ref.tabId && shell?.tabs?.get?.(ref.tabId));
+    if (existing) {
+      if (sourcePane) shell.paneTree.setActive(sourcePane);
+      (sourcePane?.tabs || shell.tabs).activate(ref.tabId);
+    }
+    else if (ref.filePath) await window.MazzCommands?.execute('file.openPath', { path: ref.filePath });
+    else { toast('源文档标签已关闭，且尚未保存到磁盘'); return; }
+    setTimeout(() => {
+      const allTabs = shell?.paneTree?.leaves?.().flatMap(leaf => leaf.tabs.tabs) || shell?.tabs?.tabs || [];
+      const tab = (ref.filePath && allTabs.find(t => t.filePath === ref.filePath)) || (ref.tabId && allTabs.find(t => t.id === ref.tabId));
+      const registry = window.MazzModulesReal || window.MazzModules;
+      const inst = tab && registry?.instances?.get(tab.id);
+      if (inst && ref.selection) inst.def.applyProgress?.(ref.selection, inst.state);
+    }, 80);
+  }
+  sourceHook.addEventListener('click', (event) => { event.stopPropagation(); openSourceRef(); });
   ctl.mutate = (fn) => mutate(fn); // deals 命令统一走撤销登记
   ctl.mmStatus = 'normal'; // 状态机单字段（mm-present：normal|present+rollback）
   ctl.setCam = () => { viewport.setAttribute('transform', `translate(${ctl.cam.x},${ctl.cam.y}) scale(${ctl.cam.k})`); drawLinkLayer(ctl._lastLinkStrokes || [], !!shVirtual); }; // 镜头动画统一口（canvas 层随帧）
@@ -215,6 +245,9 @@ function createMindmap(container) {
   function countAll(roots) { let n = 0; for (const r of (Array.isArray(roots) ? roots : [roots])) { (function w(x) { n++; for (const c of x.children) w(c); })(r); } return n; }
 
   function render() {
+    const sourceRef = activeSourceRef();
+    sourceHook.hidden = !sourceRef;
+    sourceHook.querySelector('.mm-source-hook-label').textContent = sourceRef ? `来源：${sourceRef.title || '文档'}` : '';
     const L = layout(ctl.doc.roots, ctl.doc.mode);
     ctl.boxes = L.boxes;
     ctl.layoutInfo = { width: L.width, height: L.height };
@@ -2494,6 +2527,36 @@ function createMindmap(container) {
   return ctl;
 }
 
+/** W62d：列出所有仍在会话中的导图及其最后选中节点，供文档页跨标签嫁接。 */
+export function listDistillGraftTargets() {
+  const shell = window.MazzShell;
+  const out = [];
+  for (const [container, ctl] of instances) {
+    const node = ctl.selectedNode?.();
+    if (!node) continue;
+    const tabId = shell?.containerTab?.get?.(container);
+    const tab = tabId && (shell?.paneTree?.paneOfTab?.(tabId)?.tabs?.get?.(tabId) || shell?.tabs?.get?.(tabId));
+    if (tabId) out.push({ tabId, title: tab?.title || '思维导图', nodeId: node.id, nodeText: node.text || '未命名节点' });
+  }
+  return out;
+}
+
+/** W62d：把经无损契约验证的森林嫁接到目标导图当前选中节点。 */
+export function graftDistillRoots(tabId, roots) {
+  const registry = window.MazzModulesReal || window.MazzModules;
+  const inst = registry?.instances?.get(tabId);
+  const ctl = inst?.name === MODULE ? inst.state : null;
+  const target = ctl?.selectedNode?.();
+  if (!target) throw new Error('目标导图没有已选节点');
+  const forest = Array.isArray(roots) ? roots : [];
+  if (!forest.length) throw new Error('没有可嫁接的节点');
+  ctl.mutate(() => target.children.push(...forest));
+  ctl.selected = forest[0].id;
+  ctl.render();
+  window.MazzHost?.notifyChange(ctl.container);
+  return { targetId: target.id, appended: forest.length };
+}
+
 export default {
   displayName: '思维导图',
   icon: '🧠',
@@ -2502,7 +2565,8 @@ export default {
   create(container) {
     const ctl = createMindmap(container);
     instances.set(container, ctl);
-    return { container };
+    // W62d 顺手归正军规：state 必须就是 ctl，跨模块嫁接才能拿到稳定实例本体。
+    return ctl;
   },
   activate(container) {
     const ctl = instances.get(container);
