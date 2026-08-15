@@ -1,6 +1,6 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.10
+> 版本：v2.11
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
@@ -1135,7 +1135,7 @@ W71 只验证已经落地的 W68 主链；不得借本索引实施下一代 Fact
 
 ### C. Design Capsule Index
 
-W64、W70，以及 Asset/Capability/Civilization、Relation Retrieval/Multi-parent、Workspace Event Ledger / 个人工作运行史等设计只保存摘要、权威来源和未来波次映射。W69 已新增 [`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)，将旧 Hub/模板市场升格为 Publication/World/Charts/Content Fabric 四柱的 Local-first Content Network，并拆为 W69a–W69i；它仍是 Post-W71 Design Capsule。W71 不把任何 Design Capsule 当仓库实现。
+W64、W70，以及 Asset/Capability/Civilization、Relation Retrieval/Multi-parent、Workspace Event Ledger / 个人工作运行史等设计只保存摘要、权威来源和未来波次映射。W69 已由 [`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) v1.1 升格为 Factory/World/Charts/Transparent AI Production Market/P2P 五柱、Publication 贯穿的 Local-first Content Network，并拆为 W69a–W69l；它仍是 Post-W71 Design Capsule。W73 持有本地 Production Run 事实，W69 只消费显式公共证据投影；W71 不把任何 Design Capsule 当仓库实现。
 
 ### D. Discussion-stage Candidates
 
@@ -1159,7 +1159,7 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 同理，Post-W71 OSS Research Reserve 的全文入库不等于任何外部依赖已经获准。W71 期间禁止据此引入 daemon、native dependency、OCR/LLM 权重、图数据库、向量库或新的后台采集器。
 
-同步/桌面性能研究与 W69 Local-first Content Network Design Capsule 的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hub 服务、账号系统、公共 Seed、World runtime、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究或架构材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
+同步/桌面性能研究与 W69 Local-first Content Network Design Capsule 的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hub 服务、账号系统、公共 Seed、World runtime、Production Record 公共服务、AI 排行榜、AUTO Router、AI Challenge、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究或架构材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
 
 ---
 

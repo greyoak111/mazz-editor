@@ -17,4 +17,4 @@
 
 | 资产 | 状态 | 工作流入口 | 边界 |
 |---|---|---|---|
-| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **Design Capsule 已冻结；W69a–W69i 已拆波，未施工** | W69a Publication Contract → Hub Joints → Charts → Local Publish → Content Fabric → World Network | W71 内完全冻结；Hub 不拥有本地真相，Publication 不等于 URL，Canon/Popularity/Permission 分离，不建 Universal DB |
+| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **v1.1 Design Capsule 已冻结；W69a–W69l 已拆波，未施工** | Publication → Hub/Charts/Publish → Content Fabric/World → Production Record → Transparent AI Market/Router | W71 内完全冻结；Hub 不拥有本地或生产真相，Publication 不等于 URL，Canon/Popularity/Quality/Permission 分离，不建 Overall Score 或 Universal DB |
