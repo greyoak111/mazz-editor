@@ -6,7 +6,7 @@ import path from 'node:path';
 
 const capsulePath = path.resolve('docs/plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md');
 const capsule = fs.readFileSync(capsulePath, 'utf8');
-const workflowCapsule = fs.readFileSync(path.resolve('docs/plans/W82_INDUSTRY_WORKFLOW_COMPILER.md'), 'utf8');
+const workflowCapsule = fs.readFileSync(path.resolve('docs/plans/W82_ORGANIZATIONAL_COMPILER.md'), 'utf8');
 const planIndex = fs.readFileSync(path.resolve('docs/plans/README.md'), 'utf8');
 const w71Spec = fs.readFileSync(path.resolve('docs/engineering/W71_FINAL_CONVERGENCE_EXECUTION_SPEC.md'), 'utf8');
 
@@ -15,9 +15,10 @@ describe('W69 Local-first Content Network architecture intake', () => {
     assert.ok(capsule.includes('089FD81DDFC5F07829199F9A7DCA6250E4AC902E1E92F4FEFDAD46EF15837195'));
     assert.ok(capsule.includes('E5DAF440261A56AAE97EF99B8453298D1D76D0205A0D9C4A90A27AA0E2A2D127'));
     assert.ok(capsule.includes('92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679'));
+    assert.ok(capsule.includes('EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E'));
     assert.ok(capsule.includes('DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION'));
     assert.ok(planIndex.includes('W69a–W69m 已拆波，未施工'));
-    assert.ok(planIndex.includes('W82a–W82e 未施工'));
+    assert.ok(planIndex.includes('W82a–W82h 未施工'));
   });
 
   test('three-plane truth boundary and portable publication identity remain intact', () => {
@@ -45,13 +46,14 @@ describe('W69 Local-first Content Network architecture intake', () => {
     assert.ok(capsule.indexOf('### W69a —') < capsule.indexOf('### W69m —'));
   });
 
-  test('all four hard validation samples and origin fallback remain mandatory', () => {
+  test('all five hard validation samples and origin fallback remain mandatory', () => {
     assert.ok(capsule.includes('Content Fabric Sample A'));
     assert.ok(capsule.includes('World Network Sample B'));
     assert.ok(capsule.includes('Production Market Sample C'));
-    assert.ok(capsule.includes('Industry Workflow Sample D'));
+    assert.ok(capsule.includes('Media Workflow Sample D'));
+    assert.ok(capsule.includes('Organizational Invariance Sample E'));
     assert.ok(capsule.includes('Origin fallback'));
-    assert.ok(capsule.includes('A/B/C/D 未全部跑通，不得宣称六柱闭环完成'));
+    assert.ok(capsule.includes('A/B/C/D/E 未全部跑通，不得宣称六柱闭环完成'));
   });
 
   test('production records remain local truth and public evidence stays reversible', () => {
@@ -74,19 +76,29 @@ describe('W69 Local-first Content Network architecture intake', () => {
     assert.ok(capsule.includes('Canon Merge 提升事实而不吞并 Branch'));
   });
 
-  test('industry workflow compiler is local infrastructure while W69m is only its public projection', () => {
+  test('organizational compiler is local infrastructure while W69m is only its public projection', () => {
     assert.ok(workflowCapsule.includes('W82 / Local Mazz'));
     assert.ok(workflowCapsule.includes('W69 / MazzHub'));
     assert.ok(workflowCapsule.includes('W69m 是 W82 的公共投影，不是第二个 Compiler 或 Factory Runtime'));
     assert.ok(capsule.includes('W69 只承担 Workflow Publication、发现、Fork、透明市场视图'));
   });
 
-  test('workflow package compiles proven industry handoffs without conflating seats and executors', () => {
-    for (const mapping of ['传统岗位       → Seat', '交接物         → Artifact Contract', '审批环节       → Gate', '行业 SOP       → Workflow Package']) {
+  test('workflow package compiles proven organizational boundaries without conflating seats and executors', () => {
+    for (const mapping of ['职业 / 岗位          → Seat', '交接物               → Artifact Contract', '质检 / 审稿 / Review → Gate / Reviewer', '行业 SOP             → Workflow Package']) {
       assert.ok(workflowCapsule.includes(mapping), `missing workflow mapping: ${mapping}`);
     }
     assert.ok(workflowCapsule.includes('Seat != Model'));
     assert.ok(workflowCapsule.includes('为动画重造 NLE / 为游戏重造 Engine / 为音频重造 DAW'));
+  });
+
+  test('organization archaeology removes historical friction and cross-domain proof is mandatory', () => {
+    assert.ok(workflowCapsule.includes('Compile the invariant structure of production'));
+    assert.ok(workflowCapsule.includes('管边界，不管手脚'));
+    assert.ok(workflowCapsule.includes('能证明的不推理，能计算的不生成'));
+    assert.ok(workflowCapsule.includes('W82b — Software Release Organization Slice'));
+    assert.ok(workflowCapsule.includes('W82c — Research / Evidence Organization Slice'));
+    assert.ok(workflowCapsule.includes('Hard Validation Sample E — Cross-domain invariance'));
+    assert.ok(workflowCapsule.includes('Sample E 未通过，不得使用“Organizational Compiler”'));
   });
 
   test('sample D requires mixed execution, local repair and safe workflow publication', () => {
@@ -98,7 +110,7 @@ describe('W69 Local-first Content Network architecture intake', () => {
 
   test('W71 freezes W69 runtime and keeps adjacent scopes distinct', () => {
     assert.ok(w71Spec.includes('W69a–W69m'));
-    assert.ok(w71Spec.includes('W82_INDUSTRY_WORKFLOW_COMPILER.md'));
+    assert.ok(w71Spec.includes('W82_ORGANIZATIONAL_COMPILER.md'));
     assert.ok(w71Spec.includes('不批准 W63–W82'));
     assert.ok(w71Spec.includes('公开 Comment/Danmaku Event Feed、人类多人 P2P 共看 Room 与 W64 AI 陪看三者明确分离'));
     assert.ok(w71Spec.includes('Hub 服务、账号系统、公共 Seed、World runtime'));

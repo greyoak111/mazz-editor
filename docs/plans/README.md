@@ -17,5 +17,5 @@
 
 | 资产 | 状态 | 工作流入口 | 边界 |
 |---|---|---|---|
-| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **v1.2 Design Capsule 已冻结；W69a–W69m 已拆波，未施工** | Publication → Hub/Charts/Publish → Content Fabric/World → AI Market → Workflow Publication | W71 内完全冻结；Hub 不拥有本地、生产或 Workflow 真相，Publication 不等于 URL，不建 Overall Score 或 Universal DB |
-| [W82 Industry Workflow Compiler](./W82_INDUSTRY_WORKFLOW_COMPILER.md) | **v0.1 Design Capsule 已登记；W82a–W82e 未施工** | Industry SOP → Workflow Package → Compiler → Factory/Capability → Artifact/Final → W69m | 不建设动画/游戏引擎或超级 Agent；Seat 不等于 Model，Hub 不执行本地 Workflow，Sample D 未通过不得宣称“灵感到动画”落地 |
+| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **v1.3 Design Capsule 已冻结；W69a–W69m 已拆波，未施工** | Publication → Hub/Charts/Publish → Content Fabric/World → AI Market → Workflow Publication | W71 内完全冻结；Hub 不拥有本地、生产或 Workflow 真相，Publication 不等于 URL，不建 Overall Score 或 Universal DB |
+| [W82 Organizational Compiler](./W82_ORGANIZATIONAL_COMPILER.md) | **v0.2 Design Capsule 已登记；W82a–W82h 未施工** | Goal/Constraints/Assets/Method/Budget → Organization Archaeology → Workflow Package → Compiler → W73 Runtime → Product/Record → W69m | 编译组织不变量而非照抄 org chart；Seat 不等于 Model；不重造行业软件，Hub 不执行本地 Workflow；Sample D/E 未通过不得宣称跨行业组织编译成立 |

@@ -3,11 +3,12 @@
 ### World Branch Governance × Transparent AI Production Market
 
 > 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
-> 版本：v1.2
+> 版本：v1.3
 > 登记日期：2026-08-15
 > 基础材料：维护者《MazzHub 内容生态升格纲要》，SHA-256 `089FD81DDFC5F07829199F9A7DCA6250E4AC902E1E92F4FEFDAD46EF15837195`
 > 增量材料：维护者《World Branch Governance × Transparent AI Production Market》，SHA-256 `E5DAF440261A56AAE97EF99B8453298D1D76D0205A0D9C4A90A27AA0E2A2D127`
 > 第二增量：维护者《Media Production Workflows / Industry Workflow Compiler》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
+> 第三增量：维护者《Production Organization Compiler / Organizational Compiler》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
 
 ## 0. 升格结论
@@ -32,7 +33,7 @@ P2P / HTTP / LAN / NAS / VPS 是路。
 ```text
 Factory                生产能力
 World                  可共享、可继续生长的上下文
-Media Workflows        可执行的行业生产线
+Production Workflows   可执行的生产组织
 Charts                 透明公共内容发现
 AI Production Market   可审计的 AI 劳动履历与派工视图
 P2P Content Fabric     用户节点参与的混合内容分发
@@ -159,7 +160,7 @@ WorkflowPackage / WorkflowPublication / WorkflowRun
 
 Workflow Package 是 W82 本地一等资产，表达 Inputs、Seats、Artifact Contracts、Gates、Routing Policies、Capability requirements、版本、许可证和 provenance。Workflow Publication 是其经显式 Promotion 后的公共投影。
 
-Hub 可以发现、检查、收藏和 Fork Workflow Publication，但不得执行本地 Workflow、读取私有 World/素材/密钥，或成为 Package 与生产工件唯一真相。完整本地语义见 [`W82_INDUSTRY_WORKFLOW_COMPILER.md`](./W82_INDUSTRY_WORKFLOW_COMPILER.md)。
+Hub 可以发现、检查、收藏和 Fork Workflow Publication，但不得执行本地 Workflow、读取私有 Project/World/Repository/数据/素材/密钥，或成为 Package 与生产工件唯一真相。完整本地语义见 [`W82_ORGANIZATIONAL_COMPILER.md`](./W82_ORGANIZATIONAL_COMPILER.md)。
 
 ## 3. 成熟内容站的公共关节
 
@@ -303,7 +304,7 @@ Factory Run
 
 ```text
 Worker = Model × Provider × Harness × Seat × Governance
-       × Domain × World Type × Task Type × Budget × Time
+       × Domain × Workflow × Project Context × Task Type × Budget × Time
 ```
 
 `Model != Worker`，`Provider != Harness`，`Model != Seat`。排行榜不物化这个巨型张量为一个永久总分，而是对带版本和上下文的真实记录做查询。
@@ -312,7 +313,7 @@ Production Run 最小审计链：
 
 ```text
 identity      runId / timestamp
-context       worldId / worldVersion / branchId / taskType
+context       domain / workflowVersion / projectContext / world? / taskType
 organization  seat / harness / governance
 executor      model / provider / version
 constraints   canonLocks / rules / inputArtifacts
@@ -326,7 +327,7 @@ downstream    authorSignals? / audienceSignals? / canonMergeResult?
 
 ```text
 Ranking → Metric → Sample Set → Production Run → Task
-→ World/Version/Canon Locks → Input → Harness/Seat/Model
+→ Project/World/Version/Locks → Input → Harness/Seat/Model
 → Output → Machine/Reviewer Verdict → Revision → Human Decision
 → Publication / Author / Audience / Canon outcome
 ```
@@ -346,23 +347,24 @@ Ranking Formula 必须公开、版本化、带 effective date，并允许按旧�
 
 Factory Router 可以提供 `AUTO`，但必须显示：
 
-- 同类 World/Seat 样本数、置信度与版本窗口；
+- 同类 Domain/Workflow/Project Context/Seat 样本数、置信度与版本窗口；
 - Canon violation、质量、成本、延迟和趋势；
 - 推荐与备选的可量化差异；
 - 用户接受、换 Worker、改权重、禁 Provider、锁模型的控制权。
 
 团队榜优先观察 Complementarity、Error Correlation、Detection Coverage、Governance Uplift 与 Final Landed Quality。两个单项第一不自动组成最佳团队。
 
-World 可以具有 Evaluation Value，但 Benchmark 只能从真实生产中涌现：`Benchmark Emerges From Production`。不得为刷榜把创作世界改造成固定考试集。AI Challenge 可以同时成为 Publication、Community Event 与匿名盲评样本，但 Challenge Winner、AI Rank、Factory Pass 均不自动成为 Canon。
+Project Context 可以具有 Evaluation Value，内容领域中的 World 是其中一种；Benchmark 只能从真实生产中涌现：`Benchmark Emerges From Production`。不得为刷榜污染创作世界、代码仓库、研究语料或真实生产线。AI Challenge 可以同时成为 Publication、Community Event 与匿名盲评样本，但 Challenge Winner、AI Rank、Factory Pass 均不自动成为 Canon 或生产签发。
 
 ### 4.6 双自增强环与权力拓扑
 
-六柱不是并列功能，而是两个在 Hub 汇合的闭环；Media Workflow 位于 World 与 Factory 的可复用编排层：
+六柱不是并列功能，而是两个在 Hub 汇合的闭环；Production Workflow 位于 Intent/Project Context 与 Factory 的可复用组织层：
 
 ```text
 Production Loop
-World → Media Workflow → Factory → Production Records → AI Market / Router
-      → Better Production → Publication / Branch → Richer World
+Intent / Project Context → Production Workflow → Factory
+→ Production Records → AI Market / Router → Better Production
+→ Publication / Decision / Release / Branch → richer local context
 
 Distribution Loop
 Publication → Audience → Mazz Nodes → P2P Seed / Cache
@@ -371,18 +373,19 @@ Publication → Audience → Mazz Nodes → P2P Seed / Cache
 
 增长不能消灭权力边界：Root Author 持有 Canon Authority，Derivative Creator 持有 Branch Authority，Audience 持有 Attention Authority，MazzHub 负责公开发现规则，Charts 负责公共测量，Factory 负责生产治理，AI Worker 负责执行，Peers 负责复制/分发，User 始终持有本地资产。
 
-### 4.7 Media Production Workflows：行业生产组织的公共接口
+### 4.7 Production Organization Workflows：生产组织的公共接口
 
-第六柱不等于“AI 一键生成动画/游戏”。W82 把传统行业的岗位、职责、交接物、审批与工具编译为 Seat、Policy、Artifact Contract、Gate、Capability/Executor 和 Factory Runtime 计划；W69 只承担 Workflow Publication、发现、Fork、透明市场视图和回到本地前的权限/兼容性入口。
+第六柱不等于“AI 一键生成动画/游戏”，媒体只是首个可见 acceptance domain。W82 通过组织考古把历史生产结构中的必要岗位、职责、权力分离、交接物、审批、恢复与工具编译为 Team、Seat、Policy、Artifact Contract、Gate、Authority、Capability/Executor 和 Execution Plan；W73 才持有 Factory Runtime 与 ProductionRun。W69 只承担 Workflow Publication、发现、Fork、透明市场视图和回到本地前的权限/兼容性入口。
 
 ```text
-Idea → World → Industry Workflow → Factory
-     → Artifact / Finished Work → Publication
-     → Hub / Charts / P2P / Audience / Fork
-     → World / Workflow / Factory feedback
+Goal + Constraints + Assets + Method + Budget
+→ Organizational Compiler → Factory
+→ Artifact / Finished Product / Production Record
+→ optional Promotion → Hub / Charts / Market / Fork
+→ Workflow / Router / Factory feedback
 ```
 
-公共 Workflow 页面必须允许查看版本、Inputs、Seat/Artifact/Gate 图、目标成品、许可证、Capability requirements、成本/耗时区间和真实生产证据。Fork Workflow 只产生新本地 Package，不自动复制私有素材、修改原 Package 或取得原作者 Canon 权。
+公共 Workflow 页面必须允许查看版本、Inputs、组织考古说明、Team/Seat/Artifact/Gate/Authority 图、目标交付物、风险级别、许可证、Capability requirements、成本/耗时区间和真实生产证据。Fork Workflow 只产生新本地 Package，不自动复制私有项目、仓库、数据、素材，不能修改原 Package，也不能取得 Canon、生产发布、法律或财务签发权。
 
 ## 5. World Branch Governance
 
@@ -475,10 +478,10 @@ Canon Merge 提升事实而不吞并 Branch。一个 Fact 被 Partial Merge 只�
 | W75/W78 Anchor/Evidence | 评论、弹幕、引用的稳定地址 | Chunk 不成为内容本体 |
 | W76 Node/Placement | Collection/World/Branch 多重组织前件 | 不复制 Publication 本体 |
 | W77 Relation Promotion | Branch/Canon 关系证据与升格前件 | 推断关系不直接成为 Canon |
-| W79 External Tool | Workflow 使用 Blender/FFmpeg/engine/CLI 等结构化 Capability | Hub 不执行工具，W69/W82 不克隆外部 UI 或揉入外部源码 |
+| W79 External Tool | Workflow 使用 Blender/FFmpeg/compiler/statistics/engine/CLI 等结构化 Capability | Hub 不执行工具，W69/W82 不克隆外部 UI 或揉入外部源码 |
 | W80 Civilization Model | 未来可生成/验证 World 事实 | World Package 不依赖 W80 才能存在 |
 | W81 Event Ledger | 私有个人工作运行史，可为本地 Factory 提供只读证据 | 不替代 Production Run Ledger，不把个人行为默认投影到 Hub |
-| W82 Industry Workflow Compiler | 本地 Workflow Package、Compiler、Artifact DAG 与垂直生产线 | W69 只持有 Workflow Publication/Market，不另造 Compiler/Factory Runtime |
+| W82 Organizational Compiler | 本地组织考古、Workflow Package、Compiler、Artifact DAG、Authority 与跨域垂直生产线 | W69 只持有 Workflow Publication/Market，不另造 Compiler/Factory Runtime 或托管私有生产事实 |
 | 旧 W69 模板市场 | 降为 Publication/Capability 的一个市场与 registry 分支 | 不再代表 W69 全部定位 |
 
 ## 7. W69 分波施工规格
@@ -569,7 +572,7 @@ Public World → Hub Discover → Open in Mazz → Fork
 ### W69j — Production Record Contract & Evidence Projection
 
 - W73 本地冻结 ProductionRun、WorkerProfile、MetricDefinition、RankingFormula、RankingView 的版本契约；
-- Model/Provider/Harness/Seat/Governance/World/Task/Budget/Time 全维上下文在位；
+- Model/Provider/Harness/Seat/Governance/Domain/Workflow/Project Context/World?/Task/Budget/Time 全维上下文在位；
 - Local Record 与 Public Evidence Projection 分离，逐字段同意、脱敏、撤回和导出；
 - 任一公开指标可追到样本、运行、输入约束、工件、审校、人类决定与下游结果；
 - Model/Harness/Formula/Metric/World Canon 均带版本与 effective date。
@@ -579,7 +582,7 @@ Public World → Hub Discover → Open in Mazz → Fork
 ### W69k — Transparent Market Views & Auditable Router
 
 - Production/Author/Audience 三榜分离；Raw/Governed/Final/Dependency 与成本、可靠性、延迟、返工、Canon Compliance 分轴；
-- Factory Amplification Curve、Worker Profile、World × Task × Worker Compatibility；
+- Factory Amplification Curve、Worker Profile、Domain × Workflow × Project Context × Seat × Worker Compatibility；
 - 公式公开、版本化、可改权重，提供 Pareto Frontiers 而非单一总榜；
 - AUTO Router 给出样本量、置信度、推荐理由、备选差异和版本窗口；
 - 用户可换 Worker、改权重、禁 Provider、锁模型，Router 不越权执行 Canon 决策。
@@ -589,7 +592,7 @@ Public World → Hub Discover → Open in Mazz → Fork
 ### W69l — Team Market, World Staffing & Challenge
 
 - TeamProfile 记录互补性、错误相关、检测覆盖、治理增益与最终落地质量；
-- World-specific Staffing 按 Architecture/Expansion/Voice/Review/Canon Audit/Media Adaptation 等 Seat 推荐；
+- Context-specific Staffing 按 Architecture/Development/Analysis/Voice/Review/Security/Canon Audit/Media Adaptation 等 Seat 推荐；
 - World Evaluation Value 只从真实生产涌现，不为 benchmark 污染创作世界；
 - AI Challenge 支持真实 World Task、匿名盲评、揭榜与细粒度 adoption/merge 信号；
 - Challenge Winner、Audience #1、AI #1、Factory Pass 均不自动 Canon。
@@ -600,28 +603,29 @@ Public World → Hub Discover → Open in Mazz → Fork
 
 - W82 Local Workflow Package → W74c Promotion → Workflow Publication；
 - Hub Workflow Page、搜索/收藏/Fork、版本/许可证/兼容性与 migration preview；
-- Workflow/Team/成本/质量/返工/交付时间的透明市场视图；
+- Workflow/Team/Seat/成本/质量/返工/交付时间的跨行业透明市场视图；
 - Fork 回本地后先做 Capability、权限、许可证与缺件检查，再由 W82 编译；
 - Official Workflow 不默认加权，热门 Fork 不覆盖原 Package。
 
-依赖：W82a/e、W69a/b/c/j/k 与 W74c。退出 Gate：公共包可被另一台 Mazz 检查、Fork、迁移预览和重新编译，同时不泄露原项目私有资产、密钥或本机路径。
+依赖：W82a/g、W69a/b/c/j/k 与 W74c。退出 Gate：公共包可被另一台 Mazz 检查、Fork、迁移预览和重新编译，同时不泄露原项目私有资产、仓库、数据、密钥或本机路径。
 
-## 8. 四个 Hard Validation Samples
+## 8. 五个 Hard Validation Samples
 
-W69 不能以页面数量结案。必须跑通四个端到端样本：
+W69 不能以页面数量结案。必须跑通五个端到端样本：
 
 1. **Content Fabric Sample A**：证明内容身份、Hub 发现、HTTP/P2P 混合取件、本地缓存与 Seed、Origin fallback；
 2. **World Network Sample B**：证明公开 World 可进入本地、Fork、Factory 生产、Branch 发布与 Canon Partial Merge；
 3. **Production Market Sample C**：同一真实 World Task 在不同 Governance 下产生本地记录，经显式投影形成可重算榜单；AUTO Router 显示证据与备选，用户覆盖后继续生产，且任何排名、盲评或 Factory Pass 都不能自动改变 Canon；
-4. **Industry Workflow Sample D**：Existing World + Idea 编译为动画短片 Workflow，由 Model/Agent/Tool/Human 混合执行；单镜头 Gate 失败后只重做受影响分支，产出 master 与完整账本，再将成品和 Workflow 分别 Promotion，另一用户可安全 Fork 并在本地重编译。
+4. **Media Workflow Sample D**：Existing World + Idea 编译为动画短片 Workflow，由 Model/Agent/Tool/Human 混合执行；单镜头 Gate 失败后只重做受影响分支，产出 master 与完整账本，再将成品和 Workflow 分别 Promotion，另一用户可安全 Fork 并在本地重编译；
+5. **Organizational Invariance Sample E**：同一 W82 Kernel 分别编译软件 Release 与研究报告组织；开发者不能自批发布，分析者不能自证方法，确定性工具不被模型替代；两个 Workflow 的公开投影可按 Seat/Context 重算 Worker 表现，但不能形成脱离上下文的跨行业总分。
 
-A 证明 Content Fabric，B 证明 World Network，C 证明 Transparent AI Production Market，D 证明 Media Production Workflows。对应支柱的样本未跑通，不得宣称该支柱成立；A/B/C/D 未全部跑通，不得宣称六柱闭环完成。
+A 证明 Content Fabric，B 证明 World Network，C 证明 Transparent AI Production Market，D 证明媒体 acceptance，E 证明 Organizational Compiler 的跨域不变量。对应支柱的样本未跑通，不得宣称该支柱成立；A/B/C/D/E 未全部跑通，不得宣称六柱闭环完成。
 
 ## 9. 数据、隐私、治理与退出能力
 
 - Public Projection 必须逐项可见、可撤回、可导出；
 - Production Record 默认本地；公开样本必须明确列出输入、约束、工件、成本、审校与下游信号中哪些字段被投影，支持 CSV/JSON/Parquet 等可独立分析格式；
-- Workflow Package、Execution Plan、中间工件和工具日志默认本地；Workflow Publication 不得夹带私有 World、未授权素材、密钥、本机路径或完整运行史；
+- Workflow Package、Execution Plan、中间工件和工具日志默认本地；Workflow Publication 不得夹带私有 Project/World、Repository、数据、未授权素材、密钥、本机路径或完整运行史；
 - 删除 Hub 账号与删除本地资产是不同操作；
 - 评论/弹幕/Reaction 是可审核 Event Feed，不修改 Publication blob；
 - 作者公开衍生许可不等于放弃 Canon Authority；
@@ -654,9 +658,12 @@ A 证明 Content Fabric，B 证明 World Network，C 证明 Transparent AI Produ
 × Benchmark Tasks 取代真实生产
 × Merge = 删除或吞并 Branch
 × Idea → one opaque prompt → finished binary
+× 机械复制传统 org chart / 一个旧岗位 = 一个 Agent
 × Seat = Model / Provider / Harness
 × Hub 执行本地 Workflow Runtime
 × 为动画重造 NLE / 为游戏重造 Engine / 为音频重造 DAW
+× Hub 托管私有生产事实或取得生产/法律/财务签发权
+× 脱离 Seat/Workflow/Governance/Context 制造跨行业 Worker 总分
 × 局部修改默认全项目重跑
 × Universal Graph / Universal DB
 ```
@@ -665,11 +672,11 @@ A 证明 Content Fabric，B 证明 World Network，C 证明 Transparent AI Produ
 
 ## 11. 最终定义
 
-> MazzHub 是建立在本地创作环境之上的公共内容网络：用户可以生产作品、公开作品、分享可继续创作的世界与可复用行业生产线，让其他用户消费、Fork、衍生和再发布；W82 将人类内容工业的岗位、交接和 Gate 编译为本地 Factory Workflow，Charts 与 AI Production Market 提供透明发现、评价和派工，原作者保留 Canon 定义权，P2P 与本地节点共同承担内容分发。
+> MazzHub 是建立在本地工作环境之上的公共内容与方法网络：用户可以生产并公开作品、分享可继续创作的世界与可复用生产组织，让其他用户消费、检查、Fork、衍生和再发布；W82 将人类生产组织中的不变量编译为本地 Factory Workflow，媒体是首个可见验收域，软件、研究等数字生产域用于证明通用性；Charts 与 AI Production Market 提供透明发现、评价和派工，责任主体仍保留 Canon、生产和签发权，P2P 与本地节点共同承担内容分发。
 
 压缩定义：
 
-> 作者定义什么是真的，创作者决定做成什么，Workflow 固化怎么稳定生产，AI 与工具负责劳动，Factory 负责治理，观众决定喜欢什么，排行榜只诚实记录实际结果。
+> 责任主体决定目标与最终签发，Workflow 固化稳定生产所需的边界，Code、Tool、AI、Agent 和 Human 动态上岗，Factory 负责运行治理，市场只诚实投影带上下文的实际结果。
 
 ## 12. 当前停止线
 
@@ -679,4 +686,4 @@ A 证明 Content Fabric，B 证明 World Network，C 证明 Transparent AI Produ
 - 在 W71 之外经维护者批准后冻结 W69a Publication Contract ADR；
 - 用纸面 fixture 检查与 W72/W74c 的身份和 Promotion 边界。
 
-未经独立授权不得建设 Hub 服务、账号系统、中心数据库、P2P daemon、公共 Seed、World runtime、Workflow Compiler/Runtime、Production Record 公共服务、排行榜、AUTO Router、AI Challenge、动画/游戏入口或正式市场。
+未经独立授权不得建设 Hub 服务、账号系统、中心数据库、P2P daemon、公共 Seed、World runtime、Organizational Compiler/Factory Runtime、Production Record 公共服务、排行榜、AUTO Router、AI Challenge、软件发布/研究/动画/游戏入口、跨行业 Worker Market 或正式市场。
