@@ -111,6 +111,10 @@ window.mazz.on('panel:push', p => {
     return;
   }
   if (p.type === 'factoryEditSaved') {
+    filePath = p.path || filePath;
+    document.body.dataset.path = filePath;
+    $('#path').textContent = filePath;
+    $('#title').textContent = filePath.split(/[\\/]/).pop() || $('#title').textContent;
     baseline = String(p.content || $('#editor').value); paint(); status('预览已同步 ✓', 'ok');
   }
   if (p.type === 'factoryEditError') status('✗ ' + (p.message || '保存失败'), 'err');

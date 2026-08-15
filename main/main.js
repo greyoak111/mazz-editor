@@ -116,6 +116,7 @@ const BrowserSession = require('./browser-session');
 const TerminalService = require('./terminal');
 const { ResourceLedger } = require('./resource-ledger');
 const { AgentHarnessService } = require('./agent-harness');
+const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
 
 const PROTOCOL = 'mazz';
 
@@ -135,6 +136,8 @@ const store = new Store(path.join(app.getPath('userData'), 'mazz-settings.json')
 
 const bus = new IpcBus();
 const resourceLedger = new ResourceLedger();
+const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
+const factoryAiOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
 const tray = new TrayService({
   windowManager: wm, store,
@@ -218,6 +221,13 @@ function addRecent(filePath) {
 
 // ---------- 白名单通道注册 ----------
 function registerChannels() {
+  const bindFactoryAiOwner = sender => {
+    if (!sender || factoryAiOwners.has(sender)) return String(sender?.id || '');
+    factoryAiOwners.add(sender);
+    const ownerId = String(sender.id || '');
+    sender.once('destroyed', () => factoryAiRequests.cancelOwner(ownerId).catch(() => {}));
+    return ownerId;
+  };
   // —— 文件系统 ——
   bus.handle('fs:readFile', async ({ path: p, encoding }) => fs.readFileSync(p, encoding || 'utf8'));
   bus.handle('fs:readFileBase64', async ({ path: p }) => fs.readFileSync(p).toString('base64'));
@@ -502,24 +512,35 @@ function registerChannels() {
     }
     return '测试响应';
   };
-  bus.handle('factory:aiChat', async ({ baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192 }) => {
-    const mocked = factoryMockReply({ system, user, stream: false });
-    if (mocked != null) return mocked;
-    // messages 直通（多模态：content 数组含 image_url）；否则 system/user 组装
-    const msgs = messages || [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }];
-    const resp = await net.fetch(aiUrl(baseURL), {
-      method: 'POST', headers: aiHeaders(apiKey),
-      body: JSON.stringify({ model, messages: msgs, temperature, max_tokens: maxTokens, stream: false }),
-    });
-    if (!resp.ok) throw new Error(await aiReadError(resp));
-    const data = await resp.json();
-    if (data.error) throw new Error('API 报错：' + String(data.error.message || JSON.stringify(data.error)).slice(0, 300));
-    const text = aiExtractText(data.choices?.[0]?.message);
-    if (!text || !text.trim()) {
-      const fr = data.choices?.[0]?.finish_reason || '未知';
-      throw new Error(`AI 返回为空（finish_reason=${fr}；原始片段：${JSON.stringify(data).slice(0, 200)}）`);
+  bus.handle('factory:aiChat', async ({ requestId, baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192 }, event) => {
+    const req = factoryAiRequests.begin(requestId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, { kind: 'chat', timeoutMs: 180000, model, ownerId: bindFactoryAiOwner(event?.sender) });
+    let outcome = 'completed';
+    try {
+      const mocked = factoryMockReply({ system, user, stream: false });
+      if (mocked != null) return mocked;
+      // messages 直通（多模态：content 数组含 image_url）；否则 system/user 组装
+      const msgs = messages || [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }];
+      const resp = await net.fetch(aiUrl(baseURL), {
+        method: 'POST', headers: aiHeaders(apiKey),
+        body: JSON.stringify({ model, messages: msgs, temperature, max_tokens: maxTokens, stream: false }),
+        signal: req.signal,
+      });
+      if (!resp.ok) throw new Error(await aiReadError(resp));
+      const data = await resp.json();
+      if (data.error) throw new Error('API 报错：' + String(data.error.message || JSON.stringify(data.error)).slice(0, 300));
+      const text = aiExtractText(data.choices?.[0]?.message);
+      if (!text || !text.trim()) {
+        const fr = data.choices?.[0]?.finish_reason || '未知';
+        throw new Error(`AI 返回为空（finish_reason=${fr}；原始片段：${JSON.stringify(data).slice(0, 200)}）`);
+      }
+      return text.trim();
+    } catch (error) {
+      outcome = req.cancelled ? req.cancelReason : 'failed';
+      if (req.cancelled && req.cancelReason !== 'timeout') return null;
+      throw error;
+    } finally {
+      await req.close({ reason: outcome });
     }
-    return text.trim();
   });
   // 模型列表：GET /v1/models（渲染层拉取会被 CORS 拦，主进程代理）
   bus.handle('factory:aiModels', async ({ baseURL, apiKey }) => {
@@ -528,19 +549,25 @@ function registerChannels() {
     if (!resp.ok) throw new Error(await aiReadError(resp));
     return await resp.json();
   });
+  bus.handle('factory:aiCancel', async ({ requestId, reason = 'renderer-cancel' }, event) => ({
+    cancelled: await factoryAiRequests.cancel(requestId, reason, { ownerId: String(event?.sender?.id || '') }),
+  }));
   // 流式：SSE 逐 delta 广播 factory:aiChunk {requestId, delta}，结束推 done，出错推 error
-  bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }) => {
-    const push = (payload) => { if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'factory:aiChunk', { requestId, ...payload }); };
+  bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }, event) => {
+    const req = factoryAiRequests.begin(requestId, { kind: 'stream', timeoutMs: 300000, model, ownerId: bindFactoryAiOwner(event?.sender) });
+    const push = (payload) => { if (!req.cancelled && wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'factory:aiChunk', { requestId, ...payload }); };
+    let outcome = 'completed';
     try {
       const mocked = factoryMockReply({ system, user, stream: true });
       if (mocked != null) {
         const mockDelay = Math.max(0, Math.min(1000, Number(process.env.MAZZ_E2E_FACTORY_DELAY_MS) || 0));
         for (let i = 0; i < mocked.length; i += 120) {
+          if (req.cancelled) break;
           push({ delta: mocked.slice(i, i + 120) });
           if (mockDelay) await new Promise(resolve => setTimeout(resolve, mockDelay));
         }
-        push({ done: true });
-        return { ok: true };
+        if (!req.cancelled) push({ done: true });
+        return { ok: !req.cancelled, cancelled: req.cancelled, reason: req.cancelReason };
       }
       const resp = await net.fetch(aiUrl(baseURL), {
         method: 'POST', headers: aiHeaders(apiKey),
@@ -549,9 +576,11 @@ function registerChannels() {
           messages: [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }],
           temperature, max_tokens: maxTokens, stream: true,
         }),
+        signal: req.signal,
       });
-      if (!resp.ok) { push({ error: await aiReadError(resp) }); return { ok: false }; }
+      if (!resp.ok) throw new Error(await aiReadError(resp));
       const reader = resp.body.getReader();
+      req.attachReader(reader);
       const dec = new TextDecoder('utf-8');
       let buf = '';
       for (;;) {
@@ -574,8 +603,11 @@ function registerChannels() {
       push({ done: true });
       return { ok: true };
     } catch (e) {
-      push({ error: e.message || String(e) });
-      return { ok: false };
+      outcome = req.cancelled ? req.cancelReason : 'failed';
+      if (!req.cancelled) push({ error: e.message || String(e) });
+      return { ok: false, cancelled: req.cancelled, reason: req.cancelReason };
+    } finally {
+      await req.close({ reason: outcome });
     }
   });
 
@@ -1375,6 +1407,7 @@ app.whenReady().then(() => {
     bus, workspace: () => store.get('workspace'), session: browserSess, resourceLedger,
   });
   app.on('before-quit', () => torrentDaemon.destroy().catch(e => console.warn('[torrent] quit cleanup:', e.message)));
+  app.on('before-quit', () => factoryAiRequests.destroy('app-quit').catch(e => console.warn('[factory-ai] quit cleanup:', e.message)));
   const TorrentSites = require('./torrent-sites');
   new TorrentSites({ bus });
 

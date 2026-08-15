@@ -34,7 +34,7 @@ const INVOKE_CHANNELS = new Set([
   'pw:list', 'pw:save', 'pw:delete', 'pw:available',
   'secret:set', 'secret:get',
   'factory:pandocAvailable', 'factory:extractText', 'factory:pandocExport', 'fs:closeAll',
-  'factory:aiChat', 'factory:aiChatStream', 'factory:aiModels',
+  'factory:aiChat', 'factory:aiChatStream', 'factory:aiCancel', 'factory:aiModels',
   'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut',
   'tr:translate', 'tr:getConfig', 'tr:setConfig',
   'sync:identity', 'sync:host', 'sync:stopHost', 'sync:join', 'sync:discover', 'sync:status',

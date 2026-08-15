@@ -80,7 +80,9 @@ export async function scenes76({ app, win, human, scenario, shotDir, fs }) {
     await editor.keyboard.press('Control+S');
     await editor.waitForFunction(() => document.querySelector('#status')?.textContent.includes('预览已同步'), null, { timeout: 8000 });
     await first.waitForFunction(() => document.querySelector('#status')?.textContent.includes('预览已同步') && document.querySelector('#doc')?.textContent.includes('北向洋流观测值已复核'), null, { timeout: 8000 });
-    await human.assert(fs.readFileSync(mdPath, 'utf8').includes('北向洋流观测值已复核'), 'Ctrl+S 必须写回磁盘原文件');
+    const savedPath = await editor.evaluate(() => document.body.dataset.path);
+    await human.assert(fs.readFileSync(savedPath, 'utf8').includes('北向洋流观测值已复核'), 'Ctrl+S 必须写回磁盘实际目标');
+    if (savedPath !== mdPath) await human.assert(/补遗-\d{14}\.md$/i.test(savedPath), 'W68 封存正文只能另立带时间戳补遗');
     const revision = await human.evaluate(() => {
       const fp = window.MazzShell.sideDock.factoryPanel;
       const index = fp.tasks.findIndex(t => t.manualRevision?.count);

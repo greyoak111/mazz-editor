@@ -268,22 +268,85 @@ async function routedConfig(cfg, role = '') {
   return resolved;
 }
 
-export async function chat({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192 }) {
+function aiRequestId(prefix = 'ai') {
+  return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function abortError(reason = 'AI 请求已取消') {
+  const error = new Error(String(reason || 'AI 请求已取消'));
+  error.name = 'AbortError';
+  return error;
+}
+
+function cancelRemote(requestId, reason) {
+  return window.mazz?.invoke?.('factory:aiCancel', { requestId, reason }).catch(() => ({ cancelled: false }));
+}
+
+function invokeCancelable(channel, payload, signal) {
+  if (!signal) return window.mazz.invoke(channel, payload);
+  if (signal.aborted) return Promise.reject(abortError(signal.reason?.message || signal.reason));
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener('abort', onAbort);
+      fn(value);
+    };
+    const onAbort = () => {
+      cancelRemote(payload.requestId, 'renderer-abort');
+      finish(reject, abortError(signal.reason?.message || signal.reason));
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+    window.mazz.invoke(channel, payload).then(
+      value => finish(resolve, value),
+      error => finish(reject, error),
+    );
+  });
+}
+
+function createAbortScope({ signal, timeoutMs, shouldStop } = {}) {
+  const controller = new AbortController();
+  let stopReason = '';
+  const stop = reason => {
+    if (controller.signal.aborted) return;
+    stopReason = String(reason || 'cancelled');
+    try { controller.abort(abortError(stopReason)); } catch { controller.abort(); }
+  };
+  const onAbort = () => stop(signal?.reason?.message || signal?.reason || 'renderer-abort');
+  if (signal?.aborted) onAbort();
+  else signal?.addEventListener?.('abort', onAbort, { once: true });
+  const timer = timeoutMs > 0 ? setTimeout(() => stop('timeout'), timeoutMs) : null;
+  const poll = shouldStop ? setInterval(() => { if (shouldStop()) stop('stopped'); }, 75) : null;
+  return {
+    signal: controller.signal,
+    get stopped() { return stopReason !== 'timeout' && !!stopReason; },
+    stop,
+    cleanup() {
+      if (timer) clearTimeout(timer);
+      if (poll) clearInterval(poll);
+      signal?.removeEventListener?.('abort', onAbort);
+    },
+  };
+}
+
+export async function chat({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, signal }) {
   cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
-    return await window.mazz.invoke('factory:aiChat', {
+    const requestId = aiRequestId('chat');
+    return await invokeCancelable('factory:aiChat', {
+      requestId,
       baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
       system, user, temperature, maxTokens,
-    });
+    }, signal);
   }
-  return await chatDirect({ cfg, system, user, temperature, maxTokens });
+  return await chatDirect({ cfg, system, user, temperature, maxTokens, signal });
 }
 
 /** 网页预览直连（受目标 API CORS 限制，桌面端不走这里） */
-async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 8192 }) {
+async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 8192, signal }) {
   const url = cfg.baseURL.replace(/\/+$/, '') + '/v1/chat/completions';
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 180000);
+  const scope = createAbortScope({ signal, timeoutMs: 180000 });
   try {
     const resp = await fetch(url, {
       method: 'POST',
@@ -298,7 +361,7 @@ async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 81
         max_tokens: maxTokens,
         stream: false,
       }),
-      signal: ctrl.signal,
+      signal: scope.signal,
     });
     if (!resp.ok) {
       const text = await resp.text().catch(() => '');
@@ -315,29 +378,50 @@ async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 81
     }
     return String(content).trim();
   } finally {
-    clearTimeout(timer);
+    scope.cleanup();
   }
 }
 
 /** Chat Completions 流式（SSE）：onChunk 逐 token 回调，返回全文；shouldStop() 返回 true 时中止 */
-export async function chatStream({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop }) {
+export async function chatStream({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
   cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
+    if (signal?.aborted || shouldStop?.()) return '';
     // 主进程代理流式：factory:aiChunk 事件逐 delta 推流
-    const requestId = 'ai' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const requestId = aiRequestId('stream');
     return await new Promise((resolve, reject) => {
       let full = '';
-      const off = window.mazz.on('factory:aiChunk', (payload) => {
+      let settled = false;
+      let off = () => {};
+      let poll = null;
+      const cleanup = () => {
+        off();
+        if (poll) clearInterval(poll);
+        signal?.removeEventListener?.('abort', onAbort);
+      };
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        fn(value);
+      };
+      const stop = reason => {
+        cancelRemote(requestId, reason);
+        finish(resolve, full.trim());
+      };
+      const onAbort = () => stop('renderer-abort');
+      signal?.addEventListener?.('abort', onAbort, { once: true });
+      if (shouldStop) poll = setInterval(() => { if (shouldStop()) stop('task-stop'); }, 75);
+      off = window.mazz.on('factory:aiChunk', (payload) => {
         if (payload?.requestId !== requestId) return;
-        if (payload.error) { off(); reject(new Error(payload.error)); return; }
+        if (payload.error) { finish(reject, new Error(payload.error)); return; }
         if (payload.done) {
-          off();
-          if (!full) reject(new Error('AI 返回为空'));
-          else resolve(full.trim());
+          if (!full) finish(reject, new Error('AI 返回为空'));
+          else finish(resolve, full.trim());
           return;
         }
         if (payload.delta) {
-          if (shouldStop?.()) { off(); resolve(full.trim()); return; }
+          if (signal?.aborted || shouldStop?.()) { stop('task-stop'); return; }
           full += payload.delta;
           onChunk?.(payload.delta, full);
         }
@@ -345,17 +429,24 @@ export async function chatStream({ cfg, role = '', system, user, temperature = 0
       window.mazz.invoke('factory:aiChatStream', {
         requestId, baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
         system, user, temperature, maxTokens,
-      }).catch((e) => { off(); reject(e); });
+      }).then(result => {
+        if (!settled && result?.ok === false) {
+          if (result.cancelled && result.reason !== 'timeout') finish(resolve, full.trim());
+          else if (result.reason === 'timeout') finish(reject, new Error('AI 流式请求超时'));
+          else finish(reject, new Error('AI 流式请求失败'));
+        }
+      }).catch(error => finish(reject, error));
     });
   }
-  return await chatStreamDirect({ cfg, system, user, temperature, maxTokens, onChunk, shouldStop });
+  return await chatStreamDirect({ cfg, system, user, temperature, maxTokens, onChunk, shouldStop, signal });
 }
 
 /** 网页预览直连流式 */
-async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop }) {
+async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
   const url = cfg.baseURL.replace(/\/+$/, '') + '/v1/chat/completions';
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 300000);
+  const scope = createAbortScope({ signal, timeoutMs: 300000, shouldStop });
+  let reader = null;
+  let full = '';
   try {
     const resp = await fetch(url, {
       method: 'POST',
@@ -368,17 +459,17 @@ async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxToken
         ],
         temperature, max_tokens: maxTokens, stream: true,
       }),
-      signal: ctrl.signal,
+      signal: scope.signal,
     });
     if (!resp.ok) {
       const text = await resp.text().catch(() => '');
       throw new Error(`HTTP ${resp.status}：${text.slice(0, 300)}`);
     }
-    const reader = resp.body.getReader();
+    reader = resp.body.getReader();
     const dec = new TextDecoder('utf-8');
-    let buf = '', full = '';
+    let buf = '';
     for (;;) {
-      if (shouldStop?.()) { try { await reader.cancel(); } catch {} break; }
+      if (scope.signal.aborted) break;
       const { done, value } = await reader.read();
       if (done) break;
       buf += dec.decode(value, { stream: true });
@@ -395,10 +486,16 @@ async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxToken
         } catch { /* 半行 JSON 留到下轮 */ }
       }
     }
+    if (scope.stopped) return full.trim();
     if (!full) throw new Error('AI 返回为空');
     return full.trim();
+  } catch (error) {
+    if (scope.stopped) return full.trim();
+    throw error;
   } finally {
-    clearTimeout(timer);
+    if (scope.signal.aborted) { try { await reader?.cancel?.(); } catch {} }
+    try { reader?.releaseLock?.(); } catch {}
+    scope.cleanup();
   }
 }
 

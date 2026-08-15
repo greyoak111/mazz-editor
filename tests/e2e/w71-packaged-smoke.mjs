@@ -23,6 +23,8 @@ try {
       MAZZ_E2E_USER_DATA: userData,
       MAZZ_E2E_WORKSPACE: workspace,
       MAZZ_GPU_MODE: 'safe',
+      MAZZ_E2E_FACTORY_MOCK: '1',
+      MAZZ_E2E_FACTORY_DELAY_MS: '100',
       NODE_ENV: 'test',
     },
     timeout: 120000,
@@ -57,6 +59,7 @@ try {
     let torrentDuring = null;
     let pythonDuring = null;
     let viewerDuring = null;
+    let factoryDuring = null;
     for (let index = 0; index < 20; index++) {
       const term = await window.mazz.invoke('term:create', { id: `w71-packaged-smoke-${index}`, cols: 40, rows: 8 });
       if (term?.error) throw new Error(term.error);
@@ -109,6 +112,18 @@ try {
         const hasViewerInstance = [...(registry?.instances?.values?.() || [])].some(inst => inst.name === 'viewer');
         return !hasViewerInstance && !document.querySelector('.viewer-root') && !window.__activeViewerCtl;
       }, `Viewer 第 ${index + 1} 次关闭后仍有实例、DOM 或活动锚点`);
+
+      const requestId = `w71-packaged-factory-${index}`;
+      const factoryRequest = window.mazz.invoke('factory:aiChatStream', {
+        requestId, baseURL: 'mock://w71-packaged', apiKey: 'local-test-key', model: 'w71-local',
+        user: `Factory lifecycle ${index}`, temperature: 0, maxTokens: 200,
+      });
+      factoryDuring = await waitFor(value => value.byType['factory-ai-request'] === 1,
+        `Factory AI 第 ${index + 1} 次未进入资源账本`);
+      const cancelled = await window.mazz.invoke('factory:aiCancel', { requestId, reason: 'packaged-smoke' });
+      const finished = await factoryRequest;
+      if (!cancelled?.cancelled || !finished?.cancelled) throw new Error(`Factory AI 第 ${index + 1} 次取消未贯通`);
+      await waitFor(value => value.activeCount === baseline.activeCount, `Factory AI 第 ${index + 1} 次取消后未释放`);
     }
     const resources = await window.mazz.invoke('resources:snapshot', { includeReleased: true });
     const adapters = await window.mazz.invoke('harness:adapters');
@@ -127,8 +142,10 @@ try {
       torrentRuntimeObserved: torrentDuring.byType['torrent-client'] === 1 && torrentDuring.byType['torrent-server'] === 1,
       pythonRuntimeObserved: pythonDuring.byType['python-process'] === 1 && pythonDuring.byType['temp-file'] === 1,
       viewerRuntimeObserved: !!viewerDuring?.tabId,
+      factoryRequestObserved: factoryDuring.byType['factory-ai-request'] === 1,
       lifecycleCycles: 20,
       viewerLifecycleCycles: 20,
+      factoryLifecycleCycles: 20,
       releasedResourcesRetained: resources.released?.length || 0,
       adapters: adapters.length,
       sessions: sessions.length,
@@ -136,8 +153,9 @@ try {
   }, { watchedFile: path.join(workspace, 'packaged-smoke.md'), viewerFile: path.join(workspace, 'packaged-viewer.svg') });
   if (!result.title || result.resourceVersion !== 1 || !result.mainWindowObserved || !result.ptyObserved
     || !result.panelObserved || !result.webContentsViewObserved || !result.fileWatcherObserved || !result.torrentRuntimeObserved
-    || !result.pythonRuntimeObserved || !result.viewerRuntimeObserved || result.lifecycleCycles !== 20 || result.viewerLifecycleCycles !== 20
-    || result.releasedResourcesRetained < 140
+    || !result.pythonRuntimeObserved || !result.viewerRuntimeObserved || !result.factoryRequestObserved
+    || result.lifecycleCycles !== 20 || result.viewerLifecycleCycles !== 20 || result.factoryLifecycleCycles !== 20
+    || result.releasedResourcesRetained < 160
     || result.activeResources !== result.baselineResources || result.sessions !== 0) {
     throw new Error(`packaged smoke 断言失败：${JSON.stringify(result)}`);
   }

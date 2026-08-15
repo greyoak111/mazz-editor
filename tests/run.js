@@ -6,6 +6,7 @@ const path = require('path');
 const files = [
   'tests/unit/core.test.mjs',
   'tests/unit/resource-ledger.test.mjs',
+  'tests/unit/factory-ai-requests.test.mjs',
   'tests/unit/formula.test.mjs',
   'tests/contract/module-contract.test.mjs',
   'tests/contract/markdown-roundtrip.test.mjs',
@@ -67,6 +68,7 @@ const files = [
   'tests/contract/w71-native-surface-ledger.test.mjs',
   'tests/contract/w71-lifecycle-security.test.mjs',
   'tests/contract/w71-viewer-lifecycle.test.mjs',
+  'tests/contract/w71-factory-request-lifecycle.test.mjs',
   'tests/contract/w71-native-binary-audit.test.mjs',
   'tests/contract/w71-census.test.mjs',
   'tests/contract/hotfix-w59c.test.mjs',

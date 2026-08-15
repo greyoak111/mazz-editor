@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.7
+> 版本：v2.8
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / Wave 1 Viewer 与 Player 生命周期检查点已落地**
+> 状态：**IN PROGRESS / Wave 1 Factory 请求生命周期检查点已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,7 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W81，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
-8. 后续“继续推进”已完成 Python/DAP 与 Viewer/Player 两个 Wave 1 检查点；只关闭有测试和 packaged 证据的子 Gate，Factory/Agent/多窗/真实媒体设备等未尽项保持 OPEN。
+8. 后续“继续推进”已完成 Python/DAP、Viewer/Player 与 Factory request 三个 Wave 1 检查点；只关闭有测试和 packaged 证据的子 Gate，Agent/多窗/真实媒体设备/worker 等未尽项保持 OPEN。
 
 ---
 
@@ -367,7 +367,7 @@ Panel host follow listener 回收
 
 这些是待验证候选，不得在没有运行态证据时直接宣判为泄漏。
 
-当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。真实媒体设备分支、Factory stream、Monaco worker、Agent 与多窗迁移仍未闭合，详见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
+当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。Factory chat/stream 已接入 caller signal、主进程 request owner、timeout、reader cancellation、renderer-destroy 与 ResourceLedger，并通过 packaged 20 次及 W61b 双路并发实证。真实媒体设备分支、Monaco worker、真实 Agent Adapter 与多窗迁移仍未闭合，详见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md) 与 [`W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
 
 ## 5.2 Data Reliability Contract
 
@@ -949,7 +949,7 @@ RSS / heap / handles / process / webContents / business resources
 
 ## 8.4 生命周期
 
-- Browser、Panel、PTY、P2P、watcher、Viewer 各完成 20 次循环。
+- Browser、Panel、PTY、P2P、watcher、Viewer、Factory request 各完成 20 次循环。
 - 最终业务对象数、webContents、PTY、torrent、watcher 和媒体采集轨回到基线。
 - 三次独立重复运行不存在持续单调增长；RSS 波动若不能归零，必须有稳定平台基线和可解释上界。
 - 应用退出没有遗留 Electron/Node/PTY/torrent 进程。
@@ -975,7 +975,7 @@ RSS / heap / handles / process / webContents / business resources
 
 ## 8.7 自动化
 
-- 当前 125 个 Node 测试文件及 W71 新增测试 100% 通过。
+- 当前统一入口 136 个测试文件 100% 通过。
 - release E2E manifest 必跑场景在 packaged app 100% 通过。
 - 主进程 uncaught、渲染 pageerror、非预期 render-process-gone 和未批准 console error 为 0。
 - 每份结果记录 commit、Windows、Electron、GPU、DPI 和耗时。
@@ -1194,7 +1194,9 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 下一检查点把 PythonKernel 与 DebugService 接入共享 ResourceLedger，关闭 DAP 旧进程退出覆盖新会话、pending timer 残留和初始化失败留进程三类风险；Python 在正式 packaged 程序中完成 20 次真执行/销毁，DAP 完成 20 次替换/停止契约循环。证据见 [`W71_WAVE1_PROCESS_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_PROCESS_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
 
-完整 Wave 0 / Wave 1 Gate 仍未通过：worker/media/Object URL/Factory stream 等资源尚未全部接账，DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0。
+随后完成 Viewer/Player owner 与 Factory request owner 两个检查点：Viewer 和 Factory request 均通过 packaged 20 次；Factory 的非流式/流式请求、timeout、SSE reader、renderer-destroy 与每任务 AbortController 已闭环，W68 补遗路径也完成真机回写。证据见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md) 与 [`W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
+
+完整 Wave 0 / Wave 1 Gate 仍未通过：Monaco worker、真实媒体设备与部分 AudioContext/GIF/transcode 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。
 

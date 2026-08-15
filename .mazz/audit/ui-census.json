@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 209,
-    "scannedLines": 55883
+    "scannedLines": 56037
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -1995,697 +1995,697 @@
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 166,
+        "line": 196,
         "sample": "<button data-a=\"provider\" title=\"AI 服务设置\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 167,
+        "line": 197,
         "sample": "<button data-a=\"newgenre\" title=\"新建创作模板\">${iconHtml('✚')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 172,
+        "line": 202,
         "sample": "<span class=\"fc-project-actions\"><button class=\"fc-btn\" data-a=\"desk\">🏭 智能创作台</button><button class=\"fc-btn fc-accent\" data-a=\"project\">＋ 新建立项</button></span>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 176,
+        "line": 206,
         "sample": "<select class=\"fc-genre\" title=\"创作模板\"></select>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 181,
+        "line": 211,
         "sample": "<div class=\"fc-label\">自由补充 <button class=\"fc-mini\" data-a=\"fill\">${iconHtml('✨')} 智能填充</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 182,
+        "line": 212,
         "sample": "<textarea class=\"fc-dump-text\" rows=\"4\" placeholder=\"补充想法、要求和限制条件，系统会自动整理到对应字段。\"></textarea>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 187,
+        "line": 217,
         "sample": "${FACTORY_LENGTH_PRESETS.map(x => `<button type=\"button\" data-length=\"${x.id}\"><b>${x.label}</b><span>${x.id === 'unlimited' ? '写到手动终止' : (x.totalWords / 10000) + ' 万字'}</span></button>`).join('')}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 190,
+        "line": 220,
         "sample": "<label>总字数 <input class=\"fc-totalwords\" type=\"number\" min=\"1\" step=\"1000\" value=\"${this.lengthPlan.totalWords}\"></label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 192,
+        "line": 222,
         "sample": "<label>每单元 <input class=\"fc-wordsperunit\" type=\"number\" min=\"100\" step=\"100\" value=\"${this.lengthPlan.wordsPerUnit}\"></label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 194,
+        "line": 224,
         "sample": "<label>单元数 <input class=\"fc-maxchapters\" type=\"number\" min=\"0\" max=\"999\" value=\"${this.lengthPlan.maxChapters}\" readonly></label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 196,
+        "line": 226,
         "sample": "<div class=\"fc-length-chips\">${[2000, 4000, 6000, 8000].map(n => `<button type=\"button\" data-words=\"${n}\">${n}</button>`).join('')}</div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 201,
+        "line": 231,
         "sample": "<label class=\"fc-check\" title=\"双循环勘误：生成后自检+修订一轮\"><input type=\"checkbox\" class=\"fc-dualloop\"> 双循环勘误</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 202,
+        "line": 232,
         "sample": "<label class=\"fc-check\" title=\"交叉审校流程\">审校 <select class=\"fc-review-ritual\"><option value=\"light\">标准流程</option><option value=\"full\">完整流程</option></select></label>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 203,
+        "line": 233,
         "sample": "<label class=\"fc-check\" title=\"每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停\">预算 <input type=\"number\" class=\"fc-review-budget\" min=\"8000\" step=\"1000\" value=\"32000\" style=\"width:72px\"> token</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 203,
+        "line": 233,
         "sample": "<label class=\"fc-check\" title=\"每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停\">预算 <input type=\"number\" class=\"fc-review-budget\" min=\"8000\" step=\"1000\" value=\"32000\" style=\"width:72px\"> token</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 204,
+        "line": 234,
         "sample": "<label class=\"fc-check\" title=\"由篇幅档决定是否连写\"><input type=\"checkbox\" class=\"fc-maxmode\" checked> 连写模式</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 205,
+        "line": 235,
         "sample": "<label class=\"fc-check\" title=\"每个任务自动打开独立只读预览窗\"><input type=\"checkbox\" class=\"fc-autopreview\" ${this.autoPreview ? 'checked' : ''}> 生成自动开预览</label>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 206,
+        "line": 236,
         "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 206,
-        "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 207,
-        "sample": "<select class=\"fc-exportfmt\" title=\"内容单元导出格式\">"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 212,
-        "sample": "<div class=\"fc-label\">创作插件（注入蓝图，可多选） <button class=\"fc-mini\" data-a=\"plugcfg\">配置字段</button></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 217,
-        "sample": "<button class=\"fc-mini\" data-a=\"styleup\">上传文件</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 218,
-        "sample": "<button class=\"fc-mini\" data-a=\"styleonline\">在线查询</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 223,
-        "sample": "<div class=\"fc-label\">嵌入资料（最高优先级注入） <button class=\"fc-mini\" data-a=\"embedadd\">添加文件</button></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 229,
-        "sample": "<input class=\"fc-search\" placeholder=\"关键词，回车检索…\" spellcheck=\"false\">"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 230,
-        "sample": "<button class=\"fc-mini\" data-a=\"websearch\">生成来源清单</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 236,
-        "sample": "<button class=\"fc-btn\" data-a=\"copy\" title=\"生成创作模板母版并复制到剪贴板（可粘到任意 AI 对话）\">${iconHtml('📋')} 复制模板母版</button>"
+        "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 237,
-        "sample": "<button class=\"fc-btn fc-accent\" data-a=\"generate\" title=\"调用配置的 AI 直接生成内容进编辑器\">${iconHtml('⚡')} 直接生成</button>"
+        "sample": "<select class=\"fc-exportfmt\" title=\"内容单元导出格式\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 239,
-        "sample": "<button class=\"fc-btn\" data-a=\"addtask\">＋ 加入任务队列</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 244,
-        "sample": "<button class=\"fc-mini\" data-a=\"startsel\">▶ 开始选中</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 245,
-        "sample": "<button class=\"fc-mini\" data-a=\"runall\">▶▶ 全部启动</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 246,
-        "sample": "<button class=\"fc-mini\" data-a=\"stopsel\">■ 停止</button>"
+        "line": 242,
+        "sample": "<div class=\"fc-label\">创作插件（注入蓝图，可多选） <button class=\"fc-mini\" data-a=\"plugcfg\">配置字段</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 247,
-        "sample": "<button class=\"fc-mini\" data-a=\"importcsv\">导入CSV</button>"
+        "sample": "<button class=\"fc-mini\" data-a=\"styleup\">上传文件</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 251,
-        "sample": "<button class=\"fc-mini\" data-a=\"resumesel\">↻ 恢复选中（断点续写）</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 252,
-        "sample": "<button class=\"fc-mini\" data-a=\"delsel\">删除选中</button>"
+        "line": 248,
+        "sample": "<button class=\"fc-mini\" data-a=\"styleonline\">在线查询</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 253,
-        "sample": "<button class=\"fc-mini\" data-a=\"cleardone\">清空完成</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/factory/index.js",
-        "line": 256,
-        "sample": "<div class=\"fc-livewrap\" style=\"display:none\">"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 258,
-        "sample": "<button class=\"fc-mini\" data-a=\"live-edit\">${iconHtml('✎')} 编辑并应用回去</button>"
+        "sample": "<div class=\"fc-label\">嵌入资料（最高优先级注入） <button class=\"fc-mini\" data-a=\"embedadd\">添加文件</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 259,
-        "sample": "<button class=\"fc-mini\" data-a=\"live-open\">在编辑器打开</button>"
+        "sample": "<input class=\"fc-search\" placeholder=\"关键词，回车检索…\" spellcheck=\"false\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 260,
-        "sample": "<button class=\"fc-mini\" data-a=\"live-close\">收起</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/factory/index.js",
-        "line": 262,
-        "sample": "<div class=\"fc-live\" style=\"max-height:220px;overflow-y:auto;border:1px solid var(--bd,#ddd);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.8;white-space:pre-wrap;background:var(--card,#fff)\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/factory/index.js",
-        "line": 263,
-        "sample": "<div class=\"fc-livechaps\" style=\"display:flex;flex-wrap:wrap;gap:4px;margin-top:6px\"></div>"
+        "sample": "<button class=\"fc-mini\" data-a=\"websearch\">生成来源清单</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 273,
-        "sample": "<textarea class=\"fc-agent-input\" rows=\"2\" placeholder=\"下达一项指令；Ctrl+Enter 执行。多步任务会逐步回报，危险操作必须确认。\" spellcheck=\"false\"></textarea>"
+        "line": 266,
+        "sample": "<button class=\"fc-btn\" data-a=\"copy\" title=\"生成创作模板母版并复制到剪贴板（可粘到任意 AI 对话）\">${iconHtml('📋')} 复制模板母版</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 267,
+        "sample": "<button class=\"fc-btn fc-accent\" data-a=\"generate\" title=\"调用配置的 AI 直接生成内容进编辑器\">${iconHtml('⚡')} 直接生成</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 269,
+        "sample": "<button class=\"fc-btn\" data-a=\"addtask\">＋ 加入任务队列</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 274,
-        "sample": "<button class=\"fc-btn fc-accent\" data-a=\"agent-submit\">执行</button>"
+        "sample": "<button class=\"fc-mini\" data-a=\"startsel\">▶ 开始选中</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 279,
-        "sample": "<div class=\"fc-label\">运行日志 <button class=\"fc-mini\" data-a=\"clearlog\">清空</button></div>"
+        "line": 275,
+        "sample": "<button class=\"fc-mini\" data-a=\"runall\">▶▶ 全部启动</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 276,
+        "sample": "<button class=\"fc-mini\" data-a=\"stopsel\">■ 停止</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 277,
+        "sample": "<button class=\"fc-mini\" data-a=\"importcsv\">导入CSV</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 281,
+        "sample": "<button class=\"fc-mini\" data-a=\"resumesel\">↻ 恢复选中（断点续写）</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 282,
+        "sample": "<button class=\"fc-mini\" data-a=\"delsel\">删除选中</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 283,
-        "sample": "<div class=\"fc-label\">历史 <button class=\"fc-mini\" data-a=\"clearhis\">清空</button></div>"
+        "sample": "<button class=\"fc-mini\" data-a=\"cleardone\">清空完成</button>"
       },
       {
-        "rule": "native-form-control",
+        "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 287,
-        "sample": "<button class=\"fc-mini\" data-a=\"mazimport\">导入 .maz 文体包</button>"
+        "line": 286,
+        "sample": "<div class=\"fc-livewrap\" style=\"display:none\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 288,
+        "sample": "<button class=\"fc-mini\" data-a=\"live-edit\">${iconHtml('✎')} 编辑并应用回去</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 289,
+        "sample": "<button class=\"fc-mini\" data-a=\"live-open\">在编辑器打开</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 290,
+        "sample": "<button class=\"fc-mini\" data-a=\"live-close\">收起</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/factory/index.js",
+        "line": 292,
+        "sample": "<div class=\"fc-live\" style=\"max-height:220px;overflow-y:auto;border:1px solid var(--bd,#ddd);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.8;white-space:pre-wrap;background:var(--card,#fff)\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/factory/index.js",
+        "line": 293,
+        "sample": "<div class=\"fc-livechaps\" style=\"display:flex;flex-wrap:wrap;gap:4px;margin-top:6px\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 303,
+        "sample": "<textarea class=\"fc-agent-input\" rows=\"2\" placeholder=\"下达一项指令；Ctrl+Enter 执行。多步任务会逐步回报，危险操作必须确认。\" spellcheck=\"false\"></textarea>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 304,
+        "sample": "<button class=\"fc-btn fc-accent\" data-a=\"agent-submit\">执行</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 309,
+        "sample": "<div class=\"fc-label\">运行日志 <button class=\"fc-mini\" data-a=\"clearlog\">清空</button></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 313,
+        "sample": "<div class=\"fc-label\">历史 <button class=\"fc-mini\" data-a=\"clearhis\">清空</button></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 317,
+        "sample": "<button class=\"fc-mini\" data-a=\"mazimport\">导入 .maz 文体包</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 318,
         "sample": "<button class=\"fc-mini\" data-a=\"mazexport\">导出当前文体 .maz</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 487,
+        "line": 517,
         "sample": "`<button class=\"fc-chip ${this.pluginSel.has(p.id) ? 'on' : ''}\" data-p=\"${p.id}\" title=\"${p.desc}\">${p.name}</button>`).join('');"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 497,
+        "line": 527,
         "sample": "? this.styles.map(s => `<button class=\"fc-chip ${this.styleIds.has(s.id) ? 'on' : ''}\" data-s=\"${s.id}\" title=\"${(s.analysis || s.textPreview || '').slice(0, 120)}\">${s.label}</button>`).join('') +"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 498,
+        "line": 528,
         "sample": "`<button class=\"fc-chip fc-chip-ghost\" data-smgr>管理</button>`"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 533,
+        "line": 563,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-height:60vh;overflow:auto\">${ids.map(id => {"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 539,
+        "line": 569,
         "sample": "? `<select class=\"rb-select\" data-pf=\"${id}::${f.id}\">${f.options.map(o => `<option ${o === (vals[f.id] || f.options[0]) ? 'selected' : ''}>${o}</option>`).join('')}</select>`"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 540,
+        "line": 570,
         "sample": ": `<input class=\"rb-input\" style=\"width:60%\" data-pf=\"${id}::${f.id}\" value=\"${(vals[f.id] || '').replace(/\"/g, '&quot;')}\" placeholder=\"${f.placeholder || ''}\">`}</div>`).join('')}</div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 540,
+        "line": 570,
         "sample": ": `<input class=\"rb-input\" style=\"width:60%\" data-pf=\"${id}::${f.id}\" value=\"${(vals[f.id] || '').replace(/\"/g, '&quot;')}\" placeholder=\"${f.placeholder || ''}\">`}</div>`).join('')}</div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 542,
+        "line": 572,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"pc-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button></div></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 542,
+        "line": 572,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"pc-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button></div></div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 589,
+        "line": 619,
         "sample": "m.body.innerHTML = `<div style=\"min-width:420px;max-height:55vh;overflow:auto\">${this.styles.length ? this.styles.map(s => `"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 591,
+        "line": 621,
         "sample": "<button class=\"fc-mini\" data-del=\"${s.id}\">删除</button></div>`).join('') : '<div class=\"fc-empty\">（暂无素材）</div>'}</div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 621,
+        "line": 651,
         "sample": "? this.embeds.map((e, i) => `<div class=\"fc-embedrow\">${iconHtml('📎')} ${e.name} <span class=\"fc-dim\">${e.text.length}字</span> <button class=\"fc-mini\" data-edelete=\"${i}\">✕</button></div>`).join('')"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 640,
+        "line": 670,
         "sample": "<input type=\"checkbox\" data-research-source=\"${escapeHtml(source.id)}\" ${this.researchSelected.has(source.id) ? 'checked' : ''} ${this.researchResultPath ? 'disabled' : ''}>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 643,
+        "line": 673,
         "sample": "<div class=\"fc-searchrow\"><span class=\"fc-dim\">${escapeHtml(this.researchStatus || '等待人工核准')}</span><button class=\"fc-mini\" data-research-approve ${this.researchResultPath ? 'disabled' : ''}>${this.researchResultPath ? '已投喂 M0' : '核准并投喂 M0'}</button></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 753,
+        "line": 783,
         "sample": "${this.resumables.map((r, i) => `<button class=\"fc-mini\" data-res=\"${i}\" title=\"${r.outDir}\">↻ ${r.title || '未命名'}（第${(r.currentChapter || 0) + 1}章续）</button>`).join('')}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 754,
+        "line": 784,
         "sample": "<button class=\"fc-mini\" data-resclear>忽略全部</button></span></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 958,
+        "line": 987,
         "sample": "return `<div class=\"fc-field\"><label>${f.label}${req}</label><textarea data-f=\"${f.id}\" rows=\"3\" placeholder=\"${f.placeholder || ''}\">${val}</textarea></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 961,
+        "line": 990,
         "sample": "return `<div class=\"fc-field\"><label>${f.label}${req}</label><select data-f=\"${f.id}\">${(f.options || []).map(o => `<option ${o === (f.default || this.values[f.id]) ? 'selected' : ''}>${o}</option>`).join('')}</select></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 964,
+        "line": 993,
         "sample": "return `<div class=\"fc-field\"><label>${f.label}${req}</label><button class=\"fc-mini\" data-filepick=\"${f.id}\">选择文件…</button><span class=\"fc-filename\" data-fname=\"${f.id}\">${this.values[f.id] || ''}</span></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 966,
+        "line": 995,
         "sample": "return `<div class=\"fc-field\"><label>${f.label}${req}</label><input data-f=\"${f.id}\" value=\"${val}\" placeholder=\"${f.placeholder || ''}\" spellcheck=\"false\"></div>`;"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/factory/index.js",
-        "line": 1326,
+        "line": 1366,
         "sample": "skeleton: '骨架与验收点', draft: '扩写稿', polish: '润色记录', machine: '机检报告', point: '对点报告', repair: '修订单',"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 1785,
+        "line": 1831,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--mut,#888);font-size:12px;margin-bottom:4px\">⚡ 第 ${chapterNo} ${unitName}生成中…</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 1814,
+        "line": 1860,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--ok,#3d6b35);font-size:12px;margin-bottom:4px\">✓ 第 ${chapterNo} ${unitName}完成（${text.length} 字）——可直接点「编辑并应用回去」改稿</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 1846,
+        "line": 1892,
         "sample": "<div style=\"font-size:12px;color:var(--acc,#4f46e5);margin-bottom:4px\">✎ 编辑第 ${c.chapterNo} ${unitName}——保存后自动写回文件并重建状态快照</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 1847,
+        "line": 1893,
         "sample": "<textarea class=\"fc-live-edit rb-input\" style=\"width:100%;height:180px;font-size:13px;line-height:1.8\"></textarea>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 1847,
+        "line": 1893,
         "sample": "<textarea class=\"fc-live-edit rb-input\" style=\"width:100%;height:180px;font-size:13px;line-height:1.8\"></textarea>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 1848,
+        "line": 1894,
         "sample": "<div style=\"display:flex;gap:6px;margin-top:6px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 1849,
+        "line": 1895,
         "sample": "<button class=\"fc-mini fc-accent\" data-l=\"save\">💾 保存并应用（重建快照）</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 1850,
+        "line": 1896,
         "sample": "<button class=\"fc-mini\" data-l=\"cancel\">取消</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 1994,
-        "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/factory/index.js",
-        "line": 1994,
+        "line": 2044,
         "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
         "line": 2044,
+        "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/factory/index.js",
+        "line": 2094,
         "sample": "<input type=\"checkbox\" data-i=\"${i}\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2047,
+        "line": 2097,
         "sample": "${t.mode === 'max' && t.doneChapters ? `<button class=\"fc-mini\" data-retry=\"${i}\" title=\"重试某一内容单元/蓝图\">↻</button>` : ''}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2075,
+        "line": 2128,
         "sample": "${h.text ? `<button class=\"fc-mini\" data-open=\"${i}\" title=\"打开\">↗</button>` : ''}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2101,
+        "line": 2154,
         "sample": "<div style=\"min-width:420px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2103,
+        "line": 2156,
         "sample": "<select id=\"pv-preset\" class=\"rb-select\">${PRESETS.map(p => `<option value=\"${p.id}\">${p.name}</option>`).join('')}</select></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2104,
+        "line": 2157,
         "sample": "<div class=\"set-row\"><label>接口地址</label><input id=\"pv-base\" class=\"rb-input\" style=\"width:64%\" value=\"${cfg.baseURL || ''}\" placeholder=\"https://api.deepseek.com\" spellcheck=\"false\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2104,
+        "line": 2157,
         "sample": "<div class=\"set-row\"><label>接口地址</label><input id=\"pv-base\" class=\"rb-input\" style=\"width:64%\" value=\"${cfg.baseURL || ''}\" placeholder=\"https://api.deepseek.com\" spellcheck=\"false\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2106,
+        "line": 2159,
         "sample": "<input id=\"pv-model\" class=\"rb-input\" style=\"width:46%\" value=\"${cfg.model || ''}\" placeholder=\"模型名（可直接编辑）\" spellcheck=\"false\" list=\"pv-models-list\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2106,
+        "line": 2159,
         "sample": "<input id=\"pv-model\" class=\"rb-input\" style=\"width:46%\" value=\"${cfg.model || ''}\" placeholder=\"模型名（可直接编辑）\" spellcheck=\"false\" list=\"pv-models-list\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2107,
+        "line": 2160,
         "sample": "<select id=\"pv-model-sel\" class=\"rb-select\" style=\"max-width:32%\" title=\"模型选单（预置+自动拉取）\"><option value=\"\">选单…</option></select>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2107,
+        "line": 2160,
         "sample": "<select id=\"pv-model-sel\" class=\"rb-select\" style=\"max-width:32%\" title=\"模型选单（预置+自动拉取）\"><option value=\"\">选单…</option></select>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2108,
+        "line": 2161,
         "sample": "<button id=\"pv-fetch\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从端点拉取全部模型（接入一家即自动接入他家全部现有模型）\">拉取</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2108,
+        "line": 2161,
         "sample": "<button id=\"pv-fetch\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从端点拉取全部模型（接入一家即自动接入他家全部现有模型）\">拉取</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2109,
+        "line": 2162,
         "sample": "<div class=\"set-row\"><label>API Key</label><input id=\"pv-key\" class=\"rb-input\" style=\"width:64%\" type=\"password\" value=\"${cfg.apiKey || ''}\" placeholder=\"sk-…（加密存储）\" spellcheck=\"false\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2109,
+        "line": 2162,
         "sample": "<div class=\"set-row\"><label>API Key</label><input id=\"pv-key\" class=\"rb-input\" style=\"width:64%\" type=\"password\" value=\"${cfg.apiKey || ''}\" placeholder=\"sk-…（加密存储）\" spellcheck=\"false\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2110,
+        "line": 2163,
         "sample": "<div style=\"display:flex;gap:8px;justify-content:flex-end;margin-top:12px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2111,
+        "line": 2164,
         "sample": "<button id=\"pv-test\" class=\"rb-btn\" style=\"flex-direction:row\">测试连接</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2111,
+        "line": 2164,
         "sample": "<button id=\"pv-test\" class=\"rb-btn\" style=\"flex-direction:row\">测试连接</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2112,
+        "line": 2165,
         "sample": "<button id=\"pv-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2112,
+        "line": 2165,
         "sample": "<button id=\"pv-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2114,
+        "line": 2167,
         "sample": "<div id=\"pv-status\" style=\"font-size:12px;color:var(--fg-dim);margin-top:8px\">OpenAI 兼容端点均可（DeepSeek / Kimi / OpenAI / 智谱 / Ollama 本地）。Key 经系统加密存储。</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2172,
+        "line": 2225,
         "sample": "<div style=\"min-width:460px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2173,
+        "line": 2226,
         "sample": "<div class=\"set-row\"><label>名称</label><input id=\"ge-name\" class=\"rb-input\" style=\"width:60%\" placeholder=\"护理记录\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2173,
+        "line": 2226,
         "sample": "<div class=\"set-row\"><label>名称</label><input id=\"ge-name\" class=\"rb-input\" style=\"width:60%\" placeholder=\"护理记录\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2174,
+        "line": 2227,
         "sample": "<div class=\"set-row\"><label>描述</label><input id=\"ge-desc\" class=\"rb-input\" style=\"width:60%\" placeholder=\"简短说明\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2174,
+        "line": 2227,
         "sample": "<div class=\"set-row\"><label>描述</label><input id=\"ge-desc\" class=\"rb-input\" style=\"width:60%\" placeholder=\"简短说明\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2175,
+        "line": 2228,
         "sample": "<div style=\"font-size:12.5px;margin:8px 0 4px\">输入字段（每行一个：标签|类型|必填。类型：text/textarea/select）</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2176,
+        "line": 2229,
         "sample": "<textarea id=\"ge-fields\" rows=\"4\" class=\"rb-input\" style=\"width:100%\" spellcheck=\"false\">患者姓名|text|必填"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2176,
+        "line": 2229,
         "sample": "<textarea id=\"ge-fields\" rows=\"4\" class=\"rb-input\" style=\"width:100%\" spellcheck=\"false\">患者姓名|text|必填"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2179,
+        "line": 2232,
         "sample": "<div style=\"font-size:12.5px;margin:8px 0 4px\">系统提示词（角色与文风要求）</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2180,
+        "line": 2233,
         "sample": "<textarea id=\"ge-sys\" rows=\"3\" class=\"rb-input\" style=\"width:100%\" spellcheck=\"false\">你是一名资深…</textarea>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2180,
+        "line": 2233,
         "sample": "<textarea id=\"ge-sys\" rows=\"3\" class=\"rb-input\" style=\"width:100%\" spellcheck=\"false\">你是一名资深…</textarea>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2181,
+        "line": 2234,
         "sample": "<div style=\"font-size:12.5px;margin:8px 0 4px\">质量校验（每行一条：描述|规则:值，如 不少于500字|minLength:500）</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2182,
+        "line": 2235,
         "sample": "<textarea id=\"ge-checks\" rows=\"3\" class=\"rb-input\" style=\"width:100%\" spellcheck=\"false\">不少于 500 字|minLength:500"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2182,
+        "line": 2235,
         "sample": "<textarea id=\"ge-checks\" rows=\"3\" class=\"rb-input\" style=\"width:100%\" spellcheck=\"false\">不少于 500 字|minLength:500"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/factory/index.js",
-        "line": 2184,
+        "line": 2237,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"ge-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存到工作区</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/factory/index.js",
-        "line": 2184,
+        "line": 2237,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"ge-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存到工作区</button></div>"
       },
       {
@@ -13083,397 +13083,397 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 125,
+        "line": 155,
         "sample": "const STATUS = { pending: '⏳ 等待', running: '⚡ 执行中', done: '✓ 完成', 'done-warn': '⚠ 完成(有警告)', failed: '✗ 失败', paused: '⏸ 已终止' };"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 127,
+        "line": 157,
         "sample": "title: (t.mode === 'max' ? '📖 ' : '📄 ') + t.label + (t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}章]` : '') + (t.manualRevision?.count ? ` · ✎人工修订×${t.manualRevision.count}` : ''),"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 166,
+        "line": 196,
         "sample": "<button data-a=\"provider\" title=\"AI 服务设置\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 166,
+        "line": 196,
         "sample": "<button data-a=\"provider\" title=\"AI 服务设置\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 167,
+        "line": 197,
         "sample": "<button data-a=\"newgenre\" title=\"新建创作模板\">${iconHtml('✚')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 167,
+        "line": 197,
         "sample": "<button data-a=\"newgenre\" title=\"新建创作模板\">${iconHtml('✚')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 172,
+        "line": 202,
         "sample": "<span class=\"fc-project-actions\"><button class=\"fc-btn\" data-a=\"desk\">🏭 智能创作台</button><button class=\"fc-btn fc-accent\" data-a=\"project\">＋ 新建立项</button></span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 181,
+        "line": 211,
         "sample": "<div class=\"fc-label\">自由补充 <button class=\"fc-mini\" data-a=\"fill\">${iconHtml('✨')} 智能填充</button></div>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 181,
+        "line": 211,
         "sample": "<div class=\"fc-label\">自由补充 <button class=\"fc-mini\" data-a=\"fill\">${iconHtml('✨')} 智能填充</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 236,
+        "line": 266,
         "sample": "<button class=\"fc-btn\" data-a=\"copy\" title=\"生成创作模板母版并复制到剪贴板（可粘到任意 AI 对话）\">${iconHtml('📋')} 复制模板母版</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 236,
+        "line": 266,
         "sample": "<button class=\"fc-btn\" data-a=\"copy\" title=\"生成创作模板母版并复制到剪贴板（可粘到任意 AI 对话）\">${iconHtml('📋')} 复制模板母版</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 237,
+        "line": 267,
         "sample": "<button class=\"fc-btn fc-accent\" data-a=\"generate\" title=\"调用配置的 AI 直接生成内容进编辑器\">${iconHtml('⚡')} 直接生成</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 237,
+        "line": 267,
         "sample": "<button class=\"fc-btn fc-accent\" data-a=\"generate\" title=\"调用配置的 AI 直接生成内容进编辑器\">${iconHtml('⚡')} 直接生成</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 257,
+        "line": 287,
         "sample": "<div class=\"fc-label\">${iconHtml('📺')} 实时预览 <span class=\"fc-batch-acts\">"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 257,
+        "line": 287,
         "sample": "<div class=\"fc-label\">${iconHtml('📺')} 实时预览 <span class=\"fc-batch-acts\">"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 258,
+        "line": 288,
         "sample": "<button class=\"fc-mini\" data-a=\"live-edit\">${iconHtml('✎')} 编辑并应用回去</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 258,
+        "line": 288,
         "sample": "<button class=\"fc-mini\" data-a=\"live-edit\">${iconHtml('✎')} 编辑并应用回去</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 431,
+        "line": 461,
         "sample": "this.addAgentCard(event.ok ? 'result' : 'error', event.ok ? `✓ ${event.command}` : `✗ ${event.command}`, event.result);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 621,
+        "line": 651,
         "sample": "? this.embeds.map((e, i) => `<div class=\"fc-embedrow\">${iconHtml('📎')} ${e.name} <span class=\"fc-dim\">${e.text.length}字</span> <button class=\"fc-mini\" data-edelete=\"${i}\">✕</button></div>`).join('')"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 621,
+        "line": 651,
         "sample": "? this.embeds.map((e, i) => `<div class=\"fc-embedrow\">${iconHtml('📎')} ${e.name} <span class=\"fc-dim\">${e.text.length}字</span> <button class=\"fc-mini\" data-edelete=\"${i}\">✕</button></div>`).join('')"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 752,
+        "line": 782,
         "sample": "box.innerHTML = `<div class=\"fc-label\">${iconHtml('⚠')} 发现 ${this.resumables.length} 个中断任务 <span class=\"fc-batch-acts\">"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 752,
+        "line": 782,
         "sample": "box.innerHTML = `<div class=\"fc-label\">${iconHtml('⚠')} 发现 ${this.resumables.length} 个中断任务 <span class=\"fc-batch-acts\">"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 799,
-        "sample": "this.log(`✗ 恢复失败：${e.message}`);"
+        "line": 829,
+        "sample": "else { task.status = 'failed'; this.log(`✗ 恢复失败：${e.message}`); await this.finishTaskPreview(task, e.message).catch(() => {}); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1022,
+        "line": 1051,
         "sample": "if (!providerReady(this.cfg)) { toast('先点 ⚙ 配置 AI 服务（或先「复制模板母版」去别的 AI 用）'); return; }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1159,
+        "line": 1188,
         "sample": "this.previewPush(instanceId || id, { type: 'factoryPreviewInit', taskId: id, title: task.label, folder: ctx.folder, files, currentPath, content, status: task.status === 'failed' ? 'failed' : task.status === 'done' || task.status === 'done-warn' ? 'done' : 'running', statusText: task.status === 'failed' ? '✗ 失败' : task."
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1242,
+        "line": 1271,
         "sample": "this.log(`✎ 「${task.label}」人工修订已回写：${target.split(/[\\\\/]/).pop()}（第 ${task.manualRevision.count} 次）`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1291,
+        "line": 1330,
         "sample": "this.log(`✗ 任务「${task.label}」失败：${e.message}`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1407,
+        "line": 1447,
         "sample": "this.log(`⚖ ${unitName} ${unitNo} 进入 W68a ${task.reviewRitual === 'full' ? '全仪式' : '轻仪式'}双环审理…`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1426,
+        "line": 1466,
         "sample": "this.log(`✓ ${unitName} ${unitNo} 四闸全开并封存（审理 ${result.budget?.usedTokens || 0} token）`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1451,
+        "line": 1491,
         "sample": "this.log('⚡ AI 生成中…');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1475,
+        "line": 1521,
         "sample": "this.log('🔁 双循环勘误：自检未过，修订中…');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1489,
+        "line": 1535,
         "sample": "catch (e) { this.log(`⚠ ${task.exportFmt} 导出跳过：${e.message}`); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1498,
+        "line": 1544,
         "sample": "this.log(fails.length ? `⚠ 完成但有 ${fails.length} 项校验未过：${fails[0].label}` : `✅ 完成，全部校验通过（${text.length} 字）`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1543,
+        "line": 1589,
         "sample": "this.log('📐 正在生成全书蓝图（流式）…');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1557,
+        "line": 1603,
         "sample": "this.log(ok ? `✅ 蓝图完整（${blueprint.length} 字，结构通过）` : `⚠ 蓝图不完整（长度 ${blueprint.length}），${attempt < 3 ? '重试 ' + attempt + '/3' : '启用兜底'}`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1561,
+        "line": 1607,
         "sample": "this.log('🔧 已使用兜底蓝图');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1579,
+        "line": 1625,
         "sample": "if (outlines.length > total) { this.log(`⚡ 蓝图含 ${outlines.length} 章，截取前 ${total} 章`); outlines = outlines.slice(0, total); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1609,
+        "line": 1655,
         "sample": "this.log(`📝 自动生成第 ${i} ${unitName}大纲`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1654,
+        "line": 1700,
         "sample": "this.log(`✓ 第 ${i} ${unitName}断点已带 TOKEN 声明，直接收口不重复续写`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1658,
+        "line": 1704,
         "sample": "this.log(`⚡ 防线1触发：第 ${i} ${unitName}断点续写（已有 ${previous.length} 字）`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1660,
+        "line": 1706,
         "sample": "this.log(`⚡ 正在生成第 ${i} ${unitName}${total ? ' / 共 ' + total + ' ' + unitName : ''}…`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1710,
+        "line": 1756,
         "sample": "this.log(`🔁 第 ${i} ${unitName}自检未过，修订中…`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1726,
+        "line": 1772,
         "sample": "this.log(`✓ 第 ${i} ${unitName} ${task.exportFmt.toUpperCase()} 已导出`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1727,
+        "line": 1773,
         "sample": "} catch (e) { this.log(`⚠ 第 ${i} ${unitName} ${task.exportFmt} 导出跳过：${e.message}`); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1731,
+        "line": 1777,
         "sample": "this.log(`✓ 第 ${i} ${unitName}落盘（${text.length} 字）`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1736,
+        "line": 1782,
         "sample": "this.log(`⚠ 第 ${i} ${unitName}内容过短，保留断点待续`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1758,
+        "line": 1804,
         "sample": "this.log(`✅ 任务「${task.label}」全部 ${task.doneChapters} ${unitName}完成`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1785,
+        "line": 1831,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--mut,#888);font-size:12px;margin-bottom:4px\">⚡ 第 ${chapterNo} ${unitName}生成中…</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1814,
+        "line": 1860,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--ok,#3d6b35);font-size:12px;margin-bottom:4px\">✓ 第 ${chapterNo} ${unitName}完成（${text.length} 字）——可直接点「编辑并应用回去」改稿</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1846,
+        "line": 1892,
         "sample": "<div style=\"font-size:12px;color:var(--acc,#4f46e5);margin-bottom:4px\">✎ 编辑第 ${c.chapterNo} ${unitName}——保存后自动写回文件并重建状态快照</div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1849,
+        "line": 1895,
         "sample": "<button class=\"fc-mini fc-accent\" data-l=\"save\">💾 保存并应用（重建快照）</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1889,
+        "line": 1935,
         "sample": "this.log(`✓ 第 ${c.chapterNo} ${unitName}快照已按修订重建——下游${unitName}将遵循你的改稿`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1891,
+        "line": 1937,
         "sample": "} catch (e) { this.log(`⚠ 快照重建失败（不影响文件）：${e.message}`); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 1980,
+        "line": 2029,
         "sample": "this.log(`✗ 恢复失败：${e.message}`);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2040,
+        "line": 2090,
         "sample": "const STATUS = { pending: iconHtml('⏳') + ' 等待', running: iconHtml('⚡') + ' 执行中', done: iconHtml('✓') + ' 完成', 'done-warn': iconHtml('⚠') + ' 完成(有警告)', failed: iconHtml('✗') + ' 失败', paused: iconHtml('⏸') + ' 已终止' };"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/factory/index.js",
-        "line": 2040,
+        "line": 2090,
         "sample": "const STATUS = { pending: iconHtml('⏳') + ' 等待', running: iconHtml('⚡') + ' 执行中', done: iconHtml('✓') + ' 完成', 'done-warn': iconHtml('⚠') + ' 完成(有警告)', failed: iconHtml('✗') + ' 失败', paused: iconHtml('⏸') + ' 已终止' };"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2045,
+        "line": 2095,
         "sample": "<span class=\"fc-task-label\" title=\"${t.label}\">${t.mode === 'max' ? '📖 ' : '📄 '}${t.label}${t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}${getSnapshotSchema(this.genres.find(g => g.id === t.genreId) || {}).unitName}]` : ''}${t.manualRevision?.count ? ` · ✎人工修订×${t.manualRevision.count}` : ''}</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2072,
+        "line": 2125,
         "sample": "<span class=\"${h.ok ? 'fc-ok' : 'fc-warn'}\">${h.ok ? '✓' : '✗'}</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2140,
+        "line": 2193,
         "sample": "st.textContent = `✓ 已拉取 ${ids.length} 个模型到选单`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2150,
+        "line": 2203,
         "sample": "st.textContent = '✅ 连接成功：' + r.slice(0, 40);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2151,
+        "line": 2204,
         "sample": "} catch (e) { st.textContent = '✗ ' + e.message; }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2228,
+        "line": 2281,
         "sample": "if (!providerReady(cfg)) { toast('先在智能创作面板 ⚙ 配置 AI 服务'); return; }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2248,
+        "line": 2301,
         "sample": "commands.register('factory.rewrite', { title: '智能改写', icon: '✍', group: '智能创作', when: \"module=='markdown' && hasSelection\", run: () => rewriteSelected('改写') });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/factory/index.js",
-        "line": 2248,
+        "line": 2301,
         "sample": "commands.register('factory.rewrite', { title: '智能改写', icon: '✍', group: '智能创作', when: \"module=='markdown' && hasSelection\", run: () => rewriteSelected('改写') });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/factory/index.js",
-        "line": 2249,
+        "line": 2302,
         "sample": "commands.register('factory.expand', { title: '智能扩写', icon: '➕', group: '智能创作', when: \"module=='markdown' && hasSelection\", run: () => rewriteSelected('扩写') });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/factory/index.js",
-        "line": 2249,
+        "line": 2302,
         "sample": "commands.register('factory.expand', { title: '智能扩写', icon: '➕', group: '智能创作', when: \"module=='markdown' && hasSelection\", run: () => rewriteSelected('扩写') });"
       },
       {
@@ -15723,13 +15723,13 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/panels/fedit.html",
-        "line": 114,
+        "line": 118,
         "sample": "baseline = String(p.content || $('#editor').value); paint(); status('预览已同步 ✓', 'ok');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/panels/fedit.html",
-        "line": 116,
+        "line": 120,
         "sample": "if (p.type === 'factoryEditError') status('✗ ' + (p.message || '保存失败'), 'err');"
       },
       {
@@ -21532,85 +21532,85 @@
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 262,
+        "line": 292,
         "sample": "<div class=\"fc-live\" style=\"max-height:220px;overflow-y:auto;border:1px solid var(--bd,#ddd);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.8;white-space:pre-wrap;background:var(--card,#fff)\"></div>"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/factory/index.js",
-        "line": 262,
+        "line": 292,
         "sample": "<div class=\"fc-live\" style=\"max-height:220px;overflow-y:auto;border:1px solid var(--bd,#ddd);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.8;white-space:pre-wrap;background:var(--card,#fff)\"></div>"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/factory/index.js",
-        "line": 262,
+        "line": 292,
         "sample": "<div class=\"fc-live\" style=\"max-height:220px;overflow-y:auto;border:1px solid var(--bd,#ddd);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.8;white-space:pre-wrap;background:var(--card,#fff)\"></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 542,
+        "line": 572,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"pc-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button></div></div>`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 1785,
+        "line": 1831,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--mut,#888);font-size:12px;margin-bottom:4px\">⚡ 第 ${chapterNo} ${unitName}生成中…</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/factory/index.js",
-        "line": 1785,
+        "line": 1831,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--mut,#888);font-size:12px;margin-bottom:4px\">⚡ 第 ${chapterNo} ${unitName}生成中…</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 1814,
+        "line": 1860,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--ok,#3d6b35);font-size:12px;margin-bottom:4px\">✓ 第 ${chapterNo} ${unitName}完成（${text.length} 字）——可直接点「编辑并应用回去」改稿</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/factory/index.js",
-        "line": 1814,
+        "line": 1860,
         "sample": "this.liveEl.innerHTML = `<div style=\"color:var(--ok,#3d6b35);font-size:12px;margin-bottom:4px\">✓ 第 ${chapterNo} ${unitName}完成（${text.length} 字）——可直接点「编辑并应用回去」改稿</div><div class=\"fc-live-text\"></div>`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 1846,
+        "line": 1892,
         "sample": "<div style=\"font-size:12px;color:var(--acc,#4f46e5);margin-bottom:4px\">✎ 编辑第 ${c.chapterNo} ${unitName}——保存后自动写回文件并重建状态快照</div>"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/factory/index.js",
-        "line": 1846,
+        "line": 1892,
         "sample": "<div style=\"font-size:12px;color:var(--acc,#4f46e5);margin-bottom:4px\">✎ 编辑第 ${c.chapterNo} ${unitName}——保存后自动写回文件并重建状态快照</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 1994,
+        "line": 2044,
         "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 2112,
+        "line": 2165,
         "sample": "<button id=\"pv-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 2114,
+        "line": 2167,
         "sample": "<div id=\"pv-status\" style=\"font-size:12px;color:var(--fg-dim);margin-top:8px\">OpenAI 兼容端点均可（DeepSeek / Kimi / OpenAI / 智谱 / Ollama 本地）。Key 经系统加密存储。</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/factory/index.js",
-        "line": 2184,
+        "line": 2237,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"ge-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存到工作区</button></div>"
       },
       {
@@ -38111,49 +38111,49 @@
         "rule": "fixed-width-px",
         "provisionalClass": "D",
         "file": "renderer/modules/factory/index.js",
-        "line": 203,
+        "line": 233,
         "sample": "<label class=\"fc-check\" title=\"每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停\">预算 <input type=\"number\" class=\"fc-review-budget\" min=\"8000\" step=\"1000\" value=\"32000\" style=\"width:72px\"> token</label>"
       },
       {
         "rule": "fixed-width-px",
         "provisionalClass": "D",
         "file": "renderer/modules/factory/index.js",
-        "line": 206,
+        "line": 236,
         "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/factory/index.js",
-        "line": 533,
+        "line": 563,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-height:60vh;overflow:auto\">${ids.map(id => {"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/factory/index.js",
-        "line": 589,
+        "line": 619,
         "sample": "m.body.innerHTML = `<div style=\"min-width:420px;max-height:55vh;overflow:auto\">${this.styles.length ? this.styles.map(s => `"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/factory/index.js",
-        "line": 1994,
+        "line": 2044,
         "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/factory/index.js",
-        "line": 2101,
+        "line": 2154,
         "sample": "<div style=\"min-width:420px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/factory/index.js",
-        "line": 2172,
+        "line": 2225,
         "sample": "<div style=\"min-width:460px\">"
       },
       {

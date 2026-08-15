@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-15",
+  "runtime": {
+    "artifact": "release/win-unpacked/Mazz Editor.exe",
+    "electron": "33.4.11",
+    "gpuMode": "safe",
+    "factoryProvider": "local-e2e-mock"
+  },
+  "factoryRequest": {
+    "cycles": 20,
+    "resourceType": "factory-ai-request",
+    "explicitCancelIpc": "factory:aiCancel",
+    "baselineActiveResources": 2,
+    "finalActiveResources": 2,
+    "result": "PASS"
+  },
+  "packagedLifecycle": {
+    "cyclesPerFamily": 20,
+    "families": [
+      "pty",
+      "panel-window",
+      "web-contents-view",
+      "file-watcher",
+      "torrent-client-and-server",
+      "python-process-and-temp-file",
+      "viewer",
+      "factory-ai-request"
+    ],
+    "releasedResourcesRetained": 160,
+    "finalHarnessSessions": 0,
+    "result": "PASS"
+  },
+  "electronE2E": {
+    "suite": "tests/e2e/run76.mjs",
+    "scenariosPassed": 5,
+    "scenariosTotal": 5,
+    "serialAndParallelScheduling": true,
+    "w68SupplementRoundtrip": true,
+    "mainAndRendererErrors": 0,
+    "result": "PASS"
+  },
+  "tests": {
+    "unitAssertionsPassed": 4,
+    "contractAssertionsPassed": 6,
+    "fullTestFilesPassed": 136,
+    "fullTestFilesTotal": 136,
+    "result": "PASS"
+  },
+  "openGates": [
+    "packaged renderer crash/reload injection",
+    "real remote provider slow response, disconnect and partial SSE",
+    "Factory long-running RSS slope and soak",
+    "Monaco worker lifecycle",
+    "real Agent adapters",
+    "real Recorder device permissions and cancellation",
+    "multi-window migration and sleep/resume"
+  ]
+}

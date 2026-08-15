@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 29,
-    "scannedLines": 6981
+    "scannedFiles": 30,
+    "scannedLines": 7115
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -90,25 +90,25 @@
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 718,
+      "line": 750,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1006,
+      "line": 1038,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1348,
+      "line": 1380,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1423,
+      "line": 1456,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -346,17 +346,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1194,
+          "line": 1226,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1287,
+          "line": 1319,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1316,
+          "line": 1348,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -394,7 +394,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 1350,
+          "line": 1382,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]

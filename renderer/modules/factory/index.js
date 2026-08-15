@@ -43,7 +43,9 @@ export class FactoryPanel {
     this.history = this.loadJSON(HISTORY_KEY, []);
     this.running = false;
     this.runningTasks = new Set();
+    this.taskControllers = new Map();
     this.stopRequested = false;
+    this.disposed = false;
     this.autoPreview = this.loadJSON(AUTO_PREVIEW_KEY, true) !== false;
     this.concurrency = Math.max(1, Math.min(4, Number(this.loadJSON(CONCURRENCY_KEY, 1)) || 1));
     this.previewTasks = new Map(); // taskId -> { task, tpl, folder, currentPath }
@@ -68,16 +70,44 @@ export class FactoryPanel {
       const task = this.tasks.find(row => row.id === taskId);
       if (!task || !patch || typeof patch !== 'object') return;
       Object.assign(task, patch);
-      if (patch.status === 'paused' && this.runningTasks.has(taskId)) this.stopRequested = true;
+      if (patch.status === 'paused' && this.runningTasks.has(taskId)) this.abortTask(taskId, 'task-paused');
       this.persistTasks();
       this.pushSnapshot();
     };
+    this.beforeUnloadListener = () => this.dispose();
     window.addEventListener('mazz:factory-task-updated', this.taskUpdateListener);
+    window.addEventListener('beforeunload', this.beforeUnloadListener, { once: true });
     this.render();
     this.reload();
   }
 
   loadJSON(k, dft) { try { return JSON.parse(localStorage.getItem(k)) ?? dft; } catch { return dft; } }
+
+  taskSignal(task) { return this.taskControllers.get(task?.id)?.signal; }
+
+  taskShouldStop(task) { return this.stopRequested || !!this.taskSignal(task)?.aborted; }
+
+  abortTask(taskId, reason = 'task-stop') {
+    const controller = this.taskControllers.get(taskId);
+    if (!controller || controller.signal.aborted) return false;
+    try { controller.abort(new Error(reason)); } catch { controller.abort(); }
+    return true;
+  }
+
+  requestStopAll(reason = 'batch-stop') {
+    this.stopRequested = true;
+    for (const taskId of this.runningTasks) this.abortTask(taskId, reason);
+    this.log('用户请求停止当前执行批次…');
+  }
+
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.requestStopAll('factory-dispose');
+    window.removeEventListener('mazz:factory-task-updated', this.taskUpdateListener);
+    window.removeEventListener('beforeunload', this.beforeUnloadListener);
+    this.agentRuntime?.cancel?.().catch?.(() => {});
+  }
 
   // ==================== W53 坞浮动状态镜像（dockfloat 子窗格=远程视图，本实例是真相源） ====================
   snapshot() {
@@ -330,7 +360,7 @@ export class FactoryPanel {
     this.el.querySelector('[data-a=addtask]').addEventListener('click', () => this.addTask());
     this.el.querySelector('[data-a=startsel]').addEventListener('click', () => this.startSelected());
     this.el.querySelector('[data-a=runall]').addEventListener('click', () => this.runAllTasks());
-    this.el.querySelector('[data-a=stopsel]').addEventListener('click', () => { this.stopRequested = true; this.log('用户请求停止当前任务…'); });
+    this.el.querySelector('[data-a=stopsel]').addEventListener('click', () => this.requestStopAll());
     this.el.querySelector('[data-a=importcsv]').addEventListener('click', () => this.importCsv());
     this.el.querySelector('[data-a=resumesel]').addEventListener('click', () => this.resumeSelected());
     this.el.querySelector('[data-a=delsel]').addEventListener('click', () => this.deleteSelected());
@@ -795,9 +825,8 @@ export class FactoryPanel {
       await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, progress);
       if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
     } catch (e) {
-      task.status = 'failed';
-      this.log(`✗ 恢复失败：${e.message}`);
-      await this.finishTaskPreview(task, e.message).catch(() => {});
+      if (this.taskShouldStop(task) || e?.name === 'AbortError') { task.status = 'paused'; this.log('⏹ 恢复任务已停止并保留断点'); }
+      else { task.status = 'failed'; this.log(`✗ 恢复失败：${e.message}`); await this.finishTaskPreview(task, e.message).catch(() => {}); }
     } finally {
       this.releaseTask(task);
       this.resumables = await scanResumableTasks();
@@ -1251,6 +1280,7 @@ export class FactoryPanel {
       return false;
     }
     if (!this.running) this.stopRequested = false;
+    this.taskControllers.set(task.id, new AbortController());
     this.runningTasks.add(task.id);
     this.running = true;
     this.pushSnapshot();
@@ -1258,7 +1288,10 @@ export class FactoryPanel {
   }
 
   releaseTask(task, { scheduled = false } = {}) {
-    if (task) this.runningTasks.delete(task.id);
+    if (task) {
+      this.runningTasks.delete(task.id);
+      this.taskControllers.delete(task.id);
+    }
     this.running = this.runningTasks.size > 0;
     this.persistTasks();
     this.pushSnapshot();
@@ -1286,12 +1319,19 @@ export class FactoryPanel {
         status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder },
       });
     } catch (e) {
-      task.status = 'failed';
-      if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
-      this.log(`✗ 任务「${task.label}」失败：${e.message}`);
-      await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务中断', content: e.message, stage: 'failed', progress: 100 })).catch(() => {});
-      await this.finishTaskPreview(task, e.message).catch(() => {});
-      window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
+      if (this.taskShouldStop(task) || e?.name === 'AbortError') {
+        task.status = 'paused';
+        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
+        this.log(`⏹ 任务「${task.label}」已停止并保留断点`);
+        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务已暂停', content: '请求已取消；现有断点与工件保持不变。', stage: 'stopped', progress: 100 })).catch(() => {});
+      } else {
+        task.status = 'failed';
+        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
+        this.log(`✗ 任务「${task.label}」失败：${e.message}`);
+        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务中断', content: e.message, stage: 'failed', progress: 100 })).catch(() => {});
+        await this.finishTaskPreview(task, e.message).catch(() => {});
+        window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
+      }
     } finally {
       this.releaseTask(task, { scheduled });
     }
@@ -1410,7 +1450,7 @@ export class FactoryPanel {
       ritual: task.reviewRitual || 'light', budgetCap: Number(task.reviewBudgetCap) || 32000, precedents,
       protectionList: [task.label, ...(task.values?.['主要人物'] ? [task.values['主要人物']] : [])].filter(Boolean),
       additionalMachineChecks: current => runQualityChecks(tpl, current),
-      ask: req => chat({ cfg: this.cfg, ...req }),
+      ask: req => chat({ cfg: this.cfg, signal: this.taskSignal(task), ...req }),
     });
     const artifactDir = await this.writeW68Artifacts(task, result, { unitNo, unitName, outline });
     task.reviewState = {
@@ -1456,11 +1496,17 @@ export class FactoryPanel {
     try {
       text = await chatStream({
         cfg: this.cfg, role: 'chapter', system: m.system, user: m.user, temperature: 0.8, maxTokens: 8192,
-        shouldStop: () => this.stopRequested,
+        signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
         onChunk: (_, f) => { full = f; this.liveUpdate(task, full); },
       });
       full = text;
     } catch (e) { this.liveWrapEl && (this.liveWrapEl.style.display = 'none'); throw e; }
+    if (this.taskShouldStop(task)) {
+      task.status = 'paused';
+      await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', currentChapter: 0, maxChapters: 1, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState });
+      this.log(`⏹ 任务「${task.label}」已终止，未把流式半稿冒充成正式成稿`);
+      return;
+    }
     const unitName = getSnapshotSchema(tpl).unitName;
     const outline = `第1${unitName}：${task.label}`;
     let reviewedResult = null;
@@ -1475,7 +1521,7 @@ export class FactoryPanel {
         this.log('🔁 双循环勘误：自检未过，修订中…');
         const fixSys = m.system + '\n\n【勘误】你将收到初稿与未通过的校验项，请输出修订后的完整正文（不要解释）。';
         const fixUser = `【初稿】\n${text}\n\n【未通过校验项】\n${failed.map(f => '- ' + f.label + (f.detail ? '（' + f.detail + '）' : '')).join('\n')}`;
-        text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: fixUser });
+        text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: fixUser, signal: this.taskSignal(task) });
         checks = runQualityChecks(tpl, text);
       }
     }
@@ -1543,11 +1589,11 @@ export class FactoryPanel {
       this.log('📐 正在生成全书蓝图（流式）…');
       let ok = false;
       for (let attempt = 1; attempt <= 3 && ok === false; attempt++) {
-        if (this.stopRequested) { task.status = 'paused'; await stateFor('stopped', 0); return; }
+        if (this.taskShouldStop(task)) { task.status = 'paused'; await stateFor('stopped', 0); return; }
         let shown = 0;
         blueprint = stripMdFence(await chatStream({
           cfg: this.cfg, role: 'blueprint', user: bpUser, temperature: 0.7, maxTokens: 8192,
-          shouldStop: () => this.stopRequested,
+          signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
           onChunk: (_, full) => {
             this.previewPush(task.id, { type: 'factoryPreviewStream', phase: 'blueprint', chapterNo: 0, unitName: '蓝图', path: bpPath, text: full, status: 'running' });
             if (full.length - shown >= 600) { shown = full.length; this.log(`… 蓝图 ${full.length} 字`); }
@@ -1601,7 +1647,7 @@ export class FactoryPanel {
     const endAt = retryChapter > 0 ? retryChapter : chapterCount;
 
     for (let i = startAt; i <= endAt; i++) {
-      if (this.stopRequested) { this.log(`■ 任务「${task.label}」在第 ${i} ${unitName}前被手动终止`); task.status = 'paused'; await stateFor('stopped', i - 1); return; }
+      if (this.taskShouldStop(task)) { this.log(`■ 任务「${task.label}」在第 ${i} ${unitName}前被手动终止`); task.status = 'paused'; await stateFor('stopped', i - 1); return; }
       // max 模式自动续大纲
       if (i > outlines.length) {
         outlines.push(`第${i}${unitName}：根据内容发展自然推进`);
@@ -1635,7 +1681,7 @@ export class FactoryPanel {
             cfg: this.cfg, role: 'snapshot',
             system: '你是长篇一致性校验员。只指出下一个结构单元需要纠正的偏差；禁止改写既有正文。',
             user: `【恒定锚】\n${constantAnchor}\n\n【滚动快照】\n${stateSummary}\n\n【下一${unitName}任务】\n${outline}`,
-            temperature: 0.1, maxTokens: 1200,
+            temperature: 0.1, maxTokens: 1200, signal: this.taskSignal(task),
           });
         } catch { /* 纠偏失败不阻塞生产 */ }
       }
@@ -1675,7 +1721,7 @@ export class FactoryPanel {
         try {
           aiText = await chatStream({
             cfg: this.cfg, role: 'chapter', system: cp.system, user: cp.user, temperature: 0.8, maxTokens: 8192,
-            shouldStop: () => this.stopRequested,
+            signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
             onChunk: (_, f) => {
               full = mergeDeclaredContinuation(previous, f).text;
               this.liveUpdate(task, stripTokenDeclaration(full));
@@ -1688,7 +1734,7 @@ export class FactoryPanel {
           throw e;
         }
       }
-      if (this.stopRequested) {
+      if (this.taskShouldStop(task)) {
         await flushCkpt();
         this.log(`⏹ 第 ${i} ${unitName}已终止，已保存 ${full.length} 字到断点文件`);
         task.status = 'paused';
@@ -1709,7 +1755,7 @@ export class FactoryPanel {
         if (failed.length) {
           this.log(`🔁 第 ${i} ${unitName}自检未过，修订中…`);
           const fixSys = cp.system + '\n\n【勘误】请修订初稿使未过校验项全部通过，只输出修订后正文。';
-          text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: `【初稿】\n${text}\n\n【未过项】\n${failed.map(f => '- ' + f.label).join('\n')}` });
+          text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: `【初稿】\n${text}\n\n【未过项】\n${failed.map(f => '- ' + f.label).join('\n')}`, signal: this.taskSignal(task) });
         }
       }
 
@@ -1737,13 +1783,13 @@ export class FactoryPanel {
         await flushCkpt();
       }
 
-      if (this.stopRequested) { task.status = 'paused'; await stateFor('stopped', i); return; }
+      if (this.taskShouldStop(task)) { task.status = 'paused'; await stateFor('stopped', i); return; }
 
       // 滚动叙事状态快照（温度调低求稳）
       this.log(`… 正在更新${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照（第 ${i} ${unitName}后）`);
       const sp = buildStateSummaryPrompt(stateSummary, text, i, snapshotSchema);
       try {
-        stateSummary = await chat({ cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3 });
+        stateSummary = await chat({ cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3, signal: this.taskSignal(task) });
       } catch { /* 快照失败沿用旧快照 */ }
       await window.mazz.invoke('fs:writeFile', {
         path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第${String(i).padStart(3, '0')}${unitName}后.md`, content: stateSummary,
@@ -1952,6 +1998,7 @@ export class FactoryPanel {
   deleteSelected() {
     const sel = new Set(this.selectedTasks().map(t => t.id));
     if (!sel.size) { toast('先勾选要删除的任务'); return; }
+    for (const taskId of sel) this.abortTask(taskId, 'task-deleted');
     this.tasks = this.tasks.filter(t => !sel.has(t.id));
     this.persistTasks();
     this.log(`已删除 ${sel.size} 个任务`);
@@ -1976,10 +2023,13 @@ export class FactoryPanel {
         if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
         if (task.status === 'done' || task.status === 'done-warn') window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作完成：${task.label}`, detail: '续写任务已收口并落盘。', status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder } });
       } catch (e) {
-        task.status = 'failed';
-        this.log(`✗ 恢复失败：${e.message}`);
-        await this.finishTaskPreview(task, e.message).catch(() => {});
-        window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
+        if (this.taskShouldStop(task) || e?.name === 'AbortError') { task.status = 'paused'; this.log(`⏹ 恢复任务「${task.label}」已停止并保留断点`); }
+        else {
+          task.status = 'failed';
+          this.log(`✗ 恢复失败：${e.message}`);
+          await this.finishTaskPreview(task, e.message).catch(() => {});
+          window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
+        }
       } finally {
         this.releaseTask(task);
       }
@@ -2063,7 +2113,10 @@ export class FactoryPanel {
         if (n === 0) await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, null, -1);
         else await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, null, n);
         if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
-      } catch (err) { task.status = 'failed'; this.log('重试失败：' + err.message); await this.finishTaskPreview(task, err.message).catch(() => {}); }
+      } catch (err) {
+        if (this.taskShouldStop(task) || err?.name === 'AbortError') { task.status = 'paused'; this.log('重试已停止并保留断点'); }
+        else { task.status = 'failed'; this.log('重试失败：' + err.message); await this.finishTaskPreview(task, err.message).catch(() => {}); }
+      }
       finally { this.releaseTask(task); }
     }));
     this.hisListEl.innerHTML = this.history.length
