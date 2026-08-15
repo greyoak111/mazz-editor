@@ -66,6 +66,7 @@ const files = [
   'tests/contract/w71-reproducible-samples.test.mjs',
   'tests/contract/w71-native-surface-ledger.test.mjs',
   'tests/contract/w71-lifecycle-security.test.mjs',
+  'tests/contract/w71-viewer-lifecycle.test.mjs',
   'tests/contract/w71-native-binary-audit.test.mjs',
   'tests/contract/w71-census.test.mjs',
   'tests/contract/hotfix-w59c.test.mjs',

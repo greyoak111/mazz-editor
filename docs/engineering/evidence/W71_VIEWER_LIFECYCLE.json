@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-15",
+  "runtime": {
+    "artifact": "release/win-unpacked/Mazz Editor.exe",
+    "electron": "33.4.11",
+    "gpuMode": "safe"
+  },
+  "viewer": {
+    "cycles": 20,
+    "fixture": "packaged-viewer.svg",
+    "loadedImageRequired": true,
+    "postCloseViewerInstances": 0,
+    "postCloseViewerRoots": 0,
+    "postCloseActiveAnchor": false,
+    "result": "PASS"
+  },
+  "packagedLifecycle": {
+    "cyclesPerFamily": 20,
+    "families": [
+      "pty",
+      "panel-window",
+      "web-contents-view",
+      "file-watcher",
+      "torrent-client-and-server",
+      "python-process-and-temp-file",
+      "viewer"
+    ],
+    "baselineActiveResources": 2,
+    "finalActiveResources": 2,
+    "releasedResourcesRetained": 140,
+    "finalHarnessSessions": 0,
+    "result": "PASS"
+  },
+  "contract": {
+    "viewerLifecycleAssertions": 3,
+    "viewerLifecyclePassed": 3,
+    "blobUrlCycles": 20,
+    "staleReadCovered": true,
+    "result": "PASS"
+  },
+  "openGates": [
+    "packaged AudioContext/GIF MediaStream/transcode branch activation",
+    "real Recorder device permissions and cancellation",
+    "Factory stream/task lifecycle",
+    "Monaco worker lifecycle",
+    "real Agent adapters",
+    "Viewer multi-window migration, sleep/resume and RSS slope"
+  ]
+}

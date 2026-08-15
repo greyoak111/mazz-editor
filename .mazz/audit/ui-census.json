@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 209,
-    "scannedLines": 55784
+    "scannedLines": 55883
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -6045,61 +6045,61 @@
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/index.js",
-        "line": 122,
+        "line": 130,
         "sample": "<div style=\"display:flex;gap:10px;flex-wrap:wrap;justify-content:center\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/index.js",
-        "line": 123,
+        "line": 131,
         "sample": "${isMedia ? '<button class=\"vf-tc rb-btn\" style=\"flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)\">⚙ 转码播放</button>' : ''}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/index.js",
-        "line": 123,
+        "line": 131,
         "sample": "${isMedia ? '<button class=\"vf-tc rb-btn\" style=\"flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)\">⚙ 转码播放</button>' : ''}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/index.js",
-        "line": 124,
+        "line": 132,
         "sample": "<button class=\"vf-open rb-btn\" style=\"flex-direction:row;padding:8px 22px\">用系统默认程序打开</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/index.js",
-        "line": 124,
+        "line": 132,
         "sample": "<button class=\"vf-open rb-btn\" style=\"flex-direction:row;padding:8px 22px\">用系统默认程序打开</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/index.js",
-        "line": 126,
+        "line": 134,
         "sample": "<div class=\"vf-progress\" style=\"display:none;width:260px\"></div>"
       },
       {
         "rule": "inline-css-text",
         "file": "renderer/modules/viewer/index.js",
-        "line": 139,
+        "line": 147,
         "sample": "guide.style.cssText = 'margin-top:12px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:11.5px;line-height:1.8;color:var(--fg-dim);max-width:520px;text-align:left';"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/index.js",
-        "line": 157,
+        "line": 167,
         "sample": "prog.innerHTML = `<div style=\"font-size:12px;color:var(--fg-dim);margin-bottom:6px\" class=\"vf-prog-text\">正在加载转码引擎（约 31MB wasm，仅首次）…</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/index.js",
-        "line": 158,
+        "line": 168,
         "sample": "<div style=\"height:6px;background:var(--bg-active);border-radius:3px;overflow:hidden\"><div class=\"vf-prog-bar\" style=\"height:100%;width:0%;background:var(--accent);transition:width .2s\"></div></div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/index.js",
-        "line": 198,
+        "line": 218,
         "sample": "prog.innerHTML = `<div style=\"font-size:12px;color:var(--danger,#dc2626)\">转码失败：${e.message}</div>`;"
       },
       {
@@ -6435,97 +6435,97 @@
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 410,
+        "line": 415,
         "sample": "<span class=\"mz-ml-caret\">${open ? '▾' : '▸'}</span><span class=\"mz-ml-dname\" style=\"padding-left:${n.depth * 14}px\">${iconHtml('📂')} ${escH(n.dir.name)}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 411,
+        "line": 416,
         "sample": "</div><div class=\"mz-ml-kids\" data-k=\"${escH(n.dir.path)}\" style=\"display:${open ? '' : 'none'}\">${renderNodes(n.kids)}</div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 414,
+        "line": 419,
         "sample": "<span class=\"mz-ml-name\" style=\"padding-left:${n.depth * 14 + 14}px\">${escH(n.file.name)}</span><span class=\"mz-ml-size\">${(n.file.size / 1048576).toFixed(1)}MB</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 421,
+        "line": 426,
         "sample": "<button class=\"rb-btn\" data-ml=\"import\" style=\"flex-direction:row\">${iconHtml('＋')} 导入视频</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 421,
+        "line": 426,
         "sample": "<button class=\"rb-btn\" data-ml=\"import\" style=\"flex-direction:row\">${iconHtml('＋')} 导入视频</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 422,
+        "line": 427,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 422,
+        "line": 427,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 465,
-        "sample": "<select class=\"mz-web-site rb-select\">${sites.map(s => `<option value=\"${s.id}\">${s.name}</option>`).join('')}</select>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 466,
-        "sample": "<input class=\"mz-web-kw rb-input\" placeholder=\"搜索番名/关键词，回车搜…\" spellcheck=\"false\">"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 467,
-        "sample": "<button class=\"rb-btn mz-web-go\" style=\"flex-direction:row\">搜</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 467,
-        "sample": "<button class=\"rb-btn mz-web-go\" style=\"flex-direction:row\">搜</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
         "line": 470,
+        "sample": "<select class=\"mz-web-site rb-select\">${sites.map(s => `<option value=\"${s.id}\">${s.name}</option>`).join('')}</select>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 471,
+        "sample": "<input class=\"mz-web-kw rb-input\" placeholder=\"搜索番名/关键词，回车搜…\" spellcheck=\"false\">"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 472,
+        "sample": "<button class=\"rb-btn mz-web-go\" style=\"flex-direction:row\">搜</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 472,
+        "sample": "<button class=\"rb-btn mz-web-go\" style=\"flex-direction:row\">搜</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 475,
         "sample": "<input class=\"mz-web-magnet rb-input\" placeholder=\"或直接粘贴 magnet:? 链接，回车边下边播\" spellcheck=\"false\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 590,
+        "line": 595,
         "sample": "<div class=\"mz-watch-bar\"><div class=\"mz-watch-fill\" style=\"width:${Math.round((w.progress || 0) * 100)}%\"></div></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 593,
+        "line": 598,
         "sample": "<button data-wa=\"play\" title=\"打开流播放\">${iconHtml('▶')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 594,
+        "line": 599,
         "sample": "<button data-wa=\"rm\" title=\"移除并删除文件\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 670,
+        "line": 675,
         "sample": "wrap.innerHTML = `<select class=\"mz-track rb-select\" title=\"音轨（多轨片源切轨换音道；FLAC/Vorbis/AAC/Opus 自封装直通，其他编码探测仅展示）\">"
       },
       {
@@ -14973,49 +14973,49 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/index.js",
-        "line": 119,
+        "line": 127,
         "sample": "<div class=\"vf-ico\">${iconHtml(isMedia ? '🎬' : '📄')}</div>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/index.js",
-        "line": 119,
+        "line": 127,
         "sample": "<div class=\"vf-ico\">${iconHtml(isMedia ? '🎬' : '📄')}</div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/index.js",
-        "line": 123,
+        "line": 131,
         "sample": "${isMedia ? '<button class=\"vf-tc rb-btn\" style=\"flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)\">⚙ 转码播放</button>' : ''}"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/index.js",
-        "line": 299,
+        "line": 325,
         "sample": "onClose: () => { // 右上角 ✕ 接线（此前 onClose 未传=点了没反应）"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/index.js",
-        "line": 317,
+        "line": 343,
         "sample": "ov.innerHTML = `<b>${iconHtml('⚠')} 流已接通，但本机内核无法解码该视频编码</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/index.js",
-        "line": 317,
+        "line": 343,
         "sample": "ov.innerHTML = `<b>${iconHtml('⚠')} 流已接通，但本机内核无法解码该视频编码</b>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/index.js",
-        "line": 370,
+        "line": 420,
         "sample": "icon: '🖼',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/viewer/index.js",
-        "line": 370,
+        "line": 420,
         "sample": "icon: '🖼',"
       },
       {
@@ -15285,121 +15285,121 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 410,
+        "line": 415,
         "sample": "<span class=\"mz-ml-caret\">${open ? '▾' : '▸'}</span><span class=\"mz-ml-dname\" style=\"padding-left:${n.depth * 14}px\">${iconHtml('📂')} ${escH(n.dir.name)}</span>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 410,
+        "line": 415,
         "sample": "<span class=\"mz-ml-caret\">${open ? '▾' : '▸'}</span><span class=\"mz-ml-dname\" style=\"padding-left:${n.depth * 14}px\">${iconHtml('📂')} ${escH(n.dir.name)}</span>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 421,
+        "line": 426,
         "sample": "<button class=\"rb-btn\" data-ml=\"import\" style=\"flex-direction:row\">${iconHtml('＋')} 导入视频</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 422,
+        "line": 427,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 422,
+        "line": 427,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 593,
+        "line": 598,
         "sample": "<button data-wa=\"play\" title=\"打开流播放\">${iconHtml('▶')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 594,
+        "line": 599,
         "sample": "<button data-wa=\"rm\" title=\"移除并删除文件\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 594,
+        "line": 599,
         "sample": "<button data-wa=\"rm\" title=\"移除并删除文件\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 762,
+        "line": 767,
         "sample": "media.addEventListener('play', () => { playBtn.innerHTML = iconHtml('⏸'); root.querySelector('.mz-audio-disc')?.classList.add('spin'); });"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 763,
+        "line": 768,
         "sample": "media.addEventListener('pause', () => { playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 887,
+        "line": 893,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 887,
+        "line": 893,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 930,
+        "line": 936,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 930,
+        "line": 936,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 956,
+        "line": 962,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 956,
+        "line": 962,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 985,
+        "line": 991,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 985,
+        "line": 991,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1004,
+        "line": 1010,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1004,
+        "line": 1010,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
@@ -23248,49 +23248,49 @@
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/index.js",
-        "line": 123,
+        "line": 131,
         "sample": "${isMedia ? '<button class=\"vf-tc rb-btn\" style=\"flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)\">⚙ 转码播放</button>' : ''}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/index.js",
-        "line": 139,
+        "line": 147,
         "sample": "guide.style.cssText = 'margin-top:12px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:11.5px;line-height:1.8;color:var(--fg-dim);max-width:520px;text-align:left';"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/viewer/index.js",
-        "line": 139,
+        "line": 147,
         "sample": "guide.style.cssText = 'margin-top:12px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:11.5px;line-height:1.8;color:var(--fg-dim);max-width:520px;text-align:left';"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/index.js",
-        "line": 157,
+        "line": 167,
         "sample": "prog.innerHTML = `<div style=\"font-size:12px;color:var(--fg-dim);margin-bottom:6px\" class=\"vf-prog-text\">正在加载转码引擎（约 31MB wasm，仅首次）…</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/index.js",
-        "line": 158,
+        "line": 168,
         "sample": "<div style=\"height:6px;background:var(--bg-active);border-radius:3px;overflow:hidden\"><div class=\"vf-prog-bar\" style=\"height:100%;width:0%;background:var(--accent);transition:width .2s\"></div></div>`;"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/viewer/index.js",
-        "line": 158,
+        "line": 168,
         "sample": "<div style=\"height:6px;background:var(--bg-active);border-radius:3px;overflow:hidden\"><div class=\"vf-prog-bar\" style=\"height:100%;width:0%;background:var(--accent);transition:width .2s\"></div></div>`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/index.js",
-        "line": 198,
+        "line": 218,
         "sample": "prog.innerHTML = `<div style=\"font-size:12px;color:var(--danger,#dc2626)\">转码失败：${e.message}</div>`;"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/viewer/index.js",
-        "line": 198,
+        "line": 218,
         "sample": "prog.innerHTML = `<div style=\"font-size:12px;color:var(--danger,#dc2626)\">转码失败：${e.message}</div>`;"
       },
       {
@@ -23356,7 +23356,7 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1130,
+        "line": 1145,
         "sample": "grad.addColorStop(0, getComputedStyle(root).getPropertyValue('--accent') || '#e3b341');"
       },
       {
@@ -38412,7 +38412,7 @@
         "rule": "fixed-width-px",
         "provisionalClass": "D",
         "file": "renderer/modules/viewer/index.js",
-        "line": 126,
+        "line": 134,
         "sample": "<div class=\"vf-progress\" style=\"display:none;width:260px\"></div>"
       },
       {
@@ -38433,7 +38433,7 @@
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1036,
+        "line": 1042,
         "sample": "window.addEventListener('resize', applySide);"
       },
       {

@@ -170,13 +170,13 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   let subFor = null;   // 已挂载对应的路径（同片重进不重复挂载——竞态杀 in-flight 的总根，在这里闸死）
   async function loadAutoSubtitle(notify = false) {
     window.__subFlow = { stage: 'enter', isVideo, curPath, subEnabled, subFor };
-    if (!isVideo || !curPath || !subEnabled) return;
+    if (destroyed || !isVideo || !curPath || !subEnabled) return;
     if (subFor === curPath) return; // 同片已挂/在挂，重进跳过
     const seq = ++subLoadSeq;
     subFor = curPath; // 先占坑（在挂与已挂同坑，后来者见此即弃）
     const subs = await probeSubtitles(curPath);
     window.__subFlow = { stage: 'probed', count: subs.length, seq, subLoadSeq, curPath };
-    if (seq !== subLoadSeq || !subs.length) {
+    if (destroyed || seq !== subLoadSeq || !subs.length) {
       subFor = null; // 后到的旧呼叫弃权
       // 手动点击必须有明白话（静默=「字幕按钮点击了没反应」实锤：探测不到就闷死）
       if (notify && !subs.length) import('../../shell/shell.js').then(({ toast }) => toast('未探测到同名字幕（.ass/.srt/.ssa 与视频同目录同名）——可用 播放设置→外挂字幕文件 手动挂载'));
@@ -184,7 +184,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     }
     try {
       await attachSubtitle(media, { subPath: subs[0] });
-      if (seq !== subLoadSeq) return;
+      if (destroyed || seq !== subLoadSeq) { detachSubtitle(); return; }
       subVisible = true;
       syncSubBtn();
       import('../../shell/shell.js').then(({ toast }) => toast('已挂载字幕：' + subs[0].split('/').pop()));
@@ -309,6 +309,11 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     playlist: [], plIndex: -1, loop: 'list', // list | single | sequential | off
     borderless: false, seeking: false, analyser: null,
   };
+  // W71：播放器拥有的全局监听/定时器/媒体资源必须可枚举退役；destroy 允许重复调用。
+  let destroyed = false;
+  let dragCleanup = null;
+  let autoNextTimer = null;
+  let waveRaf = null;
 
   root.querySelector('.mz-name').textContent = name;
 
@@ -738,7 +743,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     else if (ctl._chain) ctl._chain.gain.gain.value = 1;
     window.mazz?.invoke('settings:set', { key: 'player.audioGain', value: x }).catch(() => {});
   }
-  window.mazz?.invoke('settings:get', { key: 'player.audioGain' }).then(v => { if (v > 1) setGain(v); }).catch(() => {});
+  window.mazz?.invoke('settings:get', { key: 'player.audioGain' }).then(v => { if (!destroyed && v > 1) setGain(v); }).catch(() => {});
 
   // ==================== 倍速/亮度记忆（上次值恢复 + 变更即存） ====================
   window.mazz?.invoke('settings:get', { key: 'player.lastSpeed' }).then(v => {
@@ -796,7 +801,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         const { toast } = await import('../../shell/shell.js');
         let cancel = false;
         toast(`3s 后自动连播：${np.split('/').pop()}`, [{ label: '取消连播', fn: () => { cancel = true; } }], 3000);
-        setTimeout(() => { if (!cancel) onNav?.(np); }, 3000);
+        clearTimeout(autoNextTimer);
+        autoNextTimer = setTimeout(() => { if (!destroyed && !cancel) onNav?.(np); }, 3000);
       })();
       return;
     }
@@ -1052,18 +1058,24 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   const sideGrip = root.querySelector('.mz-side-grip');
   sideGrip.addEventListener('mousedown', (e) => {
     e.preventDefault();
+    dragCleanup?.();
     sideGrip.classList.add('on');
     const startX = e.clientX, startW = ctl.sideW;
     const move = (ev) => {
       ctl.sideW = Math.min(Math.max(startW + (startX - ev.clientX), SIDE_MIN), sideMaxNow());
       stage.style.setProperty('--mz-side-w', ctl.sideW + 'px');
     };
-    const up = () => {
+    const cleanup = () => {
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
       sideGrip.classList.remove('on');
+      if (dragCleanup === cleanup) dragCleanup = null;
+    };
+    const up = () => {
+      cleanup();
       persistSide();
     };
+    dragCleanup = cleanup;
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
   });
@@ -1101,9 +1113,10 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     if (document.fullscreenElement) document.exitFullscreen();
     else stage.requestFullscreen?.();
   });
-  document.addEventListener('fullscreenchange', () => {
+  const onFullscreenChange = () => {
     root.classList.toggle('fs', !!document.fullscreenElement);
-  });
+  };
+  document.addEventListener('fullscreenchange', onFullscreenChange);
   stage.addEventListener('dblclick', (e) => {
     if (e.target.closest('.mz-controls, .mz-topbar, .mz-side')) return;
     togglePlay();
@@ -1120,6 +1133,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       const c2d = canvas.getContext('2d');
       const data = new Uint8Array(analyser.frequencyBinCount);
       const draw = () => {
+        waveRaf = null;
+        if (destroyed) return;
         canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
         analyser.getByteFrequencyData(data);
         c2d.clearRect(0, 0, canvas.width, canvas.height);
@@ -1132,7 +1147,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           c2d.fillStyle = grad;
           c2d.fillRect((i / n) * canvas.width, canvas.height - h, canvas.width / n * 0.7, h);
         }
-        if (root.isConnected) requestAnimationFrame(draw);
+        if (root.isConnected) waveRaf = requestAnimationFrame(draw);
       };
       draw();
     } catch {}
@@ -1173,6 +1188,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   /** 切歌复用：只换源不重建（stage 不销毁，全屏物理保持——比 wasFs 恢复 requestFullscreen 可靠） */
   function setSource(newUrl, newName, newPath, newSize = 0) {
+    if (destroyed) return;
     saveProgMem(); // 旧片先存进度（用旧 curPath）
     // 同片 setSource（activate 重载/刷新）不得卸载字幕——detach+重挂的竞态杀 in-flight 是总根（三连实锤）
     const pathChanged = newPath !== curPath;
@@ -1220,21 +1236,49 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     /** 外挂字幕直挂（设置面板/E2E 通道——bundle 内模块裸 import 进不来，此口是唯一真源） */
     loadSub: async (p) => { await attachSubtitle(media, { subPath: p }); subVisible = true; syncSubBtn(); return true; },
     destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      subLoadSeq++; // 令所有在途字幕探测/挂载失效。
       document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      window.removeEventListener('resize', applySide);
+      dragCleanup?.();
       clearTimeout(hideTimer);
+      clearTimeout(hoverTimer);
+      clearTimeout(ctl._thumbHideT);
+      clearTimeout(autoNextTimer);
       clearInterval(watchPollT); // 种子状态轮询必清（泄漏会后台持续打 tor:stats）
       clearInterval(progMemTimer); // 进度记忆定时器必清（泄漏会持续写 settings）
+      if (waveRaf != null) { cancelAnimationFrame(waveRaf); waveRaf = null; }
       saveProgMem(); // 销毁前终存一次（关签/切歌时位置不丢）
-      if (previewVideo) { previewVideo.pause(); previewVideo.removeAttribute('src'); previewVideo = null; }
+      if (gifRec) {
+        const { stream, rec, drawTimer } = gifRec;
+        gifRec = null;
+        clearInterval(drawTimer);
+        try { rec.onstop = null; if (rec.state !== 'inactive') rec.stop(); } catch {}
+        try { stream.getTracks().forEach(t => t.stop()); } catch {}
+      }
+      if (previewVideo) {
+        previewVideo.pause(); previewVideo.removeAttribute('src');
+        try { previewVideo.load(); } catch {}
+        previewVideo = null;
+      }
       try {
         // close() 在已关闭上下文上返回 rejected promise（同步 try 接不住）——二次销毁时 pageerror 的真凶
-        const cp = ctl._actx?.close?.();
-        cp?.catch?.(() => {});
+        const contexts = new Set([ctl._actx, ctl._chain?.ctx].filter(Boolean));
+        for (const ctx of contexts) ctx.close?.()?.catch?.(() => {});
         ctl._actx = null;
+        ctl._chain = null;
       } catch {}
       detachSubtitle(); // 字幕渲染器与 canvas 必清（worker 不退役=内存挂账）
       detachAuxAudio(); // aux 音轨元素与同步监听必清（切走不卸=后台双音轨同播实锤）
-      media.pause();
+      if (ctl.borderless) document.body.classList.remove('player-borderless');
+      try {
+        media.pause();
+        media.srcObject = null;
+        media.removeAttribute('src');
+        media.load(); // 主动释放 Chromium 解码器与文件句柄，不等 DOM GC。
+      } catch {}
     },
   };
 }

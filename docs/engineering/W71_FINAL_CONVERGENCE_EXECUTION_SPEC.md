@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.6
+> 版本：v2.7
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / Wave 1 Python 与 DAP 进程生命周期检查点已落地**
+> 状态：**IN PROGRESS / Wave 1 Viewer 与 Player 生命周期检查点已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,6 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W81，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
+8. 后续“继续推进”已完成 Python/DAP 与 Viewer/Player 两个 Wave 1 检查点；只关闭有测试和 packaged 证据的子 Gate，Factory/Agent/多窗/真实媒体设备等未尽项保持 OPEN。
 
 ---
 
@@ -365,6 +366,8 @@ Panel host follow listener 回收
 ```
 
 这些是待验证候选，不得在没有运行态证据时直接宣判为泄漏。
+
+当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。真实媒体设备分支、Factory stream、Monaco worker、Agent 与多窗迁移仍未闭合，详见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
 
 ## 5.2 Data Reliability Contract
 

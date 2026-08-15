@@ -99,14 +99,22 @@ async function enterImageEdit(ctl, img, path, ext) {
 
 /** 媒体源：桌面走 mazz-res://media/ 协议（页面同源化：file:// 页面 media loader 零请求实锤根治，
    *  同源 video 画 canvas 不污染——截图/GIF 录制命门；range 206 由主进程流式供）；网页/移动读 base64 建 Blob URL */
-  async function mediaUrl(path) {
+  function revokeBlobUrl(url) {
+    if (typeof url === 'string' && url.startsWith('blob:')) {
+      try { URL.revokeObjectURL(url); } catch {}
+    }
+  }
+
+  async function mediaUrl(path, gen) {
     if (window.mazz?.isElectron) return 'mazz-res://media/' + encodeURIComponent(path.replace(/\\/g, '/'));
     const b64 = await window.mazz.invoke('fs:readFileBase64', { path });
+    // 标签已关或另一趟 load 已接管时，不再把迟到的 base64 物化成 Blob。
+    if (ctl._destroyed || (gen != null && gen !== ctl._loadGen)) return null;
     const bin = atob(b64);
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     const ext = (path.split('.').pop() || '').toLowerCase();
-    if (ctl.objUrl) URL.revokeObjectURL(ctl.objUrl);
+    revokeBlobUrl(ctl.objUrl);
     ctl.objUrl = URL.createObjectURL(new Blob([bytes], { type: MIME[ext] || 'application/octet-stream' }));
     return ctl.objUrl;
   }
@@ -145,6 +153,8 @@ async function enterImageEdit(ctl, img, path, ext) {
 
   /** ffmpeg 转码后播放（带进度；同会话内缓存结果） */
   async function transcodeAndPlay(name, ext) {
+    const gen = ctl._loadGen;
+    if (ctl._destroyed) return;
     const cacheKey = ctl.path;
     if (ctl._tcCache?.has(cacheKey)) {
       playUrl(ctl._tcCache.get(cacheKey), VIDEO_EXTS.has(ext) ? 'video' : 'audio').catch(e => toast('播放失败：' + e.message));
@@ -173,20 +183,30 @@ async function enterImageEdit(ctl, img, path, ext) {
       });
       setProg('写入缓存…', 0.98);
       let url;
+      let tempPath = null;
       if (window.mazz?.isElectron) {
         // 写临时文件，协议 URL 播放（不占内存；同会话缓存命中直接播）
         const ws = await window.mazz.invoke('workspace:get');
         const dir = `${ws}/.mazz/temp`;
         await window.mazz.invoke('fs:mkdir', { path: dir });
         const outExt = AUDIO_EXTS.has(ext) ? 'mp3' : 'mp4';
-        const outPath = `${dir}/transcoded_${Date.now()}.${outExt}`;
-        await window.mazz.invoke('fs:writeFileBase64', { path: outPath, base64: u8ToB64(out) });
-        url = 'mazz-res://media/' + encodeURIComponent(outPath.replace(/\\/g, '/'));
+        tempPath = `${dir}/transcoded_${Date.now()}.${outExt}`;
+        await window.mazz.invoke('fs:writeFileBase64', { path: tempPath, base64: u8ToB64(out) });
+        url = 'mazz-res://media/' + encodeURIComponent(tempPath.replace(/\\/g, '/'));
       } else {
         url = URL.createObjectURL(new Blob([out], { type: AUDIO_EXTS.has(ext) ? 'audio/mpeg' : 'video/mp4' }));
       }
+      if (ctl._destroyed || gen !== ctl._loadGen) {
+        revokeBlobUrl(url);
+        if (tempPath) window.mazz.invoke('fs:delete', { path: tempPath }).catch(() => {});
+        return;
+      }
       ctl._tcCache = ctl._tcCache || new Map();
       ctl._tcCache.set(cacheKey, url);
+      if (tempPath) {
+        ctl._tcTempPaths = ctl._tcTempPaths || new Set();
+        ctl._tcTempPaths.add(tempPath);
+      }
       window.MazzActivity?.publish?.({
         id: `transcode-${cacheKey}`, source: 'transcode', title: '媒体转码完成',
         detail: name, status: 'done', target: { kind: 'file', path: ctl.path },
@@ -202,9 +222,12 @@ async function enterImageEdit(ctl, img, path, ext) {
 
   /** 统一播放入口（原生或转码产物）：一律走 Mazz Player 组件（快捷键/倍速/播放列表全套，不再用裸 video） */
   async function playUrl(url, kind) {
+    const gen = ctl._loadGen;
+    if (ctl._destroyed) return;
     const name = ctl.path.split(/[\\/]/).pop();
     const ext = (name.split('.').pop() || '').toLowerCase();
     const { createPlayer } = await import('./player.js');
+    if (ctl._destroyed || gen !== ctl._loadGen) return;
     ctl.body.innerHTML = '';
     const playerRoot = document.createElement('div');
     playerRoot.className = 'viewer-player';
@@ -243,7 +266,8 @@ async function enterImageEdit(ctl, img, path, ext) {
         ctl._player = null; ctl._playerKind = null;
       }
       if (ctl.kind === 'image') {
-        const url = await mediaUrl(path);
+        const url = await mediaUrl(path, gen);
+        if (!url || ctl._destroyed || gen !== ctl._loadGen) return;
         ctl.body.innerHTML = '';
         const img = document.createElement('img');
         img.draggable = false;
@@ -269,12 +293,14 @@ async function enterImageEdit(ctl, img, path, ext) {
         return;
       }
       if (ctl.kind === 'pdf') {
-        const url = await mediaUrl(path);
+        const url = await mediaUrl(path, gen);
+        if (!url || ctl._destroyed || gen !== ctl._loadGen) return;
         ctl.body.innerHTML = `<embed class="viewer-pdf" src="${url}" type="application/pdf">`;
         return;
       }
       if (ctl.kind === 'video' || ctl.kind === 'audio') {
-        const url = await mediaUrl(path);
+        const url = await mediaUrl(path, gen);
+        if (!url || ctl._destroyed || gen !== ctl._loadGen) return;
         // Mazz Player（PotPlayer 风皮肤；原生解码失败自动转降级卡）
         const st = await window.mazz.invoke('fs:stat', { path }).catch(() => ({}));
         // 切歌复用：同类媒体只换源不重建（stage 不销毁，全屏物理保持——比 wasFs 恢复 requestFullscreen 可靠）
@@ -340,20 +366,44 @@ async function enterImageEdit(ctl, img, path, ext) {
       }
       showFallback(name, ext, '暂不支持预览此格式');
     } catch (e) {
+      if (ctl._destroyed || gen !== ctl._loadGen) return;
       ctl.body.innerHTML = `<div class="viewer-err">读取失败：${e.message}</div>`;
     }
   };
-  ctl.destroy = () => { if (ctl.objUrl) { URL.revokeObjectURL(ctl.objUrl); ctl.objUrl = null; } };
+  ctl.destroy = () => {
+    if (ctl._destroyed) return;
+    ctl._destroyed = true;
+    ctl._loadGen = (ctl._loadGen || 0) + 1; // 让所有在途 load/transcode 失效。
+    try { ctl._imgEditor?.destroy?.(); } catch {}
+    ctl._imgEditor = null;
+    try { ctl._player?.destroy?.(); } catch {}
+    ctl._player = null;
+    ctl._playerKind = null;
+    revokeBlobUrl(ctl.objUrl);
+    ctl.objUrl = null;
+    for (const url of new Set(ctl._tcCache?.values?.() || [])) revokeBlobUrl(url);
+    ctl._tcCache?.clear?.();
+    for (const tempPath of ctl._tcTempPaths || []) {
+      window.mazz?.invoke?.('fs:delete', { path: tempPath })?.catch?.(() => {});
+    }
+    ctl._tcTempPaths?.clear?.();
+    ctl.root?.remove?.();
+    instances.delete(container);
+    if (current === ctl) current = null;
+    if (window.__activeViewerCtl === ctl) window.__activeViewerCtl = null;
+  };
   return ctl;
 }
 
 /** 空档起手（W44 无视频启动）：裸播放器上台——侧栏三源（播放列表/媒体库/网络资源）全可用，选源即播；幂等（有片/有播放器/有内容不碰） */
 async function bootEmptyPlayer(ctl) {
   // 竞态闸：await import 期间 activate 同钩会再入（双播放器实锤）——同步占位先于一切 await
+  if (ctl._destroyed) return;
   if (ctl.path || ctl._player || ctl._bootingEmpty || ctl.body.children.length) return;
   ctl._bootingEmpty = true;
   const { createPlayer } = await import('./player.js');
   // W58d：await 落锤前重验闸——竞态期间 setContent 已装片（看图/PDF 连带裸播放器上台，真机三证实锤）
+  if (ctl._destroyed) { ctl._bootingEmpty = false; return; }
   if (ctl.path || ctl._player || ctl.body.children.length) { ctl._bootingEmpty = false; return; }
   const playerRoot = document.createElement('div');
   playerRoot.className = 'mz-player-root';
@@ -400,6 +450,11 @@ export default {
     // 移除 DOM root：attach 复用 container 时旧 root 必须清走（双播放器第二道防线）
     try { ctl?.root?.remove(); } catch {}
     if (current === ctl) current = null;
+  },
+  dispose(state) {
+    // detach 与纯 deactivate 语义分离：切签可复活，关签必须连实例表、播放器和临时资源一起退役。
+    const ctl = instances.get(state?.container) || state;
+    ctl?.destroy?.();
   },
   getContent() { return ''; }, // 只读：不产生可保存文本
   setContent(data, state) {

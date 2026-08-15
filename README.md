@@ -74,7 +74,7 @@ plugins-samples/  示例插件源码（构建时打成 samples/*.maz）
 
 ## 测试与质量
 
-- 131 个测试文件进入统一入口：`npm test`（单元/契约/往返/i18n/同步/帮助/UI 主题/W71 Census 与生命周期）
+- 134 个测试文件进入统一入口：`npm test`（单元/契约/往返/i18n/同步/帮助/UI 主题/W71 Census 与生命周期）
 - docx 往返 20 份关键元素 100% 保留 · xlsx 10 份零丢失 · pptx×5 主题合法
 - 公式引擎 26 组 Excel 一致性断言 · Electron 真机冒烟 10 项 · 双实例同步 100 文件零丢失
 - 测试本身有防"假绿"设计（harness 防 beforeExit 重入，历史教训固化）

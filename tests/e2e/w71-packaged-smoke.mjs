@@ -11,6 +11,8 @@ if (!fs.existsSync(executablePath)) throw new Error(`app-unpacked 不存在：${
 const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-user-'));
 const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-ws-'));
 fs.writeFileSync(path.join(workspace, 'packaged-smoke.md'), '# packaged smoke\n', 'utf8');
+fs.writeFileSync(path.join(workspace, 'packaged-viewer.svg'),
+  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#2563eb"/></svg>', 'utf8');
 
 let app;
 try {
@@ -28,13 +30,22 @@ try {
   const win = await app.firstWindow({ timeout: 120000 });
   await win.waitForLoadState('domcontentloaded');
   await win.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }));
-  const result = await win.evaluate(async (watchedFile) => {
+  const result = await win.evaluate(async ({ watchedFile, viewerFile }) => {
     const waitFor = async (predicate, message, timeout = 8000) => {
       const until = Date.now() + timeout;
       while (Date.now() < until) {
         const value = await window.mazz.invoke('resources:snapshot');
         if (predicate(value)) return value;
         await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      throw new Error(message);
+    };
+    const waitForLocal = async (predicate, message, timeout = 8000) => {
+      const until = Date.now() + timeout;
+      while (Date.now() < until) {
+        const value = predicate();
+        if (value) return value;
+        await new Promise(resolve => setTimeout(resolve, 25));
       }
       throw new Error(message);
     };
@@ -45,6 +56,7 @@ try {
     let watcherDuring = null;
     let torrentDuring = null;
     let pythonDuring = null;
+    let viewerDuring = null;
     for (let index = 0; index < 20; index++) {
       const term = await window.mazz.invoke('term:create', { id: `w71-packaged-smoke-${index}`, cols: 40, rows: 8 });
       if (term?.error) throw new Error(term.error);
@@ -81,6 +93,22 @@ try {
         `Python 第 ${index + 1} 次未进入资源账本`, 10000);
       await window.mazz.invoke('py:runtimeReset');
       await waitFor(value => value.activeCount === baseline.activeCount, `Python 第 ${index + 1} 次关闭后未释放`, 10000);
+
+      await window.MazzShell.openFile(viewerFile);
+      viewerDuring = await waitForLocal(() => {
+        const tab = window.MazzShell.paneTree.leaves().flatMap(leaf => leaf.tabs.tabs)
+          .find(item => item.moduleId === 'viewer' && item.filePath === viewerFile);
+        const registry = window.MazzModulesReal || window.MazzModules;
+        const inst = tab && registry?.instances?.get(tab.id);
+        const img = inst?.state?.body?.querySelector('img');
+        return tab && inst?.state?.root?.isConnected && img?.complete && img.naturalWidth > 0 ? { tabId: tab.id } : null;
+      }, `Viewer 第 ${index + 1} 次未完成真实装载`);
+      await window.MazzShell.closeTabFlow(viewerDuring.tabId);
+      await waitForLocal(() => {
+        const registry = window.MazzModulesReal || window.MazzModules;
+        const hasViewerInstance = [...(registry?.instances?.values?.() || [])].some(inst => inst.name === 'viewer');
+        return !hasViewerInstance && !document.querySelector('.viewer-root') && !window.__activeViewerCtl;
+      }, `Viewer 第 ${index + 1} 次关闭后仍有实例、DOM 或活动锚点`);
     }
     const resources = await window.mazz.invoke('resources:snapshot', { includeReleased: true });
     const adapters = await window.mazz.invoke('harness:adapters');
@@ -98,15 +126,18 @@ try {
       fileWatcherObserved: watcherDuring.byType['file-watcher'] === 1,
       torrentRuntimeObserved: torrentDuring.byType['torrent-client'] === 1 && torrentDuring.byType['torrent-server'] === 1,
       pythonRuntimeObserved: pythonDuring.byType['python-process'] === 1 && pythonDuring.byType['temp-file'] === 1,
+      viewerRuntimeObserved: !!viewerDuring?.tabId,
       lifecycleCycles: 20,
+      viewerLifecycleCycles: 20,
       releasedResourcesRetained: resources.released?.length || 0,
       adapters: adapters.length,
       sessions: sessions.length,
     };
-  }, path.join(workspace, 'packaged-smoke.md'));
+  }, { watchedFile: path.join(workspace, 'packaged-smoke.md'), viewerFile: path.join(workspace, 'packaged-viewer.svg') });
   if (!result.title || result.resourceVersion !== 1 || !result.mainWindowObserved || !result.ptyObserved
     || !result.panelObserved || !result.webContentsViewObserved || !result.fileWatcherObserved || !result.torrentRuntimeObserved
-    || !result.pythonRuntimeObserved || result.lifecycleCycles !== 20 || result.releasedResourcesRetained < 140
+    || !result.pythonRuntimeObserved || !result.viewerRuntimeObserved || result.lifecycleCycles !== 20 || result.viewerLifecycleCycles !== 20
+    || result.releasedResourcesRetained < 140
     || result.activeResources !== result.baselineResources || result.sessions !== 0) {
     throw new Error(`packaged smoke 断言失败：${JSON.stringify(result)}`);
   }
