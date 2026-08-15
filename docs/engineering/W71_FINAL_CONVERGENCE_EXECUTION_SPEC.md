@@ -1,6 +1,6 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.9
+> 版本：v2.10
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
@@ -975,7 +975,7 @@ RSS / heap / handles / process / webContents / business resources
 
 ## 8.7 自动化
 
-- 当前统一入口 137 个测试文件 100% 通过。
+- 当前统一入口 138 个测试文件 100% 通过（含 W69 Design Capsule 防漂移契约）。
 - release E2E manifest 必跑场景在 packaged app 100% 通过。
 - 主进程 uncaught、渲染 pageerror、非预期 render-process-gone 和未批准 console error 为 0。
 - 每份结果记录 commit、Windows、Electron、GPU、DPI 和耗时。
@@ -1135,11 +1135,11 @@ W71 只验证已经落地的 W68 主链；不得借本索引实施下一代 Fact
 
 ### C. Design Capsule Index
 
-W64、W69、W70，以及 Asset/Capability/Civilization、Relation Retrieval/Multi-parent、Workspace Event Ledger / 个人工作运行史等设计只保存摘要、权威来源和未来波次映射。W71 不复制其全文，也不把 Design Capsule 当仓库实现。
+W64、W70，以及 Asset/Capability/Civilization、Relation Retrieval/Multi-parent、Workspace Event Ledger / 个人工作运行史等设计只保存摘要、权威来源和未来波次映射。W69 已新增 [`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)，将旧 Hub/模板市场升格为 Publication/World/Charts/Content Fabric 四柱的 Local-first Content Network，并拆为 W69a–W69i；它仍是 Post-W71 Design Capsule。W71 不把任何 Design Capsule 当仓库实现。
 
 ### D. Discussion-stage Candidates
 
-人类多人 P2P 共看 / Room / chat / danmaku 与 W64 AI 陪看明确分离；Browser 逻辑系列整批 Harvest、厂花/产品人格层等继续标记 Discussion-stage。未冻结候选不得进入 RC 承诺。
+W69 的公开 Comment/Danmaku Event Feed、人类多人 P2P 共看 Room 与 W64 AI 陪看三者明确分离：前者是 Publication 公共事件，Room 是人类实时同步，W64 是 AI 陪伴。Browser 逻辑系列整批 Harvest、厂花/产品人格层等继续标记 Discussion-stage。未冻结候选不得进入 RC 承诺。
 
 ### E. Post-W71 OSS Research Reserve
 
@@ -1159,7 +1159,7 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 同理，Post-W71 OSS Research Reserve 的全文入库不等于任何外部依赖已经获准。W71 期间禁止据此引入 daemon、native dependency、OCR/LLM 权重、图数据库、向量库或新的后台采集器。
 
-同步/桌面性能研究材料的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
+同步/桌面性能研究与 W69 Local-first Content Network Design Capsule 的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hub 服务、账号系统、公共 Seed、World runtime、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究或架构材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
 
 ---
 

@@ -78,6 +78,7 @@ const files = [
   'tests/contract/hotfix-w59f-terminal.test.mjs',
   'tests/contract/hotfix-w59c-code-catalog.test.mjs',
   'tests/contract/w65-plan-intake.test.mjs',
+  'tests/contract/w69-architecture-intake.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
   'tests/contract/hotfix-w61a.test.mjs',
