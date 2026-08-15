@@ -15,6 +15,7 @@
     "dist": "node scripts/build.js && electron-builder",
     "dist:dir": "node scripts/build.js && electron-builder --dir --win",
     "audit:release": "node scripts/release-audit.js --out docs/engineering/evidence/W71_RELEASE_BASELINE.json",
+    "audit:w71:census": "node scripts/w71-census.js",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },

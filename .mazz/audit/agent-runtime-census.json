@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "harnessContract": {
+    "requiredMethods": [
+      "detect",
+      "probe",
+      "capabilities",
+      "createSession",
+      "send",
+      "interrupt",
+      "dispose",
+      "events"
+    ],
+    "registeredAdapterCount": 0,
+    "note": "Count is static production registration and excludes tests."
+  },
+  "candidates": [
+    {
+      "id": "codex",
+      "foundPaths": [
+        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.803.10989.0_x64__2p2nqsd0c76g0\\app\\resources\\codex",
+        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.803.10989.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe"
+      ],
+      "detection": "FOUND",
+      "versionProbe": {
+        "status": "FAILED",
+        "error": "spawnSync C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.803.10989.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe EPERM"
+      },
+      "authentication": {
+        "status": "NOT_PROBED",
+        "reason": "Wave 0 census does not launch interactive login or read vendor credential stores."
+      },
+      "permission": {
+        "status": "NOT_PROBED",
+        "reason": "No real Adapter session is registered; command execution approval remains adapter-specific."
+      }
+    },
+    {
+      "id": "kimi",
+      "foundPaths": [],
+      "detection": "NOT_FOUND",
+      "versionProbe": {
+        "status": "NOT_RUN",
+        "reason": "Executable not found."
+      },
+      "authentication": {
+        "status": "NOT_PROBED",
+        "reason": "Wave 0 census does not launch interactive login or read vendor credential stores."
+      },
+      "permission": {
+        "status": "NOT_PROBED",
+        "reason": "No real Adapter session is registered; command execution approval remains adapter-specific."
+      }
+    },
+    {
+      "id": "claude",
+      "foundPaths": [],
+      "detection": "NOT_FOUND",
+      "versionProbe": {
+        "status": "NOT_RUN",
+        "reason": "Executable not found."
+      },
+      "authentication": {
+        "status": "NOT_PROBED",
+        "reason": "Wave 0 census does not launch interactive login or read vendor credential stores."
+      },
+      "permission": {
+        "status": "NOT_PROBED",
+        "reason": "No real Adapter session is registered; command execution approval remains adapter-specific."
+      }
+    },
+    {
+      "id": "gemini",
+      "foundPaths": [],
+      "detection": "NOT_FOUND",
+      "versionProbe": {
+        "status": "NOT_RUN",
+        "reason": "Executable not found."
+      },
+      "authentication": {
+        "status": "NOT_PROBED",
+        "reason": "Wave 0 census does not launch interactive login or read vendor credential stores."
+      },
+      "permission": {
+        "status": "NOT_PROBED",
+        "reason": "No real Adapter session is registered; command execution approval remains adapter-specific."
+      }
+    }
+  ],
+  "gate": "W66 remains PARTIAL until at least two real adapters complete detect/probe/session/send/interrupt/dispose packaged-runtime evidence."
+}

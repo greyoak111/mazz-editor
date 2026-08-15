@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T10:31:51.566Z",
+  "generatedAt": "2026-08-15T10:45:38.307Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -9027,11 +9027,11 @@
     "present": true,
     "unpacked": {
       "count": 499,
-      "bytes": 674792208
+      "bytes": 674794783
     },
     "asar": {
       "present": true,
-      "bytes": 362495608,
+      "bytes": 362498183,
       "entries": 10031,
       "sourceMaps": 388,
       "rootNotices": [
@@ -9196,8 +9196,8 @@
     },
     "installer": {
       "path": "release/Mazz Editor Setup 0.2.0.exe",
-      "bytes": 152711448,
-      "sha256": "95FCD546F9B087799A9D1D2A45487E529F02AA0345E2D973E8242F34400FB3BB"
+      "bytes": 152716725,
+      "sha256": "0C37BE6E4A62156B53AD7F3DF66904246ECC31E0105BFAD22DB21579E69F93DC"
     }
   }
 }

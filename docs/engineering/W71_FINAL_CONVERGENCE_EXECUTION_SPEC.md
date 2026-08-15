@@ -4,7 +4,7 @@
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 首轮三小时检查点施工中**
+> 状态：**IN PROGRESS / Wave 0 Census 与 Native Surface Ledger 检查点已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -20,6 +20,7 @@
 4. 后续施工任务、缺陷卡、测试和验收必须引用本文件中的 Wave 与 Gate。
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W81，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
+7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
 
 ---
 
@@ -1156,6 +1157,23 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 ```
 
 执行解释：允许 W71 内三个可验收微波施工、测试、构建、回写和提交；所有历史欠账继续以完整未尽波次总表为真源，不因时间盒而降级、删除或冒充结案。
+
+首轮提交 `f2d708a` 后收到后续等价授权：
+
+```text
+继续推进
+```
+
+本次继续施工只覆盖：四项 UI Census、Surface/protocol/workaround 现实登记、Agent 发现清单，以及 BrowserWindow/PanelWindow/WebContentsView 的 ResourceLedger 接入与 packaged smoke。Census 结果见：
+
+- [`UI_VISUAL_CENSUS.md`](./UI_VISUAL_CENSUS.md)
+- [`UI_ICON_CENSUS.md`](./UI_ICON_CENSUS.md)
+- [`UI_THEME_CENSUS.md`](./UI_THEME_CENSUS.md)
+- [`UI_LAYOUT_CENSUS.md`](./UI_LAYOUT_CENSUS.md)
+- [`W71_SURFACE_PROTOCOL_CENSUS.md`](./W71_SURFACE_PROTOCOL_CENSUS.md)
+- [`W71_AGENT_RUNTIME_CENSUS.md`](./W71_AGENT_RUNTIME_CENSUS.md)
+
+这些产物把未知范围变成了可重复事实，但完整 Wave 0 Gate 仍未通过：Torrent/watcher/worker/media 等资源尚未全部接账，37 个 native binary 尚未裁剪验证，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。
 

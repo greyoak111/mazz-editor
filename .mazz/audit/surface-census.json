@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "scannedFiles": 29,
+    "scannedLines": 6671
+  },
+  "inventory": {
+    "managedWindowFamilies": [
+      "main",
+      "child",
+      "quick-note"
+    ],
+    "panelKinds": [
+      "favmgr",
+      "pwmgr",
+      "palette",
+      "shortcuts",
+      "annotate",
+      "settings",
+      "agreement",
+      "help",
+      "translate",
+      "plugins",
+      "quickopen",
+      "recorder",
+      "dockfloat",
+      "bookmark",
+      "ctxmenu",
+      "splitpreview",
+      "sync",
+      "notif",
+      "factorycfg",
+      "newfile",
+      "picklist",
+      "fpreview",
+      "fedit",
+      "harvest",
+      "archive"
+    ],
+    "nativeBrowserViewFamily": "BrowserViews / WebContentsView per browser tab",
+    "sessionPartitions": [
+      "const ses = partition ? session.fromPartition(partition) : this.session;",
+      "const browserSess = session.fromPartition('persist:mazz-browser');",
+      "const authorSess = session.fromPartition('persist:mazz-author');"
+    ]
+  },
+  "protocolReality": {
+    "ownership": "WindowManager owns shell windows; PanelWindows owns panel windows; BrowserViews owns WebContentsView records.",
+    "host": "BrowserViews resolves BrowserWindow.fromWebContents(event.sender), records hostWin and mounts through host.contentView.",
+    "move": "Renderer pane/window handoff emits layout state; browser native bounds are resynchronized after host changes.",
+    "destroy": "Window/panel closed hooks and BrowserViews destroy/destroyByHost paths are authoritative; ResourceLedger observes but does not own resources."
+  },
+  "findings": [
+    {
+      "rule": "browser-window-registry",
+      "file": "main/browser-views.js",
+      "line": 36,
+      "sample": "const hostWin = BrowserWindow.fromWebContents(event?.sender) || this.wm.main;"
+    },
+    {
+      "rule": "session-partition",
+      "file": "main/browser-views.js",
+      "line": 115,
+      "sample": "const ses = partition ? session.fromPartition(partition) : this.session;"
+    },
+    {
+      "rule": "web-contents-view-construction",
+      "file": "main/browser-views.js",
+      "line": 116,
+      "sample": "const view = new WebContentsView({"
+    },
+    {
+      "rule": "native-content-view-ownership",
+      "file": "main/browser-views.js",
+      "line": 140,
+      "sample": "host.contentView.addChildView(view);"
+    },
+    {
+      "rule": "native-content-view-ownership",
+      "file": "main/browser-views.js",
+      "line": 168,
+      "sample": "try { (rec.hostWin || this.wm.main).contentView.removeChildView(rec.view); } catch {}"
+    },
+    {
+      "rule": "render-gone-hook",
+      "file": "main/browser-views.js",
+      "line": 393,
+      "sample": "wc.on('render-process-gone', (_e, details) => this.emit(tabId, 'render-process-gone', { reason: details?.reason }));"
+    },
+    {
+      "rule": "browser-window-registry",
+      "file": "main/main.js",
+      "line": 718,
+      "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
+    },
+    {
+      "rule": "browser-window-construction",
+      "file": "main/main.js",
+      "line": 1006,
+      "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
+    },
+    {
+      "rule": "session-partition",
+      "file": "main/main.js",
+      "line": 1351,
+      "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
+    },
+    {
+      "rule": "session-partition",
+      "file": "main/main.js",
+      "line": 1423,
+      "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
+    },
+    {
+      "rule": "window-close-hook",
+      "file": "main/panel-windows.js",
+      "line": 17,
+      "sample": "win.on('closed', () => {"
+    },
+    {
+      "rule": "browser-window-construction",
+      "file": "main/panel-windows.js",
+      "line": 202,
+      "sample": "const win = new BrowserWindow({"
+    },
+    {
+      "rule": "window-close-hook",
+      "file": "main/panel-windows.js",
+      "line": 216,
+      "sample": "win.on('closed', () => { this.panels.delete('annotate'); this._unfollow(parent, win); });"
+    },
+    {
+      "rule": "browser-window-construction",
+      "file": "main/panel-windows.js",
+      "line": 250,
+      "sample": "const win = new BrowserWindow({"
+    },
+    {
+      "rule": "window-close-hook",
+      "file": "main/panel-windows.js",
+      "line": 260,
+      "sample": "if (host) { host.on('move', follow); host.on('resize', follow); win.on('closed', () => { try { host.off('move', follow); host.off('resize', follow); } catch {} }); }"
+    },
+    {
+      "rule": "browser-window-construction",
+      "file": "main/panel-windows.js",
+      "line": 280,
+      "sample": "const win = new BrowserWindow({"
+    },
+    {
+      "rule": "window-close-hook",
+      "file": "main/panel-windows.js",
+      "line": 314,
+      "sample": "win.on('closed', () => {"
+    },
+    {
+      "rule": "browser-window-construction",
+      "file": "main/window-manager.js",
+      "line": 50,
+      "sample": "const win = new BrowserWindow({"
+    },
+    {
+      "rule": "window-close-hook",
+      "file": "main/window-manager.js",
+      "line": 99,
+      "sample": "win.on('closed', () => { this.main = null; });"
+    },
+    {
+      "rule": "render-gone-hook",
+      "file": "main/window-manager.js",
+      "line": 108,
+      "sample": "win.webContents.on('render-process-gone', (_e, details) => {"
+    },
+    {
+      "rule": "browser-window-construction",
+      "file": "main/window-manager.js",
+      "line": 120,
+      "sample": "const win = new BrowserWindow({"
+    },
+    {
+      "rule": "window-close-hook",
+      "file": "main/window-manager.js",
+      "line": 140,
+      "sample": "win.on('closed', () => {"
+    },
+    {
+      "rule": "render-gone-hook",
+      "file": "main/window-manager.js",
+      "line": 147,
+      "sample": "win.webContents.on('render-process-gone', (_e, details) => {"
+    },
+    {
+      "rule": "browser-window-construction",
+      "file": "main/window-manager.js",
+      "line": 164,
+      "sample": "const win = new BrowserWindow({"
+    },
+    {
+      "rule": "window-close-hook",
+      "file": "main/window-manager.js",
+      "line": 182,
+      "sample": "win.on('closed', () => { this.quickNote = null; });"
+    }
+  ],
+  "workaroundRegister": [
+    {
+      "id": "WKR-BV-INVALIDATE",
+      "owner": "BrowserViews",
+      "status": "KEEP",
+      "reason": "Windows D3D WebContentsView hide/show repaint loss.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "main/browser-views.js",
+          "line": 193,
+          "sample": "try { rec.view.webContents.invalidate(); rec._invalidateCount = (rec._invalidateCount || 0) + 1; } catch {}"
+        }
+      ]
+    },
+    {
+      "id": "WKR-BV-BOUNDS-OSCILLATION",
+      "owner": "BrowserViews",
+      "status": "KEEP",
+      "reason": "Second-frame compositor recovery after a hidden native surface returns.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "main/browser-views.js",
+          "line": 200,
+          "sample": "try { rec.view.setBounds({ ...R, width: Math.max(1, R.width - 1) }); rec.view.setBounds(R); } catch {}"
+        },
+        {
+          "file": "main/browser-views.js",
+          "line": 204,
+          "sample": "try { rec.view.setBounds({ ...R, height: Math.max(1, R.height - 1) }); rec.view.setBounds(R); } catch {}"
+        }
+      ]
+    },
+    {
+      "id": "WKR-BACKGROUND-THROTTLING",
+      "owner": "WindowManager/BrowserViews",
+      "status": "KEEP",
+      "reason": "Recorder and occluded native-surface continuity.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "main/browser-views.js",
+          "line": 125,
+          "sample": "backgroundThrottling: false,"
+        },
+        {
+          "file": "main/window-manager.js",
+          "line": 64,
+          "sample": "backgroundThrottling: false, // 全局内录命脉：窗口最小化/被遮挡时画布合成与定时器照常（配主进程反节流三开关）"
+        },
+        {
+          "file": "renderer/lib/recorder.js",
+          "line": 300,
+          "sample": "// —— 画布合成路径（多源平铺/变速/自录虚拟源）：反节流三开关+backgroundThrottling:false 护体 ——"
+        },
+        {
+          "file": "renderer/modules/browser/index.js",
+          "line": 245,
+          "sample": "// 兜底遮挡隐身（W52 过渡：只认全屏遮罩两件套（modal/帮助），backgroundThrottling:false 加持下关罩即活不再白死——②③波逐类遣散后此闸退役）"
+        }
+      ]
+    },
+    {
+      "id": "WKR-RELOAD-CONVERGENCE",
+      "owner": "Browser module",
+      "status": "KEEP",
+      "reason": "about:blank home document cannot use a raw webContents reload path.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "renderer/modules/browser/index.js",
+          "line": 557,
+          "sample": "reloadTab(tab);"
+        },
+        {
+          "file": "renderer/modules/browser/index.js",
+          "line": 920,
+          "sample": "function reloadTab(t) {"
+        },
+        {
+          "file": "renderer/modules/browser/index.js",
+          "line": 926,
+          "sample": "root.querySelector('[data-a=reload]').addEventListener('click', () => reloadTab(activeTab()));"
+        }
+      ]
+    },
+    {
+      "id": "WKR-DRAG-CLOAK",
+      "owner": "Shell/Browser module",
+      "status": "KEEP",
+      "reason": "Native WebContentsView consumes drag hit-testing above DOM drop targets.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "renderer/shell/shell.js",
+          "line": 432,
+          "sample": "const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图"
+        },
+        {
+          "file": "renderer/shell/shell.js",
+          "line": 436,
+          "sample": "if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）"
+        }
+      ]
+    },
+    {
+      "id": "WKR-PANE-MOVE-RESYNC",
+      "owner": "Shell/Browser module",
+      "status": "KEEP",
+      "reason": "Native view host move requires post-layout bounds/reload convergence.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "renderer/modules/browser/index.js",
+          "line": 1267,
+          "sample": "// pane:tabMoved 监听器拿 { container } 空调 __sync/reloadTab=分屏自动刷新全静默失效）"
+        },
+        {
+          "file": "renderer/shell/panes.js",
+          "line": 195,
+          "sample": "bus.emit('pane:tabMoved', { tabId, from, target: targetLeaf });"
+        },
+        {
+          "file": "renderer/shell/shell.js",
+          "line": 2014,
+          "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
+        }
+      ]
+    },
+    {
+      "id": "WKR-NATIVE-CONTEXT-MENU",
+      "owner": "BrowserViews",
+      "status": "KEEP",
+      "reason": "DOM menu layering conflicts with native WebContentsView.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "main/browser-views.js",
+          "line": 257,
+          "sample": "Menu.buildFromTemplate(items).popup({ window: this.wm.main, x: Math.round((params.x || 0) + b.x), y: Math.round((params.y || 0) + b.y) });"
+        },
+        {
+          "file": "main/main.js",
+          "line": 1194,
+          "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
+        },
+        {
+          "file": "main/main.js",
+          "line": 1288,
+          "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
+        },
+        {
+          "file": "main/main.js",
+          "line": 1317,
+          "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
+        },
+        {
+          "file": "main/tray-service.js",
+          "line": 32,
+          "sample": "const menu = Menu.buildFromTemplate(["
+        }
+      ]
+    },
+    {
+      "id": "WKR-HOST-AWARE-DESTROY",
+      "owner": "WindowManager/BrowserViews",
+      "status": "KEEP",
+      "reason": "A child window must not leave native views alive after host destruction.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "main/browser-views.js",
+          "line": 152,
+          "sample": "destroyByHost(win) {"
+        },
+        {
+          "file": "main/window-manager.js",
+          "line": 143,
+          "sample": "try { const BV = require('./browser-views'); for (const bvs of BV.all) bvs.destroyByHost(win); } catch {}"
+        }
+      ]
+    },
+    {
+      "id": "WKR-PER-SESSION-PROTOCOL",
+      "owner": "Main/session setup",
+      "status": "KEEP",
+      "reason": "Persisted browser partition does not inherit the default-session custom protocol handler.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "main/main.js",
+          "line": 1353,
+          "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
+        }
+      ]
+    },
+    {
+      "id": "WKR-SAFE-GRAPHICS",
+      "owner": "Main startup",
+      "status": "KEEP",
+      "reason": "Remote/virtual display drivers can crash the Chromium GPU process.",
+      "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
+      "evidence": [
+        {
+          "file": "main/main.js",
+          "line": 23,
+          "sample": "function detectUnsafeGraphicsHost() {"
+        },
+        {
+          "file": "main/main.js",
+          "line": 42,
+          "sample": "const GRAPHICS_MODE = detectUnsafeGraphicsHost();"
+        },
+        {
+          "file": "main/main.js",
+          "line": 49,
+          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
+        }
+      ]
+    }
+  ],
+  "surfaceV1InterfaceDraft": {
+    "status": "DRAFT_ONLY_NO_MIGRATION",
+    "methods": [
+      "create(spec, host)",
+      "attach(host)",
+      "setBounds(rect, visible)",
+      "focus()",
+      "snapshot()",
+      "move(nextHost)",
+      "dispose(reason)"
+    ],
+    "events": [
+      "ready",
+      "state",
+      "crashed",
+      "unresponsive",
+      "disposed"
+    ],
+    "invariants": [
+      "One authoritative owner and one current host.",
+      "Dispose is idempotent and returns the resource ledger to baseline.",
+      "Move is observable, generation-guarded and rollback-capable.",
+      "Existing workarounds remain adapter-local until packaged Windows evidence permits removal."
+    ]
+  },
+  "decision": "NO SurfaceManager implementation or migration is authorized by this census."
+}

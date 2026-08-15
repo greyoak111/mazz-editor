@@ -176,3 +176,5 @@ node tests/e2e/w71-packaged-smoke.mjs
 6. 在真实安装/卸载前补签名策略与隔离测试目录。
 
 上述项目完成前，不宣称 Wave 0 退出 Gate 已通过。
+
+> 后续进展：其中第 1 项的 BrowserWindow/PanelWindow/WebContentsView 部分，以及第 2、3 项已在 [`W71_WAVE0_CENSUS_CHECKPOINT_2026-08-15.md`](./W71_WAVE0_CENSUS_CHECKPOINT_2026-08-15.md) 落地；Torrent/watcher/stream、native binary、许可和签名等未尽项继续有效。

@@ -9,12 +9,13 @@ class BrowserViews {
   // theme:broadcast 句柄与装配点不在同一函数体，局部 const 必 ReferenceError（真机实锤）
   static all = new Set();
 
-  constructor({ bus, wm, session: defaultSession, pwList = null, themeId = null }) {
+  constructor({ bus, wm, session: defaultSession, pwList = null, themeId = null, resourceLedger = null }) {
     this.bus = bus;
     this.wm = wm;
     this.session = defaultSession;
     this.pwList = pwList || (() => []); // W48：自动填充/修改识别取数口（主进程注入，渲染永不触密钥）
     this.themeId = themeId || (() => null); // W52④ devtools 主题取数口（app 主题 id）
+    this.resourceLedger = resourceLedger;
     this.views = new Map(); // tabId -> { view, partition }
     this._dtThemed = new WeakSet(); // devtools 主题已注的 wc（每 wc 只注一趟）
     BrowserViews.all.add(this);
@@ -109,7 +110,7 @@ class BrowserViews {
   }
 
   create(tabId, partition, url, hostWin = null) {
-    this.destroy(tabId);
+    this.destroy(tabId, 'replaced');
     const host = hostWin || this.wm.main;
     const ses = partition ? session.fromPartition(partition) : this.session;
     const view = new WebContentsView({
@@ -124,9 +125,24 @@ class BrowserViews {
         backgroundThrottling: false,
       },
     });
-    this.views.set(tabId, { view, partition, hostWin: host }); // hostWin=视图宿主窗（跨窗迁/收尸凭据）
+    const rec = { view, partition, hostWin: host, resourceKey: null };
+    this.views.set(tabId, rec); // hostWin=视图宿主窗（跨窗迁/收尸凭据）
+    if (this.resourceLedger) {
+      try {
+        rec.resourceKey = this.resourceLedger.register({
+          type: 'web-contents-view', id: String(tabId), owner: `browser-tab:${tabId}`,
+          meta: { partition: partition || 'default', hostWindowId: host?.id || null },
+        });
+      } catch (error) {
+        console.warn('[resources] WebContentsView 登记失败:', error.message || error);
+      }
+    }
     host.contentView.addChildView(view);
     this.wire(tabId, view);
+    view.webContents.once('destroyed', () => {
+      if (this.views.get(tabId) === rec) this.views.delete(tabId);
+      this._releaseResource(rec, 'web-contents-destroyed');
+    });
     // 帧率不设限=显示器 v-sync 自适应（用户定版：setFrameRate 只对离屏生效，原生模式合成器直管——一个闸不留）
     view.webContents.loadURL(url || 'about:blank').catch(() => {});
     return true;
@@ -135,16 +151,23 @@ class BrowserViews {
   /** 宿主死亡收尸：子窗 closed → 挂在它上面的视图全灭（宿主没了视图不能活——分窗幽灵同治） */
   destroyByHost(win) {
     for (const [tabId, rec] of this.views) {
-      if (rec.hostWin === win) this.destroy(tabId);
+      if (rec.hostWin === win) this.destroy(tabId, 'host-window-closed');
     }
   }
 
-  destroy(tabId) {
+  _releaseResource(rec, reason) {
+    if (!rec?.resourceKey || !this.resourceLedger) return;
+    this.resourceLedger.release(rec.resourceKey, { reason });
+    rec.resourceKey = null;
+  }
+
+  destroy(tabId, reason = 'destroyed') {
     const rec = this.views.get(tabId);
     if (!rec) return false;
+    this.views.delete(tabId);
     try { (rec.hostWin || this.wm.main).contentView.removeChildView(rec.view); } catch {}
     try { rec.view.webContents.close(); } catch {}
-    this.views.delete(tabId);
+    this._releaseResource(rec, reason);
     return true;
   }
 

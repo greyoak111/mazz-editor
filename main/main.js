@@ -134,7 +134,8 @@ const store = new Store(path.join(app.getPath('userData'), 'mazz-settings.json')
 });
 
 const bus = new IpcBus();
-const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png') });
+const resourceLedger = new ResourceLedger();
+const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
 const tray = new TrayService({
   windowManager: wm, store,
   onCommand: (id, payload) => wm.broadcast('command:invoke', { id, payload }),
@@ -1003,6 +1004,7 @@ function registerChannels() {
   bus.handle('print:html', async ({ html, setup = {}, toPdf, defaultPath }) => {
     const mm2in = (mm) => (mm || 0) / 25.4;
     const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });
+    wm.trackWindow(win, 'print-worker');
     // 大文档必须走临时文件：data: URL 有长度上限（字多的 csv/长文档直接 ERR_FAILED 崩掉离屏窗=「报错再起不能」总根）
     let tmpHtml = null;
     try {
@@ -1363,7 +1365,7 @@ app.whenReady().then(() => {
   const SlideRemote = require('./slide-remote');
   new SlideRemote({ bus, win: () => wm.main });
   // —— 衍生面板原生子窗（W43 并行进程：收藏管理/密码管理器独立合成，与 WebContentsView 永不相见——白屏病根除） ——
-  new PanelWindows({ bus, win: () => wm.main });
+  new PanelWindows({ bus, win: () => wm.main, resourceLedger });
   // W58b 解压缩服务（魔数识别+JSZip 主力+7zip-bin 兜底+GBK 修复+打包+进度取消+2 并发）
   try { const ArchiveService = require('./archive'); new ArchiveService({ bus, win: () => wm.main }); } catch (e) { console.error('[archive] 装配失败:', e.message); }
   new ShareService({ bus, store, startMenuApps });
@@ -1412,6 +1414,7 @@ app.whenReady().then(() => {
   // 浏览器视图注册表（WebContentsView 主进程持有——webview 标签结构性病根终结）
   // 类走模块级 require（顶部）：局部 const 会遮蔽且跨函数不可达（ReferenceError 病源）
   const browserViews = new BrowserViews({ bus, wm, session: browserSess,
+    resourceLedger,
     themeId: () => store.get('theme'), // W52④ devtools 主题取数
     pwList: () => (store.get('passwords', [])).map(e => ({ id: e.id, site: e.site, username: e.username, password: __pwDecrypt(e.password) })) }); // W48 自动填充/修改识别取数
 
@@ -1437,7 +1440,6 @@ app.whenReady().then(() => {
   } catch (e) { console.warn('[author-sess]', e.message); }
 
   // —— W71 资源账本 + W66 Agent Harness Foundation ——
-  const resourceLedger = new ResourceLedger();
   const harness = new AgentHarnessService({ bus, windowManager: wm, resourceLedger });
   let harnessQuitReady = false;
   app.on('before-quit', (event) => {

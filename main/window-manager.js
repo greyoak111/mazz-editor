@@ -7,15 +7,33 @@ const path = require('path');
 const THEME_BG = { paper: '#f7f6f3', ink: '#16181d', indigo: '#101226', moss: '#1a211c', sand: '#f4ede1', construct: '#f0e6d2' };
 
 class WindowManager {
-  constructor({ store, iconPath }) {
+  constructor({ store, iconPath, resourceLedger = null }) {
     this.themeBg = () => THEME_BG[this.store.get('theme')] || (nativeTheme.shouldUseDarkColors ? '#16181d' : '#f7f6f3');
     this.store = store;
     this.iconPath = iconPath;
+    this.resourceLedger = resourceLedger;
     this.main = null;
     this.quickNote = null;
     this.children = new Set();
     this.onCloseRequest = null; // 由 main.js 注入：关闭行为（询问/托盘/退出）
     this.forceClose = false;
+  }
+
+  trackWindow(win, kind) {
+    if (!this.resourceLedger || !win) return;
+    try {
+      const key = this.resourceLedger.register({
+        type: 'browser-window', id: String(win.id), owner: `window-manager:${kind}`,
+        meta: { kind, parentId: win.getParentWindow?.()?.id || null },
+      });
+      win.__resourceLedgerKey = key;
+      win.once('closed', () => {
+        this.resourceLedger.release(key, { reason: 'window-closed' });
+        if (win.__resourceLedgerKey === key) win.__resourceLedgerKey = null;
+      });
+    } catch (error) {
+      console.warn('[resources] BrowserWindow 登记失败:', error.message || error);
+    }
   }
 
   createMain() {
@@ -47,6 +65,7 @@ class WindowManager {
       },
     });
     this.main = win;
+    this.trackWindow(win, 'main');
 
     if (state.maximized) win.maximize();
 
@@ -114,6 +133,7 @@ class WindowManager {
       },
     });
     this.children.add(win);
+    this.trackWindow(win, 'child');
     win.once('ready-to-show', () => { win.show(); win.focus(); });
     win.loadURL('mazz-res://app/index.html?role=child'); // 角色随 URL 落（启动首帧可知身份——协议自动弹等首启流程在子窗必须缄默，零竞态）
     // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
@@ -153,6 +173,7 @@ class WindowManager {
       },
     });
     this.quickNote = win;
+    this.trackWindow(win, 'quick-note');
     win.loadURL('mazz-res://app/quicknote.html');
     win.once('ready-to-show', () => {
       win.show();

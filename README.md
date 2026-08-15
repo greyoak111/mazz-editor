@@ -17,6 +17,7 @@ npm run dev      # 构建渲染层并启动 Electron（Electron 下载失败时 
 npm test         # 单元 + 契约 + 往返测试
 npm run smoke    # Electron 真机冒烟（含 IPC 白名单 / 密码管理器 / 13 模块注册 / 307 命令）
 npm run audit:release  # 生成 source map / native ABI / 许可证 / vendored runtime 发布基线
+npm run audit:w71:census  # 生成 UI / Layout / Surface / Agent Wave 0 Census
 npm run dist:dir       # 构建 Windows app-unpacked specimen
 npm run dist           # 构建 Windows NSIS 安装包
 ```
@@ -73,7 +74,7 @@ plugins-samples/  示例插件源码（构建时打成 samples/*.maz）
 
 ## 测试与质量
 
-- 129 个测试文件进入统一入口：`npm test`（单元/契约/往返/i18n/同步/帮助/UI 主题）
+- 131 个测试文件进入统一入口：`npm test`（单元/契约/往返/i18n/同步/帮助/UI 主题/W71 Census 与生命周期）
 - docx 往返 20 份关键元素 100% 保留 · xlsx 10 份零丢失 · pptx×5 主题合法
 - 公式引擎 26 组 Excel 一致性断言 · Electron 真机冒烟 10 项 · 双实例同步 100 文件零丢失
 - 测试本身有防"假绿"设计（harness 防 beforeExit 重入，历史教训固化）

@@ -26,9 +26,10 @@ class PanelWindows {
     }
   }
 
-  constructor({ bus, win }) {
+  constructor({ bus, win, resourceLedger = null }) {
     this.bus = bus;
     this.win = win; // () => 主窗
+    this.resourceLedger = resourceLedger;
     this.panels = new Map(); // singleton: kind；multi: kind:instanceId
     bus.handle('panel:open', async ({ kind, opts }) => this.open(kind, opts));
     bus.handle('panel:close', async ({ kind, instanceId }) => {
@@ -137,6 +138,21 @@ class PanelWindows {
     win.__panelKey = key;
     win.__panelReady = false;
     win.__panelQueue = [];
+    if (this.resourceLedger) {
+      try {
+        const ledgerKey = this.resourceLedger.register({
+          type: 'panel-window', id: String(win.id), owner: `panel:${kind}`,
+          meta: { kind, instanceId: win.__panelInstanceId || null, panelKey: key },
+        });
+        win.__resourceLedgerKey = ledgerKey;
+        win.once('closed', () => {
+          this.resourceLedger.release(ledgerKey, { reason: 'panel-closed' });
+          if (win.__resourceLedgerKey === ledgerKey) win.__resourceLedgerKey = null;
+        });
+      } catch (error) {
+        console.warn('[resources] PanelWindow 登记失败:', error.message || error);
+      }
+    }
     win.webContents.on('did-finish-load', () => {
       if (win.isDestroyed()) return;
       win.__panelReady = true;
