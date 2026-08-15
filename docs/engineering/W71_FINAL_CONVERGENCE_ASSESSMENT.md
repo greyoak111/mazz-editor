@@ -13,7 +13,7 @@
 > W66 的原始 `45 / PREVIEW` 只评价当时可见的“Kimi Provider + Terminal/Toolchain 前件”，不能代表长期架构。维护者已经将其正式修正为 `W66 Agent Harness Integration`：Provider、Harness、Seat、Gate 四层分离，Harness Foundation 与各 Vendor Adapter 分层验收。具体范围和 Final Gate 以施工规格 4.4、Wave 4 与 8.8 为准。
 
 > [!NOTE]
-> 跨波次未尽项、Factory 后半场、W64/W69/W70 Design Capsule 与 W72–W81 Post-W71 分组统一维护在 [`Mazz 当前未落地全景-W71归并版.md`](<C:/Users/Administrator/Downloads/交付区/Mazz 当前未落地全景-W71归并版.md>)。本评估仍只作为 W71 第一阶段审计证据，不承担未来路线真源。
+> 跨波次未尽项、Factory 后半场、W64/W69/W70/W82 Design Capsule 与 W72–W82 Post-W71 分组统一维护在 [`Mazz 当前未落地全景-W71归并版.md`](<C:/Users/Administrator/Downloads/交付区/Mazz 当前未落地全景-W71归并版.md>)。本评估仍只作为 W71 第一阶段审计证据，不承担未来路线真源。
 
 ## 0. 评估边界、证据与限制
 

@@ -17,4 +17,5 @@
 
 | 资产 | 状态 | 工作流入口 | 边界 |
 |---|---|---|---|
-| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **v1.1 Design Capsule 已冻结；W69a–W69l 已拆波，未施工** | Publication → Hub/Charts/Publish → Content Fabric/World → Production Record → Transparent AI Market/Router | W71 内完全冻结；Hub 不拥有本地或生产真相，Publication 不等于 URL，Canon/Popularity/Quality/Permission 分离，不建 Overall Score 或 Universal DB |
+| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **v1.2 Design Capsule 已冻结；W69a–W69m 已拆波，未施工** | Publication → Hub/Charts/Publish → Content Fabric/World → AI Market → Workflow Publication | W71 内完全冻结；Hub 不拥有本地、生产或 Workflow 真相，Publication 不等于 URL，不建 Overall Score 或 Universal DB |
+| [W82 Industry Workflow Compiler](./W82_INDUSTRY_WORKFLOW_COMPILER.md) | **v0.1 Design Capsule 已登记；W82a–W82e 未施工** | Industry SOP → Workflow Package → Compiler → Factory/Capability → Artifact/Final → W69m | 不建设动画/游戏引擎或超级 Agent；Seat 不等于 Model，Hub 不执行本地 Workflow，Sample D 未通过不得宣称“灵感到动画”落地 |

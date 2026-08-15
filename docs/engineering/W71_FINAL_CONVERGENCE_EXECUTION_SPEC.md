@@ -1,6 +1,6 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.11
+> 版本：v2.12
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
@@ -19,7 +19,7 @@
 3. 跨波次状态、Post-W71 归属与 Design Capsule 来源，以 [`Mazz 当前未落地全景-W71归并版.md`](<C:/Users/Administrator/Downloads/交付区/Mazz 当前未落地全景-W71归并版.md>) 为唯一总表；任何后续施工规格必须引用并回写该表。
 4. 后续施工任务、缺陷卡、测试和验收必须引用本文件中的 Wave 与 Gate。
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
-6. 本次授权不扩大 W71，不批准 W63–W81，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
+6. 本次授权不扩大 W71，不批准 W63–W82，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
 8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request 与 Monaco/Code 四个检查点；只关闭有测试和 packaged 证据的子 Gate，Agent/多窗/真实媒体设备等未尽项保持 OPEN。
 
@@ -74,6 +74,7 @@ W63 完整块级活引用
 W64 AI / 人格陪看
 W69 Hub / 市场
 W70 Cognition
+W82 Industry Workflow Compiler / Media Production Workflows
 完整 W67
 Task Capsule
 SeatPackage
@@ -1135,7 +1136,7 @@ W71 只验证已经落地的 W68 主链；不得借本索引实施下一代 Fact
 
 ### C. Design Capsule Index
 
-W64、W70，以及 Asset/Capability/Civilization、Relation Retrieval/Multi-parent、Workspace Event Ledger / 个人工作运行史等设计只保存摘要、权威来源和未来波次映射。W69 已由 [`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) v1.1 升格为 Factory/World/Charts/Transparent AI Production Market/P2P 五柱、Publication 贯穿的 Local-first Content Network，并拆为 W69a–W69l；它仍是 Post-W71 Design Capsule。W73 持有本地 Production Run 事实，W69 只消费显式公共证据投影；W71 不把任何 Design Capsule 当仓库实现。
+W64、W70，以及 Asset/Capability/Civilization、Relation Retrieval/Multi-parent、Workspace Event Ledger / 个人工作运行史等设计只保存摘要、权威来源和未来波次映射。W69 已由 [`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) v1.2 升格为 Factory/World/Media Workflows/Charts/Transparent AI Production Market/P2P 六柱、Publication 贯穿的 Local-first Content Network，并拆为 W69a–W69m。新增 [`W82_INDUSTRY_WORKFLOW_COMPILER.md`](../plans/W82_INDUSTRY_WORKFLOW_COMPILER.md) 持有本地 Workflow Package、Compiler、Artifact DAG 与垂直生产线；W69m 只持有其公共投影。W73 仍持有 Factory/Production Run 事实，W79 只提供外部 Capability。以上均是 Post-W71 Design Capsule，W71 不把它们当仓库实现。
 
 ### D. Discussion-stage Candidates
 
@@ -1151,15 +1152,15 @@ GitHub“拿来主义”补充材料已以全文镜像和工作流路由两层�
 
 本登记不验证选型、不批准 clone/安装/PoC，也不改变 W71 范围。材料中的 `P0/P1` 是 W71 结束后的研究优先级，不是 W71 缺陷优先级。后续只有在目标 commit 的 LICENSE/NOTICE/SBOM/模型卡复核、Mazz-owned interface、可重建派生层和代表性 benchmark 同时成立后，候选才可申请进入独立波次。
 
-### 13.1 W71 与 W72–W81 的硬边界
+### 13.1 W71 与 W72–W82 的硬边界
 
-W72–W81 只是总表中的 Post-W71 分组：资产/能力、Factory 组织完形、统一导入与 Promotion、关系检索、多父级、Shadow Relation、多模态 Anchor、外部工具、文明模型，以及 Workspace Event Ledger / 个人工作运行史。它们没有获得开工授权。
+W72–W82 只是总表中的 Post-W71 分组：资产/能力、Factory 组织完形、统一导入与 Promotion、关系检索、多父级、Shadow Relation、多模态 Anchor、外部工具、文明模型、Workspace Event Ledger / 个人工作运行史，以及 Industry Workflow Compiler。它们没有获得开工授权。
 
-W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；W71 实施 W66 Harness Foundation，也不等于 W73 下一代 Factory、W79 Blender 或 W81 工作区事件流已进入范围。W71 中为了诊断而产生的日志和测试证据，也不得借名升级为 W81 运行时。
+W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；W71 实施 W66 Harness Foundation，也不等于 W73 下一代 Factory、W79 Blender、W81 工作区事件流或 W82 Workflow Compiler 已进入范围。W71 中为了诊断而产生的日志和测试证据，也不得借名升级为 W81/W82 运行时。
 
 同理，Post-W71 OSS Research Reserve 的全文入库不等于任何外部依赖已经获准。W71 期间禁止据此引入 daemon、native dependency、OCR/LLM 权重、图数据库、向量库或新的后台采集器。
 
-同步/桌面性能研究与 W69 Local-first Content Network Design Capsule 的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hub 服务、账号系统、公共 Seed、World runtime、Production Record 公共服务、AI 排行榜、AUTO Router、AI Challenge、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究或架构材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
+同步/桌面性能研究、W69 Local-first Content Network 与 W82 Industry Workflow Compiler Capsule 的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hub 服务、账号系统、公共 Seed、World runtime、Workflow Compiler/Runtime、Production Record 公共服务、AI 排行榜、AUTO Router、AI Challenge、动画/游戏入口、外部工具引入、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究或架构材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
 
 ---
 
@@ -1205,7 +1206,7 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 ```text
 升级依赖或 Electron
 删除 workaround / legacy
-夹带 W63–W81 功能施工
+夹带 W63–W82 功能施工
 把微波完成冒充完整 Wave 退出
 把 Foundation 冒充真实 Adapter 已扶正
 ```
