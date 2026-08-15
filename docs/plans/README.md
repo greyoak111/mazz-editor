@@ -11,3 +11,4 @@
 | 资产 | 状态 | 工作流入口 | 边界 |
 |---|---|---|---|
 | [Mazz Post-W71 GitHub“拿来主义”研究储备](../research/Mazz-Post-W71-GitHub-拿来主义研究储备.md) | **全文已入库；未选型、未施工** | [OSS 研究储备工作流](../research/POST_W71_OSS_RESEARCH_WORKFLOW.md) | P0/P1 只表示研究优先级；W71 后仍需独立授权、目标 commit 许可审计和 benchmark |
+| [Mazz Post-W71 同步与桌面性能工程增量研究](../research/Mazz_Post-W71_同步与桌面性能工程_增量研究储备.md) | **全文已入库；未重构、未施工** | [统一研究储备工作流](../research/POST_W71_OSS_RESEARCH_WORKFLOW.md) | 现有 LAN Sync 不抹零；Runtime/Replica/Hyper-V/8h soak 均需 Post-W71 独立研究授权 |

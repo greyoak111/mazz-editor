@@ -1143,7 +1143,8 @@ W64、W69、W70，以及 Asset/Capability/Civilization、Relation Retrieval/Mult
 GitHub“拿来主义”补充材料已以全文镜像和工作流路由两层入库：
 
 - [`Mazz-Post-W71-GitHub-拿来主义研究储备.md`](../research/Mazz-Post-W71-GitHub-拿来主义研究储备.md)：外部项目、可复用原语、许可证分流和 PoC 候选的研究底稿；
-- [`POST_W71_OSS_RESEARCH_WORKFLOW.md`](../research/POST_W71_OSS_RESEARCH_WORKFLOW.md)：把研究包唯一映射到 W72/W74/W75–W81，并冻结准入、退出与禁区。
+- [`Mazz_Post-W71_同步与桌面性能工程_增量研究储备.md`](../research/Mazz_Post-W71_同步与桌面性能工程_增量研究储备.md)：统一 Runtime、Replica 语义、T0–T3 Harness、桌面预算与候选 8h Soak 的增量底稿；
+- [`POST_W71_OSS_RESEARCH_WORKFLOW.md`](../research/POST_W71_OSS_RESEARCH_WORKFLOW.md)：把 R0–R14 唯一映射到 W72/W74/W75–W81、完整 W67、LAN Sync 演进研究和测试基础设施，并冻结准入、退出与禁区。
 
 本登记不验证选型、不批准 clone/安装/PoC，也不改变 W71 范围。材料中的 `P0/P1` 是 W71 结束后的研究优先级，不是 W71 缺陷优先级。后续只有在目标 commit 的 LICENSE/NOTICE/SBOM/模型卡复核、Mazz-owned interface、可重建派生层和代表性 benchmark 同时成立后，候选才可申请进入独立波次。
 
@@ -1154,6 +1155,8 @@ W72–W81 只是总表中的 Post-W71 分组：资产/能力、Factory 组织完
 W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；W71 实施 W66 Harness Foundation，也不等于 W73 下一代 Factory、W79 Blender 或 W81 工作区事件流已进入范围。W71 中为了诊断而产生的日志和测试证据，也不得借名升级为 W81 运行时。
 
 同理，Post-W71 OSS Research Reserve 的全文入库不等于任何外部依赖已经获准。W71 期间禁止据此引入 daemon、native dependency、OCR/LLM 权重、图数据库、向量库或新的后台采集器。
+
+同步/桌面性能研究材料的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
 
 ---
 
