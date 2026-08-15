@@ -12,13 +12,17 @@ const ADAPTERS = {
 };
 
 class DebugService {
-  constructor({ bus, windowManager }) {
+  constructor({ bus, windowManager, resourceLedger = null, spawnProcess = spawn, requestTimeout = 15000 }) {
     this.wm = windowManager;
     this.session = null; // {proc, seq, pending: Map, buffer}
     this.seq = 1;
+    this.sessionSeq = 1;
+    this.resourceLedger = resourceLedger;
+    this.spawnProcess = spawnProcess;
+    this.requestTimeout = requestTimeout;
 
     bus.handle('debug:start', async (config) => this.start(config));
-    bus.handle('debug:stop', async () => { this.kill(); return true; });
+    bus.handle('debug:stop', async () => { this.kill('user-stop'); return true; });
     bus.handle('debug:request', async ({ command, args }) => this.request(command, args));
     bus.handle('debug:status', async () => ({ active: !!this.session }));
   }
@@ -26,19 +30,27 @@ class DebugService {
   broadcast(channel, payload) { this.wm.broadcast('debug:event', { channel, ...payload }); }
 
   async start(config) {
-    if (this.session) this.kill();
+    if (this.session) this.kill('session-replaced');
     const adapter = ADAPTERS[config.type];
     if (!adapter) return { error: `不支持的调试类型: ${config.type}` };
     const [cmd, args] = adapter.cmd(config);
     try {
-      const proc = spawn(cmd, args, { cwd: config.cwd || process.cwd(), env: process.env, stdio: ['pipe', 'pipe', 'pipe'] });
-      this.session = { proc, pending: new Map(), buffer: Buffer.alloc(0) };
-      proc.stdout.on('data', (d) => this.onData(d));
-      proc.stderr.on('data', (d) => this.broadcast('output', { category: 'stderr', output: d.toString() }));
-      proc.on('exit', (code) => {
-        this.broadcast('terminated', { code });
-        this.session = null;
+      const proc = this.spawnProcess(cmd, args, { cwd: config.cwd || process.cwd(), env: process.env, stdio: ['pipe', 'pipe', 'pipe'] });
+      const id = `dap-${this.sessionSeq++}`;
+      const session = {
+        id, proc, pending: new Map(), buffer: Buffer.alloc(0),
+        resourceKey: this.resourceLedger?.register({
+          type: 'debug-process', id, owner: 'debug-service', state: 'running',
+          meta: { adapter: config.type, cwd: config.cwd || process.cwd() },
+        }) || null,
+      };
+      this.session = session;
+      proc.stdout.on('data', (d) => this.onData(d, session));
+      proc.stderr.on('data', (d) => {
+        if (this.session === session) this.broadcast('output', { category: 'stderr', output: d.toString() });
       });
+      proc.once('exit', (code, signal) => this._endSession(session, 'process-exit', { code, signal }, true));
+      proc.once('error', (error) => this._endSession(session, 'process-error', { error: error.message }, true));
       // DAP 初始化握手
       const initRes = await this.request('initialize', {
         clientID: 'mazz-editor',
@@ -50,26 +62,32 @@ class DebugService {
         supportsVariablePaging: false,
         supportsRunInTerminalRequest: false,
         supportsProgressReporting: false,
-      });
-      if (initRes.error) return initRes;
+      }, session);
+      if (initRes.error) {
+        this.kill('initialize-failed', session);
+        return initRes;
+      }
       // launch
-      await this.request('launch', {
+      const launchRes = await this.request('launch', {
         program: config.program,
         args: config.args || [],
         cwd: config.cwd || path.dirname(config.program || '.'),
         stopOnEntry: !!config.stopOnEntry,
         console: 'internalConsole',
         justMyCode: config.justMyCode !== false,
-      });
+      }, session);
+      if (launchRes.error) {
+        this.kill('launch-failed', session);
+        return launchRes;
+      }
       return { ok: true, capabilities: initRes.body || {} };
     } catch (e) {
-      this.kill();
+      this.kill('start-failed');
       return { error: `调试适配器启动失败: ${e.message}（请确认已安装 Python 与 debugpy：pip install debugpy）` };
     }
   }
 
-  onData(chunk) {
-    const s = this.session;
+  onData(chunk, s = this.session) {
     if (!s) return;
     s.buffer = Buffer.concat([s.buffer, chunk]);
     while (true) {
@@ -82,50 +100,67 @@ class DebugService {
       if (s.buffer.length < headerEnd + 4 + len) return;
       const body = s.buffer.slice(headerEnd + 4, headerEnd + 4 + len).toString('utf8');
       s.buffer = s.buffer.slice(headerEnd + 4 + len);
-      try { this.onMessage(JSON.parse(body)); } catch (e) { console.error('[dap] 解析失败:', e.message); }
+      try { this.onMessage(JSON.parse(body), s); } catch (e) { console.error('[dap] 解析失败:', e.message); }
     }
   }
 
-  onMessage(msg) {
-    const s = this.session;
+  onMessage(msg, s = this.session) {
+    if (!s) return;
     if (msg.type === 'response') {
       const pending = s.pending.get(msg.request_seq);
       if (pending) {
         s.pending.delete(msg.request_seq);
-        pending(msg);
+        clearTimeout(pending.timer);
+        pending.resolve(msg);
       }
-    } else if (msg.type === 'event') {
+    } else if (msg.type === 'event' && this.session === s) {
       this.broadcast('dapEvent', { event: msg.event, body: msg.body || {} });
     }
   }
 
-  request(command, args = {}) {
+  request(command, args = {}, s = this.session) {
     return new Promise((resolve) => {
-      const s = this.session;
       if (!s) return resolve({ error: '无活动调试会话' });
       const seq = this.seq++;
-      s.pending.set(seq, (msg) => {
+      const timer = setTimeout(() => {
+        if (s.pending.has(seq)) { s.pending.delete(seq); resolve({ error: 'DAP 请求超时: ' + command }); }
+      }, this.requestTimeout);
+      s.pending.set(seq, { timer, resolve: (msg) => {
         if (msg.success === false) resolve({ error: msg.message || '请求失败' });
         else resolve({ body: msg.body || {} });
-      });
+      } });
       const body = JSON.stringify({ seq, type: 'request', command, arguments: args });
       try {
         s.proc.stdin.write(`Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`);
       } catch (e) {
+        const pending = s.pending.get(seq);
+        if (pending) clearTimeout(pending.timer);
         s.pending.delete(seq);
         resolve({ error: e.message });
       }
-      setTimeout(() => {
-        if (s.pending.has(seq)) { s.pending.delete(seq); resolve({ error: 'DAP 请求超时: ' + command }); }
-      }, 15000);
     });
   }
 
-  kill() {
-    if (this.session) {
-      try { this.session.proc.kill(); } catch {}
-      this.session = null;
+  _endSession(session, reason, meta = {}, fromProcess = false) {
+    if (!session) return false;
+    const wasCurrent = this.session === session;
+    if (wasCurrent) this.session = null;
+    for (const pending of session.pending.values()) {
+      clearTimeout(pending.timer);
+      pending.resolve({ success: false, message: `调试会话已结束：${reason}` });
     }
+    session.pending.clear();
+    if (!fromProcess) { try { session.proc.kill(); } catch {} }
+    if (session.resourceKey) {
+      this.resourceLedger?.release(session.resourceKey, { reason, state: 'stopped', meta });
+      session.resourceKey = null;
+    }
+    if (fromProcess && wasCurrent) this.broadcast('terminated', meta);
+    return true;
+  }
+
+  kill(reason = 'user-kill', session = this.session) {
+    return this._endSession(session, reason);
   }
 }
 module.exports = DebugService;

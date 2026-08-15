@@ -28,7 +28,7 @@ const INVOKE_CHANNELS = new Set([
   'term:create', 'term:write', 'term:resize', 'term:kill', 'term:list',
   'harness:adapters', 'harness:detect', 'harness:probe', 'harness:createSession', 'harness:send',
   'harness:interrupt', 'harness:dispose', 'harness:sessions', 'resources:snapshot',
-  'py:exec', 'py:status', 'py:restart',
+  'py:exec', 'py:status', 'py:restart', 'py:runtimeReset',
   'debug:start', 'debug:stop', 'debug:request', 'debug:status',
   'app:fonts',
   'pw:list', 'pw:save', 'pw:delete', 'pw:available',

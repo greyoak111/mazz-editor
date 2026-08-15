@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.5
+> 版本：v2.6
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / Wave 0 生命周期、发布安全与 native staging 检查点已落地**
+> 状态：**IN PROGRESS / Wave 1 Python 与 DAP 进程生命周期检查点已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -1175,7 +1175,9 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 这些产物把未知范围变成了可重复事实。后续检查点又完成 Torrent/FileWatcher 扩账、PTY/Panel/WebContentsView/FileWatcher/WebTorrent 20 次循环、27 个外平台 native binary 的 staging 与正式排除，以及 SearXNG/Updater/Translate TLS 和凭据收口。证据见 [`W71_WAVE0_LIFECYCLE_SECURITY_CHECKPOINT_2026-08-15.md`](./W71_WAVE0_LIFECYCLE_SECURITY_CHECKPOINT_2026-08-15.md)。
 
-完整 Wave 0 Gate 仍未通过：worker/media/Object URL/Factory stream/Python/DAP 等资源尚未全部接账，三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0。
+下一检查点把 PythonKernel 与 DebugService 接入共享 ResourceLedger，关闭 DAP 旧进程退出覆盖新会话、pending timer 残留和初始化失败留进程三类风险；Python 在正式 packaged 程序中完成 20 次真执行/销毁，DAP 完成 20 次替换/停止契约循环。证据见 [`W71_WAVE1_PROCESS_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_PROCESS_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
+
+完整 Wave 0 / Wave 1 Gate 仍未通过：worker/media/Object URL/Factory stream 等资源尚未全部接账，DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。
 

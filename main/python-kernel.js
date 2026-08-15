@@ -39,34 +39,56 @@ while True:
 `;
 
 class PythonKernel {
-  constructor({ bus, windowManager }) {
+  constructor({
+    bus, windowManager, resourceLedger = null,
+    spawnProcess = spawn, fsApi = fs, tempDir = os.tmpdir(),
+  }) {
     this.proc = null;
     this.pythonPath = null;
     this.queue = [];
     this.busy = false;
+    this.current = null;
+    this.starting = null;
     this.wm = windowManager;
     this.driverPath = null;
+    this.resourceLedger = resourceLedger;
+    this.spawnProcess = spawnProcess;
+    this.fs = fsApi;
+    this.tempDir = tempDir;
+    this.processResourceKey = null;
+    this.driverResourceKey = null;
 
     bus.handle('py:exec', async ({ code, timeout = 30000 }) => this.exec(code, timeout));
     bus.handle('py:status', async () => ({
       available: !!this.proc && !this.proc.killed,
       python: this.pythonPath,
     }));
-    bus.handle('py:restart', async () => { this.kill(); await this.ensure(); return true; });
+    bus.handle('py:restart', async () => { this.kill('restart'); await this.ensure(); return true; });
+    if (process.env.NODE_ENV === 'test') {
+      bus.handle('py:runtimeReset', async () => { this.kill('runtime-reset'); return true; });
+    }
   }
 
   async detect() {
     if (this.pythonPath) return this.pythonPath;
     for (const cmd of PYTHON_CANDIDATES) {
       const ok = await new Promise((resolve) => {
+        let settled = false;
+        let timer = null;
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          if (timer) clearTimeout(timer);
+          resolve(value);
+        };
         try {
-          const p = spawn(cmd, ['-c', 'import sys;print(sys.version_info[0])'], { stdio: ['ignore', 'pipe', 'ignore'] });
+          const p = this.spawnProcess(cmd, ['-c', 'import sys;print(sys.version_info[0])'], { stdio: ['ignore', 'pipe', 'ignore'] });
           let out = '';
           p.stdout.on('data', d => out += d);
-          p.on('close', (code) => resolve(code === 0 && out.trim().startsWith('3')));
-          p.on('error', () => resolve(false));
-          setTimeout(() => { try { p.kill(); } catch {} resolve(false); }, 4000);
-        } catch { resolve(false); }
+          p.once('close', (code) => finish(code === 0 && out.trim().startsWith('3')));
+          p.once('error', () => finish(false));
+          timer = setTimeout(() => { try { p.kill(); } catch {} finish(false); }, 4000);
+        } catch { finish(false); }
       });
       if (ok) { this.pythonPath = cmd; return cmd; }
     }
@@ -75,20 +97,44 @@ class PythonKernel {
 
   async ensure() {
     if (this.proc && !this.proc.killed) return true;
+    if (this.starting) return this.starting;
+    this.starting = this._start().finally(() => { this.starting = null; });
+    return this.starting;
+  }
+
+  async _start() {
     const cmd = await this.detect();
     if (!cmd) throw new Error('未检测到 Python。请安装 Python 3 并加入 PATH');
     if (!this.driverPath) {
-      this.driverPath = path.join(os.tmpdir(), 'mazz_py_driver.py');
-      fs.writeFileSync(this.driverPath, DRIVER);
+      this.driverPath = path.join(this.tempDir, `mazz_py_driver_${process.pid}.py`);
+      this.fs.writeFileSync(this.driverPath, DRIVER);
+      this.driverResourceKey = this.resourceLedger?.register({
+        type: 'temp-file', id: this.driverPath, owner: 'python-kernel', state: 'created',
+        meta: { purpose: 'python-driver' },
+      }) || null;
     }
-    this.proc = spawn(cmd, ['-u', this.driverPath], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-    });
+    let proc = null;
+    try {
+      proc = this.spawnProcess(cmd, ['-u', this.driverPath], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+      });
+      this.processResourceKey = this.resourceLedger?.register({
+        type: 'python-process', id: 'kernel', owner: 'python-kernel', state: 'running',
+        meta: { command: cmd },
+      }) || null;
+      this.proc = proc;
+    } catch (error) {
+      try { proc?.kill(); } catch {}
+      this._releaseProcess('start-failed', { error: error.message });
+      this._cleanupDriver('start-failed');
+      throw error;
+    }
     this.buffer = '';
-    this.proc.stdout.on('data', (d) => { this.buffer += d.toString('utf8'); });
-    this.proc.stderr.on('data', (d) => { this.buffer += d.toString('utf8'); });
-    this.proc.on('exit', () => { this.proc = null; });
+    proc.stdout.on('data', (d) => { if (this.proc === proc) this.buffer += d.toString('utf8'); });
+    proc.stderr.on('data', (d) => { if (this.proc === proc) this.buffer += d.toString('utf8'); });
+    proc.once('exit', (code, signal) => this._handleProcessExit(proc, code, signal));
+    proc.once('error', (error) => this._handleProcessExit(proc, null, null, error));
     return true;
   }
 
@@ -108,9 +154,11 @@ class PythonKernel {
     this.buffer = '';
     const b64 = Buffer.from(job.code, 'utf8').toString('base64').replace(/\n/g, '');
     const timer = setTimeout(() => {
+      if (this.current?.job !== job) return;
+      job.reject(new Error('执行超时（Python 内核已终止，可重新执行）'));
+      this.current = null;
       this.busy = false;
-      job.reject(new Error('执行超时（内核可能卡死，可用「重启内核」恢复）'));
-      this.pump();
+      this.kill('exec-timeout', { rejectCurrent: false });
     }, job.timeout);
     try {
       this.proc.stdin.write(b64 + ' ' + marker + '\n');
@@ -118,6 +166,7 @@ class PythonKernel {
       clearTimeout(timer);
       this.busy = false;
       job.reject(e);
+      this.current = null;
       this.pump();
       return;
     }
@@ -128,13 +177,58 @@ class PythonKernel {
       clearTimeout(timer);
       const out = this.buffer.slice(0, idx).replace(/\r\n/g, '\n').replace(/\n+$/, '');
       this.busy = false;
+      this.current = null;
       job.resolve({ output: out, python: this.pythonPath });
       this.pump();
     }, 40);
+    this.current = { job, timer, interval: iv, proc: this.proc };
   }
 
-  kill() {
-    if (this.proc) { try { this.proc.kill(); } catch {} this.proc = null; }
+  _rejectJobs(error, { rejectCurrent = true } = {}) {
+    if (this.current) {
+      clearTimeout(this.current.timer);
+      clearInterval(this.current.interval);
+      if (rejectCurrent) this.current.job.reject(error);
+      this.current = null;
+    }
+    for (const job of this.queue.splice(0)) job.reject(error);
+    this.busy = false;
+  }
+
+  _releaseProcess(reason, meta = {}) {
+    if (!this.processResourceKey) return;
+    this.resourceLedger?.release(this.processResourceKey, { reason, state: 'stopped', meta });
+    this.processResourceKey = null;
+  }
+
+  _cleanupDriver(reason) {
+    const driverPath = this.driverPath;
+    this.driverPath = null;
+    if (driverPath) {
+      try { if (this.fs.existsSync(driverPath)) this.fs.unlinkSync(driverPath); } catch {}
+    }
+    if (this.driverResourceKey) {
+      this.resourceLedger?.release(this.driverResourceKey, { reason, state: 'deleted' });
+      this.driverResourceKey = null;
+    }
+  }
+
+  _handleProcessExit(proc, code, signal, error = null) {
+    if (this.proc !== proc) return;
+    this.proc = null;
+    this._releaseProcess(error ? 'process-error' : 'process-exit', { code, signal, error: error?.message || '' });
+    this._rejectJobs(new Error(error?.message || `Python 内核已退出${code == null ? '' : `（${code}）`}`));
+    this._cleanupDriver(error ? 'process-error' : 'process-exit');
+  }
+
+  kill(reason = 'user-kill', { rejectCurrent = true } = {}) {
+    const proc = this.proc;
+    this.proc = null;
+    this._rejectJobs(new Error(`Python 内核已停止：${reason}`), { rejectCurrent });
+    if (proc) { try { proc.kill(); } catch {} }
+    this._releaseProcess(reason);
+    this._cleanupDriver(reason);
+    return !!proc;
   }
 }
 module.exports = PythonKernel;

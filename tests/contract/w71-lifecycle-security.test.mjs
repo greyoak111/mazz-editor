@@ -1,5 +1,6 @@
 // tests/contract/w71-lifecycle-security.test.mjs —— W71 长期资源与发布安全闭环
 import { createRequire } from 'node:module';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,6 +10,8 @@ const require = createRequire(import.meta.url);
 const { ResourceLedger } = require('../../main/resource-ledger.js');
 const FileWatcher = require('../../main/file-watcher.js');
 const TorrentDaemon = require('../../main/torrent-daemon.js');
+const PythonKernel = require('../../main/python-kernel.js');
+const DebugService = require('../../main/debug.js');
 const SearxService = require('../../main/searx.js');
 const Updater = require('../../main/updater.js');
 
@@ -34,6 +37,57 @@ class FakeWebTorrent {
   constructor() { this.server = new FakeServer(); }
   createServer() { return this.server; }
   destroy(callback) { callback?.(); }
+}
+
+class FakePythonProcess extends EventEmitter {
+  constructor({ probe = false } = {}) {
+    super();
+    this.killed = false;
+    this.stdout = new EventEmitter();
+    this.stderr = new EventEmitter();
+    this.stdin = {
+      write: (line) => {
+        const marker = String(line).trim().split(' ').slice(1).join(' ');
+        queueMicrotask(() => this.stdout.emit('data', Buffer.from(`2\n${marker}\n`)));
+        return true;
+      },
+    };
+    if (probe) queueMicrotask(() => {
+      this.stdout.emit('data', Buffer.from('3\n'));
+      this.emit('close', 0);
+    });
+  }
+  kill() {
+    if (this.killed) return;
+    this.killed = true;
+    queueMicrotask(() => this.emit('exit', 0, null));
+  }
+}
+
+class FakeDapProcess extends EventEmitter {
+  constructor() {
+    super();
+    this.killed = false;
+    this.stdout = new EventEmitter();
+    this.stderr = new EventEmitter();
+    this.stdin = { write: raw => this.respond(raw) };
+  }
+  respond(raw) {
+    const body = String(raw).split('\r\n\r\n').slice(1).join('\r\n\r\n');
+    const req = JSON.parse(body);
+    const payload = JSON.stringify({
+      seq: req.seq + 1000, type: 'response', request_seq: req.seq,
+      command: req.command, success: true, body: {},
+    });
+    const frame = `Content-Length: ${Buffer.byteLength(payload)}\r\n\r\n${payload}`;
+    queueMicrotask(() => this.stdout.emit('data', Buffer.from(frame)));
+    return true;
+  }
+  kill() {
+    if (this.killed) return;
+    this.killed = true;
+    queueMicrotask(() => this.emit('exit', 0, null));
+  }
 }
 
 const read = file => fs.readFileSync(path.resolve(file), 'utf8');
@@ -75,11 +129,68 @@ describe('W71 长期资源生命周期', () => {
     assert.equal(ledger.snapshot({ includeReleased: true }).released.length, 40);
   });
 
-  test('总装配将 watcher/torrent 接入同一账本并在退出时销毁', () => {
+  test('Python 内核连续 20 次执行/终止会同时释放进程与临时驱动', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-python-'));
+    const ledger = new ResourceLedger({ historyLimit: 100 });
+    let driverSpawns = 0;
+    const kernel = new PythonKernel({
+      bus: new FakeBus(), windowManager: { broadcast() {} }, resourceLedger: ledger, tempDir,
+      spawnProcess: (_cmd, args) => {
+        if (args[0] === '-u') driverSpawns++;
+        return new FakePythonProcess({ probe: args[0] === '-c' });
+      },
+    });
+    try {
+      for (let index = 0; index < 20; index++) {
+        if (index === 0) {
+          await Promise.all([kernel.ensure(), kernel.ensure(), kernel.ensure()]);
+          assert.equal(driverSpawns, 1, '并发 ensure 必须汇聚到同一个 Python 进程');
+        }
+        const result = await kernel.exec('1 + 1', 1000);
+        assert.equal(result.output, '2');
+        assert.deepEqual(ledger.snapshot().byType, { 'temp-file': 1, 'python-process': 1 });
+        kernel.kill('test-cycle');
+        assert.equal(ledger.snapshot().activeCount, 0, `第 ${index + 1} 次 Python 内核未释放`);
+        assert.equal(fs.readdirSync(tempDir).length, 0, `第 ${index + 1} 次 Python 驱动未删除`);
+      }
+      assert.equal(driverSpawns, 20);
+      assert.equal(ledger.snapshot({ includeReleased: true }).released.length, 40);
+    } finally {
+      kernel.kill('test-finally');
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test('DAP 连续 20 次替换/停止不会被旧进程退出回调清空新会话', async () => {
+    const ledger = new ResourceLedger({ historyLimit: 100 });
+    const debug = new DebugService({
+      bus: new FakeBus(), windowManager: { broadcast() {} }, resourceLedger: ledger,
+      spawnProcess: () => new FakeDapProcess(), requestTimeout: 1000,
+    });
+    for (let index = 0; index < 20; index++) {
+      const started = await debug.start({ type: 'python', program: 'fixture.py', cwd: os.tmpdir() });
+      assert.equal(started.ok, true);
+      assert.equal(ledger.snapshot().byType['debug-process'], 1);
+      const previous = debug.session;
+      const replacement = await debug.start({ type: 'python', program: 'fixture.py', cwd: os.tmpdir() });
+      assert.equal(replacement.ok, true);
+      await new Promise(resolve => setImmediate(resolve));
+      assert.ok(debug.session && debug.session !== previous, `第 ${index + 1} 次旧 exit 覆盖了新 DAP 会话`);
+      debug.kill('test-cycle');
+      assert.equal(ledger.snapshot().activeCount, 0, `第 ${index + 1} 次 DAP 未释放`);
+    }
+    assert.equal(ledger.snapshot({ includeReleased: true }).released.length, 40);
+  });
+
+  test('总装配将 watcher/torrent/Python/DAP 接入同一账本并在退出时销毁', () => {
     const main = read('main/main.js');
     assert.ok(main.includes('new FileWatcher({ bus, windowManager: wm, resourceLedger })'));
     assert.ok(/new TorrentDaemon\(\{[\s\S]{0,180}resourceLedger/.test(main));
     assert.ok(main.includes("torrentDaemon.destroy().catch"));
+    assert.ok(main.includes('new PythonKernel({ bus, windowManager: wm, resourceLedger })'));
+    assert.ok(main.includes("pyKernel.kill('app-quit')"));
+    assert.ok(main.includes('new DebugService({ bus, windowManager: wm, resourceLedger })'));
+    assert.ok(main.includes("debugService.kill('app-quit')"));
   });
 });
 

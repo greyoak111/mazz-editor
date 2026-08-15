@@ -1459,13 +1459,13 @@ app.whenReady().then(() => {
 
   // —— Python 计算内核（math.js 后端）——
   const PythonKernel = require('./python-kernel');
-  const pyKernel = new PythonKernel({ bus, windowManager: wm });
-  app.on('before-quit', () => pyKernel.kill());
+  const pyKernel = new PythonKernel({ bus, windowManager: wm, resourceLedger });
+  app.on('before-quit', () => pyKernel.kill('app-quit'));
 
   // —— DAP 调试适配器池 ——
   const DebugService = require('./debug');
-  const debugService = new DebugService({ bus, windowManager: wm });
-  app.on('before-quit', () => debugService.kill());
+  const debugService = new DebugService({ bus, windowManager: wm, resourceLedger });
+  app.on('before-quit', () => debugService.kill('app-quit'));
   wm.main.webContents.on('did-finish-load', () => {
     applySettings();
     hookEditorContextMenu();
