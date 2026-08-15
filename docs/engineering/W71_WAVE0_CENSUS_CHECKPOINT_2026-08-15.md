@@ -124,9 +124,9 @@ unpacked .node: 37 / 4.97 MiB
 
 | 未尽项 | 状态 |
 |---|---|
-| Torrent / watcher / worker / media / Object URL / Factory stream 等资源账本 | OPEN |
-| 20 次 Surface/Panel/PTY/Torrent/Agent 循环 | OPEN；当前只完成单次 packaged 闭环 |
-| 37 个 `.node` 的 win32-x64 裁剪与 ABI/WebTorrent 验证 | OPEN |
+| Torrent / watcher / worker / media / Object URL / Factory stream 等资源账本 | PARTIAL；Torrent/FileWatcher 已接账，其余 OPEN |
+| 20 次 Surface/Panel/PTY/Torrent/Agent 循环 | PARTIAL；PTY/Panel/WebContentsView/FileWatcher/WebTorrent 已完成 20 次，Viewer/Factory/Agent 等仍 OPEN |
+| 37 个 `.node` 的 win32-x64 裁剪与 ABI/WebTorrent 验证 | PARTIAL；已收敛为 10 个且外平台为 0，异机 clean install 仍 OPEN |
 | `buffers@0.1.1` 许可元数据 | OPEN |
 | ffmpeg 对应源码、构建配置与许可证闭环 | OPEN |
 | 代码签名、真实安装/升级/卸载 | OPEN |
@@ -142,3 +142,5 @@ unpacked .node: 37 / 4.97 MiB
 5. 再进入 Wave 1 数据状态机或 Layout runtime helper。
 
 历史欠账与 Post-W71 依赖继续以交付区《Mazz 当前未落地全景-W71归并版》为唯一总表。
+
+> 后续结果：上述第 1～3 项的当前闭环与安全修复见 [`W71_WAVE0_LIFECYCLE_SECURITY_CHECKPOINT_2026-08-15.md`](./W71_WAVE0_LIFECYCLE_SECURITY_CHECKPOINT_2026-08-15.md)。

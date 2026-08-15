@@ -103,6 +103,10 @@ function auditRelease() {
   const vendoredFfmpeg = walk(path.join(ROOT, 'renderer', 'vendor', 'ffmpeg'), file => !file.endsWith('.md'))
     .map(file => ({ ...fileRecord(file), sha256: sha256(file) }));
   const locked = lockedPackages();
+  let licenseEvidence = null;
+  try {
+    licenseEvidence = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'engineering', 'evidence', 'W71_LICENSE_AUDIT.json'), 'utf8'));
+  } catch {}
   const sum = rows => rows.reduce((total, row) => total + row.bytes, 0);
   return {
     schemaVersion: 1,
@@ -119,6 +123,7 @@ function auditRelease() {
       lockedPackageCount: locked.length,
       missingDeclaredLicense: locked.filter(item => !item.license),
       packages: locked,
+      evidence: licenseEvidence,
     },
     rendererSourceMaps: { count: sourceMaps.length, bytes: sum(sourceMaps), files: sourceMaps },
     nativeBinaries: { count: nativeBinaries.length, bytes: sum(nativeBinaries), files: nativeBinaries },

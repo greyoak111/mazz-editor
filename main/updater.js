@@ -8,13 +8,14 @@ const UA = 'MazzEditor-Updater/0.1';
 function getJson(url, { timeout = 12000 } = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
-    const lib = u.protocol === 'http:' ? http : https;
+    if (u.protocol !== 'https:') throw new Error('更新源必须使用 HTTPS');
+    const lib = https;
     const req = lib.request({
       protocol: u.protocol, hostname: u.hostname,
       port: u.port || (u.protocol === 'https:' ? 443 : 80),
       path: u.pathname + u.search, method: 'GET',
       headers: { 'User-Agent': UA, 'Accept': 'application/json', 'Accept-Encoding': 'identity' },
-      rejectUnauthorized: false, timeout, agent: false,
+      rejectUnauthorized: true, timeout, agent: false,
     }, (res) => {
       let data = '';
       res.setEncoding('utf8');
@@ -81,3 +82,4 @@ class Updater {
 
 module.exports = Updater;
 module.exports.semverCompare = semverCompare;
+module.exports.getJson = getJson;

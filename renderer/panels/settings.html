@@ -61,6 +61,7 @@
     <div class="set-row"><label>实例地址</label><div class="ctl"><input id="s-searx-url" class="inp" placeholder="https://你的实例"></div></div>
     <div class="set-row"><label>用户名</label><div class="ctl"><input id="s-searx-user" class="inp"></div></div>
     <div class="set-row"><label>密码</label><div class="ctl"><input id="s-searx-pass" class="inp" type="password"></div></div>
+    <div class="set-row"><label>TLS 指纹</label><div class="ctl"><input id="s-searx-pin" class="inp" placeholder="自签证书才填写 SHA-256"><span class="hint">留空时使用系统 CA 严格验证</span></div></div>
     <div class="set-row"><label></label><div class="ctl">
       <button id="s-searx-save" class="btn pri">保存并自检</button><span id="s-searx-status" class="status"></span></div></div>
     <div class="set-row"><label>AI 扩展</label><div class="ctl"><span class="hint">AI 扩展层已预留（Provider 未配置，相关菜单为禁用态）——智能创作 ⚙ 里配置</span></div></div>
@@ -112,6 +113,7 @@ function fill(d) {
   $('#s-searx-url').placeholder = d.searxMasked || 'https://你的实例';
   $('#s-searx-user').value = d.searxUser || '';
   $('#s-searx-pass').placeholder = d.searxHasPass ? '（已设置，不修改请留空）' : '（未设置）';
+  $('#s-searx-pin').value = d.searxTlsPin || '';
 }
 
 $('#s-lang').addEventListener('change', (e) => set('lang', e.target.value));
@@ -132,7 +134,7 @@ $('#s-explorer-reg').addEventListener('click', () => act('explorerReg'));
 $('#s-explorer-unreg').addEventListener('click', () => act('explorerUnreg'));
 $('#s-searx-save').addEventListener('click', () => {
   $('#s-searx-status').textContent = '自检中…';
-  act('searxSave', { url: $('#s-searx-url').value.trim(), user: $('#s-searx-user').value.trim(), pass: $('#s-searx-pass').value });
+  act('searxSave', { url: $('#s-searx-url').value.trim(), user: $('#s-searx-user').value.trim(), pass: $('#s-searx-pass').value, tlsPin: $('#s-searx-pin').value.trim() });
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
 ask();

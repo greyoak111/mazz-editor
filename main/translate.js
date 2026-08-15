@@ -6,7 +6,7 @@ const http = require('http');
 
 const TR_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
-/** 通用请求（支持 GET/POST，自签容错，超时重试） */
+/** 通用请求（支持 GET/POST，严格 TLS，超时重试） */
 function request(url, { method = 'GET', headers = {}, body = null, timeout = 15000, retries = 1 } = {}) {
   const attempt = () => new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -18,7 +18,7 @@ function request(url, { method = 'GET', headers = {}, body = null, timeout = 150
       path: u.pathname + u.search,
       method,
       headers: { 'User-Agent': TR_UA, 'Accept-Encoding': 'identity', ...headers },
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
       timeout,
       agent: false,
     }, (res) => {

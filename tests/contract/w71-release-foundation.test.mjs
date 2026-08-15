@@ -14,6 +14,9 @@ describe('W71 发布边界', () => {
     assert.equal(pkg.build.directories.output, 'release');
     assert.ok(pkg.build.files.includes('!renderer/dist/**/*.map'));
     assert.ok(pkg.build.files.includes('!renderer/vendor/**/*.map'));
+    for (const foreign of ['darwin-*', 'linux-*', 'android-*', 'win32-ia32', 'win32-arm64']) {
+      assert.ok(pkg.build.files.some(rule => rule.includes(`/prebuilds/${foreign}/`)), `缺 ${foreign} 原生排除规则`);
+    }
     assert.ok(pkg.build.asarUnpack.includes('node_modules/**/*.node'));
     for (const required of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md']) assert.ok(pkg.build.files.includes(required));
   });
@@ -26,10 +29,13 @@ describe('W71 发布边界', () => {
     assert.equal(report.licenses.missingDeclaredLicense.some(item => item.name === 'limiter'), false, 'legacy licenses[] 也必须识别');
     const wasm = report.vendoredFfmpeg.files.find(file => file.path.endsWith('ffmpeg-core.wasm'));
     assert.equal(wasm.sha256, '9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7');
+    assert.equal(report.licenses.evidence.buffers.gate, 'OPEN');
+    assert.equal(report.licenses.evidence.ffmpegWasm.byteMatch, false);
     if (report.packagedSpecimen.present) {
       assert.ok(report.packagedSpecimen.asar.present);
       assert.deepEqual(report.packagedSpecimen.asar.rootNotices.sort(), ['\\LICENSE', '\\NOTICE', '\\THIRD_PARTY_NOTICES.md']);
       assert.equal(report.packagedSpecimen.installer.sha256.length, 64);
+      assert.equal(report.packagedSpecimen.asarUnpackedNative.count, 10);
     }
   });
 });

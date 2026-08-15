@@ -1,28 +1,54 @@
 // main/searx.js —— SearXNG 搜索服务（主进程专属）
-// 隐私红线：实例地址与 Basic Auth 凭据只存在于主进程，渲染进程/网页永远拿不到
-// TLS 走 Node https（实例自签证书直连，不受 Chromium 证书栈影响）
+// 隐私红线：Basic Auth 凭据只存在于主进程，渲染进程/网页永远拿不到
+// TLS 默认严格验证；自签实例必须显式配置 SHA-256 证书指纹
 'use strict';
-const { app } = require('electron');
 const http = require('http');
 const https = require('https');
 const dns = require('dns').promises;
 const net = require('net');
+const crypto = require('crypto');
 const { URL } = require('url');
 
 // 归一化 UA（反指纹：所有搜索流量同一副面孔，不携带任何客户端特征）
 const SEARCH_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 const DEFAULT_INSTANCE = {
-  url: 'https://107.174.37.27',
-  user: 'mazz',
-  pass: '737037sxf',
+  url: '',
+  user: '',
+  pass: '',
+  tlsPin: '',
 };
 
-/** 主进程 Node https 请求（实例自签证书走 rejectUnauthorized=false；超时+单次重试） */
-function nodeFetch(url, { headers = {}, timeout = 12000, retries = 1 } = {}) {
+// 旧版本曾把共享实例三元组写进源码；只保留不可逆指纹用于迁移时清除旧配置。
+const LEAKED_DEFAULT_FINGERPRINT = '0cfef0ca7ea502d4a962522bc920a7597dd964a55fe86784f49ce5974b4be753';
+
+function normalizeTlsPin(value) {
+  const pin = String(value || '').replace(/[^a-f0-9]/gi, '').toUpperCase();
+  if (pin && pin.length !== 64) throw new Error('TLS 指纹必须是 64 位 SHA-256 十六进制');
+  return pin;
+}
+
+function authHeaders(config) {
+  if (!config.user && !config.pass) return {};
+  return { Authorization: 'Basic ' + Buffer.from(`${config.user}:${config.pass}`).toString('base64') };
+}
+
+function assertSecureEndpoint(url) {
+  const parsed = new URL(url);
+  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  const loopback = host === 'localhost' || host === '::1' || /^127\./.test(host);
+  if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && loopback)) {
+    throw new Error('搜索实例必须使用 HTTPS（仅本机 loopback 可使用 HTTP）');
+  }
+  return parsed;
+}
+
+/** 主进程 Node https 请求：默认系统 CA；自签证书只按用户显式 SHA-256 指纹放行。 */
+function nodeFetch(url, { headers = {}, timeout = 12000, retries = 1, tlsPin = '' } = {}) {
   const attempt = () => new Promise((resolve, reject) => {
-    const u = new URL(url);
+    const u = assertSecureEndpoint(url);
     const transport = u.protocol === 'http:' ? http : https;
+    const pin = u.protocol === 'https:' ? normalizeTlsPin(tlsPin) : '';
     const req = transport.request({
       protocol: u.protocol,
       hostname: u.hostname,
@@ -30,7 +56,7 @@ function nodeFetch(url, { headers = {}, timeout = 12000, retries = 1 } = {}) {
       path: u.pathname + u.search,
       method: 'GET',
       headers: { 'User-Agent': SEARCH_UA, 'Accept-Encoding': 'identity', ...headers },
-      rejectUnauthorized: false, // 实例为自签证书（Basic Auth 已做访问控制）
+      rejectUnauthorized: !pin,
       timeout,
       agent: false,
     }, (res) => {
@@ -41,10 +67,16 @@ function nodeFetch(url, { headers = {}, timeout = 12000, retries = 1 } = {}) {
     });
     req.on('timeout', () => req.destroy(new Error('timeout')));
     req.on('error', reject);
+    if (pin) {
+      req.on('socket', socket => socket.once('secureConnect', () => {
+        const actual = normalizeTlsPin(socket.getPeerCertificate()?.fingerprint256 || '');
+        if (!actual || actual !== pin) req.destroy(new Error('TLS 证书指纹不匹配'));
+      }));
+    }
     req.end();
   });
   return attempt().catch((e) => {
-    if (retries > 0) return nodeFetch(url, { headers, timeout, retries: retries - 1 });
+    if (retries > 0) return nodeFetch(url, { headers, timeout, retries: retries - 1, tlsPin });
     throw e;
   });
 }
@@ -251,27 +283,49 @@ async function fetchImage(raw, redirects = 0) {
 }
 
 class SearxService {
-  constructor({ bus, store, session }) {
+  constructor({ bus, store, session, encryptSecret = null, decryptSecret = null }) {
     this.store = store;
     this.session = session;
-
-    // 自签证书放行：仅对配置的实例主机生效（plan 4.3.6 既定方案）
-    this.applyCertWhitelist();
+    this.encryptSecret = encryptSecret || (value => ({ enc: false, data: Buffer.from(String(value || '')).toString('base64') }));
+    this.decryptSecret = decryptSecret || (payload => Buffer.from(payload?.data || '', 'base64').toString('utf8'));
+    this.migrateLegacyConfig();
 
     bus.handle('searx:search', async (payload) => this.search(payload));
     bus.handle('searx:extract', async (payload) => this.extract(payload));
     bus.handle('clip:fetchImage', async (payload) => this.fetchImage(payload));
     bus.handle('searx:selfcheck', async () => this.selfcheck());
     bus.handle('searx:getMaskedConfig', async () => this.maskedConfig());
-    bus.handle('searx:setConfig', async ({ url, user, pass }) => {
-      this.store.set('searx', {
-        url: String(url || '').trim().replace(/\/+$/, ''),
-        user: String(user || '').trim(),
-        pass: String(pass || ''),
-      });
-      this.applyCertWhitelist();
+    bus.handle('searx:setConfig', async ({ url, user, pass, tlsPin, clearPass = false }) => {
+      const previous = this.store.get('searx', {}) || {};
+      const next = {
+        url: String(url || previous.url || '').trim().replace(/\/+$/, ''),
+        user: user === undefined ? String(previous.user || '') : String(user || '').trim(),
+        tlsPin: normalizeTlsPin(tlsPin === undefined ? previous.tlsPin || '' : tlsPin),
+      };
+      if (!clearPass && pass) next.passEnc = this.encryptSecret(String(pass));
+      else if (!clearPass && previous.passEnc) next.passEnc = previous.passEnc;
+      this.store.set('searx', next);
       return this.selfcheck();
     });
+  }
+
+  migrateLegacyConfig() {
+    const previous = this.store.get('searx', null);
+    if (!previous || typeof previous !== 'object') return;
+    const plain = typeof previous.pass === 'string' ? previous.pass : '';
+    const fingerprint = crypto.createHash('sha256')
+      .update(`${previous.url || ''}\n${previous.user || ''}\n${plain}`)
+      .digest('hex');
+    if (fingerprint === LEAKED_DEFAULT_FINGERPRINT) {
+      this.store.set('searx', { url: '', user: '', tlsPin: '', legacyCredentialsRemovedAt: Date.now() });
+      return;
+    }
+    if (Object.prototype.hasOwnProperty.call(previous, 'pass')) {
+      const next = { ...previous };
+      delete next.pass;
+      if (plain) next.passEnc = this.encryptSecret(plain);
+      this.store.set('searx', next);
+    }
   }
 
   async extract({ url } = {}) {
@@ -289,26 +343,18 @@ class SearxService {
   }
 
   config() {
-    const c = this.store.get('searx', DEFAULT_INSTANCE);
-    return { ...DEFAULT_INSTANCE, ...c };
-  }
-
-  /** 实例主机证书白名单：app 级 certificate-error 事件，仅放行该主机，其余站点完全走默认验证 */
-  applyCertWhitelist() {
-    if (this._hooked) return;
-    this._hooked = true;
-    app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-      let host = '';
-      try { host = new URL(this.config().url).host; } catch {}
-      try {
-        if (host && new URL(url).host === host) {
-          event.preventDefault();
-          callback(true); // 仅实例主机放行自签证书
-          return;
-        }
-      } catch {}
-      callback(false); // 其余站点：默认验证（不受任何影响）
-    });
+    const stored = this.store.get('searx', {}) || {};
+    let pass = '';
+    try { if (stored.passEnc) pass = this.decryptSecret(stored.passEnc); } catch {}
+    let tlsPin = '';
+    try { tlsPin = normalizeTlsPin(stored.tlsPin || ''); } catch {}
+    return {
+      ...DEFAULT_INSTANCE,
+      url: String(stored.url || ''),
+      user: String(stored.user || ''),
+      tlsPin,
+      pass,
+    };
   }
 
   maskedConfig() {
@@ -318,7 +364,7 @@ class SearxService {
       const u = new URL(c.url);
       masked = u.protocol + '//' + u.host.replace(/^(\d{1,3})\.(\d{1,3})\..*$/, '$1.$2.***.***');
     } catch {}
-    return { masked, user: c.user, hasPass: !!c.pass };
+    return { masked, user: c.user, hasPass: !!c.pass, tlsPin: c.tlsPin };
   }
 
   /** 搜索：返回结构化结果（不含任何实例信息） */
@@ -331,16 +377,15 @@ class SearxService {
     if (language && language !== 'auto') params.set('language', language);
     if (time_range) params.set('time_range', time_range);
     const url = `${c.url}/search?${params}`;
-    const auth = 'Basic ' + Buffer.from(`${c.user}:${c.pass}`).toString('base64');
-
     let lastErr = null;
     try {
       const res = await nodeFetch(url, {
         headers: {
-          'Authorization': auth,
+          ...authHeaders(c),
           'Accept': 'application/json',
           'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         },
+        tlsPin: c.tlsPin,
       });
       if (!res.ok) return { ok: false, error: `HTTP ${res.status}`, results: [], selfcheck: await this.selfcheck() };
       let data;
@@ -370,11 +415,11 @@ class SearxService {
   /** 实例自检（凭据连通性 + JSON 可用性） */
   async selfcheck() {
     const c = this.config();
-    const auth = 'Basic ' + Buffer.from(`${c.user}:${c.pass}`).toString('base64');
     const out = { instance: 'configured', checks: [] };
+    if (!c.url) return { ...out, ok: false, instance: 'missing', checks: [{ name: '实例配置', pass: false, detail: '未配置搜索实例' }] };
     try {
       const r1 = await nodeFetch(`${c.url}/search?q=test&format=json`, {
-        headers: { 'Authorization': auth, 'Accept': 'application/json' },
+        headers: { ...authHeaders(c), 'Accept': 'application/json' }, tlsPin: c.tlsPin,
       });
       out.checks.push({ name: 'Basic Auth + JSON', pass: r1.ok, detail: `HTTP ${r1.status}` });
     } catch (e) {
@@ -382,7 +427,7 @@ class SearxService {
     }
     try {
       const r2 = await nodeFetch(`${c.url}/`, {
-        headers: { 'Authorization': auth },
+        headers: authHeaders(c), tlsPin: c.tlsPin,
       });
       out.checks.push({ name: '实例可达性', pass: r2.ok, detail: `HTTP ${r2.status}` });
     } catch (e) {
@@ -395,4 +440,7 @@ class SearxService {
 SearxService.extractArticleText = extractArticleText;
 SearxService.extractImageSources = extractImageSources;
 SearxService.isPrivateAddress = isPrivateAddress;
+SearxService.normalizeTlsPin = normalizeTlsPin;
+SearxService.nodeFetch = nodeFetch;
+SearxService.assertSecureEndpoint = assertSecureEndpoint;
 module.exports = SearxService;

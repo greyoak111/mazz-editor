@@ -3,50 +3,84 @@
 const chokidar = require('chokidar');
 
 class FileWatcher {
-  constructor({ bus, windowManager }) {
+  constructor({ bus, windowManager, resourceLedger = null }) {
     this.watcher = null;
     this.wm = windowManager;
     this.watched = new Set();
+    this.resourceLedger = resourceLedger;
+    this.resourceKey = null;
 
     bus.handle('fs:closeAll', async () => {
-      try { this.watcher?.close(); } catch {}
-      this.watcher = null;
-      this.watched.clear();
+      await this.close({ clearRoots: true, reason: 'fs-close-all' });
       return true;
     });
     bus.handle('fs:watch', async ({ paths }) => {
       const list = Array.isArray(paths) ? paths : [paths];
       const fresh = list.filter(p => p && !this.watched.has(p));
       if (!fresh.length) return true;
-      if (!this.watcher) {
-        this.watcher = chokidar.watch([], {
-          ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-          depth: 8,
-          ignored: /(^|[/\\])\.(git|mazz[/\\]temp)|node_modules/,
-        });
-        this.watcher.on('all', (evt, p) => {
-          // 渲染层路径统一正斜杠（与 fs:listDir / workspace:get 约定一致）
-          this.wm.broadcast('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
-        });
-      }
+      if (!this.watcher) this._createWatcher([]);
       this.watcher.add(fresh);
       fresh.forEach(p => this.watched.add(p));
+      this._updateLedger('watch');
       return true;
     });
     bus.handle('fs:unwatch', async ({ paths }) => {
       const list = Array.isArray(paths) ? paths : [paths];
-      if (this.watcher) this.watcher.unwatch(list);
+      if (this.watcher) await Promise.resolve(this.watcher.unwatch(list));
       list.forEach(p => this.watched.delete(p));
+      if (!this.watched.size) await this.close({ clearRoots: false, reason: 'no-roots' });
+      else this._updateLedger('unwatch');
       return true;
     });
   }
-  async close() { if (this.watcher) { await this.watcher.close(); this.watcher = null; } }
+
+  _createWatcher(roots) {
+    this.watcher = chokidar.watch(roots, {
+      ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+      depth: 8,
+      ignored: /(^|[/\\])\.(git|mazz[/\\]temp)|node_modules/,
+    });
+    this.watcher.on('all', (evt, p) => {
+      // 渲染层路径统一正斜杠（与 fs:listDir / workspace:get 约定一致）
+      this.wm.broadcast('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
+    });
+    if (this.resourceLedger && !this.resourceKey) {
+      this.resourceKey = this.resourceLedger.register({
+        type: 'file-watcher', id: 'workspace', owner: 'file-watcher',
+        meta: { roots: this.watched.size, reason: 'create' },
+      });
+    }
+    this._updateLedger('create');
+  }
+
+  _updateLedger(reason) {
+    if (!this.resourceLedger || !this.resourceKey) return;
+    this.resourceLedger.update(this.resourceKey, {
+      state: this.watcher ? 'watching' : 'closed',
+      meta: { roots: this.watched.size, reason },
+    });
+  }
+
+  _releaseLedger(reason) {
+    if (!this.resourceLedger || !this.resourceKey) return;
+    this.resourceLedger.release(this.resourceKey, { reason });
+    this.resourceKey = null;
+  }
+
+  async close({ clearRoots = true, reason = 'close' } = {}) {
+    const current = this.watcher;
+    this.watcher = null;
+    if (current) {
+      try { await current.close(); } catch {}
+    }
+    if (clearRoots) this.watched.clear();
+    this._releaseLedger(reason);
+  }
 
   /** 挂起监视（记下根目录，释放全部句柄）——删除/移动被监视的多层目录前用，Windows 上句柄会锁目录 */
   async suspend() {
     if (!this.watcher) return;
-    try { await this.watcher.close(); } catch {}
-    this.watcher = null;
+    await this.close({ clearRoots: false, reason: 'suspend' });
   }
 
   /** 恢复监视（重建实例并把根目录加回去） */
@@ -56,15 +90,8 @@ class FileWatcher {
     this.watched.clear();
     // 复用 fs:watch 通道逻辑重建
     try {
-      this.watcher = chokidar.watch(roots, {
-        ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-        depth: 8,
-        ignored: /(^|[/\\])\.(git|mazz[/\\]temp)|node_modules/,
-      });
-      this.watcher.on('all', (evt, p) => {
-        this.wm.broadcast('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
-      });
       roots.forEach(p => this.watched.add(p));
+      this._createWatcher(roots);
     } catch {}
   }
 }

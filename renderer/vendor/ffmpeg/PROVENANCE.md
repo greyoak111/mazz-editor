@@ -13,6 +13,18 @@
 
 `esm/const.js` declares `CORE_VERSION = "0.12.6"` and the candidate upstream URL `https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js`.
 
+## Candidate comparison (2026-08-15)
+
+The fixed npm artifact `@ffmpeg/core@0.12.6` was acquired and hashed:
+
+| Candidate artifact | SHA-256 | Vendored match |
+|---|---|---|
+| npm tarball | `9812C82188E8CA434A3D0E9EDC2435458B55DF0CE3F700A8DF867C22EC8A8CED` | n/a |
+| `dist/umd/ffmpeg-core.js` | `A34873964B0F62AEC516BAC75E3AA9086EC3535D4D07F0269AA94EA748B6CB71` | **NO** |
+| `dist/umd/ffmpeg-core.wasm` | `2390EFA7FB66E7E42DBAE15427571A5FFC96B829480904C30F471F0A78967F61` | **NO** |
+
+The version constant therefore identifies an intended API/core version, but it does not prove that the vendored binaries came from that npm package. Do not replace the current binary merely to force a hash match without a media regression matrix; do not attribute the candidate package's build or license metadata to the current bytes.
+
 ## Known use
 
 The runtime is loaded lazily by `renderer/lib/ffmpeg-transcode.js` for local media conversion. It is a real product runtime, not a development fixture, and must remain in packaged builds unless the feature is explicitly removed.
@@ -20,13 +32,13 @@ The runtime is loaded lazily by `renderer/lib/ffmpeg-transcode.js` for local med
 ## Evidence still missing
 
 ```text
-exact acquisition record
+exact acquisition record (the declared npm 0.12.6 candidate is now proven not byte-identical)
 wrapper package/version for the vendored esm files
 upstream source archive and immutable source hash
 FFmpeg configure/build flags
 complete corresponding source/build recipe
 license texts and notices selected by that exact build
-byte-for-byte comparison with the declared candidate upstream artifact
+identification of the actual byte-identical upstream artifact, or a reproducible replacement build
 ```
 
 FFmpeg licensing depends on the configuration and linked codecs. The version string and binary hash alone are not sufficient to classify the compiled WebAssembly artifact as LGPL-only or GPL. Do not close the W71 licensing gate until the missing evidence is supplied or the vendored binary is rebuilt through a reproducible, documented pipeline.

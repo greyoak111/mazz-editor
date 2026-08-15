@@ -1203,15 +1203,14 @@ function registerChannels() {
   bus.handle('menu:setModel', async ({ items }) => { editorMenuModel.items = items || []; return true; });
 }
 
-// ---------- 证书异常处理：默认验证；实例主机放行；其他站点失败时询问「继续访问」（记忆选择）----------
+// ---------- Browser 内容证书异常处理：默认验证；只允许用户对网页显式选择继续 ----------
 function hookCertificateErrors() {
   const trusted = new Set(store.get('trustedHosts', []));
   app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
     let host = '';
     try { host = new URL(url).host; } catch {}
     if (!host) { event.preventDefault(); callback(false); return; }
-    const instHost = (() => { try { return new URL(store.get('searx', {}).url || '').host; } catch { return ''; } })();
-    if (trusted.has(host) || host === instHost) {
+    if (trusted.has(host)) {
       event.preventDefault();
       callback(true);
       return;
@@ -1334,15 +1333,13 @@ app.whenReady().then(() => {
   bus.start();
   registerChannels();
   new CrashRecovery({ app, bus });
-  watcher = new FileWatcher({ bus, windowManager: wm });
+  watcher = new FileWatcher({ bus, windowManager: wm, resourceLedger });
 
   wm.createMain();
   // 全屏进出广播（必须在建窗后挂：registerChannels 时 wm.main 还没出生）
   wm.main.on('enter-full-screen', () => wm.broadcast('window:fullscreen', { on: true }));
   wm.main.on('leave-full-screen', () => wm.broadcast('window:fullscreen', { on: false }));
   hookDisplayMedia(); // getDisplayMedia 许可（全局内录）
-  // 默认搜索实例持久化（证书白名单/实例识别依赖 store 中有值）
-  if (!store.get('searx')) store.set('searx', { url: 'https://107.174.37.27', user: 'mazz', pass: '737037sxf' });
   hookCertificateErrors();
   tray.create();
   globalShortcuts.registerAll();
@@ -1351,7 +1348,7 @@ app.whenReady().then(() => {
   const browserSess = session.fromPartition('persist:mazz-browser');
   // W58 预览档根治：浏览器独立会话同注册 mazz-res——html 运行预览/媒体页全走此源，默认会话独享=视图会话 about:blank（实锤）
   if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);
-  new SearxService({ bus, store, session: browserSess });
+  new SearxService({ bus, store, session: browserSess, encryptSecret: __pwEncrypt, decryptSecret: __pwDecrypt });
   new TranslateService({ bus, store });
   // —— 局域网同步 + 自动更新入口 ——
   const lanSync = new LanSync({
@@ -1374,7 +1371,10 @@ app.whenReady().then(() => {
   bs.hookWindow(wm.main);
   // —— P2P 边下边播守护（webtorrent 主进程实例 + 127.0.0.1 range 流端点） ——
   const TorrentDaemon = require('./torrent-daemon');
-  new TorrentDaemon({ bus, workspace: () => store.get('workspace'), session: browserSess });
+  const torrentDaemon = new TorrentDaemon({
+    bus, workspace: () => store.get('workspace'), session: browserSess, resourceLedger,
+  });
+  app.on('before-quit', () => torrentDaemon.destroy().catch(e => console.warn('[torrent] quit cleanup:', e.message)));
   const TorrentSites = require('./torrent-sites');
   new TorrentSites({ bus });
 

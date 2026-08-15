@@ -2,25 +2,22 @@
 // 隐私红线：实例地址与 Basic Auth 凭据只存在于主进程，渲染进程/网页永远拿不到
 // 403 三保险：① formats json 已开（服务端规格）② UA/Accept 归一化 ③ JSON 失败降级链
 'use strict';
-const { app, net } = require('electron');
+const { net } = require('electron');
 const { URL } = require('url');
 
 // 归一化 UA（反指纹：所有搜索流量同一副面孔，不携带任何客户端特征）
 const SEARCH_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 const DEFAULT_INSTANCE = {
-  url: 'https://107.174.37.27',
-  user: 'mazz',
-  pass: '737037sxf',
+  url: '',
+  user: '',
+  pass: '',
 };
 
 class SearxService {
   constructor({ bus, store, session }) {
     this.store = store;
     this.session = session;
-
-    // 自签证书放行：仅对配置的实例主机生效（plan 4.3.6 既定方案）
-    this.applyCertWhitelist();
 
     bus.handle('searx:search', async (payload) => this.search(payload));
     bus.handle('searx:selfcheck', async () => this.selfcheck());
@@ -31,7 +28,6 @@ class SearxService {
         user: String(user || '').trim(),
         pass: String(pass || ''),
       });
-      this.applyCertWhitelist();
       return this.selfcheck();
     });
   }
@@ -41,22 +37,9 @@ class SearxService {
     return { ...DEFAULT_INSTANCE, ...c };
   }
 
-  /** 实例主机证书白名单：app 级 certificate-error 事件，仅放行该主机，其余站点完全走默认验证 */
+  /** 历史根目录镜像不再注册全局证书白名单；当前运行入口位于 main/searx.js。 */
   applyCertWhitelist() {
-    if (this._hooked) return;
-    this._hooked = true;
-    app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-      let host = '';
-      try { host = new URL(this.config().url).host; } catch {}
-      try {
-        if (host && new URL(url).host === host) {
-          event.preventDefault();
-          callback(true); // 仅实例主机放行自签证书
-          return;
-        }
-      } catch {}
-      callback(false); // 其余站点：默认验证（不受任何影响）
-    });
+    return false;
   }
 
   maskedConfig() {

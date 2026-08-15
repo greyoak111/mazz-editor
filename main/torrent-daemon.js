@@ -34,13 +34,19 @@ function enrichMagnet(magnet) {
 }
 
 class TorrentDaemon {
-  constructor({ bus, workspace, session }) {
+  constructor({ bus, workspace, session, resourceLedger = null, loadWebTorrent = () => import('webtorrent') }) {
     this.bus = bus;
     this.workspace = workspace; // () => 当前工作区路径
     this.session = session;
+    this.resourceLedger = resourceLedger;
+    this.loadWebTorrent = loadWebTorrent;
     this.client = null;
     this.server = null;
     this.port = 0;
+    this.starting = null;
+    this.destroying = null;
+    this.clientResourceKey = null;
+    this.serverResourceKey = null;
     this.torrents = new Map(); // infoHash -> { t, addedAt }
     // 启动即过一遍 storeRoot（内含旧 .download→download 一次性合并迁移——不能只等 tor:add，
     // 否则用户不加种子迁移永不触发，工作区树/媒体库扫描继续瞎（真机实锤））
@@ -69,15 +75,52 @@ class TorrentDaemon {
 
   async ensureClient() {
     if (this.client) return;
-    const { default: WebTorrent } = await import('webtorrent');
+    if (this.starting) return this.starting;
+    this.starting = this._startClient();
+    try { await this.starting; }
+    finally { this.starting = null; }
+  }
+
+  async _startClient() {
+    const { default: WebTorrent } = await this.loadWebTorrent();
     this.client = new WebTorrent({
       dht: true, lsd: true, tracker: true,
       uploadLimit: 100 * 1024, // 上行默认限流（做种本性要说清，全速上行是带宽刺客）
     });
+    this.clientResourceKey = this._registerResource('torrent-client', 'webtorrent', { transport: 'tcp-udp' });
     this.server = this.client.createServer();
     // webtorrent@2.8.5 的 NodeServer 不继承 EventEmitter.once（once is not a function 实锤）——listen 回调即唯一时序锚
-    await new Promise((resolve) => this.server.listen(0, '127.0.0.1', resolve));
-    this.port = this.server.address().port;
+    try {
+      await new Promise((resolve) => this.server.listen(0, '127.0.0.1', resolve));
+      this.port = this.server.address().port;
+      this.serverResourceKey = this._registerResource('torrent-server', 'range-server', { host: '127.0.0.1', port: this.port });
+    } catch (error) {
+      await this.destroy('start-failed');
+      throw error;
+    }
+  }
+
+  _registerResource(type, id, meta = {}) {
+    if (!this.resourceLedger) return null;
+    return this.resourceLedger.register({ type, id, owner: 'torrent-daemon', meta });
+  }
+
+  _releaseResource(key, reason, state = 'released', meta) {
+    if (!key || !this.resourceLedger) return;
+    this.resourceLedger.release(key, { reason, state, meta });
+  }
+
+  async _destroyTorrent(torrent, { destroyStore = false } = {}) {
+    if (!torrent?.destroy) return;
+    await new Promise(resolve => {
+      let settled = false;
+      const done = () => { if (!settled) { settled = true; resolve(); } };
+      const timeout = setTimeout(done, 2000);
+      try {
+        const result = torrent.destroy({ destroyStore }, () => { clearTimeout(timeout); done(); });
+        if (result?.then) result.then(() => { clearTimeout(timeout); done(); }, () => { clearTimeout(timeout); done(); });
+      } catch { clearTimeout(timeout); done(); }
+    });
   }
 
   streamUrlOf(file) {
@@ -107,16 +150,25 @@ class TorrentDaemon {
       // 不预查 client.get()：2.8.5 的 get() 对未知 id 也会返回空壳 Torrent（metadata 未启动=files:0 实锤）——
       // add() 本身幂等（同 infoHash 复用），直接 add 才是唯一活口
       const t = this.client.add(enrichMagnet(magnet), { path: this.storeRoot() });
-      await new Promise((resolve, reject) => {
-        const to = setTimeout(() => reject(new Error('元数据获取超时（60s，种子可能无热度）')), 60000);
-        // 同 infoHash 复用时元数据已在手——'metadata'/'ready' 不再重发（重复添加挂 60s 实锤），先查即态再挂耳
-        if (t.ready || t.info) { clearTimeout(to); resolve(); return; }
-        const done = () => { clearTimeout(to); resolve(); };
-        t.once('metadata', done);
-        t.once('ready', done);
-        t.once('error', (e) => { clearTimeout(to); reject(e); });
+      try {
+        await new Promise((resolve, reject) => {
+          const to = setTimeout(() => reject(new Error('元数据获取超时（60s，种子可能无热度）')), 60000);
+          // 同 infoHash 复用时元数据已在手——'metadata'/'ready' 不再重发（重复添加挂 60s 实锤），先查即态再挂耳
+          if (t.ready || t.info) { clearTimeout(to); resolve(); return; }
+          const done = () => { clearTimeout(to); resolve(); };
+          t.once('metadata', done);
+          t.once('ready', done);
+          t.once('error', (e) => { clearTimeout(to); reject(e); });
+        });
+      } catch (error) {
+        await this._destroyTorrent(t);
+        throw error;
+      }
+      const existing = this.torrents.get(t.infoHash);
+      this.torrents.set(t.infoHash, {
+        t, addedAt: existing?.addedAt || Date.now(), alias: name || t.name,
+        resourceKey: existing?.resourceKey || this._registerResource('torrent', t.infoHash, { name: name || t.name }),
       });
-      this.torrents.set(t.infoHash, { t, addedAt: Date.now(), alias: name || t.name });
       return { infoHash: t.infoHash, name: t.name, files: this.filesOf(t) };
     });
     bus.handle('tor:stats', async ({ infoHash }) => {
@@ -154,13 +206,65 @@ class TorrentDaemon {
       const rec = this.torrents.get(infoHash);
       if (rec) {
         this.torrents.delete(infoHash);
-        try { rec.t.destroy({ destroyStore: !!deleteFiles }); } catch {}
+        await this._destroyTorrent(rec.t, { destroyStore: !!deleteFiles });
+        this._releaseResource(rec.resourceKey, deleteFiles ? 'remove-and-delete' : 'remove');
       }
       if (deleteFiles && rec?.t?.name) {
         try { fs.rmSync(path.join(this.storeRoot(), rec.t.name), { recursive: true, force: true }); } catch {}
       }
       return true;
     });
+    if (process.env.NODE_ENV === 'test') {
+      bus.handle('tor:runtimeProbe', async () => {
+        await this.ensureClient();
+        return { running: !!this.client, listening: !!this.server, port: this.port };
+      });
+      bus.handle('tor:runtimeReset', async () => this.destroy('test-reset'));
+    }
+  }
+
+  async destroy(reason = 'app-quit') {
+    if (this.destroying) return this.destroying;
+    this.destroying = (async () => {
+      const records = [...this.torrents.values()];
+      this.torrents.clear();
+      for (const rec of records) {
+        await this._destroyTorrent(rec.t);
+        this._releaseResource(rec.resourceKey, reason);
+      }
+      const server = this.server;
+      this.server = null;
+      this.port = 0;
+      if (server?.close) {
+        await new Promise(resolve => {
+          let settled = false;
+          const done = () => { if (!settled) { settled = true; resolve(); } };
+          const timeout = setTimeout(done, 2000);
+          try { server.close(() => { clearTimeout(timeout); done(); }); }
+          catch { clearTimeout(timeout); done(); }
+        });
+      }
+      this._releaseResource(this.serverResourceKey, reason);
+      this.serverResourceKey = null;
+      const client = this.client;
+      this.client = null;
+      if (client?.destroy) {
+        await new Promise(resolve => {
+          let settled = false;
+          const done = () => { if (!settled) { settled = true; resolve(); } };
+          const timeout = setTimeout(done, 3000);
+          try {
+            const result = client.destroy(() => { clearTimeout(timeout); done(); });
+            if (result?.then) result.then(() => { clearTimeout(timeout); done(); }, () => { clearTimeout(timeout); done(); });
+          } catch { clearTimeout(timeout); done(); }
+        });
+      }
+      this._releaseResource(this.clientResourceKey, reason);
+      this.clientResourceKey = null;
+      return true;
+    })();
+    try { return await this.destroying; }
+    finally { this.destroying = null; }
   }
 }
 

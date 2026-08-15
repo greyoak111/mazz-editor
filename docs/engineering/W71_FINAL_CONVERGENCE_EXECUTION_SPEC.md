@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.4
+> 版本：v2.5
 > 日期：2026-08-15
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / Wave 0 Census 与 Native Surface Ledger 检查点已落地**
+> 状态：**IN PROGRESS / Wave 0 生命周期、发布安全与 native staging 检查点已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -1173,7 +1173,9 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 - [`W71_SURFACE_PROTOCOL_CENSUS.md`](./W71_SURFACE_PROTOCOL_CENSUS.md)
 - [`W71_AGENT_RUNTIME_CENSUS.md`](./W71_AGENT_RUNTIME_CENSUS.md)
 
-这些产物把未知范围变成了可重复事实，但完整 Wave 0 Gate 仍未通过：Torrent/watcher/worker/media 等资源尚未全部接账，37 个 native binary 尚未裁剪验证，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0。
+这些产物把未知范围变成了可重复事实。后续检查点又完成 Torrent/FileWatcher 扩账、PTY/Panel/WebContentsView/FileWatcher/WebTorrent 20 次循环、27 个外平台 native binary 的 staging 与正式排除，以及 SearXNG/Updater/Translate TLS 和凭据收口。证据见 [`W71_WAVE0_LIFECYCLE_SECURITY_CHECKPOINT_2026-08-15.md`](./W71_WAVE0_LIFECYCLE_SECURITY_CHECKPOINT_2026-08-15.md)。
+
+完整 Wave 0 Gate 仍未通过：worker/media/Object URL/Factory stream/Python/DAP 等资源尚未全部接账，三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。
 

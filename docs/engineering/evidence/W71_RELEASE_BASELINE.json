@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T10:45:38.307Z",
+  "generatedAt": "2026-08-15T12:12:39.904Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -18,6 +18,11 @@
       "renderer/",
       "!renderer/dist/**/*.map",
       "!renderer/vendor/**/*.map",
+      "!node_modules/**/prebuilds/darwin-*/**",
+      "!node_modules/**/prebuilds/linux-*/**",
+      "!node_modules/**/prebuilds/android-*/**",
+      "!node_modules/**/prebuilds/win32-ia32/**",
+      "!node_modules/**/prebuilds/win32-arm64/**",
       "resources/",
       "package.json",
       "samples/",
@@ -7979,11 +7984,42 @@
         "optional": false,
         "dev": false
       }
-    ]
+    ],
+    "evidence": {
+      "schemaVersion": 1,
+      "recordedAt": "2026-08-15",
+      "buffers": {
+        "name": "buffers",
+        "version": "0.1.1",
+        "runtimePath": "exceljs@4.4.0 > unzipper@0.10.14 > binary@0.3.0 > buffers@0.1.1",
+        "npmTarball": "https://registry.npmjs.org/buffers/-/buffers-0.1.1.tgz",
+        "npmSha1": "b24579c3bed4d6d396aeee6d9a8ae7f5482ab7bb",
+        "npmIntegrity": "sha512-9q/rDEGSb/Qsvv2qvzIzdluL5k7AaJOTrw23z9reQthrbF7is4CtlT0DXyO1oei2DCp4uojjzQ7igaSHp1kAEQ==",
+        "declaredLicense": null,
+        "licenseFileInPackage": false,
+        "repository": "https://github.com/substack/node-buffers",
+        "repositoryReachableAtAudit": false,
+        "gate": "OPEN",
+        "reason": "Published package has no license field or license file; do not infer a license from adjacent Substack packages."
+      },
+      "ffmpegWasm": {
+        "claimedCandidate": "@ffmpeg/core@0.12.6",
+        "candidateTarballSha256": "9812C82188E8CA434A3D0E9EDC2435458B55DF0CE3F700A8DF867C22EC8A8CED",
+        "candidateNpmSha1": "9a61866fdd662118bcf419b96db76d5fa3c6c270",
+        "candidateNpmIntegrity": "sha512-PrjWBTfGn2WVn9T7wGnzfFwChbqWeZc7tM9vvJZVRadYFUDakfzy7W0LpYC0cvvK0xT82qlBsk38lQhJ/Hps5A==",
+        "candidateUmdJsSha256": "A34873964B0F62AEC516BAC75E3AA9086EC3535D4D07F0269AA94EA748B6CB71",
+        "candidateUmdWasmSha256": "2390EFA7FB66E7E42DBAE15427571A5FFC96B829480904C30F471F0A78967F61",
+        "vendoredJsSha256": "B642482AC79F8F619DD06DE77A557EECA6390E4F4E80C8A709EC1E7E9091E876",
+        "vendoredWasmSha256": "9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7",
+        "byteMatch": false,
+        "gate": "OPEN",
+        "reason": "Vendored JS/WASM do not match the official npm 0.12.6 UMD artifacts; exact build flags, source and resulting LGPL/GPL obligations remain unknown."
+      }
+    }
   },
   "rendererSourceMaps": {
     "count": 209,
-    "bytes": 57994611,
+    "bytes": 57994503,
     "files": [
       {
         "path": "renderer/dist/app.js.map",
@@ -7998,7 +8034,7 @@
         "bytes": 4920
       },
       {
-        "path": "renderer/dist/chunks/agreement-IJ7CNA7R.js.map",
+        "path": "renderer/dist/chunks/agreement-KKDIMYO2.js.map",
         "bytes": 12695
       },
       {
@@ -8034,6 +8070,10 @@
         "bytes": 7037
       },
       {
+        "path": "renderer/dist/chunks/chunk-2XMQEINF.js.map",
+        "bytes": 12942
+      },
+      {
         "path": "renderer/dist/chunks/chunk-3H2OIHPE.js.map",
         "bytes": 15640
       },
@@ -8044,6 +8084,10 @@
       {
         "path": "renderer/dist/chunks/chunk-3QHEHVIQ.js.map",
         "bytes": 8678
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-4XYLZAJ2.js.map",
+        "bytes": 17812
       },
       {
         "path": "renderer/dist/chunks/chunk-5HQQI2VW.js.map",
@@ -8060,10 +8104,6 @@
       {
         "path": "renderer/dist/chunks/chunk-6BGXCV3W.js.map",
         "bytes": 1776
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-7ECK3EW3.js.map",
-        "bytes": 302273
       },
       {
         "path": "renderer/dist/chunks/chunk-7GSUD4RR.js.map",
@@ -8094,12 +8134,20 @@
         "bytes": 6831
       },
       {
+        "path": "renderer/dist/chunks/chunk-F2MB46BQ.js.map",
+        "bytes": 505555
+      },
+      {
         "path": "renderer/dist/chunks/chunk-F3G75VWQ.js.map",
         "bytes": 8981
       },
       {
         "path": "renderer/dist/chunks/chunk-FB2OS3SZ.js.map",
         "bytes": 97504
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-FGOEMJGN.js.map",
+        "bytes": 540351
       },
       {
         "path": "renderer/dist/chunks/chunk-FSGXTKM3.js.map",
@@ -8118,14 +8166,6 @@
         "bytes": 9958
       },
       {
-        "path": "renderer/dist/chunks/chunk-HO6FC6RA.js.map",
-        "bytes": 12942
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-IFXCT2ET.js.map",
-        "bytes": 27708
-      },
-      {
         "path": "renderer/dist/chunks/chunk-ISCH7X5M.js.map",
         "bytes": 4331
       },
@@ -8136,6 +8176,10 @@
       {
         "path": "renderer/dist/chunks/chunk-K6USOJNM.js.map",
         "bytes": 204246
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-KQUBSCWQ.js.map",
+        "bytes": 302273
       },
       {
         "path": "renderer/dist/chunks/chunk-L54TMZYS.js.map",
@@ -8178,24 +8222,12 @@
         "bytes": 6328
       },
       {
-        "path": "renderer/dist/chunks/chunk-RQ7Y4SXZ.js.map",
-        "bytes": 505663
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-S2E6OLCI.js.map",
-        "bytes": 17812
-      },
-      {
         "path": "renderer/dist/chunks/chunk-SG24SKEM.js.map",
         "bytes": 23980
       },
       {
         "path": "renderer/dist/chunks/chunk-TQOD3YIH.js.map",
         "bytes": 14426
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-TVWZW5LE.js.map",
-        "bytes": 540351
       },
       {
         "path": "renderer/dist/chunks/chunk-UTTE4BP6.js.map",
@@ -8212,6 +8244,10 @@
       {
         "path": "renderer/dist/chunks/chunk-WCILAN67.js.map",
         "bytes": 87486
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-XDZIV2HC.js.map",
+        "bytes": 27708
       },
       {
         "path": "renderer/dist/chunks/chunk-XPFNG65H.js.map",
@@ -8266,7 +8302,7 @@
         "bytes": 14978
       },
       {
-        "path": "renderer/dist/chunks/custom-apps-SFKUWVJ3.js.map",
+        "path": "renderer/dist/chunks/custom-apps-WAOFCPBE.js.map",
         "bytes": 8126
       },
       {
@@ -8298,7 +8334,7 @@
         "bytes": 5970
       },
       {
-        "path": "renderer/dist/chunks/docx-io-5DIYXFWU.js.map",
+        "path": "renderer/dist/chunks/docx-io-OY3RCBKL.js.map",
         "bytes": 93
       },
       {
@@ -8334,15 +8370,15 @@
         "bytes": 3559516
       },
       {
-        "path": "renderer/dist/chunks/extern-convert-EQWN4LWL.js.map",
+        "path": "renderer/dist/chunks/extern-convert-5TCT63ON.js.map",
         "bytes": 15478
       },
       {
-        "path": "renderer/dist/chunks/factory-N4RTYBP7.js.map",
+        "path": "renderer/dist/chunks/factory-CDLWCT6L.js.map",
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/ffmpeg-transcode-UNRWMF36.js.map",
+        "path": "renderer/dist/chunks/ffmpeg-transcode-R6IUBV45.js.map",
         "bytes": 6585
       },
       {
@@ -8354,7 +8390,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/formats-io-6OHDFH5U.js.map",
+        "path": "renderer/dist/chunks/formats-io-7DIRJYKR.js.map",
         "bytes": 6111
       },
       {
@@ -8398,7 +8434,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/imgedit-UG4UKHJK.js.map",
+        "path": "renderer/dist/chunks/imgedit-CFYB6TIQ.js.map",
         "bytes": 42263
       },
       {
@@ -8482,7 +8518,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/mindmap-MNUC53MR.js.map",
+        "path": "renderer/dist/chunks/mindmap-JMFV4VYA.js.map",
         "bytes": 93
       },
       {
@@ -8526,7 +8562,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/paginate-W2ASR2FH.js.map",
+        "path": "renderer/dist/chunks/paginate-RKQEOSUL.js.map",
         "bytes": 93
       },
       {
@@ -8558,7 +8594,7 @@
         "bytes": 5568
       },
       {
-        "path": "renderer/dist/chunks/player-NNUDIYHE.js.map",
+        "path": "renderer/dist/chunks/player-QFWFI33D.js.map",
         "bytes": 235216
       },
       {
@@ -8586,15 +8622,15 @@
         "bytes": 683045
       },
       {
-        "path": "renderer/dist/chunks/print-KNC4FMWA.js.map",
-        "bytes": 5323
-      },
-      {
-        "path": "renderer/dist/chunks/print-UO2NGNGK.js.map",
+        "path": "renderer/dist/chunks/print-JKPV6AYI.js.map",
         "bytes": 3689
       },
       {
-        "path": "renderer/dist/chunks/print-preview-CXSCII7K.js.map",
+        "path": "renderer/dist/chunks/print-PROHZVB2.js.map",
+        "bytes": 5323
+      },
+      {
+        "path": "renderer/dist/chunks/print-preview-UBM2SMM3.js.map",
         "bytes": 93
       },
       {
@@ -8618,7 +8654,7 @@
         "bytes": 10174
       },
       {
-        "path": "renderer/dist/chunks/queue-6WJ4KTUR.js.map",
+        "path": "renderer/dist/chunks/queue-XURG4L6L.js.map",
         "bytes": 3826
       },
       {
@@ -8630,7 +8666,7 @@
         "bytes": 29006
       },
       {
-        "path": "renderer/dist/chunks/recorder-BSGSW3KM.js.map",
+        "path": "renderer/dist/chunks/recorder-4BKUINRH.js.map",
         "bytes": 72998
       },
       {
@@ -8642,7 +8678,7 @@
         "bytes": 28146
       },
       {
-        "path": "renderer/dist/chunks/replace-EUDEEG5O.js.map",
+        "path": "renderer/dist/chunks/replace-JE5ZHORI.js.map",
         "bytes": 14873
       },
       {
@@ -8678,7 +8714,7 @@
         "bytes": 7201
       },
       {
-        "path": "renderer/dist/chunks/share-MLNN2GZ4.js.map",
+        "path": "renderer/dist/chunks/share-P474O5DS.js.map",
         "bytes": 15750
       },
       {
@@ -8686,7 +8722,7 @@
         "bytes": 2595
       },
       {
-        "path": "renderer/dist/chunks/shell-EWD7B5RA.js.map",
+        "path": "renderer/dist/chunks/shell-522TL7DS.js.map",
         "bytes": 93
       },
       {
@@ -8694,11 +8730,11 @@
         "bytes": 8877
       },
       {
-        "path": "renderer/dist/chunks/side-dock-V7W32GLH.js.map",
+        "path": "renderer/dist/chunks/side-dock-DYWPPQE7.js.map",
         "bytes": 37786
       },
       {
-        "path": "renderer/dist/chunks/sidebar-panels-WT3NTIHM.js.map",
+        "path": "renderer/dist/chunks/sidebar-panels-ZDIKBQAF.js.map",
         "bytes": 35865
       },
       {
@@ -8754,7 +8790,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/theme-custom-2QISG4RL.js.map",
+        "path": "renderer/dist/chunks/theme-custom-MANL7RCJ.js.map",
         "bytes": 20096
       },
       {
@@ -9026,13 +9062,13 @@
   "packagedSpecimen": {
     "present": true,
     "unpacked": {
-      "count": 499,
-      "bytes": 674794783
+      "count": 457,
+      "bytes": 668000617
     },
     "asar": {
       "present": true,
-      "bytes": 362498183,
-      "entries": 10031,
+      "bytes": 360631801,
+      "entries": 9910,
       "sourceMaps": 388,
       "rootNotices": [
         "\\LICENSE",
@@ -9041,64 +9077,12 @@
       ]
     },
     "asarUnpackedNative": {
-      "count": 37,
-      "bytes": 5214980,
+      "count": 10,
+      "bytes": 2625024,
       "files": [
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/bufferutil/prebuilds/darwin-arm64/bufferutil.node",
-          "bytes": 34064
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/bufferutil/prebuilds/darwin-x64/bufferutil.node",
-          "bytes": 9072
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/bufferutil/prebuilds/linux-x64/bufferutil.node",
-          "bytes": 14584
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/bufferutil/prebuilds/win32-ia32/bufferutil.node",
-          "bytes": 129024
-        },
         {
           "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/bufferutil/prebuilds/win32-x64/bufferutil.node",
           "bytes": 155136
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/android-arm64/fs-native-extensions.node",
-          "bytes": 41024
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/android-arm/fs-native-extensions.node",
-          "bytes": 33088
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/android-ia32/fs-native-extensions.node",
-          "bytes": 33964
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/android-x64/fs-native-extensions.node",
-          "bytes": 37800
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/darwin-arm64/fs-native-extensions.node",
-          "bytes": 74072
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/darwin-x64/fs-native-extensions.node",
-          "bytes": 36504
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/linux-arm64/fs-native-extensions.node",
-          "bytes": 37312
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/linux-x64/fs-native-extensions.node",
-          "bytes": 37096
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/win32-arm64/fs-native-extensions.node",
-          "bytes": 126976
         },
         {
           "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/win32-x64/fs-native-extensions.node",
@@ -9117,26 +9101,6 @@
           "bytes": 303104
         },
         {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/darwin-arm64/pty.node",
-          "bytes": 85496
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/darwin-x64/pty.node",
-          "bytes": 52864
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-arm64/conpty.node",
-          "bytes": 302592
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-arm64/conpty_console_list.node",
-          "bytes": 122368
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-arm64/pty.node",
-          "bytes": 293376
-        },
-        {
           "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-x64/conpty.node",
           "bytes": 312320
         },
@@ -9149,44 +9113,8 @@
           "bytes": 303104
         },
         {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/darwin-arm64/utf-8-validate.node",
-          "bytes": 36256
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/darwin-x64/utf-8-validate.node",
-          "bytes": 20216
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/linux-x64/utf-8-validate.musl.node",
-          "bytes": 34656
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/linux-x64/utf-8-validate.node",
-          "bytes": 31200
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/win32-ia32/utf-8-validate.node",
-          "bytes": 139264
-        },
-        {
           "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/win32-x64/utf-8-validate.node",
           "bytes": 174592
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utp-native/prebuilds/darwin-arm64/node.napi.node",
-          "bytes": 116368
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utp-native/prebuilds/darwin-x64/node.napi.node",
-          "bytes": 98912
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utp-native/prebuilds/linux-x64/node.napi.node",
-          "bytes": 93664
-        },
-        {
-          "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utp-native/prebuilds/win32-ia32/node.napi.node",
-          "bytes": 518144
         },
         {
           "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utp-native/prebuilds/win32-x64/node.napi.node",
@@ -9196,8 +9124,8 @@
     },
     "installer": {
       "path": "release/Mazz Editor Setup 0.2.0.exe",
-      "bytes": 152716725,
-      "sha256": "0C37BE6E4A62156B53AD7F3DF66904246ECC31E0105BFAD22DB21579E69F93DC"
+      "bytes": 150803071,
+      "sha256": "853FFF6DDC99A7FB11BED2F7B458BE27629CADB4565B15495E5FD4E4AEAC4903"
     }
   }
 }

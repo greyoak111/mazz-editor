@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-15",
+  "buffers": {
+    "name": "buffers",
+    "version": "0.1.1",
+    "runtimePath": "exceljs@4.4.0 > unzipper@0.10.14 > binary@0.3.0 > buffers@0.1.1",
+    "npmTarball": "https://registry.npmjs.org/buffers/-/buffers-0.1.1.tgz",
+    "npmSha1": "b24579c3bed4d6d396aeee6d9a8ae7f5482ab7bb",
+    "npmIntegrity": "sha512-9q/rDEGSb/Qsvv2qvzIzdluL5k7AaJOTrw23z9reQthrbF7is4CtlT0DXyO1oei2DCp4uojjzQ7igaSHp1kAEQ==",
+    "declaredLicense": null,
+    "licenseFileInPackage": false,
+    "repository": "https://github.com/substack/node-buffers",
+    "repositoryReachableAtAudit": false,
+    "gate": "OPEN",
+    "reason": "Published package has no license field or license file; do not infer a license from adjacent Substack packages."
+  },
+  "ffmpegWasm": {
+    "claimedCandidate": "@ffmpeg/core@0.12.6",
+    "candidateTarballSha256": "9812C82188E8CA434A3D0E9EDC2435458B55DF0CE3F700A8DF867C22EC8A8CED",
+    "candidateNpmSha1": "9a61866fdd662118bcf419b96db76d5fa3c6c270",
+    "candidateNpmIntegrity": "sha512-PrjWBTfGn2WVn9T7wGnzfFwChbqWeZc7tM9vvJZVRadYFUDakfzy7W0LpYC0cvvK0xT82qlBsk38lQhJ/Hps5A==",
+    "candidateUmdJsSha256": "A34873964B0F62AEC516BAC75E3AA9086EC3535D4D07F0269AA94EA748B6CB71",
+    "candidateUmdWasmSha256": "2390EFA7FB66E7E42DBAE15427571A5FFC96B829480904C30F471F0A78967F61",
+    "vendoredJsSha256": "B642482AC79F8F619DD06DE77A557EECA6390E4F4E80C8A709EC1E7E9091E876",
+    "vendoredWasmSha256": "9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7",
+    "byteMatch": false,
+    "gate": "OPEN",
+    "reason": "Vendored JS/WASM do not match the official npm 0.12.6 UMD artifacts; exact build flags, source and resulting LGPL/GPL obligations remain unknown."
+  }
+}

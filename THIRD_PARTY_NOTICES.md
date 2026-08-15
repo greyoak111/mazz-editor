@@ -24,6 +24,11 @@ Important direct runtime dependencies include:
 | Monaco Editor | MIT |
 | ECharts | Apache-2.0 |
 
+Unresolved release evidence:
+
+- `buffers@0.1.1` is present through `exceljs > unzipper > binary`; its published package contains no declared license or license file. It remains a release blocker until a primary-source license is recovered or the dependency is removed/replaced.
+- The vendored ffmpeg JS/WASM does not byte-match the declared `@ffmpeg/core@0.12.6` npm candidate. Wrapper metadata must not be used to infer the compiled core's LGPL/GPL obligations. See `docs/engineering/evidence/W71_LICENSE_AUDIT.json`.
+
 ## Release rule
 
 No release may mark the licensing gate closed solely because this summary exists. The final installer must be audited against its actual `app.asar` and `app.asar.unpacked` contents, and every shipped native or vendored runtime must have an identified version, source, hash, license and required notice/source-offer material.

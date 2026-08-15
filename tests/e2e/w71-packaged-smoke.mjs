@@ -28,9 +28,9 @@ try {
   const win = await app.firstWindow({ timeout: 120000 });
   await win.waitForLoadState('domcontentloaded');
   await win.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }));
-  const result = await win.evaluate(async () => {
-    const waitFor = async (predicate, message) => {
-      const until = Date.now() + 5000;
+  const result = await win.evaluate(async (watchedFile) => {
+    const waitFor = async (predicate, message, timeout = 8000) => {
+      const until = Date.now() + timeout;
       while (Date.now() < until) {
         const value = await window.mazz.invoke('resources:snapshot');
         if (predicate(value)) return value;
@@ -39,21 +39,42 @@ try {
       throw new Error(message);
     };
     const baseline = await window.mazz.invoke('resources:snapshot');
-    const term = await window.mazz.invoke('term:create', { id: 'w71-packaged-smoke', cols: 40, rows: 8 });
-    if (term?.error) throw new Error(term.error);
-    const during = await window.mazz.invoke('resources:snapshot');
-    await window.mazz.invoke('term:kill', { id: term.id });
-    await waitFor(value => value.activeCount === baseline.activeCount, 'PTY 释放后资源未回基线');
+    let during = null;
+    let panelDuring = null;
+    let viewDuring = null;
+    let watcherDuring = null;
+    let torrentDuring = null;
+    for (let index = 0; index < 20; index++) {
+      const term = await window.mazz.invoke('term:create', { id: `w71-packaged-smoke-${index}`, cols: 40, rows: 8 });
+      if (term?.error) throw new Error(term.error);
+      during = await waitFor(value => value.byType.pty === 1, `PTY 第 ${index + 1} 次未进入账本`);
+      await window.mazz.invoke('term:kill', { id: term.id });
+      await waitFor(value => value.activeCount === baseline.activeCount, `PTY 第 ${index + 1} 次释放后未回基线`);
 
-    await window.mazz.invoke('panel:open', { kind: 'settings' });
-    const panelDuring = await waitFor(value => value.byType['panel-window'] === 1, 'PanelWindow 未进入资源账本');
-    await window.mazz.invoke('panel:close', { kind: 'settings' });
-    await waitFor(value => !value.byType['panel-window'], 'PanelWindow 关闭后未释放');
+      await window.mazz.invoke('panel:open', { kind: 'settings' });
+      panelDuring = await waitFor(value => value.byType['panel-window'] === 1, `PanelWindow 第 ${index + 1} 次未进入资源账本`);
+      await window.mazz.invoke('panel:close', { kind: 'settings' });
+      await waitFor(value => value.activeCount === baseline.activeCount, `PanelWindow 第 ${index + 1} 次关闭后未释放`);
 
-    await window.mazz.invoke('bv:create', { tabId: 'w71-ledger-view', partition: 'persist:mazz-browser', url: 'about:blank' });
-    const viewDuring = await waitFor(value => value.byType['web-contents-view'] === 1, 'WebContentsView 未进入资源账本');
-    await window.mazz.invoke('bv:destroy', { tabId: 'w71-ledger-view' });
-    const resources = await waitFor(value => value.activeCount === baseline.activeCount, 'Surface 关闭后资源未回基线');
+      const tabId = `w71-ledger-view-${index}`;
+      await window.mazz.invoke('bv:create', { tabId, partition: 'persist:mazz-browser', url: 'about:blank' });
+      viewDuring = await waitFor(value => value.byType['web-contents-view'] === 1, `WebContentsView 第 ${index + 1} 次未进入资源账本`);
+      await window.mazz.invoke('bv:destroy', { tabId });
+      await waitFor(value => value.activeCount === baseline.activeCount, `WebContentsView 第 ${index + 1} 次关闭后未释放`);
+
+      await window.mazz.invoke('fs:watch', { paths: [watchedFile] });
+      watcherDuring = await waitFor(value => value.byType['file-watcher'] === 1, `FileWatcher 第 ${index + 1} 次未进入资源账本`);
+      await window.mazz.invoke('fs:unwatch', { paths: [watchedFile] });
+      await waitFor(value => value.activeCount === baseline.activeCount, `FileWatcher 第 ${index + 1} 次关闭后未释放`);
+
+      const probe = await window.mazz.invoke('tor:runtimeProbe');
+      if (!probe?.running || !probe?.listening || !probe?.port) throw new Error(`WebTorrent 第 ${index + 1} 次 runtime probe 失败`);
+      torrentDuring = await waitFor(value => value.byType['torrent-client'] === 1 && value.byType['torrent-server'] === 1,
+        `WebTorrent 第 ${index + 1} 次未进入资源账本`, 15000);
+      await window.mazz.invoke('tor:runtimeReset');
+      await waitFor(value => value.activeCount === baseline.activeCount, `WebTorrent 第 ${index + 1} 次关闭后未释放`, 15000);
+    }
+    const resources = await window.mazz.invoke('resources:snapshot', { includeReleased: true });
     const adapters = await window.mazz.invoke('harness:adapters');
     const sessions = await window.mazz.invoke('harness:sessions');
     return {
@@ -66,12 +87,17 @@ try {
       ptyObserved: during.byType.pty === 1,
       panelObserved: panelDuring.byType['panel-window'] === 1,
       webContentsViewObserved: viewDuring.byType['web-contents-view'] === 1,
+      fileWatcherObserved: watcherDuring.byType['file-watcher'] === 1,
+      torrentRuntimeObserved: torrentDuring.byType['torrent-client'] === 1 && torrentDuring.byType['torrent-server'] === 1,
+      lifecycleCycles: 20,
+      releasedResourcesRetained: resources.released?.length || 0,
       adapters: adapters.length,
       sessions: sessions.length,
     };
-  });
+  }, path.join(workspace, 'packaged-smoke.md'));
   if (!result.title || result.resourceVersion !== 1 || !result.mainWindowObserved || !result.ptyObserved
-    || !result.panelObserved || !result.webContentsViewObserved
+    || !result.panelObserved || !result.webContentsViewObserved || !result.fileWatcherObserved || !result.torrentRuntimeObserved
+    || result.lifecycleCycles !== 20 || result.releasedResourcesRetained < 100
     || result.activeResources !== result.baselineResources || result.sessions !== 0) {
     throw new Error(`packaged smoke 断言失败：${JSON.stringify(result)}`);
   }

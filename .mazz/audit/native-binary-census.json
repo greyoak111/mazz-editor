@@ -1,0 +1,502 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-15T12:12:41.259Z",
+  "target": {
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "source": {
+    "summary": {
+      "count": 37,
+      "bytes": 5214980,
+      "target": 7,
+      "foreign": 27,
+      "ambiguous": 3,
+      "packages": {
+        "bufferutil": {
+          "count": 5,
+          "bytes": 341880,
+          "target": 1,
+          "foreign": 4,
+          "ambiguous": 0
+        },
+        "fs-native-extensions": {
+          "count": 10,
+          "bytes": 593004,
+          "target": 1,
+          "foreign": 9,
+          "ambiguous": 0
+        },
+        "node-pty": {
+          "count": 11,
+          "bytes": 2356856,
+          "target": 3,
+          "foreign": 5,
+          "ambiguous": 3
+        },
+        "utf-8-validate": {
+          "count": 6,
+          "bytes": 436184,
+          "target": 1,
+          "foreign": 5,
+          "ambiguous": 0
+        },
+        "utp-native": {
+          "count": 5,
+          "bytes": 1487056,
+          "target": 1,
+          "foreign": 4,
+          "ambiguous": 0
+        }
+      }
+    },
+    "files": [
+      {
+        "path": "node_modules/bufferutil/prebuilds/darwin-arm64/bufferutil.node",
+        "bytes": 34064,
+        "package": "bufferutil",
+        "status": "foreign",
+        "platformArch": "darwin-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/bufferutil/prebuilds/darwin-x64/bufferutil.node",
+        "bytes": 9072,
+        "package": "bufferutil",
+        "status": "foreign",
+        "platformArch": "darwin-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/bufferutil/prebuilds/linux-x64/bufferutil.node",
+        "bytes": 14584,
+        "package": "bufferutil",
+        "status": "foreign",
+        "platformArch": "linux-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/bufferutil/prebuilds/win32-ia32/bufferutil.node",
+        "bytes": 129024,
+        "package": "bufferutil",
+        "status": "foreign",
+        "platformArch": "win32-ia32",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/bufferutil/prebuilds/win32-x64/bufferutil.node",
+        "bytes": 155136,
+        "package": "bufferutil",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/android-arm64/fs-native-extensions.node",
+        "bytes": 41024,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "android-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/android-arm/fs-native-extensions.node",
+        "bytes": 33088,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "android-arm",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/android-ia32/fs-native-extensions.node",
+        "bytes": 33964,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "android-ia32",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/android-x64/fs-native-extensions.node",
+        "bytes": 37800,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "android-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/darwin-arm64/fs-native-extensions.node",
+        "bytes": 74072,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "darwin-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/darwin-x64/fs-native-extensions.node",
+        "bytes": 36504,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "darwin-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/linux-arm64/fs-native-extensions.node",
+        "bytes": 37312,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "linux-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/linux-x64/fs-native-extensions.node",
+        "bytes": 37096,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "linux-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/win32-arm64/fs-native-extensions.node",
+        "bytes": 126976,
+        "package": "fs-native-extensions",
+        "status": "foreign",
+        "platformArch": "win32-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/fs-native-extensions/prebuilds/win32-x64/fs-native-extensions.node",
+        "bytes": 135168,
+        "package": "fs-native-extensions",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/build/Release/conpty.node",
+        "bytes": 312320,
+        "package": "node-pty",
+        "status": "ambiguous",
+        "platformArch": "current-build",
+        "reason": "generic-build-output"
+      },
+      {
+        "path": "node_modules/node-pty/build/Release/conpty_console_list.node",
+        "bytes": 134656,
+        "package": "node-pty",
+        "status": "ambiguous",
+        "platformArch": "current-build",
+        "reason": "generic-build-output"
+      },
+      {
+        "path": "node_modules/node-pty/build/Release/pty.node",
+        "bytes": 303104,
+        "package": "node-pty",
+        "status": "ambiguous",
+        "platformArch": "current-build",
+        "reason": "generic-build-output"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/darwin-arm64/pty.node",
+        "bytes": 85496,
+        "package": "node-pty",
+        "status": "foreign",
+        "platformArch": "darwin-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/darwin-x64/pty.node",
+        "bytes": 52864,
+        "package": "node-pty",
+        "status": "foreign",
+        "platformArch": "darwin-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/win32-arm64/conpty.node",
+        "bytes": 302592,
+        "package": "node-pty",
+        "status": "foreign",
+        "platformArch": "win32-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/win32-arm64/conpty_console_list.node",
+        "bytes": 122368,
+        "package": "node-pty",
+        "status": "foreign",
+        "platformArch": "win32-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/win32-arm64/pty.node",
+        "bytes": 293376,
+        "package": "node-pty",
+        "status": "foreign",
+        "platformArch": "win32-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/win32-x64/conpty.node",
+        "bytes": 312320,
+        "package": "node-pty",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/win32-x64/conpty_console_list.node",
+        "bytes": 134656,
+        "package": "node-pty",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "node_modules/node-pty/prebuilds/win32-x64/pty.node",
+        "bytes": 303104,
+        "package": "node-pty",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "node_modules/utf-8-validate/prebuilds/darwin-arm64/utf-8-validate.node",
+        "bytes": 36256,
+        "package": "utf-8-validate",
+        "status": "foreign",
+        "platformArch": "darwin-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utf-8-validate/prebuilds/darwin-x64/utf-8-validate.node",
+        "bytes": 20216,
+        "package": "utf-8-validate",
+        "status": "foreign",
+        "platformArch": "darwin-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utf-8-validate/prebuilds/linux-x64/utf-8-validate.musl.node",
+        "bytes": 34656,
+        "package": "utf-8-validate",
+        "status": "foreign",
+        "platformArch": "linux-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utf-8-validate/prebuilds/linux-x64/utf-8-validate.node",
+        "bytes": 31200,
+        "package": "utf-8-validate",
+        "status": "foreign",
+        "platformArch": "linux-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utf-8-validate/prebuilds/win32-ia32/utf-8-validate.node",
+        "bytes": 139264,
+        "package": "utf-8-validate",
+        "status": "foreign",
+        "platformArch": "win32-ia32",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utf-8-validate/prebuilds/win32-x64/utf-8-validate.node",
+        "bytes": 174592,
+        "package": "utf-8-validate",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "node_modules/utp-native/prebuilds/darwin-arm64/node.napi.node",
+        "bytes": 116368,
+        "package": "utp-native",
+        "status": "foreign",
+        "platformArch": "darwin-arm64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utp-native/prebuilds/darwin-x64/node.napi.node",
+        "bytes": 98912,
+        "package": "utp-native",
+        "status": "foreign",
+        "platformArch": "darwin-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utp-native/prebuilds/linux-x64/node.napi.node",
+        "bytes": 93664,
+        "package": "utp-native",
+        "status": "foreign",
+        "platformArch": "linux-x64",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utp-native/prebuilds/win32-ia32/node.napi.node",
+        "bytes": 518144,
+        "package": "utp-native",
+        "status": "foreign",
+        "platformArch": "win32-ia32",
+        "reason": "foreign-prebuild"
+      },
+      {
+        "path": "node_modules/utp-native/prebuilds/win32-x64/node.napi.node",
+        "bytes": 659968,
+        "package": "utp-native",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      }
+    ]
+  },
+  "packaged": {
+    "present": true,
+    "summary": {
+      "count": 10,
+      "bytes": 2625024,
+      "target": 7,
+      "foreign": 0,
+      "ambiguous": 3,
+      "packages": {
+        "bufferutil": {
+          "count": 1,
+          "bytes": 155136,
+          "target": 1,
+          "foreign": 0,
+          "ambiguous": 0
+        },
+        "fs-native-extensions": {
+          "count": 1,
+          "bytes": 135168,
+          "target": 1,
+          "foreign": 0,
+          "ambiguous": 0
+        },
+        "node-pty": {
+          "count": 6,
+          "bytes": 1500160,
+          "target": 3,
+          "foreign": 0,
+          "ambiguous": 3
+        },
+        "utf-8-validate": {
+          "count": 1,
+          "bytes": 174592,
+          "target": 1,
+          "foreign": 0,
+          "ambiguous": 0
+        },
+        "utp-native": {
+          "count": 1,
+          "bytes": 659968,
+          "target": 1,
+          "foreign": 0,
+          "ambiguous": 0
+        }
+      }
+    },
+    "files": [
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/bufferutil/prebuilds/win32-x64/bufferutil.node",
+        "bytes": 155136,
+        "package": "bufferutil",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/win32-x64/fs-native-extensions.node",
+        "bytes": 135168,
+        "package": "fs-native-extensions",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/conpty.node",
+        "bytes": 312320,
+        "package": "node-pty",
+        "status": "ambiguous",
+        "platformArch": "current-build",
+        "reason": "generic-build-output"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/conpty_console_list.node",
+        "bytes": 134656,
+        "package": "node-pty",
+        "status": "ambiguous",
+        "platformArch": "current-build",
+        "reason": "generic-build-output"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
+        "bytes": 303104,
+        "package": "node-pty",
+        "status": "ambiguous",
+        "platformArch": "current-build",
+        "reason": "generic-build-output"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-x64/conpty.node",
+        "bytes": 312320,
+        "package": "node-pty",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-x64/conpty_console_list.node",
+        "bytes": 134656,
+        "package": "node-pty",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-x64/pty.node",
+        "bytes": 303104,
+        "package": "node-pty",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/win32-x64/utf-8-validate.node",
+        "bytes": 174592,
+        "package": "utf-8-validate",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      },
+      {
+        "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/utp-native/prebuilds/win32-x64/node.napi.node",
+        "bytes": 659968,
+        "package": "utp-native",
+        "status": "target",
+        "platformArch": "win32-x64",
+        "reason": "exact-prebuild"
+      }
+    ]
+  },
+  "stagingPlan": {
+    "keep": [
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/bufferutil/prebuilds/win32-x64/bufferutil.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/fs-native-extensions/prebuilds/win32-x64/fs-native-extensions.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/conpty.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/conpty_console_list.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-x64/conpty.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-x64/conpty_console_list.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/prebuilds/win32-x64/pty.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/utf-8-validate/prebuilds/win32-x64/utf-8-validate.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/utp-native/prebuilds/win32-x64/node.napi.node"
+    ],
+    "removeCandidate": [],
+    "manualReview": [
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/conpty.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/conpty_console_list.node",
+      "release/win-unpacked/resources/app.asar.unpacked/node_modules/node-pty/build/Release/pty.node"
+    ],
+    "rule": "Only foreign prebuild paths are automatic staging-removal candidates; generic build/Release outputs stay until ABI/runtime proof exists."
+  }
+}

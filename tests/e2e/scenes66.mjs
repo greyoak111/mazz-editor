@@ -2,7 +2,8 @@
 export async function scenes66({ app, win, human, WS, WS2, scenario }) {
   const wait = (ms) => win.waitForTimeout(ms);
   const evaluate = (fn, arg) => win.evaluate(fn, arg);
-  const KEY = 'sk-c0e9395bf7084fb491c840743b3abc7a';
+  const KEY = String(process.env.MAZZ_E2E_DEEPSEEK_API_KEY || '').trim();
+  if (!KEY) throw new Error('scenes66 需要通过 MAZZ_E2E_DEEPSEEK_API_KEY 注入测试密钥');
 
   // ==================== 1：provider 配置+API 探活 ====================
   await scenario('配置·DeepSeek 真 key 探活', async () => {

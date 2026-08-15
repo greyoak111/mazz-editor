@@ -24,6 +24,7 @@ const INVOKE_CHANNELS = new Set([
   'power:block',
   'menu:context', 'menu:setModel', 'appmenu:sync',
   'searx:search', 'searx:extract', 'clip:fetchImage', 'searx:selfcheck', 'searx:getMaskedConfig', 'searx:setConfig',
+  'tor:runtimeProbe', 'tor:runtimeReset',
   'term:create', 'term:write', 'term:resize', 'term:kill', 'term:list',
   'harness:adapters', 'harness:detect', 'harness:probe', 'harness:createSession', 'harness:send',
   'harness:interrupt', 'harness:dispose', 'harness:sessions', 'resources:snapshot',

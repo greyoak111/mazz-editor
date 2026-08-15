@@ -2210,6 +2210,7 @@ export class Shell {
               spellcheck, autolaunch: !!autolaunch,
               explorerRegistered: !!explorerSt?.registered,
               searxMasked: searxMc?.masked || '', searxUser: searxMc?.user || '', searxHasPass: !!searxMc?.hasPass,
+              searxTlsPin: searxMc?.tlsPin || '',
             } }).catch(() => {});
           } catch {}
           return;
@@ -2283,10 +2284,8 @@ export class Shell {
               await window.mazz.invoke('explorermenu:unregister').catch(() => {});
               back('explorerUnreg', '未注册', true);
             } else if (pl.act === 'searxSave') {
-              const cur = await window.mazz.invoke('settings:get', { key: 'searx' }).catch(() => null);
-              const cfg = { url: pl.url || cur?.url, user: pl.user || cur?.user, pass: pl.pass || cur?.pass };
               try {
-                const sc = await window.mazz.invoke('searx:setConfig', cfg);
+                const sc = await window.mazz.invoke('searx:setConfig', { url: pl.url, user: pl.user, pass: pl.pass, tlsPin: pl.tlsPin });
                 back('searxSave', sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；'), false);
               } catch (e) { back('searxSave', '✗ ' + e.message, false); }
             }
@@ -2863,6 +2862,7 @@ export class Shell {
       <div class="set-row"><label>实例地址</label><input id="s-searx-url" class="rb-input" style="width:62%" placeholder="https://你的实例"></div>
       <div class="set-row"><label>用户名</label><input id="s-searx-user" class="rb-input" style="width:62%"></div>
       <div class="set-row"><label>密码</label><input id="s-searx-pass" class="rb-input" style="width:62%" type="password"></div>
+      <div class="set-row"><label>TLS 指纹</label><input id="s-searx-pin" class="rb-input" style="width:62%" placeholder="自签证书才填写 SHA-256"></div>
       <div class="set-row"><label></label>
         <button id="s-searx-save" class="rb-btn" style="flex-direction:row;background:var(--accent);color:var(--accent-fg)">保存并自检</button>
         <span id="s-searx-status" style="font-size:11.5px;color:var(--fg-dim)"></span></div>
@@ -3005,18 +3005,18 @@ export class Shell {
       g('#s-searx-url').placeholder = mc.masked || 'https://你的实例';
       g('#s-searx-user').value = mc.user || '';
       g('#s-searx-pass').placeholder = mc.hasPass ? '（已设置，不修改请留空）' : '（未设置）';
+      g('#s-searx-pin').value = mc.tlsPin || '';
     };
     fillSearx();
     g('#s-searx-save').addEventListener('click', async () => {
       const url = g('#s-searx-url').value.trim();
       const user = g('#s-searx-user').value.trim();
       const pass = g('#s-searx-pass').value;
-      const cur = await window.mazz.invoke('settings:get', { key: 'searx' });
-      const cfg = { url: url || cur?.url, user: user || cur?.user, pass: pass || cur?.pass };
+      const tlsPin = g('#s-searx-pin').value.trim();
       const status = g('#s-searx-status');
       status.textContent = '自检中…';
       try {
-        const sc = await window.mazz.invoke('searx:setConfig', cfg);
+        const sc = await window.mazz.invoke('searx:setConfig', { url, user, pass, tlsPin });
         status.textContent = sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；');
       } catch (e) { status.textContent = '✗ ' + e.message; }
     });
