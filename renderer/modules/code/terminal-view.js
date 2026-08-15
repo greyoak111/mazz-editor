@@ -18,6 +18,8 @@ export class TerminalPanel {
     this.terms = new Map(); // id -> {xterm, fitAddon, proc, title}
     this.activeId = null;
     this.onCountChange = onCountChange;
+    this.disposed = false;
+    this.eventUnsubscribers = [];
     this.el = document.createElement('div');
     this.el.className = 'term-panel';
     this.el.innerHTML = `<div class="term-tabs"><button class="term-new" title="新建终端（Ctrl+Shift+\`）">＋ 终端</button></div><div class="term-body"></div>`;
@@ -28,30 +30,36 @@ export class TerminalPanel {
 
     // 主进程 → 渲染进程 数据流
     if (window.mazz?.isElectron) {
-      window.mazz.on('term:data', ({ id, data }) => {
+      this.eventUnsubscribers.push(window.mazz.on('term:data', ({ id, data }) => {
         this.terms.get(id)?.xterm.write(data);
-      });
-      window.mazz.on('term:exit', ({ id, exitCode }) => {
+      }));
+      this.eventUnsubscribers.push(window.mazz.on('term:exit', ({ id, exitCode }) => {
         const t = this.terms.get(id);
         if (t) {
           t.xterm.write(`\r\n\x1b[90m[进程已退出，代码 ${exitCode}]\x1b[0m\r\n`);
           toast(`终端 ${id} 已退出（${exitCode}）`);
         }
-      });
+      }));
     }
   }
 
   async create({ shell, cwd } = {}) {
+    if (this.disposed) return null;
     if (!window.mazz?.isElectron) { toast('终端需要桌面版'); return null; }
     injectXtermCss();
     const [{ Terminal }, { FitAddon }] = await Promise.all([
       import('@xterm/xterm'),
       import('@xterm/addon-fit'),
     ]);
+    if (this.disposed) return null;
 
     const id = 'term-' + seq++;
     const res = await window.mazz.invoke('term:create', { id, shell, cwd });
     if (res.error) { toast('终端创建失败：' + res.error); return null; }
+    if (this.disposed) {
+      window.mazz.invoke('term:kill', { id: res.id || id }).catch(() => {});
+      return null;
+    }
 
     const xterm = new Terminal({
       fontFamily: 'var(--font-mono)',
@@ -133,7 +141,7 @@ export class TerminalPanel {
   kill(id) {
     const rec = this.terms.get(id);
     if (!rec) return;
-    window.mazz.invoke('term:kill', { id });
+    window.mazz.invoke('term:kill', { id }).catch(() => {});
     rec.xterm.dispose();
     this.bodyEl.querySelector(`[data-term-id="${id}"]`)?.remove();
     this.terms.delete(id);
@@ -168,6 +176,17 @@ export class TerminalPanel {
   }
 
   count() { return this.terms.size; }
+
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    for (const id of [...this.terms.keys()]) this.kill(id);
+    for (const unsubscribe of this.eventUnsubscribers.splice(0)) {
+      try { unsubscribe?.(); } catch {}
+    }
+    this.activeId = null;
+    this.el?.remove();
+  }
 }
 
 function themeByBody() {

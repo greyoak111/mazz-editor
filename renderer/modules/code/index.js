@@ -1,6 +1,6 @@
 // renderer/modules/code/index.js —— 编程内核（Monaco + 集成终端）
 // Monaco：JS/TS 内置智能（补全/跳转/诊断/格式化）；终端：node-pty + xterm 多标签
-import { getMonaco } from './monaco-setup.js';
+import { getMonaco, getMonacoWorkerDiagnostics } from './monaco-setup.js';
 import { LANGUAGE_CATALOG, LANGUAGE_TIERS, LANGUAGE_BY_EXT, PRIMARY_EXT_BY_LANGUAGE, languageName } from './language-catalog.js';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { TerminalPanel } from './terminal-view.js';
@@ -89,6 +89,14 @@ function createCode(container, { filePath = null, language = null } = {}) {
     termGripEl: root.querySelector('.code-term-grip'),
     editorEl: root.querySelector('.code-editor'),
     ready: false,
+    disposed: false,
+    disposables: [],
+    themeObserver: null,
+    pendingTextTimer: null,
+    timers: new Set(),
+    cancelGripDrag: null,
+    monaco: null,
+    getWorkerDiagnostics: getMonacoWorkerDiagnostics,
   };
 
   const paneId = () => container.closest('.pane')?.dataset.paneId || 'default';
@@ -103,6 +111,7 @@ function createCode(container, { filePath = null, language = null } = {}) {
     return Math.round(Math.max(min, Math.min(max, n)));
   };
   const applyTerminalHeight = (height, { persist = false } = {}) => {
+    if (ctl.disposed) return 0;
     const next = clampTerminalHeight(height);
     ctl.bottomEl.style.height = `${next}px`;
     ctl.bottomEl.dataset.height = String(next);
@@ -113,9 +122,11 @@ function createCode(container, { filePath = null, language = null } = {}) {
   };
   const restoreTerminalHeight = async () => {
     const saved = await window.mazz?.invoke('settings:get', { key: terminalHeightKey() }).catch(() => null);
+    if (ctl.disposed) return;
     applyTerminalHeight(saved ?? TERMINAL_DEFAULT_HEIGHT);
   };
   const setTerminalOpen = (open) => {
+    if (ctl.disposed) return;
     ctl.bottomEl.classList.toggle('collapsed', !open);
     ctl.termGripEl.hidden = !open;
     root.classList.toggle('terminal-open', open);
@@ -132,13 +143,16 @@ function createCode(container, { filePath = null, language = null } = {}) {
     try { ctl.termGripEl.setPointerCapture?.(e.pointerId); } catch {}
     root.classList.add('term-resizing');
     const move = (ev) => applyTerminalHeight(startHeight + startY - ev.clientY);
+    ctl.cancelGripDrag?.();
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
       root.classList.remove('term-resizing');
-      applyTerminalHeight(+ctl.bottomEl.dataset.height, { persist: true });
+      if (!ctl.disposed) applyTerminalHeight(+ctl.bottomEl.dataset.height, { persist: true });
+      ctl.cancelGripDrag = null;
     };
+    ctl.cancelGripDrag = up;
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
@@ -147,6 +161,8 @@ function createCode(container, { filePath = null, language = null } = {}) {
 
   async function init() {
     const monaco = await getMonaco();
+    if (ctl.disposed) return;
+    ctl.monaco = monaco;
     ctl.model = monaco.editor.createModel('', ctl.language);
     ctl.editor = monaco.editor.create(ctl.editorEl, {
       model: ctl.model,
@@ -166,19 +182,19 @@ function createCode(container, { filePath = null, language = null } = {}) {
       guides: { bracketPairs: true, indentation: true },
       theme: document.documentElement.dataset.theme === 'paper' || document.documentElement.dataset.theme === 'sand' ? 'mazz-light' : 'mazz-dark',
     });
-    ctl.model.onDidChangeContent(() => {
+    ctl.disposables.push(ctl.model.onDidChangeContent(() => {
       if (!ctl._loading) window.MazzHost?.notifyChange(container); // W58d：程序化装载期免脏（幻影改动绝育）
       contextKeys.set('hasSelection', !ctl.editor.getSelection().isEmpty());
-    });
-    ctl.editor.onDidChangeCursorSelection(() => {
+    }));
+    ctl.disposables.push(ctl.editor.onDidChangeCursorSelection(() => {
       contextKeys.set('hasSelection', !ctl.editor.getSelection().isEmpty());
-    });
-    ctl.editor.onDidFocusEditorText(() => {
+    }));
+    ctl.disposables.push(ctl.editor.onDidFocusEditorText(() => {
       current = ctl;
       contextKeys.set('module', MODULE);
-    });
+    }));
     // 主题联动
-    watchTheme(ctl.editor);
+    ctl.themeObserver = watchTheme(ctl.editor);
     // 调试服务（DAP：断点/单步/变量/监视/调用栈/调试控制台）
     ctl.debug = new DebugService(ctl);
     ctl.ready = true;
@@ -192,14 +208,21 @@ function createCode(container, { filePath = null, language = null } = {}) {
       });
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return mo;
   }
 
-  init();
+  void init().catch((error) => {
+    if (ctl.disposed) return;
+    ctl.initError = error;
+    console.error('[code] Monaco 初始化失败:', error);
+  });
 
   // 终端面板（默认折叠；最后一个终端被关闭时自动收起，重新展开时若无终端自动新建）
   ctl.toggleTerminal = async (show) => {
+    if (ctl.disposed) return;
     const want = show ?? ctl.bottomEl.classList.contains('collapsed');
     if (want) await restoreTerminalHeight();
+    if (ctl.disposed) return;
     setTerminalOpen(want);
     const cwd = ctl.filePath ? ctl.filePath.replace(/[\\/][^\\/]*$/, '') : undefined;
     if (want && !ctl.terminal) {
@@ -210,7 +233,13 @@ function createCode(container, { filePath = null, language = null } = {}) {
     } else if (want && ctl.terminal && !ctl.terminal.count()) {
       await ctl.terminal.create({ cwd });
     }
-    if (want) setTimeout(() => ctl.terminal?.resize(), 50);
+    if (want) {
+      const timer = setTimeout(() => {
+        ctl.timers.delete(timer);
+        if (!ctl.disposed) ctl.terminal?.resize();
+      }, 50);
+      ctl.timers.add(timer);
+    }
   };
 
   /** 全语言运行（W58）：语言三保险（ctl.language ← 扩展名兜底 ← 语言选择器）+工具链探测+四档分级 */
@@ -311,6 +340,35 @@ export default {
     if (current === instances.get(container)) current = null;
   },
 
+  dispose(state) {
+    const ctl = instances.get(state.container);
+    if (!ctl || ctl.disposed) return;
+    ctl.disposed = true;
+    ctl.ready = false;
+    ctl.cancelGripDrag?.();
+    ctl.cancelGripDrag = null;
+    if (ctl.pendingTextTimer) clearInterval(ctl.pendingTextTimer);
+    ctl.pendingTextTimer = null;
+    for (const timer of ctl.timers) clearTimeout(timer);
+    ctl.timers.clear();
+    ctl.debug?.dispose?.();
+    ctl.terminal?.dispose?.();
+    ctl.themeObserver?.disconnect?.();
+    ctl.themeObserver = null;
+    for (const disposable of ctl.disposables.splice(0)) {
+      try { disposable?.dispose?.(); } catch {}
+    }
+    try { ctl.editor?.dispose?.(); } catch {}
+    try { ctl.model?.dispose?.(); } catch {}
+    ctl.editor = null;
+    ctl.model = null;
+    ctl.monaco = null;
+    ctl.root?.remove();
+    instances.delete(state.container);
+    if (current === ctl) current = null;
+    if (window.__activeCodeCtl === ctl) window.__activeCodeCtl = null;
+  },
+
   getContent(state) {
     const ctl = instances.get(state.container);
     return ctl?.editor ? ctl.editor.getValue() : (ctl?._pendingText ?? '');
@@ -322,7 +380,8 @@ export default {
     if (typeof data !== 'string' && data != null) console.warn('[code] setContent 非字符串输入已忽略（降级 tab 防对象契约连坐）');
     // 语言按文件类型（由外壳经 setLanguage 提前指定，或内容推断）
     const setModel = async () => {
-      const monaco = await getMonaco();
+      await getMonaco();
+      if (ctl.disposed) return;
       // W58d 程序化装载免脏：setValue 触发 onDidChangeContent=打开即幻影改动（关签弹保存闸实锤）——装载窗内抑制
       const put = (v) => { ctl._loading = true; try { ctl.editor.setValue(v); } finally { ctl._loading = false; } };
       if (ctl.editor) {
@@ -330,9 +389,16 @@ export default {
         ctl.editor.revealLine(1);
       } else {
         ctl._pendingText = text;
-        const iv = setInterval(() => {
+        if (ctl.pendingTextTimer) clearInterval(ctl.pendingTextTimer);
+        ctl.pendingTextTimer = setInterval(() => {
+          if (ctl.disposed) {
+            clearInterval(ctl.pendingTextTimer);
+            ctl.pendingTextTimer = null;
+            return;
+          }
           if (ctl.editor) {
-            clearInterval(iv);
+            clearInterval(ctl.pendingTextTimer);
+            ctl.pendingTextTimer = null;
             put(ctl._pendingText || '');
           }
         }, 100);

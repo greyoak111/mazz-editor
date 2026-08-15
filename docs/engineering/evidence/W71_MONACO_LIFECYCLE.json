@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-15T21:52:04+08:00",
+  "parentCommit": "a7fbcf827cbf1a901cff13fe4584c3165fda1228",
+  "scope": "W71 packaged Monaco worker and Code lifecycle checkpoint",
+  "runtime": {
+    "platform": "win32-x64",
+    "electron": "33.4.11",
+    "artifact": "release/win-unpacked/Mazz Editor.exe",
+    "asarEntries": [
+      "renderer/dist/codicon.ttf",
+      "renderer/dist/editor.worker.js",
+      "renderer/dist/ts.worker.js"
+    ]
+  },
+  "tests": {
+    "fullSuite": { "passedFiles": 137, "totalFiles": 137 },
+    "lifecycleContract": { "passed": 5, "total": 5 },
+    "targetedCodeTerminalAssertions": { "passed": 13, "total": 13 },
+    "packaged": {
+      "lateInitGuardObserved": true,
+      "typescriptDiagnosticCode": 2322,
+      "lifecycleCycles": 20,
+      "modelsAfterClose": 0,
+      "workerErrors": 0,
+      "representativeWorkerLedger": {
+        "created": 18,
+        "terminated": 16,
+        "active": 2,
+        "accounted": true
+      },
+      "workerBounds": {
+        "maxActive": 2,
+        "maxCreatedAcross20Cycles": 22,
+        "requireCreatedEqualsTerminatedPlusActive": true
+      },
+      "baselineResources": 2,
+      "activeResourcesAfter": 2,
+      "releasedResourcesRetained": 160
+    }
+  },
+  "closedGates": [
+    "packaged TypeScript worker activation",
+    "Code editor/model disposal",
+    "late Monaco initialization cannot revive a closed host",
+    "TerminalPanel and DebugService child-owner disposal",
+    "20-cycle bounded Monaco worker and zero-model close state"
+  ],
+  "openGates": [
+    "multi-window Code/Monaco ownership transfer",
+    "real packaged DAP adapter",
+    "real media device and remaining packaged media branches",
+    "real external Factory provider failure injection",
+    "clean-machine ABI and install/upgrade/uninstall matrix"
+  ]
+}

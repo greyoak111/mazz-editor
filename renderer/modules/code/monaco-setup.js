@@ -3,6 +3,20 @@
 import monacoCss from 'monaco-editor/min/vs/editor/editor.main.css';
 
 let monacoPromise = null;
+const workerDiagnostics = {
+  created: 0,
+  active: 0,
+  terminated: 0,
+  errors: 0,
+  byLabel: {},
+};
+
+export function getMonacoWorkerDiagnostics() {
+  return {
+    ...workerDiagnostics,
+    byLabel: { ...workerDiagnostics.byLabel },
+  };
+}
 
 function injectMonacoCss() {
   if (document.getElementById('monaco-css')) return;
@@ -21,10 +35,23 @@ export async function getMonaco() {
       const workerUrl = (name) => new URL(`./${name}`, import.meta.url).href;
       self.MonacoEnvironment = {
         getWorker(_workerId, label) {
-          if (label === 'typescript' || label === 'javascript') {
-            return new Worker(workerUrl('ts.worker.js'), { type: 'module' });
-          }
-          return new Worker(workerUrl('editor.worker.js'), { type: 'module' });
+          const name = label === 'typescript' || label === 'javascript' ? 'ts.worker.js' : 'editor.worker.js';
+          const worker = new Worker(workerUrl(name), { type: 'module', name: `mazz-monaco-${label || 'editor'}` });
+          workerDiagnostics.created += 1;
+          workerDiagnostics.active += 1;
+          workerDiagnostics.byLabel[label || 'editor'] = (workerDiagnostics.byLabel[label || 'editor'] || 0) + 1;
+          worker.addEventListener('error', () => { workerDiagnostics.errors += 1; });
+          worker.addEventListener('messageerror', () => { workerDiagnostics.errors += 1; });
+          const terminate = worker.terminate.bind(worker);
+          let terminated = false;
+          worker.terminate = () => {
+            if (terminated) return;
+            terminated = true;
+            workerDiagnostics.active = Math.max(0, workerDiagnostics.active - 1);
+            workerDiagnostics.terminated += 1;
+            terminate();
+          };
+          return worker;
         },
       };
 

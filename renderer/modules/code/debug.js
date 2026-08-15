@@ -13,6 +13,10 @@ export class DebugService {
     this.currentThreadId = null;
     this.watches = [];
     this.panel = null;
+    this.disposed = false;
+    this.disposables = [];
+    this.gutterTimer = null;
+    this.eventUnsubscribe = null;
     this._wireGutter();
     this._wireEvents();
   }
@@ -21,15 +25,17 @@ export class DebugService {
 
   // ==================== 断点（边距点击切换） ====================
   _wireGutter() {
-    const iv = setInterval(() => {
-      if (!this.editor) { clearInterval(iv); return; }
-      clearInterval(iv);
+    this.gutterTimer = setInterval(() => {
+      if (this.disposed) { clearInterval(this.gutterTimer); this.gutterTimer = null; return; }
+      if (!this.editor) return;
+      clearInterval(this.gutterTimer);
+      this.gutterTimer = null;
       this.editor.updateOptions({ glyphMargin: true });
-      this.editor.onMouseDown((e) => {
+      this.disposables.push(this.editor.onMouseDown((e) => {
         if (e.target.type === 2 /* GUTTER_GLYPH_MARGIN */ || e.target.type === 3 /* GUTTER_LINE_NUMBERS */) {
           this.toggleBreakpoint(e.target.position.lineNumber);
         }
-      });
+      }));
     }, 300);
   }
 
@@ -101,7 +107,8 @@ export class DebugService {
   // ==================== 事件 ====================
   _wireEvents() {
     if (!window.mazz?.isElectron) return;
-    window.mazz.on('debug:event', ({ channel, ...payload }) => {
+    this.eventUnsubscribe = window.mazz.on('debug:event', ({ channel, ...payload }) => {
+      if (this.disposed) return;
       if (channel === 'dapEvent') this.onDapEvent(payload.event, payload.body);
       if (channel === 'output') this.appendConsole(payload.output, 'stderr');
       if (channel === 'terminated') {
@@ -111,6 +118,23 @@ export class DebugService {
         this.showPanel(false);
       }
     });
+  }
+
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
+    if (this.gutterTimer) clearInterval(this.gutterTimer);
+    this.gutterTimer = null;
+    try { this.eventUnsubscribe?.(); } catch {}
+    this.eventUnsubscribe = null;
+    for (const disposable of this.disposables.splice(0)) {
+      try { disposable?.dispose?.(); } catch {}
+    }
+    this.clearStopMark();
+    if (this.active) window.mazz?.invoke('debug:stop').catch(() => {});
+    this.active = false;
+    this.panel?.remove();
+    this.panel = null;
   }
 
   async onDapEvent(event, body) {

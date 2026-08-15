@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 209,
-    "scannedLines": 56037
+    "scannedLines": 56173
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -1275,175 +1275,175 @@
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 192,
+        "line": 216,
         "sample": "<button data-a=\"continue\" title=\"继续 (F5)\">▶</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 193,
+        "line": 217,
         "sample": "<button data-a=\"over\" title=\"单步跳过 (F10)\">↷</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 194,
+        "line": 218,
         "sample": "<button data-a=\"in\" title=\"单步进入 (F11)\">↓</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 195,
+        "line": 219,
         "sample": "<button data-a=\"out\" title=\"单步跳出 (Shift+F11)\">↑</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 196,
+        "line": 220,
         "sample": "<button data-a=\"stop\" title=\"停止 (Shift+F5)\">■</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 201,
+        "line": 225,
         "sample": "<div class=\"debug-sec\"><div class=\"debug-sec-title\">监视 <button data-a=\"addwatch\">＋</button></div><div class=\"debug-watch\"></div></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 204,
+        "line": 228,
         "sample": "<input class=\"debug-eval\" placeholder=\"回车求值（断点上下文）\" spellcheck=\"false\" />"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
-        "line": 279,
+        "line": 303,
         "sample": "<div class=\"set-row\"><label>程序</label><input id=\"lc-program\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program)}\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 279,
+        "line": 303,
         "sample": "<div class=\"set-row\"><label>程序</label><input id=\"lc-program\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program)}\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
-        "line": 280,
+        "line": 304,
         "sample": "<div class=\"set-row\"><label>参数（空格分隔）</label><input id=\"lc-args\" class=\"rb-input\" style=\"width:70%\" placeholder=\"arg1 arg2\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 280,
+        "line": 304,
         "sample": "<div class=\"set-row\"><label>参数（空格分隔）</label><input id=\"lc-args\" class=\"rb-input\" style=\"width:70%\" placeholder=\"arg1 arg2\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
-        "line": 281,
+        "line": 305,
         "sample": "<div class=\"set-row\"><label>工作目录</label><input id=\"lc-cwd\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program.replace(/[\\\\/][^\\\\/]*$/, ''))}\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 281,
+        "line": 305,
         "sample": "<div class=\"set-row\"><label>工作目录</label><input id=\"lc-cwd\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program.replace(/[\\\\/][^\\\\/]*$/, ''))}\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
-        "line": 282,
+        "line": 306,
         "sample": "<div class=\"set-row\"><label>Python 路径（可空=自动探测）</label><input id=\"lc-python\" class=\"rb-input\" style=\"width:70%\" placeholder=\"python\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 282,
+        "line": 306,
         "sample": "<div class=\"set-row\"><label>Python 路径（可空=自动探测）</label><input id=\"lc-python\" class=\"rb-input\" style=\"width:70%\" placeholder=\"python\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 283,
+        "line": 307,
         "sample": "<div class=\"set-row\"><label>入口暂停</label><input id=\"lc-stop\" type=\"checkbox\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
-        "line": 284,
+        "line": 308,
         "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 284,
+        "line": 308,
         "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
-        "line": 285,
+        "line": 309,
         "sample": "<div style=\"color:var(--fg-dim);font-size:11.5px\">需要本机 Python + debugpy（pip install debugpy）。配置自动记忆在本文件中。</div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/index.js",
-        "line": 400,
+        "line": 466,
         "sample": "<button class=\"rb-btn\" id=\"code-lang-btn\" title=\"编程语言（点击切换——子窗格选择格，分屏不被压）\"><i class=\"ico\">≣</i><span id=\"code-lang-text\">JavaScript</span><i class=\"ico\">▾</i></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/index.js",
-        "line": 401,
+        "line": 467,
         "sample": "<select class=\"rb-select\" id=\"code-lang\" title=\"编程语言\" style=\"display:none\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/index.js",
-        "line": 401,
+        "line": 467,
         "sample": "<select class=\"rb-select\" id=\"code-lang\" title=\"编程语言\" style=\"display:none\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/index.js",
-        "line": 406,
+        "line": 472,
         "sample": "<button class=\"rb-btn\" data-command=\"code.runFile\"><i class=\"ico\">▶</i><span>运行文件</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/index.js",
-        "line": 407,
+        "line": 473,
         "sample": "<button class=\"rb-btn\" data-command=\"code.runSelection\"><i class=\"ico\">⏎</i><span>运行选区</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/index.js",
-        "line": 408,
+        "line": 474,
         "sample": "<button class=\"rb-btn\" data-command=\"code.format\"><i class=\"ico\">${iconHtml('⌨')}</i><span>格式化</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/index.js",
-        "line": 411,
+        "line": 477,
         "sample": "<button class=\"rb-btn\" data-command=\"code.toggleTerminal\"><i class=\"ico\">▗</i><span>切换终端</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/index.js",
-        "line": 412,
+        "line": 478,
         "sample": "<button class=\"rb-btn\" data-command=\"code.newTerminal\"><i class=\"ico\">＋</i><span>新建终端</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/terminal-view.js",
-        "line": 23,
+        "line": 25,
         "sample": "this.el.innerHTML = `<div class=\"term-tabs\"><button class=\"term-new\" title=\"新建终端（Ctrl+Shift+\\`）\">＋ 终端</button></div><div class=\"term-body\"></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/terminal-view.js",
-        "line": 156,
+        "line": 164,
         "sample": "el.innerHTML = `<span>${rec.title}</span><button class=\"term-tab-x\">✕</button>`;"
       },
       {
@@ -12795,67 +12795,67 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/code/index.js",
-        "line": 292,
+        "line": 321,
         "sample": "icon: '💻',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 292,
+        "line": 321,
         "sample": "icon: '💻',"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/code/index.js",
-        "line": 408,
+        "line": 474,
         "sample": "<button class=\"rb-btn\" data-command=\"code.format\"><i class=\"ico\">${iconHtml('⌨')}</i><span>格式化</span></button>"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 454,
+        "line": 520,
         "sample": "{ id: 'code.runFile', title: '运行当前文件', icon: '▶', group: '编程',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 456,
+        "line": 522,
         "sample": "{ id: 'code.runSelection', title: '运行选区/当前 cell', icon: '⏎', group: '编程',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 458,
+        "line": 524,
         "sample": "{ id: 'code.format', title: '格式化文档', icon: '⌨', group: '编程',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 475,
+        "line": 541,
         "sample": "{ id: 'code.toggleTerminal', title: '切换集成终端', icon: '▗', group: '编程',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 477,
+        "line": 543,
         "sample": "{ id: 'code.newTerminal', title: '新建终端', icon: '＋', group: '编程',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 488,
+        "line": 554,
         "sample": "{ id: 'debug.start', title: '启动/继续调试', icon: '▶', group: '调试',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 491,
+        "line": 557,
         "sample": "{ id: 'debug.stop', title: '停止调试', icon: '■', group: '调试',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/code/index.js",
-        "line": 493,
+        "line": 559,
         "sample": "{ id: 'debug.toggleBreakpoint', title: '切换断点', icon: '●', group: '调试',"
       },
       {
@@ -12873,7 +12873,7 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/code/terminal-view.js",
-        "line": 156,
+        "line": 164,
         "sample": "el.innerHTML = `<span>${rec.title}</span><button class=\"term-tab-x\">✕</button>`;"
       },
       {
@@ -21280,25 +21280,25 @@
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/code/debug.js",
-        "line": 284,
+        "line": 308,
         "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/code/debug.js",
-        "line": 285,
+        "line": 309,
         "sample": "<div style=\"color:var(--fg-dim);font-size:11.5px\">需要本机 Python + debugpy（pip install debugpy）。配置自动记忆在本文件中。</div>`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/code/index.js",
-        "line": 155,
+        "line": 171,
         "sample": "fontFamily: 'var(--font-mono)',"
       },
       {
         "rule": "theme-selector",
         "file": "renderer/modules/code/index.js",
-        "line": 194,
+        "line": 210,
         "sample": "mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });"
       },
       {
@@ -21310,31 +21310,31 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/code/monaco-setup.js",
-        "line": 35,
+        "line": 62,
         "sample": "colors: { 'editor.background': '#16181d', 'editor.lineHighlightBackground': '#1e2128' },"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/code/monaco-setup.js",
-        "line": 40,
+        "line": 67,
         "sample": "colors: { 'editor.background': '#ffffff' },"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/code/terminal-view.js",
-        "line": 57,
+        "line": 65,
         "sample": "fontFamily: 'var(--font-mono)',"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/code/terminal-view.js",
-        "line": 176,
+        "line": 195,
         "sample": "? { background: '#16181d', foreground: '#e2e4e9', cursor: '#818cf8', selectionBackground: '#312e5f' }"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/code/terminal-view.js",
-        "line": 177,
+        "line": 196,
         "sample": ": { background: '#ffffff', foreground: '#2c2c2a', cursor: '#4f46e5', selectionBackground: '#e0e7ff' };"
       },
       {

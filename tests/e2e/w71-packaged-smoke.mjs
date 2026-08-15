@@ -52,6 +52,15 @@ try {
       throw new Error(message);
     };
     const baseline = await window.mazz.invoke('resources:snapshot');
+    await window.MazzCommands.execute('file.newCode');
+    const fastCloseCtl = window.__activeCodeCtl;
+    const fastCloseTabId = window.MazzShell.tabs.activeId;
+    if (!fastCloseCtl || !fastCloseTabId) throw new Error('Monaco 迟到初始化探针未创建宿主');
+    await window.MazzShell.closeTabFlow(fastCloseTabId);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const lateInitGuardObserved = fastCloseCtl.disposed && !fastCloseCtl.editor && !fastCloseCtl.model
+      && !fastCloseCtl.root?.isConnected && !window.__activeCodeCtl && !document.querySelector('.code-root');
+    if (!lateInitGuardObserved) throw new Error('Monaco 标签先关闭后仍被迟到初始化复活');
     let during = null;
     let panelDuring = null;
     let viewDuring = null;
@@ -60,6 +69,9 @@ try {
     let pythonDuring = null;
     let viewerDuring = null;
     let factoryDuring = null;
+    let monacoDuring = null;
+    let monacoWorkerDiagnostics = null;
+    let monacoModelsAfterClose = null;
     for (let index = 0; index < 20; index++) {
       const term = await window.mazz.invoke('term:create', { id: `w71-packaged-smoke-${index}`, cols: 40, rows: 8 });
       if (term?.error) throw new Error(term.error);
@@ -113,6 +125,45 @@ try {
         return !hasViewerInstance && !document.querySelector('.viewer-root') && !window.__activeViewerCtl;
       }, `Viewer 第 ${index + 1} 次关闭后仍有实例、DOM 或活动锚点`);
 
+      await window.MazzCommands.execute('file.newCode');
+      monacoDuring = await waitForLocal(() => {
+        const ctl = window.__activeCodeCtl;
+        const tab = window.MazzShell.paneTree.leaves().flatMap(leaf => leaf.tabs.tabs)
+          .find(item => item.moduleId === 'code' && item.id === window.MazzShell.tabs.activeId);
+        return ctl?.ready && ctl.model && ctl.editor && ctl.monaco && tab ? { ctl, tabId: tab.id } : null;
+      }, `Monaco 第 ${index + 1} 次未完成真实装载`, 15000);
+      const { ctl: codeCtl, tabId: codeTabId } = monacoDuring;
+      const monaco = codeCtl.monaco;
+      const source = `const answer: number = "wrong-${index}";\nanswer;`;
+      codeCtl._loading = true;
+      try { codeCtl.model.setValue(source); } finally { codeCtl._loading = false; }
+      monaco.editor.setModelLanguage(codeCtl.model, 'typescript');
+      let typeScriptWorker = null;
+      let workerError = null;
+      for (let attempt = 0; attempt < 100 && !typeScriptWorker; attempt++) {
+        try {
+          const getTypeScriptWorker = await monaco.languages.typescript.getTypeScriptWorker();
+          typeScriptWorker = await getTypeScriptWorker(codeCtl.model.uri);
+        } catch (error) {
+          workerError = error;
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+      }
+      if (!typeScriptWorker) throw workerError || new Error('TypeScript worker 未就绪');
+      const diagnostics = await typeScriptWorker.getSemanticDiagnostics(codeCtl.model.uri.toString());
+      if (!diagnostics.some(item => Number(item.code) === 2322)) {
+        throw new Error(`Monaco 第 ${index + 1} 次 TypeScript worker 未返回真实类型诊断`);
+      }
+      await window.MazzShell.closeTabFlow(codeTabId);
+      await waitForLocal(() => {
+        const registry = window.MazzModulesReal || window.MazzModules;
+        const hasCodeInstance = [...(registry?.instances?.values?.() || [])].some(inst => inst.name === 'code');
+        monacoModelsAfterClose = monaco.editor.getModels().length;
+        return !hasCodeInstance && !document.querySelector('.code-root') && !window.__activeCodeCtl
+          && monacoModelsAfterClose === 0;
+      }, `Monaco 第 ${index + 1} 次关闭后仍有实例、DOM、活动锚点或 model`);
+      monacoWorkerDiagnostics = codeCtl.getWorkerDiagnostics();
+
       const requestId = `w71-packaged-factory-${index}`;
       const factoryRequest = window.mazz.invoke('factory:aiChatStream', {
         requestId, baseURL: 'mock://w71-packaged', apiKey: 'local-test-key', model: 'w71-local',
@@ -143,9 +194,17 @@ try {
       pythonRuntimeObserved: pythonDuring.byType['python-process'] === 1 && pythonDuring.byType['temp-file'] === 1,
       viewerRuntimeObserved: !!viewerDuring?.tabId,
       factoryRequestObserved: factoryDuring.byType['factory-ai-request'] === 1,
+      monacoWorkerObserved: (monacoWorkerDiagnostics?.byLabel?.typescript || 0) >= 1,
+      monacoLateInitGuardObserved: lateInitGuardObserved,
+      monacoWorkersCreated: monacoWorkerDiagnostics?.created || 0,
+      monacoWorkersActive: monacoWorkerDiagnostics?.active ?? -1,
+      monacoWorkersTerminated: monacoWorkerDiagnostics?.terminated || 0,
+      monacoWorkerErrors: monacoWorkerDiagnostics?.errors || 0,
+      monacoModelsAfterClose,
       lifecycleCycles: 20,
       viewerLifecycleCycles: 20,
       factoryLifecycleCycles: 20,
+      monacoLifecycleCycles: 20,
       releasedResourcesRetained: resources.released?.length || 0,
       adapters: adapters.length,
       sessions: sessions.length,
@@ -154,7 +213,12 @@ try {
   if (!result.title || result.resourceVersion !== 1 || !result.mainWindowObserved || !result.ptyObserved
     || !result.panelObserved || !result.webContentsViewObserved || !result.fileWatcherObserved || !result.torrentRuntimeObserved
     || !result.pythonRuntimeObserved || !result.viewerRuntimeObserved || !result.factoryRequestObserved
+    || !result.monacoWorkerObserved || !result.monacoLateInitGuardObserved
+    || result.monacoWorkerErrors !== 0 || result.monacoModelsAfterClose !== 0
+    || result.monacoWorkersActive > 2 || result.monacoWorkersCreated > 22
+    || result.monacoWorkersTerminated + result.monacoWorkersActive !== result.monacoWorkersCreated
     || result.lifecycleCycles !== 20 || result.viewerLifecycleCycles !== 20 || result.factoryLifecycleCycles !== 20
+    || result.monacoLifecycleCycles !== 20
     || result.releasedResourcesRetained < 160
     || result.activeResources !== result.baselineResources || result.sessions !== 0) {
     throw new Error(`packaged smoke 断言失败：${JSON.stringify(result)}`);
