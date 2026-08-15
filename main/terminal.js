@@ -4,8 +4,9 @@ const os = require('os');
 const pty = require('node-pty');
 
 class TerminalService {
-  constructor({ bus, windowManager }) {
+  constructor({ bus, windowManager, resourceLedger = null }) {
     this.terms = new Map(); // id -> {pty, title, cwd}
+    this.resourceLedger = resourceLedger;
     let seq = 1;
 
     bus.handle('term:create', async ({ id, shell, cwd, cols, rows }) => {
@@ -21,7 +22,11 @@ class TerminalService {
           cwd: workdir,
           env: process.env,
         });
-        const rec = { proc, title: shellPath.split(/[\\/]/).pop(), cwd: workdir };
+        const resourceKey = this.resourceLedger?.register({
+          type: 'pty', id: termId, owner: 'terminal', state: 'running',
+          meta: { shell: shellPath, cwd: workdir },
+        }) || null;
+        const rec = { proc, title: shellPath.split(/[\\/]/).pop(), cwd: workdir, resourceKey };
         this.terms.set(termId, rec);
         proc.onData((data) => {
           windowManager.broadcast('term:data', { id: termId, data });
@@ -29,6 +34,7 @@ class TerminalService {
         proc.onExit(({ exitCode }) => {
           windowManager.broadcast('term:exit', { id: termId, exitCode });
           this.terms.delete(termId);
+          if (resourceKey) this.resourceLedger?.release(resourceKey, { reason: 'process-exit', meta: { exitCode } });
         });
         return { id: termId, title: rec.title, cwd: workdir };
       } catch (e) {
@@ -46,7 +52,11 @@ class TerminalService {
     });
     bus.handle('term:kill', async ({ id }) => {
       const rec = this.terms.get(id);
-      if (rec) { try { rec.proc.kill(); } catch {} this.terms.delete(id); }
+      if (rec) {
+        try { rec.proc.kill(); } catch {}
+        this.terms.delete(id);
+        if (rec.resourceKey) this.resourceLedger?.release(rec.resourceKey, { reason: 'user-kill', state: 'cancelled' });
+      }
       return true;
     });
     bus.handle('term:list', async () => {
@@ -55,7 +65,10 @@ class TerminalService {
   }
 
   killAll() {
-    for (const rec of this.terms.values()) { try { rec.proc.kill(); } catch {} }
+    for (const rec of this.terms.values()) {
+      try { rec.proc.kill(); } catch {}
+      if (rec.resourceKey) this.resourceLedger?.release(rec.resourceKey, { reason: 'app-quit', state: 'cancelled' });
+    }
     this.terms.clear();
   }
 }

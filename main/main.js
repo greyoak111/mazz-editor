@@ -114,6 +114,8 @@ const StartMenuApps = require('./startmenu');
 const Updater = require('./updater');
 const BrowserSession = require('./browser-session');
 const TerminalService = require('./terminal');
+const { ResourceLedger } = require('./resource-ledger');
+const { AgentHarnessService } = require('./agent-harness');
 
 const PROTOCOL = 'mazz';
 
@@ -1434,8 +1436,23 @@ app.whenReady().then(() => {
     });
   } catch (e) { console.warn('[author-sess]', e.message); }
 
+  // —— W71 资源账本 + W66 Agent Harness Foundation ——
+  const resourceLedger = new ResourceLedger();
+  const harness = new AgentHarnessService({ bus, windowManager: wm, resourceLedger });
+  let harnessQuitReady = false;
+  app.on('before-quit', (event) => {
+    if (harnessQuitReady) return;
+    event.preventDefault();
+    let timeoutId;
+    const timeout = new Promise(resolve => { timeoutId = setTimeout(() => resolve('timeout'), 5000); });
+    Promise.race([harness.killAll().then(() => 'done'), timeout])
+      .then(status => { if (status === 'timeout') console.warn('[harness] quit cleanup timed out'); })
+      .catch(e => console.warn('[harness] quit cleanup:', e.message))
+      .finally(() => { clearTimeout(timeoutId); harnessQuitReady = true; app.quit(); });
+  });
+
   // —— 集成终端：node-pty 终端池 ——
-  const terminal = new TerminalService({ bus, windowManager: wm });
+  const terminal = new TerminalService({ bus, windowManager: wm, resourceLedger });
   app.on('before-quit', () => terminal.killAll());
 
   // —— Python 计算内核（math.js 后端）——

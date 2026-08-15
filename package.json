@@ -3,6 +3,7 @@
   "productName": "Mazz Editor",
   "version": "0.2.0",
   "description": "榨干 Electron 的一站式超级编辑器 —— 文档/代码/创作 全闭环",
+  "author": "Mazz Editor contributors",
   "main": "main/main.js",
   "license": "MIT",
   "scripts": {
@@ -12,6 +13,8 @@
     "test": "node tests/run.js",
     "smoke": "node tests/e2e/smoke.js",
     "dist": "node scripts/build.js && electron-builder",
+    "dist:dir": "node scripts/build.js && electron-builder --dir --win",
+    "audit:release": "node scripts/release-audit.js --out docs/engineering/evidence/W71_RELEASE_BASELINE.json",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },
@@ -19,15 +22,23 @@
     "appId": "com.mazz.editor",
     "productName": "Mazz Editor",
     "directories": {
-      "output": "/mnt/agents/work/release"
+      "output": "release"
     },
     "files": [
       "main/",
       "preload/",
       "renderer/",
+      "!renderer/dist/**/*.map",
+      "!renderer/vendor/**/*.map",
       "resources/",
       "package.json",
-      "samples/"
+      "samples/",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "asarUnpack": [
+      "node_modules/**/*.node"
     ],
     "protocols": [
       {

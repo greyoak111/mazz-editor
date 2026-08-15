@@ -14,13 +14,16 @@
 ```bash
 npm install
 npm run dev      # 构建渲染层并启动 Electron（Electron 下载失败时 postinstall 自动换镜像兜底）
-npm test         # 单元 + 契约 + 往返测试（42 个测试文件）
+npm test         # 单元 + 契约 + 往返测试
 npm run smoke    # Electron 真机冒烟（含 IPC 白名单 / 密码管理器 / 13 模块注册 / 307 命令）
+npm run audit:release  # 生成 source map / native ABI / 许可证 / vendored runtime 发布基线
+npm run dist:dir       # 构建 Windows app-unpacked specimen
+npm run dist           # 构建 Windows NSIS 安装包
 ```
 
 数据默认存放于 `文档/MazzWorkspace`：笔记与书摘为纯 Markdown，书库/插件各有专目录，全部资料可整体拷贝备份。
 
-## 功能总览（四大阶段全部交付）
+## 当前已落地主链
 
 | 领域 | 模块 | 能力要点 |
 | --- | --- | --- |
@@ -45,7 +48,8 @@ npm run smoke    # Electron 真机冒烟（含 IPC 白名单 / 密码管理器 /
 
 ```
 main/        Electron 主进程：单实例 · 窗口管理 · IPC 总线（白名单信封）· 托盘 · 协议
-             · 打印双路径 · 拼写 · 崩溃恢复 · SearXNG/翻译/密码/同步/更新 服务
+             · ResourceLedger · Agent Harness Foundation · 打印双路径 · 拼写 · 崩溃恢复
+             · SearXNG/翻译/密码/同步/更新 服务
 preload/     contextBridge 白名单桥（渲染进程唯一入口 window.mazz）
 renderer/
   core/      命令注册表（单一事实源）· 上下文键 · 键位 · 菜单 · 命令面板 · 模块注册表
@@ -69,12 +73,13 @@ plugins-samples/  示例插件源码（构建时打成 samples/*.maz）
 
 ## 测试与质量
 
-- 21 个测试文件全绿：`npm test`（单元/契约/往返/i18n/同步/帮助/UI 主题）
+- 129 个测试文件进入统一入口：`npm test`（单元/契约/往返/i18n/同步/帮助/UI 主题）
 - docx 往返 20 份关键元素 100% 保留 · xlsx 10 份零丢失 · pptx×5 主题合法
 - 公式引擎 26 组 Excel 一致性断言 · Electron 真机冒烟 10 项 · 双实例同步 100 文件零丢失
 - 测试本身有防"假绿"设计（harness 防 beforeExit 重入，历史教训固化）
 
 ## 许可与第三方
 
-代码：ProseMirror / Monaco / SheetJS / ExcelJS / PptxGenJS / ECharts / jszip / perfect-freehand / Tesseract.js / node-pty / debugpy / node-forge / bonjour-service（均为 MIT/Apache/BSD）。
-SearXNG（AGPL）为自部署服务、不分发；Pandoc（GPL）仅外部进程调用（可选）。
+Mazz 自有代码按 [`LICENSE`](./LICENSE) 中的 MIT License 分发；第三方组件以 [`NOTICE`](./NOTICE) 与 [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) 为入口，最终义务以实际发布物及各组件许可证为准。
+
+SearXNG（AGPL）为自部署服务、不分发；Pandoc（GPL）仅作为可选外部进程调用。内置 ffmpeg.wasm 是真实发布资产，其固定哈希和仍缺的来源/构建证据记录在 [`renderer/vendor/ffmpeg/PROVENANCE.md`](./renderer/vendor/ffmpeg/PROVENANCE.md)；缺口关闭前不得宣称发布许可已经完全闭环。
