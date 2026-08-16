@@ -1,20 +1,97 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-08-16T08:34:02.932Z",
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-16T08:54:20.584Z",
   "installer": {
     "file": "release/Mazz Editor Setup 0.2.0.exe",
-    "bytes": 141028503,
-    "sha256": "D178BFC98310233781BDB43E885A4963FCD3EF83A6958C5CCE8831A59620D4D1"
+    "bytes": 141035065,
+    "sha256": "553D0FFD7D8A005EED8434980EA7F1592456E78D9C6D11C6D7A7FCAFE998A70A"
   },
-  "isolatedTarget": "MazzW71Install-lc7aQn",
+  "isolatedTarget": "MazzW71Install-IaoZMM",
   "preflight": {
     "noExistingInstallRegistration": true,
-    "noExistingShortcuts": true
+    "noExistingShortcuts": true,
+    "noExistingMazzIntegration": true,
+    "associationDefaults": [
+      {
+        "ext": "md",
+        "defaultValueExists": true,
+        "defaultValue": ""
+      },
+      {
+        "ext": "markdown",
+        "defaultValueExists": true,
+        "defaultValue": ""
+      },
+      {
+        "ext": "txt",
+        "defaultValueExists": true,
+        "defaultValue": ""
+      },
+      {
+        "ext": "mazz",
+        "defaultValueExists": false,
+        "defaultValue": ""
+      }
+    ]
   },
   "install": {
     "exitCode": 0,
     "uninstallRegistrationCreated": true,
-    "installedExeSha256": "8B8752FFDE812849531D3EEB4DF6376F477CB987913E520773B2103BF6EFA802"
+    "installedExeSha256": "3FBA3247574EE175DDEB8FC1719EB8F195A8BE96FF10530ECA956FD6410BA39B",
+    "windowsIntegration": {
+      "protocol": {
+        "exists": true,
+        "label": "URL:mazz",
+        "markerExists": true,
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+      },
+      "associations": [
+        {
+          "ext": "md",
+          "progId": "com.mazz.editor.markdown",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.markdown",
+          "backupExists": true,
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+        },
+        {
+          "ext": "markdown",
+          "progId": "com.mazz.editor.markdown",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.markdown",
+          "backupExists": true,
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+        },
+        {
+          "ext": "txt",
+          "progId": "com.mazz.editor.text",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.text",
+          "backupExists": true,
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+        },
+        {
+          "ext": "mazz",
+          "progId": "com.mazz.editor.workspace",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.workspace",
+          "backupExists": true,
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+        }
+      ]
+    }
   },
   "installedRuntime": {
     "smokeExitCode": 0,
@@ -36,9 +113,9 @@
       "factoryRequestObserved": true,
       "monacoWorkerObserved": true,
       "monacoLateInitGuardObserved": true,
-      "monacoWorkersCreated": 19,
+      "monacoWorkersCreated": 20,
       "monacoWorkersActive": 2,
-      "monacoWorkersTerminated": 17,
+      "monacoWorkersTerminated": 18,
       "monacoWorkerErrors": 0,
       "monacoModelsAfterClose": 0,
       "lifecycleCycles": 20,
@@ -47,7 +124,10 @@
       "monacoLifecycleCycles": 20,
       "releasedResourcesRetained": 160,
       "adapters": 0,
-      "sessions": 0
+      "sessions": 0,
+      "protocolObserved": true,
+      "associatedFileObserved": true,
+      "integrationResourcesReturnedToBaseline": true
     }
   },
   "uninstall": {
@@ -55,6 +135,61 @@
     "executableRemoved": true,
     "uninstallRegistrationRemoved": true,
     "shortcutsRemoved": true,
+    "windowsIntegrationRemoved": true,
+    "windowsIntegrationAfterRemoval": {
+      "protocol": {
+        "exists": false,
+        "label": "",
+        "markerExists": false,
+        "command": ""
+      },
+      "associations": [
+        {
+          "ext": "md",
+          "progId": "com.mazz.editor.markdown",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "",
+          "backupExists": false,
+          "legacyBackupExists": false,
+          "classKeyExists": false,
+          "command": ""
+        },
+        {
+          "ext": "markdown",
+          "progId": "com.mazz.editor.markdown",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "",
+          "backupExists": false,
+          "legacyBackupExists": false,
+          "classKeyExists": false,
+          "command": ""
+        },
+        {
+          "ext": "txt",
+          "progId": "com.mazz.editor.text",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "",
+          "backupExists": false,
+          "legacyBackupExists": false,
+          "classKeyExists": false,
+          "command": ""
+        },
+        {
+          "ext": "mazz",
+          "progId": "com.mazz.editor.workspace",
+          "extensionKeyExists": false,
+          "defaultValueExists": false,
+          "defaultValue": "",
+          "backupExists": false,
+          "legacyBackupExists": false,
+          "classKeyExists": false,
+          "command": ""
+        }
+      ]
+    },
     "residueBeforeGuardedTempCleanup": [],
     "guardedTempCleanup": {
       "attempted": true,

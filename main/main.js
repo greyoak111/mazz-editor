@@ -147,6 +147,8 @@ const globalShortcuts = new GlobalShortcuts({ windowManager: wm, store });
 
 let pendingOpenFiles = []; // 主实例未就绪前收到的文件参数
 let pendingImports = [];   // 主实例未就绪前收到的 --import 导入参数
+let pendingProtocolUrls = [];
+let mainRendererReady = false;
 
 // —— 跨进程路径统一为正斜杠：渲染层一律按 '/' 运算（Node fs 在 Windows 正反斜杠通吃）——
 const toSlash = (p) => (typeof p === 'string' ? p.replace(/\\/g, '/') : p);
@@ -177,21 +179,34 @@ function extractOpenFiles(argv) {
   return out;
 }
 
+function extractProtocolUrls(argv) {
+  return (argv || [])
+    .map(value => String(value || '').trim())
+    .filter(value => value.toLowerCase().startsWith(PROTOCOL + '://'));
+}
+
 app.on('second-instance', (_e, argv) => {
   const files = extractOpenFiles(argv);
   const imports = Importer.extractImportPaths(argv);
+  const protocolUrls = extractProtocolUrls(argv);
   if (wm.main) { wm.main.show(); wm.main.focus(); }
   else wm.createMain();
   files.forEach(f => wm.broadcast('file:open', { path: f }));
   if (imports.length) wm.broadcast('file:import', { paths: imports });
+  protocolUrls.forEach(handleProtocol);
 });
 
 // ---------- mazz:// 自定义协议（笔记互链跳转 / 浏览器模块唤回主窗）----------
-app.setAsDefaultProtocolClient(PROTOCOL);
 app.on('open-url', (e, url) => { e.preventDefault(); handleProtocol(url); });
 function handleProtocol(url) {
+  const normalized = extractProtocolUrls([url])[0];
+  if (!normalized) return;
   if (wm.main) { wm.main.show(); wm.main.focus(); }
-  wm.broadcast('protocol:open', { url });
+  if (!mainRendererReady) {
+    if (!pendingProtocolUrls.includes(normalized)) pendingProtocolUrls.push(normalized);
+    return;
+  }
+  wm.broadcast('protocol:open', { url: normalized });
 }
 
 // ---------- 关闭行为：退出 / 最小化到托盘（默认询问一次后记住）----------
@@ -1499,13 +1514,16 @@ app.whenReady().then(() => {
   const DebugService = require('./debug');
   const debugService = new DebugService({ bus, windowManager: wm, resourceLedger });
   app.on('before-quit', () => debugService.kill('app-quit'));
+  wm.main.webContents.on('did-start-loading', () => { mainRendererReady = false; });
   wm.main.webContents.on('did-finish-load', () => {
+    mainRendererReady = true;
     applySettings();
     hookEditorContextMenu();
     // 主实例就绪后回放待打开文件（文件关联双击冷启动）
     pendingOpenFiles.forEach(f => wm.broadcast('file:open', { path: f }));
     pendingOpenFiles = [];
     if (pendingImports.length) { wm.broadcast('file:import', { paths: pendingImports }); pendingImports = []; }
+    pendingProtocolUrls.splice(0).forEach(handleProtocol);
     // 右键菜单陈旧自愈：老版本注册的命令缺 --import（文件变打开、文件夹无反应），静默重注册
     // 增强：未注册（被清理/从未装）也要注册——否则"导入到 Mazz 工作区"永远只能打开
     if (process.platform === 'win32') {
@@ -1533,6 +1551,7 @@ app.whenReady().then(() => {
 // 文件关联双击（Windows/Linux 冷启动：参数带文件路径）
 pendingOpenFiles = extractOpenFiles(process.argv);
 pendingImports = Importer.extractImportPaths(process.argv);
+pendingProtocolUrls.push(...extractProtocolUrls(process.argv));
 
 // 未捕获异常不杀进程
 process.on('uncaughtException', (e) => console.error('[main] uncaught:', e));

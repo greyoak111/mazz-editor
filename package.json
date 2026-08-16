@@ -65,22 +65,26 @@
     "fileAssociations": [
       {
         "ext": "md",
-        "name": "Markdown Document",
+        "name": "com.mazz.editor.markdown",
+        "description": "Markdown Document",
         "role": "Editor"
       },
       {
         "ext": "markdown",
-        "name": "Markdown Document",
+        "name": "com.mazz.editor.markdown",
+        "description": "Markdown Document",
         "role": "Editor"
       },
       {
         "ext": "txt",
-        "name": "Text Document",
+        "name": "com.mazz.editor.text",
+        "description": "Text Document",
         "role": "Editor"
       },
       {
         "ext": "mazz",
-        "name": "Mazz Workspace File",
+        "name": "com.mazz.editor.workspace",
+        "description": "Mazz Workspace File",
         "role": "Editor"
       }
     ],
@@ -95,6 +99,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
+      "include": "build/installer.nsh",
       "installerIcon": "resources/icons/app.ico",
       "uninstallerIcon": "resources/icons/app.ico"
     },

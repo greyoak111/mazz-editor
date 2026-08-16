@@ -2058,6 +2058,13 @@ export class Shell {
 
     if (window.mazz?.isElectron) {
       window.mazz.on('file:open', async ({ path: p }) => { await this.openFile(p); });
+      window.mazz.on('protocol:open', async ({ url } = {}) => {
+        let parsed;
+        try { parsed = new URL(String(url || '')); } catch { return; }
+        if (parsed.protocol !== 'mazz:') return;
+        window.__mazzProtocolLast = parsed.href;
+        if (parsed.hostname === 'home') await commands.execute('file.newBrowser');
+      });
       window.mazz.on('command:invoke', ({ id, payload }) => commands.execute(id, payload));
       window.mazz.on('window:handoff', async (snapshot) => { await this.receiveHandoff(snapshot); });
       window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });

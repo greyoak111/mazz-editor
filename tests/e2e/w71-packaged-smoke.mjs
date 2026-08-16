@@ -1,5 +1,6 @@
 // tests/e2e/w71-packaged-smoke.mjs —— W71 app-unpacked 真启动与 Foundation IPC 探针
 import { _electron as electron } from 'playwright';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -17,17 +18,18 @@ fs.writeFileSync(path.join(workspace, 'packaged-viewer.svg'),
 
 let app;
 try {
+  const launchEnv = {
+    ...process.env,
+    MAZZ_E2E_USER_DATA: userData,
+    MAZZ_E2E_WORKSPACE: workspace,
+    MAZZ_GPU_MODE: 'safe',
+    MAZZ_E2E_FACTORY_MOCK: '1',
+    MAZZ_E2E_FACTORY_DELAY_MS: '100',
+    NODE_ENV: 'test',
+  };
   app = await electron.launch({
     executablePath,
-    env: {
-      ...process.env,
-      MAZZ_E2E_USER_DATA: userData,
-      MAZZ_E2E_WORKSPACE: workspace,
-      MAZZ_GPU_MODE: 'safe',
-      MAZZ_E2E_FACTORY_MOCK: '1',
-      MAZZ_E2E_FACTORY_DELAY_MS: '100',
-      NODE_ENV: 'test',
-    },
+    env: launchEnv,
     timeout: 120000,
   });
   const win = await app.firstWindow({ timeout: 120000 });
@@ -40,7 +42,7 @@ try {
   });
   await new Promise(resolve => setTimeout(resolve, 250));
   await win.evaluate(() => window.mazz.invoke('panel:close', { kind: 'agreement' }));
-  const result = await win.evaluate(async ({ watchedFile, viewerFile }) => {
+  const runtimeResult = await win.evaluate(async ({ watchedFile, viewerFile }) => {
     const waitFor = async (predicate, message, timeout = 8000) => {
       const until = Date.now() + timeout;
       while (Date.now() < until) {
@@ -218,10 +220,56 @@ try {
       sessions: sessions.length,
     };
   }, { watchedFile: path.join(workspace, 'packaged-smoke.md'), viewerFile: path.join(workspace, 'packaged-viewer.svg') });
+  const protocolUrl = 'mazz://home';
+  const protocolLaunch = spawnSync(executablePath, [protocolUrl], {
+    cwd: root, env: launchEnv, encoding: 'utf8', windowsHide: true, timeout: 30000,
+  });
+  if (protocolLaunch.error) throw protocolLaunch.error;
+  if (protocolLaunch.status !== 0) throw new Error(`mazz:// 二实例转发失败：${protocolLaunch.stderr || protocolLaunch.stdout}`);
+
+  const associatedFile = path.join(workspace, 'packaged-smoke.md');
+  const fileLaunch = spawnSync(executablePath, [associatedFile], {
+    cwd: root, env: launchEnv, encoding: 'utf8', windowsHide: true, timeout: 30000,
+  });
+  if (fileLaunch.error) throw fileLaunch.error;
+  if (fileLaunch.status !== 0) throw new Error(`文件关联参数二实例转发失败：${fileLaunch.stderr || fileLaunch.stdout}`);
+
+  await win.waitForFunction(({ expectedProtocol, expectedFile }) => {
+    const slash = value => String(value || '').replace(/\\/g, '/').toLowerCase();
+    const tabs = window.MazzShell?.paneTree?.leaves?.().flatMap(leaf => leaf.tabs.tabs) || [];
+    return window.__mazzProtocolLast === expectedProtocol
+      && !!document.querySelector('.browser-root')
+      && tabs.some(tab => slash(tab.filePath) === slash(expectedFile));
+  }, { expectedProtocol: protocolUrl, expectedFile: associatedFile }, { timeout: 30000 });
+
+  const integrationResult = await win.evaluate(async ({ expectedProtocol, expectedFile, baselineResources }) => {
+    const slash = value => String(value || '').replace(/\\/g, '/').toLowerCase();
+    const tabs = window.MazzShell.paneTree.leaves().flatMap(leaf => leaf.tabs.tabs);
+    const targets = tabs.filter(tab => tab.moduleId === 'browser' || slash(tab.filePath) === slash(expectedFile));
+    const protocolObserved = window.__mazzProtocolLast === expectedProtocol
+      && targets.some(tab => tab.moduleId === 'browser');
+    const associatedFileObserved = targets.some(tab => slash(tab.filePath) === slash(expectedFile));
+    for (const tab of targets) await window.MazzShell.closeTabFlow(tab.id);
+    const until = Date.now() + 10000;
+    let resources;
+    do {
+      resources = await window.mazz.invoke('resources:snapshot');
+      if (resources.activeCount === baselineResources) break;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    } while (Date.now() < until);
+    return {
+      protocolObserved,
+      associatedFileObserved,
+      integrationResourcesReturnedToBaseline: resources.activeCount === baselineResources,
+    };
+  }, { expectedProtocol: protocolUrl, expectedFile: associatedFile, baselineResources: runtimeResult.baselineResources });
+
+  const result = { ...runtimeResult, ...integrationResult };
   if (!result.title || result.resourceVersion !== 1 || !result.mainWindowObserved || !result.ptyObserved
     || !result.panelObserved || !result.webContentsViewObserved || !result.fileWatcherObserved || !result.torrentRuntimeObserved
     || !result.pythonRuntimeObserved || !result.viewerRuntimeObserved || !result.factoryRequestObserved
     || !result.monacoWorkerObserved || !result.monacoLateInitGuardObserved
+    || !result.protocolObserved || !result.associatedFileObserved || !result.integrationResourcesReturnedToBaseline
     || result.monacoWorkerErrors !== 0 || result.monacoModelsAfterClose !== 0
     || result.monacoWorkersActive > 2 || result.monacoWorkersCreated > 22
     || result.monacoWorkersTerminated + result.monacoWorkersActive !== result.monacoWorkersCreated

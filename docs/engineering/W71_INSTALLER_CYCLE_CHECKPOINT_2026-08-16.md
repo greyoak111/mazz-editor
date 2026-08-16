@@ -72,7 +72,11 @@ npm run test:w71:installer
 
 该入口串起安装、安装后 packaged smoke、卸载和残留审计；证据固定写入 `docs/engineering/evidence/W71_INSTALLER_CYCLE.json`。契约测试同时守住隔离目标、既有安装预检、安装后 EXE 注入和受限清理条件。
 
-## 6. 未关闭边界
+## 6. 后续补证
+
+同日后续检查点已修复并验证文件关联 / `mazz://` 的注册所有权、唯一 ProgID、命令引号、二实例消费与卸载对称性；见 [`W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md)。本文件以下停止线以该后续证据为准更新。
+
+## 7. 未关闭边界
 
 以下仍为 OPEN，不得从本检查点外推：
 
@@ -80,10 +84,10 @@ npm run test:w71:installer
 - 代码签名、SmartScreen 与签名后 hash；
 - 覆盖升级、失败升级、降级与回滚；
 - 默认用户数据在卸载时保留/删除的产品策略；
-- `.md` / `.markdown` / `.txt` / `.maz` 文件关联及 `mazz://` 协议；
+- Windows Shell 的真实双击/“打开方式”可见 UI、默认应用争用，以及 `mazz://home` 之外的深链接 schema；
 - 开始菜单目录变体、交互式安装/卸载 UI、多用户安装；
 - 多 Windows 版本、DPI、休眠、多显示器与 RDP 矩阵。
 
 因此当前准确口径是：
 
-> **本机 clean install + 安装后首次启动/20 轮运行 + silent uninstall 子门禁 PASS；完整 Packaged Windows Gate 继续 OPEN。**
+> **本机 clean install + 安装后首次启动/20 轮运行 + 基础文件关联/`mazz://home` + silent uninstall 子门禁 PASS；完整 Packaged Windows Gate 继续 OPEN。**

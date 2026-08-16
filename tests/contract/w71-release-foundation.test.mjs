@@ -73,14 +73,32 @@ describe('W71 许可证据', () => {
   });
 
   test('NSIS 安装循环使用隔离目标、已安装 exe 真冒烟与受限清理', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+    const installerInclude = fs.readFileSync(path.join(root, 'build/installer.nsh'), 'utf8');
+    const main = fs.readFileSync(path.join(root, 'main/main.js'), 'utf8');
+    const shell = fs.readFileSync(path.join(root, 'renderer/shell/shell.js'), 'utf8');
     const smoke = fs.readFileSync(path.join(root, 'tests/e2e/w71-packaged-smoke.mjs'), 'utf8');
     const cycle = fs.readFileSync(path.join(root, 'tests/e2e/w71-installer-cycle.mjs'), 'utf8');
+    assert.equal(pkg.build.nsis.include, 'build/installer.nsh');
+    assert.deepEqual(pkg.build.fileAssociations.map(item => item.name), [
+      'com.mazz.editor.markdown', 'com.mazz.editor.markdown', 'com.mazz.editor.text', 'com.mazz.editor.workspace',
+    ]);
+    assert.ok(installerInclude.includes('WriteRegStr SHELL_CONTEXT "Software\\Classes\\mazz"'));
+    assert.ok(installerInclude.includes('DeleteRegKey SHELL_CONTEXT "Software\\Classes\\mazz"'));
+    assert.ok(installerInclude.includes('com.mazz.editor.markdown_backup'));
+    assert.equal(main.includes('app.setAsDefaultProtocolClient(PROTOCOL)'), false);
+    assert.ok(main.includes('extractProtocolUrls(argv)'));
+    assert.ok(main.includes('pendingProtocolUrls.splice(0).forEach(handleProtocol)'));
+    assert.ok(shell.includes("window.mazz.on('protocol:open'"));
     assert.ok(smoke.includes('MAZZ_E2E_EXECUTABLE'));
+    assert.ok(smoke.includes("spawnSync(executablePath, [protocolUrl]"));
+    assert.ok(smoke.includes('associatedFileObserved'));
     assert.ok(cycle.includes("run(installer, ['/S', `/D=${installDir}`])"));
     assert.ok(cycle.includes('MAZZ_E2E_EXECUTABLE: installedExe'));
     assert.ok(cycle.includes("run(uninstaller, ['/S'])"));
     assert.ok(cycle.includes('assertInsideTemp(target)'));
     assert.ok(cycle.includes('removeOwnedTempDirectory(installDir)'));
     assert.ok(cycle.includes('Existing Mazz Editor installation/shortcut found'));
+    assert.ok(cycle.includes('windowsIntegrationRemoved'));
   });
 });

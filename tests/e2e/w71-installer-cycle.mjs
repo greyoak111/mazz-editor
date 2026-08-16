@@ -18,6 +18,13 @@ const shortcutPaths = [
   path.join(os.homedir(), 'Desktop', 'Mazz Editor.lnk'),
   path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Mazz Editor.lnk'),
 ];
+const protocolKey = 'HKCU\\Software\\Classes\\mazz';
+const associationSpecs = [
+  { ext: 'md', progId: 'com.mazz.editor.markdown', legacyBackup: 'Markdown Document_backup' },
+  { ext: 'markdown', progId: 'com.mazz.editor.markdown', legacyBackup: 'Markdown Document_backup' },
+  { ext: 'txt', progId: 'com.mazz.editor.text', legacyBackup: 'Text Document_backup' },
+  { ext: 'mazz', progId: 'com.mazz.editor.workspace', legacyBackup: 'Mazz Workspace File_backup', proprietary: true },
+];
 
 function sha256(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex').toUpperCase();
@@ -49,6 +56,89 @@ function registrySnapshot() {
     '/s', '/f', 'Mazz Editor',
   ], { timeout: 30000 });
   return { exitCode: result.status, output: String(result.stdout || '').trim() };
+}
+
+function registryKeySnapshot(key) {
+  const result = run('reg.exe', ['query', key, '/s'], { timeout: 30000 });
+  return { exists: result.status === 0, output: String(result.stdout || '').trim() };
+}
+
+function registryValueSnapshot(key, name = '') {
+  const result = run('reg.exe', ['query', key, name ? '/v' : '/ve', ...(name ? [name] : [])], { timeout: 30000 });
+  const output = String(result.stdout || '').trim();
+  const valueLine = output.split(/\r?\n/).find(line => /\sREG_[A-Z0-9_]+\s*/i.test(line));
+  const match = valueLine?.match(/\sREG_[A-Z0-9_]+\s*(.*)$/i);
+  return { exists: result.status === 0, value: match ? match[1].trim() : '', output };
+}
+
+function windowsIntegrationSnapshot() {
+  return {
+    protocol: {
+      key: registryKeySnapshot(protocolKey),
+      label: registryValueSnapshot(protocolKey),
+      marker: registryValueSnapshot(protocolKey, 'URL Protocol'),
+      command: registryValueSnapshot(`${protocolKey}\\shell\\open\\command`),
+    },
+    associations: associationSpecs.map(spec => {
+      const extensionKey = `HKCU\\Software\\Classes\\.${spec.ext}`;
+      const classKey = `HKCU\\Software\\Classes\\${spec.progId}`;
+      return {
+        ...spec,
+        extensionKey: registryKeySnapshot(extensionKey),
+        defaultValue: registryValueSnapshot(extensionKey),
+        backup: registryValueSnapshot(extensionKey, `${spec.progId}_backup`),
+        legacyBackup: registryValueSnapshot(extensionKey, spec.legacyBackup),
+        classKey: registryKeySnapshot(classKey),
+        command: registryValueSnapshot(`${classKey}\\shell\\open\\command`),
+      };
+    }),
+  };
+}
+
+function integrationInstalled(snapshot, expectedCommand) {
+  return snapshot.protocol.key.exists
+    && snapshot.protocol.label.value === 'URL:mazz'
+    && snapshot.protocol.marker.exists
+    && snapshot.protocol.command.value === expectedCommand
+    && snapshot.associations.every(item => item.defaultValue.value === item.progId
+      && item.backup.exists
+      && !item.legacyBackup.exists
+      && item.classKey.exists
+      && item.command.value === expectedCommand);
+}
+
+function integrationRemoved(before, after) {
+  return !after.protocol.key.exists
+    && after.associations.every((item, index) => {
+      const previous = before.associations[index];
+      const defaultRestored = item.proprietary && !previous.defaultValue.value
+        ? (!item.extensionKey.exists || item.defaultValue.value === '')
+        : item.defaultValue.exists === previous.defaultValue.exists
+          && item.defaultValue.value === previous.defaultValue.value;
+      return defaultRestored && !item.backup.exists && !item.legacyBackup.exists && !item.classKey.exists;
+    });
+}
+
+function compactIntegration(snapshot) {
+  return {
+    protocol: {
+      exists: snapshot.protocol.key.exists,
+      label: snapshot.protocol.label.value,
+      markerExists: snapshot.protocol.marker.exists,
+      command: snapshot.protocol.command.value,
+    },
+    associations: snapshot.associations.map(item => ({
+      ext: item.ext,
+      progId: item.progId,
+      extensionKeyExists: item.extensionKey.exists,
+      defaultValueExists: item.defaultValue.exists,
+      defaultValue: item.defaultValue.value,
+      backupExists: item.backup.exists,
+      legacyBackupExists: item.legacyBackup.exists,
+      classKeyExists: item.classKey.exists,
+      command: item.command.value,
+    })),
+  };
 }
 
 function shortcutSnapshot() {
@@ -86,8 +176,11 @@ async function removeOwnedTempDirectory(target) {
 const before = {
   registry: registrySnapshot(),
   shortcuts: shortcutSnapshot(),
+  integration: windowsIntegrationSnapshot(),
 };
-if (before.registry.exitCode === 0 || before.shortcuts.length) {
+const preexistingIntegration = before.integration.protocol.key.exists
+  || before.integration.associations.some(item => item.classKey.exists || item.backup.exists || item.legacyBackup.exists);
+if (before.registry.exitCode === 0 || before.shortcuts.length || preexistingIntegration) {
   throw new Error(`Existing Mazz Editor installation/shortcut found; refusing destructive installer test: ${JSON.stringify(before)}`);
 }
 
@@ -98,6 +191,7 @@ let installExitCode = null;
 let smokeExitCode = null;
 let uninstallExitCode = null;
 let installRegistry = null;
+let installIntegration = null;
 let installedExeHash = '';
 let uninstaller = '';
 let smokeResult = null;
@@ -116,6 +210,11 @@ try {
   if (!uninstaller) throw new Error('Installed uninstaller is missing');
   installRegistry = registrySnapshot();
   if (installRegistry.exitCode !== 0) throw new Error('NSIS install did not register an uninstall entry');
+  installIntegration = windowsIntegrationSnapshot();
+  const expectedCommand = `"${installedExe}" "%1"`;
+  if (!integrationInstalled(installIntegration, expectedCommand)) {
+    throw new Error(`Windows integration registration is incomplete: ${JSON.stringify(compactIntegration(installIntegration))}`);
+  }
 
   const smoke = run(process.execPath, [path.join(root, 'tests', 'e2e', 'w71-packaged-smoke.mjs')], {
     env: { ...process.env, MAZZ_E2E_EXECUTABLE: installedExe },
@@ -157,15 +256,18 @@ do {
 } while (Date.now() < uninstallDeadline);
 
 const residue = fs.existsSync(installDir) ? fs.readdirSync(installDir) : [];
+const afterIntegration = windowsIntegrationSnapshot();
+const windowsIntegrationRemoved = integrationRemoved(before.integration, afterIntegration);
 const productResidueRemoved = !after.installedExeExists
   && after.registry.exitCode !== 0
-  && after.shortcuts.length === 0;
+  && after.shortcuts.length === 0
+  && windowsIntegrationRemoved;
 const guardedTempCleanup = productResidueRemoved
   ? await removeOwnedTempDirectory(installDir)
   : { attempted: false, removed: !fs.existsSync(installDir), attempts: 0 };
 
 const evidence = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: new Date().toISOString(),
   installer: {
     file: `release/${installerName}`,
@@ -173,11 +275,21 @@ const evidence = {
     sha256: sha256(installer),
   },
   isolatedTarget: path.basename(installDir),
-  preflight: { noExistingInstallRegistration: before.registry.exitCode !== 0, noExistingShortcuts: before.shortcuts.length === 0 },
+  preflight: {
+    noExistingInstallRegistration: before.registry.exitCode !== 0,
+    noExistingShortcuts: before.shortcuts.length === 0,
+    noExistingMazzIntegration: !preexistingIntegration,
+    associationDefaults: compactIntegration(before.integration).associations.map(item => ({
+      ext: item.ext,
+      defaultValueExists: item.defaultValueExists,
+      defaultValue: item.defaultValue,
+    })),
+  },
   install: {
     exitCode: installExitCode,
     uninstallRegistrationCreated: installRegistry?.exitCode === 0,
     installedExeSha256: installedExeHash,
+    windowsIntegration: installIntegration ? compactIntegration(installIntegration) : null,
   },
   installedRuntime: { smokeExitCode, smokeResult },
   uninstall: {
@@ -185,6 +297,8 @@ const evidence = {
     executableRemoved: !after.installedExeExists,
     uninstallRegistrationRemoved: after.registry.exitCode !== 0,
     shortcutsRemoved: after.shortcuts.length === 0,
+    windowsIntegrationRemoved,
+    windowsIntegrationAfterRemoval: compactIntegration(afterIntegration),
     residueBeforeGuardedTempCleanup: residue,
     guardedTempCleanup,
   },
