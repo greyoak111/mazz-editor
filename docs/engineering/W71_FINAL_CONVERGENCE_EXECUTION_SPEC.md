@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.17
+> 版本：v2.18
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 外部文件变化与脏稿保护子 Gate 已落地**
+> 状态：**IN PROGRESS / 多窗口文件与基础窗控所有权子 Gate 已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,7 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W86，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
-8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order 与外部文件变化检查点；只关闭有测试和 packaged 证据的子 Gate，Agent/多窗/真实媒体设备等未尽项保持 OPEN。
+8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化与多窗口文件/基础窗控所有权检查点；只关闭有测试和 packaged 证据的子 Gate，Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
 
 ---
 
@@ -383,7 +383,7 @@ Panel host follow listener 回收
 
 这些是待验证候选，不得在没有运行态证据时直接宣判为泄漏。
 
-当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。本地文件的 AudioContext 播放手势恢复、关签关闭、GIF 正常导出和录制中关签已经在正式 packaged 程序中真实激活并回到资源基线；真实摄像头/麦克风/屏幕设备与权限矩阵仍 OPEN。Factory chat/stream 已接入 caller signal、主进程 request owner、timeout、reader cancellation、renderer-destroy 与 ResourceLedger，并通过 packaged 20 次及 W61b 双路并发实证。Code editor/model、主题 observer、pending interval、TerminalPanel 与 DebugService 已建立宿主级 dispose；packaged TypeScript worker 20 次返回真实 TS2322 诊断，关签后 model 归零，worker 维持最多两个有界共享实例。Python 3.14 + debugpy 1.8.21 已在 packaged 程序完成真实断点/栈/变量/继续和 20 轮 adapter 释放；其他语言、远程/容器调试与异机矩阵仍 OPEN。真实 Agent Adapter 与多窗迁移仍未闭合，详见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md)、[`W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md`](./W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md)、[`W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md`](./W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md)、[`W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md) 与 [`W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
+当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。本地文件的 AudioContext 播放手势恢复、关签关闭、GIF 正常导出和录制中关签已经在正式 packaged 程序中真实激活并回到资源基线；真实摄像头/麦克风/屏幕设备与权限矩阵仍 OPEN。Factory chat/stream 已接入 caller signal、主进程 request owner、timeout、reader cancellation、renderer-destroy 与 ResourceLedger，并通过 packaged 20 次及 W61b 双路并发实证。Code editor/model、主题 observer、pending interval、TerminalPanel 与 DebugService 已建立宿主级 dispose；packaged TypeScript worker 20 次返回真实 TS2322 诊断，关签后 model 归零，worker 维持最多两个有界共享实例。Python 3.14 + debugpy 1.8.21 已在 packaged 程序完成真实断点/栈/变量/继续和 20 轮 adapter 释放；其他语言、远程/容器调试与异机矩阵仍 OPEN。主窗/分窗同文件外改、标题、全屏、最大化与关窗资源现已按真实 owner 完成 packaged 同场实证；Factory stream、Terminal、DAP、Agent 等跨窗事件 owner 及迁入/迁回 20 次仍未闭合。详见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md)、[`W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md`](./W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md)、[`W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md`](./W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md)、[`W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md)、[`W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md) 与 [`W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
 
 ## 5.2 Data Reliability Contract
 
@@ -417,7 +417,7 @@ failure / cancel
 6. 自己保存触发的 watcher 回声不得重复通知或重复读盘。
 7. 快照恢复必须标明来源、时间和目标文件，不把旧快照伪装成磁盘新版本。
 
-当前进度：本地文件外部变化已由两条竞争 listener 收束为单一状态机；干净标签只重载一次，脏标签保留本地内容并提供“保留当前 / 另存当前… / 从磁盘载入”，应用自身保存以路径和文件指纹识别回声。`fs:watch` 现在等待 chokidar 真实 ready，ready 前关闭会立即结算并清除 timer；Save As 也改为写盘成功后才更新标签路径。正式 packaged 证据覆盖 clean reload、dirty conflict、显式磁盘载入、自保存回声与 ResourceLedger `2→2`。Office 支持子集、损坏/大文件语料、多窗同文件并发、LAN Sync 冲突与三方合并仍 OPEN。详见 [`W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md`](./W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md) 与 [`W71_EXTERNAL_FILE_CHANGE.json`](./evidence/W71_EXTERNAL_FILE_CHANGE.json)。
+当前进度：本地文件外部变化已由两条竞争 listener 收束为单一状态机；干净标签只重载一次，脏标签保留本地内容并提供“保留当前 / 另存当前… / 从磁盘载入”，应用自身保存以路径和文件指纹识别回声。`fs:watch` 现在等待 chokidar 真实 ready，ready 前关闭会立即结算并清除 timer；Save As 也改为写盘成功后才更新标签路径。后续 packaged 同场验证又证明同一文件在主窗脏、分窗净时可各自正确决策，显式载盘后两窗收敛；文件变化由定向 `broadcastShells` 抵达全部工作台壳，分窗标题/全屏/最大化也恢复到 IPC caller owner。Office 支持子集、损坏/大文件语料、LAN Sync 三方冲突与合并仍 OPEN。详见 [`W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md`](./W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md)、[`W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md)、[`W71_EXTERNAL_FILE_CHANGE.json`](./evidence/W71_EXTERNAL_FILE_CHANGE.json) 与 [`W71_MULTIWINDOW_FILE_CHANGE.json`](./evidence/W71_MULTIWINDOW_FILE_CHANGE.json)。
 
 ## 5.3 Windows Packaged Runtime Contract
 
@@ -1271,3 +1271,5 @@ Factory 故障矩阵随后用正式 `win-unpacked`、真实 Electron `net.fetch`
 真实 DAP 检查点随后以隔离固定的 Python 3.14.6 + debugpy 1.8.21 驱动正式 packaged 程序，实锤并修复两项伪适配器无法暴露的状态机缺陷：主进程不再等待 `launch` response 后才放行 `configurationDone`，而是在 `initialized` 事件后把控制权还给 renderer；debugpy 发出 `terminated` 后立即停止仍在等待的 adapter、释放资源并结束界面调试态。真调试已验证第 2 行断点、2 帧调用栈、Locals `a=2/b=3`、继续执行结果 `5` 与 stdout；完整 1 次加 20 次循环共释放 21 个 `debug-process`，ResourceLedger `2→2`。全量 `143/143`；最终 installer `141,041,336` bytes、SHA-256 `BB3AA049DBA22CC1FD13E6D50C1EA0536FDE7FB92BF0FB0827F70F836FCD193D`，schema v5 安装回归继续通过。产品不内置或暗装 debugpy；其他语言 Adapter、attach、远程/容器调试和异机矩阵仍 OPEN，W66 Agent Adapter 仍为 0。证据见 [`W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md`](./W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md)、[`W71_DAP_RUNTIME.json`](./evidence/W71_DAP_RUNTIME.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 schema v5 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
 
 外部文件变化检查点继而关闭本地单机主路径的三项数据不变量：Shell 只保留一条 `file:changed` 决策入口，脏标签绝不静默覆盖，应用自身保存不重复通知或读盘；同时修复 chokidar 就绪竞态、Chromium timer `Illegal invocation`、Save As 失败后伪换路径和分屏 owner 错写。正式 packaged E2E 验证干净文件恰好重载一次、脏稿保留并给出三项显式动作、用户选择磁盘版本后正确清脏、自保存无伪冲突，ResourceLedger `2→2`。全量增至 `144/144`；最终 installer `141,039,701` bytes、SHA-256 `BCCBCCDD3C269138AA5FEC4765046A3839172EAEB1181283E7EF89C1665D4004`，schema v5 安装/覆盖/五入口/20 轮/卸载继续通过。Office 语料、多窗同文件并发、LAN Sync 冲突和三方合并仍 OPEN。证据见 [`W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md`](./W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md)、[`W71_EXTERNAL_FILE_CHANGE.json`](./evidence/W71_EXTERNAL_FILE_CHANGE.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
+
+多窗口所有权检查点随后关闭“同一文件在主窗/分窗的外改分流”和基础窗控子门禁：历史 `broadcast()` 只发主窗，FileWatcher/删除/快记却误作全工作台广播；现保留旧语义并新增定向 `broadcastShells()`。分窗标题、全屏/最大化查询与切换也不再硬编码主窗，统一落到 IPC sender 对应 BrowserWindow。正式 packaged 同场证明主窗脏稿保留并给三项决策、分窗干净稿自动更新，显式载盘后双窗收敛；标题、全屏、最大化只作用子窗，关闭后 ResourceLedger `2→3→2`。全量 `144/144`；最终 installer `141,038,151` bytes、SHA-256 `F26C888453C3E0F4AAD404528AAF1718623ACC70F25420EA7D176FAB720135F6`，schema v5 安装矩阵继续通过。跨窗 Factory/Terminal/DAP/Agent owner、迁入/迁回 20 次、crash restore、DPI/RDP 与 LAN Sync 三方冲突仍 OPEN。证据见 [`W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md)、[`W71_MULTIWINDOW_FILE_CHANGE.json`](./evidence/W71_MULTIWINDOW_FILE_CHANGE.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。

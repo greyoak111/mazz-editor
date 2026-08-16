@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 31,
-    "scannedLines": 7322
+    "scannedLines": 7340
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -102,7 +102,7 @@
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1059,
+      "line": 1062,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
@@ -162,49 +162,49 @@
     {
       "rule": "browser-window-construction",
       "file": "main/window-manager.js",
-      "line": 50,
+      "line": 58,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/window-manager.js",
-      "line": 99,
+      "line": 108,
       "sample": "win.on('closed', () => { this.main = null; });"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/window-manager.js",
-      "line": 108,
+      "line": 117,
       "sample": "win.webContents.on('render-process-gone', (_e, details) => {"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/window-manager.js",
-      "line": 120,
+      "line": 129,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/window-manager.js",
-      "line": 140,
+      "line": 150,
       "sample": "win.on('closed', () => {"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/window-manager.js",
-      "line": 147,
+      "line": 157,
       "sample": "win.webContents.on('render-process-gone', (_e, details) => {"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/window-manager.js",
-      "line": 164,
+      "line": 174,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/window-manager.js",
-      "line": 182,
+      "line": 192,
       "sample": "win.on('closed', () => { this.quickNote = null; });"
     }
   ],
@@ -256,7 +256,7 @@
         },
         {
           "file": "main/window-manager.js",
-          "line": 64,
+          "line": 72,
           "sample": "backgroundThrottling: false, // 全局内录命脉：窗口最小化/被遮挡时画布合成与定时器照常（配主进程反节流三开关）"
         },
         {
@@ -352,17 +352,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1247,
+          "line": 1250,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1340,
+          "line": 1343,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1369,
+          "line": 1372,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -386,7 +386,7 @@
         },
         {
           "file": "main/window-manager.js",
-          "line": 143,
+          "line": 153,
           "sample": "try { const BV = require('./browser-views'); for (const bvs of BV.all) bvs.destroyByHost(win); } catch {}"
         }
       ]

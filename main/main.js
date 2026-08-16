@@ -309,7 +309,7 @@ function registerChannels() {
     const norm = path.normalize(p);
     // 确定性广播：chokidar 对 trashItem 挪走的 unlink 可能哑火（Linux 实测），
     // 虚空标签清扫不能只靠监听器——主进程删完就官宣
-    const announce = () => wm.broadcast('file:changed', { event: 'unlink', path: toSlash(p), at: Date.now() });
+    const announce = () => wm.broadcastShells('file:changed', { event: 'unlink', path: toSlash(p), at: Date.now() });
     // trashItem 串行重试：多层目录被 chokidar 句柄/杀软占用时会 Operation was aborted
     let lastErr = null;
     for (let i = 0; i < 3; i++) {
@@ -781,17 +781,20 @@ function registerChannels() {
     w.isMaximized() ? w.unmaximize() : w.maximize();
     return w.isMaximized();
   });
-  bus.handle('window:isFullScreen', async () => !!wm.main?.isFullScreen());
+  bus.handle('window:isFullScreen', async (payload, event) => !!callerWin(event)?.isFullScreen());
   bus.handle('window:close', async (payload, event) => {
     const w = callerWin(event);
     if (w?.isFullScreen()) w.setFullScreen(false); // 先退全屏再关，避免覆盖层吃事件
     w?.close();
   });
-  bus.handle('window:setTitle', async ({ title }) => wm.main?.setTitle(title));
-  bus.handle('window:isMaximized', async () => !!wm.main?.isMaximized());
-  bus.handle('window:toggleFullScreen', async () => {
-    if (!wm.main) return;
-    wm.main.setFullScreen(!wm.main.isFullScreen());
+  bus.handle('window:setTitle', async ({ title }, event) => callerWin(event)?.setTitle(title));
+  bus.handle('window:isMaximized', async (payload, event) => !!callerWin(event)?.isMaximized());
+  bus.handle('window:toggleFullScreen', async (payload, event) => {
+    const w = callerWin(event);
+    if (!w) return false;
+    const next = !w.isFullScreen();
+    w.setFullScreen(next);
+    return next;
   });
 
   // 分窗：开新窗口并交接标签快照
@@ -1166,7 +1169,7 @@ function registerChannels() {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const stamp = new Date().toTimeString().slice(0, 5);
     fs.appendFileSync(file, `\n- ${stamp} ${String(text).replace(/\n/g, '\n  ')}\n`);
-    wm.broadcast('file:changed', { event: 'change', path: toSlash(file), at: Date.now() });
+    wm.broadcastShells('file:changed', { event: 'change', path: toSlash(file), at: Date.now() });
     return toSlash(file);
   });
   bus.handle('quicknote:close', async () => { wm.quickNote?.hide(); return true; });
@@ -1389,9 +1392,6 @@ app.whenReady().then(() => {
   watcher = new FileWatcher({ bus, windowManager: wm, resourceLedger });
 
   wm.createMain();
-  // 全屏进出广播（必须在建窗后挂：registerChannels 时 wm.main 还没出生）
-  wm.main.on('enter-full-screen', () => wm.broadcast('window:fullscreen', { on: true }));
-  wm.main.on('leave-full-screen', () => wm.broadcast('window:fullscreen', { on: false }));
   hookDisplayMedia(); // getDisplayMedia 许可（全局内录）
   hookCertificateErrors();
   tray.create();

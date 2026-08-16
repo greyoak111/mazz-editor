@@ -69,7 +69,7 @@ class FileWatcher {
     });
     watcher.on('all', (evt, p) => {
       // 渲染层路径统一正斜杠（与 fs:listDir / workspace:get 约定一致）
-      this.wm.broadcast('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
+      this.wm.broadcastShells('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
     });
     if (this.resourceLedger && !this.resourceKey) {
       this.resourceKey = this.resourceLedger.register({

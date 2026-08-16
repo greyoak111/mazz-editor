@@ -55,10 +55,20 @@ describe('W71 外部文件变化状态机', () => {
 
   test('fs:watch IPC 等待 chokidar ready 后才确认监听完成', () => {
     const source = fs.readFileSync(new URL('../../main/file-watcher.js', import.meta.url), 'utf8');
+    const manager = fs.readFileSync(new URL('../../main/window-manager.js', import.meta.url), 'utf8');
+    const main = fs.readFileSync(new URL('../../main/main.js', import.meta.url), 'utf8');
     assert.ok(source.includes("watcher.once('ready', finish)"), '必须以真实 ready 事件形成确认点');
     assert.ok((source.match(/await this\.readyPromise/g) || []).length >= 3, '新建、重复根和追加根都必须等待初始 ready');
     assert.ok(source.includes('this._finishReady?.();'), 'ready 前关闭必须立即结算等待状态');
     assert.ok(source.includes('if (this._readyTimer) clearTimeout(this._readyTimer)'), 'ready/close 后不得残留十秒兜底 timer');
+    assert.ok(manager.includes('broadcastShells(channel, payload)'), '工作台壳必须有主窗+分窗定向广播协议');
+    assert.ok(manager.includes("win.on('enter-full-screen'") && manager.includes("win.on('leave-full-screen'"), '主窗与分窗必须各自回传全屏状态');
+    assert.ok(source.includes("this.wm.broadcastShells('file:changed'"), 'watcher 外改必须抵达全部工作台壳');
+    assert.equal((main.match(/broadcastShells\('file:changed'/g) || []).length, 2, '确定性删除与快记写入同样必须抵达分窗');
+    for (const channel of ['window:isFullScreen', 'window:setTitle', 'window:isMaximized', 'window:toggleFullScreen']) {
+      const start = main.indexOf(`bus.handle('${channel}'`);
+      assert.ok(start >= 0 && main.slice(start, start + 260).includes('callerWin(event)'), `${channel} 必须按 IPC 调用者归属`);
+    }
   });
 
   test('Shell 只有一条 file:changed 决策入口，另存为成功后才换路径', () => {

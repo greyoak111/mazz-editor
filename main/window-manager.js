@@ -36,6 +36,14 @@ class WindowManager {
     }
   }
 
+  wireShellWindow(win) {
+    const emit = on => {
+      if (!win?.isDestroyed()) win.webContents.send('mazz:event', { channel: 'window:fullscreen', payload: { on } });
+    };
+    win.on('enter-full-screen', () => emit(true));
+    win.on('leave-full-screen', () => emit(false));
+  }
+
   createMain() {
     const state = this.store.get('windowState', { width: 1440, height: 900 });
     // 防离屏：记忆坐标不在任何显示器范围内时丢弃（多屏拔插/远程桌面常见）
@@ -66,6 +74,7 @@ class WindowManager {
     });
     this.main = win;
     this.trackWindow(win, 'main');
+    this.wireShellWindow(win);
 
     if (state.maximized) win.maximize();
 
@@ -134,6 +143,7 @@ class WindowManager {
     });
     this.children.add(win);
     this.trackWindow(win, 'child');
+    this.wireShellWindow(win);
     win.once('ready-to-show', () => { win.show(); win.focus(); });
     win.loadURL('mazz-res://app/index.html?role=child'); // 角色随 URL 落（启动首帧可知身份——协议自动弹等首启流程在子窗必须缄默，零竞态）
     // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
@@ -191,6 +201,14 @@ class WindowManager {
   broadcast(channel, payload) {
     if (this.main && !this.main.isDestroyed()) {
       this.main.webContents.send('mazz:event', { channel, payload });
+    }
+  }
+
+  /** 只向完整工作台壳广播；Panel/QuickNote 不消费文件与工作区状态。 */
+  broadcastShells(channel, payload) {
+    const targets = [this.main, ...this.children];
+    for (const win of targets) {
+      if (win && !win.isDestroyed()) win.webContents.send('mazz:event', { channel, payload });
     }
   }
 }

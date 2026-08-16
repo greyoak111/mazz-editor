@@ -228,8 +228,9 @@ describe('v45 实机回归', () => {
     assert.ok(sh.includes('fs-exit'), '浮动退出钮必须存在');
     assert.ok(sh.includes("window:fullscreen"), '必须监听全屏状态');
     const main = readSrc('main/main.js');
+    const wm = readSrc('main/window-manager.js');
     assert.ok(main.includes("window:isFullScreen"), '主进程必须有 isFullScreen handler');
-    assert.ok(main.includes('enter-full-screen'), '必须广播全屏进出');
+    assert.ok(wm.includes('enter-full-screen') && wm.includes('leave-full-screen'), '每个工作台窗必须广播全屏进出');
   });
 
   test('导图格式解析产物带 v:3（打开为空绝育）', () => {

@@ -27,6 +27,7 @@
     "test:w71:media-runtime": "node tests/e2e/w71-media-runtime.mjs",
     "test:w71:dap-runtime": "node tests/e2e/w71-dap-runtime.mjs",
     "test:w71:file-change": "node tests/e2e/w71-file-change-runtime.mjs",
+    "test:w71:multiwindow-file-change": "node tests/e2e/w71-multiwindow-file-change.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },
