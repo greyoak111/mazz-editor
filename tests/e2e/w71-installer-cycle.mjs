@@ -107,6 +107,13 @@ function integrationInstalled(snapshot, expectedCommand) {
       && item.command.value === expectedCommand);
 }
 
+function originalAssociationBackupsPreserved(before, current) {
+  return current.associations.every((item, index) => {
+    const previous = before.associations[index];
+    return item.backup.exists && item.backup.value === previous.defaultValue.value;
+  });
+}
+
 function integrationRemoved(before, after) {
   return !after.protocol.key.exists
     && after.associations.every((item, index) => {
@@ -134,6 +141,7 @@ function compactIntegration(snapshot) {
       defaultValueExists: item.defaultValue.exists,
       defaultValue: item.defaultValue.value,
       backupExists: item.backup.exists,
+      backupValue: item.backup.value,
       legacyBackupExists: item.legacyBackup.exists,
       classKeyExists: item.classKey.exists,
       command: item.command.value,
@@ -188,10 +196,16 @@ const installDir = fs.mkdtempSync(path.join(tempRoot, 'MazzW71Install-'));
 const installedExe = path.join(installDir, 'Mazz Editor.exe');
 
 let installExitCode = null;
+let sameVersionReinstallExitCode = null;
 let smokeExitCode = null;
 let uninstallExitCode = null;
 let installRegistry = null;
 let installIntegration = null;
+let sameVersionReinstallRegistry = null;
+let sameVersionReinstallIntegration = null;
+let sameVersionReinstallExeHash = '';
+let originalBackupsPreservedAfterInstall = false;
+let originalBackupsPreservedAfterReinstall = false;
 let installedExeHash = '';
 let uninstaller = '';
 let smokeResult = null;
@@ -214,6 +228,36 @@ try {
   const expectedCommand = `"${installedExe}" "%1"`;
   if (!integrationInstalled(installIntegration, expectedCommand)) {
     throw new Error(`Windows integration registration is incomplete: ${JSON.stringify(compactIntegration(installIntegration))}`);
+  }
+  originalBackupsPreservedAfterInstall = originalAssociationBackupsPreserved(before.integration, installIntegration);
+  if (!originalBackupsPreservedAfterInstall) {
+    throw new Error(`Initial install did not preserve original association owners: ${JSON.stringify(compactIntegration(installIntegration))}`);
+  }
+
+  const reinstalled = run(installer, ['/S', `/D=${installDir}`]);
+  sameVersionReinstallExitCode = reinstalled.status;
+  if (sameVersionReinstallExitCode !== 0 || !fs.existsSync(installedExe)) {
+    throw new Error(`Same-version reinstall failed: exit=${sameVersionReinstallExitCode}, exe=${fs.existsSync(installedExe)}`);
+  }
+  sameVersionReinstallExeHash = sha256(installedExe);
+  if (sameVersionReinstallExeHash !== installedExeHash) {
+    throw new Error(`Same-version reinstall changed executable bytes: ${installedExeHash} -> ${sameVersionReinstallExeHash}`);
+  }
+  uninstaller = fs.readdirSync(installDir)
+    .map(name => path.join(installDir, name))
+    .find(file => /uninstall.*\.exe$/i.test(path.basename(file))) || '';
+  if (!uninstaller) throw new Error('Reinstalled uninstaller is missing');
+  sameVersionReinstallRegistry = registrySnapshot();
+  if (sameVersionReinstallRegistry.exitCode !== 0) {
+    throw new Error('Same-version reinstall removed the uninstall registration');
+  }
+  sameVersionReinstallIntegration = windowsIntegrationSnapshot();
+  if (!integrationInstalled(sameVersionReinstallIntegration, expectedCommand)) {
+    throw new Error(`Same-version reinstall broke Windows integration: ${JSON.stringify(compactIntegration(sameVersionReinstallIntegration))}`);
+  }
+  originalBackupsPreservedAfterReinstall = originalAssociationBackupsPreserved(before.integration, sameVersionReinstallIntegration);
+  if (!originalBackupsPreservedAfterReinstall) {
+    throw new Error(`Same-version reinstall overwrote original association owners: ${JSON.stringify(compactIntegration(sameVersionReinstallIntegration))}`);
   }
 
   const smoke = run(process.execPath, [path.join(root, 'tests', 'e2e', 'w71-packaged-smoke.mjs')], {
@@ -267,7 +311,7 @@ const guardedTempCleanup = productResidueRemoved
   : { attempted: false, removed: !fs.existsSync(installDir), attempts: 0 };
 
 const evidence = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   generatedAt: new Date().toISOString(),
   installer: {
     file: `release/${installerName}`,
@@ -289,7 +333,16 @@ const evidence = {
     exitCode: installExitCode,
     uninstallRegistrationCreated: installRegistry?.exitCode === 0,
     installedExeSha256: installedExeHash,
+    originalAssociationBackupsPreserved: originalBackupsPreservedAfterInstall,
     windowsIntegration: installIntegration ? compactIntegration(installIntegration) : null,
+  },
+  sameVersionReinstall: {
+    exitCode: sameVersionReinstallExitCode,
+    executablePreserved: sameVersionReinstallExeHash === installedExeHash && sameVersionReinstallExeHash !== '',
+    installedExeSha256: sameVersionReinstallExeHash,
+    uninstallRegistrationPreserved: sameVersionReinstallRegistry?.exitCode === 0,
+    originalAssociationBackupsPreserved: originalBackupsPreservedAfterReinstall,
+    windowsIntegration: sameVersionReinstallIntegration ? compactIntegration(sameVersionReinstallIntegration) : null,
   },
   installedRuntime: { smokeExitCode, smokeResult },
   uninstall: {

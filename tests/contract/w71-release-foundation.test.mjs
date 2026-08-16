@@ -100,5 +100,7 @@ describe('W71 许可证据', () => {
     assert.ok(cycle.includes('removeOwnedTempDirectory(installDir)'));
     assert.ok(cycle.includes('Existing Mazz Editor installation/shortcut found'));
     assert.ok(cycle.includes('windowsIntegrationRemoved'));
+    assert.ok(cycle.includes('sameVersionReinstall'));
+    assert.ok(cycle.includes('originalAssociationBackupsPreserved'));
   });
 });

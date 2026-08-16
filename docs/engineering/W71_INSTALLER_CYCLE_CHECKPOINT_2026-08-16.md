@@ -74,7 +74,7 @@ npm run test:w71:installer
 
 ## 6. 后续补证
 
-同日后续检查点已修复并验证文件关联 / `mazz://` 的注册所有权、唯一 ProgID、命令引号、二实例消费与卸载对称性；见 [`W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md)。本文件以下停止线以该后续证据为准更新。
+同日后续检查点已修复并验证文件关联 / `mazz://` 的注册所有权、唯一 ProgID、命令引号、二实例消费与卸载对称性，并继续验证同一 specimen 的同目录重复安装不会覆盖原文件类型 owner 备份；见 [`W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md) 与 [`W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md`](./W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md)。本文件以下停止线以这些后续证据为准更新。
 
 ## 7. 未关闭边界
 
@@ -82,7 +82,7 @@ npm run test:w71:installer
 
 - 干净异机上的 native ABI、VC runtime、杀软与权限验证；
 - 代码签名、SmartScreen 与签名后 hash；
-- 覆盖升级、失败升级、降级与回滚；
+- 跨版本覆盖升级、失败升级、降级与回滚；同版本 reinstall 已通过；
 - 默认用户数据在卸载时保留/删除的产品策略；
 - Windows Shell 的真实双击/“打开方式”可见 UI、默认应用争用，以及 `mazz://home` 之外的深链接 schema；
 - 开始菜单目录变体、交互式安装/卸载 UI、多用户安装；

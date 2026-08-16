@@ -71,7 +71,7 @@ renderer 当前冻结的最小行为是：`mazz://home` 打开 Mazz 浏览器主
 | 卸载后 Mazz protocol / ProgID / backup | 0 |
 | 原文件类型默认值 | 恢复 |
 
-机器证据：[`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json) schema v2。发布物清单同步见 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。
+机器证据：[`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json) schema v3。发布物清单同步见 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。schema v3 另加入同一 specimen 的同目录覆盖安装证明，详见 [`W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md`](./W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md)。
 
 ## 5. 自动门禁
 
@@ -91,7 +91,7 @@ renderer 当前冻结的最小行为是：`mazz://home` 打开 Mazz 浏览器主
 - 冷启动 ShellExecute 的独立进程链（本轮以精确注册命令 + 冷启动队列契约 + 二实例真运行组成证据）；
 - 除 `mazz://home` 外的深链接 schema；
 - 多用户/per-machine 安装、提升权限、其它 Windows 版本；
-- 覆盖升级、失败升级、降级、回滚；
+- 跨版本覆盖升级、失败升级、降级、回滚；同版本 reinstall 已由后续检查点补证；
 - 代码签名、SmartScreen 与签名后 hash；
 - 默认用户数据保留/删除策略和交互式卸载选项。
 

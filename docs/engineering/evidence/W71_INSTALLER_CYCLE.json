@@ -1,12 +1,12 @@
 {
-  "schemaVersion": 2,
-  "generatedAt": "2026-08-16T08:54:20.584Z",
+  "schemaVersion": 3,
+  "generatedAt": "2026-08-16T09:02:34.860Z",
   "installer": {
     "file": "release/Mazz Editor Setup 0.2.0.exe",
     "bytes": 141035065,
     "sha256": "553D0FFD7D8A005EED8434980EA7F1592456E78D9C6D11C6D7A7FCAFE998A70A"
   },
-  "isolatedTarget": "MazzW71Install-IaoZMM",
+  "isolatedTarget": "MazzW71Install-ajzh09",
   "preflight": {
     "noExistingInstallRegistration": true,
     "noExistingShortcuts": true,
@@ -38,12 +38,13 @@
     "exitCode": 0,
     "uninstallRegistrationCreated": true,
     "installedExeSha256": "3FBA3247574EE175DDEB8FC1719EB8F195A8BE96FF10530ECA956FD6410BA39B",
+    "originalAssociationBackupsPreserved": true,
     "windowsIntegration": {
       "protocol": {
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -53,9 +54,10 @@
           "defaultValueExists": true,
           "defaultValue": "com.mazz.editor.markdown",
           "backupExists": true,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "markdown",
@@ -64,9 +66,10 @@
           "defaultValueExists": true,
           "defaultValue": "com.mazz.editor.markdown",
           "backupExists": true,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "txt",
@@ -75,9 +78,10 @@
           "defaultValueExists": true,
           "defaultValue": "com.mazz.editor.text",
           "backupExists": true,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "mazz",
@@ -86,9 +90,75 @@
           "defaultValueExists": true,
           "defaultValue": "com.mazz.editor.workspace",
           "backupExists": true,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-IaoZMM\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
+        }
+      ]
+    }
+  },
+  "sameVersionReinstall": {
+    "exitCode": 0,
+    "executablePreserved": true,
+    "installedExeSha256": "3FBA3247574EE175DDEB8FC1719EB8F195A8BE96FF10530ECA956FD6410BA39B",
+    "uninstallRegistrationPreserved": true,
+    "originalAssociationBackupsPreserved": true,
+    "windowsIntegration": {
+      "protocol": {
+        "exists": true,
+        "label": "URL:mazz",
+        "markerExists": true,
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
+      },
+      "associations": [
+        {
+          "ext": "md",
+          "progId": "com.mazz.editor.markdown",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.markdown",
+          "backupExists": true,
+          "backupValue": "",
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
+        },
+        {
+          "ext": "markdown",
+          "progId": "com.mazz.editor.markdown",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.markdown",
+          "backupExists": true,
+          "backupValue": "",
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
+        },
+        {
+          "ext": "txt",
+          "progId": "com.mazz.editor.text",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.text",
+          "backupExists": true,
+          "backupValue": "",
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
+        },
+        {
+          "ext": "mazz",
+          "progId": "com.mazz.editor.workspace",
+          "extensionKeyExists": true,
+          "defaultValueExists": true,
+          "defaultValue": "com.mazz.editor.workspace",
+          "backupExists": true,
+          "backupValue": "",
+          "legacyBackupExists": false,
+          "classKeyExists": true,
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-ajzh09\\Mazz Editor.exe\" \"%1\""
         }
       ]
     }
@@ -113,9 +183,9 @@
       "factoryRequestObserved": true,
       "monacoWorkerObserved": true,
       "monacoLateInitGuardObserved": true,
-      "monacoWorkersCreated": 20,
+      "monacoWorkersCreated": 18,
       "monacoWorkersActive": 2,
-      "monacoWorkersTerminated": 18,
+      "monacoWorkersTerminated": 16,
       "monacoWorkerErrors": 0,
       "monacoModelsAfterClose": 0,
       "lifecycleCycles": 20,
@@ -151,6 +221,7 @@
           "defaultValueExists": true,
           "defaultValue": "",
           "backupExists": false,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
           "command": ""
@@ -162,6 +233,7 @@
           "defaultValueExists": true,
           "defaultValue": "",
           "backupExists": false,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
           "command": ""
@@ -173,6 +245,7 @@
           "defaultValueExists": true,
           "defaultValue": "",
           "backupExists": false,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
           "command": ""
@@ -184,6 +257,7 @@
           "defaultValueExists": false,
           "defaultValue": "",
           "backupExists": false,
+          "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
           "command": ""
