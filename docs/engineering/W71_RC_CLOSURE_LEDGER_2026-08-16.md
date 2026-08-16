@@ -2,9 +2,9 @@
 
 > 日期：2026-08-16
 >
-> 决策：**按推荐封板继续；完整主义扩展保留但后移**
+> 决策：**SEAL / W71 COMPLETE；完整主义扩展保留但后移**
 >
-> C3 检查点：发布、许可、升级边界与真安装 Gate 通过，全量 `153/153`
+> C4 检查点：同一冻结 hash 三次独立全链复跑 `3/3 PASS`，全量每次 `153/153`
 >
 > 作用：把“必须挡住首个可信 RC”的问题，与“需要外部条件”“某入口启用前再做”“长期完整主义”分开，避免历史欠账被遗忘，也避免它们无限阻塞新增内容。
 
@@ -35,11 +35,11 @@
 
 当前 specimen：installer `133,676,213` bytes，SHA-256 `69940814475FCF2C294EB280BC1A6AFF2755DFB2F28DDCCCA422BBA3D41A41FA`；win-unpacked `565,148,574` bytes；app.asar `257,845,274` bytes；packaged source map / FFmpeg core 均为 `0`；unpacked native `10` files / `2,625,024` bytes。
 
-## 3. 推荐封板还剩一个宏观波次
+## 3. 推荐封板已完成
 
 这里的“轮”是可独立验收的宏观波次，不等于一次提交。按当前证据，距进入 W71 后新增内容的推荐估计为：
 
-> **C1–C3 已完成。只剩 C4 冻结 specimen 三次独立复跑；不得以此召回 Post-W71 新功能。**
+> **C1–C4 全部完成。W71 在推荐范围内停止；Post-W71 完整主义继续保留，不反向重开本轮。**
 
 ### C1 — 正式入口与低水位模块定级
 
@@ -84,6 +84,8 @@
 
 ### C4 — RC 汇总与三次独立复跑
 
+**状态：COMPLETE / 3 OF 3 PASS。** 证据见 [`W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md`](./W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md) 与 [`W71_RC_THREE_RUN_MANIFEST.json`](./evidence/W71_RC_THREE_RUN_MANIFEST.json)。
+
 目标：冻结首个可信 Windows RC，而不是继续加入新能力。
 
 - 三次独立 packaged/release manifest；
@@ -98,7 +100,7 @@
 
 | 阻塞 | 为什么仍挡 RC | 推荐处理 |
 |---|---|---|
-| 最终 RC 独立复跑未完成 | 当前证据跨多个中间 specimen，尚缺冻结 hash 的统一结论 | C4 三次独立复跑与总报告 |
+| 无 | 推荐封板范围内已知 P0/P1 为 0，三次冻结复跑全部通过 | W71 停止；条件门和完整主义按既有分类后移 |
 
 ## 5. CONDITIONAL GATE
 
@@ -152,5 +154,7 @@ C1 入口诚实
 + C4 冻结 specimen 三次独立通过
 = 推荐封板完成
 ```
+
+最终状态：`SEAL / COMPLETE`。冻结 installer SHA-256 为 `69940814475FCF2C294EB280BC1A6AFF2755DFB2F28DDCCCA422BBA3D41A41FA`，app.asar SHA-256 为 `35961F6770A469DA0E2216BACDC7CC8EB588B93E5F10FD79C7AF63C363F312CC`；三轮前后均无漂移。
 
 达到这个停止线后，完整主义仍在总表中，但排到更远期。下一新增波次必须重新从总表按依赖和价值选择；不得把本账本自动解释为 W65、W63、W64 或 W72–W86 的开工授权。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-16T14:52:30.750Z",
+  "generatedAt": "2026-08-16T15:09:04.062Z",
   "executable": "release/win-unpacked/Mazz Editor.exe",
   "distribution": {
     "mode": "DEFERRED_NOT_BUNDLED",

@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "decision": "SEAL_UNSIGNED_INTERNAL_RC",
+  "productSourceCommit": "e753dd0",
+  "frozenArtifacts": {
+    "installer": {
+      "path": "release/Mazz Editor Setup 0.2.0.exe",
+      "bytes": 133676213,
+      "sha256": "69940814475FCF2C294EB280BC1A6AFF2755DFB2F28DDCCCA422BBA3D41A41FA"
+    },
+    "appAsar": {
+      "path": "release/win-unpacked/resources/app.asar",
+      "bytes": 257845274,
+      "sha256": "35961F6770A469DA0E2216BACDC7CC8EB588B93E5F10FD79C7AF63C363F312CC"
+    },
+    "winUnpacked": {
+      "files": 438,
+      "bytes": 565148574
+    },
+    "packagedSourceMaps": 0,
+    "packagedFfmpegCoreArtifacts": 0,
+    "unpackedNative": {
+      "files": 10,
+      "bytes": 2625024,
+      "target": "win32-x64"
+    }
+  },
+  "runs": [
+    {
+      "id": 1,
+      "endedAt": "2026-08-16T15:02:42.5535968Z",
+      "fullTestFiles": "153/153",
+      "productMaturity": "PASS",
+      "formalMainPaths": "PASS",
+      "ffmpegDistributionBoundary": "PASS",
+      "nativeMediaBoundary": "PASS",
+      "packagedLifecycle": {
+        "status": "PASS",
+        "cyclesPerFamily": 20,
+        "resourceLedger": "2->2"
+      },
+      "installerCycle": "PASS",
+      "releaseAudit": "PASS",
+      "secretAudit": "PASS",
+      "artifactHashesUnchanged": true
+    },
+    {
+      "id": 2,
+      "endedAt": "2026-08-16T15:07:03.4422531Z",
+      "fullTestFiles": "153/153",
+      "productMaturity": "PASS",
+      "formalMainPaths": "PASS",
+      "ffmpegDistributionBoundary": "PASS",
+      "nativeMediaBoundary": "PASS",
+      "packagedLifecycle": {
+        "status": "PASS",
+        "cyclesPerFamily": 20,
+        "resourceLedger": "2->2"
+      },
+      "installerCycle": "PASS",
+      "releaseAudit": "PASS",
+      "secretAudit": "PASS",
+      "artifactHashesUnchanged": true
+    },
+    {
+      "id": 3,
+      "endedAt": "2026-08-16T15:11:09.8263089Z",
+      "fullTestFiles": "153/153",
+      "productMaturity": "PASS",
+      "formalMainPaths": "PASS",
+      "ffmpegDistributionBoundary": "PASS",
+      "nativeMediaBoundary": "PASS",
+      "packagedLifecycle": {
+        "status": "PASS",
+        "cyclesPerFamily": 20,
+        "resourceLedger": "2->2"
+      },
+      "installerCycle": "PASS",
+      "releaseAudit": "PASS",
+      "secretAudit": "PASS",
+      "artifactHashesUnchanged": true
+    }
+  ],
+  "aggregate": {
+    "independentRunsPassed": "3/3",
+    "knownP0": 0,
+    "knownP1WithinSealedScope": 0,
+    "installResidueRuns": 0,
+    "userChoiceMutationRuns": 0,
+    "artifactDriftRuns": 0,
+    "currentSecretCandidates": 0,
+    "finalGate": "SEAL"
+  }
+}

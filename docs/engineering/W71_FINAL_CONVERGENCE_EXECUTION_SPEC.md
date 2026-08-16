@@ -4,7 +4,7 @@
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / C1–C3 已结案，只剩 C4 冻结 specimen 三次独立复跑**
+> 状态：**COMPLETE / SEAL — unsigned internal Windows RC**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -1301,3 +1301,5 @@ C1 正式入口成熟度检查点随后完成：新增中心三态表，只控�
 C2 正式主路径产品完整性检查点继而结案：模块注册表为所有模块生成稳定 `module.*` 图标身份，Shell 页签、恢复和跨窗交接只持久化 `iconId`，Library 创建/开书/返回/关闭/恢复全程保持 `module.library → 同一 SVG`。Library、Notes、内嵌 Markdown、Notes Graph 和 Viewer 补齐代表性 owner/dispose；Library 20 次循环及 packaged 关签后的三模块 owner 均归零。实包验证过程中抓出并修复 Notes 启动“今日笔记”覆盖显式恢复，以及写盘进行中 close/handoff 越过保存屏障两项真实竞态。Paper/Ink、可见键盘焦点、disabled、空态/不支持态和 1024×720 窄窗口末端控件可达性均通过，renderer error 为 0；全量增至 `152/152`。这只关闭推荐封板的代表性正式路径，整应用图标/像素/DPI 穷举和完整 Session/运行时组合继续留在 Post-W71。距新增内容常态只剩 C3 发布许可与 C4 冻结 specimen 三次独立复跑两个宏观波次。证据见 [`W71_FORMAL_MAIN_PATHS_CHECKPOINT_2026-08-16.md`](./W71_FORMAL_MAIN_PATHS_CHECKPOINT_2026-08-16.md) 与 [`W71_FORMAL_MAIN_PATHS.json`](./evidence/W71_FORMAL_MAIN_PATHS.json)。
 
 C3 发布与许可封口检查点完成范围缩减式闭环：仓库没有可冻结旧 installer，故拒绝用重标版本号制造假升级证据，将 `0.2.0` 定为首个升级基线；同版本 repair 已实证，Updater 继续 Hidden，下一版本必须以真实旧/新 specimen 验证数据迁移、失败保持与回滚。历史 FFmpeg core 虽有真实运行身份，但上游可变 ref 使完整 corresponding source 仍不可证明；当前分支与发行物因此移除 `ffmpeg-core.js/.wasm`，Viewer fallback 转码、Player GIF 和 Recorder MP4 统一 Hidden，原生播放/WebM/系统打开继续可用，wrapper、来源档案、集成代码与未来激活 Gate 保留。全量增至 `153/153`；secret 审计扫描 253 个产品/配置文件为 0 候选。最终 installer `133,676,213` bytes、SHA-256 `69940814475FCF2C294EB280BC1A6AFF2755DFB2F28DDCCCA422BBA3D41A41FA`，win-unpacked `565,148,574` bytes、app.asar `257,845,274` bytes，source map/core 均为 0；schema v5 真安装、同版本覆盖、五入口、UserChoice、安装态 20 轮、退出、卸载全部通过。构建仍因无证书明确保持 unsigned internal RC。距推荐封板只剩 C4 对同一冻结 hash 的三次独立复跑；完整主义继续保留为 Post-W71，不回流。证据见 [`W71_RELEASE_LICENSING_CHECKPOINT_2026-08-16.md`](./W71_RELEASE_LICENSING_CHECKPOINT_2026-08-16.md)、[`W71_FFMPEG_DISTRIBUTION_DECISION.json`](./evidence/W71_FFMPEG_DISTRIBUTION_DECISION.json)、[`W71_SECRET_AUDIT.json`](./evidence/W71_SECRET_AUDIT.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
+
+C4 最终封板在不再改动产品代码的前提下，对 `main@e753dd0` 对应的同一 installer/app.asar 完成三次独立全链复跑。每轮均为全量 `153/153`、正式入口、正式主路径、FFmpeg 不分发边界、原生媒体、九族 packaged 20 轮 ResourceLedger `2→2`、clean install、同版本 repair、五入口冷启动、UserChoice 不改写、正常退出、silent uninstall、release/secret audit 全绿；三轮安装残留、UserChoice 改写、secret 候选和产物 hash 漂移均为 0。最终决策为 `SEAL — unsigned internal Windows RC`，推荐范围内已知 P0/P1 为 0。W71 到此停止，条件门和完整主义继续保留到完整未尽总表，不构成新功能开工授权。证据见 [`W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md`](./W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md) 与 [`W71_RC_THREE_RUN_MANIFEST.json`](./evidence/W71_RC_THREE_RUN_MANIFEST.json)。
