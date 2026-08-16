@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 209,
-    "scannedLines": 56396
+    "scannedLines": 56423
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -23,11 +23,11 @@
   },
   "visual": {
     "summary": {
-      "totalFindings": 1642,
+      "totalFindings": 1643,
       "filesWithFindings": 95,
       "byRule": {
         "inline-style-attribute": 555,
-        "loading-state-term": 35,
+        "loading-state-term": 36,
         "native-form-control": 1007,
         "inline-css-text": 43,
         "tooltip-or-title": 2
@@ -453,20 +453,26 @@
       {
         "rule": "loading-state-term",
         "file": "renderer/lib/ffmpeg-transcode.js",
-        "line": 17,
+        "line": 19,
         "sample": "if (loading) return loading;"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/lib/ffmpeg-transcode.js",
-        "line": 18,
+        "line": 20,
         "sample": "loading = (async () => {"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/lib/ffmpeg-transcode.js",
-        "line": 26,
+        "line": 28,
         "sample": "try { return await loading; } finally { /* 失败后允许重试 */ loading = ffmpeg ? loading : null; }"
+      },
+      {
+        "rule": "loading-state-term",
+        "file": "renderer/lib/ffmpeg-transcode.js",
+        "line": 92,
+        "sample": "loading = null;"
       },
       {
         "rule": "loading-state-term",

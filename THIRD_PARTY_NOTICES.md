@@ -20,14 +20,14 @@ Important direct runtime dependencies include:
 | node-pty | MIT; native ABI must be verified in the packaged Windows specimen |
 | WebTorrent and native helpers | MIT-family dependencies; packaged native binaries require inventory |
 | libass-wasm | Compound license set declared by the package; its `dist/js/COPYRIGHT` must remain available |
-| ffmpeg.wasm vendored runtime | Build-dependent LGPL/GPL obligations; see `renderer/vendor/ffmpeg/PROVENANCE.md` |
+| ffmpeg.wasm vendored runtime | `@ffmpeg/core@0.12.10`-identical core payload, GPL-2.0-or-later; see `renderer/vendor/ffmpeg/PROVENANCE.md` |
 | Monaco Editor | MIT |
 | ECharts | Apache-2.0 |
 
 Unresolved release evidence:
 
-- `buffers@0.1.1` is present through `exceljs > unzipper > binary`; its published package contains no declared license or license file. It remains a release blocker until a primary-source license is recovered or the dependency is removed/replaced.
-- The vendored ffmpeg JS/WASM does not byte-match the declared `@ffmpeg/core@0.12.6` npm candidate. Wrapper metadata must not be used to infer the compiled core's LGPL/GPL obligations. See `docs/engineering/evidence/W71_LICENSE_AUDIT.json`.
+- The former `buffers@0.1.1` blocker is closed by a scoped `exceljs > unzipper@0.12.3` override. The unlicensed `buffers` and legacy `binary` packages are absent from the locked runtime graph; XLSX roundtrip/export regression tests pass.
+- The vendored ffmpeg core is byte-identical to the official `@ffmpeg/core@0.12.10` WASM payload (the JS differs only in line endings/outer whitespace), and live runtime evidence reports FFmpeg 5.1.4 with `--enable-gpl`. Classification is therefore GPL-2.0-or-later. The gate remains open until the final distributable carries the full license/notices and a durable corresponding-source delivery mechanism. See `docs/engineering/evidence/W71_LICENSE_AUDIT.json` and `docs/engineering/evidence/W71_FFMPEG_RUNTIME.json`.
 
 ## Release rule
 

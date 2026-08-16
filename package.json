@@ -21,6 +21,7 @@
     "test:w71:security-ui": "node tests/e2e/w71-security-settings.mjs",
     "test:w71:plugin-trust": "node tests/e2e/w71-plugin-trust.mjs",
     "test:w71:overlay": "node tests/e2e/w71-overlay-zorder.mjs",
+    "test:w71:ffmpeg": "node tests/e2e/w71-ffmpeg-runtime.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },
@@ -131,6 +132,11 @@
     "tesseract.js": "^7.0.0",
     "webtorrent": "2.8.5",
     "xlsx": "^0.18.5"
+  },
+  "overrides": {
+    "exceljs": {
+      "unzipper": "0.12.3"
+    }
   },
   "devDependencies": {
     "electron": "^33.2.0",

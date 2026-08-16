@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15T12:31:52.915Z",
+  "generatedAt": "2026-08-16T08:17:05.996Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -46,17 +46,8 @@
         "present": true
       }
     ],
-    "lockedPackageCount": 811,
-    "missingDeclaredLicense": [
-      {
-        "name": "buffers",
-        "version": "0.1.1",
-        "license": "",
-        "licenseFiles": [],
-        "optional": false,
-        "dev": false
-      }
-    ],
+    "lockedPackageCount": 801,
+    "missingDeclaredLicense": [],
     "packages": [
       {
         "name": "@asamuzakjp/css-color",
@@ -1593,24 +1584,6 @@
         "dev": false
       },
       {
-        "name": "big-integer",
-        "version": "1.6.52",
-        "license": "Unlicense",
-        "licenseFiles": [
-          "LICENSE"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
-        "name": "binary",
-        "version": "0.3.0",
-        "license": "MIT",
-        "licenseFiles": [],
-        "optional": false,
-        "dev": false
-      },
-      {
         "name": "binary-extensions",
         "version": "2.3.0",
         "license": "MIT",
@@ -1706,7 +1679,7 @@
           "LICENSE"
         ],
         "optional": false,
-        "dev": true
+        "dev": false
       },
       {
         "name": "bluebird-lst",
@@ -1795,24 +1768,6 @@
         ],
         "optional": false,
         "dev": true
-      },
-      {
-        "name": "buffer-indexof-polyfill",
-        "version": "1.0.2",
-        "license": "MIT",
-        "licenseFiles": [
-          "LICENSE"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
-        "name": "buffers",
-        "version": "0.1.1",
-        "license": "",
-        "licenseFiles": [],
-        "optional": false,
-        "dev": false
       },
       {
         "name": "bufferutil",
@@ -2011,14 +1966,6 @@
         "licenseFiles": [
           "LICENSE"
         ],
-        "optional": false,
-        "dev": false
-      },
-      {
-        "name": "chainsaw",
-        "version": "0.1.0",
-        "license": "MIT/X11",
-        "licenseFiles": [],
         "optional": false,
         "dev": false
       },
@@ -3583,36 +3530,6 @@
         "dev": false
       },
       {
-        "name": "fstream",
-        "version": "1.0.12",
-        "license": "ISC",
-        "licenseFiles": [
-          "LICENSE"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
-        "name": "fstream/node_modules/mkdirp",
-        "version": "0.5.6",
-        "license": "MIT",
-        "licenseFiles": [
-          "LICENSE"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
-        "name": "fstream/node_modules/rimraf",
-        "version": "2.7.1",
-        "license": "ISC",
-        "licenseFiles": [
-          "LICENSE"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
         "name": "function-bind",
         "version": "1.1.2",
         "license": "MIT",
@@ -4647,16 +4564,6 @@
         "dev": true
       },
       {
-        "name": "listenercount",
-        "version": "1.0.1",
-        "license": "ISC",
-        "licenseFiles": [
-          "LICENSE.md"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
         "name": "load-ip-set",
         "version": "3.0.2",
         "license": "MIT",
@@ -5453,6 +5360,16 @@
         ],
         "optional": false,
         "dev": true
+      },
+      {
+        "name": "node-int64",
+        "version": "0.4.0",
+        "license": "MIT",
+        "licenseFiles": [
+          "LICENSE"
+        ],
+        "optional": false,
+        "dev": false
       },
       {
         "name": "node-pty",
@@ -7292,16 +7209,6 @@
         "dev": true
       },
       {
-        "name": "traverse",
-        "version": "0.3.9",
-        "license": "MIT/X11",
-        "licenseFiles": [
-          "LICENSE"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
         "name": "truncate-utf8-bytes",
         "version": "1.0.2",
         "license": "WTFPL",
@@ -7439,7 +7346,7 @@
       },
       {
         "name": "unzipper",
-        "version": "0.10.14",
+        "version": "0.12.3",
         "license": "MIT",
         "licenseFiles": [
           "LICENSE"
@@ -7448,8 +7355,8 @@
         "dev": false
       },
       {
-        "name": "unzipper/node_modules/bluebird",
-        "version": "3.4.7",
+        "name": "unzipper/node_modules/fs-extra",
+        "version": "11.4.0",
         "license": "MIT",
         "licenseFiles": [
           "LICENSE"
@@ -7458,8 +7365,8 @@
         "dev": false
       },
       {
-        "name": "unzipper/node_modules/readable-stream",
-        "version": "2.3.8",
+        "name": "unzipper/node_modules/jsonfile",
+        "version": "6.2.1",
         "license": "MIT",
         "licenseFiles": [
           "LICENSE"
@@ -7468,18 +7375,8 @@
         "dev": false
       },
       {
-        "name": "unzipper/node_modules/safe-buffer",
-        "version": "5.1.2",
-        "license": "MIT",
-        "licenseFiles": [
-          "LICENSE"
-        ],
-        "optional": false,
-        "dev": false
-      },
-      {
-        "name": "unzipper/node_modules/string_decoder",
-        "version": "1.1.1",
+        "name": "unzipper/node_modules/universalify",
+        "version": "2.0.1",
         "license": "MIT",
         "licenseFiles": [
           "LICENSE"
@@ -7987,11 +7884,11 @@
     ],
     "evidence": {
       "schemaVersion": 1,
-      "recordedAt": "2026-08-15",
+      "recordedAt": "2026-08-16",
       "buffers": {
         "name": "buffers",
         "version": "0.1.1",
-        "runtimePath": "exceljs@4.4.0 > unzipper@0.10.14 > binary@0.3.0 > buffers@0.1.1",
+        "priorRuntimePath": "exceljs@4.4.0 > unzipper@0.10.14 > binary@0.3.0 > buffers@0.1.1",
         "npmTarball": "https://registry.npmjs.org/buffers/-/buffers-0.1.1.tgz",
         "npmSha1": "b24579c3bed4d6d396aeee6d9a8ae7f5482ab7bb",
         "npmIntegrity": "sha512-9q/rDEGSb/Qsvv2qvzIzdluL5k7AaJOTrw23z9reQthrbF7is4CtlT0DXyO1oei2DCp4uojjzQ7igaSHp1kAEQ==",
@@ -7999,8 +7896,22 @@
         "licenseFileInPackage": false,
         "repository": "https://github.com/substack/node-buffers",
         "repositoryReachableAtAudit": false,
-        "gate": "OPEN",
-        "reason": "Published package has no license field or license file; do not infer a license from adjacent Substack packages."
+        "replacement": {
+          "package": "unzipper",
+          "version": "0.12.3",
+          "npmIntegrity": "sha512-PZ8hTS+AqcGxsaQntl3IRBw65QrBI6lxzqDEL7IAo/XCEqRTKGfOX56Vea5TH9SZczRVxuzk1re04z/YjuYCJA==",
+          "declaredLicense": "MIT",
+          "licenseFileInPackage": true,
+          "scope": "package.json override limited to exceljs"
+        },
+        "verification": [
+          "npm ls confirms exceljs@4.4.0 > unzipper@0.12.3",
+          "package-lock.json contains neither node_modules/buffers nor node_modules/binary",
+          "tests/roundtrip/xlsx.test.mjs passes all 10 generated workbooks",
+          "tests/contract/save-formats.test.mjs passes XLSX export validation"
+        ],
+        "gate": "CLOSED_REMOVED_FROM_RUNTIME",
+        "reason": "The unlicensed package was removed from the runtime graph through a scoped compatible unzipper override; no license was inferred."
       },
       "ffmpegWasm": {
         "claimedCandidate": "@ffmpeg/core@0.12.6",
@@ -8012,18 +7923,39 @@
         "vendoredJsSha256": "B642482AC79F8F619DD06DE77A557EECA6390E4F4E80C8A709EC1E7E9091E876",
         "vendoredWasmSha256": "9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7",
         "byteMatch": false,
+        "recoveredOfficialArtifacts": {
+          "packages": [
+            "@ffmpeg/core@0.12.9",
+            "@ffmpeg/core@0.12.10"
+          ],
+          "selectedProvenanceVersion": "0.12.10",
+          "selectedTarball": "https://registry.npmjs.org/@ffmpeg/core/-/core-0.12.10.tgz",
+          "selectedTarballSha256": "D00089CE82E1BDF637DDBE42E0C3D41A1BA8CF4C9E825E7FA4D0BB970E844BD4",
+          "selectedNpmSha1": "3177e88852bfbfaad5d258e9e0ac1fd9dffd3223",
+          "selectedNpmIntegrity": "sha512-dzNplnn2Nxle2c2i2rrDhqcB19q9cglCkWnoMTDN9Q9l3PvdjZWd1HfSPjCNWc/p8Q3CT+Es9fWOR0UhAeYQZA==",
+          "officialEsmJsSha256": "67A48F11645F85439F3FDE4F2119042C16B374B910206B7A7A24F342E28DCAE3",
+          "officialWasmSha256": "9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7",
+          "wasmExactByteMatch": true,
+          "jsEqualAfterLineEndingAndOuterWhitespaceNormalization": true,
+          "declaredLicense": "GPL-2.0-or-later",
+          "repositoryTag": "v0.12.10",
+          "repositoryTagCommit": "c3a763857c5e615ae8674715ad5e4f63ff469e9d"
+        },
+        "runtimeEvidence": "W71_FFMPEG_RUNTIME.json",
+        "runtimeVersion": "ffmpeg version 5.1.4",
+        "runtimeGplEnabled": true,
         "gate": "OPEN",
-        "reason": "Vendored JS/WASM do not match the official npm 0.12.6 UMD artifacts; exact build flags, source and resulting LGPL/GPL obligations remain unknown."
+        "reason": "Core identity and GPL-2.0-or-later classification are now recovered, but the distributable must still carry the full license/notices and a durable corresponding-source delivery mechanism."
       }
     }
   },
   "rendererSourceMaps": {
     "count": 209,
-    "bytes": 57994503,
+    "bytes": 58040023,
     "files": [
       {
         "path": "renderer/dist/app.js.map",
-        "bytes": 3416502
+        "bytes": 3432105
       },
       {
         "path": "renderer/dist/chunks/abap-G2Z2H6CX.js.map",
@@ -8034,11 +7966,11 @@
         "bytes": 4920
       },
       {
-        "path": "renderer/dist/chunks/agreement-KKDIMYO2.js.map",
-        "bytes": 12695
+        "path": "renderer/dist/chunks/agreement-J4IDZNJM.js.map",
+        "bytes": 13257
       },
       {
-        "path": "renderer/dist/chunks/ai-translate-BD25EU7H.js.map",
+        "path": "renderer/dist/chunks/ai-translate-WQXRCUKT.js.map",
         "bytes": 6845
       },
       {
@@ -8070,8 +8002,8 @@
         "bytes": 7037
       },
       {
-        "path": "renderer/dist/chunks/chunk-2XMQEINF.js.map",
-        "bytes": 12942
+        "path": "renderer/dist/chunks/chunk-2G4GGYNE.js.map",
+        "bytes": 17812
       },
       {
         "path": "renderer/dist/chunks/chunk-3H2OIHPE.js.map",
@@ -8086,8 +8018,8 @@
         "bytes": 8678
       },
       {
-        "path": "renderer/dist/chunks/chunk-4XYLZAJ2.js.map",
-        "bytes": 17812
+        "path": "renderer/dist/chunks/chunk-4YNTUIEL.js.map",
+        "bytes": 546290
       },
       {
         "path": "renderer/dist/chunks/chunk-5HQQI2VW.js.map",
@@ -8104,6 +8036,10 @@
       {
         "path": "renderer/dist/chunks/chunk-6BGXCV3W.js.map",
         "bytes": 1776
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-6ZXMHMSE.js.map",
+        "bytes": 27708
       },
       {
         "path": "renderer/dist/chunks/chunk-7GSUD4RR.js.map",
@@ -8134,10 +8070,6 @@
         "bytes": 6831
       },
       {
-        "path": "renderer/dist/chunks/chunk-F2MB46BQ.js.map",
-        "bytes": 505555
-      },
-      {
         "path": "renderer/dist/chunks/chunk-F3G75VWQ.js.map",
         "bytes": 8981
       },
@@ -8146,24 +8078,16 @@
         "bytes": 97504
       },
       {
-        "path": "renderer/dist/chunks/chunk-FGOEMJGN.js.map",
-        "bytes": 540351
-      },
-      {
         "path": "renderer/dist/chunks/chunk-FSGXTKM3.js.map",
         "bytes": 9399
       },
       {
-        "path": "renderer/dist/chunks/chunk-G6LD7SLZ.js.map",
-        "bytes": 46588
+        "path": "renderer/dist/chunks/chunk-GB7OS2NV.js.map",
+        "bytes": 302273
       },
       {
         "path": "renderer/dist/chunks/chunk-GYVGGTW3.js.map",
         "bytes": 24669
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-H7JMVTT4.js.map",
-        "bytes": 9958
       },
       {
         "path": "renderer/dist/chunks/chunk-ISCH7X5M.js.map",
@@ -8174,12 +8098,12 @@
         "bytes": 7882
       },
       {
-        "path": "renderer/dist/chunks/chunk-K6USOJNM.js.map",
-        "bytes": 204246
+        "path": "renderer/dist/chunks/chunk-K3AEDBZS.js.map",
+        "bytes": 52833
       },
       {
-        "path": "renderer/dist/chunks/chunk-KQUBSCWQ.js.map",
-        "bytes": 302273
+        "path": "renderer/dist/chunks/chunk-K6USOJNM.js.map",
+        "bytes": 204246
       },
       {
         "path": "renderer/dist/chunks/chunk-L54TMZYS.js.map",
@@ -8208,6 +8132,10 @@
       {
         "path": "renderer/dist/chunks/chunk-PEO37PJZ.js.map",
         "bytes": 10260
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-QLC425OD.js.map",
+        "bytes": 21565
       },
       {
         "path": "renderer/dist/chunks/chunk-QPA56VRP.js.map",
@@ -8246,12 +8174,16 @@
         "bytes": 87486
       },
       {
-        "path": "renderer/dist/chunks/chunk-XDZIV2HC.js.map",
-        "bytes": 27708
+        "path": "renderer/dist/chunks/chunk-XGL27YMJ.js.map",
+        "bytes": 506406
       },
       {
         "path": "renderer/dist/chunks/chunk-XPFNG65H.js.map",
         "bytes": 36078
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-YE6E2AWM.js.map",
+        "bytes": 12942
       },
       {
         "path": "renderer/dist/chunks/clojure-ZAJ34JP7.js.map",
@@ -8302,7 +8234,7 @@
         "bytes": 14978
       },
       {
-        "path": "renderer/dist/chunks/custom-apps-WAOFCPBE.js.map",
+        "path": "renderer/dist/chunks/custom-apps-LILOMMWZ.js.map",
         "bytes": 8126
       },
       {
@@ -8334,7 +8266,7 @@
         "bytes": 5970
       },
       {
-        "path": "renderer/dist/chunks/docx-io-OY3RCBKL.js.map",
+        "path": "renderer/dist/chunks/docx-io-IWJMYHP5.js.map",
         "bytes": 93
       },
       {
@@ -8370,16 +8302,16 @@
         "bytes": 3559516
       },
       {
-        "path": "renderer/dist/chunks/extern-convert-5TCT63ON.js.map",
+        "path": "renderer/dist/chunks/extern-convert-6S72E6IA.js.map",
         "bytes": 15478
       },
       {
-        "path": "renderer/dist/chunks/factory-CDLWCT6L.js.map",
+        "path": "renderer/dist/chunks/factory-BDGMRZOO.js.map",
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/ffmpeg-transcode-R6IUBV45.js.map",
-        "bytes": 6585
+        "path": "renderer/dist/chunks/ffmpeg-transcode-25NOOVDO.js.map",
+        "bytes": 8273
       },
       {
         "path": "renderer/dist/chunks/flow9-VAVGG2VQ.js.map",
@@ -8390,7 +8322,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/formats-io-7DIRJYKR.js.map",
+        "path": "renderer/dist/chunks/formats-io-U3YLCPLN.js.map",
         "bytes": 6111
       },
       {
@@ -8434,7 +8366,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/imgedit-CFYB6TIQ.js.map",
+        "path": "renderer/dist/chunks/imgedit-TPWJSLXR.js.map",
         "bytes": 42263
       },
       {
@@ -8494,7 +8426,7 @@
         "bytes": 15020
       },
       {
-        "path": "renderer/dist/chunks/loader-C7XB4A2A.js.map",
+        "path": "renderer/dist/chunks/loader-ZUULLM7A.js.map",
         "bytes": 93
       },
       {
@@ -8518,7 +8450,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/mindmap-JMFV4VYA.js.map",
+        "path": "renderer/dist/chunks/mindmap-3PM2EKNC.js.map",
         "bytes": 93
       },
       {
@@ -8562,7 +8494,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/paginate-RKQEOSUL.js.map",
+        "path": "renderer/dist/chunks/paginate-EKOMSNHO.js.map",
         "bytes": 93
       },
       {
@@ -8594,8 +8526,8 @@
         "bytes": 5568
       },
       {
-        "path": "renderer/dist/chunks/player-QFWFI33D.js.map",
-        "bytes": 235216
+        "path": "renderer/dist/chunks/player-ZNTKHLEA.js.map",
+        "bytes": 238241
       },
       {
         "path": "renderer/dist/chunks/postiats-MKP2YCNA.js.map",
@@ -8622,15 +8554,15 @@
         "bytes": 683045
       },
       {
-        "path": "renderer/dist/chunks/print-JKPV6AYI.js.map",
-        "bytes": 3689
-      },
-      {
-        "path": "renderer/dist/chunks/print-PROHZVB2.js.map",
+        "path": "renderer/dist/chunks/print-7OTSI53M.js.map",
         "bytes": 5323
       },
       {
-        "path": "renderer/dist/chunks/print-preview-UBM2SMM3.js.map",
+        "path": "renderer/dist/chunks/print-QNGSAMSZ.js.map",
+        "bytes": 3689
+      },
+      {
+        "path": "renderer/dist/chunks/print-preview-4FAIHQP5.js.map",
         "bytes": 93
       },
       {
@@ -8638,7 +8570,7 @@
         "bytes": 23654
       },
       {
-        "path": "renderer/dist/chunks/provider-3KFLDFAS.js.map",
+        "path": "renderer/dist/chunks/provider-RUYH5FB4.js.map",
         "bytes": 93
       },
       {
@@ -8654,7 +8586,7 @@
         "bytes": 10174
       },
       {
-        "path": "renderer/dist/chunks/queue-XURG4L6L.js.map",
+        "path": "renderer/dist/chunks/queue-T5AGAWFH.js.map",
         "bytes": 3826
       },
       {
@@ -8666,7 +8598,7 @@
         "bytes": 29006
       },
       {
-        "path": "renderer/dist/chunks/recorder-4BKUINRH.js.map",
+        "path": "renderer/dist/chunks/recorder-IOANA3VR.js.map",
         "bytes": 72998
       },
       {
@@ -8678,7 +8610,7 @@
         "bytes": 28146
       },
       {
-        "path": "renderer/dist/chunks/replace-JE5ZHORI.js.map",
+        "path": "renderer/dist/chunks/replace-6U7NCZHO.js.map",
         "bytes": 14873
       },
       {
@@ -8714,7 +8646,7 @@
         "bytes": 7201
       },
       {
-        "path": "renderer/dist/chunks/share-P474O5DS.js.map",
+        "path": "renderer/dist/chunks/share-USRVWDFU.js.map",
         "bytes": 15750
       },
       {
@@ -8722,19 +8654,19 @@
         "bytes": 2595
       },
       {
-        "path": "renderer/dist/chunks/shell-522TL7DS.js.map",
-        "bytes": 93
-      },
-      {
         "path": "renderer/dist/chunks/shell-PPKUZOWZ.js.map",
         "bytes": 8877
       },
       {
-        "path": "renderer/dist/chunks/side-dock-DYWPPQE7.js.map",
+        "path": "renderer/dist/chunks/shell-Q27J2JEC.js.map",
+        "bytes": 93
+      },
+      {
+        "path": "renderer/dist/chunks/side-dock-2MORH7AB.js.map",
         "bytes": 37786
       },
       {
-        "path": "renderer/dist/chunks/sidebar-panels-ZDIKBQAF.js.map",
+        "path": "renderer/dist/chunks/sidebar-panels-SEH3GCR6.js.map",
         "bytes": 35865
       },
       {
@@ -8790,7 +8722,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/theme-custom-MANL7RCJ.js.map",
+        "path": "renderer/dist/chunks/theme-custom-ALE6ACRQ.js.map",
         "bytes": 20096
       },
       {
@@ -9062,13 +8994,13 @@
   "packagedSpecimen": {
     "present": true,
     "unpacked": {
-      "count": 457,
-      "bytes": 668006005
+      "count": 455,
+      "bytes": 667726899
     },
     "asar": {
       "present": true,
-      "bytes": 360637189,
-      "entries": 9910,
+      "bytes": 360465697,
+      "entries": 9863,
       "sourceMaps": 388,
       "rootNotices": [
         "\\LICENSE",

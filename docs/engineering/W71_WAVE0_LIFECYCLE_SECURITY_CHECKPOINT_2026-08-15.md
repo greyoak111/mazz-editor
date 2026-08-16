@@ -112,4 +112,29 @@ SearXNG security UI + safeStorage：PASS，截图目检通过
 | UI 运行态宽度/DPI/对比度与全模块状态矩阵 | OPEN |
 | Kimi Code + Codex 两个真实 Adapter | OPEN；仍为 0 |
 
+## 8. 2026-08-16 许可与 ffmpeg 增量
+
+本节是对 2026-08-15 初始判断的增量修订，保留上文作为历史审计轨迹。
+
+### `buffers@0.1.1`：CLOSED（从运行图移除）
+
+没有猜测旧包的许可证。`package.json` 仅对 `exceljs` 的解压依赖施加 `unzipper@0.12.3` override；新版解压包为 MIT、随包包含 LICENSE，且不再依赖 `binary/buffers`。`npm ls`、锁文件检查、10 份 XLSX 往返和 XLSX 导出契约均通过。
+
+### vendored ffmpeg：身份/分类已恢复，分发合规仍 OPEN
+
+- 当前 WASM SHA-256 与官方 `@ffmpeg/core@0.12.10` 完全一致；JS 在统一换行和去除外层空白后完全一致。
+- 真 `win-unpacked` 运行时自报 FFmpeg 5.1.4、`--enable-gpl` 以及 x264/x265/mp3lame/libass 等编译项，许可证分类明确为 GPL-2.0-or-later。
+- 已真实完成 WAV→MP3、worker/WASM dispose、重新 load 和再次 `ffmpeg -version`。
+- 转码入口现已串行化；每任务使用唯一文件名，并在成功/失败路径统一注销 progress listener、删除输入/输出/调色板临时文件；提供显式 worker/WASM dispose。
+- 仍需把完整 GPL 文本、组件 notices 和持久 corresponding-source 交付机制带入最终安装包，因此不能关闭发布 Gate。
+
+机器证据：[`W71_FFMPEG_RUNTIME.json`](./evidence/W71_FFMPEG_RUNTIME.json)、[`W71_LICENSE_AUDIT.json`](./evidence/W71_LICENSE_AUDIT.json)。
+
+| 原未尽项 | 修订状态 |
+|---|---|
+| `buffers@0.1.1` 可证明许可或依赖替代 | **CLOSED_REMOVED_FROM_RUNTIME** |
+| ffmpeg exact identity / GPL classification | **CLOSED** |
+| ffmpeg license/notices/corresponding-source delivery | **OPEN** |
+| ffmpeg packaged load/transcode/dispose/reload | **PASS**；真实设备、GIF 与长时 soak 仍未覆盖 |
+
 W62e、W63、W64、W65、W67、W69、W70 与 W72–W81 的历史欠账没有被本检查点删除或改写，继续以交付区《Mazz 当前未落地全景-W71归并版》为唯一总表。

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T08:13:14.259Z",
+  "executable": "release/win-unpacked/Mazz Editor.exe",
+  "assets": {
+    "coreJs": {
+      "bytes": 111819,
+      "sha256": "B642482AC79F8F619DD06DE77A557EECA6390E4F4E80C8A709EC1E7E9091E876"
+    },
+    "coreWasm": {
+      "bytes": 32232419,
+      "sha256": "9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7"
+    }
+  },
+  "runtime": {
+    "version": "ffmpeg version 5.1.4 Copyright (c) 2000-2023 the FFmpeg developers",
+    "configuration": "configuration: --target-os=none --arch=x86_32 --enable-cross-compile --disable-asm --disable-stripping --disable-programs --disable-doc --disable-debug --disable-runtime-cpudetect --disable-autodetect --nm=emnm --ar=emar --ranlib=emranlib --cc=emcc --cxx=em++ --objcc=emcc --dep-cc=emcc --extra-cflags='-I/opt/include -O3 -msimd128' --extra-cxxflags='-I/opt/include -O3 -msimd128' --disable-pthreads --disable-w32threads --disable-os2threads --enable-gpl --enable-libx264 --enable-libx265 --enable-libvpx --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libopus --enable-zlib --enable-libwebp --enable-libfreetype --enable-libfribidi --enable-libass --enable-libzimg",
+    "libraryVersions": [
+      "libavutil      57. 28.100 / 57. 28.100",
+      "libavcodec     59. 37.100 / 59. 37.100",
+      "libavformat    59. 27.100 / 59. 27.100",
+      "libavdevice    59.  7.100 / 59.  7.100",
+      "libavfilter     8. 44.100 /  8. 44.100",
+      "libswscale      6.  7.100 /  6.  7.100",
+      "libswresample   4.  7.100 /  4.  7.100",
+      "libpostproc    56.  6.100 / 56.  6.100",
+      "libavutil      57. 28.100 / 57. 28.100",
+      "libavcodec     59. 37.100 / 59. 37.100",
+      "libavformat    59. 27.100 / 59. 27.100",
+      "libavdevice    59.  7.100 / 59.  7.100",
+      "libavfilter     8. 44.100 /  8. 44.100",
+      "libswscale      6.  7.100 /  6.  7.100",
+      "libswresample   4.  7.100 /  4.  7.100",
+      "libpostproc    56.  6.100 / 56.  6.100"
+    ],
+    "versionExitCode": 0,
+    "reloadExitCode": 0,
+    "reloadedWithNewInstance": true,
+    "syntheticWavToMp3": {
+      "outputBytes": 1413,
+      "magicHex": "49443304",
+      "progressEvents": 1
+    }
+  },
+  "conclusion": {
+    "packagedCoreLoads": true,
+    "realTranscodePasses": true,
+    "explicitDisposeAndReloadPasses": true,
+    "exactSourceAndBuildRecipeRecovered": false,
+    "releaseLicenseGate": "OPEN"
+  }
+}

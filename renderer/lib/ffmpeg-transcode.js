@@ -5,6 +5,8 @@ import { toast } from '../shell/shell.js';
 
 let ffmpeg = null;
 let loading = null;
+let transcodeTail = Promise.resolve();
+let transcodeSequence = 0;
 
 /** vendor 运行时 URL（worker/wasm 需要真实文件，不走打包） */
 function vendorUrl(rel) {
@@ -35,34 +37,59 @@ export async function ensureFFmpeg() {
  * @param {(ratio:number)=>void} o.onProgress 进度 0~1
  * @returns {Promise<Uint8Array>}
  */
-export async function transcode(bytes, inExt, { toAudio = false, toGif = false, gifWidth = 360, gifFps = 10, onProgress } = {}) {
+export function transcode(bytes, inExt, options = {}) {
+  const run = () => runTranscode(bytes, inExt, options);
+  const result = transcodeTail.then(run, run);
+  transcodeTail = result.catch(() => {});
+  return result;
+}
+
+async function runTranscode(bytes, inExt, { toAudio = false, toGif = false, gifWidth = 360, gifFps = 10, onProgress } = {}) {
   const f = await ensureFFmpeg();
-  if (onProgress) f.on('progress', (p) => { if (p.progress > 0 && p.progress <= 1) onProgress(p.progress); });
+  const progressHandler = onProgress
+    ? (p) => { if (p.progress > 0 && p.progress <= 1) onProgress(p.progress); }
+    : null;
+  if (progressHandler) f.on('progress', progressHandler);
   const safeExt = String(inExt || 'bin').replace(/[^a-z0-9]/gi, '') || 'bin';
-  const inName = 'input.' + safeExt;
-  const outName = toGif ? 'out.gif' : (toAudio ? 'out.mp3' : 'out.mp4');
-  await f.writeFile(inName, bytes);
+  const jobId = `${Date.now().toString(36)}-${(++transcodeSequence).toString(36)}`;
+  const inName = `input-${jobId}.${safeExt}`;
+  const outName = toGif ? `out-${jobId}.gif` : (toAudio ? `out-${jobId}.mp3` : `out-${jobId}.mp4`);
+  const paletteName = `palette-${jobId}.png`;
   const args = toGif
     // 两阶段 palette：先取全局最优调色板，再抖动合成（GIF 质量关键）
-    ? ['-i', inName, '-vf', `fps=${gifFps},scale=${gifWidth}:-1:flags=lanczos,palettegen`, '-y', 'palette.png']
+    ? ['-i', inName, '-vf', `fps=${gifFps},scale=${gifWidth}:-1:flags=lanczos,palettegen`, '-y', paletteName]
     : (toAudio
     ? ['-i', inName, '-vn', '-c:a', 'libmp3lame', '-q:a', '4', outName]
     : ['-i', inName, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '27',
        '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', outName]);
-  let ret = await f.exec(args);
-  if (toGif) {
-    if (ret !== 0 && ret !== true) throw new Error('GIF 调色板生成失败（退出码 ' + ret + '）');
-    ret = await f.exec(['-i', inName, '-i', 'palette.png', '-lavfi',
-      `fps=${gifFps},scale=${gifWidth}:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=4`, outName]);
+  try {
+    await f.writeFile(inName, bytes);
+    let ret = await f.exec(args);
+    if (toGif) {
+      if (ret !== 0 && ret !== true) throw new Error('GIF 调色板生成失败（退出码 ' + ret + '）');
+      ret = await f.exec(['-i', inName, '-i', paletteName, '-lavfi',
+        `fps=${gifFps},scale=${gifWidth}:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=4`, outName]);
+    }
+    if (ret !== 0 && ret !== true) {
+      // 部分源流损坏：试试更宽容的二次封装（直接流拷贝失败再全转）
+      throw new Error('ffmpeg 转码失败（退出码 ' + ret + '）');
+    }
+    return await f.readFile(outName);
+  } finally {
+    if (progressHandler) f.off('progress', progressHandler);
+    // 失败路径也必须清理；否则损坏输入或取消任务会永久占用 WASM 文件系统内存。
+    for (const name of [inName, outName, paletteName]) {
+      try { await f.deleteFile(name); } catch {}
+    }
   }
-  if (ret !== 0 && ret !== true) {
-    // 部分源流损坏：试试更宽容的二次封装（直接流拷贝失败再全转）
-    throw new Error('ffmpeg 转码失败（退出码 ' + ret + '）');
-  }
-  const out = await f.readFile(outName);
-  // 清理虚拟文件系统（防内存膨胀）
-  try { await f.deleteFile(inName); await f.deleteFile(outName); } catch {}
-  return out;
+}
+
+/** 等待转码队列清空并释放 worker/WASM 内存；供模块宿主或诊断流程显式收口。 */
+export async function disposeFFmpeg() {
+  await transcodeTail.catch(() => {});
+  if (ffmpeg) ffmpeg.terminate();
+  ffmpeg = null;
+  loading = null;
 }
 
 export function b64ToU8(b64) {

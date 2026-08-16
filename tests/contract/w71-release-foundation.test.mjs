@@ -29,8 +29,15 @@ describe('W71 发布边界', () => {
     assert.equal(report.licenses.missingDeclaredLicense.some(item => item.name === 'limiter'), false, 'legacy licenses[] 也必须识别');
     const wasm = report.vendoredFfmpeg.files.find(file => file.path.endsWith('ffmpeg-core.wasm'));
     assert.equal(wasm.sha256, '9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7');
-    assert.equal(report.licenses.evidence.buffers.gate, 'OPEN');
+    assert.equal(report.licenses.evidence.buffers.gate, 'CLOSED_REMOVED_FROM_RUNTIME');
+    assert.equal(report.licenses.packages.some(item => item.name === 'buffers' || item.name === 'binary'), false);
+    const unzipper = report.licenses.packages.find(item => item.name === 'unzipper');
+    assert.equal(unzipper?.version, '0.12.3');
+    assert.equal(unzipper?.license, 'MIT');
+    assert.ok(unzipper?.licenseFiles.includes('LICENSE'));
     assert.equal(report.licenses.evidence.ffmpegWasm.byteMatch, false);
+    assert.equal(report.licenses.evidence.ffmpegWasm.recoveredOfficialArtifacts.wasmExactByteMatch, true);
+    assert.equal(report.licenses.evidence.ffmpegWasm.recoveredOfficialArtifacts.declaredLicense, 'GPL-2.0-or-later');
     if (report.packagedSpecimen.present) {
       assert.ok(report.packagedSpecimen.asar.present);
       assert.deepEqual(report.packagedSpecimen.asar.rootNotices.sort(), ['\\LICENSE', '\\NOTICE', '\\THIRD_PARTY_NOTICES.md']);
@@ -47,7 +54,18 @@ describe('W71 许可证据', () => {
     }
     const provenance = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/PROVENANCE.md'), 'utf8');
     assert.ok(provenance.includes('RELEASE BLOCKER UNTIL COMPLETED'));
-    assert.ok(provenance.includes('configure/build flags'));
+    assert.ok(provenance.includes('--enable-gpl'));
     assert.ok(provenance.includes('0.12.6'));
+    assert.ok(provenance.includes('GPL-2.0-or-later'));
+    assert.ok(provenance.includes('ffmpeg version 5.1.4'));
+  });
+
+  test('ffmpeg 转码任务串行化且成功/失败路径均释放监听器、虚拟文件与 worker', () => {
+    const source = fs.readFileSync(path.join(root, 'renderer/lib/ffmpeg-transcode.js'), 'utf8');
+    assert.ok(source.includes('transcodeTail.then(run, run)'));
+    assert.ok(source.includes("f.off('progress', progressHandler)"));
+    assert.ok(source.includes('for (const name of [inName, outName, paletteName])'));
+    assert.ok(source.includes('export async function disposeFFmpeg()'));
+    assert.ok(source.includes('ffmpeg.terminate()'));
   });
 });

@@ -1228,7 +1228,9 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 2026-08-16 检查点关闭未授权插件自动执行 Hard Gate：新装默认隔离，授权绑定整包 SHA-256，内容变化自动撤权，并完成干净 userData 下的安装、授权、重启与改包 packaged E2E。Plugins 因尚无进程级沙箱、签名与 permissions enforcement，继续保持 Preview。同期完成首启协议遮挡根因修复，以及协议、上下文菜单、Quick Switcher、拖拽四条活动 WebContentsView 同场 z-order 证据；未触发 SurfaceManager/Universal Overlay Manager。证据见 [`W71_SECURITY_OVERLAY_CHECKPOINT_2026-08-16.md`](./W71_SECURITY_OVERLAY_CHECKPOINT_2026-08-16.md) 与 [`W71_OVERLAY_ZORDER_CENSUS.md`](./W71_OVERLAY_ZORDER_CENSUS.md)。
 
-完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：真实媒体设备与部分 AudioContext/GIF/transcode 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
+2026-08-16 又关闭一项许可阻塞并缩小一项媒体/许可不确定性：通过仅限 `exceljs` 的 `unzipper@0.12.3` override，将无许可声明的 `buffers@0.1.1` 及其 `binary` 链从锁定运行依赖中移除，10 份 XLSX 往返与导出契约通过。vendored ffmpeg 已在真实 `win-unpacked` 中完成加载、WAV→MP3 转码、显式释放与重载；运行时自报 FFmpeg 5.1.4、`--enable-gpl`，WASM 与官方 `@ffmpeg/core@0.12.10` 精确同 hash，JS 仅换行/外层空白不同。ffmpeg 的“来源/许可证分类未知”已经消除，但最终安装包仍缺完整 GPL 文本、notice 和持久 corresponding-source 交付机制，故其发布许可 Gate 仍为 OPEN。同期修复转码进度 listener、失败路径虚拟文件和 worker/WASM 显式释放债。
+
+完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：真实媒体设备与 AudioContext/GIF 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 分发合规仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。
 
