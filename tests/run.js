@@ -7,6 +7,7 @@ const files = [
   'tests/unit/core.test.mjs',
   'tests/unit/resource-ledger.test.mjs',
   'tests/unit/factory-ai-requests.test.mjs',
+  'tests/unit/factory-sse.test.mjs',
   'tests/unit/formula.test.mjs',
   'tests/contract/module-contract.test.mjs',
   'tests/contract/markdown-roundtrip.test.mjs',

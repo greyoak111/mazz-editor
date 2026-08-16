@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T10:22:32.411Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "network": {
+    "transport": "real-loopback-http",
+    "host": "127.0.0.1",
+    "thirdPartyProviderUsed": false
+  },
+  "baselineResources": 2,
+  "slowResponse": {
+    "requestObserved": true,
+    "fulfilled": false,
+    "errorClass": "timeout",
+    "elapsedMs": 612
+  },
+  "offline": {
+    "fulfilled": false,
+    "errorObserved": true
+  },
+  "halfSse": {
+    "requestObserved": true,
+    "partialDeltaObserved": true,
+    "errorObserved": true,
+    "doneObserved": false,
+    "invokeOk": false
+  },
+  "normalSse": {
+    "text": "完整响应",
+    "doneObserved": true,
+    "invokeOk": true
+  },
+  "rendererCrash": {
+    "requestObserved": true,
+    "registryBefore": 1,
+    "registryAfter": 0,
+    "socketClosed": true,
+    "rendererRecovered": true,
+    "activeResourcesAfterRecovery": 2
+  },
+  "finalFactoryRegistry": []
+}

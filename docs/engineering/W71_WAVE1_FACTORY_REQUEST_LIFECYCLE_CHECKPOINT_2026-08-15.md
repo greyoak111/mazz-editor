@@ -108,3 +108,5 @@ factory:aiChatStream
 | Monaco worker、真实 Agent Adapter、多窗迁移、真实媒体设备 | **OPEN** |
 
 历史 W62e、W63、W64、W65、W67、W69、W70 与 W72–W81 仍以交付区《Mazz 当前未落地全景-W71归并版》为唯一总表。本轮没有实施下一代 Factory、Task Capsule、Runtime、Replica、Snapshot/Delta 或 8 小时 soak。
+
+> 2026-08-16 后续实证：上述 renderer crash 与确定性网络故障注入已由 [`W71_FACTORY_FAULT_MATRIX_CHECKPOINT_2026-08-16.md`](./W71_FACTORY_FAULT_MATRIX_CHECKPOINT_2026-08-16.md) 关闭产品自有处理层；第三方 Provider 差异与长任务 soak 仍 OPEN。本文件保留当日历史口径，不回写冒充原检查点已完成。

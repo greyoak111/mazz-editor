@@ -85,12 +85,16 @@ describe('W71 Factory AI 跨进程与任务 owner 契约', () => {
     const main = read('main/main.js');
     assert.ok(preload.includes("'factory:aiCancel'"));
     assert.ok(main.includes("bus.handle('factory:aiCancel'"));
-    assert.match(main, /kind: 'stream', timeoutMs: 300000/);
-    assert.match(main, /kind: 'chat', timeoutMs: 180000/);
+    assert.ok(main.includes("factoryTimeout('MAZZ_E2E_FACTORY_STREAM_TIMEOUT_MS', 300000)"));
+    assert.ok(main.includes("factoryTimeout('MAZZ_E2E_FACTORY_CHAT_TIMEOUT_MS', 180000)"));
     assert.ok(main.includes("factoryAiRequests.destroy('app-quit')"));
-    assert.ok(main.includes('factoryAiRequests.cancelOwner(ownerId)'));
+    assert.ok(main.includes('factoryAiRequests.cancelOwner(ownerId,'));
+    assert.ok(main.includes("sender.on('render-process-gone'"));
     assert.ok(main.includes("sender.once('destroyed'"));
     assert.ok(main.includes('req.attachReader(reader)'));
+    assert.ok(main.includes('sse.finish()'));
+    assert.ok(main.includes("process.env.NODE_ENV === 'test'"));
+    assert.ok(main.includes('globalThis.__MAZZ_E2E_RESOURCE_LEDGER__'));
   });
 
   test('FactoryPanel 以 taskId 隔离 AbortController，单任务暂停不再污染整批', () => {

@@ -117,6 +117,7 @@ const TerminalService = require('./terminal');
 const { ResourceLedger } = require('./resource-ledger');
 const { AgentHarnessService } = require('./agent-harness');
 const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
+const { FactorySseDecoder } = require('./factory-sse');
 
 const PROTOCOL = 'mazz';
 
@@ -137,6 +138,10 @@ const store = new Store(path.join(app.getPath('userData'), 'mazz-settings.json')
 const bus = new IpcBus();
 const resourceLedger = new ResourceLedger();
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
+if (process.env.NODE_ENV === 'test') {
+  globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
+  globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
+}
 const factoryAiOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
 const tray = new TrayService({
@@ -240,7 +245,8 @@ function registerChannels() {
     if (!sender || factoryAiOwners.has(sender)) return String(sender?.id || '');
     factoryAiOwners.add(sender);
     const ownerId = String(sender.id || '');
-    sender.once('destroyed', () => factoryAiRequests.cancelOwner(ownerId).catch(() => {}));
+    sender.on('render-process-gone', () => factoryAiRequests.cancelOwner(ownerId, 'renderer-gone').catch(() => {}));
+    sender.once('destroyed', () => factoryAiRequests.cancelOwner(ownerId, 'renderer-destroyed').catch(() => {}));
     return ownerId;
   };
   // —— 文件系统 ——
@@ -446,6 +452,11 @@ function registerChannels() {
     return typeof c === 'string' ? c : '';
   };
   const factoryMockEnabled = process.env.NODE_ENV === 'test' && process.env.MAZZ_E2E_FACTORY_MOCK === '1';
+  const factoryTimeout = (envName, normalMs) => {
+    if (process.env.NODE_ENV !== 'test' || !process.env[envName]) return normalMs;
+    const value = Number(process.env[envName]);
+    return Number.isFinite(value) ? Math.max(50, Math.min(normalMs, Math.round(value))) : normalMs;
+  };
   const factoryMock = { blueprintAttempts: 0, unitNo: 0, w68Repair: 0, w68Point: 0 };
   const factoryMockReply = ({ system = '', user = '', stream = false }) => {
     if (!factoryMockEnabled) return null;
@@ -528,7 +539,10 @@ function registerChannels() {
     return '测试响应';
   };
   bus.handle('factory:aiChat', async ({ requestId, baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192 }, event) => {
-    const req = factoryAiRequests.begin(requestId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, { kind: 'chat', timeoutMs: 180000, model, ownerId: bindFactoryAiOwner(event?.sender) });
+    const req = factoryAiRequests.begin(requestId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, {
+      kind: 'chat', timeoutMs: factoryTimeout('MAZZ_E2E_FACTORY_CHAT_TIMEOUT_MS', 180000), model,
+      ownerId: bindFactoryAiOwner(event?.sender),
+    });
     let outcome = 'completed';
     try {
       const mocked = factoryMockReply({ system, user, stream: false });
@@ -552,6 +566,7 @@ function registerChannels() {
     } catch (error) {
       outcome = req.cancelled ? req.cancelReason : 'failed';
       if (req.cancelled && req.cancelReason !== 'timeout') return null;
+      if (req.cancelled && req.cancelReason === 'timeout') throw new Error('AI 请求超时（180 秒）');
       throw error;
     } finally {
       await req.close({ reason: outcome });
@@ -569,7 +584,10 @@ function registerChannels() {
   }));
   // 流式：SSE 逐 delta 广播 factory:aiChunk {requestId, delta}，结束推 done，出错推 error
   bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }, event) => {
-    const req = factoryAiRequests.begin(requestId, { kind: 'stream', timeoutMs: 300000, model, ownerId: bindFactoryAiOwner(event?.sender) });
+    const req = factoryAiRequests.begin(requestId, {
+      kind: 'stream', timeoutMs: factoryTimeout('MAZZ_E2E_FACTORY_STREAM_TIMEOUT_MS', 300000), model,
+      ownerId: bindFactoryAiOwner(event?.sender),
+    });
     const push = (payload) => { if (!req.cancelled && wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'factory:aiChunk', { requestId, ...payload }); };
     let outcome = 'completed';
     try {
@@ -596,27 +614,15 @@ function registerChannels() {
       if (!resp.ok) throw new Error(await aiReadError(resp));
       const reader = resp.body.getReader();
       req.attachReader(reader);
-      const dec = new TextDecoder('utf-8');
-      let buf = '';
+      const sse = new FactorySseDecoder({ onDelta: delta => push({ delta }) });
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          const t = line.trim();
-          if (!t.startsWith('data:')) continue;
-          const data = t.slice(5).trim();
-          if (data === '[DONE]') continue;
-          try {
-            const delta = JSON.parse(data).choices?.[0]?.delta?.content;
-            if (delta) push({ delta });
-          } catch {}
-        }
+        sse.push(value);
       }
+      sse.finish();
       push({ done: true });
-      return { ok: true };
+      return { ok: true, completionKind: sse.completionKind, deltaCount: sse.deltaCount };
     } catch (e) {
       outcome = req.cancelled ? req.cancelReason : 'failed';
       if (!req.cancelled) push({ error: e.message || String(e) });
