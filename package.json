@@ -37,6 +37,7 @@
       "renderer/",
       "!renderer/dist/**/*.map",
       "!renderer/vendor/**/*.map",
+      "!node_modules/**/*.map",
       "!node_modules/**/prebuilds/darwin-*/**",
       "!node_modules/**/prebuilds/linux-*/**",
       "!node_modules/**/prebuilds/android-*/**",

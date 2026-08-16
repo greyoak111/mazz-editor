@@ -1230,6 +1230,8 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 2026-08-16 又关闭一项许可阻塞并缩小一项媒体/许可不确定性：通过仅限 `exceljs` 的 `unzipper@0.12.3` override，将无许可声明的 `buffers@0.1.1` 及其 `binary` 链从锁定运行依赖中移除，10 份 XLSX 往返与导出契约通过。vendored ffmpeg 已在真实 `win-unpacked` 中完成加载、WAV→MP3 转码、显式释放与重载；运行时自报 FFmpeg 5.1.4、`--enable-gpl`，WASM 与官方 `@ffmpeg/core@0.12.10` 精确同 hash，JS 仅换行/外层空白不同。ffmpeg 的“来源/许可证分类未知”已经消除，但最终安装包仍缺完整 GPL 文本、notice 和持久 corresponding-source 交付机制，故其发布许可 Gate 仍为 OPEN。同期修复转码进度 listener、失败路径虚拟文件和 worker/WASM 显式释放债。
 
+同日发布物复审发现 `app.asar` 仍夹带 388 份依赖 source map（原始 70,344,542 bytes），根因是既有规则只排除 renderer map。增加统一的 `!node_modules/**/*.map` 后重建，`app.asar` source map / PDB / test directory 均归零，asar 从 360,465,697 降至 290,083,965 bytes，最终 `win-unpacked` 从 667,726,899 降至 597,387,265 bytes；NSIS installer 从 150,813,568 降至 141,028,503 bytes，SHA-256 为 `D178BFC98310233781BDB43E885A4963FCD3EF83A6958C5CCE8831A59620D4D1`。packaged smoke、20 次生命周期与 ffmpeg 真转码继续通过。该子 Gate 仅关闭 source-map 泄漏和当前安装包重新计量，不代替签名、安装/升级/卸载和异机 ABI。证据见 [`W71_PACKAGING_BOUNDARY_CHECKPOINT_2026-08-16.md`](./W71_PACKAGING_BOUNDARY_CHECKPOINT_2026-08-16.md) 与 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。
+
 完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：真实媒体设备与 AudioContext/GIF 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 分发合规仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。

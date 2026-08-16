@@ -14,6 +14,7 @@ describe('W71 发布边界', () => {
     assert.equal(pkg.build.directories.output, 'release');
     assert.ok(pkg.build.files.includes('!renderer/dist/**/*.map'));
     assert.ok(pkg.build.files.includes('!renderer/vendor/**/*.map'));
+    assert.ok(pkg.build.files.includes('!node_modules/**/*.map'));
     for (const foreign of ['darwin-*', 'linux-*', 'android-*', 'win32-ia32', 'win32-arm64']) {
       assert.ok(pkg.build.files.some(rule => rule.includes(`/prebuilds/${foreign}/`)), `缺 ${foreign} 原生排除规则`);
     }
@@ -41,6 +42,8 @@ describe('W71 发布边界', () => {
     if (report.packagedSpecimen.present) {
       assert.ok(report.packagedSpecimen.asar.present);
       assert.deepEqual(report.packagedSpecimen.asar.rootNotices.sort(), ['\\LICENSE', '\\NOTICE', '\\THIRD_PARTY_NOTICES.md']);
+      assert.equal(report.packagedSpecimen.asar.sourceMaps, 0);
+      assert.equal(report.packagedSpecimen.asar.sourceMapBytes, 0);
       assert.equal(report.packagedSpecimen.installer.sha256.length, 64);
       assert.equal(report.packagedSpecimen.asarUnpackedNative.count, 10);
     }

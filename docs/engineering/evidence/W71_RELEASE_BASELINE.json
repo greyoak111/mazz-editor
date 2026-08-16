@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T08:17:05.996Z",
+  "generatedAt": "2026-08-16T08:23:46.097Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -18,6 +18,7 @@
       "renderer/",
       "!renderer/dist/**/*.map",
       "!renderer/vendor/**/*.map",
+      "!node_modules/**/*.map",
       "!node_modules/**/prebuilds/darwin-*/**",
       "!node_modules/**/prebuilds/linux-*/**",
       "!node_modules/**/prebuilds/android-*/**",
@@ -8994,14 +8995,16 @@
   "packagedSpecimen": {
     "present": true,
     "unpacked": {
-      "count": 455,
-      "bytes": 667726899
+      "count": 438,
+      "bytes": 597387265
     },
     "asar": {
       "present": true,
-      "bytes": 360465697,
-      "entries": 9863,
-      "sourceMaps": 388,
+      "bytes": 290083965,
+      "entries": 9473,
+      "sourceMaps": 0,
+      "sourceMapBytes": 0,
+      "sourceMapFiles": [],
       "rootNotices": [
         "\\LICENSE",
         "\\NOTICE",
@@ -9056,8 +9059,8 @@
     },
     "installer": {
       "path": "release/Mazz Editor Setup 0.2.0.exe",
-      "bytes": 150813568,
-      "sha256": "D16B26273110B857DB745A4EDE44B4445518D9B857320E5871BC91C920C8C8B1"
+      "bytes": 141028503,
+      "sha256": "D178BFC98310233781BDB43E885A4963FCD3EF83A6958C5CCE8831A59620D4D1"
     }
   }
 }

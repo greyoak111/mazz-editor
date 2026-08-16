@@ -73,11 +73,17 @@ function packagedSpecimen() {
   if (fs.existsSync(asarFile)) {
     const record = fileRecord(asarFile);
     try {
-      const { listPackage } = require('@electron/asar');
+      const { extractFile, listPackage } = require('@electron/asar');
       const entries = listPackage(asarFile);
+      const sourceMapFiles = entries.filter(name => name.endsWith('.map')).map(name => ({
+        path: slash(name).replace(/^\//, ''),
+        bytes: extractFile(asarFile, name.replace(/^\\/, '')).length,
+      }));
       asar = {
         present: true, bytes: record.bytes, entries: entries.length,
-        sourceMaps: entries.filter(name => name.endsWith('.map')).length,
+        sourceMaps: sourceMapFiles.length,
+        sourceMapBytes: sourceMapFiles.reduce((total, file) => total + file.bytes, 0),
+        sourceMapFiles,
         rootNotices: entries.filter(name => /^\\(?:LICENSE|NOTICE|THIRD_PARTY_NOTICES\.md)$/.test(name)),
       };
     } catch (error) {
