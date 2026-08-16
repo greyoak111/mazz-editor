@@ -40,6 +40,8 @@ const handlers = {
   'snapshot:clear': async () => true,
   'snapshot:clearAll': async () => true,
   'crash:lastExitUnclean': async () => false,
+  'crash:consumeAppRecovery': async () => ({ reason: null, snapshots: [] }),
+  'crash:finalizeAppRecovery': async () => ({ removed: 0, remaining: 0 }),
   'notify:show': async () => true,
   'power:block': async () => true,
   // —— 密码管理器（与 main/main.js 同一实现：safeStorage 真机加解密） ——

@@ -121,6 +121,7 @@ describe('W71 许可证据', () => {
     assert.ok(shell.includes("window.mazz.on('protocol:open'"));
     assert.ok(smoke.includes('MAZZ_E2E_EXECUTABLE'));
     assert.ok(smoke.includes('launchIntegrationTarget(protocolUrl)'));
+    assert.ok(smoke.includes('launchIntegrationTarget(associatedFile, { windowsShell: false })'));
     assert.ok(smoke.includes('associatedFileObserved'));
     assert.ok(smoke.includes("['url.dll,FileProtocolHandler', target]"));
     assert.ok(cycle.includes("run(installer, ['/S', `/D=${installDir}`])"));

@@ -28,9 +28,9 @@ try {
     NODE_ENV: 'test',
   };
   const useWindowsShell = process.platform === 'win32' && process.env.MAZZ_E2E_WINDOWS_SHELL === '1';
-  const launchIntegrationTarget = (target) => spawnSync(
-    useWindowsShell ? 'rundll32.exe' : executablePath,
-    useWindowsShell ? ['url.dll,FileProtocolHandler', target] : [target],
+  const launchIntegrationTarget = (target, { windowsShell = useWindowsShell } = {}) => spawnSync(
+    windowsShell ? 'rundll32.exe' : executablePath,
+    windowsShell ? ['url.dll,FileProtocolHandler', target] : [target],
     { cwd: root, env: launchEnv, encoding: 'utf8', windowsHide: true, timeout: 30000 },
   );
   app = await electron.launch({
@@ -243,7 +243,9 @@ try {
   }
 
   const associatedFile = path.join(workspace, 'packaged-smoke.md');
-  const fileLaunch = launchIntegrationTarget(associatedFile);
+  // 公共扩展的注册处理器可用不等于系统默认；UserChoice 不能由安装器伪造。
+  // 安装门禁已核对 ProgID 命令，这里用同一 installed EXE 验证运行中二实例文件分发。
+  const fileLaunch = launchIntegrationTarget(associatedFile, { windowsShell: false });
   if (fileLaunch.error) throw fileLaunch.error;
   if (fileLaunch.status !== 0) throw new Error(`文件关联系统分发失败：${fileLaunch.stderr || fileLaunch.stdout}`);
 
@@ -287,7 +289,7 @@ try {
       await new Promise(resolve => setTimeout(resolve, 50));
     } while (Date.now() < until);
     return {
-      integrationLaunchMode: useWindowsShell ? 'windows-shell' : 'direct-executable',
+      integrationLaunchMode: useWindowsShell ? 'windows-shell-protocol+registered-command-file' : 'direct-executable',
       protocolObserved,
       associatedFileObserved,
       integrationResourcesReturnedToBaseline: resources.activeCount === baselineResources,

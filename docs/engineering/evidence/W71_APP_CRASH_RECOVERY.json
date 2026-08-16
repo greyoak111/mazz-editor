@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T12:47:33.812Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "crashedPid": 16448,
+  "before": {
+    "tabId": "tab-1",
+    "ownerId": "b2464394-8eac-4a7d-9a58-1598f8a17313:1",
+    "snapshots": 1
+  },
+  "prompt": "⚠ 检测到 1 份未正常关闭的快照（自动保存/崩溃恢复）\n全部恢复\n忽略",
+  "restored": {
+    "id": "tab-1",
+    "title": "app-crash.md（已恢复）",
+    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-app-crash-ws-nE2QCi/app-crash.md",
+    "content": "# 整应用异常退出恢复\n\nalpha beta gamma",
+    "dirty": true,
+    "pinned": true,
+    "progress": {
+      "from": 5,
+      "to": 14
+    }
+  },
+  "recoverySnapshotsAfterRestore": [
+    {
+      "ownerId": "4a6c1d2f-399a-4dbb-94fb-a6897e637a86:1",
+      "tabId": "tab-1",
+      "dirty": true,
+      "pinned": true,
+      "progress": {
+        "from": 5,
+        "to": 14
+      }
+    }
+  ],
+  "pendingCleared": true,
+  "cleanRestartHasNoOffer": true
+}

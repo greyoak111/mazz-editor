@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.20
+> 版本：v2.21
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复子 Gate 已落地**
+> 状态：**IN PROGRESS / 代表性 Markdown 整应用异常退出恢复子 Gate 已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,7 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W86，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
-8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权、代表性编辑标签事务性交接与 20 次往返，以及代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复检查点；只关闭有测试和 packaged 证据的子 Gate，其他模块崩溃恢复、整应用异常退出恢复、Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
+8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权、代表性编辑标签事务性交接与 20 次往返、代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复，以及单主窗整应用异常退出恢复检查点；只关闭有测试和 packaged 证据的子 Gate，其他模块/多窗口拓扑恢复、Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
 
 ---
 
@@ -383,7 +383,7 @@ Panel host follow listener 回收
 
 这些是待验证候选，不得在没有运行态证据时直接宣判为泄漏。
 
-当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。本地文件的 AudioContext 播放手势恢复、关签关闭、GIF 正常导出和录制中关签已经在正式 packaged 程序中真实激活并回到资源基线；真实摄像头/麦克风/屏幕设备与权限矩阵仍 OPEN。Factory chat/stream 已接入 caller signal、主进程 request owner、timeout、reader cancellation、renderer-destroy 与 ResourceLedger，并通过 packaged 20 次及 W61b 双路并发实证。Code editor/model、主题 observer、pending interval、TerminalPanel 与 DebugService 已建立宿主级 dispose；packaged TypeScript worker 20 次返回真实 TS2322 诊断，关签后 model 归零，worker 维持最多两个有界共享实例。Python 3.14 + debugpy 1.8.21 已在 packaged 程序完成真实断点/栈/变量/继续和 20 轮 adapter 释放；其他语言、远程/容器调试与异机矩阵仍 OPEN。主窗/分窗同文件外改、标题、全屏、最大化与关窗资源现已按真实 owner 完成 packaged 同场实证；代表性 Markdown 编辑标签已用 ACK/owner/timeout 两阶段协议完成 20 次主窗↔分窗往返，并保持内容、脏态、固定态、选择区和恢复快照唯一 owner。Factory stream、Terminal、DAP、Agent 等运行时资源的跨窗 owner、child crash restore 与其他模块家族迁移仍未闭合。详见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md)、[`W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md`](./W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md)、[`W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md`](./W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md)、[`W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md)、[`W71_WINDOW_HANDOFF_CHECKPOINT_2026-08-16.md`](./W71_WINDOW_HANDOFF_CHECKPOINT_2026-08-16.md)、[`W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md) 与 [`W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
+当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。本地文件的 AudioContext 播放手势恢复、关签关闭、GIF 正常导出和录制中关签已经在正式 packaged 程序中真实激活并回到资源基线；真实摄像头/麦克风/屏幕设备与权限矩阵仍 OPEN。Factory chat/stream 已接入 caller signal、主进程 request owner、timeout、reader cancellation、renderer-destroy 与 ResourceLedger，并通过 packaged 20 次及 W61b 双路并发实证。Code editor/model、主题 observer、pending interval、TerminalPanel 与 DebugService 已建立宿主级 dispose；packaged TypeScript worker 20 次返回真实 TS2322 诊断，关签后 model 归零，worker 维持最多两个有界共享实例。Python 3.14 + debugpy 1.8.21 已在 packaged 程序完成真实断点/栈/变量/继续和 20 轮 adapter 释放；其他语言、远程/容器调试与异机矩阵仍 OPEN。主窗/分窗同文件外改、标题、全屏、最大化与关窗资源现已按真实 owner 完成 packaged 同场实证；代表性 Markdown 编辑标签已用 ACK/owner/timeout 两阶段协议完成 20 次主窗↔分窗往返，并保持内容、脏态、固定态、选择区和恢复快照唯一 owner；同一标签又完成分窗连续 5 次 renderer 崩溃恢复。单主窗整应用强制终止后的下一轮显式恢复、旧/新 run owner 收敛和第三轮干净启动不误报也已实证。Factory stream、Terminal、DAP、Agent 等运行时资源的跨窗 owner，其他模块、运行时对象与多窗口拓扑恢复仍未闭合。详见 [`W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md)、[`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 及本节既有生命周期检查点。
 
 ## 5.2 Data Reliability Contract
 
@@ -417,7 +417,7 @@ failure / cancel
 6. 自己保存触发的 watcher 回声不得重复通知或重复读盘。
 7. 快照恢复必须标明来源、时间和目标文件，不把旧快照伪装成磁盘新版本。
 
-当前进度：本地文件外部变化已由两条竞争 listener 收束为单一状态机；干净标签只重载一次，脏标签保留本地内容并提供“保留当前 / 另存当前… / 从磁盘载入”，应用自身保存以路径和文件指纹识别回声。`fs:watch` 现在等待 chokidar 真实 ready，ready 前关闭会立即结算并清除 timer；Save As 也改为写盘成功后才更新标签路径。后续 packaged 同场验证又证明同一文件在主窗脏、分窗净时可各自正确决策，显式载盘后两窗收敛；文件变化由定向 `broadcastShells` 抵达全部工作台壳，分窗标题/全屏/最大化也恢复到 IPC caller owner。代表性 Markdown 标签的跨窗交接现改为目标 ACK 后源窗才提交删除；重复同文件目标会 NACK，脏态、固定态、选择区及内容经过 20 次往返不漂移。恢复快照改为 run + renderer owner 隔离，目标在 ACK 前先落自己的脏稿快照。Office 支持子集、损坏/大文件语料、其他模块迁移、child crash restore、LAN Sync 三方冲突与合并仍 OPEN。详见 [`W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md`](./W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md)、[`W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_OWNERSHIP_CHECKPOINT_2026-08-16.md)、[`W71_WINDOW_HANDOFF_CHECKPOINT_2026-08-16.md`](./W71_WINDOW_HANDOFF_CHECKPOINT_2026-08-16.md)、[`W71_EXTERNAL_FILE_CHANGE.json`](./evidence/W71_EXTERNAL_FILE_CHANGE.json)、[`W71_MULTIWINDOW_FILE_CHANGE.json`](./evidence/W71_MULTIWINDOW_FILE_CHANGE.json) 与 [`W71_WINDOW_HANDOFF_RUNTIME.json`](./evidence/W71_WINDOW_HANDOFF_RUNTIME.json)。
+当前进度：本地文件外部变化已由两条竞争 listener 收束为单一状态机；干净标签只重载一次，脏标签保留本地内容并提供“保留当前 / 另存当前… / 从磁盘载入”，应用自身保存以路径和文件指纹识别回声。`fs:watch` 现在等待 chokidar 真实 ready，ready 前关闭会立即结算并清除 timer；Save As 也改为写盘成功后才更新标签路径。后续 packaged 同场验证又证明同一文件在主窗脏、分窗净时可各自正确决策，显式载盘后两窗收敛；文件变化由定向 `broadcastShells` 抵达全部工作台壳，分窗标题/全屏/最大化也恢复到 IPC caller owner。代表性 Markdown 标签的跨窗交接现改为目标 ACK 后源窗才提交删除；重复同文件目标会 NACK，脏态、固定态、选择区及内容经过 20 次往返不漂移。恢复快照改为 run + renderer owner 隔离，目标在 ACK 前先落自己的快照；分窗连续 5 次 renderer crash 以及单主窗整应用异常退出后的显式恢复均已完成 packaged 实证。整应用事故批次与本轮新快照隔离，成功恢复后旧 run owner 精确删除，未决恢复用 pending 标记跨正常退出保留。Office 支持子集、损坏/大文件语料、其他模块/运行时对象/多窗口拓扑恢复、LAN Sync 三方冲突与合并仍 OPEN。详见 [`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 及本节既有数据检查点。
 
 ## 5.3 Windows Packaged Runtime Contract
 
@@ -1242,7 +1242,7 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 安装态系统集成随后不再由测试直接启动已知 EXE，而改由 Windows `url.dll/FileProtocolHandler` 根据 `mazz://home` 和 `.md` 注册分发；两条路径均抵达现有主实例并真实打开 Browser / Markdown，系统规范化协议尾斜杠不再被当作失败。为防 Shell 子进程退出与卸载抢跑，测试在 uninstaller 前新增 installed EXE 可改名/还原占用探针；最终成功轮退出后一次即释放，卸载归零。该结果关闭当前主机、主实例已运行时的 Windows Shell 分发子门禁；Explorer 可见 UI、UserChoice/默认应用争用与主实例未运行时的冷启动 Shell 仍 OPEN。证据见 [`W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md)。
 
-完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：本地文件的 AudioContext/GIF packaged 激活已经完成，但真实摄像头/麦克风/屏幕设备、权限拒绝/取消、Recorder 最小化/长录制等矩阵仍未完成；Factory 的产品自有慢响应/断网/半包 SSE 与 renderer crash 故障层已在后续检查点完成确定性真注入，但第三方 Provider 差异和长任务 soak 仍缺；当前主机 Python/debugpy DAP 真适配器已通过，但其他语言、远程/容器调试和异机矩阵仍缺；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 分发合规仍未闭环，签名、覆盖升级/回滚、默认应用争用、系统 Shell 可见 UI 和异机安装矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
+完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：本地文件的 AudioContext/GIF packaged 激活已经完成，但真实摄像头/麦克风/屏幕设备、权限拒绝/取消、Recorder 最小化/长录制等矩阵仍未完成；Factory 的产品自有慢响应/断网/半包 SSE 与 renderer crash 故障层已在后续检查点完成确定性真注入，但第三方 Provider 差异和长任务 soak 仍缺；当前主机 Python/debugpy DAP 真适配器已通过，但其他语言、远程/容器调试和异机矩阵仍缺；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 分发合规仍未闭环，签名、覆盖升级/回滚、默认应用争用、系统 Shell 可见 UI 和异机安装矩阵仍缺，真实 Agent Adapter 仍为 0。代表性 Markdown 标签的事务性交接、分窗 renderer 恢复和单主窗整应用异常退出恢复已通过；其他模块迁移、运行时 owner 与完整多窗口 Session Restore 仍未闭环。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。
 
@@ -1257,6 +1257,8 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 ```
 
 每个检查点完成后必须回写完整未尽波次总表、记录测试/构建证据并提交，下一检查点继续按本规格 Gate 推进。
+
+2026-08-16 整应用异常退出恢复检查点把旧 `RUNNING.flag + snapshot:list` 的“能提示”收敛为有批次所有权的恢复事务：`RUNNING.flag` 记录精确 runId，启动时只冻结该事故 run 的文件；兼容旧时间戳 flag 时也只选 savedAt 最新的同 run owner 组，不吞全部历史。主工作台按不透明 recoveryId 领取，新 run 先写自己的快照，主进程再精确删除实际恢复成功的旧件。`RECOVERY_PENDING.flag` 保存精确 recoveryId 清单，保证用户未作决定就正常退出时下轮仍继续提示，全部恢复/明确忽略/无有效候选后才清除。正式 packaged 程序经历主进程树硬终止、同 userData 第二轮提示并恢复完整 Markdown 脏稿、旧/新 owner `1→1` 收敛、正常退出与第三轮不误报。全量增至 `147/147`。安装矩阵同时纠正一项旧假设：`mazz://home` 继续走 Windows Shell，而公共 `.md` 只验证已审计注册命令和运行中二实例分发，不再把“处理器已注册”冒充“系统默认已选择”；最终 schema v5 安装/覆盖/五入口/20 轮/卸载通过。installer `141,036,293` bytes，SHA-256 `476935D578D2F0B1E8416EAA74C560F5C3E59CE675DCC5548A4DA9B60F2F2830`。其他模块、运行时对象、多窗口拓扑、部分恢复 UX、debounce 窗口、DPI/RDP 与 LAN Sync 冲突仍 OPEN。证据见 [`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 与 [`W71_APP_CRASH_RECOVERY.json`](./evidence/W71_APP_CRASH_RECOVERY.json)。
 
 2026-08-16 分窗 renderer 崩溃恢复检查点补上事务性交接之后最直接的数据可靠性断口：主进程只为 `role=child` 的完整工作台 crash 建立一次性 token，重载后的分窗按 WebContents owner 领取自己的快照；renderer 启动时由 URL 同步恢复 window role，快照补齐标题、脏态、固定态与选择区，并在恢复后只裁剪当前 owner 的旧 tabId。正式 packaged 程序连续 5 次 `forcefullyCrashRenderer()` 后均恢复同一份完整 Markdown 脏稿，标题没有重复后缀，快照稳定为 1 份，最终仍可事务性交接回主窗，ResourceLedger `2→3→2`。全量测试增至 `146/146`；installer `141,034,491` bytes，SHA-256 `4C601AA91388EBA0A31C4B8FF6438B986827784B51D90607562BB28D273FC906`，schema v5 真安装/覆盖/五入口/20 轮/卸载继续通过。该结果只关闭代表性 Markdown child renderer 恢复；其他模块、运行时对象、整应用异常退出拓扑、debounce 窗口、DPI/RDP 和 LAN Sync 冲突仍 OPEN。证据见 [`W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 与 [`W71_CHILD_CRASH_RECOVERY.json`](./evidence/W71_CHILD_CRASH_RECOVERY.json)。
 

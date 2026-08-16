@@ -1,12 +1,12 @@
 {
   "schemaVersion": 5,
-  "generatedAt": "2026-08-16T12:17:48.895Z",
+  "generatedAt": "2026-08-16T12:49:12.936Z",
   "installer": {
     "file": "release/Mazz Editor Setup 0.2.0.exe",
-    "bytes": 141034491,
-    "sha256": "4C601AA91388EBA0A31C4B8FF6438B986827784B51D90607562BB28D273FC906"
+    "bytes": 141036293,
+    "sha256": "476935D578D2F0B1E8416EAA74C560F5C3E59CE675DCC5548A4DA9B60F2F2830"
   },
-  "isolatedTarget": "MazzW71Install-T3MJ8F",
+  "isolatedTarget": "MazzW71Install-YdTHBI",
   "preflight": {
     "noExistingInstallRegistration": true,
     "noExistingShortcuts": true,
@@ -71,14 +71,14 @@
   "install": {
     "exitCode": 0,
     "uninstallRegistrationCreated": true,
-    "installedExeSha256": "90DD423AA1B0904EF9EF315A257CE3C6E2CFBD582FCFAFC4B91A017B080CD3C9",
+    "installedExeSha256": "8D411667BFC558DF3378555D52EBC1C8EB3103C017F9C71AC0FA1BA7D71F4307",
     "originalAssociationBackupsPreserved": true,
     "windowsIntegration": {
       "protocol": {
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -91,7 +91,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -104,7 +104,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -117,7 +117,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -130,7 +130,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         }
       ]
@@ -139,7 +139,7 @@
   "sameVersionReinstall": {
     "exitCode": 0,
     "executablePreserved": true,
-    "installedExeSha256": "90DD423AA1B0904EF9EF315A257CE3C6E2CFBD582FCFAFC4B91A017B080CD3C9",
+    "installedExeSha256": "8D411667BFC558DF3378555D52EBC1C8EB3103C017F9C71AC0FA1BA7D71F4307",
     "uninstallRegistrationPreserved": true,
     "originalAssociationBackupsPreserved": true,
     "windowsIntegration": {
@@ -147,7 +147,7 @@
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -160,7 +160,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -173,7 +173,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -186,7 +186,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -199,7 +199,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-T3MJ8F\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-YdTHBI\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         }
       ]
@@ -585,9 +585,9 @@
       "factoryRequestObserved": true,
       "monacoWorkerObserved": true,
       "monacoLateInitGuardObserved": true,
-      "monacoWorkersCreated": 18,
+      "monacoWorkersCreated": 19,
       "monacoWorkersActive": 2,
-      "monacoWorkersTerminated": 16,
+      "monacoWorkersTerminated": 17,
       "monacoWorkerErrors": 0,
       "monacoModelsAfterClose": 0,
       "lifecycleCycles": 20,
@@ -597,7 +597,7 @@
       "releasedResourcesRetained": 160,
       "adapters": 0,
       "sessions": 0,
-      "integrationLaunchMode": "windows-shell",
+      "integrationLaunchMode": "windows-shell-protocol+registered-command-file",
       "protocolObserved": true,
       "associatedFileObserved": true,
       "integrationResourcesReturnedToBaseline": true

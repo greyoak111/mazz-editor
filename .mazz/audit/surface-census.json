@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 31,
-    "scannedLines": 7428
+    "scannedLines": 7536
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -90,7 +90,7 @@
     {
       "rule": "render-gone-hook",
       "file": "main/crash-recovery.js",
-      "line": 22,
+      "line": 32,
       "sample": "app.on('render-process-gone', (_event, webContents, details = {}) => {"
     },
     {

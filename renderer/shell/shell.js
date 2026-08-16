@@ -2886,7 +2886,7 @@ export class Shell {
       // 单一外部变化状态机：索引、转换回传、删除、clean reload、dirty conflict 与 self-write echo 共用此入口。
       window.mazz.on('file:changed', payload => { this.handleExternalFileChanged(payload); });
     }
-    bus.on('recovery:available', (snaps, restoreFn) => this.showRecoveryBar(snaps, restoreFn));
+    bus.on('recovery:available', (snaps, restoreFn, discardFn) => this.showRecoveryBar(snaps, restoreFn, discardFn));
   }
 
   async checkRecovery() {
@@ -2894,6 +2894,7 @@ export class Shell {
     await snapshots.checkRecovery(async (snaps, { reason } = {}) => {
       const restoredOldIds = [];
       const restoredNewIds = [];
+      const recoveryIds = [];
       for (const s of snaps) {
         if (!modules.get(s.moduleId)) continue;
         const recoveryTitle = (s.title || (s.filePath ? s.filePath.split(/[\\/]/).pop() : '未保存'))
@@ -2906,6 +2907,7 @@ export class Shell {
         if (!ok) continue;
         restoredOldIds.push(s.tabId);
         restoredNewIds.push(this.tabs.activeId);
+        if (s.recoveryId) recoveryIds.push(s.recoveryId);
       }
       if (reason === 'renderer-crash') {
         await snapshots.pruneRecovered(restoredOldIds, restoredNewIds);
@@ -2913,10 +2915,11 @@ export class Shell {
       } else {
         toast(`已从快照恢复 ${restoredNewIds.length} 个标签`);
       }
+      return { recoveryIds, restored: restoredNewIds.length };
     }, { role });
   }
 
-  showRecoveryBar(snaps, restoreFn) {
+  showRecoveryBar(snaps, restoreFn, discardFn) {
     const bar = document.createElement('div');
     bar.className = 'recovery-bar';
     bar.innerHTML = `<span>⚠ 检测到 ${snaps.length} 份未正常关闭的快照（自动保存/崩溃恢复）</span>
@@ -2924,7 +2927,8 @@ export class Shell {
     bar.querySelector('button').addEventListener('click', async () => { bar.remove(); await restoreFn(snaps); });
     bar.querySelector('.ghost').addEventListener('click', async () => {
       bar.remove();
-      await window.mazz?.invoke('snapshot:clearAll');
+      if (discardFn) await discardFn();
+      else await window.mazz?.invoke('snapshot:clearAll');
     });
     this.tabs.area.appendChild(bar);
   }

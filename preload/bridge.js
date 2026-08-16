@@ -22,6 +22,7 @@ const INVOKE_CHANNELS = new Set([
   'quicknote:save', 'quicknote:close',
   'snapshot:write', 'snapshot:list', 'snapshot:clear', 'snapshot:clearAll', 'snapshot:pruneOwned',
   'crash:lastExitUnclean', 'crash:consumeRendererRecovery',
+  'crash:consumeAppRecovery', 'crash:finalizeAppRecovery',
   'power:block',
   'menu:context', 'menu:setModel', 'appmenu:sync',
   'searx:search', 'searx:extract', 'clip:fetchImage', 'searx:selfcheck', 'searx:getMaskedConfig', 'searx:setConfig',

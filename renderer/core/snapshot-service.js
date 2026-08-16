@@ -54,15 +54,17 @@ class SnapshotService {
         }
         return;
       }
-      const unclean = await window.mazz.invoke('crash:lastExitUnclean');
-      const snaps = await window.mazz.invoke('snapshot:list');
-      if (!snaps?.length) return;
-      if (unclean) {
-        bus.emit('recovery:available', snaps, selected => restoreFn(selected, { reason: 'app-unclean' }));
-      } else {
-        const unsaved = snaps.filter(s => !s.filePath);
-        if (unsaved.length) bus.emit('recovery:available', unsaved, selected => restoreFn(selected, { reason: 'unsaved' }));
-      }
+      const offer = await window.mazz.invoke('crash:consumeAppRecovery');
+      if (!offer?.snapshots?.length) return;
+      const restoreOffered = async selected => {
+        const result = await restoreFn(selected, { reason: offer.reason });
+        await window.mazz.invoke('crash:finalizeAppRecovery', {
+          recoveryIds: result?.recoveryIds || [],
+        });
+        return result;
+      };
+      const discardOffered = () => window.mazz.invoke('crash:finalizeAppRecovery', { discardAll: true });
+      bus.emit('recovery:available', offer.snapshots, restoreOffered, discardOffered);
     } catch (e) { console.warn('[snapshot] 恢复检查失败:', e.message); }
   }
 }

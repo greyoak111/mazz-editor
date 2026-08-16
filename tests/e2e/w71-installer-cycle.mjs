@@ -529,7 +529,7 @@ try {
   if (smokeExitCode !== 0) {
     throw new Error(`Installed executable smoke failed: ${smoke.stderr || smoke.stdout}`);
   }
-  if (smokeResult.integrationLaunchMode !== 'windows-shell') {
+  if (smokeResult.integrationLaunchMode !== 'windows-shell-protocol+registered-command-file') {
     throw new Error(`Installed executable smoke bypassed Windows Shell: ${JSON.stringify(smokeResult)}`);
   }
   executableRelease = await waitForExecutableRelease(installedExe);
