@@ -65,13 +65,13 @@ renderer 当前冻结的最小行为是：`mazz://home` 打开 Mazz 浏览器主
 | installed EXE SHA-256 | `3FBA3247574EE175DDEB8FC1719EB8F195A8BE96FF10530ECA956FD6410BA39B` |
 | `.md/.markdown/.txt/.mazz` 默认 ProgID | 4/4 精确匹配 |
 | 协议/关联命令 | 4 类关联 + 1 协议均为带引号的安装目录 EXE |
-| `mazz://home` 二实例 | renderer 真观察并打开 Browser |
-| 关联文件二实例 | 真打开目标 Markdown |
+| `mazz://home` Windows Shell 二实例 | renderer 真观察并打开 Browser |
+| `.md` Windows Shell 二实例 | 真打开目标 Markdown |
 | 额外资源回收 | 回到启动基线 |
 | 卸载后 Mazz protocol / ProgID / backup | 0 |
 | 原文件类型默认值 | 恢复 |
 
-机器证据：[`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json) schema v3。发布物清单同步见 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。schema v3 另加入同一 specimen 的同目录覆盖安装证明，详见 [`W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md`](./W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md)。
+机器证据：[`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json) schema v3。发布物清单同步见 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。schema v3 另加入同一 specimen 的同目录覆盖安装与 Windows Shell 真分发证明，详见 [`W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md`](./W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md) 和 [`W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md)。
 
 ## 5. 自动门禁
 
@@ -81,14 +81,15 @@ renderer 当前冻结的最小行为是：`mazz://home` 打开 Mazz 浏览器主
 - 安装后五条系统集成命令精确引用当前隔离 EXE；
 - 旧通用 backup 不存在；
 - 安装后 EXE 完成原有 20 轮 packaged smoke；
-- `mazz://home` 与文件参数经第二实例抵达现有主实例；
+- Windows Shell 根据 `mazz://home` 与 `.md` 注册拉起第二实例，两者均抵达现有主实例；
+- packaged app 退出后 installed EXE 必须先通过可改名/还原占用探针，才允许卸载；
 - 关闭临时标签后资源回到基线；
 - 卸载恢复原默认值，Mazz 私有注册和产品文件归零。
 
 ## 6. 未关闭边界
 
-- Windows Shell 的真实双击/“打开方式”可见 UI 与默认应用争用；
-- 冷启动 ShellExecute 的独立进程链（本轮以精确注册命令 + 冷启动队列契约 + 二实例真运行组成证据）；
+- Windows Explorer 的真实双击/“打开方式”可见 UI 与默认应用争用；
+- 主实例未运行时的冷启动 ShellExecute 独立进程链；
 - 除 `mazz://home` 外的深链接 schema；
 - 多用户/per-machine 安装、提升权限、其它 Windows 版本；
 - 跨版本覆盖升级、失败升级、降级、回滚；同版本 reinstall 已由后续检查点补证；

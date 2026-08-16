@@ -45,7 +45,7 @@ electron-builder 的文件关联宏会把安装前的默认 ProgID 写入 `${FIL
 3. 首次注册和原 owner backup 精确断言；
 4. 同一目录、同一 specimen 再安装一次；
 5. 第二次安装后 EXE hash、卸载注册、五条集成命令与原 owner backup 复验；
-6. 覆盖后的正式 EXE 完成 20 轮 packaged 生命周期及协议/文件二实例消费；
+6. 覆盖后的正式 EXE 完成 20 轮 packaged 生命周期，并由 Windows Shell 真分发协议/文件二实例；
 7. silent uninstall；
 8. 原默认值恢复，Mazz protocol、ProgID、backup、快捷方式、EXE 与测试目录归零。
 
@@ -62,6 +62,7 @@ electron-builder 的文件关联宏会把安装前的默认 ProgID 写入 `${FIL
 | 原关联 owner backup | 4/4 保持首次安装前值 |
 | `mazz://` + 四类关联命令 | 5/5 精确指向隔离 EXE |
 | 覆盖后 packaged smoke | PASS |
+| Windows Shell 协议/`.md` 分发 | PASS |
 | 覆盖后 20 轮资源账 | 回到基线 |
 | 最终卸载系统集成残留 | 0 |
 | 最终产品/快捷方式/测试目录残留 | 0 |

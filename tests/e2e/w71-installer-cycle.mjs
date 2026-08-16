@@ -181,6 +181,36 @@ async function removeOwnedTempDirectory(target) {
   };
 }
 
+async function waitForExecutableRelease(file) {
+  const probe = `${file}.w71-release-probe`;
+  const deadline = Date.now() + 30000;
+  let attempts = 0;
+  let lastError = null;
+  while (Date.now() < deadline) {
+    attempts += 1;
+    let moved = false;
+    try {
+      fs.renameSync(file, probe);
+      moved = true;
+      fs.renameSync(probe, file);
+      return { released: true, attempts };
+    } catch (error) {
+      lastError = error;
+      if (moved && fs.existsSync(probe)) {
+        try { fs.renameSync(probe, file); } catch (restoreError) {
+          throw new Error(`Executable release probe could not restore the installed EXE: ${restoreError.message}`);
+        }
+      }
+      await delay(250);
+    }
+  }
+  return {
+    released: false,
+    attempts,
+    error: lastError instanceof Error ? lastError.message : String(lastError || ''),
+  };
+}
+
 const before = {
   registry: registrySnapshot(),
   shortcuts: shortcutSnapshot(),
@@ -209,6 +239,7 @@ let originalBackupsPreservedAfterReinstall = false;
 let installedExeHash = '';
 let uninstaller = '';
 let smokeResult = null;
+let executableRelease = null;
 let primaryError = null;
 
 try {
@@ -261,7 +292,7 @@ try {
   }
 
   const smoke = run(process.execPath, [path.join(root, 'tests', 'e2e', 'w71-packaged-smoke.mjs')], {
-    env: { ...process.env, MAZZ_E2E_EXECUTABLE: installedExe },
+    env: { ...process.env, MAZZ_E2E_EXECUTABLE: installedExe, MAZZ_E2E_WINDOWS_SHELL: '1' },
   });
   smokeExitCode = smoke.status;
   const smokeLine = String(smoke.stdout || '').trim().split(/\r?\n/).filter(Boolean).at(-1) || '';
@@ -272,6 +303,13 @@ try {
   }
   if (smokeExitCode !== 0) {
     throw new Error(`Installed executable smoke failed: ${smoke.stderr || smoke.stdout}`);
+  }
+  if (smokeResult.integrationLaunchMode !== 'windows-shell') {
+    throw new Error(`Installed executable smoke bypassed Windows Shell: ${JSON.stringify(smokeResult)}`);
+  }
+  executableRelease = await waitForExecutableRelease(installedExe);
+  if (!executableRelease.released) {
+    throw new Error(`Installed executable remained locked after app shutdown: ${JSON.stringify(executableRelease)}`);
   }
 } catch (error) {
   primaryError = error;
@@ -344,7 +382,7 @@ const evidence = {
     originalAssociationBackupsPreserved: originalBackupsPreservedAfterReinstall,
     windowsIntegration: sameVersionReinstallIntegration ? compactIntegration(sameVersionReinstallIntegration) : null,
   },
-  installedRuntime: { smokeExitCode, smokeResult },
+  installedRuntime: { smokeExitCode, smokeResult, executableRelease },
   uninstall: {
     exitCode: uninstallExitCode,
     executableRemoved: !after.installedExeExists,

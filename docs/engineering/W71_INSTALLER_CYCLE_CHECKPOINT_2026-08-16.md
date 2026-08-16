@@ -74,7 +74,7 @@ npm run test:w71:installer
 
 ## 6. 后续补证
 
-同日后续检查点已修复并验证文件关联 / `mazz://` 的注册所有权、唯一 ProgID、命令引号、二实例消费与卸载对称性，并继续验证同一 specimen 的同目录重复安装不会覆盖原文件类型 owner 备份；见 [`W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md) 与 [`W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md`](./W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md)。本文件以下停止线以这些后续证据为准更新。
+同日后续检查点已修复并验证文件关联 / `mazz://` 的注册所有权、唯一 ProgID、命令引号、二实例消费与卸载对称性，并继续验证同一 specimen 的同目录重复安装不会覆盖原文件类型 owner 备份，以及 Windows Shell 能真实分发协议和 Markdown；见 [`W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_INTEGRATION_CHECKPOINT_2026-08-16.md)、[`W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md`](./W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md) 与 [`W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md)。本文件以下停止线以这些后续证据为准更新。
 
 ## 7. 未关闭边界
 

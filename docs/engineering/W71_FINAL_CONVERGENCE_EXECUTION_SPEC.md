@@ -1238,6 +1238,8 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 同一安装门禁随后加入同 specimen、同目录第二次静默安装：第二次安装后 EXE hash、卸载注册、五条系统集成命令保持正确，四类关联 backup 仍精确等于首次安装前捕获的原 owner，没有被当前 Mazz ProgID 覆盖；覆盖后的正式 EXE 再完成 20 轮 packaged smoke，最终卸载仍恢复原 owner 并清除全部 Mazz 私有状态。该结果只关闭同版本 reinstall / repair 子门禁，不能外推为真实跨版本升级、失败升级、降级或回滚。证据见 [`W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md`](./W71_SAME_VERSION_REINSTALL_CHECKPOINT_2026-08-16.md) 与 schema v3 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
 
+安装态系统集成随后不再由测试直接启动已知 EXE，而改由 Windows `url.dll/FileProtocolHandler` 根据 `mazz://home` 和 `.md` 注册分发；两条路径均抵达现有主实例并真实打开 Browser / Markdown，系统规范化协议尾斜杠不再被当作失败。为防 Shell 子进程退出与卸载抢跑，测试在 uninstaller 前新增 installed EXE 可改名/还原占用探针；最终成功轮退出后一次即释放，卸载归零。该结果关闭当前主机、主实例已运行时的 Windows Shell 分发子门禁；Explorer 可见 UI、UserChoice/默认应用争用与主实例未运行时的冷启动 Shell 仍 OPEN。证据见 [`W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md`](./W71_WINDOWS_SHELL_DISPATCH_CHECKPOINT_2026-08-16.md)。
+
 完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：真实媒体设备与 AudioContext/GIF 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 分发合规仍未闭环，签名、覆盖升级/回滚、默认应用争用、系统 Shell 可见 UI 和异机安装矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。

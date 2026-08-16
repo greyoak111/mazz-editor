@@ -91,8 +91,9 @@ describe('W71 许可证据', () => {
     assert.ok(main.includes('pendingProtocolUrls.splice(0).forEach(handleProtocol)'));
     assert.ok(shell.includes("window.mazz.on('protocol:open'"));
     assert.ok(smoke.includes('MAZZ_E2E_EXECUTABLE'));
-    assert.ok(smoke.includes("spawnSync(executablePath, [protocolUrl]"));
+    assert.ok(smoke.includes('launchIntegrationTarget(protocolUrl)'));
     assert.ok(smoke.includes('associatedFileObserved'));
+    assert.ok(smoke.includes("['url.dll,FileProtocolHandler', target]"));
     assert.ok(cycle.includes("run(installer, ['/S', `/D=${installDir}`])"));
     assert.ok(cycle.includes('MAZZ_E2E_EXECUTABLE: installedExe'));
     assert.ok(cycle.includes("run(uninstaller, ['/S'])"));
@@ -102,5 +103,7 @@ describe('W71 许可证据', () => {
     assert.ok(cycle.includes('windowsIntegrationRemoved'));
     assert.ok(cycle.includes('sameVersionReinstall'));
     assert.ok(cycle.includes('originalAssociationBackupsPreserved'));
+    assert.ok(cycle.includes("MAZZ_E2E_WINDOWS_SHELL: '1'"));
+    assert.ok(cycle.includes('waitForExecutableRelease(installedExe)'));
   });
 });

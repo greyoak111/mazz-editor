@@ -27,6 +27,12 @@ try {
     MAZZ_E2E_FACTORY_DELAY_MS: '100',
     NODE_ENV: 'test',
   };
+  const useWindowsShell = process.platform === 'win32' && process.env.MAZZ_E2E_WINDOWS_SHELL === '1';
+  const launchIntegrationTarget = (target) => spawnSync(
+    useWindowsShell ? 'rundll32.exe' : executablePath,
+    useWindowsShell ? ['url.dll,FileProtocolHandler', target] : [target],
+    { cwd: root, env: launchEnv, encoding: 'utf8', windowsHide: true, timeout: 30000 },
+  );
   app = await electron.launch({
     executablePath,
     env: launchEnv,
@@ -221,32 +227,55 @@ try {
     };
   }, { watchedFile: path.join(workspace, 'packaged-smoke.md'), viewerFile: path.join(workspace, 'packaged-viewer.svg') });
   const protocolUrl = 'mazz://home';
-  const protocolLaunch = spawnSync(executablePath, [protocolUrl], {
-    cwd: root, env: launchEnv, encoding: 'utf8', windowsHide: true, timeout: 30000,
-  });
+  const protocolLaunch = launchIntegrationTarget(protocolUrl);
   if (protocolLaunch.error) throw protocolLaunch.error;
-  if (protocolLaunch.status !== 0) throw new Error(`mazz:// 二实例转发失败：${protocolLaunch.stderr || protocolLaunch.stdout}`);
+  if (protocolLaunch.status !== 0) throw new Error(`mazz:// 系统分发失败：${protocolLaunch.stderr || protocolLaunch.stdout}`);
+
+  try {
+    await win.waitForFunction(expectedProtocol => String(window.__mazzProtocolLast || '').replace(/\/+$/, '') === expectedProtocol.replace(/\/+$/, '')
+      && !!document.querySelector('.browser-root'), protocolUrl, { timeout: 30000 });
+  } catch (error) {
+    const state = await win.evaluate(() => ({
+      protocol: window.__mazzProtocolLast || '',
+      browserVisible: !!document.querySelector('.browser-root'),
+    }));
+    throw new Error(`mazz:// 系统分发未抵达 renderer：${JSON.stringify(state)}；${error.message}`);
+  }
 
   const associatedFile = path.join(workspace, 'packaged-smoke.md');
-  const fileLaunch = spawnSync(executablePath, [associatedFile], {
-    cwd: root, env: launchEnv, encoding: 'utf8', windowsHide: true, timeout: 30000,
-  });
+  const fileLaunch = launchIntegrationTarget(associatedFile);
   if (fileLaunch.error) throw fileLaunch.error;
-  if (fileLaunch.status !== 0) throw new Error(`文件关联参数二实例转发失败：${fileLaunch.stderr || fileLaunch.stdout}`);
+  if (fileLaunch.status !== 0) throw new Error(`文件关联系统分发失败：${fileLaunch.stderr || fileLaunch.stdout}`);
+
+  try {
+    await win.waitForFunction((expectedFile) => {
+      const slash = value => String(value || '').replace(/\\/g, '/').toLowerCase();
+      const tabs = window.MazzShell?.paneTree?.leaves?.().flatMap(leaf => leaf.tabs.tabs) || [];
+      return tabs.some(tab => slash(tab.filePath) === slash(expectedFile));
+    }, associatedFile, { timeout: 30000 });
+  } catch (error) {
+    const state = await win.evaluate(() => ({
+      tabs: (window.MazzShell?.paneTree?.leaves?.().flatMap(leaf => leaf.tabs.tabs) || [])
+        .map(tab => ({ moduleId: tab.moduleId, filePath: tab.filePath || '' })),
+    }));
+    throw new Error(`文件关联系统分发未抵达 renderer：${JSON.stringify(state)}；${error.message}`);
+  }
 
   await win.waitForFunction(({ expectedProtocol, expectedFile }) => {
     const slash = value => String(value || '').replace(/\\/g, '/').toLowerCase();
+    const protocolTarget = value => String(value || '').replace(/\/+$/, '');
     const tabs = window.MazzShell?.paneTree?.leaves?.().flatMap(leaf => leaf.tabs.tabs) || [];
-    return window.__mazzProtocolLast === expectedProtocol
+    return protocolTarget(window.__mazzProtocolLast) === protocolTarget(expectedProtocol)
       && !!document.querySelector('.browser-root')
       && tabs.some(tab => slash(tab.filePath) === slash(expectedFile));
   }, { expectedProtocol: protocolUrl, expectedFile: associatedFile }, { timeout: 30000 });
 
-  const integrationResult = await win.evaluate(async ({ expectedProtocol, expectedFile, baselineResources }) => {
+  const integrationResult = await win.evaluate(async ({ expectedProtocol, expectedFile, baselineResources, useWindowsShell }) => {
     const slash = value => String(value || '').replace(/\\/g, '/').toLowerCase();
+    const protocolTarget = value => String(value || '').replace(/\/+$/, '');
     const tabs = window.MazzShell.paneTree.leaves().flatMap(leaf => leaf.tabs.tabs);
     const targets = tabs.filter(tab => tab.moduleId === 'browser' || slash(tab.filePath) === slash(expectedFile));
-    const protocolObserved = window.__mazzProtocolLast === expectedProtocol
+    const protocolObserved = protocolTarget(window.__mazzProtocolLast) === protocolTarget(expectedProtocol)
       && targets.some(tab => tab.moduleId === 'browser');
     const associatedFileObserved = targets.some(tab => slash(tab.filePath) === slash(expectedFile));
     for (const tab of targets) await window.MazzShell.closeTabFlow(tab.id);
@@ -258,11 +287,17 @@ try {
       await new Promise(resolve => setTimeout(resolve, 50));
     } while (Date.now() < until);
     return {
+      integrationLaunchMode: useWindowsShell ? 'windows-shell' : 'direct-executable',
       protocolObserved,
       associatedFileObserved,
       integrationResourcesReturnedToBaseline: resources.activeCount === baselineResources,
     };
-  }, { expectedProtocol: protocolUrl, expectedFile: associatedFile, baselineResources: runtimeResult.baselineResources });
+  }, {
+    expectedProtocol: protocolUrl,
+    expectedFile: associatedFile,
+    baselineResources: runtimeResult.baselineResources,
+    useWindowsShell,
+  });
 
   const result = { ...runtimeResult, ...integrationResult };
   if (!result.title || result.resourceVersion !== 1 || !result.mainWindowObserved || !result.ptyObserved
