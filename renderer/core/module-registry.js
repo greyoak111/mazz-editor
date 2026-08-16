@@ -62,9 +62,20 @@ class ModuleRegistry {
     if (!def) throw new Error(`[modules] 未注册模块: ${name}`);
     this.detach(tabId);
     const state = def.create(container) || {};
-    const inst = { name, def, container, state };
+    const inst = { name, def, container, state, ready: null };
     this.instances.set(tabId, inst);
-    if (restoreContent != null) def.setContent(restoreContent, state);
+    // setContent 既允许同步模块，也允许 DOCX/XLSX 这类异步导入模块。
+    // ready 永不向外抛出未处理拒绝；外壳必须依据 {ok,error} 决定是否把标签登记为“已打开”。
+    let loadResult;
+    try {
+      loadResult = restoreContent != null ? def.setContent(restoreContent, state) : undefined;
+    } catch (error) {
+      loadResult = Promise.reject(error);
+    }
+    inst.ready = Promise.resolve(loadResult).then(
+      () => ({ ok: true, error: null }),
+      error => ({ ok: false, error }),
+    );
     def.activate(container, state);
     return inst;
   }

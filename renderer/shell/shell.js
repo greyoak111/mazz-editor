@@ -22,6 +22,7 @@ import { StatusBar } from './statusbar.js';
 import { ProgressRelay } from '../core/progress-relay.js';
 import { ActivityCenter } from '../core/activity-center.js';
 import { ALL_CODE_EXTENSIONS, CODE_FILE_EXTENSIONS, CODE_FILE_DEFAULTS, CODE_NEW_FILE_TYPES, LANGUAGE_BY_EXT } from '../modules/code/language-catalog.js';
+import { assertNativeOpenContent, assertOfficeContainer } from '../lib/file-open-policy.js';
 
 const CODE_SAMPLE = `// Mazz Editor · 编程内核
 // F5 调试 · Ctrl+\` 终端 · Ctrl+Enter 运行选区 · F12 跳定义 · Shift+F12 引用
@@ -55,6 +56,11 @@ const EXT_MODULE = {
 };
 // W59c：底层 RUNNERS 已覆盖的扩展名统一进代码模块；已有专用查看器/文档路由保持优先。
 for (const ext of ALL_CODE_EXTENSIONS) if (!EXT_MODULE[ext]) EXT_MODULE[ext] = 'code';
+// 这些格式由专用二进制/路径读取器接管；其余文件在进入文本编辑链前必须先通过轻量探针。
+const DIRECT_OPEN_EXTENSIONS = new Set([
+  ...Object.keys(EXT_MODULE).filter(ext => EXT_MODULE[ext] === 'viewer'),
+  'xlsx', 'docx', 'pptx', 'xmind', 'epub', 'cbz', 'mobi', 'azw3',
+]);
 
 function defaultExt(moduleId) {
   return { text: '.txt', mindmap: '.mindmap', draw: '.mazzdraw' }[moduleId] || '.md';
@@ -578,6 +584,7 @@ export class Shell {
         const bin = atob(b64);
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        assertOfficeContainer(ext, bytes);
         if (ext === 'pptx') {
           const { pptxToOutline } = await import('../modules/slide/pptx-import.js');
           content = await pptxToOutline(bytes.buffer);
@@ -595,7 +602,7 @@ export class Shell {
         this.showExternalConflict(current);
         return false;
       }
-      inst.def.setContent(content, inst.state);
+      await inst.def.setContent(content, inst.state);
       const owner = this.findTabById(tab.id);
       owner?.tabs.setDirty(tab.id, false);
       snapshots.untrack(tab.id);
@@ -856,6 +863,13 @@ export class Shell {
     return { tab, inst };
   }
 
+  /** 撤回尚未完成加载的标签；失败文件不能留下空白标签、快照或正式入口痕迹。 */
+  async discardFailedOpen(tab) {
+    if (!tab || !this.findTabById(tab.id)) return;
+    tab.forceClose = true;
+    await this.closeTabFlow(tab.id);
+  }
+
   /** 上下文 Ribbon：按当前模块重建「开始」页（契约 toolbarHTML/bindToolbar） */
   rebuildModuleRibbon(tab) {
     this.ribbon.removePage('module');
@@ -962,7 +976,7 @@ export class Shell {
 
   /** W58d 大文件降级通道：ProseMirror 无虚拟化=整树渲染此量级必卡死（8.3MB/10万行 md 打开即渲染进程崩落实锤）——
    *  降级走 Monaco（虚拟化+自带 largeFileOptimizations，官方大文件姿势）；docx 走 mammoth extractRawText 轻提取 */
-  async openLargeFile(filePath, ext, size) {
+  async openLargeFile(filePath, ext, size, encoding = 'utf8') {
     const name = filePath.split(/[\\/]/).pop();
     const mb = (size / 1048576).toFixed(1);
     let content;
@@ -976,7 +990,8 @@ export class Shell {
       content = await extractRawTextFromDocx(bytes.buffer);
     } else {
       toast(`大文件降级：${name}（${mb}MB）以轻快编辑器打开——富文本引擎整树渲染此量级必卡死`, [], 6000);
-      content = await window.mazz.invoke('fs:readFile', { path: filePath });
+      content = await window.mazz.invoke('fs:readFile', { path: filePath, encoding });
+      if (content.charCodeAt(0) === 0xfeff) content = content.slice(1);
     }
     const { tab, inst } = this.openTab('code', { title: name, filePath, content });
     if (inst?.def.setLanguage) {
@@ -988,15 +1003,46 @@ export class Shell {
     await window.mazz?.invoke('recent:add', { path: filePath });
     this.fileTree.markActive(filePath);
     this.syncTitle();
+    return true;
   }
 
   async openFile(filePath) {
-    const ext = filePath.split('.').pop().toLowerCase();
+    const ext = (filePath.match(/\.([^./\\]+)$/)?.[1] || '').toLowerCase();
     const moduleId = EXT_MODULE[ext] || 'text';
+    // 同一路径只激活现有标签；不得重新 attach 后在解析失败时误删用户已打开的好标签。
+    const existing = this.tabsForPath(filePath)[0];
+    if (existing) {
+      const pane = this.paneTree.paneOfTab(existing.id);
+      pane?.tabs.activate(existing.id);
+      if (pane) this.paneTree.setActive(pane);
+      this.fileTree.markActive(filePath);
+      this.syncTitle();
+      return true;
+    }
+
+    let probe = null;
+    let textEncoding = 'utf8';
+    if (!DIRECT_OPEN_EXTENSIONS.has(ext)) {
+      try { probe = await window.mazz.invoke('fs:probeFile', { path: filePath }); }
+      catch (e) { toast(`打开失败：${e.message}`); return false; }
+      if (!probe?.isFile) { toast('打开失败：目标不是可读取的文件'); return false; }
+      if (probe.kind === 'binary') {
+        toast(`无法打开：${ext ? `.${ext} ` : ''}是未支持的二进制格式，请使用系统默认应用`);
+        return false;
+      }
+      if (probe.kind === 'unsupported-encoding') {
+        toast('无法打开：文本编码暂不支持，请先转换为 UTF-8 或 UTF-16 LE');
+        return false;
+      }
+      textEncoding = probe.encoding || 'utf8';
+    }
     // W58d 大文件降级闸：md/txt/mazz 超 1.5MB / docx 超 3MB 一律走降级通道（富文本引擎卡死防线）
-    if (['md', 'markdown', 'mazz', 'txt', 'docx'].includes(ext)) {
-      const st = await window.mazz.invoke('fs:stat', { path: filePath }).catch(() => null);
-      if (st?.size > (ext === 'docx' ? 3 * 1024 * 1024 : 1.5 * 1024 * 1024)) return this.openLargeFile(filePath, ext, st.size);
+    if (['md', 'markdown', 'mazz', 'txt', 'docx'].includes(ext) || moduleId === 'text') {
+      const st = probe || await window.mazz.invoke('fs:stat', { path: filePath }).catch(() => null);
+      if (st?.size > (ext === 'docx' ? 3 * 1024 * 1024 : 1.5 * 1024 * 1024)) {
+        try { return await this.openLargeFile(filePath, ext, st.size, textEncoding); }
+        catch (e) { toast(`打开失败：${e.message}`); return false; }
+      }
     }
     // epub/cbz/mobi/azw3：进书库入库打开（原来是当文本打开成乱码）
     if (ext === 'epub' || ext === 'cbz' || ext === 'mobi' || ext === 'azw3') {
@@ -1005,11 +1051,15 @@ export class Shell {
       tab.forceClose = false;
       this.tabs.setDirty(tab.id, false);
       const libInst = modules.instances.get(tab.id);
-      await libInst?.def.importPath?.(filePath, libInst.state);
+      const bookId = await libInst?.def.importPath?.(filePath, libInst.state);
+      if (!bookId) {
+        await this.discardFailedOpen(tab);
+        return false;
+      }
       await window.mazz?.invoke('recent:add', { path: filePath });
       this.fileTree.markActive(filePath);
       this.syncTitle();
-      return;
+      return true;
     }
     // OPML/FreeMind/XMind：导图格式导入（v37；v45 改确定性管道——先解析再开签，
     // 旧流程开空签再延时 350ms 投 __activeMindmapCtl，慢机/他签激活时投空或投错签=打开为空）
@@ -1030,11 +1080,11 @@ export class Shell {
         const { tab: t2 } = this.openTab('mindmap', { title: name2, filePath, content: JSON.stringify({ parentLinks: [], notes: [], refLines: [], ...doc }) });
         t2.forceClose = false;
         this.tabs.setDirty(t2.id, false);
-      } catch (e) { toast('导图导入失败：' + e.message); return; }
+      } catch (e) { toast('导图导入失败：' + e.message); return false; }
       await window.mazz?.invoke('recent:add', { path: filePath });
       this.fileTree.markActive(filePath);
       this.syncTitle();
-      return;
+      return true;
     }
     // 图片/PDF：查看器模块按路径读二进制，不走文本通道（否则打开全是乱码）
     if (moduleId === 'viewer') {
@@ -1047,7 +1097,7 @@ export class Shell {
           this.paneTree.setActive(leaf);
           this.fileTree.markActive(filePath);
           this.syncTitle();
-          return;
+          return true;
         }
       }
       const { tab } = this.openTab('viewer', { title: name, filePath, content: { path: filePath } });
@@ -1056,7 +1106,7 @@ export class Shell {
       await window.mazz?.invoke('recent:add', { path: filePath });
       this.fileTree.markActive(filePath);
       this.syncTitle();
-      return;
+      return true;
     }
     let content = '';
     try {
@@ -1065,6 +1115,7 @@ export class Shell {
         const bin = atob(b64);
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        assertOfficeContainer(ext, bytes);
         if (ext === 'pptx') {
           const { pptxToOutline } = await import('../modules/slide/pptx-import.js');
           content = await pptxToOutline(bytes.buffer);
@@ -1072,12 +1123,23 @@ export class Shell {
           content = ext === 'xlsx' ? { __xlsx: bytes.buffer } : { __docx: bytes.buffer };
         }
       } else {
-        content = await window.mazz.invoke('fs:readFile', { path: filePath });
+        content = await window.mazz.invoke('fs:readFile', { path: filePath, encoding: textEncoding });
+        if (content.charCodeAt(0) === 0xfeff) content = content.slice(1);
       }
     }
-    catch (e) { toast(`打开失败：${e.message}`); return; }
+    catch (e) { toast(`打开失败：${e.message}`); return false; }
+    try { assertNativeOpenContent(ext, content); }
+    catch (e) { toast(`打开失败：${e.message}`); return false; }
     const name = filePath.split(/[\\/]/).pop();
     const { tab, inst } = this.openTab(moduleId, { title: name, filePath, content });
+    const loaded = await inst.ready;
+    if (!loaded.ok) {
+      await this.discardFailedOpen(tab);
+      toast(`打开失败：${loaded.error?.message || loaded.error || '文件内容无法解析'}`);
+      return false;
+    }
+    // 异步解析期间用户可能已经关签；迟到成功不得再登记 recent/watch 或复活路径状态。
+    if (!this.findTabById(tab.id) || modules.instances.get(tab.id) !== inst) return false;
     if (moduleId === 'code' && LANGUAGE_BY_EXT[ext] && inst?.def.setLanguage) {
       inst.def.setLanguage(LANGUAGE_BY_EXT[ext], inst.state);
     }
@@ -1087,6 +1149,7 @@ export class Shell {
     await window.mazz?.invoke('fs:watch', { paths: [filePath] });
     this.fileTree.markActive(filePath);
     this.syncTitle();
+    return true;
   }
 
   async saveTab(tab, { saveAs = false } = {}) {
@@ -1876,6 +1939,12 @@ export class Shell {
       filePath: snapshot.filePath || null,
       content: snapshot.content,
     });
+    const loaded = await inst.ready;
+    if (!loaded.ok) {
+      await this.discardFailedOpen(tab);
+      toast(`恢复“${snapshot.title || '分窗标签'}”失败：${loaded.error?.message || loaded.error || '内容无法解析'}`);
+      return false;
+    }
     if (snapshot.progress != null && typeof inst?.def?.applyProgress === 'function') {
       await inst.def.applyProgress(snapshot.progress, inst.state);
     }

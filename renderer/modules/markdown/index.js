@@ -652,14 +652,13 @@ export default {
     if (!ctl) return;
     if (data && typeof data === 'object' && data.__docx) {
       window.MazzHost?.toast('正在解析 docx…');
-      import('./docx-io.js').then(({ importDocx }) => importDocx(schema, data.__docx)).then(({ doc, warnings }) => {
+      return import('./docx-io.js').then(({ importDocx }) => importDocx(schema, data.__docx)).then(({ doc, warnings }) => {
         const tr = ctl.view.state.tr.replaceWith(0, ctl.view.state.doc.content.size, doc.content);
         tr.setMeta('addToHistory', false);
         ctl.view.dispatch(tr);
         ctl.tocPanel?.update();
         window.MazzHost?.toast(warnings.length ? `docx 已导入（${warnings.length} 条降级提示）` : 'docx 已导入');
-      }).catch(e => window.MazzHost?.toast('docx 解析失败：' + e.message));
-      return;
+      });
     }
     ctl.setMarkdown(typeof data === 'string' ? data : '');
   },

@@ -440,13 +440,12 @@ export default {
     if (!ctl) return;
     if (data && typeof data === 'object' && data.__xlsx) {
       toast('正在解析 xlsx…');
-      import('./io.js').then(io => io.importXlsx(null, data.__xlsx)).then(wb => {
+      return import('./io.js').then(io => io.importXlsx(null, data.__xlsx)).then(wb => {
         ctl.wb = wb;
         ctl.rebuildGrid();
         ctl.renderTabs();
         toast(`已导入 ${wb.sheets.length} 个工作表`);
-      }).catch(e => toast('xlsx 解析失败：' + e.message));
-      return;
+      });
     }
     const text = typeof data === 'string' ? data : '';
     if (text.startsWith('{')) {

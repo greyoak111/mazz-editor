@@ -252,6 +252,7 @@ function registerChannels() {
   // —— 文件系统 ——
   bus.handle('fs:readFile', async ({ path: p, encoding }) => fs.readFileSync(p, encoding || 'utf8'));
   bus.handle('fs:readFileBase64', async ({ path: p }) => fs.readFileSync(p).toString('base64'));
+  bus.handle('fs:probeFile', async ({ path: p }) => require('./file-probe').probeFileSync(p));
   // Windows 原子写：rename 遇 EPERM/EACCES/EBUSY（目标被外部程序占用/杀软扫描）退化为覆盖拷贝，重试两轮后仍败则报人话
   const writeAtomic = (p, data, encoding) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });

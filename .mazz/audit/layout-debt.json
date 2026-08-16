@@ -1130,21 +1130,21 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/sheet/index.js",
-      "line": 836,
+      "line": 835,
       "sample": "<div class=\"set-row\" id=\"vd-num-row\" style=\"display:none\"><label>最小</label><input id=\"vd-min\" class=\"rb-input\" type=\"number\" style=\"width:70px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/sheet/index.js",
-      "line": 837,
+      "line": 836,
       "sample": "<label>最大</label><input id=\"vd-max\" class=\"rb-input\" type=\"number\" style=\"width:70px\"></div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/sheet/index.js",
-      "line": 932,
+      "line": 931,
       "sample": "`<button class=\"rb-btn\" style=\"flex-direction:row;min-width:110px;margin:2px\" data-fn=\"${n}\">${n}</button>`).join('')}"
     },
     {
@@ -1977,35 +1977,35 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 314,
+      "line": 320,
       "sample": "<div style=\"min-width:560px;max-width:720px\">"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/shell/shell.js",
-      "line": 320,
+      "line": 326,
       "sample": "<div style=\"font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${s.name}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3271,
+      "line": 3340,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3286,
+      "line": 3355,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3308,
+      "line": 3377,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {

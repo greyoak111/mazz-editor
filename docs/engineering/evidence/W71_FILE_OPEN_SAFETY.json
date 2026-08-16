@@ -1,0 +1,93 @@
+{
+  "gate": "W71 damaged-large-unsupported-file-open safety",
+  "executablePath": "D:/output/Mazz Editor/release/win-unpacked/Mazz Editor.exe",
+  "invalidCases": [
+    {
+      "name": "bad-header.docx",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "broken.docx",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "broken.xlsx",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "broken.epub",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "broken.mazzsheet",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "empty.mazzdraw",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "unknown.bin",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "legacy-encoding.odd",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    },
+    {
+      "name": "large-broken.docx",
+      "result": false,
+      "leaked": false,
+      "tabs": 0,
+      "recents": 0
+    }
+  ],
+  "validUtf16": {
+    "result": true,
+    "path": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-open-ws-CahFwb/valid-utf16.txt",
+    "content": "W71 合法 UTF16 文本"
+  },
+  "conversionFailure": {
+    "result": false,
+    "dirty": true,
+    "path": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-open-ws-CahFwb/conversion-must-not-overwrite.xlsx"
+  },
+  "writeFailure": {
+    "result": false,
+    "dirty": true,
+    "path": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-open-ws-CahFwb/write-blocked.md"
+  },
+  "assertions": {
+    "invalidCasesRejected": true,
+    "noPhantomTabsRecentOrSnapshots": true,
+    "validUtf16AcceptedLosslessly": true,
+    "conversionFailurePreservedOriginalAndDirtyState": true,
+    "writeFailurePreservedDirtyStateAndCleanedTemporaryFile": true,
+    "noRendererErrors": true
+  },
+  "generatedAt": "2026-08-16T13:42:25.022Z"
+}

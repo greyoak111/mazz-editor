@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 31,
-    "scannedLines": 7536
+    "scannedFiles": 32,
+    "scannedLines": 7596
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -102,37 +102,37 @@
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 771,
+      "line": 772,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 812,
+      "line": 813,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 829,
+      "line": 830,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1102,
+      "line": 1103,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1441,
+      "line": 1442,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1517,
+      "line": 1518,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -322,12 +322,12 @@
       "evidence": [
         {
           "file": "renderer/shell/shell.js",
-          "line": 437,
+          "line": 443,
           "sample": "const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 441,
+          "line": 447,
           "sample": "if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）"
         }
       ]
@@ -351,7 +351,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2141,
+          "line": 2210,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]
@@ -370,17 +370,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1290,
+          "line": 1291,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1383,
+          "line": 1384,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1412,
+          "line": 1413,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -418,7 +418,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 1443,
+          "line": 1444,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]

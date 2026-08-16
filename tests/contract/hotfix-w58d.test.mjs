@@ -23,7 +23,7 @@ describe('① 看图/PDF 连带播放器根治', () => {
 describe('② 大文件降级通道', () => {
   test('降级闸+阈值+Monaco 通道', () => {
     const sh = readSrc('renderer/shell/shell.js');
-    assert.ok(sh.includes('openLargeFile(filePath, ext, size)'), 'openLargeFile 必须有');
+    assert.ok(sh.includes('openLargeFile(filePath, ext, size'), 'openLargeFile 必须有且可扩展可选参数');
     assert.ok(sh.includes("['md', 'markdown', 'mazz', 'txt', 'docx'].includes(ext)"), '降级闸扩展名族必须在');
     assert.ok(sh.includes('3 * 1024 * 1024 : 1.5 * 1024 * 1024'), '双阈值必须在（docx 3MB/文本 1.5MB）');
     assert.ok(sh.includes("this.openTab('code'"), '降级必须走 code（Monaco 虚拟化）');
