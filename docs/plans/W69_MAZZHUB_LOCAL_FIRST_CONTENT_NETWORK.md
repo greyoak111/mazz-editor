@@ -3,12 +3,13 @@
 ### World Branch Governance × Transparent AI Production Market
 
 > 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
-> 版本：v1.3
+> 版本：v1.4
 > 登记日期：2026-08-15
 > 基础材料：维护者《MazzHub 内容生态升格纲要》，SHA-256 `089FD81DDFC5F07829199F9A7DCA6250E4AC902E1E92F4FEFDAD46EF15837195`
 > 增量材料：维护者《World Branch Governance × Transparent AI Production Market》，SHA-256 `E5DAF440261A56AAE97EF99B8453298D1D76D0205A0D9C4A90A27AA0E2A2D127`
 > 第二增量：维护者《Media Production Workflows / Industry Workflow Compiler》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 第三增量：维护者《Production Organization Compiler / Organizational Compiler》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
+> 第四增量：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
 
 ## 0. 升格结论
@@ -184,7 +185,7 @@ W69 的六柱不能替代内容站最低闭环。W69 必须按阶段补齐：
 | Report / Block / Permission | 公共空间治理 | 上线前必需 |
 | Monetization | 商业化扩展 | 后置，但 schema 不堵死 |
 
-私信、群聊和复杂实时社交后置。公开 Comment/Danmaku Event Feed 不等于多人共看 Room，更不授权把 W69 做成 Discord。
+私信、群聊和复杂实时社交后置。公开 Comment/Danmaku Event Feed 不等于多人共看 Room，更不授权把 W69 做成 Discord。弹幕的媒体时钟、Timeline Index、Lane Allocator、碰撞/密度和 Canvas/GPU 渲染归 [`W83_DANMAKU_RUNTIME.md`](./W83_DANMAKU_RUNTIME.md)；W69 只持有公共事件身份、权限、审核和同步。
 
 ## 4. 六根支柱
 
@@ -482,6 +483,10 @@ Canon Merge 提升事实而不吞并 Branch。一个 Fact 被 Partial Merge 只�
 | W80 Civilization Model | 未来可生成/验证 World 事实 | World Package 不依赖 W80 才能存在 |
 | W81 Event Ledger | 私有个人工作运行史，可为本地 Factory 提供只读证据 | 不替代 Production Run Ledger，不把个人行为默认投影到 Hub |
 | W82 Organizational Compiler | 本地组织考古、Workflow Package、Compiler、Artifact DAG、Authority 与跨域垂直生产线 | W69 只持有 Workflow Publication/Market，不另造 Compiler/Factory Runtime 或托管私有生产事实 |
+| W83 Danmaku Runtime | 本地 media-clock scheduler/lane/render；W69 只提供公共 Danmaku Event | Event Feed 不进入 Publication blob，W83 不接管 Player/P2P |
+| W84 `.maz` Standard | Workflow/organization/world 等 Definition Profile 的可移植包络 | Hub 只分发显式 Promotion 的包，不执行脚本、不保存 Run/secret |
+| W85 Context/Coverage | 可为本地发布流程提供上下文与义务证据 | Hub 不接收私人 Context Package 或 Wave Graph |
+| W86 Physical Production | 仅远期公共方法/Capability 元数据候选 | Hub 不控制设备、不托管现场状态或安全凭据 |
 | 旧 W69 模板市场 | 降为 Publication/Capability 的一个市场与 registry 分支 | 不再代表 W69 全部定位 |
 
 ## 7. W69 分波施工规格
@@ -602,12 +607,13 @@ Public World → Hub Discover → Open in Mazz → Fork
 ### W69m — Workflow Publication & Public Market
 
 - W82 Local Workflow Package → W74c Promotion → Workflow Publication；
+- W84 只读检查通过的 workflow/organization Profile 可作为一种交付容器，但 `.maz` 文件、Workflow Publication 与运行实例仍是三层对象；
 - Hub Workflow Page、搜索/收藏/Fork、版本/许可证/兼容性与 migration preview；
 - Workflow/Team/Seat/成本/质量/返工/交付时间的跨行业透明市场视图；
 - Fork 回本地后先做 Capability、权限、许可证与缺件检查，再由 W82 编译；
 - Official Workflow 不默认加权，热门 Fork 不覆盖原 Package。
 
-依赖：W82a/g、W69a/b/c/j/k 与 W74c。退出 Gate：公共包可被另一台 Mazz 检查、Fork、迁移预览和重新编译，同时不泄露原项目私有资产、仓库、数据、密钥或本机路径。
+依赖：W82a/g、W84a–c、W69a/b/c/j/k 与 W74c。退出 Gate：公共包可被另一台 Mazz 无执行检查、Fork、迁移预览和重新编译，同时不泄露原项目私有资产、仓库、数据、密钥、本机路径或 Runtime Instance。
 
 ## 8. 五个 Hard Validation Samples
 
@@ -686,4 +692,4 @@ A 证明 Content Fabric，B 证明 World Network，C 证明 Transparent AI Produ
 - 在 W71 之外经维护者批准后冻结 W69a Publication Contract ADR；
 - 用纸面 fixture 检查与 W72/W74c 的身份和 Promotion 边界。
 
-未经独立授权不得建设 Hub 服务、账号系统、中心数据库、P2P daemon、公共 Seed、World runtime、Organizational Compiler/Factory Runtime、Production Record 公共服务、排行榜、AUTO Router、AI Challenge、软件发布/研究/动画/游戏入口、跨行业 Worker Market 或正式市场。
+未经独立授权不得建设 Hub 服务、账号系统、中心数据库、P2P daemon、公共 Seed、World runtime、Organizational Compiler/Factory Runtime、Danmaku Runtime、统一 `.maz` loader、Context/Coverage Runtime、Physical Production Runtime、Production Record 公共服务、排行榜、AUTO Router、AI Challenge、软件发布/研究/动画/游戏入口、跨行业 Worker Market 或正式市场。

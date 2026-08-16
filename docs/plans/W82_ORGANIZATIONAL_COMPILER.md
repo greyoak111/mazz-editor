@@ -2,10 +2,11 @@
 ## Production Organization Compiler / 生产组织编译器
 
 > 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
-> 版本：v0.2
+> 版本：v0.3
 > 登记日期：2026-08-15
 > 基础材料：维护者《Media Production Workflows / Industry Workflow Compiler 增量》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 升格材料：维护者《Production Organization Compiler / Organizational Compiler 增量》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
+> 技术补遗：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
 > 公共生态接口：[`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
 
@@ -128,7 +129,16 @@ Organizational Compiler != Factory Runtime
 Human Final != automated Gate
 ```
 
-Executor 可以是模型、Agent、脚本、CLI、外部 OSS 工具或人；Seat 表达职责和交接契约，不随 Executor 更换而改变。
+Executor 可以是 Human、Model、Agent、Script、外部 Tool、Supplier；远期还可能是 Robot、CNC、PLC、Vision 或 Warehouse。Seat 表达职责和交接契约，不随 Executor 更换而改变。物理 Executor 只在 W86 独立安全架构获批后进入，当前 W82 只冻结类型边界。
+
+```text
+Seat != Model
+Seat != Machine
+Seat != Supplier
+Capability != Executor
+```
+
+同一“表面检测”Seat 可以由 Vision Machine A、Machine B 或 Machine B + Human inspection 承担；更换执行者不能偷改 Artifact Contract、Gate、Authority 或 Safety requirement。
 
 ## 3. Workflow Package 一等资产
 
@@ -220,6 +230,31 @@ Compiler 不直接执行工具、批准现实行动或持有运行事实。W68/W
 编译必须确定性：同一 Package version、输入快照、Capability profile 和 routing lock 应产生可比较计划。AUTO 路由如受 W69k 市场视图影响，必须记录公式、证据窗口、候选与人工覆盖。
 
 W82 只决定“什么组织适合稳定地产生目标交付物”；W73 决定“这次运行现在处于什么状态”。两者不得共享一套含混数据库，也不得让 Compiler 冒充 Orchestrator。
+
+### 4.1 Evidence-backed State Transition / 证据支持的状态迁移
+
+完成不是 Executor 的一句声明。任何正式迁移都必须区分：
+
+```text
+Verification   事实、格式、schema、数值是否满足规则
+Review         是否存在缺口、冲突、遗漏或风险
+Evaluation     多个合法方案中哪个更优
+Authority      谁有资格使结果生效
+```
+
+前三项可以逐步由 deterministic check、独立 AI review、adversarial review 或 external/formal check 承担；Authority 不能被“前三项全绿”自动吞并。
+
+```text
+Produce
+→ Deterministic Verification
+→ Independent Review
+→ Adversarial / Formal Check
+→ Evidence Bundle
+→ Authority Decision
+→ State Transition
+```
+
+Machine Governance 的目标不是继续提醒模型守纪律，而是把 repository/symbol evidence、Blueprint Authority、reuse inventory、mandatory test gate、architecture lock、UNKNOWN/BLOCKED、diff scope 和 destructive action authority 编译成“没有证据或权限就没有生效权”。
 
 ## 5. Artifact DAG 与局部重做
 
@@ -376,10 +411,12 @@ Workflow 排名属于 W69k/l 市场视图：比较“完成某类交付物的生
 
 ## 10. 施工拆波
 
-### W82a — Organizational Kernel & Archaeology Contract
+### W82a — Organizational Kernel, Archaeology & Transition Contract
 
 - 冻结 Goal/Constraint/Asset/Method/Budget 输入与 Team/Seat/Artifact/Gate/Authority/Executor/Routing/Recovery 输出；
 - 冻结组织考古记录：岗位保留、合并、消失的理由和证据；
+- 冻结 Verification/Review/Evaluation/Authority 分层与 Evidence-backed State Transition；
+- 冻结 UNKNOWN/BLOCKED、权限拒绝、破坏性动作和异常恢复为合法状态；
 - Package validation、确定性编译、Artifact DAG、预算和恢复点；
 - 纸面 fixtures 证明 Seat/Model/Harness/Capability 分层，以及 Compiler/Runtime 分权。
 
@@ -484,6 +521,9 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 | W79 External Tool | Blender/FFmpeg/engine/CLI 等结构化执行 | 不揉入外部工具源码或克隆 UI |
 | W69 | Workflow 公共投影、发现、Fork、Charts/跨行业 Worker Market | Hub 不执行本地生产线或托管私有生产事实 |
 | W80 | 可选的 World simulation/effect evidence | W82 不依赖 W80 才能生产 |
+| W84 `.maz` Standard | Workflow/organization 包的可移植 Definition profile | `.maz` 不保存 W73 Runtime Instance |
+| W85 Context Compiler | 为 Seat 编译可寻址上下文与覆盖证明 | 长上下文不等于 Plan/State/Coverage |
+| W86 Physical Production | 远期 Robot/CNC/PLC/Supplier executor 与安全边界 | W82/W73 无权绕过 Safety Kernel 或直控设备 |
 
 ## 14. 永久禁区
 
@@ -499,6 +539,8 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 × AUTO Routing 隐藏证据与覆盖权
 × 一次 Gate 通过 = Human Final / Publication / Canon
 × AI/Agent 自动取得法律签字、财务签发、生产发布或不可逆现实行动权
+× Executor 自报“完成”直接推动正式 State Transition
+× Verification / Review / Evaluation 全绿自动取得 Authority
 × 局部修改默认全项目重跑
 × 公共 Workflow 自动读取私有 Project、World、Repository、数据、密钥或素材
 × Hub 成为 Workflow 或工件唯一真相
@@ -521,10 +563,11 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 9. 成本、耗时、版本、许可证、来源、人工决定和 Recovery 可追；
 10. 缺工具、失败、取消、重开均不留下幽灵进程、越权动作或伪成品；
 11. Workflow 的本地真相与 Hub 公共投影可分别撤回和导出；
-12. Sample D 与 Sample E 全链通过。
+12. 任一正式完成态都有 Evidence Bundle、Authority owner 与可解释 State Transition；
+13. Sample D 与 Sample E 全链通过。
 
 ## 16. 当前停止线
 
-本文件只完成 W82 v0.2 Design Capsule、W69 第六柱/AI Market 接口与施工拆波。W71 内不得据此引入模型、外部工具、后台服务、Workflow Runtime、软件发布/研究/动画/游戏入口、跨行业 Worker Market 或公共市场。
+本文件只完成 W82 v0.3 Design Capsule、W69 第六柱/AI Market 接口、Evidence-backed State Transition 与施工拆波。W71 内不得据此引入模型、外部工具、后台服务、Workflow Runtime、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
 
 下一步只允许在 W71 RC 后经维护者独立批准，先冻结 W82a Organizational Kernel/Archaeology ADR；不得直接从“做成动画”“发布 repo”或“生成研究报告”按钮开工。
