@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.26
+> 版本：v2.27
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 当前 specimen 安装回归已通过，推荐封板 RC 收口账本已冻结**
+> 状态：**IN PROGRESS / C1–C2 已结案，进入 C3 发布与许可封口**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -1297,3 +1297,5 @@ Factory 故障矩阵随后用正式 `win-unpacked`、真实 Electron `net.fetch`
 当前源码随即完成发布回归：新 installer 为 `141,035,270` bytes，SHA-256 `262D17B5D77CCA65C27110B3CF51CCE4C1736686CC72DF69A4D66F9250D1B030`；win-unpacked `597,463,879` bytes，app.asar `290,160,579` bytes，packaged source map `0`，unpacked native `10` files / `2,625,024` bytes，FFmpeg 分发材料 `5/5`。schema v5 再次通过 clean install、同版本 reinstall、五入口、UserChoice 不改写、安装态 20 轮 ResourceLedger `2→2`、正常退出与 silent uninstall；Agent Adapter/Session 仍诚实记录为 `0/0`。构建明确因没有证书跳过代码签名。后续不再把所有 OPEN 混作同等级阻塞，而依 [`W71_RC_CLOSURE_LEDGER_2026-08-16.md`](./W71_RC_CLOSURE_LEDGER_2026-08-16.md) 分成 RC BLOCKER、CONDITIONAL GATE、ACTIVATION GATE 与 POST-W71 COMPLETENESS；常态预计四个宏观收口波次后进入新内容选择。
 
 C1 正式入口成熟度检查点随后完成：新增中心三态表，只控制产品表达而不删除实现。Mobile、Updater、W62e 和 Agent 通用 UI 保持 Hidden；W66 Harness Foundation 保持 internal；DMHY、Recorder、Plugins、OCR 与 Archive 统一定为 Preview。Hidden 命令不进入注册表，Preview 命令由单源自动补“（预览）”；工具坞、命令面板、原生面板、同步面板、帮助窗和 DMHY 数据源全部消费同一结论。Electron 原生帮助窗曾被实包验收发现漏过滤，已与网页帮助合流。全量 `151/151`；重建 installer `141,039,379` bytes，SHA-256 `C42DA6BF08CEBFDB1AE5623B999A5FEAC93A7C07F361F2CBCEDA48196A7509A8`，win-unpacked `597,470,288` bytes，app.asar `290,166,988` bytes，source map `0`，实包 UI 无 renderer error。C1 结案后，距新增内容常态还剩 C2–C4 三个宏观波次；完整主义能力的实现、接口和激活条件继续保留到 Post-W71，不回流扩大 C2。证据见 [`W71_PRODUCT_MATURITY_CHECKPOINT_2026-08-16.md`](./W71_PRODUCT_MATURITY_CHECKPOINT_2026-08-16.md) 与 [`W71_PRODUCT_MATURITY.json`](./evidence/W71_PRODUCT_MATURITY.json)。
+
+C2 正式主路径产品完整性检查点继而结案：模块注册表为所有模块生成稳定 `module.*` 图标身份，Shell 页签、恢复和跨窗交接只持久化 `iconId`，Library 创建/开书/返回/关闭/恢复全程保持 `module.library → 同一 SVG`。Library、Notes、内嵌 Markdown、Notes Graph 和 Viewer 补齐代表性 owner/dispose；Library 20 次循环及 packaged 关签后的三模块 owner 均归零。实包验证过程中抓出并修复 Notes 启动“今日笔记”覆盖显式恢复，以及写盘进行中 close/handoff 越过保存屏障两项真实竞态。Paper/Ink、可见键盘焦点、disabled、空态/不支持态和 1024×720 窄窗口末端控件可达性均通过，renderer error 为 0；全量增至 `152/152`。这只关闭推荐封板的代表性正式路径，整应用图标/像素/DPI 穷举和完整 Session/运行时组合继续留在 Post-W71。距新增内容常态只剩 C3 发布许可与 C4 冻结 specimen 三次独立复跑两个宏观波次。证据见 [`W71_FORMAL_MAIN_PATHS_CHECKPOINT_2026-08-16.md`](./W71_FORMAL_MAIN_PATHS_CHECKPOINT_2026-08-16.md) 与 [`W71_FORMAL_MAIN_PATHS.json`](./evidence/W71_FORMAL_MAIN_PATHS.json)。

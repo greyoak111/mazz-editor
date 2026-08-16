@@ -128,6 +128,7 @@ function createLibrary(container) {
     fontSize: 16, fontFamily: '', lineHeight: 1.8,
     readTheme: 'paper', mode: 'single', direction: 'ltr', // ltr 左到右 | rtl 右到左（日漫）
     catFilter: '', batchMode: false, batchSel: new Set(),
+    _destroyed: false, _openGen: 0,
   };
 
   // ==================== 书架 ====================
@@ -138,7 +139,9 @@ function createLibrary(container) {
 
   async function renderShelf() {
     const books = await getShelf();
+    if (ctl._destroyed) return;
     const cats = await allCats();
+    if (ctl._destroyed) return;
     // 分类筛选下拉
     const filterSel = root.querySelector('.lib-cat-filter');
     filterSel.innerHTML = `<option value="">全部（${books.length}）</option>` + cats.map(c => {
@@ -359,12 +362,15 @@ function createLibrary(container) {
 
   // ==================== 阅读室 ====================
   async function openBook(id) {
+    const gen = ++ctl._openGen;
     const book = (await getShelf()).find(b => b.id === id);
-    if (!book) { toast('书籍不存在'); return; }
+    if (ctl._destroyed || gen !== ctl._openGen) return false;
+    if (!book) { toast('书籍不存在'); return false; }
     try {
       let bytes = null;
       if (book.format !== 'manga-folder') {
         const b64 = await window.mazz.invoke('fs:readFileBase64', { path: book.path });
+        if (ctl._destroyed || gen !== ctl._openGen) return false;
         const bin = atob(b64);
         bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -378,6 +384,7 @@ function createLibrary(container) {
       const progress = (await window.mazz.invoke('settings:get', { key: PROGRESS_KEY }).catch(() => ({}))) || {};
       // R1：同步位置账按文件路径取件，覆盖旧版仅按 bookId 的单机记忆。
       const synced = window.MazzProgress?.get ? await window.MazzProgress.get('library', book.path).catch(() => null) : null;
+      if (ctl._destroyed || gen !== ctl._openGen) return false;
       if (synced?.value) progress[id] = { ...(progress[id] || {}), ...synced.value };
       // 分栏屏位比例（重开恢复用；只在分栏横排布局完成后消费一次）
       ctl._pendingRatio = (typeof progress[id]?.ratio === 'number') ? progress[id].ratio : null;
@@ -417,24 +424,29 @@ function createLibrary(container) {
         ctl.book.cbz = await parseCbz(bytes.buffer);
         ctl.pageIdx = Math.min(progress[id]?.page || 0, ctl.book.cbz.count - 1);
       }
+      if (ctl._destroyed || gen !== ctl._openGen) return false;
       shelfView.style.display = 'none';
       readerView.style.display = 'flex';
       root.querySelector('.lib-book-title').textContent = book.title;
       window.MazzHost?.setTabTitle(container, book.title);
       // 净化规则与简繁偏好随书恢复（加工链版本戳驱动章节回炉）
       ctl._cleanRules = rulesForBook(await getAllRules(), book.id);
+      if (ctl._destroyed || gen !== ctl._openGen) return false;
       ctl.zhMode = progress[id]?.zh || '';
       root.querySelector('.lib-zh').value = ctl.zhMode || '';
       root._zhProxy?.setCurrent(ctl.zhMode || ''); // B12b：只同步按钮文案——不派 change（否则 openBook 期 saveProgress/showCurrent 被连坐双跑）
       renderToc();
       applyReadTheme();
       await showCurrent();
+      if (ctl._destroyed || gen !== ctl._openGen) return false;
       // 首开后台写预处理缓存（下次零解析直开——只疼第一次）
       if (ctl.book?.meta?.format === 'epub' && ctl.book.epub && !ctl.book.epub._fromCache && ctl.book.epub._srcStat) {
         writeBookCache(book.id, ctl.book.epub._srcStat, ctl.book.epub).catch(() => {});
       }
+      return true;
     } catch (e) {
-      toast('打开失败：' + (e.message || e));
+      if (!ctl._destroyed && gen === ctl._openGen) toast('打开失败：' + (e.message || e));
+      return false;
     }
   }
 
@@ -1211,7 +1223,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     readerView.style.display = 'none';
     shelfView.style.display = 'flex';
     ctl.book = null;
-    window.MazzHost?.setTabTitle(container, '📚 书库');
+    window.MazzHost?.setTabTitle(container, '书库');
     renderShelf();
   });
   root.querySelector('[data-a=toc]').addEventListener('click', () => {
@@ -1223,10 +1235,11 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
   root.querySelector('[data-a=mark]').addEventListener('click', addMark);
   root.querySelector('[data-a=marks]').addEventListener('click', showMarks);
   // 选区缓存：点「摘录」按钮时焦点转移会把正文选区折叠清空（实时 getSelection 必空=「无法摘录」总根）
-  document.addEventListener('selectionchange', () => {
+  const onDocumentSelectionChange = () => {
     const t = (window.getSelection()?.toString() || '').trim();
     if (t) ctl._lastSel = t;
-  });
+  };
+  document.addEventListener('selectionchange', onDocumentSelectionChange);
   root.querySelector('[data-a=clip]').addEventListener('click', async () => {
     const text = readSelection() || ctl._lastSel || ''; // 帧内选区优先（沙箱帧后正文选区在帧里）
     if (!text) { toast('先选中一段文字'); return; }
@@ -1450,9 +1463,11 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
 
   // 投稿会话下载完成 → 自动入库
   if (window.mazz?.on) {
-    window.mazz.on('library:download', async ({ path, name }) => {
+    ctl._offDownload = window.mazz.on('library:download', async ({ path, name }) => {
+      if (ctl._destroyed) return;
       try {
         const bookId = await importPath(path);
+        if (ctl._destroyed) return;
         if (!bookId) throw new Error('文件未能写入书架');
         toast(`📚 已自动入库：${name}`);
         window.MazzActivity?.publish?.({ id: `download-${path}`, source: 'download', title: '下载已入书库', detail: name || path.split(/[\\/]/).pop(), status: 'done', target: { kind: 'library', bookId, path } });
@@ -1472,13 +1487,34 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
   ctl.exportBookMarkdown = exportBookMarkdown;
   ctl.captureProgress = progressRecord;
   ctl.applyProgress = async (rec) => {
-    if (!ctl.book || !rec) return;
+    if (ctl._destroyed || !ctl.book || !rec) return;
     ctl._pendingRatio = typeof rec.ratio === 'number' ? rec.ratio : null;
     ctl._pendingAnchor = rec.anchor || null;
     if (ctl.book.meta.format === 'epub') ctl.chapterIdx = Math.max(0, Math.min(Number(rec.chapter) || 0, totalPages() - 1));
     else ctl.pageIdx = Math.max(0, Math.min(Number(rec.page) || 0, totalPages() - 1));
     if (rec.zh != null) ctl.zhMode = rec.zh || '';
     await showCurrent();
+  };
+  ctl.destroy = () => {
+    if (ctl._destroyed) return;
+    ctl._destroyed = true;
+    ctl._openGen++;
+    clearTimeout(progTimer);
+    clearTimeout(ctl._flowHideT);
+    ctl._flowRO?.disconnect?.();
+    ctl._flowRO = null;
+    try { ctl.book?.cbz?.unloadAll?.(); } catch {}
+    try { ctl.book?.epub?.unloadAll?.(); } catch {}
+    ctl._frame?.remove?.();
+    ctl._frame = null;
+    ctl._fdoc = null;
+    document.removeEventListener('selectionchange', onDocumentSelectionChange);
+    try { ctl._offDownload?.(); } catch {}
+    ctl._offDownload = null;
+    root.remove();
+    instances.delete(container);
+    if (current === ctl) current = null;
+    if (window.__activeLibraryCtl === ctl) window.__activeLibraryCtl = null;
   };
 
   renderShelf();
@@ -1505,18 +1541,24 @@ export default {
     contextKeys.set('module', MODULE);
   },
   deactivate(container) {
-    if (current === instances.get(container)) current = null;
+    const ctl = instances.get(container);
+    if (current === ctl) current = null;
+    if (window.__activeLibraryCtl === ctl) window.__activeLibraryCtl = null;
+  },
+  dispose(state) {
+    const ctl = instances.get(state?.container) || state;
+    ctl?.destroy?.();
   },
   getContent(state) {
     const ctl = instances.get(state.container);
     return JSON.stringify({ mark: 'mazz-library-v2', bookId: ctl?.book?.meta?.id || null });
   },
-  setContent(data, state) {
+  async setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;
     try {
       const obj = typeof data === 'string' ? JSON.parse(data) : data;
-      if (obj?.bookId) ctl.openBook?.(obj.bookId);
+      if (obj?.bookId) return await ctl.openBook?.(obj.bookId);
     } catch {}
   },
   newDocument(state) {

@@ -4,6 +4,7 @@ import { commands } from './command-registry.js';
 import { keymap } from './keymap-service.js';
 import { menus } from './menu-service.js';
 import { contextKeys } from './contextkey-service.js';
+import { moduleIconId, registerIcon, unregisterIcon } from './icon-registry.js';
 
 const REQUIRED = ['create', 'activate', 'deactivate', 'getContent', 'setContent', 'newDocument'];
 
@@ -22,6 +23,8 @@ class ModuleRegistry {
     def.name = name;
     def.displayName = def.displayName || name;
     def.icon = def.icon || '📄';
+    def.iconId = def.iconId || moduleIconId(name);
+    registerIcon(def.iconId, def.icon);
     this.defs.set(name, def);
     this._processContributes(name, def);
     return def;
@@ -47,6 +50,7 @@ class ModuleRegistry {
   }
 
   unregister(name) {
+    unregisterIcon(this.defs.get(name)?.iconId);
     this.defs.delete(name);
     commands.unregisterBySource(name);
     keymap.unregisterBySource(name);

@@ -621,6 +621,20 @@ export default {
   deactivate(container) {
     if (current === instances.get(container)) { current = null; window.__activeMarkdownCtl = null; }
   },
+  dispose(state) {
+    const ctl = instances.get(state?.container) || state;
+    if (!ctl) return;
+    try { ctl.tocPanel?.destroy?.(); } catch {}
+    try { ctl.commentsPanel?.destroy?.(); } catch {}
+    try { ctl.findBar?.el?.remove?.(); } catch {}
+    try { ctl.view?.destroy?.(); } catch {}
+    try { ctl.host?.remove?.(); } catch {}
+    instances.delete(ctl.container);
+    if (current === ctl) {
+      current = null;
+      window.__activeMarkdownCtl = null;
+    }
+  },
 
   // —— 内容 ——
   getContent(state) {

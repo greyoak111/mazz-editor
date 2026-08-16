@@ -4,6 +4,7 @@ import { menus } from '../core/menu-service.js';
 import { contextKeys } from '../core/contextkey-service.js';
 import { inputModal } from './shell.js';
 import { iconHtml } from '../lib/svg-icons.js';
+import { iconHtmlById, moduleIconId } from '../core/icon-registry.js';
 
 let seq = 1;
 
@@ -11,11 +12,11 @@ export class Tabs {
   constructor(root, area) {
     this.el = root;          // .tabbar
     this.area = area;        // .editor-area
-    this.tabs = [];          // {id, title, moduleId, filePath, dirty, pinned, view}
+    this.tabs = [];          // {id, title, moduleId, iconId, filePath, dirty, pinned, view}
     this.activeId = null;
   }
 
-  add({ title, moduleId, filePath = null }) {
+  add({ title, moduleId, iconId = moduleIconId(moduleId), filePath = null }) {
     // 同文件复用标签
     if (filePath) {
       const hit = this.tabs.find(t => t.filePath === filePath);
@@ -26,7 +27,7 @@ export class Tabs {
     view.className = 'module-view';
     view.dataset.tabId = id;
     this.area.appendChild(view);
-    const tab = { id, title, moduleId, filePath, dirty: false, pinned: false, view };
+    const tab = { id, title, moduleId, iconId, filePath, dirty: false, pinned: false, view };
     this.tabs.push(tab);
     this.render();
     this.activate(id);
@@ -91,7 +92,15 @@ export class Tabs {
       name.className = 't-name';
       name.innerHTML = '';
       if (t.pinned) { const pin = document.createElement('span'); pin.className = 'tab-pin'; pin.innerHTML = iconHtml('📌'); name.appendChild(pin); }
-      name.appendChild(document.createTextNode(t.title));
+      const icon = document.createElement('span');
+      icon.className = 't-icon';
+      icon.dataset.iconId = t.iconId;
+      icon.innerHTML = iconHtmlById(t.iconId);
+      name.appendChild(icon);
+      const label = document.createElement('span');
+      label.className = 't-label';
+      label.textContent = t.title;
+      name.appendChild(label);
       el.appendChild(name);
       if (t.dirty) {
         const d = document.createElement('span');

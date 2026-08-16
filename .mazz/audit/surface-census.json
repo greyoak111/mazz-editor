@@ -322,12 +322,12 @@
       "evidence": [
         {
           "file": "renderer/shell/shell.js",
-          "line": 443,
+          "line": 453,
           "sample": "const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 447,
+          "line": 457,
           "sample": "if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）"
         }
       ]
@@ -351,7 +351,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2210,
+          "line": 2236,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]

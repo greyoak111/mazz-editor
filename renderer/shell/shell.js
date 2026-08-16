@@ -24,6 +24,7 @@ import { ActivityCenter } from '../core/activity-center.js';
 import { ALL_CODE_EXTENSIONS, CODE_FILE_EXTENSIONS, CODE_FILE_DEFAULTS, CODE_NEW_FILE_TYPES, LANGUAGE_BY_EXT } from '../modules/code/language-catalog.js';
 import { assertNativeOpenContent, assertOfficeContainer } from '../lib/file-open-policy.js';
 import { visibleHelpSections } from '../core/product-maturity.js';
+import { moduleIconId } from '../core/icon-registry.js';
 
 const CODE_SAMPLE = `// Mazz Editor · 编程内核
 // F5 调试 · Ctrl+\` 终端 · Ctrl+Enter 运行选区 · F12 跳定义 · Shift+F12 引用
@@ -171,6 +172,14 @@ export class Shell {
         this.tabs.setDirty(tabId, true);
         snapshots.markDirty(tabId);
         bus.emit('doc:changed', { tabId });
+      },
+      setTabDirty: (container, dirty) => {
+        const tabId = this.containerTab.get(container);
+        if (!tabId) return;
+        const owner = this.findTabById(tabId);
+        owner?.tabs.setDirty(tabId, !!dirty);
+        if (dirty) snapshots.markDirty(tabId);
+        this.syncTitle();
       },
       setStatus: (container, text) => {
         const tabId = this.containerTab.get(container);
@@ -835,6 +844,7 @@ export class Shell {
       title: tab?.title || null,
       filePath: tab?.filePath || null,
       moduleId: inst?.name || tab?.moduleId,
+      iconId: tab?.iconId || inst?.def?.iconId || moduleIconId(inst?.name || tab?.moduleId),
       content: safeGet(() => inst?.def?.getContent(inst.state)),
       dirty: !!tab?.dirty,
       pinned: !!tab?.pinned,
@@ -846,7 +856,8 @@ export class Shell {
 
   openTab(moduleId, { title, filePath = null, content = null }) {
     this.hideWelcome();
-    const tab = this.tabs.add({ title, moduleId, filePath });
+    const iconId = modules.get(moduleId)?.iconId || moduleIconId(moduleId);
+    const tab = this.tabs.add({ title, moduleId, iconId, filePath });
     // 空内容视为 null：让模块用自身默认初始内容（如演示模板），不触发 setContent('') 清空
     const inst = modules.attach(tab.id, moduleId, tab.view, content ? content : null);
     try { inst.state.title = title; } catch {}
@@ -1156,6 +1167,10 @@ export class Shell {
   async saveTab(tab, { saveAs = false } = {}) {
     const inst = modules.instances.get(tab.id);
     if (!inst) return false;
+    if (inst.def.managedSave) {
+      const ok = typeof inst.def.beforeClose === 'function' ? await inst.def.beforeClose(inst.state) : true;
+      return ok !== false;
+    }
     if (inst.def.readOnly) { toast('查看器是只读模块，无需保存'); return false; } // 防呆：空内容写回媒体文件
     let target = tab.filePath;
     if (saveAs || !target) {
@@ -1233,13 +1248,18 @@ export class Shell {
     const tabsObj = pane ? pane.tabs : this.tabs;
     const tab = tabsObj.get(id);
     if (!tab) return;
-    if (tab.dirty && window.mazz?.isElectron) {
+    const inst = modules.instances.get(id);
+    if (tab.dirty && !inst?.def?.managedSave && window.mazz?.isElectron) {
       const r = await window.mazz.invoke('dialog:confirm', {
         title: '未保存的更改', message: `“${tab.title}”有未保存的更改。`,
         detail: '关闭前是否保存？', buttons: ['保存', '不保存', '取消'],
       });
       if (r === 2) return;
       if (r === 0) { const ok = await this.saveTab(tab); if (!ok) return; }
+    }
+    if (typeof inst?.def?.beforeClose === 'function') {
+      const ok = await inst.def.beforeClose(inst.state);
+      if (ok === false) return;
     }
     tab.forceClose = true;
     modules.detach(id);
@@ -1869,6 +1889,10 @@ export class Shell {
   async buildTabHandoff(tab) {
     const inst = tab && modules.instances.get(tab.id);
     if (!tab || !inst) throw new Error('标签实例尚未就绪');
+    if (typeof inst.def.beforeClose === 'function') {
+      const ok = await inst.def.beforeClose(inst.state);
+      if (ok === false) throw new Error(`“${tab.title}”仍有内容未能保存，已取消移交`);
+    }
     const content = inst.def.readOnly && tab.filePath
       ? { path: tab.filePath }
       : safeGet(() => inst.def.getContent(inst.state));
@@ -1880,6 +1904,7 @@ export class Shell {
     return {
       schemaVersion: 1,
       moduleId: tab.moduleId,
+      iconId: tab.iconId || inst.def.iconId || moduleIconId(tab.moduleId),
       title: tab.title,
       filePath: tab.filePath,
       content: content == null ? '' : content,

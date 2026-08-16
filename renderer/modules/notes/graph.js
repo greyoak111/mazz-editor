@@ -146,7 +146,7 @@ export class GraphView {
         if (h !== this.hover) { this.hover = h; this.canvas.style.cursor = h >= 0 ? 'pointer' : 'grab'; this.draw(); }
       }
     });
-    window.addEventListener('mouseup', (e) => {
+    this._onWindowMouseUp = (e) => {
       if (drag && !drag.moved) {
         const i = this.hitNode(e.offsetX ?? -1, e.offsetY ?? -1);
         // mouseup 在 window 上，offsetX/Y 相对目标元素——用 canvas 坐标重算
@@ -156,7 +156,8 @@ export class GraphView {
         if (j >= 0) this.onOpen?.(this.nodes[j].id);
       }
       drag = null;
-    });
+    };
+    window.addEventListener('mouseup', this._onWindowMouseUp);
     this.canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       const [wx, wy] = this.toWorld(e.offsetX, e.offsetY);
@@ -210,5 +211,9 @@ export class GraphView {
     });
   }
 
-  destroy() { this._ro?.disconnect(); }
+  destroy() {
+    this._ro?.disconnect();
+    if (this._onWindowMouseUp) window.removeEventListener('mouseup', this._onWindowMouseUp);
+    this._onWindowMouseUp = null;
+  }
 }

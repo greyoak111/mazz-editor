@@ -67,18 +67,42 @@ function createNotes(container) {
     dirty: false,
     lastContent: markdownModule.getContent(edState),
     graph: null,
+    _destroyed: false,
+    _openGen: 0,
   };
 
   async function saveNow() {
-    if (!ctl.dirty || !ctl.currentPath) return;
+    if (ctl._savePromise) {
+      const inFlightOk = await ctl._savePromise;
+      if (!inFlightOk) return false;
+      return ctl.dirty ? saveNow() : true;
+    }
+    if (!ctl.dirty || !ctl.currentPath) return true;
+    const path = ctl.currentPath;
     ctl.dirty = false;
     const content = markdownModule.getContent(edState);
-    try {
-      await window.mazz.invoke('fs:writeFile', { path: ctl.currentPath, content });
-      lib.invalidate();
-      ctl.blTimer && clearTimeout(ctl.blTimer);
-      ctl.blTimer = setTimeout(renderBacklinks, 800); // 保存后刷新反链
-    } catch (e) { toast('笔记保存失败：' + (e.message || e)); }
+    const pending = (async () => {
+      try {
+        await window.mazz.invoke('fs:writeFile', { path, content });
+        lib.invalidate();
+        if (!ctl.dirty && ctl.currentPath === path) window.MazzHost?.setTabDirty?.(container, false);
+        if (!ctl._destroyed) {
+          ctl.blTimer && clearTimeout(ctl.blTimer);
+          ctl.blTimer = setTimeout(renderBacklinks, 800); // 保存后刷新反链
+        }
+        return true;
+      } catch (e) {
+        ctl.dirty = true;
+        window.MazzHost?.setTabDirty?.(container, true);
+        if (!ctl._destroyed) toast('笔记保存失败：' + (e.message || e));
+        return false;
+      }
+    })();
+    ctl._savePromise = pending;
+    const ok = await pending;
+    if (ctl._savePromise === pending) ctl._savePromise = null;
+    if (ok && ctl.dirty) return saveNow();
+    return ok;
   }
 
   // 自动保存：1s 轮询内容变化，静默 1.5s 后落盘（Obsidian 式）
@@ -88,44 +112,56 @@ function createNotes(container) {
     if (c !== ctl.lastContent) {
       ctl.lastContent = c;
       ctl.dirty = true;
+      window.MazzHost?.setTabDirty?.(container, true);
       clearTimeout(ctl.saveTimer);
       ctl.saveTimer = setTimeout(saveNow, 1500);
     }
   }, 1000);
 
-  async function openNote(path) {
+  async function openNote(path, { generation = null } = {}) {
+    const gen = generation ?? ++ctl._openGen;
+    if (ctl._destroyed) return false;
     let content = '';
     try { content = (await window.mazz.invoke('fs:readFile', { path })) || ''; }
     catch { toast('打不开笔记：' + path); return; }
-    if (ctl.dirty) await saveNow();
+    if (ctl._destroyed || gen !== ctl._openGen) return false;
+    if (ctl.dirty && !(await saveNow())) return false;
+    if (ctl._destroyed || gen !== ctl._openGen) return false;
     ctl.currentPath = path;
     ctl.currentName = path.replace(/[\\/]/g, '/').split('/').pop().replace(/\.md$/i, '');
     markdownModule.setContent(content, edState);
     ctl.lastContent = markdownModule.getContent(edState);
     ctl.dirty = false;
+    window.MazzHost?.setTabDirty?.(container, false);
     window.MazzHost?.setTabTitle(container, ctl.currentName);
     setMode('editor');
     renderList();
     renderBacklinks();
+    return true;
   }
 
-  async function openDaily() {
+  async function openDaily({ generation = null } = {}) {
+    const gen = generation ?? ++ctl._openGen;
     const ws = await window.mazz.invoke('workspace:get');
+    if (ctl._destroyed || gen !== ctl._openGen) return false;
     const stamp = dateStamp();
     const path = `${ws}/${DAILY_DIR}/${stamp}.md`;
     // 用 stat 探测存在性（readFile 探测会把预期内 ENOENT 刷进主进程日志）
     const st = await window.mazz.invoke('fs:stat', { path }).catch(() => null);
+    if (ctl._destroyed || gen !== ctl._openGen) return false;
     const exists = !!st?.exists;
     if (!exists) {
       const week = WEEK[new Date().getDay()];
       await window.mazz.invoke('fs:writeFile', { path, content: `# ${stamp} 周${week}\n\n- [ ] \n` });
+      if (ctl._destroyed || gen !== ctl._openGen) return false;
       lib.invalidate();
     }
-    await openNote(path);
+    return await openNote(path, { generation: gen });
   }
 
   async function renderList() {
     const data = await lib.scanLibrary();
+    if (ctl._destroyed) return;
     const filter = filterEl.value.trim().toLowerCase();
     const items = data.entries
       .filter(e => !filter || e.name.toLowerCase().includes(filter))
@@ -147,6 +183,7 @@ function createNotes(container) {
   async function renderBacklinks() {
     if (!ctl.currentName) { blWrap.style.display = 'none'; return; }
     const list = (await lib.getBacklinks(ctl.currentName)).filter(x => x.path !== ctl.currentPath);
+    if (ctl._destroyed) return;
     blWrap.style.display = 'block';
     blList.innerHTML = list.length
       ? list.map(x => `<div class="notes-bl-item" data-path="${x.path.replace(/"/g, '&quot;')}">← ${x.name}</div>`).join('')
@@ -165,9 +202,11 @@ function createNotes(container) {
 
   async function renderGraph() {
     const data = await lib.scanLibrary();
+    if (ctl._destroyed) return;
     if (!ctl.graph) ctl.graph = new GraphView(graphWrap, { onOpen: (p) => openNote(p) });
     // 等布局显示后再量尺寸
     requestAnimationFrame(() => {
+      if (ctl._destroyed || !ctl.graph) return;
       ctl.graph._resize();
       ctl.graph.setData(data.entries, ctl.currentPath);
     });
@@ -192,13 +231,29 @@ function createNotes(container) {
   ctl.setMode = setMode;
   ctl.refreshLibrary = async () => { await lib.scanLibrary({ force: true }); renderList(); renderBacklinks(); if (ctl.mode === 'graph') renderGraph(); };
   ctl.saveNow = saveNow;
+  ctl.destroy = () => {
+    if (ctl._destroyed) return;
+    if (ctl.dirty || ctl._savePromise) saveNow().catch(() => {});
+    ctl._destroyed = true;
+    clearInterval(ctl.pollTimer);
+    clearTimeout(ctl.saveTimer);
+    clearTimeout(ctl.blTimer);
+    ctl.graph?.destroy?.();
+    ctl.graph = null;
+    markdownModule.dispose?.(ctl.edState);
+    root.remove();
+    instances.delete(container);
+    if (current === ctl) current = null;
+  };
 
   // 初始化：装全局钩子 + 扫库 + 默认开今日笔记（若存在笔记）或空态
   if (!hookInstalled) { hookInstalled = true; lib.installGlobalHook(); }
+  const bootstrapGen = ctl._openGen;
   lib.scanLibrary().then(() => {
+    if (ctl._destroyed || ctl._openGen !== bootstrapGen) return;
     renderList();
     if (!ctl.currentPath) openDaily();
-  });
+  }).catch(() => {});
 
   return ctl;
 }
@@ -206,6 +261,7 @@ function createNotes(container) {
 export default {
   displayName: '笔记',
   icon: '📓',
+  managedSave: true,
   // 测试调试面
   _forTests: { instances },
 
@@ -223,6 +279,14 @@ export default {
   deactivate(container) {
     if (current === instances.get(container)) current = null;
   },
+  async beforeClose(state) {
+    const ctl = instances.get(state?.container) || state;
+    return ctl?.saveNow ? await ctl.saveNow() : true;
+  },
+  dispose(state) {
+    const ctl = instances.get(state?.container) || state;
+    ctl?.destroy?.();
+  },
   getContent(state) {
     const ctl = instances.get(state.container);
     return JSON.stringify({ mark: 'mazz-notes-v1', path: ctl?.currentPath || null });
@@ -236,18 +300,18 @@ export default {
     }
     return null;
   },
-  setContent(data, state) {
+  async setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;
     try {
       const obj = typeof data === 'string' ? JSON.parse(data) : data;
-      if (obj?.path) ctl.openNote(obj.path);
-      else ctl.openDaily();
-    } catch { ctl.openDaily(); }
+      if (obj?.path) return await ctl.openNote(obj.path);
+      return await ctl.openDaily();
+    } catch { return await ctl.openDaily(); }
   },
   newDocument(state) {
     const ctl = instances.get(state.container);
-    ctl?.openDaily();
+    return ctl?.openDaily();
   },
   getCharCount(state) {
     const ctl = instances.get(state.container);

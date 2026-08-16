@@ -418,6 +418,7 @@ async function bootEmptyPlayer(ctl) {
 export default {
   displayName: '播放器',
   icon: '🖼',
+  _forTests: { instances },
   progressKind: 'player',
   progressPath(state) { return state?.path || ''; },
   readOnly: true, // 只读模块：禁止保存/另存（防止空内容写回媒体文件）

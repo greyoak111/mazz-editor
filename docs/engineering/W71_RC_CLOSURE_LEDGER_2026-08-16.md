@@ -4,7 +4,7 @@
 >
 > 决策：**按推荐封板继续；完整主义扩展保留但后移**
 >
-> C1 检查点：基于 `main@145affe` 构建的 packaged specimen，全量 `151/151`
+> C2 检查点：正式 `win-unpacked` 主路径 Gate 通过，全量 `152/152`
 >
 > 作用：把“必须挡住首个可信 RC”的问题，与“需要外部条件”“某入口启用前再做”“长期完整主义”分开，避免历史欠账被遗忘，也避免它们无限阻塞新增内容。
 
@@ -27,15 +27,18 @@
 - 本机 clean install、同版本 reinstall、五入口、UserChoice 不改写、20 轮安装态运行、正常退出、卸载与残留检查；
 - 正式入口成熟度已形成单一三态源：Mobile/Updater/W62e/Agent UI Hidden，DMHY/Recorder/Plugins/OCR/Archive Preview；
 - 命令面板、工具坞、原生面板、同步面板、Electron 原生帮助窗与数据源已完成 packaged 一致性验收；
-- 当前树全量 `151/151`。
+- 稳定 `iconId → SVG` 注册表已接入模块页签、恢复与交接，Library 创建/开书/返回/重开/恢复保持单源；
+- Notes 写入失败、写入中关闭/交接与启动恢复竞态已闭环；Library/Notes/Viewer 代表性 owner 关签归零；
+- Paper/Ink、focus、disabled、empty/error 与 1024×720 窄窗可达性完成 packaged Gate；
+- 当前树全量 `152/152`。
 
 当前 specimen：installer `141,039,379` bytes，SHA-256 `C42DA6BF08CEBFDB1AE5623B999A5FEAC93A7C07F361F2CBCEDA48196A7509A8`；win-unpacked `597,470,288` bytes；app.asar `290,166,988` bytes；packaged source map `0`；unpacked native `10` files / `2,625,024` bytes。
 
-## 3. 推荐封板还剩三个宏观波次
+## 3. 推荐封板还剩两个宏观波次
 
 这里的“轮”是可独立验收的宏观波次，不等于一次提交。按当前证据，距进入 W71 后新增内容的推荐估计为：
 
-> **C1 已完成。常态还剩 3 轮；最顺利可压成 2 轮；若发现新的 P0/P1，最多按 4 轮预算。**
+> **C1–C2 已完成。常态还剩 C3–C4 两轮；若 C3 发现新的发布/许可 P0/P1，可拆成三轮，但不得以此召回 Post-W71 新功能。**
 
 ### C1 — 正式入口与低水位模块定级
 
@@ -53,6 +56,8 @@
 退出条件：自动入口清单与 packaged UI 逐项一致；不存在“看似正式、实际未闭环”的按钮。
 
 ### C2 — 正式主路径产品完整性
+
+**状态：COMPLETE。** 证据见 [`W71_FORMAL_MAIN_PATHS_CHECKPOINT_2026-08-16.md`](./W71_FORMAL_MAIN_PATHS_CHECKPOINT_2026-08-16.md) 与 [`W71_FORMAL_MAIN_PATHS.json`](./evidence/W71_FORMAL_MAIN_PATHS.json)。
 
 目标：只处理已经对外承诺的主路径，不展开全模块组合。
 
@@ -90,8 +95,6 @@
 
 | 阻塞 | 为什么仍挡 RC | 推荐处理 |
 |---|---|---|
-| UI Integrity 仍缺代表性运行态收口 | 静态 Census 不是产品验收，Library 多真源图标仍有已知 P1 | C2 只验正式主路径和代表尺寸/主题 |
-| Notes/Library/Viewer 的代表性数据/恢复边界未封 | 六类核心编辑稿已证实，但这三条正式路径仍没有同等级结论 | C2 补代表性 Gate；全组合后移 |
 | 跨版本策略未实证 | 同版本 reinstall 不能替代 upgrade/失败保持/用户数据策略 | C3 真升级；做不到则明确不支持并阻断自动升级入口 |
 | FFmpeg exact corresponding-source 未闭环 | 当前包能运行且许可材料入包，但 GPL 分发责任不能靠“不知道原 commit”结案 | C3 恢复来源、替换可闭环构建或降级相关正式能力 |
 | 最终 RC 独立复跑未完成 | 当前证据跨多个中间 specimen，尚缺冻结 hash 的统一结论 | C4 三次独立复跑与总报告 |
