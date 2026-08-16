@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T12:59:08.690Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "crashedPid": 22780,
+  "prompt": "⚠ 检测到 2 份未正常关闭的快照（自动保存/崩溃恢复）\n全部恢复\n忽略",
+  "before": {
+    "windows": 2,
+    "states": [
+      {
+        "id": "tab-1",
+        "title": "main.md",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/main.md",
+        "content": "# 主窗事故稿\n\nmain alpha beta",
+        "dirty": true,
+        "pinned": true,
+        "progress": {
+          "from": 2,
+          "to": 8
+        }
+      },
+      {
+        "id": "tab-1",
+        "title": "child.md",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/child.md",
+        "content": "# 分窗事故稿\n\nchild gamma delta",
+        "dirty": true,
+        "pinned": true,
+        "progress": {
+          "from": 3,
+          "to": 11
+        }
+      }
+    ],
+    "snapshots": [
+      {
+        "ownerId": "94cf657a-32d4-4c1d-b2d8-c929a6823416:2",
+        "tabId": "tab-1",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/child.md"
+      },
+      {
+        "ownerId": "94cf657a-32d4-4c1d-b2d8-c929a6823416:1",
+        "tabId": "tab-1",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/main.md"
+      }
+    ],
+    "sameTabIdAcrossOwners": true,
+    "resources": 3
+  },
+  "restored": {
+    "fallback": "flattened-into-main-window",
+    "states": [
+      {
+        "id": "tab-1",
+        "title": "main.md（已恢复）",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/main.md",
+        "content": "# 主窗事故稿\n\nmain alpha beta",
+        "dirty": true,
+        "pinned": true,
+        "progress": {
+          "from": 2,
+          "to": 8
+        }
+      },
+      {
+        "id": "tab-2",
+        "title": "child.md（已恢复）",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/child.md",
+        "content": "# 分窗事故稿\n\nchild gamma delta",
+        "dirty": true,
+        "pinned": true,
+        "progress": {
+          "from": 3,
+          "to": 11
+        }
+      }
+    ],
+    "snapshots": [
+      {
+        "ownerId": "6fec5646-e76b-4d1d-a687-300f7234e48d:1",
+        "tabId": "tab-2",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/child.md"
+      },
+      {
+        "ownerId": "6fec5646-e76b-4d1d-a687-300f7234e48d:1",
+        "tabId": "tab-1",
+        "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-multi-app-crash-ws-CcY6fr/main.md"
+      }
+    ],
+    "oneCurrentOwner": true,
+    "resources": 2
+  },
+  "pendingCleared": true,
+  "cleanRestartHasNoOffer": true,
+  "topologyRestored": false
+}

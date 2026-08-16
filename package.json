@@ -31,6 +31,7 @@
     "test:w71:window-handoff": "node tests/e2e/w71-window-handoff-runtime.mjs",
     "test:w71:child-crash-recovery": "node tests/e2e/w71-child-crash-recovery.mjs",
     "test:w71:app-crash-recovery": "node tests/e2e/w71-app-crash-recovery.mjs",
+    "test:w71:multiwindow-app-crash": "node tests/e2e/w71-multiwindow-app-crash-recovery.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },

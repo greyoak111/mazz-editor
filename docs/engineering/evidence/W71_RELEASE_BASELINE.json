@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-16T12:49:18.285Z",
+  "generatedAt": "2026-08-16T12:58:57.506Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -9154,8 +9154,8 @@
     },
     "installer": {
       "path": "release/Mazz Editor Setup 0.2.0.exe",
-      "bytes": 141036293,
-      "sha256": "476935D578D2F0B1E8416EAA74C560F5C3E59CE675DCC5548A4DA9B60F2F2830"
+      "bytes": 141036294,
+      "sha256": "E76FA573354667EDAB04BAD1CA05D7F76052D44DADCE328E1F9D0A9A74E5EC0B"
     }
   }
 }

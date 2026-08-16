@@ -101,6 +101,51 @@ describe('W71 whole-app crash recovery ownership', () => {
     }
   });
 
+  test('同一事故 run 的多 renderer 同名 tab 不互相覆盖，部分完成后只保留未决项', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-app-multi-owner-contract-'));
+    const snapshots = path.join(dir, 'snapshots');
+    fs.mkdirSync(snapshots, { recursive: true });
+    fs.writeFileSync(path.join(snapshots, 'RUNNING.flag'), JSON.stringify({ runId: 'crashed-run' }));
+    fs.writeFileSync(path.join(snapshots, 'main.json'), JSON.stringify({
+      tabId: 'tab-1', ownerId: 'crashed-run:1', filePath: 'D:/main.md',
+      moduleId: 'markdown', content: 'main', dirty: true, savedAt: 10,
+    }));
+    fs.writeFileSync(path.join(snapshots, 'child.json'), JSON.stringify({
+      tabId: 'tab-1', ownerId: 'crashed-run:2', filePath: 'D:/child.md',
+      moduleId: 'markdown', content: 'child', dirty: true, savedAt: 20,
+    }));
+    fs.writeFileSync(path.join(snapshots, 'stale.json'), JSON.stringify({
+      tabId: 'tab-1', ownerId: 'older-run:1', filePath: 'D:/stale.md',
+      moduleId: 'markdown', content: 'stale', dirty: true, savedAt: 999,
+    }));
+    const { handlers } = makeRecovery(dir);
+    const event = { sender: mainSender(11) };
+    try {
+      const offer = await handlers.get('crash:consumeAppRecovery')({}, event);
+      assert.equal(offer.reason, 'app-unclean');
+      assert.deepEqual(new Set(offer.snapshots.map(x => x.content)), new Set(['main', 'child']));
+      assert.equal(new Set(offer.snapshots.map(x => x.recoveryId)).size, 2);
+      assert.ok(offer.snapshots.every(x => x.tabId === 'tab-1'), 'renderer 内 tabId 碰撞必须靠 recoveryId 隔离');
+
+      const first = offer.snapshots.find(x => x.content === 'main');
+      const partial = await handlers.get('crash:finalizeAppRecovery')({ recoveryIds: [first.recoveryId] }, event);
+      assert.deepEqual(partial, { removed: 1, remaining: 1 });
+      const pending = JSON.parse(fs.readFileSync(path.join(snapshots, 'RECOVERY_PENDING.flag'), 'utf8'));
+      assert.deepEqual(pending.recoveryIds, [offer.snapshots.find(x => x.content === 'child').recoveryId]);
+
+      const repeated = await handlers.get('crash:consumeAppRecovery')({}, event);
+      assert.equal(repeated.snapshots.length, 1);
+      assert.equal(repeated.snapshots[0].content, 'child');
+      assert.deepEqual(await handlers.get('crash:finalizeAppRecovery')({ discardAll: true }, event), {
+        removed: 1, remaining: 0,
+      });
+      const left = await handlers.get('snapshot:list')();
+      assert.deepEqual(left.map(x => x.content), ['stale']);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test('child 或其他页面不能消费和完成整应用恢复批次', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-app-owner-contract-'));
     const snapshots = path.join(dir, 'snapshots');
