@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' mazz-res: data:; connect-src 'self' mazz-res:">
 <link rel="stylesheet" href="../styles/themes.css">
 <link rel="stylesheet" href="panel-shared.css">
-<title>压缩包</title>
+<title>压缩包（预览）</title>
 <style>
   html, body { background: transparent; margin: 0; height: 100%; overflow: hidden; }
   body { font-family: var(--font-ui); }
@@ -36,7 +36,7 @@
 </head>
 <body>
 <div class="pwin">
-  <div class="p-drag head"><h2 id="ttl">压缩包</h2></div>
+  <div class="p-drag head"><h2 id="ttl">压缩包（预览）</h2></div>
   <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="meta" id="meta">读取中…</div>
   <div class="list ps-scroll" id="list"></div>
@@ -66,7 +66,7 @@ let ARCH = null, jobId = null;
 
 function renderList(r) {
   ARCH = r;
-  $('#ttl').textContent = (r.path || '').split(/[\\/]/).pop();
+  $('#ttl').textContent = `${(r.path || '').split(/[\\/]/).pop()}（预览）`;
   $('#meta').textContent = `格式 ${r.fmt} · ${r.entries.length} 项 · 引擎 ${r.engine}`;
   $('#list').innerHTML = r.entries.map(e =>
     `<div class="row${e.dir ? ' d' : ''}"><span class="n">${e.dir ? '🗀 ' : ''}${e.name}</span><span class="s">${fmtSize(e.size)}${e.packed != null ? ' / ' + fmtSize(e.packed) : ''}</span></div>`).join('') || '<div class="err">空包</div>';

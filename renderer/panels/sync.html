@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
-<title>局域网同步 · 更新</title>
+<title>局域网同步</title>
 <link rel="stylesheet" href="../styles/themes.css">
 <link rel="stylesheet" href="panel-shared.css">
 <style>
@@ -40,7 +40,6 @@
   <div class="head">
     <button class="tab on" data-t="host">发起共享</button>
     <button class="tab" data-t="join">加入共享</button>
-    <button class="tab" data-t="update">检查更新</button>
   </div>
   <main id="m" class="ps-scroll-y"></main>
 </div>
@@ -58,6 +57,7 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 let tab = 'host', hostTimer = null;
 function setTab(t) {
+  if (t === 'update') t = 'host'; // Updater 入口在 W71 推荐封板中保持 Hidden。
   tab = t;
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   clearInterval(hostTimer); hostTimer = null;

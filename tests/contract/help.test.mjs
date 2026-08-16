@@ -4,6 +4,7 @@ import { describe, test, assert } from '../harness.mjs';
 
 const { renderHelpMd, openHelp, closeHelp } = await import('../../renderer/help/index.js');
 const { HELP_SECTIONS } = await import('../../renderer/help/content.js');
+const { visibleHelpSections } = await import('../../renderer/core/product-maturity.js');
 
 describe('帮助中心：Markdown 渲染器', () => {
   test('标题/列表/表格/行内格式/代码块', () => {
@@ -61,7 +62,8 @@ describe('帮助中心：查看器交互', () => {
     assert.ok(mask, '帮助应打开');
     assert.ok(mask.querySelector('.help-content').innerHTML.includes('快速上手'), '默认显示第一章');
     const items = mask.querySelectorAll('.help-toc-item');
-    assert.equal(items.length, HELP_SECTIONS.length, '目录应列全部章节');
+    assert.equal(items.length, visibleHelpSections(HELP_SECTIONS).length, '目录只列当前产品可见章节');
+    assert.ok(![...items].some(el => el.dataset.id === 'mobile'), 'Hidden 移动壳不得出现在正式帮助目录');
     // 切换章节
     const target = [...items].find(el => el.dataset.id === 'browser');
     target.click();

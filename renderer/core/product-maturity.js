@@ -1,0 +1,49 @@
+// renderer/core/product-maturity.js —— W71 正式入口成熟度单源
+// 这里只决定产品表达，不代表删除实现；Hidden 能力保留代码，直到自身 Activation Gate 通过。
+
+export const MATURITY = Object.freeze({
+  FORMAL: 'formal',
+  PREVIEW: 'preview',
+  HIDDEN: 'hidden',
+});
+
+// C1 产品级状态表：三态必须覆盖所有历史 PARTIAL 与低水位正式候选。
+export const PRODUCT_CAPABILITIES = Object.freeze({
+  mobile: Object.freeze({ maturity: MATURITY.HIDDEN, label: '移动壳' }),
+  updater: Object.freeze({ maturity: MATURITY.HIDDEN, label: '自动更新' }),
+  feed: Object.freeze({ maturity: MATURITY.HIDDEN, label: 'W62e 投喂管线' }),
+  agent: Object.freeze({ maturity: MATURITY.HIDDEN, label: 'Agent 执行器整合', foundation: 'internal' }),
+  dmhy: Object.freeze({ maturity: MATURITY.PREVIEW, label: '动漫花园 DMHY' }),
+  recorder: Object.freeze({ maturity: MATURITY.PREVIEW, label: '全局内录' }),
+  plugins: Object.freeze({ maturity: MATURITY.PREVIEW, label: '插件系统' }),
+  ocr: Object.freeze({ maturity: MATURITY.PREVIEW, label: '图片文字识别' }),
+  archive: Object.freeze({ maturity: MATURITY.PREVIEW, label: '压缩包' }),
+});
+
+const EXACT_COMMANDS = Object.freeze({
+  'update.check': MATURITY.HIDDEN,
+  'ocr.image': MATURITY.PREVIEW,
+  'rec.screen': MATURITY.PREVIEW,
+  'plugin.manage': MATURITY.PREVIEW,
+  'plugin.reload': MATURITY.PREVIEW,
+});
+
+const PREFIX_COMMANDS = Object.freeze([
+  ['archive.', MATURITY.PREVIEW],
+]);
+
+export function resolveCommandMaturity(id) {
+  if (EXACT_COMMANDS[id]) return EXACT_COMMANDS[id];
+  return PREFIX_COMMANDS.find(([prefix]) => String(id).startsWith(prefix))?.[1] || MATURITY.FORMAL;
+}
+
+export function maturityLabel(title, maturity) {
+  const text = String(title || '');
+  return maturity === MATURITY.PREVIEW && !text.includes('（预览）') ? `${text}（预览）` : text;
+}
+
+const HIDDEN_HELP_SECTIONS = new Set(['mobile']);
+
+export function visibleHelpSections(sections) {
+  return (sections || []).filter(section => !HIDDEN_HELP_SECTIONS.has(section.id));
+}

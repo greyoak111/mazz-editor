@@ -7,13 +7,13 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 
 const SITES = {
   dmhy: {
-    id: 'dmhy', name: '动漫花园',
+    id: 'dmhy', name: '动漫花园 DMHY（预览）',
     homeUrl: 'https://dongmanhuayuan.com/',
     searchUrl: (kw) => `https://dongmanhuayuan.com/search/${encodeURIComponent(kw)}/`,
     detailBase: 'https://dongmanhuayuan.com',
   },
   'dmhy-sync': {
-    id: 'dmhy-sync', name: '动漫花园（同步站）',
+    id: 'dmhy-sync', name: '动漫花园 DMHY（同步站 · 预览）',
     homeUrl: 'https://dongmanhuayuan.myheartsite.com/',
     searchUrl: (kw) => `https://dongmanhuayuan.myheartsite.com/search/${encodeURIComponent(kw)}/`,
     detailBase: 'https://dongmanhuayuan.myheartsite.com',

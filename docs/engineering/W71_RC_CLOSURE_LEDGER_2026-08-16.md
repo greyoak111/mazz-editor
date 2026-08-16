@@ -4,7 +4,7 @@
 >
 > 决策：**按推荐封板继续；完整主义扩展保留但后移**
 >
-> 当前基线：`main@9c3811f`，全量 `150/150`，当前 schema v5 安装回归 PASS
+> C1 检查点：基于 `main@145affe` 构建的 packaged specimen，全量 `151/151`
 >
 > 作用：把“必须挡住首个可信 RC”的问题，与“需要外部条件”“某入口启用前再做”“长期完整主义”分开，避免历史欠账被遗忘，也避免它们无限阻塞新增内容。
 
@@ -25,17 +25,21 @@
 - 9 类损坏/不支持输入拒绝、UTF-16 LE 无损读取、转换与写盘失败不伪成功；
 - source map/PDB/test 发布泄漏归零，FFmpeg 五份分发说明材料入包；
 - 本机 clean install、同版本 reinstall、五入口、UserChoice 不改写、20 轮安装态运行、正常退出、卸载与残留检查；
-- 当前树全量 `150/150`。
+- 正式入口成熟度已形成单一三态源：Mobile/Updater/W62e/Agent UI Hidden，DMHY/Recorder/Plugins/OCR/Archive Preview；
+- 命令面板、工具坞、原生面板、同步面板、Electron 原生帮助窗与数据源已完成 packaged 一致性验收；
+- 当前树全量 `151/151`。
 
-当前 specimen：installer `141,035,270` bytes，SHA-256 `262D17B5D77CCA65C27110B3CF51CCE4C1736686CC72DF69A4D66F9250D1B030`；win-unpacked `597,463,879` bytes；app.asar `290,160,579` bytes；packaged source map `0`；unpacked native `10` files / `2,625,024` bytes。
+当前 specimen：installer `141,039,379` bytes，SHA-256 `C42DA6BF08CEBFDB1AE5623B999A5FEAC93A7C07F361F2CBCEDA48196A7509A8`；win-unpacked `597,470,288` bytes；app.asar `290,166,988` bytes；packaged source map `0`；unpacked native `10` files / `2,625,024` bytes。
 
-## 3. 推荐封板还剩四个宏观波次
+## 3. 推荐封板还剩三个宏观波次
 
 这里的“轮”是可独立验收的宏观波次，不等于一次提交。按当前证据，距进入 W71 后新增内容的推荐估计为：
 
-> **常态 4 轮；最顺利可压成 3 轮；若发现新的 P0/P1，最多按 5 轮预算。**
+> **C1 已完成。常态还剩 3 轮；最顺利可压成 2 轮；若发现新的 P0/P1，最多按 4 轮预算。**
 
 ### C1 — 正式入口与低水位模块定级
+
+**状态：COMPLETE。** 证据见 [`W71_PRODUCT_MATURITY_CHECKPOINT_2026-08-16.md`](./W71_PRODUCT_MATURITY_CHECKPOINT_2026-08-16.md) 与 [`W71_PRODUCT_MATURITY.json`](./evidence/W71_PRODUCT_MATURITY.json)。
 
 目标：每个入口只处于 Formal、Preview/Experimental、Hidden 之一，并在真实 UI、帮助与命令入口保持一致。
 
@@ -86,8 +90,6 @@
 
 | 阻塞 | 为什么仍挡 RC | 推荐处理 |
 |---|---|---|
-| 入口状态尚未完成运行态总核对 | 文档分级存在，但帮助/命令/设置/模块入口可能仍露出过度承诺 | C1 建自动清单并以 packaged UI 对齐 |
-| OCR / Archive 的正式水位未判定 | 两者仍可能在失败、取消、损坏输入上低于正式承诺 | 有限样本补证；不足即 Preview |
 | UI Integrity 仍缺代表性运行态收口 | 静态 Census 不是产品验收，Library 多真源图标仍有已知 P1 | C2 只验正式主路径和代表尺寸/主题 |
 | Notes/Library/Viewer 的代表性数据/恢复边界未封 | 六类核心编辑稿已证实，但这三条正式路径仍没有同等级结论 | C2 补代表性 Gate；全组合后移 |
 | 跨版本策略未实证 | 同版本 reinstall 不能替代 upgrade/失败保持/用户数据策略 | C3 真升级；做不到则明确不支持并阻断自动升级入口 |
@@ -118,6 +120,8 @@
 | W66 Agent | Foundation internal；Adapter/UI Hidden/Experimental | 至少两个真实 Adapter 共用契约并通过 detect/probe/auth/session/interrupt/dispose |
 | Recorder | Preview | 真实设备、权限、系统音、最小化、长录制和失败清理 |
 | Plugins | Preview | permissions enforcement、隔离/信任与发布者链达到正式水位 |
+| OCR | Preview | 依赖获取、首次使用、取消/超时、多语言与真实错误矩阵达到正式水位 |
+| Archive | Preview | 损坏包、密码包、取消、路径安全、磁盘失败与 rar/7z 依赖矩阵达到正式水位 |
 
 ## 7. POST-W71 COMPLETENESS
 

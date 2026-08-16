@@ -20,7 +20,7 @@ export function registerOcrCommands(commands) {
       const b64 = await window.mazz.invoke('fs:readFileBase64', { path: p });
       const dataUrl = `data:image/${ext};base64,${b64}`;
 
-      const m = modal('图片文字识别（OCR）');
+      const m = modal('图片文字识别（OCR · 预览）');
       m.body.innerHTML = `
         <div style="display:flex;gap:14px;max-width:72vw">
           <img src="${dataUrl}" style="max-width:300px;max-height:300px;border:1px solid var(--bd,#e0ded8);border-radius:8px;object-fit:contain" alt="">

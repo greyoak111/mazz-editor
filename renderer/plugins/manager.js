@@ -11,7 +11,7 @@ export function openPluginManager() {
     window.mazz.invoke('panel:open', { kind: 'plugins' }).catch(() => {});
     return;
   }
-  const m = modal('插件管理');
+  const m = modal('插件管理（预览）');
   const render = async () => {
     const files = await listPluginFiles();
     const rows = [];

@@ -2,6 +2,7 @@
 // 右键、快捷键、托盘、菜单栏、命令面板全部从这里取数；注册期查重
 import { Emitter } from './events.js';
 import { contextKeys } from './contextkey-service.js';
+import { MATURITY, maturityLabel, resolveCommandMaturity } from './product-maturity.js';
 
 const DANGEROUS_COMMAND = /(?:delete|remove|clear|overwrite|publish|post|upload|删除|移除|清空|覆盖|投稿|发布)/i;
 
@@ -14,6 +15,9 @@ export class CommandRegistry {
   /** 注册命令；重复 id 直接报错（注册期查重） */
   register(id, def) {
     if (!id || typeof def.run !== 'function') throw new Error(`[commands] 非法命令: ${id}`);
+    const maturity = resolveCommandMaturity(id);
+    // Hidden 只隐藏产品入口，后端/实现代码仍保留，待自身 Activation Gate 通过后再改表。
+    if (maturity === MATURITY.HIDDEN) return false;
     if (this.commands.has(id)) {
       // 同一来源重复注册视为刷新（热更新模块），不同来源视为冲突
       if (this.commands.get(id).source !== def.source) {
@@ -21,13 +25,14 @@ export class CommandRegistry {
         return false;
       }
     }
+    const title = maturityLabel(def.title || id, maturity);
     this.commands.set(id, {
-      id, title: def.title || id, run: def.run,
+      id, title, run: def.run, maturity,
       icon: def.icon || null, group: def.group || '', source: def.source || 'core',
       when: def.when || null,
       // W62a：所有入口仍以命令注册表为单源；agent 只拿脱敏工具卡，不接触 run 函数。
       agent: def.agent === false ? false : {
-        description: def.agent?.description || def.title || id,
+        description: def.agent?.description || title,
         argsSchema: def.agent?.argsSchema || { type: 'object', additionalProperties: false },
         danger: def.agent?.danger ?? DANGEROUS_COMMAND.test(`${id} ${def.title || ''}`),
         undo: def.agent?.undo || null,
@@ -70,6 +75,7 @@ export class CommandRegistry {
       .filter(c => c.agent !== false)
       .map(c => ({
         id: c.id, title: c.title, group: c.group || '', when: c.when || '',
+        maturity: c.maturity,
         description: c.agent.description, argsSchema: c.agent.argsSchema,
         danger: !!c.agent.danger, undo: c.agent.undo || null,
       }));

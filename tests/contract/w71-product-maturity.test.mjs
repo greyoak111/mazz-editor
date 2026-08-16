@@ -1,0 +1,65 @@
+import './_setup.mjs';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, test } from 'node:test';
+import { commands } from '../../renderer/core/command-registry.js';
+import { MATURITY, PRODUCT_CAPABILITIES, visibleHelpSections } from '../../renderer/core/product-maturity.js';
+import { HELP_SECTIONS } from '../../renderer/help/content.js';
+
+const read = file => fs.readFileSync(path.resolve(file), 'utf8');
+
+describe('W71 产品入口成熟度单源', () => {
+  test('历史 PARTIAL 与低水位候选全部得到唯一三态', () => {
+    const expected = {
+      mobile: MATURITY.HIDDEN,
+      updater: MATURITY.HIDDEN,
+      feed: MATURITY.HIDDEN,
+      agent: MATURITY.HIDDEN,
+      dmhy: MATURITY.PREVIEW,
+      recorder: MATURITY.PREVIEW,
+      plugins: MATURITY.PREVIEW,
+      ocr: MATURITY.PREVIEW,
+      archive: MATURITY.PREVIEW,
+    };
+    assert.deepEqual(Object.fromEntries(Object.entries(PRODUCT_CAPABILITIES).map(([id, item]) => [id, item.maturity])), expected);
+  });
+
+  test('Hidden 命令不注册，Preview 命令自动显式标识并进入工具卡', () => {
+    let hiddenRan = false;
+    const hidden = commands.register('update.check', { title: '检查更新', source: 'w71-maturity-test', run: () => { hiddenRan = true; } });
+    assert.equal(hidden, false);
+    assert.equal(commands.has('update.check'), false);
+    assert.equal(hiddenRan, false);
+
+    commands.register('ocr.image', { title: '图片文字识别（OCR）', source: 'w71-maturity-test', run: () => {} });
+    const preview = commands.get('ocr.image');
+    assert.equal(preview.maturity, MATURITY.PREVIEW);
+    assert.match(preview.title, /（预览）$/);
+    assert.equal(commands.toolCards().find(card => card.id === 'ocr.image')?.maturity, MATURITY.PREVIEW);
+    commands.unregisterBySource('w71-maturity-test');
+  });
+
+  test('工具坞消费命令可见性，Updater 面板入口与移动帮助不再暴露', () => {
+    const dock = read('renderer/shell/side-dock.js');
+    const sync = read('renderer/panels/sync.html');
+    const help = read('renderer/help/content.js');
+    const shell = read('renderer/shell/shell.js');
+    assert.ok(dock.includes('items.filter(item => commands.has(item.cmd))'));
+    assert.ok(!sync.includes('data-t="update"'));
+    assert.ok(sync.includes("if (t === 'update') t = 'host'"));
+    assert.equal(visibleHelpSections(HELP_SECTIONS).some(section => section.id === 'mobile'), false);
+    assert.ok(shell.includes("const src = visibleHelpSections(ver === 'senior' ? SENIOR_SECTIONS : HELP_SECTIONS)"),
+      'Electron 原生帮助窗必须与网页帮助共用同一可见性规则');
+    assert.ok(!help.includes('## 检查更新'));
+  });
+
+  test('Preview 在原生面板、帮助与 DMHY 数据源均不可误认成 Formal', () => {
+    for (const file of ['renderer/panels/archive.html', 'renderer/panels/plugins.html', 'renderer/panels/recorder.html']) {
+      assert.match(read(file), /预览/);
+    }
+    assert.match(read('renderer/help/content.js'), /插件系统（预览/);
+    assert.match(read('main/torrent-sites.js'), /DMHY（预览）/);
+    assert.match(read('renderer/modules/viewer/player.js'), /DMHY（预览）/);
+  });
+});

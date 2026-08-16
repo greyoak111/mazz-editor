@@ -34,6 +34,7 @@
     "test:w71:multiwindow-app-crash": "node tests/e2e/w71-multiwindow-app-crash-recovery.mjs",
     "test:w71:core-module-crash": "node tests/e2e/w71-core-module-crash-recovery.mjs",
     "test:w71:file-open": "node tests/e2e/w71-file-open-safety.mjs",
+    "test:w71:product-maturity": "node tests/e2e/w71-product-maturity.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },

@@ -1,0 +1,52 @@
+{
+  "gate": "W71 C1 packaged product-entry maturity",
+  "executablePath": "D:/output/Mazz Editor/release/win-unpacked/Mazz Editor.exe",
+  "commandState": {
+    "update.check": null,
+    "ocr.image": {
+      "title": "图片文字识别（OCR）（预览）",
+      "maturity": "preview"
+    },
+    "rec.screen": {
+      "title": "全局内录（窗口/混音/变速）…（预览）",
+      "maturity": "preview"
+    },
+    "plugin.manage": {
+      "title": "插件管理（预览）",
+      "maturity": "preview"
+    },
+    "plugin.reload": {
+      "title": "重载全部插件（预览）",
+      "maturity": "preview"
+    },
+    "archive.openPanel": {
+      "title": "压缩包面板（预览）",
+      "maturity": "preview"
+    }
+  },
+  "dock": {
+    "updaterHidden": true,
+    "previewLabelsVisible": true,
+    "screenshot": "evidence/W71_PRODUCT_MATURITY_DOCK.png"
+  },
+  "help": {
+    "nativeMobileHidden": true,
+    "sectionCount": 31,
+    "screenshot": "evidence/W71_PRODUCT_MATURITY_HELP.png"
+  },
+  "panelTitles": {
+    "plugin.manage": "插件管理（预览）",
+    "archive.openPanel": "压缩包（预览）",
+    "rec.screen": "全局内录（预览）"
+  },
+  "sync": {
+    "updaterHidden": true
+  },
+  "dmhy": {
+    "id": "dmhy",
+    "name": "动漫花园 DMHY（预览）"
+  },
+  "noRendererErrors": true,
+  "ok": true,
+  "generatedAt": "2026-08-16T14:07:26.212Z"
+}

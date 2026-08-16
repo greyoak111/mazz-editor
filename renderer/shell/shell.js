@@ -23,6 +23,7 @@ import { ProgressRelay } from '../core/progress-relay.js';
 import { ActivityCenter } from '../core/activity-center.js';
 import { ALL_CODE_EXTENSIONS, CODE_FILE_EXTENSIONS, CODE_FILE_DEFAULTS, CODE_NEW_FILE_TYPES, LANGUAGE_BY_EXT } from '../modules/code/language-catalog.js';
 import { assertNativeOpenContent, assertOfficeContainer } from '../lib/file-open-policy.js';
+import { visibleHelpSections } from '../core/product-maturity.js';
 
 const CODE_SAMPLE = `// Mazz Editor · 编程内核
 // F5 调试 · Ctrl+\` 终端 · Ctrl+Enter 运行选区 · F12 跳定义 · Shift+F12 引用
@@ -314,7 +315,7 @@ export class Shell {
     try { sources = await window.mazz.invoke('rec:sources'); }
     catch (e) { toast('录制源枚举失败：' + e.message); return; }
     if (!sources.length) { toast('没有可用的录制源（检查系统录屏权限后重试）'); return; }
-    const m = modal('全局内录');
+    const m = modal('全局内录（预览）');
     const picked = new Set(sources[0] ? [sources[0].id] : []);
     m.body.innerHTML = `
       <div style="min-width:560px;max-width:720px">
@@ -2580,7 +2581,7 @@ export class Shell {
             const { HELP_SECTIONS } = await import('../help/content.js');
             const { SENIOR_SECTIONS } = await import('../help/content-senior.js');
             const ver = pl.ver === 'senior' ? 'senior' : 'std';
-            const src = ver === 'senior' ? SENIOR_SECTIONS : HELP_SECTIONS;
+            const src = visibleHelpSections(ver === 'senior' ? SENIOR_SECTIONS : HELP_SECTIONS);
             const sections = src.map(s => ({ id: s.id, icon: s.icon, title: s.title, html: renderHelpMd(s.body), text: s.body.replace(/[#*`|\[\]()>-]/g, '').slice(0, 4000) }));
             window.mazz.invoke('panel:push', { kind: 'help', payload: { type: 'help', ver, sections, section: pl.section || null } }).catch(() => {});
           } catch (e) { console.error('[help] 桥应答失败:', e.message || e); }

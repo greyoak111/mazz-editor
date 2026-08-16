@@ -248,7 +248,7 @@ export class SideDock {
         { cmd: 'app.shortcutSheet', ico: '⌨', t: '快捷键速查', d: '全部快捷键一览' },
         { cmd: 'help.open', ico: '❓', t: '使用指南', d: 'F1 帮助文档' },
       ]],
-    ];
+    ].map(([group, items]) => [group, items.filter(item => commands.has(item.cmd))]).filter(([, items]) => items.length);
     this.toolsEl.innerHTML = GROUPS.map(([g, items]) => `
       <div class="sd-tools-group">
         <div class="sd-tools-label">${g}</div>
@@ -256,7 +256,7 @@ export class SideDock {
           ${items.map(it => `
             <button class="sd-tool-card" data-cmd="${it.cmd}">
               <span class="sd-tool-ico">${iconHtml(it.ico)}</span>
-              <span class="sd-tool-text"><b>${it.t}</b><i>${it.d}</i></span>
+              <span class="sd-tool-text"><b>${it.t}${commands.get(it.cmd)?.maturity === 'preview' ? '（预览）' : ''}</b><i>${it.d}</i></span>
             </button>`).join('')}
         </div>
       </div>`).join('');

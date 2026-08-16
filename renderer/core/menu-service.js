@@ -5,6 +5,7 @@ import { iconHtml } from '../lib/svg-icons.js';
 import { t } from '../i18n/index.js';
 import { contextKeys } from './contextkey-service.js';
 import { keymap, displayKey } from './keymap-service.js';
+import { MATURITY, maturityLabel } from './product-maturity.js';
 
 class MenuService {
   constructor() {
@@ -28,9 +29,10 @@ class MenuService {
       .filter(it => contextKeys.evaluate(it.when))
       .map(it => {
         const cmd = commands.get(it.command);
+        const rawLabel = it.title || cmd?.title || it.command;
         return {
           id: it.command,
-          label: t(it.title || cmd?.title || it.command),
+          label: t(cmd?.maturity === MATURITY.PREVIEW ? maturityLabel(rawLabel, cmd.maturity) : rawLabel),
           icon: it.icon || cmd?.icon,
           enabled: !!cmd,
           accelerator: displayKey(keymap.keyForCommand(it.command)),

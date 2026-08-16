@@ -23,7 +23,10 @@ describe('解压缩服务（main/archive.js）', () => {
     assert.ok(mj.includes("require('./archive')"), 'ArchiveService 必须装配');
     const pw = readSrc('main/panel-windows.js');
     assert.ok(pw.includes('|archive)'), 'kind 白名单必须有 archive');
-    assert.ok(pw.includes("archive: '压缩包'"), '标题必须有');
+assert.ok(
+  pw.includes("archive: '压缩包（预览）'"),
+  '标题必须保留能力名并明确预览状态',
+);
     const html = readSrc('renderer/panels/archive.html');
     for (const pin of ['archiveQuery', 'archiveExtract', 'archiveCancel', 'archiveProgress', 'archiveDone', 'themeSnapshot']) assert.ok(html.includes(pin), pin + ' 必须在');
   });

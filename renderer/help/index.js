@@ -4,6 +4,7 @@ import { keymap } from '../core/keymap-service.js';
 import { HELP_SECTIONS } from './content.js';
 import { SENIOR_SECTIONS } from './content-senior.js';
 import { t } from '../i18n/index.js';
+import { visibleHelpSections } from '../core/product-maturity.js';
 
 // ==================== mini Markdown 渲染器（帮助文档专用子集） ====================
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -102,13 +103,13 @@ export function openHelp(sectionId) {
   const searchEl = mask.querySelector('.help-search');
   const verEl = mask.querySelector('.help-ver');
   // 喂奶级/喂饭级互切（记忆选择）
-  let SECTIONS = HELP_SECTIONS;
+  let SECTIONS = visibleHelpSections(HELP_SECTIONS);
   try {
     const v = localStorage.getItem('mazz.help.ver');
-    if (v === 'senior') { SECTIONS = SENIOR_SECTIONS; verEl.value = 'senior'; }
+    if (v === 'senior') { SECTIONS = visibleHelpSections(SENIOR_SECTIONS); verEl.value = 'senior'; }
   } catch {}
   verEl.addEventListener('change', () => {
-    SECTIONS = verEl.value === 'senior' ? SENIOR_SECTIONS : HELP_SECTIONS;
+    SECTIONS = visibleHelpSections(verEl.value === 'senior' ? SENIOR_SECTIONS : HELP_SECTIONS);
     try { localStorage.setItem('mazz.help.ver', verEl.value); } catch {}
     renderToc();
     show(SECTIONS[0].id);

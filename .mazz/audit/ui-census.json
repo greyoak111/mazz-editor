@@ -13,8 +13,8 @@
       ".js",
       ".svg"
     ],
-    "scannedFiles": 211,
-    "scannedLines": 56778
+    "scannedFiles": 212,
+    "scannedLines": 56834
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -23,12 +23,12 @@
   },
   "visual": {
     "summary": {
-      "totalFindings": 1643,
+      "totalFindings": 1642,
       "filesWithFindings": 95,
       "byRule": {
         "inline-style-attribute": 555,
         "loading-state-term": 36,
-        "native-form-control": 1007,
+        "native-form-control": 1006,
         "inline-css-text": 43,
         "tooltip-or-title": 2
       },
@@ -111,7 +111,7 @@
         },
         {
           "file": "renderer/panels/sync.html",
-          "count": 23
+          "count": 22
         },
         {
           "file": "renderer/plugins/manager.js",
@@ -237,19 +237,19 @@
       {
         "rule": "native-form-control",
         "file": "renderer/help/index.js",
-        "line": 84,
+        "line": 85,
         "sample": "<select class=\"help-ver rb-select\" title=\"文档版本切换\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/help/index.js",
-        "line": 88,
+        "line": 89,
         "sample": "<input class=\"help-search\" placeholder=\"${t('搜索帮助内容…')}\" spellcheck=\"false\" />"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/help/index.js",
-        "line": 93,
+        "line": 94,
         "sample": "<button class=\"help-close rb-btn\" title=\"关闭（Esc）\">✕</button>"
       },
       {
@@ -7849,12 +7849,6 @@
         "sample": "<button class=\"tab\" data-t=\"join\">加入共享</button>"
       },
       {
-        "rule": "native-form-control",
-        "file": "renderer/panels/sync.html",
-        "line": 43,
-        "sample": "<button class=\"tab\" data-t=\"update\">检查更新</button>"
-      },
-      {
         "rule": "inline-style-attribute",
         "file": "renderer/panels/sync.html",
         "line": 83,
@@ -10323,7 +10317,7 @@
       {
         "rule": "icon-html-adapter",
         "file": "renderer/core/menu-service.js",
-        "line": 97,
+        "line": 99,
         "sample": "row.innerHTML = `<span class=\"mazz-menu-icon\">${iconHtml(it.icon || '')}</span><span class=\"mazz-menu-label\"></span><span class=\"mazz-menu-key\">${it.accelerator || ''}</span>`;"
       },
       {
@@ -11008,13 +11002,13 @@
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
         "line": 518,
-        "sample": "id: 'tools', icon: '🛠', title: '工具集（翻译 / OCR / 语音 / 计算）',"
+        "sample": "id: 'tools', icon: '🛠', title: '工具集（翻译 / OCR 预览 / 语音 / 计算）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
         "line": 518,
-        "sample": "id: 'tools', icon: '🛠', title: '工具集（翻译 / OCR / 语音 / 计算）',"
+        "sample": "id: 'tools', icon: '🛠', title: '工具集（翻译 / OCR 预览 / 语音 / 计算）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
@@ -11206,13 +11200,13 @@
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
         "line": 752,
-        "sample": "id: 'plugins', icon: '🧩', title: '插件系统（.maz）',"
+        "sample": "id: 'plugins', icon: '🧩', title: '插件系统（预览 · .maz）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
         "line": 752,
-        "sample": "id: 'plugins', icon: '🧩', title: '插件系统（.maz）',"
+        "sample": "id: 'plugins', icon: '🧩', title: '插件系统（预览 · .maz）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
@@ -11241,259 +11235,259 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 827,
+        "line": 824,
         "sample": "id: 'bridge', icon: '⚡', title: '桥接功能（模块间传送门）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 827,
+        "line": 824,
         "sample": "id: 'bridge', icon: '⚡', title: '桥接功能（模块间传送门）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 842,
+        "line": 839,
         "sample": "| 书库 → 笔记 | 读书时选中段落 →「✍ 摘录」 | 自动生成书摘笔记（含出处） |"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 848,
+        "line": 845,
         "sample": "- 桥接完成后有 ⚡ 提示条告诉你产物在哪。"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 853,
+        "line": 850,
         "sample": "id: 'workspace', icon: '🗂', title: '工作区文件管理（资源管理器式）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 853,
+        "line": 850,
         "sample": "id: 'workspace', icon: '🗂', title: '工作区文件管理（资源管理器式）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 861,
+        "line": 858,
         "sample": "- 点顶部「🗀」或**文件夹行右侧的内联按钮**（🗀=里面建文件夹，＋=里面建文件）："
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 920,
+        "line": 917,
         "sample": "- **文档**：**下划线**（Ctrl+U / 工具栏 U 按钮，Markdown 里以 「<u>」 标签往返保留，docx 导出同步）；**首字下沉**（工具栏 ❆，整段首字放大着色，随文档注释保存）。行距/段前段后/首行缩进/对齐原本就有（「对齐/行距」组 + 命令面板搜「段前距」）。"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 983,
+        "line": 980,
         "sample": "id: 'mobile', icon: '📱', title: '移动端（Android / iOS）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 983,
+        "line": 980,
         "sample": "id: 'mobile', icon: '📱', title: '移动端（Android / iOS）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 990,
+        "line": 987,
         "sample": "- **手机**：工作区变成左上角「☰」抽屉；工具栏紧凑可横滑；欢迎页单列。"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1009,
+        "line": 1006,
         "sample": "id: 'shortcuts', icon: '⌨', title: '快捷键总表',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1088,
+        "line": 1085,
         "sample": "id: 'faq', icon: '❓', title: '常见问题 FAQ',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1088,
+        "line": 1085,
         "sample": "id: 'faq', icon: '❓', title: '常见问题 FAQ',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1131,
+        "line": 1128,
         "sample": "id: 'sb-workspace-v39', icon: '🗀', title: '侧栏五页签（v39 · 思源工作区）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1131,
+        "line": 1128,
         "sample": "id: 'sb-workspace-v39', icon: '🗀', title: '侧栏五页签（v39 · 思源工作区）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1139,
+        "line": 1136,
         "sample": "- **＋ / 🗀**：新建文件 / 新建文件夹"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1156,
+        "line": 1153,
         "sample": "文件级全局书签：「把当前文件加入书签」（未保存文件先 Ctrl+S）；点击直达；✕ 移除。"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1172,
+        "line": 1169,
         "sample": "id: 'wb-out-v41', icon: '📤', title: '投稿到网站（出站桥）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1172,
+        "line": 1169,
         "sample": "id: 'wb-out-v41', icon: '📤', title: '投稿到网站（出站桥）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1193,
+        "line": 1190,
         "sample": "待投 ⏳ → 注入中 ⚡ → 待校对 ✅ / 失败 ✗（可重试）。全部投完后**逐站校对再自行发布**——最后一步永远留给你。"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1202,
+        "line": 1199,
         "sample": "id: 'ws-multi-v44', icon: '🗂', title: '多工作区（v44）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1202,
+        "line": 1199,
         "sample": "id: 'ws-multi-v44', icon: '🗂', title: '多工作区（v44）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1234,
+        "line": 1231,
         "sample": "id: 'search-v42', icon: '🔎', title: '全局搜索与查找替换（v41-42）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1234,
+        "line": 1231,
         "sample": "id: 'search-v42', icon: '🔎', title: '全局搜索与查找替换（v41-42）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1245,
+        "line": 1242,
         "sample": "## 小窗预览编辑（✎）"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1247,
+        "line": 1244,
         "sample": "命中行悬停出 ✎：小窗加载全文、定位首个命中，**直接编辑保存实时写回源文件**并刷新索引——不用打开文件就能改。"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1261,
+        "line": 1258,
         "sample": "id: 'ai-model-v43', icon: '🤖', title: 'AI 服务与模型库（v43）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1261,
+        "line": 1258,
         "sample": "id: 'ai-model-v43', icon: '🤖', title: 'AI 服务与模型库（v43）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1264,
+        "line": 1261,
         "sample": "智能创作 ⚙ 里的 AI 服务设置，已内置 **19 家国内外主流厂商**预置："
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1283,
+        "line": 1280,
         "sample": "id: 'player-v41', icon: '🎬', title: '播放器进阶（v41-43）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1283,
+        "line": 1280,
         "sample": "id: 'player-v41', icon: '🎬', title: '播放器进阶（v41-43）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1288,
+        "line": 1285,
         "sample": "点 🔓 变 🔒：**一切键盘/鼠标媒体控制失效**（不怕误触），Esc 或再点一次解锁。"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1292,
+        "line": 1289,
         "sample": "- **☀ 亮度**：控制条亮度滑条（0.4–1.6 倍）"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1298,
+        "line": 1295,
         "sample": "循环按钮四档：列表循环 🔁 → 单集循环 🔂 → **顺序播 ➡（播完列表即停）** → 关闭循环。"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1312,
+        "line": 1309,
         "sample": "id: 'lib-v41', icon: '📖', title: '阅读室进阶（v41-43）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1312,
+        "line": 1309,
         "sample": "id: 'lib-v41', icon: '📖', title: '阅读室进阶（v41-43）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/content.js",
-        "line": 1339,
+        "line": 1336,
         "sample": "id: 'misc-v41', icon: '🧩', title: '系统集成与杂项（v41-43）',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/content.js",
-        "line": 1339,
+        "line": 1336,
         "sample": "id: 'misc-v41', icon: '🧩', title: '系统集成与杂项（v41-43）',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/index.js",
-        "line": 83,
+        "line": 84,
         "sample": "<b>❓ ${t('使用指南')}</b>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/index.js",
-        "line": 93,
+        "line": 94,
         "sample": "<button class=\"help-close rb-btn\" title=\"关闭（Esc）\">✕</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/help/index.js",
-        "line": 158,
+        "line": 159,
         "sample": "title: '使用指南（帮助中心）', icon: '❓', group: '帮助',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/help/index.js",
-        "line": 158,
+        "line": 159,
         "sample": "title: '使用指南（帮助中心）', icon: '❓', group: '帮助',"
       },
       {
@@ -27640,7 +27634,7 @@
       {
         "rule": "theme-selector",
         "file": "renderer/panels/sync.html",
-        "line": 55,
+        "line": 54,
         "sample": "window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));"
       },
       {

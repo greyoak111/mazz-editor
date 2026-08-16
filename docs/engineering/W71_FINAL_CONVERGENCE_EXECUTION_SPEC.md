@@ -1,6 +1,6 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.25
+> 版本：v2.26
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
@@ -1295,3 +1295,5 @@ Factory 故障矩阵随后用正式 `win-unpacked`、真实 Electron `net.fetch`
 文件打开安全检查点随后关闭“解析失败却留下干净空签”的数据风险：Module Registry 将同步/异步 `setContent` 统一为可等待的 `{ok,error}`，DOCX/XLSX 不再吞拒绝，EPUB 入库空结果也会撤回临时标签；只有 load owner 仍存活且解析成功后，Shell 才登记 recent/watch。主进程新增 64 KiB 取样探针，未知二进制与不支持编码不再回退成可覆盖原件的乱码文本；UTF-16 LE 则按正确编码无损读取。正式 packaged 门禁中，损坏 DOCX/XLSX/EPUB、自有表格/画板空壳、未知二进制、未知编码和大损坏 DOCX 共 9 类全部返回失败，标签/recent/snapshot 零残留；合法 UTF-16 LE 中文通过。注入转换失败和真实写盘失败时，原目标字节、dirty 状态与原子临时件清理均正确。全量增至 `150/150`。穷举编码/格式/磁盘/权限矩阵和插件化格式识别保留到 Post-W71 完整主义扩展。证据见 [`W71_FILE_OPEN_SAFETY_CHECKPOINT_2026-08-16.md`](./W71_FILE_OPEN_SAFETY_CHECKPOINT_2026-08-16.md) 与 [`W71_FILE_OPEN_SAFETY.json`](./evidence/W71_FILE_OPEN_SAFETY.json)。
 
 当前源码随即完成发布回归：新 installer 为 `141,035,270` bytes，SHA-256 `262D17B5D77CCA65C27110B3CF51CCE4C1736686CC72DF69A4D66F9250D1B030`；win-unpacked `597,463,879` bytes，app.asar `290,160,579` bytes，packaged source map `0`，unpacked native `10` files / `2,625,024` bytes，FFmpeg 分发材料 `5/5`。schema v5 再次通过 clean install、同版本 reinstall、五入口、UserChoice 不改写、安装态 20 轮 ResourceLedger `2→2`、正常退出与 silent uninstall；Agent Adapter/Session 仍诚实记录为 `0/0`。构建明确因没有证书跳过代码签名。后续不再把所有 OPEN 混作同等级阻塞，而依 [`W71_RC_CLOSURE_LEDGER_2026-08-16.md`](./W71_RC_CLOSURE_LEDGER_2026-08-16.md) 分成 RC BLOCKER、CONDITIONAL GATE、ACTIVATION GATE 与 POST-W71 COMPLETENESS；常态预计四个宏观收口波次后进入新内容选择。
+
+C1 正式入口成熟度检查点随后完成：新增中心三态表，只控制产品表达而不删除实现。Mobile、Updater、W62e 和 Agent 通用 UI 保持 Hidden；W66 Harness Foundation 保持 internal；DMHY、Recorder、Plugins、OCR 与 Archive 统一定为 Preview。Hidden 命令不进入注册表，Preview 命令由单源自动补“（预览）”；工具坞、命令面板、原生面板、同步面板、帮助窗和 DMHY 数据源全部消费同一结论。Electron 原生帮助窗曾被实包验收发现漏过滤，已与网页帮助合流。全量 `151/151`；重建 installer `141,039,379` bytes，SHA-256 `C42DA6BF08CEBFDB1AE5623B999A5FEAC93A7C07F361F2CBCEDA48196A7509A8`，win-unpacked `597,470,288` bytes，app.asar `290,166,988` bytes，source map `0`，实包 UI 无 renderer error。C1 结案后，距新增内容常态还剩 C2–C4 三个宏观波次；完整主义能力的实现、接口和激活条件继续保留到 Post-W71，不回流扩大 C2。证据见 [`W71_PRODUCT_MATURITY_CHECKPOINT_2026-08-16.md`](./W71_PRODUCT_MATURITY_CHECKPOINT_2026-08-16.md) 与 [`W71_PRODUCT_MATURITY.json`](./evidence/W71_PRODUCT_MATURITY.json)。

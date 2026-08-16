@@ -213,7 +213,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const m = modal('播放设置');
     const seedSites = [
       ['Nyaa（番剧种子总库）', 'https://nyaa.si'],
-      ['动漫花园 DMHY', 'https://dmhy.org'],
+      ['动漫花园 DMHY（预览）', 'https://dmhy.org'],
       ['MioBT 猫萌', 'https://www.miobt.com'],
       ['acg.rip', 'https://acg.rip'],
       ['bangumi.moe 萌番组', 'https://bangumi.moe'],
