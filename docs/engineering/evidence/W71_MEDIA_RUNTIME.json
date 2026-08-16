@@ -1,23 +1,17 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-08-16T10:36:57.391Z",
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-16T14:52:33.736Z",
   "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
-  "syntheticVideo": {
-    "mimeType": "video/webm;codecs=vp8",
-    "bytes": 47863
-  },
-  "audio": {
+  "nativePlayback": {
+    "currentTime": 0.125032,
     "metadata": "WAV · 0.0 MB · 128 kbps · 48.0 kHz · 1 声道 · ≈768 kbps/16bit",
-    "currentTime": 0.12207,
+    "gifButtonVisible": false,
     "contexts": 1,
     "contextStates": [
       "running"
     ],
-    "resumeCalls": [
-      2
-    ],
     "afterClose": {
-      "states": [
+      "contextStates": [
         "closed"
       ],
       "closeCalls": [
@@ -25,27 +19,10 @@
       ]
     }
   },
-  "gif": {
-    "artifact": {
-      "name": "GIF-2026-08-16-10-36-57.gif",
-      "path": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-media-ws-m5qs3c/录制/GIF-2026-08-16-10-36-57.gif",
-      "size": 55254,
-      "signature": "GIF89a"
-    },
-    "recorder": {
-      "state": "inactive",
-      "stopEvents": 1,
-      "tracks": [
-        "ended"
-      ]
-    }
-  },
-  "interruptedGif": {
-    "state": "inactive",
-    "stopEvents": 1,
-    "tracks": [
-      "ended"
-    ]
+  "optionalFfmpegRuntime": {
+    "mode": "DEFERRED_NOT_BUNDLED",
+    "gifEntryHidden": true,
+    "futureActivationGate": "OPEN"
   },
   "resources": {
     "baseline": 2,

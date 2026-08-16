@@ -3,6 +3,7 @@
 import { iconHtml } from '../../lib/svg-icons.js';
 import { attachSubtitle, detachSubtitle, probeSubtitles, setSubtitleVisible, subtitleAttached } from './subtitles.js';
 import { nextEpisodePath } from '../../lib/episode-detect.js';
+import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
@@ -18,6 +19,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   // 源信息可变承载（切歌复用 stage 不重建：setSource 全量更新这几项）
   let curUrl = url, curName = name, curPath = path, curSize = fileSize;
   const isVideo = kind === 'video';
+  const canExportGif = PRODUCT_CAPABILITIES.ffmpegRuntime.maturity !== MATURITY.HIDDEN;
   root.classList.add('mz-player');
   root.innerHTML = `
     <div class="mz-stage">
@@ -66,7 +68,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           <button class="mz-btn" data-a="pip" title="画中画（PiP）">${iconHtml('🗔')}</button>
           <button class="mz-btn" data-a="loop" title="循环（L）：列表循环">${iconHtml('🔁')}</button>
           <button class="mz-btn" data-a="snap" title="截图（S）">${iconHtml('📷')}</button>
-          <button class="mz-btn" data-a="gif" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>
+          ${canExportGif ? `<button class="mz-btn" data-a="gif" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>` : ''}
           <button class="mz-btn" data-a="progmem" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
           <button class="mz-btn" data-a="sub" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
           <button class="mz-btn" data-a="pset" title="播放设置（字幕/连播/片源）">${iconHtml('⚙')}</button>

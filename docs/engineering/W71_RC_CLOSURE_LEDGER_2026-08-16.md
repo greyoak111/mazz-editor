@@ -4,7 +4,7 @@
 >
 > 决策：**按推荐封板继续；完整主义扩展保留但后移**
 >
-> C2 检查点：正式 `win-unpacked` 主路径 Gate 通过，全量 `152/152`
+> C3 检查点：发布、许可、升级边界与真安装 Gate 通过，全量 `153/153`
 >
 > 作用：把“必须挡住首个可信 RC”的问题，与“需要外部条件”“某入口启用前再做”“长期完整主义”分开，避免历史欠账被遗忘，也避免它们无限阻塞新增内容。
 
@@ -23,22 +23,23 @@
 - 外改/脏稿/Save As、事务性交接、child renderer crash 与 whole-app hard kill 的代表性数据保全；
 - Text、Code、Sheet、Slide、Mindmap、Draw 六类结构内容恢复；
 - 9 类损坏/不支持输入拒绝、UTF-16 LE 无损读取、转换与写盘失败不伪成功；
-- source map/PDB/test 发布泄漏归零，FFmpeg 五份分发说明材料入包；
+- source map/PDB/test 发布泄漏归零；FFmpeg core 从当前树与发行物移除，依赖入口 Hidden，未来以完整对应源码 Gate 保留；
 - 本机 clean install、同版本 reinstall、五入口、UserChoice 不改写、20 轮安装态运行、正常退出、卸载与残留检查；
 - 正式入口成熟度已形成单一三态源：Mobile/Updater/W62e/Agent UI Hidden，DMHY/Recorder/Plugins/OCR/Archive Preview；
 - 命令面板、工具坞、原生面板、同步面板、Electron 原生帮助窗与数据源已完成 packaged 一致性验收；
 - 稳定 `iconId → SVG` 注册表已接入模块页签、恢复与交接，Library 创建/开书/返回/重开/恢复保持单源；
 - Notes 写入失败、写入中关闭/交接与启动恢复竞态已闭环；Library/Notes/Viewer 代表性 owner 关签归零；
 - Paper/Ink、focus、disabled、empty/error 与 1024×720 窄窗可达性完成 packaged Gate；
-- 当前树全量 `152/152`。
+- `0.2.0` 冻结为首个升级基线，不伪造 `0.1.0` 跨版本证据；自动更新继续 Hidden；
+- 当前树全量 `153/153`。
 
-当前 specimen：installer `141,039,379` bytes，SHA-256 `C42DA6BF08CEBFDB1AE5623B999A5FEAC93A7C07F361F2CBCEDA48196A7509A8`；win-unpacked `597,470,288` bytes；app.asar `290,166,988` bytes；packaged source map `0`；unpacked native `10` files / `2,625,024` bytes。
+当前 specimen：installer `133,676,213` bytes，SHA-256 `69940814475FCF2C294EB280BC1A6AFF2755DFB2F28DDCCCA422BBA3D41A41FA`；win-unpacked `565,148,574` bytes；app.asar `257,845,274` bytes；packaged source map / FFmpeg core 均为 `0`；unpacked native `10` files / `2,625,024` bytes。
 
-## 3. 推荐封板还剩两个宏观波次
+## 3. 推荐封板还剩一个宏观波次
 
 这里的“轮”是可独立验收的宏观波次，不等于一次提交。按当前证据，距进入 W71 后新增内容的推荐估计为：
 
-> **C1–C2 已完成。常态还剩 C3–C4 两轮；若 C3 发现新的发布/许可 P0/P1，可拆成三轮，但不得以此召回 Post-W71 新功能。**
+> **C1–C3 已完成。只剩 C4 冻结 specimen 三次独立复跑；不得以此召回 Post-W71 新功能。**
 
 ### C1 — 正式入口与低水位模块定级
 
@@ -70,6 +71,8 @@
 
 ### C3 — 发布与许可封口
 
+**状态：COMPLETE。** 证据见 [`W71_RELEASE_LICENSING_CHECKPOINT_2026-08-16.md`](./W71_RELEASE_LICENSING_CHECKPOINT_2026-08-16.md)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)、[`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json) 与 [`W71_FFMPEG_DISTRIBUTION_DECISION.json`](./evidence/W71_FFMPEG_DISTRIBUTION_DECISION.json)。
+
 目标：关闭当前机器可完成的发布正确性。
 
 - 用历史可复现 specimen 验证真实跨版本 upgrade、失败保持与用户数据策略；若缺合法旧 specimen，则把不支持升级写成显式产品边界；
@@ -95,8 +98,6 @@
 
 | 阻塞 | 为什么仍挡 RC | 推荐处理 |
 |---|---|---|
-| 跨版本策略未实证 | 同版本 reinstall 不能替代 upgrade/失败保持/用户数据策略 | C3 真升级；做不到则明确不支持并阻断自动升级入口 |
-| FFmpeg exact corresponding-source 未闭环 | 当前包能运行且许可材料入包，但 GPL 分发责任不能靠“不知道原 commit”结案 | C3 恢复来源、替换可闭环构建或降级相关正式能力 |
 | 最终 RC 独立复跑未完成 | 当前证据跨多个中间 specimen，尚缺冻结 hash 的统一结论 | C4 三次独立复跑与总报告 |
 
 ## 5. CONDITIONAL GATE
@@ -125,6 +126,7 @@
 | Plugins | Preview | permissions enforcement、隔离/信任与发布者链达到正式水位 |
 | OCR | Preview | 依赖获取、首次使用、取消/超时、多语言与真实错误矩阵达到正式水位 |
 | Archive | Preview | 损坏包、密码包、取消、路径安全、磁盘失败与 rar/7z 依赖矩阵达到正式水位 |
+| FFmpeg 本地转码 / Player GIF / Recorder MP4 | Hidden | 完整 corresponding source、可持续源码交付及 packaged 运行/生命周期复验 |
 
 ## 7. POST-W71 COMPLETENESS
 

@@ -1221,28 +1221,28 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/viewer/index.js",
-      "line": 134,
+      "line": 136,
       "sample": "<div class=\"vf-progress\" style=\"display:none;width:260px\"></div>"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/viewer/player.js",
-      "line": 94,
+      "line": 96,
       "sample": "empty.style.cssText = 'position:absolute;left:0;top:0;bottom:0;right:var(--mz-side-w,0px);display:grid;place-items:center;background:#101014;z-index:3'; // 黑画面中央：侧栏推挤同步收窄（列表开不在列表下居中——真机点名校正）"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/viewer/player.js",
-      "line": 222,
+      "line": 224,
       "sample": "<div style=\"min-width:420px;font-size:12.5px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1049,
+      "line": 1051,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {

@@ -18,7 +18,7 @@
 
 当前定级：
 
-- Hidden：Mobile、Updater、W62e Feed、Agent 通用 UI/Adapter；
+- Hidden：Mobile、Updater、W62e Feed、Agent 通用 UI/Adapter；C3 追加本地 FFmpeg 转码/GIF/mp4 子能力；
 - Internal：W66 Harness Foundation；
 - Preview：DMHY、Recorder、Plugins、OCR、Archive。
 

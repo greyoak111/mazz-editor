@@ -16,6 +16,8 @@ describe('W71 发布边界', () => {
     assert.ok(pkg.build.files.includes('!renderer/dist/**/*.map'));
     assert.ok(pkg.build.files.includes('!renderer/vendor/**/*.map'));
     assert.ok(pkg.build.files.includes('!node_modules/**/*.map'));
+    assert.ok(pkg.build.files.includes('!renderer/vendor/ffmpeg/ffmpeg-core.js'));
+    assert.ok(pkg.build.files.includes('!renderer/vendor/ffmpeg/ffmpeg-core.wasm'));
     for (const foreign of ['darwin-*', 'linux-*', 'android-*', 'win32-ia32', 'win32-arm64']) {
       assert.ok(pkg.build.files.some(rule => rule.includes(`/prebuilds/${foreign}/`)), `缺 ${foreign} 原生排除规则`);
     }
@@ -29,8 +31,10 @@ describe('W71 发布边界', () => {
     assert.ok(report.nativeBinaries.count > 0);
     assert.ok(report.nativeBinaries.files.some(file => file.path.includes('node-pty') && file.path.endsWith('.node')));
     assert.equal(report.licenses.missingDeclaredLicense.some(item => item.name === 'limiter'), false, 'legacy licenses[] 也必须识别');
-    const wasm = report.vendoredFfmpeg.files.find(file => file.path.endsWith('ffmpeg-core.wasm'));
-    assert.equal(wasm.sha256, '9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7');
+    assert.equal(report.schemaVersion, 3);
+    assert.equal(report.ffmpegDistribution.mode, 'DEFERRED_NOT_BUNDLED');
+    assert.deepEqual(report.ffmpegDistribution.repositoryCoreArtifactsPresent, []);
+    assert.ok(report.ffmpegDistribution.buildExclusions.every(item => item.present));
     assert.equal(report.licenses.evidence.buffers.gate, 'CLOSED_REMOVED_FROM_RUNTIME');
     assert.equal(report.licenses.packages.some(item => item.name === 'buffers' || item.name === 'binary'), false);
     const unzipper = report.licenses.packages.find(item => item.name === 'unzipper');
@@ -44,11 +48,12 @@ describe('W71 发布边界', () => {
     assert.equal(report.licenses.evidence.ffmpegWasm.sourceReproducibility.gate, 'OPEN_BLOCKED_MISSING_IMMUTABLE_BUILD_INPUTS');
     if (report.packagedSpecimen.present) {
       assert.ok(report.packagedSpecimen.asar.present);
-      assert.deepEqual(report.packagedSpecimen.asar.rootNotices.sort(), ['\\LICENSE', '\\NOTICE', '\\THIRD_PARTY_NOTICES.md']);
+      assert.deepEqual(report.packagedSpecimen.asar.rootNotices.sort(), ['\\KNOWN_LIMITATIONS.md', '\\LICENSE', '\\NOTICE', '\\THIRD_PARTY_NOTICES.md']);
       assert.equal(report.packagedSpecimen.asar.sourceMaps, 0);
       assert.equal(report.packagedSpecimen.asar.sourceMapBytes, 0);
       assert.equal(report.packagedSpecimen.asar.ffmpegNotices.length, 5);
       assert.ok(report.packagedSpecimen.asar.ffmpegNotices.every(file => file.present && file.sha256.length === 64));
+      assert.ok(report.packagedSpecimen.asar.ffmpegCoreArtifacts.every(file => !file.present));
       assert.equal(report.packagedSpecimen.installer.sha256.length, 64);
       assert.equal(report.packagedSpecimen.asarUnpackedNative.count, 10);
     }
@@ -72,7 +77,7 @@ describe('W71 许可证据', () => {
     const wrapperLicense = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/LICENSE.wrapper-MIT'), 'utf8');
     const notice = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/NOTICE.md'), 'utf8');
     const sourceStatus = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md'), 'utf8');
-    assert.ok(provenance.includes('CORRESPONDING SOURCE BLOCKED'));
+    assert.ok(provenance.includes('CORE NOT DISTRIBUTED'));
     assert.ok(provenance.includes('--enable-gpl'));
     assert.ok(provenance.includes('0.12.6'));
     assert.ok(provenance.includes('GPL-2.0-or-later'));
@@ -83,7 +88,7 @@ describe('W71 许可证据', () => {
     assert.equal(crypto.createHash('sha256').update(gpl).digest('hex').toUpperCase(), '8177F97513213526DF2CF6184D8FF986C675AFB514D4E68A404010521B880643');
     assert.ok(wrapperLicense.includes('Copyright (c) 2019 Jerome Wu'));
     assert.ok(notice.includes('B2F2418BE6CC3C29A0765C1376EBFBFEA94073B287767460851A3CE487666D8F'));
-    assert.ok(sourceStatus.includes('BLOCKED / DO NOT CLAIM COMPLETE CORRESPONDING SOURCE'));
+    assert.ok(sourceStatus.includes('DEFERRED / NOT DISTRIBUTED'));
     assert.ok(sourceStatus.includes('ffmpegwasm/x264#4-cores') && sourceStatus.includes('ffmpegwasm/lame#master'));
   });
 
@@ -94,6 +99,7 @@ describe('W71 许可证据', () => {
     assert.ok(source.includes('for (const name of [inName, outName, paletteName])'));
     assert.ok(source.includes('export async function disposeFFmpeg()'));
     assert.ok(source.includes('ffmpeg.terminate()'));
+    assert.ok(source.includes('PRODUCT_CAPABILITIES.ffmpegRuntime.maturity === MATURITY.HIDDEN'));
   });
 
   test('NSIS 安装循环使用隔离目标、已安装 exe 真冒烟与受限清理', () => {

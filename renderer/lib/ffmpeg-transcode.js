@@ -2,6 +2,7 @@
 // 只在原生播放失败时才加载（31MB wasm 首次约 3-8s 下载/编译，之后常驻内存）
 // 本地 vendor，不依赖 CDN：离线/墙内环境可用；桌面/Android/iOS WebView 全平台兼容
 import { toast } from '../shell/shell.js';
+import { MATURITY, PRODUCT_CAPABILITIES } from '../core/product-maturity.js';
 
 let ffmpeg = null;
 let loading = null;
@@ -15,6 +16,9 @@ function vendorUrl(rel) {
 
 /** 懒加载 ffmpeg 实例（多次调用共享同一实例） */
 export async function ensureFFmpeg() {
+  if (PRODUCT_CAPABILITIES.ffmpegRuntime.maturity === MATURITY.HIDDEN) {
+    throw new Error('封板版未内置本地转码运行时；请使用系统默认程序打开。该能力将在源码分发闭环后重新启用');
+  }
   if (ffmpeg) return ffmpeg;
   if (loading) return loading;
   loading = (async () => {

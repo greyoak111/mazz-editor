@@ -39,6 +39,14 @@
     "archive.openPanel": "压缩包（预览）",
     "rec.screen": "全局内录（预览）"
   },
+  "optionalFfmpegRuntime": {
+    "recorderFormats": [
+      "webm"
+    ],
+    "viewerTranscodeHidden": true,
+    "viewerExternalOpenAvailable": true,
+    "playerGifHidden": true
+  },
   "sync": {
     "updaterHidden": true
   },
@@ -48,5 +56,5 @@
   },
   "noRendererErrors": true,
   "ok": true,
-  "generatedAt": "2026-08-16T14:07:26.212Z"
+  "generatedAt": "2026-08-16T14:52:28.436Z"
 }

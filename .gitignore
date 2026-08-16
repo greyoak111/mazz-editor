@@ -1,6 +1,9 @@
 node_modules/
 renderer/dist/
 release/
+# W71 C3：GPL core 在 corresponding-source Gate 通过前不得重新进入当前分支或发行物。
+renderer/vendor/ffmpeg/ffmpeg-core.js
+renderer/vendor/ffmpeg/ffmpeg-core.wasm
 *.log
 .DS_Store
 mazz-android-patch.txt

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-16T14:52:30.750Z",
+  "executable": "release/win-unpacked/Mazz Editor.exe",
+  "distribution": {
+    "mode": "DEFERRED_NOT_BUNDLED",
+    "repoCoreArtifacts": [],
+    "packagedCoreArtifacts": []
+  },
+  "runtime": {
+    "ensureRejected": true,
+    "transcodeRejected": true,
+    "messageIsExplicit": true,
+    "resourceLedger": {
+      "baseline": 2,
+      "final": 2
+    }
+  },
+  "futureActivationGate": {
+    "exactCorrespondingSource": false,
+    "reproducibleBuildRecipe": false,
+    "noticesAndLicenseBundle": true,
+    "runtimeAndLifecycleRetestRequired": true
+  },
+  "conclusion": {
+    "currentReleaseLicenseGate": "CLOSED_BY_NON_DISTRIBUTION",
+    "futureRuntimeGate": "OPEN",
+    "optionalCapabilityPreserved": true
+  }
+}

@@ -3,6 +3,7 @@
 import { contextKeys } from '../../core/contextkey-service.js';
 import { toast } from '../../shell/shell.js';
 import { iconHtml } from '../../lib/svg-icons.js';
+import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
 
 const MODULE = 'viewer';
 const instances = new Map();
@@ -122,13 +123,14 @@ async function enterImageEdit(ctl, img, path, ext) {
   /** 降级卡：格式啃不动 → 转码播放（ffmpeg）/ 外部打开 双选 */
   function showFallback(name, ext, reason) {
     const isMedia = VIDEO_EXTS.has(ext) || AUDIO_EXTS.has(ext);
+    const canTranscode = isMedia && PRODUCT_CAPABILITIES.ffmpegRuntime.maturity !== MATURITY.HIDDEN;
     ctl.body.innerHTML = `
       <div class="viewer-fallback">
         <div class="vf-ico">${iconHtml(isMedia ? '🎬' : '📄')}</div>
         <div class="vf-name"></div>
         <div class="vf-reason">${reason}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-          ${isMedia ? '<button class="vf-tc rb-btn" style="flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)">⚙ 转码播放</button>' : ''}
+          ${canTranscode ? '<button class="vf-tc rb-btn" style="flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)">⚙ 转码播放</button>' : ''}
           <button class="vf-open rb-btn" style="flex-direction:row;padding:8px 22px">用系统默认程序打开</button>
         </div>
         <div class="vf-progress" style="display:none;width:260px"></div>

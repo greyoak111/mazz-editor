@@ -8,8 +8,8 @@ This product includes third-party software distributed under separate
 licenses. See THIRD_PARTY_NOTICES.md and the license files shipped with those
 components.
 
-The vendored ffmpeg.wasm runtime ships its complete GPLv2 and wrapper MIT
-license texts, component notice, provenance record and source-reproducibility
-status under renderer/vendor/ffmpeg/. Its exact immutable build input set and
-tested corresponding-source delivery are not yet preserved; release licensing
-remains open until that source gate is completed.
+The repository retains the MIT ffmpeg.wasm wrapper integration, license texts,
+component notice, historical provenance and source-reproducibility record under
+renderer/vendor/ffmpeg/. The W71 sealed build does not distribute the GPL core;
+local media transcode activation remains blocked until exact corresponding
+source and durable source delivery are available.

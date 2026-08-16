@@ -76,7 +76,11 @@ function packagedSpecimen() {
     'renderer/vendor/ffmpeg/PROVENANCE.md',
     'renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md',
   ];
-  let asar = { present: false, bytes: 0, entries: 0, sourceMaps: 0, rootNotices: [], ffmpegNotices: [] };
+  const forbiddenFfmpegCore = [
+    'renderer/vendor/ffmpeg/ffmpeg-core.js',
+    'renderer/vendor/ffmpeg/ffmpeg-core.wasm',
+  ];
+  let asar = { present: false, bytes: 0, entries: 0, sourceMaps: 0, rootNotices: [], ffmpegNotices: [], ffmpegCoreArtifacts: [] };
   if (fs.existsSync(asarFile)) {
     const record = fileRecord(asarFile);
     try {
@@ -98,13 +102,20 @@ function packagedSpecimen() {
           sha256: crypto.createHash('sha256').update(content).digest('hex').toUpperCase(),
         };
       });
+      const ffmpegCoreArtifacts = forbiddenFfmpegCore.map(expectedPath => {
+        const entry = normalizedEntries.get(expectedPath);
+        if (!entry) return { path: expectedPath, present: false };
+        const content = extractFile(asarFile, entry.replace(/^\\/, ''));
+        return { path: expectedPath, present: true, bytes: content.length };
+      });
       asar = {
         present: true, bytes: record.bytes, entries: entries.length,
         sourceMaps: sourceMapFiles.length,
         sourceMapBytes: sourceMapFiles.reduce((total, file) => total + file.bytes, 0),
         sourceMapFiles,
-        rootNotices: entries.filter(name => /^\\(?:LICENSE|NOTICE|THIRD_PARTY_NOTICES\.md)$/.test(name)),
+        rootNotices: entries.filter(name => /^\\(?:LICENSE|NOTICE|THIRD_PARTY_NOTICES\.md|KNOWN_LIMITATIONS\.md)$/.test(name)),
         ffmpegNotices,
+        ffmpegCoreArtifacts,
       };
     } catch (error) {
       asar = { present: true, bytes: record.bytes, entries: 0, sourceMaps: null, rootNotices: [], ffmpegNotices: [], auditError: error.message };
@@ -134,15 +145,18 @@ function auditRelease() {
     licenseEvidence = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'engineering', 'evidence', 'W71_LICENSE_AUDIT.json'), 'utf8'));
   } catch {}
   const sum = rows => rows.reduce((total, row) => total + row.bytes, 0);
+  const ffmpegCorePaths = ['renderer/vendor/ffmpeg/ffmpeg-core.js', 'renderer/vendor/ffmpeg/ffmpeg-core.wasm'];
+  const ffmpegExclusions = ffmpegCorePaths.map(item => `!${item}`);
+  const buildFiles = pkg.build?.files || [];
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     generatedAt: new Date().toISOString(),
     app: { name: pkg.name, version: pkg.version, license: pkg.license },
     build: {
       output: pkg.build?.directories?.output || '',
       npmRebuild: pkg.build?.npmRebuild,
       asarUnpack: pkg.build?.asarUnpack || [],
-      files: pkg.build?.files || [],
+      files: buildFiles,
     },
     licenses: {
       root: ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md'].map(name => ({ name, present: fs.existsSync(path.join(ROOT, name)) })),
@@ -154,6 +168,12 @@ function auditRelease() {
     rendererSourceMaps: { count: sourceMaps.length, bytes: sum(sourceMaps), files: sourceMaps },
     nativeBinaries: { count: nativeBinaries.length, bytes: sum(nativeBinaries), files: nativeBinaries },
     vendoredFfmpeg: { count: vendoredFfmpeg.length, bytes: sum(vendoredFfmpeg), files: vendoredFfmpeg },
+    ffmpegDistribution: {
+      mode: 'DEFERRED_NOT_BUNDLED',
+      activationGate: 'COMPLETE_CORRESPONDING_SOURCE_AND_DURABLE_DELIVERY',
+      repositoryCoreArtifactsPresent: ffmpegCorePaths.filter(item => fs.existsSync(path.join(ROOT, item))),
+      buildExclusions: ffmpegExclusions.map(rule => ({ rule, present: buildFiles.includes(rule) })),
+    },
     packagedSpecimen: packagedSpecimen(),
   };
 }

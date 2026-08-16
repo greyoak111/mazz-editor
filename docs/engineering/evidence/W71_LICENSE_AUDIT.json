@@ -111,6 +111,15 @@
       "gate": "OPEN_BLOCKED_MISSING_IMMUTABLE_BUILD_INPUTS"
     },
     "gate": "OPEN_CORRESPONDING_SOURCE",
-    "reason": "Core identity, GPL classification, full license text, wrapper license and component notice are closed. Exact immutable build inputs, a rebuildable source archive and durable source delivery remain open."
+    "reason": "Historical core identity, GPL classification, full license text, wrapper license and component notice are closed. Exact immutable build inputs, a rebuildable source archive and durable source delivery remain open for any future core distribution."
+  },
+  "currentDistributionDecision": {
+    "recordedAt": "2026-08-16",
+    "mode": "DEFERRED_NOT_BUNDLED",
+    "sealedBinaryGate": "CLOSED_BY_NON_DISTRIBUTION",
+    "repositoryCoreArtifactsPresent": false,
+    "dependentProductControls": "HIDDEN",
+    "futureActivationGate": "COMPLETE_CORRESPONDING_SOURCE_AND_DURABLE_DELIVERY",
+    "reason": "The current branch and sealed installer do not carry ffmpeg-core.js or ffmpeg-core.wasm. Historical evidence remains for provenance; it is not permission to reintroduce the core."
   }
 }

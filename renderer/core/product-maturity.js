@@ -18,6 +18,9 @@ export const PRODUCT_CAPABILITIES = Object.freeze({
   plugins: Object.freeze({ maturity: MATURITY.PREVIEW, label: '插件系统' }),
   ocr: Object.freeze({ maturity: MATURITY.PREVIEW, label: '图片文字识别' }),
   archive: Object.freeze({ maturity: MATURITY.PREVIEW, label: '压缩包' }),
+  // GPL core 的完整 corresponding-source 尚未恢复。封板发行物不携带 core，
+  // 转码/GIF/mp4 子能力保持 Hidden；代码保留，日后通过 Activation Gate 再启用。
+  ffmpegRuntime: Object.freeze({ maturity: MATURITY.HIDDEN, label: '本地媒体转码', foundation: 'deferred' }),
 });
 
 const EXACT_COMMANDS = Object.freeze({

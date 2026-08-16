@@ -20,14 +20,14 @@ Important direct runtime dependencies include:
 | node-pty | MIT; native ABI must be verified in the packaged Windows specimen |
 | WebTorrent and native helpers | MIT-family dependencies; packaged native binaries require inventory |
 | libass-wasm | Compound license set declared by the package; its `dist/js/COPYRIGHT` must remain available |
-| ffmpeg.wasm vendored runtime | `@ffmpeg/ffmpeg@0.12.10` wrapper (MIT) plus `@ffmpeg/core@0.12.10`-identical core payload (GPL-2.0-or-later); see `renderer/vendor/ffmpeg/NOTICE.md` and `PROVENANCE.md` |
+| ffmpeg.wasm optional integration | `@ffmpeg/ffmpeg@0.12.10` wrapper (MIT) is retained; the historical `@ffmpeg/core@0.12.10`-identical GPL core is not present in the current branch or sealed installer; see `renderer/vendor/ffmpeg/NOTICE.md` and `PROVENANCE.md` |
 | Monaco Editor | MIT |
 | ECharts | Apache-2.0 |
 
 Unresolved release evidence:
 
 - The former `buffers@0.1.1` blocker is closed by a scoped `exceljs > unzipper@0.12.3` override. The unlicensed `buffers` and legacy `binary` packages are absent from the locked runtime graph; XLSX roundtrip/export regression tests pass.
-- The vendored ffmpeg wrapper and core identities are recovered, and the distributable now carries the complete GPLv2 and MIT texts plus component notice. Live runtime evidence reports FFmpeg 5.1.4 with `--enable-gpl`. The gate remains open only on the corresponding-source side: the upstream build uses mutable refs whose original release commits have not been attested, so an exact rebuildable source archive and durable delivery mechanism do not yet exist. See `renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md`, `docs/engineering/evidence/W71_LICENSE_AUDIT.json` and `docs/engineering/evidence/W71_FFMPEG_RUNTIME.json`.
+- Historical ffmpeg wrapper/core identities and runtime configuration were recovered. Because the upstream build uses mutable refs whose original release commits have not been attested, W71 C3 removed the GPL core from the current branch and sealed installer and hid all dependent product controls. The current binary release blocker is therefore closed by non-distribution; future reactivation still requires an exact rebuildable source archive and durable delivery mechanism. See `renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md`, `docs/engineering/evidence/W71_LICENSE_AUDIT.json` and `docs/engineering/evidence/W71_FFMPEG_RUNTIME.json`.
 
 ## Release rule
 

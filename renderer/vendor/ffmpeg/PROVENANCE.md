@@ -1,9 +1,9 @@
 # ffmpeg.wasm Vendored Runtime Provenance
 
-> Status: `PARTIAL / LICENSE AND WRAPPER ID CLOSED; CORRESPONDING SOURCE BLOCKED`
+> Status: `DEFERRED / CORE NOT DISTRIBUTED IN SEALED BUILD`
 > Recorded: 2026-08-16
 
-## Files and fixed hashes
+## Historical core files and fixed hashes
 
 | File | SHA-256 |
 |---|---|
@@ -76,11 +76,13 @@ worker.js
 
 The complete wrapper license is shipped as `LICENSE.wrapper-MIT`. The complete core license text is shipped as `COPYING.GPLv2`; `NOTICE.md` ties both components to their package coordinates and hashes.
 
-## Known use
+## Current distribution decision
 
-The runtime is loaded lazily by `renderer/lib/ffmpeg-transcode.js` for local media conversion. It is a real product runtime, not a development fixture, and must remain in packaged builds unless the feature is explicitly removed.
+The historical core was loaded lazily by `renderer/lib/ffmpeg-transcode.js` for local media conversion. W71 C3 has now removed `ffmpeg-core.js` and `ffmpeg-core.wasm` from the current branch and added explicit electron-builder exclusions. The sealed installer does not distribute the GPL core. Viewer transcode, Player GIF export and Recorder mp4 conversion are Hidden by the central product-maturity policy; native playback, WebM recording and system-default open remain available.
 
-## Evidence still missing
+The wrapper code, integration code, hashes and this provenance record remain as a future activation capsule. Reintroducing any core binary requires the corresponding-source Gate below; placing files back on disk is not approval.
+
+## Evidence required before future activation
 
 ```text
 a durable corresponding-source archive or download mechanism for the shipped `v0.12.10` core payload
@@ -90,4 +92,4 @@ verification that the source delivery remains available for the required complia
 documented release procedure that keeps binary, source offer and hashes together
 ```
 
-The byte identity, wrapper identity, npm metadata, live `--enable-gpl` configuration and dedicated license files close the former classification, attribution and license-text uncertainty. They do **not** by themselves complete GPL distribution compliance. `SOURCE_REPRODUCIBILITY.md` records why the current upstream tag cannot yet serve as a proven corresponding-source archive. Do not close the W71 licensing gate until the corresponding-source delivery path has been built and tested.
+The byte identity, wrapper identity, npm metadata, historical live `--enable-gpl` configuration and dedicated license files close the former classification, attribution and license-text uncertainty. They do **not** complete a future GPL binary distribution. `SOURCE_REPRODUCIBILITY.md` records why the current upstream tag cannot yet serve as a proven corresponding-source archive. The current sealed binary Gate is closed by non-distribution, not by claiming the missing source has been recovered.

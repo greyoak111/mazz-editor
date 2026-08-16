@@ -52,12 +52,12 @@
         <label><input type="checkbox" id="rec-mic"> 麦克风</label>
         <label><input type="checkbox" id="rec-sub" checked> 字幕轨（语音识别存 .srt）</label>
         <label>变速 <select id="rec-speed" class="sel"><option value="1">原速</option><option value="3" selected>3 倍速</option><option value="10">10 倍速</option><option value="6">6 倍速</option></select></label>
-        <label>格式 <select id="rec-fmt" class="sel"><option value="webm">webm（即存即播）</option><option value="mp4">mp4（H.264，录完转码）</option></select></label>
+        <label>格式 <select id="rec-fmt" class="sel"><option value="webm">webm（即存即播）</option></select></label>
       </div>
       <div style="display:flex;justify-content:flex-end">
         <button class="btn pri" id="rec-go">● 开始录制</button>
       </div>
-      <div class="hint">默认保存到工作区「录制/」；mp4 经本地转码产出真 H.264（首次需加载转码内核）。录制本体在主窗执行——本面板可关闭，录制不中断。</div>
+      <div class="hint">默认保存到工作区「录制/」。封板版只提供 webm；mp4 转码将在可验证源码分发闭环后重新启用。录制本体在主窗执行——本面板可关闭，录制不中断。</div>
     </div>
     <div class="status" id="status">
       <div class="dot"></div>

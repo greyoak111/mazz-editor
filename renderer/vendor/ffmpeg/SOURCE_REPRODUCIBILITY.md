@@ -1,6 +1,6 @@
 # ffmpeg.wasm Corresponding-Source Reproducibility Status
 
-> Status: `BLOCKED / DO NOT CLAIM COMPLETE CORRESPONDING SOURCE`
+> Status: `DEFERRED / NOT DISTRIBUTED`
 >
 > Audit coordinate: upstream `ffmpegwasm/ffmpeg.wasm` tag `v0.12.10`, commit `c3a763857c5e615ae8674715ad5e4f63ff469e9d`
 
@@ -31,9 +31,9 @@ ffmpegwasm/lame master   = 2badea1974ae36cb8312afe99cff1e6b3b5decee
 
 These observations do not prove those commits were used to build the 0.12.10 npm payload. Replacing missing build-time evidence with current branch heads would create a plausible archive, not corresponding source for the shipped binary.
 
-## Required release gate
+## Required future activation gate
 
-Before distributing the GPL core as a sealed release:
+The current W71 sealed build does not contain `ffmpeg-core.js` or `ffmpeg-core.wasm`. Before any future build distributes a GPL core:
 
 1. recover an immutable build attestation or exact commit set for every Docker `ADD` / `git clone` source;
 2. archive all those source trees, the `v0.12.10` build scripts, bindings, patches and interface definitions;
@@ -44,4 +44,4 @@ Before distributing the GPL core as a sealed release:
 
 Until all six pass, the correct status is:
 
-> License text and attribution: present in the distributable. Corresponding source: unresolved; distribution gate remains open.
+> Current sealed build: core not distributed, release blocker closed by scope reduction. Future core activation: blocked until corresponding source is complete and durably delivered.

@@ -14,6 +14,8 @@ if (!fs.existsSync(executablePath)) throw new Error(`packaged app 不存在：${
 fs.mkdirSync(evidenceDir, { recursive: true });
 const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-maturity-user-'));
 const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-maturity-ws-'));
+const unsupportedMediaPath = path.join(workspace, 'sealed-runtime.mkv');
+fs.writeFileSync(unsupportedMediaPath, 'not-a-media-container', 'utf8');
 let app;
 
 async function waitPanel(fragment, timeout = 15000) {
@@ -91,6 +93,7 @@ try {
   await help.close();
 
   const panelTitles = {};
+  let recorderFormats = [];
   for (const [command, fragment] of [
     ['plugin.manage', '/panels/plugins.html'],
     ['archive.openPanel', '/panels/archive.html'],
@@ -102,8 +105,34 @@ try {
     if (!panelTitles[command].includes('（预览）')) {
       throw new Error(`原生面板标题未标识 Preview：${command} ${panelTitles[command]}`);
     }
+    if (command === 'rec.screen') {
+      recorderFormats = await panel.locator('#rec-fmt option').evaluateAll(items => items.map(item => item.value));
+      if (JSON.stringify(recorderFormats) !== JSON.stringify(['webm'])) {
+        throw new Error(`封板 Recorder 仍暴露依赖 GPL core 的输出：${JSON.stringify(recorderFormats)}`);
+      }
+    }
     await panel.close();
   }
+
+  await main.evaluate(file => window.MazzShell.openFile(file), unsupportedMediaPath);
+  await main.waitForSelector('.viewer-fallback', { timeout: 30000 });
+  const mediaFallback = await main.evaluate(() => ({
+    hasTranscode: !!document.querySelector('.viewer-fallback .vf-tc'),
+    hasExternalOpen: !!document.querySelector('.viewer-fallback .vf-open'),
+    text: document.querySelector('.viewer-fallback')?.textContent || '',
+  }));
+  if (mediaFallback.hasTranscode || !mediaFallback.hasExternalOpen) {
+    throw new Error(`封板 Viewer 降级入口不诚实：${JSON.stringify(mediaFallback)}`);
+  }
+  await main.evaluate(async () => {
+    const tab = window.MazzShell.tabs.active;
+    tab.forceClose = true;
+    await window.MazzShell.closeTabFlow(tab.id);
+    window.MazzShell.openTab('viewer', { title: '播放器' });
+  });
+  await main.waitForSelector('.mz-player', { timeout: 15000 });
+  const playerGifHidden = await main.evaluate(() => !document.querySelector('.mz-player [data-a="gif"]'));
+  if (!playerGifHidden) throw new Error('封板 Player 仍暴露依赖 GPL core 的 GIF 入口');
 
   await main.evaluate(() => window.mazz.invoke('panel:open', { kind: 'sync' }));
   const sync = await waitPanel('/panels/sync.html');
@@ -135,6 +164,12 @@ try {
       screenshot: 'evidence/W71_PRODUCT_MATURITY_HELP.png',
     },
     panelTitles,
+    optionalFfmpegRuntime: {
+      recorderFormats,
+      viewerTranscodeHidden: !mediaFallback.hasTranscode,
+      viewerExternalOpenAvailable: mediaFallback.hasExternalOpen,
+      playerGifHidden,
+    },
     sync: { updaterHidden: !syncState.hasUpdateTab && !syncState.visibleText.includes('检查更新') },
     dmhy,
     noRendererErrors: true,

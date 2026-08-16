@@ -1,23 +1,30 @@
-// W71: prove the vendored ffmpeg core inside the packaged Windows runtime.
+// W71 C3: prove the sealed Windows runtime does not distribute or activate FFmpeg core.
 import { _electron as electron } from 'playwright';
-import crypto from 'node:crypto';
+import * as asar from '@electron/asar';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 const root = path.resolve('.');
 const executablePath = path.join(root, 'release', 'win-unpacked', 'Mazz Editor.exe');
+const appAsarPath = path.join(root, 'release', 'win-unpacked', 'resources', 'app.asar');
+const evidencePath = path.join(root, 'docs', 'engineering', 'evidence', 'W71_FFMPEG_DISTRIBUTION_DECISION.json');
 if (!fs.existsSync(executablePath)) throw new Error(`Packaged app is missing: ${executablePath}`);
+if (!fs.existsSync(appAsarPath)) throw new Error(`Packaged app.asar is missing: ${appAsarPath}`);
 
-const evidenceDir = path.join(root, 'docs', 'engineering', 'evidence');
-fs.mkdirSync(evidenceDir, { recursive: true });
+const forbiddenCorePattern = /renderer[\\/]vendor[\\/]ffmpeg[\\/]ffmpeg-core\.(?:js|wasm)$/i;
+const repoCoreArtifacts = [
+  path.join(root, 'renderer', 'vendor', 'ffmpeg', 'ffmpeg-core.js'),
+  path.join(root, 'renderer', 'vendor', 'ffmpeg', 'ffmpeg-core.wasm'),
+].filter(file => fs.existsSync(file));
+const packagedCoreArtifacts = asar.listPackage(appAsarPath).filter(entry => forbiddenCorePattern.test(entry));
+if (repoCoreArtifacts.length || packagedCoreArtifacts.length) {
+  throw new Error(`Sealed distribution still contains FFmpeg core: ${JSON.stringify({ repoCoreArtifacts, packagedCoreArtifacts })}`);
+}
+
 const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-ffmpeg-user-'));
 const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-ffmpeg-ws-'));
 let app;
-
-function sha256(file) {
-  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex').toUpperCase();
-}
 
 try {
   app = await electron.launch({
@@ -41,105 +48,64 @@ try {
     await window.mazz.invoke('panel:close', { kind: 'agreement' }).catch(() => {});
   });
 
+  const baseline = await win.evaluate(() => window.mazz.invoke('resources:snapshot'));
   const runtime = await win.evaluate(async () => {
     const moduleUrl = new URL('lib/ffmpeg-transcode.js', document.baseURI).href;
     const mod = await import(moduleUrl);
-    const makeWav = () => {
-      const sampleRate = 8000;
-      const samples = 1600;
-      const bytes = new Uint8Array(44 + samples * 2);
-      const view = new DataView(bytes.buffer);
-      const word = (offset, value) => {
-        for (let index = 0; index < value.length; index++) bytes[offset + index] = value.charCodeAt(index);
-      };
-      word(0, 'RIFF'); view.setUint32(4, bytes.length - 8, true); word(8, 'WAVE');
-      word(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
-      view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
-      view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
-      word(36, 'data'); view.setUint32(40, samples * 2, true);
-      for (let index = 0; index < samples; index++) {
-        view.setInt16(44 + index * 2, Math.round(Math.sin(index * 2 * Math.PI * 440 / sampleRate) * 6000), true);
+    const capture = async operation => {
+      try {
+        await operation();
+        return { rejected: false, message: '' };
+      } catch (error) {
+        return { rejected: true, message: String(error?.message || error) };
       }
-      return bytes;
     };
-
-    const logs = [];
-    const first = await mod.ensureFFmpeg();
-    const onLog = ({ message }) => logs.push(String(message || ''));
-    first.on('log', onLog);
-    const versionExitCode = await first.exec(['-version']);
-    first.off('log', onLog);
-
-    const progress = [];
-    const mp3 = await mod.transcode(makeWav(), 'wav', {
-      toAudio: true,
-      onProgress: ratio => progress.push(ratio),
-    });
+    const ensure = await capture(() => mod.ensureFFmpeg());
+    const transcode = await capture(() => mod.transcode(new Uint8Array([0, 1, 2]), 'wav', { toAudio: true }));
     await mod.disposeFFmpeg();
-
-    const second = await mod.ensureFFmpeg();
-    const reloadLogs = [];
-    const onReloadLog = ({ message }) => reloadLogs.push(String(message || ''));
-    second.on('log', onReloadLog);
-    const reloadExitCode = await second.exec(['-version']);
-    second.off('log', onReloadLog);
-    await mod.disposeFFmpeg();
-
-    return {
-      versionExitCode,
-      reloadExitCode,
-      reloadedWithNewInstance: first !== second,
-      mp3Bytes: mp3.byteLength,
-      mp3MagicHex: [...mp3.slice(0, 4)].map(value => value.toString(16).padStart(2, '0')).join('').toUpperCase(),
-      progressEvents: progress.length,
-      logs,
-      reloadLogs,
-    };
+    return { ensure, transcode };
   });
-
-  if (runtime.versionExitCode !== 0 || runtime.reloadExitCode !== 0) {
-    throw new Error(`ffmpeg -version failed: ${JSON.stringify(runtime)}`);
+  const expectedMessage = /封板版未内置本地转码运行时.*源码分发闭环后重新启用/;
+  if (!runtime.ensure.rejected || !runtime.transcode.rejected
+    || !expectedMessage.test(runtime.ensure.message) || !expectedMessage.test(runtime.transcode.message)) {
+    throw new Error(`Deferred runtime did not fail closed with an honest message: ${JSON.stringify(runtime)}`);
   }
-  if (!runtime.reloadedWithNewInstance) throw new Error('disposeFFmpeg did not release the worker instance');
-  if (runtime.mp3Bytes < 100) throw new Error(`Synthetic WAV transcode produced ${runtime.mp3Bytes} bytes`);
-  const allLogs = [...runtime.logs, ...runtime.reloadLogs];
-  const version = allLogs.find(line => /^ffmpeg version /i.test(line)) || '';
-  const configuration = allLogs.find(line => /^configuration:/i.test(line)) || '';
-  if (!version || !configuration) throw new Error(`Runtime identity was not reported: ${JSON.stringify(allLogs)}`);
 
-  const coreJs = path.join(root, 'renderer', 'vendor', 'ffmpeg', 'ffmpeg-core.js');
-  const coreWasm = path.join(root, 'renderer', 'vendor', 'ffmpeg', 'ffmpeg-core.wasm');
+  const finalResources = await win.evaluate(() => window.mazz.invoke('resources:snapshot'));
+  if (finalResources.activeCount !== baseline.activeCount) {
+    throw new Error(`FFmpeg activation attempt leaked resources: ${baseline.activeCount} -> ${finalResources.activeCount}`);
+  }
+
   const evidence = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     executable: 'release/win-unpacked/Mazz Editor.exe',
-    assets: {
-      coreJs: { bytes: fs.statSync(coreJs).size, sha256: sha256(coreJs) },
-      coreWasm: { bytes: fs.statSync(coreWasm).size, sha256: sha256(coreWasm) },
+    distribution: {
+      mode: 'DEFERRED_NOT_BUNDLED',
+      repoCoreArtifacts,
+      packagedCoreArtifacts,
     },
     runtime: {
-      version,
-      configuration,
-      libraryVersions: allLogs.filter(line => /^lib(?:av|sw|post)/i.test(line)),
-      versionExitCode: runtime.versionExitCode,
-      reloadExitCode: runtime.reloadExitCode,
-      reloadedWithNewInstance: runtime.reloadedWithNewInstance,
-      syntheticWavToMp3: {
-        outputBytes: runtime.mp3Bytes,
-        magicHex: runtime.mp3MagicHex,
-        progressEvents: runtime.progressEvents,
-      },
+      ensureRejected: runtime.ensure.rejected,
+      transcodeRejected: runtime.transcode.rejected,
+      messageIsExplicit: expectedMessage.test(runtime.ensure.message),
+      resourceLedger: { baseline: baseline.activeCount, final: finalResources.activeCount },
+    },
+    futureActivationGate: {
+      exactCorrespondingSource: false,
+      reproducibleBuildRecipe: false,
+      noticesAndLicenseBundle: true,
+      runtimeAndLifecycleRetestRequired: true,
     },
     conclusion: {
-      packagedCoreLoads: true,
-      realTranscodePasses: true,
-      explicitDisposeAndReloadPasses: true,
-      exactSourceAndBuildRecipeRecovered: false,
-      releaseLicenseGate: 'OPEN',
+      currentReleaseLicenseGate: 'CLOSED_BY_NON_DISTRIBUTION',
+      futureRuntimeGate: 'OPEN',
+      optionalCapabilityPreserved: true,
     },
   };
-  fs.writeFileSync(path.join(evidenceDir, 'W71_FFMPEG_RUNTIME.json'), JSON.stringify(evidence, null, 2) + '\n', 'utf8');
-  console.log(JSON.stringify({ ok: true, version, configuration, ...evidence.conclusion }));
+  fs.mkdirSync(path.dirname(evidencePath), { recursive: true });
+  fs.writeFileSync(evidencePath, JSON.stringify(evidence, null, 2) + '\n', 'utf8');
+  console.log(JSON.stringify({ ok: true, ...evidence.conclusion, resources: evidence.runtime.resourceLedger }));
 } finally {
   if (app) await app.close().catch(() => {});
   fs.rmSync(userData, { recursive: true, force: true });

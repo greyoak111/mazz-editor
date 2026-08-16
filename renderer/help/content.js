@@ -549,7 +549,7 @@ HELP_SECTIONS.push(
 - **图片**：缩放（按钮/滚轮）/适应窗口/1:1；
 - **PDF**：Chromium 内置 PDFium 渲染；
 - **视频/音频**：原生播放器（mp4/webm/ogv/mov/m4v、mp3/wav/m4a/aac/flac/opus/ogg）；
-- **原生放不了的格式**（mkv/avi/wmv/flv/ts/mpg/3gp…）：先试原生，失败给两个选择——**⚙ 转码播放**（内置 ffmpeg.wasm 本地包，首次加载几秒后常驻，桌面/手机都能用）或 **用系统默认程序打开**。
+- **原生放不了的格式**（mkv/avi/wmv/flv/ts/mpg/3gp…）：封板版明确提供 **用系统默认程序打开**；本地转码运行时在对应源码分发闭环前不随发行包提供。
 
 ## 🗂 右侧工具坞
 
@@ -884,7 +884,7 @@ F2 重命名 · Delete 删除（进回收站） · F5 刷新 · Enter 打开/展
 支持直接打开：md / txt / csv / tsv / mazzsheet / xlsx / docx / **pptx** / mazzslide / mindmap / mazzdraw / epub / cbz / 常见代码文件。
 其中 **pptx 会自动转成大纲**进入演示模块（标题、要点层级、分页、**图片**保留），编辑后可再另存为 pptx。
 
-**图片 / PDF / 音视频**（png/jpg/gif/webp/svg/bmp/avif、pdf、mp4/webm/mov/m4v/ogv、mp3/wav/m4a/aac/flac/opus/ogg）会进入**查看器**：图片缩放/适应/1:1，PDF 内置渲染，音视频原生播放；**mkv/avi/wmv/flv 等原生放不了的**，可一键 **ffmpeg 转码播放**（内置 31MB wasm，本地懒加载，离线可用），或用系统默认程序打开。
+**图片 / PDF / 音视频**（png/jpg/gif/webp/svg/bmp/avif、pdf、mp4/webm/mov/m4v/ogv、mp3/wav/m4a/aac/flac/opus/ogg）会进入**查看器**：图片缩放/适应/1:1，PDF 内置渲染，音视频原生播放；**mkv/avi/wmv/flv 等原生放不了的**，封板版提供用系统默认程序打开。本地转码、GIF 导出与录制转 mp4 保留实现，但在可验证源码分发闭环前不进入发行包或正式入口。
 
 **epub/cbz** 自动进入书库（入库即读，进度记忆）。
 
@@ -1345,7 +1345,7 @@ HELP_SECTIONS.push(
 
 ## 内录升级
 
-- **格式**：webm（即录即播）/ mp4（录完 ffmpeg.wasm 转真 H.264）
+- **格式**：封板版为 webm（即录即播）；mp4 转码保留为远期激活项
 - **字幕轨**：勾选后录制时 Web Speech 实时识别（带时间戳），停止自动存同名 **.srt** 一轨；**AI 润色**（断句+错字修正）在生成前自动介入（无 AI 配置静默跳过）
 - 系统音/麦克风独立开关，变速 1/3/6/10 倍
 

@@ -15,6 +15,7 @@
     "dist": "node scripts/build.js && electron-builder",
     "dist:dir": "node scripts/build.js && electron-builder --dir --win",
     "audit:release": "node scripts/release-audit.js --out docs/engineering/evidence/W71_RELEASE_BASELINE.json",
+    "audit:secrets": "node scripts/secret-audit.js --out docs/engineering/evidence/W71_SECRET_AUDIT.json",
     "audit:w71:census": "node scripts/w71-census.js",
     "audit:w71:native": "node scripts/w71-native-audit.js --out .mazz/audit/native-binary-census.json",
     "test:w71:native-stage": "node scripts/w71-native-stage-verify.js",
@@ -49,6 +50,8 @@
       "main/",
       "preload/",
       "renderer/",
+      "!renderer/vendor/ffmpeg/ffmpeg-core.js",
+      "!renderer/vendor/ffmpeg/ffmpeg-core.wasm",
       "!renderer/dist/**/*.map",
       "!renderer/vendor/**/*.map",
       "!node_modules/**/*.map",
@@ -62,7 +65,8 @@
       "samples/",
       "LICENSE",
       "NOTICE",
-      "THIRD_PARTY_NOTICES.md"
+      "THIRD_PARTY_NOTICES.md",
+      "KNOWN_LIMITATIONS.md"
     ],
     "asarUnpack": [
       "node_modules/**/*.node"

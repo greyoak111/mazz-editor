@@ -1,5 +1,7 @@
 # W71 FFmpeg 分发证据检查点（2026-08-16）
 
+> **后续状态：** 本文保留 C3 决策前的历史取证。当前权威结论是 W71 封板发行物不再分发 GPL core，相关子能力 Hidden；参见 `W71_RELEASE_LICENSING_CHECKPOINT_2026-08-16.md`。`OPEN_CORRESPONDING_SOURCE` 继续作为未来重新启用的 Activation Gate，不再阻塞不含 core 的首个 RC。
+
 ## 1. 结论
 
 本检查点将 vendored ffmpeg.wasm 的发布风险从一个混合的“来源/许可未知”拆成三个可独立验收的 Gate：

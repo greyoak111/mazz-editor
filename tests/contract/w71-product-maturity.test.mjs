@@ -21,6 +21,7 @@ describe('W71 产品入口成熟度单源', () => {
       plugins: MATURITY.PREVIEW,
       ocr: MATURITY.PREVIEW,
       archive: MATURITY.PREVIEW,
+      ffmpegRuntime: MATURITY.HIDDEN,
     };
     assert.deepEqual(Object.fromEntries(Object.entries(PRODUCT_CAPABILITIES).map(([id, item]) => [id, item.maturity])), expected);
   });
@@ -61,5 +62,21 @@ describe('W71 产品入口成熟度单源', () => {
     assert.match(read('renderer/help/content.js'), /插件系统（预览/);
     assert.match(read('main/torrent-sites.js'), /DMHY（预览）/);
     assert.match(read('renderer/modules/viewer/player.js'), /DMHY（预览）/);
+  });
+
+  test('FFmpeg core 未闭环时转码子能力 Hidden 且发行物双重排除', () => {
+    const pkg = JSON.parse(read('package.json'));
+    const viewer = read('renderer/modules/viewer/index.js');
+    const player = read('renderer/modules/viewer/player.js');
+    const recorder = read('renderer/panels/recorder.html');
+    const help = read('renderer/help/content.js');
+    assert.equal(PRODUCT_CAPABILITIES.ffmpegRuntime.maturity, MATURITY.HIDDEN);
+    assert.ok(viewer.includes('PRODUCT_CAPABILITIES.ffmpegRuntime.maturity !== MATURITY.HIDDEN'));
+    assert.ok(player.includes('PRODUCT_CAPABILITIES.ffmpegRuntime.maturity !== MATURITY.HIDDEN'));
+    assert.equal(recorder.includes('<option value="mp4">'), false);
+    assert.match(recorder, /源码分发闭环后重新启用/);
+    assert.match(help, /不进入发行包或正式入口/);
+    assert.ok(pkg.build.files.includes('!renderer/vendor/ffmpeg/ffmpeg-core.js'));
+    assert.ok(pkg.build.files.includes('!renderer/vendor/ffmpeg/ffmpeg-core.wasm'));
   });
 });
