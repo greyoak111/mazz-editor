@@ -71,4 +71,16 @@ describe('W71 许可证据', () => {
     assert.ok(source.includes('export async function disposeFFmpeg()'));
     assert.ok(source.includes('ffmpeg.terminate()'));
   });
+
+  test('NSIS 安装循环使用隔离目标、已安装 exe 真冒烟与受限清理', () => {
+    const smoke = fs.readFileSync(path.join(root, 'tests/e2e/w71-packaged-smoke.mjs'), 'utf8');
+    const cycle = fs.readFileSync(path.join(root, 'tests/e2e/w71-installer-cycle.mjs'), 'utf8');
+    assert.ok(smoke.includes('MAZZ_E2E_EXECUTABLE'));
+    assert.ok(cycle.includes("run(installer, ['/S', `/D=${installDir}`])"));
+    assert.ok(cycle.includes('MAZZ_E2E_EXECUTABLE: installedExe'));
+    assert.ok(cycle.includes("run(uninstaller, ['/S'])"));
+    assert.ok(cycle.includes('assertInsideTemp(target)'));
+    assert.ok(cycle.includes('removeOwnedTempDirectory(installDir)'));
+    assert.ok(cycle.includes('Existing Mazz Editor installation/shortcut found'));
+  });
 });

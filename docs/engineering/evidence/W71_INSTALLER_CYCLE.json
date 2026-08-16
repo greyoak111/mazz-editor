@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T08:34:02.932Z",
+  "installer": {
+    "file": "release/Mazz Editor Setup 0.2.0.exe",
+    "bytes": 141028503,
+    "sha256": "D178BFC98310233781BDB43E885A4963FCD3EF83A6958C5CCE8831A59620D4D1"
+  },
+  "isolatedTarget": "MazzW71Install-lc7aQn",
+  "preflight": {
+    "noExistingInstallRegistration": true,
+    "noExistingShortcuts": true
+  },
+  "install": {
+    "exitCode": 0,
+    "uninstallRegistrationCreated": true,
+    "installedExeSha256": "8B8752FFDE812849531D3EEB4DF6376F477CB987913E520773B2103BF6EFA802"
+  },
+  "installedRuntime": {
+    "smokeExitCode": 0,
+    "smokeResult": {
+      "ok": true,
+      "title": "Mazz Editor",
+      "electron": "33.4.11",
+      "resourceVersion": 1,
+      "baselineResources": 2,
+      "activeResources": 2,
+      "mainWindowObserved": true,
+      "ptyObserved": true,
+      "panelObserved": true,
+      "webContentsViewObserved": true,
+      "fileWatcherObserved": true,
+      "torrentRuntimeObserved": true,
+      "pythonRuntimeObserved": true,
+      "viewerRuntimeObserved": true,
+      "factoryRequestObserved": true,
+      "monacoWorkerObserved": true,
+      "monacoLateInitGuardObserved": true,
+      "monacoWorkersCreated": 19,
+      "monacoWorkersActive": 2,
+      "monacoWorkersTerminated": 17,
+      "monacoWorkerErrors": 0,
+      "monacoModelsAfterClose": 0,
+      "lifecycleCycles": 20,
+      "viewerLifecycleCycles": 20,
+      "factoryLifecycleCycles": 20,
+      "monacoLifecycleCycles": 20,
+      "releasedResourcesRetained": 160,
+      "adapters": 0,
+      "sessions": 0
+    }
+  },
+  "uninstall": {
+    "exitCode": 0,
+    "executableRemoved": true,
+    "uninstallRegistrationRemoved": true,
+    "shortcutsRemoved": true,
+    "residueBeforeGuardedTempCleanup": [],
+    "guardedTempCleanup": {
+      "attempted": true,
+      "removed": true,
+      "attempts": 1
+    }
+  }
+}

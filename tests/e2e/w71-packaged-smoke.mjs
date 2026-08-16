@@ -5,8 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 const root = path.resolve('.');
-const executablePath = path.join(root, 'release', 'win-unpacked', 'Mazz Editor.exe');
-if (!fs.existsSync(executablePath)) throw new Error(`app-unpacked 不存在：${executablePath}`);
+const executablePath = path.resolve(process.env.MAZZ_E2E_EXECUTABLE
+  || path.join(root, 'release', 'win-unpacked', 'Mazz Editor.exe'));
+if (!fs.existsSync(executablePath)) throw new Error(`packaged app 不存在：${executablePath}`);
 
 const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-user-'));
 const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w71-ws-'));

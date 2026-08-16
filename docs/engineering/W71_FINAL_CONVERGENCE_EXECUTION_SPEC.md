@@ -1232,7 +1232,9 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 同日发布物复审发现 `app.asar` 仍夹带 388 份依赖 source map（原始 70,344,542 bytes），根因是既有规则只排除 renderer map。增加统一的 `!node_modules/**/*.map` 后重建，`app.asar` source map / PDB / test directory 均归零，asar 从 360,465,697 降至 290,083,965 bytes，最终 `win-unpacked` 从 667,726,899 降至 597,387,265 bytes；NSIS installer 从 150,813,568 降至 141,028,503 bytes，SHA-256 为 `D178BFC98310233781BDB43E885A4963FCD3EF83A6958C5CCE8831A59620D4D1`。packaged smoke、20 次生命周期与 ffmpeg 真转码继续通过。该子 Gate 仅关闭 source-map 泄漏和当前安装包重新计量，不代替签名、安装/升级/卸载和异机 ABI。证据见 [`W71_PACKAGING_BOUNDARY_CHECKPOINT_2026-08-16.md`](./W71_PACKAGING_BOUNDARY_CHECKPOINT_2026-08-16.md) 与 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。
 
-完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：真实媒体设备与 AudioContext/GIF 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 分发合规仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
+同一 specimen 随后通过自动化 NSIS 真安装循环：在确认当前用户没有既有 Mazz Editor 安装注册或快捷方式后，静默安装到系统临时根目录内的隔离目标；从安装目录中的正式 EXE 使用干净 userData 启动，并完成包含主窗、PTY、Panel、WebContentsView、FileWatcher、WebTorrent、Python、Viewer、Factory 与 Monaco 的 20 次生命周期冒烟；静默卸载后主 EXE、HKCU 卸载注册、常见快捷方式与测试目录产品文件均归零。该结果关闭“本机 clean install / 首次启动 / silent uninstall”子门禁，但不代替签名、覆盖升级/回滚、默认用户数据策略、文件关联/`mazz://`、异机 ABI 与 Windows/DPI/RDP 矩阵。证据见 [`W71_INSTALLER_CYCLE_CHECKPOINT_2026-08-16.md`](./W71_INSTALLER_CYCLE_CHECKPOINT_2026-08-16.md) 与 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
+
+完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：真实媒体设备与 AudioContext/GIF 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 分发合规仍未闭环，签名、覆盖升级/回滚、文件关联和异机安装矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
 
 首轮结果与证据见 [`W71_THREE_HOUR_CHECKPOINT_2026-08-15.md`](./W71_THREE_HOUR_CHECKPOINT_2026-08-15.md)。
 

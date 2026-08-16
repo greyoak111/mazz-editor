@@ -22,6 +22,7 @@
     "test:w71:plugin-trust": "node tests/e2e/w71-plugin-trust.mjs",
     "test:w71:overlay": "node tests/e2e/w71-overlay-zorder.mjs",
     "test:w71:ffmpeg": "node tests/e2e/w71-ffmpeg-runtime.mjs",
+    "test:w71:installer": "node tests/e2e/w71-installer-cycle.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },
