@@ -1,8 +1,8 @@
 # W71 可序列化核心模块整应用异常恢复检查点
 
-> 日期：2026-08-16  
-> 范围：W71 Wave 1 / Data Reliability / Whole-app crash recovery  
-> 结论：**PASS（代表性 Hard Gate）**  
+> 日期：2026-08-16
+> 范围：W71 Wave 1 / Data Reliability / Whole-app crash recovery
+> 结论：**PASS（代表性 Hard Gate）**
 > 边界：本检查点证明内容本体保全，不声称完整 Session 拓扑或全模块全组合已经恢复。
 
 ## 1. 为什么做这一轮
@@ -48,8 +48,10 @@ Markdown 不重复计入本轮六种，因为此前三个事故恢复检查点�
 - 显式放弃本轮当前未保存快照后，正常退出与第三次启动不再提供旧事故材料；
 - 全量测试：`148/148` 文件通过。
 
-机器证据：[`W71_CORE_MODULE_CRASH_RECOVERY.json`](./evidence/W71_CORE_MODULE_CRASH_RECOVERY.json)  
-执行门禁：[`w71-core-module-crash-recovery.mjs`](../../tests/e2e/w71-core-module-crash-recovery.mjs)  
+机器证据：[`W71_CORE_MODULE_CRASH_RECOVERY.json`](./evidence/W71_CORE_MODULE_CRASH_RECOVERY.json)
+
+执行门禁：[`w71-core-module-crash-recovery.mjs`](../../tests/e2e/w71-core-module-crash-recovery.mjs)
+
 合同门禁：[`w71-core-module-recovery.test.mjs`](../../tests/contract/w71-core-module-recovery.test.mjs)
 
 ## 4. 本轮关闭与仍然开放
@@ -79,4 +81,3 @@ Markdown 不重复计入本轮六种，因为此前三个事故恢复检查点�
 4. 广泛设备、DPI、RDP、GPU、休眠、权限和异机系统组合矩阵。
 
 它们进入 Post-W71 完整主义扩展队列；若后续证据证明其中某项是正式 RC 的 P0/P1 阻塞，再按缺陷升级回 W71，而不是预先把整套远期架构塞进本轮。
-
