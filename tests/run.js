@@ -13,6 +13,7 @@ const files = [
   'tests/contract/w71-window-handoff.test.mjs',
   'tests/contract/w71-child-crash-recovery.test.mjs',
   'tests/contract/w71-app-crash-recovery.test.mjs',
+  'tests/contract/w71-core-module-recovery.test.mjs',
   'tests/contract/module-contract.test.mjs',
   'tests/contract/markdown-roundtrip.test.mjs',
   'tests/contract/browser-history.test.mjs',

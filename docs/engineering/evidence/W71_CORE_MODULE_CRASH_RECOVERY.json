@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T13:19:17.845Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "crashedPid": 23848,
+  "prompt": "⚠ 检测到 6 份未正常关闭的快照（自动保存/崩溃恢复）\n全部恢复\n忽略",
+  "coverage": [
+    "text",
+    "code",
+    "sheet",
+    "slide",
+    "mindmap",
+    "draw"
+  ],
+  "before": {
+    "ownerId": "b8f80947-b075-4259-ae3a-e284bccbc3bd:1",
+    "states": [
+      {
+        "id": "tab-1",
+        "title": "纯文本事故稿.txt",
+        "moduleId": "text",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "text": "W71 纯文本事故恢复\n第二行：不可丢失"
+        }
+      },
+      {
+        "id": "tab-2",
+        "title": "代码事故稿.js",
+        "moduleId": "code",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "text": "export const recovered = \"W71-code\";\nconsole.log(recovered);"
+        }
+      },
+      {
+        "id": "tab-3",
+        "title": "表格事故稿.mazzsheet",
+        "moduleId": "sheet",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "sheetName": "Recovery",
+          "marker": "W71-SHEET",
+          "value": 71,
+          "formula": "=A2+1",
+          "freezeR": 1
+        }
+      },
+      {
+        "id": "tab-4",
+        "title": "演示事故稿.mazzslide",
+        "moduleId": "slide",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "name": "W71-SLIDE",
+          "slideId": "recovery-slide",
+          "title": "W71-SLIDE-TITLE",
+          "notes": "事故恢复备注"
+        }
+      },
+      {
+        "id": "tab-5",
+        "title": "导图事故稿.mazzmap",
+        "moduleId": "mindmap",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "mode": "radial",
+          "root": "W71-MINDMAP",
+          "child": "事故恢复子节点",
+          "parentLink": "pl-w71",
+          "sourceBlock": "w71-anchor"
+        }
+      },
+      {
+        "id": "tab-6",
+        "title": "画板事故稿.mazzdraw",
+        "moduleId": "draw",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "mark": "mazz-draw-v1",
+          "layer": "事故恢复图层",
+          "stroke": "stroke-w71",
+          "color": "#ff0055",
+          "lastX": 71
+        }
+      }
+    ]
+  },
+  "restored": {
+    "ownerIds": [
+      "b0a20a3b-dfd9-4fb6-bd59-47a4d1499e1a:1"
+    ],
+    "states": [
+      {
+        "id": "tab-1",
+        "title": "纯文本事故稿.txt（已恢复）",
+        "moduleId": "text",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "text": "W71 纯文本事故恢复\n第二行：不可丢失"
+        }
+      },
+      {
+        "id": "tab-2",
+        "title": "代码事故稿.js（已恢复）",
+        "moduleId": "code",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "text": "export const recovered = \"W71-code\";\nconsole.log(recovered);"
+        }
+      },
+      {
+        "id": "tab-3",
+        "title": "表格事故稿.mazzsheet（已恢复）",
+        "moduleId": "sheet",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "sheetName": "Recovery",
+          "marker": "W71-SHEET",
+          "value": 71,
+          "formula": "=A2+1",
+          "freezeR": 1
+        }
+      },
+      {
+        "id": "tab-4",
+        "title": "演示事故稿.mazzslide（已恢复）",
+        "moduleId": "slide",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "name": "W71-SLIDE",
+          "slideId": "recovery-slide",
+          "title": "W71-SLIDE-TITLE",
+          "notes": "事故恢复备注"
+        }
+      },
+      {
+        "id": "tab-5",
+        "title": "导图事故稿.mazzmap（已恢复）",
+        "moduleId": "mindmap",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "mode": "radial",
+          "root": "W71-MINDMAP",
+          "child": "事故恢复子节点",
+          "parentLink": "pl-w71",
+          "sourceBlock": "w71-anchor"
+        }
+      },
+      {
+        "id": "tab-6",
+        "title": "画板事故稿.mazzdraw（已恢复）",
+        "moduleId": "draw",
+        "dirty": true,
+        "pinned": true,
+        "projection": {
+          "mark": "mazz-draw-v1",
+          "layer": "事故恢复图层",
+          "stroke": "stroke-w71",
+          "color": "#ff0055",
+          "lastX": 71
+        }
+      }
+    ]
+  },
+  "invariants": {
+    "contentProjectionPreserved": true,
+    "dirtyPreserved": true,
+    "pinnedPreserved": true,
+    "oldOwnerRetired": true,
+    "pendingCleared": true,
+    "currentUnsavedSnapshotsExplicitlyDiscardedForCleanRestartCheck": true,
+    "cleanRestartHasNoOffer": true
+  },
+  "deferredByDesign": [
+    "original-window-pane-focus-order topology restoration",
+    "all-module/all-combination exhaustive recovery",
+    "notes/library/viewer runtime-reference recovery matrix"
+  ]
+}

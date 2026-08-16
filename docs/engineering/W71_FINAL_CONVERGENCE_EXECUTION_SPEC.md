@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.22
+> 版本：v2.23
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 多窗口事故数据保全与扁平恢复子 Gate 已落地**
+> 状态：**IN PROGRESS / 六类可序列化核心模块整应用异常恢复子 Gate 已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,7 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W86，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
-8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权、代表性编辑标签事务性交接与 20 次往返、代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复、单主窗整应用异常退出恢复，以及双窗口/双 renderer 同名 tabId 的事故数据保全与扁平恢复检查点；只关闭有测试和 packaged 证据的子 Gate，其他模块/完整 Session 拓扑恢复、Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
+8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权、代表性编辑标签事务性交接与 20 次往返、代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复、单主窗整应用异常退出恢复、双窗口/双 renderer 同名 tabId 的事故数据保全与扁平恢复，以及 Text/Code/Sheet/Slide/Mindmap/Draw 六类可序列化核心模块的 whole-app hard-kill 恢复检查点；只关闭有测试和 packaged 证据的子 Gate，Notes/Library/Viewer 运行态、完整 Session 拓扑恢复、Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
 
 ---
 
@@ -383,7 +383,7 @@ Panel host follow listener 回收
 
 这些是待验证候选，不得在没有运行态证据时直接宣判为泄漏。
 
-当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。本地文件的 AudioContext 播放手势恢复、关签关闭、GIF 正常导出和录制中关签已经在正式 packaged 程序中真实激活并回到资源基线；真实摄像头/麦克风/屏幕设备与权限矩阵仍 OPEN。Factory chat/stream 已接入 caller signal、主进程 request owner、timeout、reader cancellation、renderer-destroy 与 ResourceLedger，并通过 packaged 20 次及 W61b 双路并发实证。Code editor/model、主题 observer、pending interval、TerminalPanel 与 DebugService 已建立宿主级 dispose；packaged TypeScript worker 20 次返回真实 TS2322 诊断，关签后 model 归零，worker 维持最多两个有界共享实例。Python 3.14 + debugpy 1.8.21 已在 packaged 程序完成真实断点/栈/变量/继续和 20 轮 adapter 释放；其他语言、远程/容器调试与异机矩阵仍 OPEN。主窗/分窗同文件外改、标题、全屏、最大化与关窗资源现已按真实 owner 完成 packaged 同场实证；代表性 Markdown 编辑标签已用 ACK/owner/timeout 两阶段协议完成 20 次主窗↔分窗往返，并保持内容、脏态、固定态、选择区和恢复快照唯一 owner；同一标签又完成分窗连续 5 次 renderer 崩溃恢复。单主窗整应用强制终止后的下一轮显式恢复、旧/新 run owner 收敛和第三轮干净启动不误报也已实证；进一步的双窗口事故证明两个 renderer 都为 `tab-1` 时，两份快照仍可按 recoveryId 隔离并扁平恢复到主窗，旧两个 owner 收敛为当前一个 owner。Factory stream、Terminal、DAP、Agent 等运行时资源的跨窗 owner，其他模块、运行时对象与完整 Session 拓扑恢复仍未闭合。详见 [`W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md)、[`W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md)、[`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 及本节既有生命周期检查点。
+当前进度：Viewer owner、模块实例、DOM 与活动锚点已经通过 packaged 20 次循环；非 Electron Blob URL 通过 contract 20 次及迟到回调测试；Player 全局监听、timer、媒体源、AudioContext/GIF/RAF/转码临时件已有确定收尸实现。本地文件的 AudioContext 播放手势恢复、关签关闭、GIF 正常导出和录制中关签已经在正式 packaged 程序中真实激活并回到资源基线；真实摄像头/麦克风/屏幕设备与权限矩阵仍 OPEN。Factory chat/stream 已接入 caller signal、主进程 request owner、timeout、reader cancellation、renderer-destroy 与 ResourceLedger，并通过 packaged 20 次及 W61b 双路并发实证。Code editor/model、主题 observer、pending interval、TerminalPanel 与 DebugService 已建立宿主级 dispose；packaged TypeScript worker 20 次返回真实 TS2322 诊断，关签后 model 归零，worker 维持最多两个有界共享实例。Python 3.14 + debugpy 1.8.21 已在 packaged 程序完成真实断点/栈/变量/继续和 20 轮 adapter 释放；其他语言、远程/容器调试与异机矩阵仍 OPEN。主窗/分窗同文件外改、标题、全屏、最大化与关窗资源现已按真实 owner 完成 packaged 同场实证；代表性 Markdown 编辑标签已用 ACK/owner/timeout 两阶段协议完成 20 次主窗↔分窗往返，并保持内容、脏态、固定态、选择区和恢复快照唯一 owner；同一标签又完成分窗连续 5 次 renderer 崩溃恢复。单主窗整应用强制终止后的下一轮显式恢复、旧/新 run owner 收敛和第三轮干净启动不误报也已实证；进一步的双窗口事故证明两个 renderer 都为 `tab-1` 时，两份快照仍可按 recoveryId 隔离并扁平恢复到主窗，旧两个 owner 收敛为当前一个 owner。最新代表性矩阵又在正式 packaged 程序内以整棵进程树硬终止验证 Text、Code、Sheet、Slide、Mindmap、Draw 六类内容本体、脏态和固定态完整恢复；恢复后的当前未保存稿继续提示被明确认定为正确保全语义。Factory stream、Terminal、DAP、Agent 等运行时资源的跨窗 owner，Notes/Library/Viewer 路径与运行态、完整 Session 拓扑恢复仍未闭合。详见 [`W71_CORE_MODULE_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CORE_MODULE_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md)、[`W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md)、[`W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md)、[`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 及本节既有生命周期检查点。
 
 ## 5.2 Data Reliability Contract
 
@@ -417,7 +417,7 @@ failure / cancel
 6. 自己保存触发的 watcher 回声不得重复通知或重复读盘。
 7. 快照恢复必须标明来源、时间和目标文件，不把旧快照伪装成磁盘新版本。
 
-当前进度：本地文件外部变化已由两条竞争 listener 收束为单一状态机；干净标签只重载一次，脏标签保留本地内容并提供“保留当前 / 另存当前… / 从磁盘载入”，应用自身保存以路径和文件指纹识别回声。`fs:watch` 现在等待 chokidar 真实 ready，ready 前关闭会立即结算并清除 timer；Save As 也改为写盘成功后才更新标签路径。后续 packaged 同场验证又证明同一文件在主窗脏、分窗净时可各自正确决策，显式载盘后两窗收敛；文件变化由定向 `broadcastShells` 抵达全部工作台壳，分窗标题/全屏/最大化也恢复到 IPC caller owner。代表性 Markdown 标签的跨窗交接现改为目标 ACK 后源窗才提交删除；重复同文件目标会 NACK，脏态、固定态、选择区及内容经过 20 次往返不漂移。恢复快照改为 run + renderer owner 隔离，目标在 ACK 前先落自己的快照；分窗连续 5 次 renderer crash、单主窗整应用异常退出后的显式恢复，以及主窗/分窗两个同名 `tab-1` 脏稿在 whole-app hard kill 后扁平恢复到主窗，均已完成 packaged 实证。整应用事故批次与本轮新快照隔离，成功恢复后旧 run owner 精确删除，未决恢复用 pending 标记跨正常退出保留。Office 支持子集、损坏/大文件语料、其他模块/运行时对象/完整 Session 拓扑恢复、LAN Sync 三方冲突与合并仍 OPEN。详见 [`W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md)、[`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 及本节既有数据检查点。
+当前进度：本地文件外部变化已由两条竞争 listener 收束为单一状态机；干净标签只重载一次，脏标签保留本地内容并提供“保留当前 / 另存当前… / 从磁盘载入”，应用自身保存以路径和文件指纹识别回声。`fs:watch` 现在等待 chokidar 真实 ready，ready 前关闭会立即结算并清除 timer；Save As 也改为写盘成功后才更新标签路径。后续 packaged 同场验证又证明同一文件在主窗脏、分窗净时可各自正确决策，显式载盘后两窗收敛；文件变化由定向 `broadcastShells` 抵达全部工作台壳，分窗标题/全屏/最大化也恢复到 IPC caller owner。代表性 Markdown 标签的跨窗交接现改为目标 ACK 后源窗才提交删除；重复同文件目标会 NACK，脏态、固定态、选择区及内容经过 20 次往返不漂移。恢复快照改为 run + renderer owner 隔离，目标在 ACK 前先落自己的快照；分窗连续 5 次 renderer crash、单主窗整应用异常退出后的显式恢复，以及主窗/分窗两个同名 `tab-1` 脏稿在 whole-app hard kill 后扁平恢复到主窗，均已完成 packaged 实证。整应用事故批次与本轮新快照隔离，成功恢复后旧 run owner 精确删除，未决恢复用 pending 标记跨正常退出保留。Text/Code/Sheet/Slide/Mindmap/Draw 六种结构差异显著的内容模型又完成同一 packaged whole-app hard-kill 恢复，正文、公式、备注、多父关系、sourceRef、帧/图层/笔画及 dirty/pinned 全部守恒。Office 支持子集、损坏/大文件语料、Notes/Library/Viewer 路径与运行态、Factory/Terminal/DAP/Agent 重启/取消、完整 Session 拓扑恢复、LAN Sync 三方冲突与合并仍 OPEN。详见 [`W71_CORE_MODULE_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CORE_MODULE_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md)、[`W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md)、[`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 及本节既有数据检查点。
 
 ## 5.3 Windows Packaged Runtime Contract
 
@@ -1035,6 +1035,9 @@ RDP 多轮矩阵
 4–8 小时及更长 soak
 安装包极限瘦身
 SurfaceManager PoC
+原窗口/窗格树/标签顺序/活动焦点的完整 Session 拓扑恢复
+全模块 × 全跨窗/分屏/崩溃时点穷举恢复矩阵
+Notes / Library / Viewer 与运行时对象的统一可恢复协议
 ```
 
 每个未完成项必须写入：
@@ -1049,6 +1052,8 @@ Known Limitation
 ```
 
 SurfaceManager PoC 未触发或未实施，不记为 Known Limitation，也不构成 W71 失败。
+
+上述完整 Session、全组合矩阵与统一可恢复协议属于“完整主义扩展”：当前只在发现正式 RC 的 P0/P1 阻塞时回升为 W71 Hard Gate，否则保留到 Post-W71 远期施工，不得从总表遗忘，也不得用其未完成无限阻塞推荐封板。
 
 ---
 
@@ -1259,6 +1264,8 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 每个检查点完成后必须回写完整未尽波次总表、记录测试/构建证据并提交，下一检查点继续按本规格 Gate 推进。
 
 2026-08-16 多窗口整应用异常退出数据保全检查点进一步证明：同一事故 run 中主窗与分窗可同时持有各自的 `tab-1`，不透明 recoveryId 仍把两份 owner 快照隔离；部分完成只删除已消费旧件并把剩余精确留在 pending。正式 packaged 程序在主窗/分窗分别持有不同 Markdown 脏稿时硬终止完整 Windows 进程树，次轮显示 2 份并把全文、路径、脏态、固定态和不同选择区全部扁平恢复到主窗；旧两个 owner 收敛为当前一个 owner，ResourceLedger `3→2`，第三轮不误报。`fallback=flattened-into-main-window` 与 `topologyRestored=false` 被写入机器证据，故不冒充窗口/窗格/焦点/顺序的 Session Restore。全量保持 `147/147`；最终 schema v5 安装/覆盖/五入口/20 轮/卸载通过，installer `141,036,294` bytes，SHA-256 `E76FA573354667EDAB04BAD1CA05D7F76052D44DADCE328E1F9D0A9A74E5EC0B`。证据见 [`W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md`](./W71_MULTIWINDOW_APP_CRASH_SALVAGE_CHECKPOINT_2026-08-16.md) 与 [`W71_MULTIWINDOW_APP_CRASH_RECOVERY.json`](./evidence/W71_MULTIWINDOW_APP_CRASH_RECOVERY.json)。
+
+2026-08-16 可序列化核心模块恢复检查点按推荐封板冻结代表性 Hard Gate：在正式 `win-unpacked` 的同一主窗口建立 Text、Code、Sheet、Slide、Mindmap、Draw 六类 dirty + pinned 标签，写入带正文、公式、演讲者备注、多父关系/sourceRef 及画板帧/图层/笔画的辨识数据后，用 Windows `taskkill /T /F` 硬终止整棵进程树。次轮 6 份材料全部按领域投影恢复，旧 owner 退役、六份新快照收敛到当前单 owner、pending 清零。测试同时纠正“恢复后正常退出应无提示”的错误假设：这些标签仍是合法当前未保存稿，继续提示属于正确保全；只有显式放弃测试快照后，第三轮才要求旧事故不诈尸。全量增至 `148/148`。Notes/Library/Viewer 路径与运行态、运行时对象、原窗口/窗格/焦点/顺序的完整 Session 拓扑、全模块全组合及广泛系统矩阵保留为后续 Gate/远期完整主义扩展，不冒充当前 Hard Gate。证据见 [`W71_CORE_MODULE_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CORE_MODULE_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 与 [`W71_CORE_MODULE_CRASH_RECOVERY.json`](./evidence/W71_CORE_MODULE_CRASH_RECOVERY.json)。
 
 2026-08-16 整应用异常退出恢复检查点把旧 `RUNNING.flag + snapshot:list` 的“能提示”收敛为有批次所有权的恢复事务：`RUNNING.flag` 记录精确 runId，启动时只冻结该事故 run 的文件；兼容旧时间戳 flag 时也只选 savedAt 最新的同 run owner 组，不吞全部历史。主工作台按不透明 recoveryId 领取，新 run 先写自己的快照，主进程再精确删除实际恢复成功的旧件。`RECOVERY_PENDING.flag` 保存精确 recoveryId 清单，保证用户未作决定就正常退出时下轮仍继续提示，全部恢复/明确忽略/无有效候选后才清除。正式 packaged 程序经历主进程树硬终止、同 userData 第二轮提示并恢复完整 Markdown 脏稿、旧/新 owner `1→1` 收敛、正常退出与第三轮不误报。全量增至 `147/147`。安装矩阵同时纠正一项旧假设：`mazz://home` 继续走 Windows Shell，而公共 `.md` 只验证已审计注册命令和运行中二实例分发，不再把“处理器已注册”冒充“系统默认已选择”；最终 schema v5 安装/覆盖/五入口/20 轮/卸载通过。installer `141,036,293` bytes，SHA-256 `476935D578D2F0B1E8416EAA74C560F5C3E59CE675DCC5548A4DA9B60F2F2830`。其他模块、运行时对象、多窗口拓扑、部分恢复 UX、debounce 窗口、DPI/RDP 与 LAN Sync 冲突仍 OPEN。证据见 [`W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_APP_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 与 [`W71_APP_CRASH_RECOVERY.json`](./evidence/W71_APP_CRASH_RECOVERY.json)。
 
