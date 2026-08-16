@@ -1,12 +1,12 @@
 {
-  "schemaVersion": 3,
-  "generatedAt": "2026-08-16T09:16:19.331Z",
+  "schemaVersion": 4,
+  "generatedAt": "2026-08-16T09:48:08.285Z",
   "installer": {
     "file": "release/Mazz Editor Setup 0.2.0.exe",
-    "bytes": 141035065,
-    "sha256": "553D0FFD7D8A005EED8434980EA7F1592456E78D9C6D11C6D7A7FCAFE998A70A"
+    "bytes": 141035138,
+    "sha256": "C7FEB742EDDEE416FDBD9C5055D684F2BE0E1DF2430F0600CDFF24FC9554F727"
   },
-  "isolatedTarget": "MazzW71Install-rYkWrG",
+  "isolatedTarget": "MazzW71Install-nwCYFX",
   "preflight": {
     "noExistingInstallRegistration": true,
     "noExistingShortcuts": true,
@@ -37,14 +37,14 @@
   "install": {
     "exitCode": 0,
     "uninstallRegistrationCreated": true,
-    "installedExeSha256": "3FBA3247574EE175DDEB8FC1719EB8F195A8BE96FF10530ECA956FD6410BA39B",
+    "installedExeSha256": "8AE8F58F59ABE8B5F8AB0C241D45176FD77A76999F2FE3EF93108953B68D7EE5",
     "originalAssociationBackupsPreserved": true,
     "windowsIntegration": {
       "protocol": {
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -57,7 +57,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "markdown",
@@ -69,7 +69,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "txt",
@@ -81,7 +81,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "mazz",
@@ -93,7 +93,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         }
       ]
     }
@@ -101,7 +101,7 @@
   "sameVersionReinstall": {
     "exitCode": 0,
     "executablePreserved": true,
-    "installedExeSha256": "3FBA3247574EE175DDEB8FC1719EB8F195A8BE96FF10530ECA956FD6410BA39B",
+    "installedExeSha256": "8AE8F58F59ABE8B5F8AB0C241D45176FD77A76999F2FE3EF93108953B68D7EE5",
     "uninstallRegistrationPreserved": true,
     "originalAssociationBackupsPreserved": true,
     "windowsIntegration": {
@@ -109,7 +109,7 @@
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -122,7 +122,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "markdown",
@@ -134,7 +134,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "txt",
@@ -146,7 +146,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         },
         {
           "ext": "mazz",
@@ -158,10 +158,50 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-rYkWrG\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
         }
       ]
     }
+  },
+  "coldStartShell": {
+    "protocol": {
+      "kind": "protocol",
+      "target": "mazz://home",
+      "launchMode": "windows-shell-cold-start",
+      "visibleRendererTargetObserved": true,
+      "mainWindowTitle": "隐私浏览器 — Mazz Editor",
+      "processCountAtObservation": 5,
+      "gracefulCloseExitCode": 0,
+      "processExit": {
+        "exited": true,
+        "attempts": 1
+      },
+      "executableRelease": {
+        "released": true,
+        "attempts": 1
+      },
+      "forcedCleanupProcesses": 0
+    },
+    "associatedFile": {
+      "kind": "file",
+      "target": "cold-start-file.md",
+      "launchMode": "windows-shell-cold-start",
+      "visibleRendererTargetObserved": true,
+      "mainWindowTitle": "cold-start-file.md — Mazz Editor",
+      "processCountAtObservation": 4,
+      "gracefulCloseExitCode": 0,
+      "processExit": {
+        "exited": true,
+        "attempts": 1
+      },
+      "executableRelease": {
+        "released": true,
+        "attempts": 1
+      },
+      "forcedCleanupProcesses": 0
+    },
+    "allVisibleTargetsObserved": true,
+    "allGracefullyReleased": true
   },
   "installedRuntime": {
     "smokeExitCode": 0,
@@ -183,9 +223,9 @@
       "factoryRequestObserved": true,
       "monacoWorkerObserved": true,
       "monacoLateInitGuardObserved": true,
-      "monacoWorkersCreated": 21,
+      "monacoWorkersCreated": 22,
       "monacoWorkersActive": 2,
-      "monacoWorkersTerminated": 19,
+      "monacoWorkersTerminated": 20,
       "monacoWorkerErrors": 0,
       "monacoModelsAfterClose": 0,
       "lifecycleCycles": 20,

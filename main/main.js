@@ -1544,7 +1544,9 @@ app.whenReady().then(() => {
 
   app.on('before-quit', async () => { watcher.close(); });
   app.on('will-quit', () => globalShortcuts.unregisterAll());
-  app.on('window-all-closed', () => { /* 托盘常驻：不关应用，除非显式退出 */ });
+  // “退出”必须真正退进程；旧逻辑无条件常驻托盘，导致窗口消失后 Electron 子进程永久残留。
+  // tray 分支在 close 事件中 preventDefault，不会触发 window-all-closed，只有明确 quit 才到这里。
+  app.on('window-all-closed', () => { if (wm.forceClose) app.quit(); });
   app.on('activate', () => { if (!wm.main) wm.createMain(); else wm.main.show(); });
 });
 

@@ -211,6 +211,153 @@ async function waitForExecutableRelease(file) {
   };
 }
 
+function installedProcessSnapshot(executable) {
+  const script = [
+    '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)',
+    '$target = [IO.Path]::GetFullPath($env:MAZZ_E2E_TARGET_EXE)',
+    '$rows = @(Get-CimInstance Win32_Process -Filter "Name = \'Mazz Editor.exe\'" | Where-Object {',
+    '  $_.ExecutablePath -and [IO.Path]::GetFullPath($_.ExecutablePath) -eq $target',
+    '} | ForEach-Object {',
+    '  try {',
+    '    $p = Get-Process -Id $_.ProcessId -ErrorAction Stop',
+    '    [pscustomobject]@{ processId = $_.ProcessId; executablePath = $_.ExecutablePath; commandLine = $_.CommandLine; mainWindowHandle = [Int64]$p.MainWindowHandle; mainWindowTitle = $p.MainWindowTitle }',
+    '  } catch {}',
+    '})',
+    'ConvertTo-Json -Compress -InputObject $rows',
+  ].join('\n');
+  const result = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
+    env: { ...process.env, MAZZ_E2E_TARGET_EXE: executable },
+    timeout: 30000,
+  });
+  if (result.status !== 0) throw new Error(`Installed process census failed: ${result.stderr || result.stdout}`);
+  const output = String(result.stdout || '').trim();
+  if (!output) return [];
+  const parsed = JSON.parse(output);
+  return Array.isArray(parsed) ? parsed : [parsed];
+}
+
+async function waitForColdStartWindow(executable, expectedTitle) {
+  const deadline = Date.now() + 60000;
+  let last = [];
+  while (Date.now() < deadline) {
+    last = installedProcessSnapshot(executable);
+    const windowProcess = last.find(item => item.mainWindowHandle && String(item.mainWindowTitle || '').includes(expectedTitle));
+    if (windowProcess) return { observed: true, expectedTitle, windowProcess, processCount: last.length };
+    await delay(250);
+  }
+  return { observed: false, expectedTitle, processCount: last.length, processes: last };
+}
+
+async function waitForOwnedProcessExit(executable) {
+  const deadline = Date.now() + 30000;
+  let attempts = 0;
+  let last = [];
+  while (Date.now() < deadline) {
+    attempts += 1;
+    last = installedProcessSnapshot(executable);
+    if (!last.length) return { exited: true, attempts };
+    await delay(250);
+  }
+  return { exited: false, attempts, processes: last };
+}
+
+function closeInstalledMainWindow(executable, processId) {
+  assertInsideTemp(executable);
+  const script = [
+    '$target = [IO.Path]::GetFullPath($env:MAZZ_E2E_TARGET_EXE)',
+    '$p = Get-Process -Id $env:MAZZ_E2E_TARGET_PID -ErrorAction Stop',
+    'if ([IO.Path]::GetFullPath($p.Path) -ne $target) { exit 3 }',
+    'if (-not $p.CloseMainWindow()) { exit 4 }',
+  ].join('\n');
+  return run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
+    env: { ...process.env, MAZZ_E2E_TARGET_EXE: executable, MAZZ_E2E_TARGET_PID: String(processId) },
+    timeout: 30000,
+  });
+}
+
+function stopOwnedInstalledProcesses(executable) {
+  assertInsideTemp(executable);
+  const script = [
+    '$target = [IO.Path]::GetFullPath($env:MAZZ_E2E_TARGET_EXE)',
+    '$owned = @(Get-CimInstance Win32_Process -Filter "Name = \'Mazz Editor.exe\'" | Where-Object {',
+    '  $_.ExecutablePath -and [IO.Path]::GetFullPath($_.ExecutablePath) -eq $target',
+    '})',
+    '$owned | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }',
+    'Write-Output $owned.Count',
+  ].join('\n');
+  return run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
+    env: { ...process.env, MAZZ_E2E_TARGET_EXE: executable },
+    timeout: 30000,
+  });
+}
+
+async function runColdStartShell(executable, kind) {
+  const userData = fs.mkdtempSync(path.join(tempRoot, `MazzW71Cold-${kind}-user-`));
+  const workspace = fs.mkdtempSync(path.join(tempRoot, `MazzW71Cold-${kind}-ws-`));
+  const associatedFile = path.join(workspace, 'cold-start-file.md');
+  fs.writeFileSync(associatedFile, '# cold start shell\n', 'utf8');
+  fs.writeFileSync(path.join(userData, 'mazz-settings.json'), JSON.stringify({
+    workspace,
+    closeBehavior: 'quit',
+    'agreement.noMore': true,
+  }, null, 2), 'utf8');
+
+  const target = kind === 'protocol' ? 'mazz://home' : associatedFile;
+  const expectedTitle = kind === 'protocol' ? '隐私浏览器 — Mazz Editor' : 'cold-start-file.md — Mazz Editor';
+  const launchEnv = {
+    ...process.env,
+    MAZZ_E2E_USER_DATA: userData,
+    MAZZ_E2E_WORKSPACE: workspace,
+    MAZZ_GPU_MODE: 'safe',
+    NODE_ENV: 'test',
+  };
+  let observation = null;
+  let closeExitCode = null;
+  let processExit = null;
+  let release = null;
+  let forcedCleanupProcesses = 0;
+  try {
+    // 冷启动必须模拟 Explorer 的可见 ShellExecute；windowsHide 会被文件关联链传给新主进程，
+    // 造成“进程已起但窗口永久隐藏”的测试自污染。暖启动只唤醒既有窗，不会暴露这个差异。
+    const launched = run('rundll32.exe', ['url.dll,FileProtocolHandler', target], {
+      env: launchEnv,
+      timeout: 30000,
+      windowsHide: false,
+    });
+    if (launched.status !== 0) throw new Error(`Cold-start ${kind} Shell dispatch failed: ${launched.stderr || launched.stdout}`);
+    observation = await waitForColdStartWindow(executable, expectedTitle);
+    if (!observation.observed) throw new Error(`Cold-start ${kind} target did not reach a visible renderer window: ${JSON.stringify(observation)}`);
+    const closed = closeInstalledMainWindow(executable, observation.windowProcess.processId);
+    closeExitCode = closed.status;
+    if (closeExitCode !== 0) throw new Error(`Cold-start ${kind} main window did not accept graceful close: ${closed.stderr || closed.stdout}`);
+    processExit = await waitForOwnedProcessExit(executable);
+    if (!processExit.exited) throw new Error(`Cold-start ${kind} left owned processes after graceful close: ${JSON.stringify(processExit)}`);
+    release = await waitForExecutableRelease(executable);
+    if (!release.released) throw new Error(`Cold-start ${kind} executable remained locked: ${JSON.stringify(release)}`);
+    return {
+      kind,
+      target: kind === 'protocol' ? target : path.basename(target),
+      launchMode: 'windows-shell-cold-start',
+      visibleRendererTargetObserved: true,
+      mainWindowTitle: observation.windowProcess.mainWindowTitle,
+      processCountAtObservation: observation.processCount,
+      gracefulCloseExitCode: closeExitCode,
+      processExit,
+      executableRelease: release,
+      forcedCleanupProcesses,
+    };
+  } finally {
+    const remaining = installedProcessSnapshot(executable);
+    if (remaining.length) {
+      const cleanup = stopOwnedInstalledProcesses(executable);
+      forcedCleanupProcesses = Number(String(cleanup.stdout || '').trim()) || remaining.length;
+      await waitForExecutableRelease(executable);
+    }
+    await removeOwnedTempDirectory(userData);
+    await removeOwnedTempDirectory(workspace);
+  }
+}
+
 const before = {
   registry: registrySnapshot(),
   shortcuts: shortcutSnapshot(),
@@ -240,6 +387,8 @@ let installedExeHash = '';
 let uninstaller = '';
 let smokeResult = null;
 let executableRelease = null;
+let coldStartProtocol = null;
+let coldStartFile = null;
 let primaryError = null;
 
 try {
@@ -290,6 +439,9 @@ try {
   if (!originalBackupsPreservedAfterReinstall) {
     throw new Error(`Same-version reinstall overwrote original association owners: ${JSON.stringify(compactIntegration(sameVersionReinstallIntegration))}`);
   }
+
+  coldStartFile = await runColdStartShell(installedExe, 'file');
+  coldStartProtocol = await runColdStartShell(installedExe, 'protocol');
 
   const smoke = run(process.execPath, [path.join(root, 'tests', 'e2e', 'w71-packaged-smoke.mjs')], {
     env: { ...process.env, MAZZ_E2E_EXECUTABLE: installedExe, MAZZ_E2E_WINDOWS_SHELL: '1' },
@@ -349,7 +501,7 @@ const guardedTempCleanup = productResidueRemoved
   : { attempted: false, removed: !fs.existsSync(installDir), attempts: 0 };
 
 const evidence = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   generatedAt: new Date().toISOString(),
   installer: {
     file: `release/${installerName}`,
@@ -381,6 +533,12 @@ const evidence = {
     uninstallRegistrationPreserved: sameVersionReinstallRegistry?.exitCode === 0,
     originalAssociationBackupsPreserved: originalBackupsPreservedAfterReinstall,
     windowsIntegration: sameVersionReinstallIntegration ? compactIntegration(sameVersionReinstallIntegration) : null,
+  },
+  coldStartShell: {
+    protocol: coldStartProtocol,
+    associatedFile: coldStartFile,
+    allVisibleTargetsObserved: !!coldStartProtocol?.visibleRendererTargetObserved && !!coldStartFile?.visibleRendererTargetObserved,
+    allGracefullyReleased: !!coldStartProtocol?.executableRelease?.released && !!coldStartFile?.executableRelease?.released,
   },
   installedRuntime: { smokeExitCode, smokeResult, executableRelease },
   uninstall: {

@@ -103,6 +103,7 @@ describe('W71 许可证据', () => {
     const shell = fs.readFileSync(path.join(root, 'renderer/shell/shell.js'), 'utf8');
     const smoke = fs.readFileSync(path.join(root, 'tests/e2e/w71-packaged-smoke.mjs'), 'utf8');
     const cycle = fs.readFileSync(path.join(root, 'tests/e2e/w71-installer-cycle.mjs'), 'utf8');
+    const cycleEvidence = JSON.parse(fs.readFileSync(path.join(root, 'docs/engineering/evidence/W71_INSTALLER_CYCLE.json'), 'utf8'));
     assert.equal(pkg.build.nsis.include, 'build/installer.nsh');
     assert.deepEqual(pkg.build.fileAssociations.map(item => item.name), [
       'com.mazz.editor.markdown', 'com.mazz.editor.markdown', 'com.mazz.editor.text', 'com.mazz.editor.workspace',
@@ -113,6 +114,7 @@ describe('W71 许可证据', () => {
     assert.equal(main.includes('app.setAsDefaultProtocolClient(PROTOCOL)'), false);
     assert.ok(main.includes('extractProtocolUrls(argv)'));
     assert.ok(main.includes('pendingProtocolUrls.splice(0).forEach(handleProtocol)'));
+    assert.ok(main.includes("app.on('window-all-closed', () => { if (wm.forceClose) app.quit(); })"));
     assert.ok(shell.includes("window.mazz.on('protocol:open'"));
     assert.ok(smoke.includes('MAZZ_E2E_EXECUTABLE'));
     assert.ok(smoke.includes('launchIntegrationTarget(protocolUrl)'));
@@ -129,5 +131,18 @@ describe('W71 许可证据', () => {
     assert.ok(cycle.includes('originalAssociationBackupsPreserved'));
     assert.ok(cycle.includes("MAZZ_E2E_WINDOWS_SHELL: '1'"));
     assert.ok(cycle.includes('waitForExecutableRelease(installedExe)'));
+    assert.ok(cycle.includes("runColdStartShell(installedExe, 'protocol')"));
+    assert.ok(cycle.includes("runColdStartShell(installedExe, 'file')"));
+    assert.ok(cycle.includes("launchMode: 'windows-shell-cold-start'"));
+    assert.ok(cycle.includes('visibleRendererTargetObserved: true'));
+    assert.ok(cycle.includes('CloseMainWindow()'));
+    assert.ok(cycle.includes('schemaVersion: 4'));
+    assert.equal(cycleEvidence.schemaVersion, 4);
+    assert.equal(cycleEvidence.coldStartShell.protocol.mainWindowTitle, '隐私浏览器 — Mazz Editor');
+    assert.equal(cycleEvidence.coldStartShell.associatedFile.mainWindowTitle, 'cold-start-file.md — Mazz Editor');
+    assert.equal(cycleEvidence.coldStartShell.allVisibleTargetsObserved, true);
+    assert.equal(cycleEvidence.coldStartShell.allGracefullyReleased, true);
+    assert.equal(cycleEvidence.coldStartShell.protocol.forcedCleanupProcesses, 0);
+    assert.equal(cycleEvidence.coldStartShell.associatedFile.forcedCleanupProcesses, 0);
   });
 });
