@@ -28,6 +28,11 @@
   .plg .name small { color:var(--fg-dim); font-weight:400; }
   .plg .desc { font-size:11.5px; color:var(--fg-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .plg .desc.err { color:#c2410c; }
+  .plg .meta { display:flex; flex-wrap:wrap; gap:5px 10px; margin-top:3px; color:var(--fg-dim); font-size:10.5px; }
+  .plg .hash { font-family:ui-monospace,Consolas,monospace; }
+  .state { border:1px solid var(--border); border-radius:999px; padding:1px 6px; }
+  .state.warn { border-color:#d97706; color:#b45309; }
+  .state.ok { border-color:#16865a; color:#16865a; }
   .empty { color:var(--fg-dim); text-align:center; padding:40px 0; line-height:2; }
 </style></head><body>
 <div class="pwin">
@@ -35,7 +40,7 @@
   <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="head">
     <span class="t">插件管理</span>
-    <span class="note">.maz = zip 包（plugin.json + main.js）</span>
+    <span class="note">插件默认隔离；只运行已按内容哈希授权的版本</span>
     <button class="btn" id="install">＋ 安装插件</button>
   </div>
   <main id="m" class="ps-scroll-y"><div class="empty">加载中…</div></main>
@@ -50,7 +55,7 @@ const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.them
 window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
 window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
 window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 let rows = [];
 function ask() { window.mazz.invoke('panel:action', { type: 'pluginsQuery' }).catch(() => {}); }
@@ -62,22 +67,51 @@ function render() {
     m.innerHTML = '<div class="empty">还没有安装插件——点「安装插件」选择 .maz 文件<br><small>交付包 samples/ 目录自带两个示例插件</small></div>';
     return;
   }
-  m.innerHTML = rows.map((r, i) => `
+  const stateOf = (r) => {
+    if (r.error) return { text: '包无效', cls: 'warn' };
+    if (r.trustStatus === 'changed') return { text: '内容已变化 · 旧授权失效', cls: 'warn' };
+    if (r.trustStatus !== 'trusted') return { text: '隔离中 · 未授权', cls: 'warn' };
+    if (!r.enabled) return { text: '已授权 · 已禁用', cls: '' };
+    return { text: r.loaded ? '已授权 · 运行中' : '已授权 · 待加载', cls: 'ok' };
+  };
+  m.innerHTML = rows.map((r, i) => {
+    const state = stateOf(r);
+    const permissions = r.permissions?.length ? r.permissions.join('、') : '未声明（不代表沙箱隔离）';
+    return `
     <div class="plg" data-i="${i}">
       <span class="ico">${r.error ? '⚠' : '🧩'}</span>
       <div class="info">
         <div class="name">${esc(r.name)} <small>v${esc(r.version)}</small></div>
         <div class="desc${r.error ? ' err' : ''}">${esc(r.error || r.desc || r.id)}</div>
+        ${r.error ? '' : `<div class="meta">
+          <span class="state ${state.cls}">${esc(state.text)}</span>
+          <span>声明权限：${esc(permissions)}</span>
+          <span class="hash" title="${esc(r.packageHash)}">SHA-256 ${esc((r.packageHash || '').slice(0, 12))}…</span>
+        </div>`}
       </div>
       ${r.error ? '' : `
-        <button class="btn" data-a="open" ${r.enabled ? '' : 'disabled'}>打开</button>
-        <button class="btn" data-a="toggle">${r.enabled ? '禁用' : '启用'}</button>`}
+        <button class="btn" data-a="open" ${r.enabled && r.loaded ? '' : 'disabled'}>打开</button>
+        ${r.trustStatus === 'trusted'
+          ? `<button class="btn" data-a="toggle">${r.enabled ? '禁用' : '启用'}</button>`
+          : `<button class="btn" data-a="trust">审查并授权</button>`}`}
       <button class="btn" data-a="del">删除</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   m.querySelectorAll('.plg button').forEach(b => b.addEventListener('click', () => {
     const r = rows[+b.closest('.plg').dataset.i];
     if (!r) return;
-    act(b.dataset.a, { id: r.id, path: r.path, enabled: r.enabled, name: r.name });
+    if (b.dataset.a === 'trust') {
+      const permissions = r.permissions?.length ? r.permissions.join('、') : '未声明';
+      const changed = r.trustStatus === 'changed' ? '\n\n注意：插件内容已变化，旧授权已经失效。' : '';
+      const ok = confirm(
+        `将授权并运行插件「${r.name}」v${r.version}\n\n` +
+        `SHA-256：${r.packageHash}\n声明权限：${permissions}\n\n` +
+        '当前插件系统尚未提供进程级沙箱；插件代码会在应用渲染环境中运行。只授权你信任来源的内容。' + changed,
+      );
+      if (!ok) return;
+    }
+    if (b.dataset.a === 'del' && !confirm(`删除插件「${r.name}」并撤销其授权？`)) return;
+    act(b.dataset.a, { id: r.id, path: r.path, enabled: r.enabled, name: r.name, packageHash: r.packageHash });
   }));
 }
 window.mazz.on('panel:push', (p) => {

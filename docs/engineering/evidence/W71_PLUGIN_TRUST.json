@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-08-16T07:55:50.913Z",
+  "executable": "release/win-unpacked/Mazz Editor.exe",
+  "packageHashes": {
+    "trustedV1": "6eef89046cb6fae2fe751e8ccb5bf83536664d9d7f869652c75ae76adb78f858",
+    "changedV2": "8ca15026b8ddadbea9b7ec7ad790e787b7e6e64c64561e9cad6146096313d1d3",
+    "different": true
+  },
+  "screenshots": {
+    "quarantined": "evidence/W71_PLUGIN_QUARANTINED.png",
+    "trusted": "evidence/W71_PLUGIN_TRUSTED.png",
+    "changed": "evidence/W71_PLUGIN_CHANGED.png"
+  },
+  "ok": true,
+  "defaultQuarantine": true,
+  "explicitHashTrust": true,
+  "trustedRestartLoad": true,
+  "changedContentRevoked": true,
+  "nativePanelEvidence": true
+}

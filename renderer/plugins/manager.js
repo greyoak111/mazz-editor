@@ -1,7 +1,9 @@
 // renderer/plugins/manager.js —— 插件管理器 UI：安装/启用/禁用/删除/打开
 import { modal, toast } from '../shell/shell.js';
-import { listPluginFiles, readMaz, isEnabled, setEnabled, installFromFile, loadAllPlugins, loadPlugin } from './loader.js';
+import { listPluginFiles, inspectPlugin, setEnabled, installFromFile, loadAllPlugins, trustAndLoad, enableTrusted, revokeTrust } from './loader.js';
 import { iconHtml } from '../lib/svg-icons.js';
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 export function openPluginManager() {
   // W53：全原生独立子窗格（应用壳 lean 路线退役）
@@ -15,15 +17,15 @@ export function openPluginManager() {
     const rows = [];
     for (const f of files) {
       try {
-        const { manifest } = await readMaz(f.path);
-        rows.push({ manifest, path: f.path, enabled: await isEnabled(manifest.id), error: null });
+        const info = await inspectPlugin(f.path);
+        rows.push({ ...info, path: f.path, error: null });
       } catch (e) {
-        rows.push({ manifest: { id: f.name, name: f.name, version: '?' }, path: f.path, enabled: false, error: e.message });
+        rows.push({ manifest: { id: f.name, name: f.name, version: '?' }, path: f.path, enabled: false, loaded: false, trustStatus: 'invalid', error: e.message });
       }
     }
     m.body.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:12px;color:#83817a">.maz 插件 = zip 包（plugin.json + main.js）· 放置于工作区 plugins/ 自动加载</span>
+        <span style="font-size:12px;color:#83817a">插件默认隔离；只运行已按内容哈希授权的版本</span>
         <button id="plg-install" class="rb-btn" style="flex-direction:row">＋ 安装插件</button>
       </div>
       <div style="max-height:50vh;overflow-y:auto">
@@ -31,12 +33,15 @@ export function openPluginManager() {
           <div class="plg-item" data-id="${r.manifest.id}" style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd,#e0ded8)">
             <span style="font-size:20px">${iconHtml(r.error ? '⚠' : '🧩')}</span>
             <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:13px">${r.manifest.name} <small style="color:#83817a">v${r.manifest.version}</small></div>
-              <div style="font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.error || r.manifest.description || r.manifest.id}</div>
+              <div style="font-weight:600;font-size:13px">${esc(r.manifest.name)} <small style="color:#83817a">v${esc(r.manifest.version)}</small></div>
+              <div style="font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.error || r.manifest.description || r.manifest.id)}</div>
+              ${r.error ? '' : `<div style="font-size:10.5px;color:#83817a;margin-top:3px">${r.trustStatus === 'changed' ? '内容已变化 · 旧授权失效' : r.trustStatus === 'trusted' ? (r.enabled ? '已授权' : '已授权 · 已禁用') : '隔离中 · 未授权'} · SHA-256 ${esc(r.packageHash.slice(0, 12))}…</div>`}
             </div>
             ${r.error ? '' : `
-              <button class="rb-btn plg-open" style="flex-direction:row" ${r.enabled ? '' : 'disabled'}>打开</button>
-              <button class="rb-btn plg-toggle" style="flex-direction:row">${r.enabled ? '禁用' : '启用'}</button>`}
+              <button class="rb-btn plg-open" style="flex-direction:row" ${r.enabled && r.loaded ? '' : 'disabled'}>打开</button>
+              ${r.trustStatus === 'trusted'
+                ? `<button class="rb-btn plg-toggle" style="flex-direction:row">${r.enabled ? '禁用' : '启用'}</button>`
+                : '<button class="rb-btn plg-trust" style="flex-direction:row">审查并授权</button>'}`}
             <button class="rb-btn plg-del" style="flex-direction:row">删除</button>
           </div>`).join('')
         : '<div style="text-align:center;color:#83817a;padding:30px 0">还没有安装插件——点「安装插件」选择 .maz 文件<br><small>交付包 samples/ 目录自带两个示例插件</small></div>'}
@@ -47,7 +52,7 @@ export function openPluginManager() {
       if (!p) return;
       try {
         const { manifest } = await installFromFile(p);
-        toast(`插件「${manifest.name}」已安装并加载`);
+        toast(`插件「${manifest.name}」已安装并隔离；审查并授权后才会运行`);
         render();
       } catch (e) { toast('安装失败：' + (e.message || e)); }
     });
@@ -59,21 +64,23 @@ export function openPluginManager() {
         m.close();
       });
       el.querySelector('.plg-toggle')?.addEventListener('click', async () => {
-        await setEnabled(id, !row.enabled);
-        toast(row.enabled ? `插件「${row.manifest.name}」已禁用（重载后生效）` : `插件「${row.manifest.name}」已启用`);
-        if (!row.enabled) {
-          // 启用：立即加载
-          try {
-            const { manifest, code } = await readMaz(row.path);
-            await loadPlugin(code, manifest);
-          } catch (e) { toast('加载失败：' + e.message); }
-        }
+        if (row.enabled) await setEnabled(id, false);
+        else await enableTrusted(row.path, row.packageHash);
+        toast(row.enabled ? `插件「${row.manifest.name}」已禁用（已运行实例重启后卸载）` : `插件「${row.manifest.name}」已启用`);
+        render();
+      });
+      el.querySelector('.plg-trust')?.addEventListener('click', async () => {
+        const permissions = row.permissions?.length ? row.permissions.join('、') : '未声明';
+        if (!window.confirm(`将授权并运行插件「${row.manifest.name}」v${row.manifest.version}\n\nSHA-256：${row.packageHash}\n声明权限：${permissions}\n\n当前插件系统尚未提供进程级沙箱。只授权你信任来源的内容。`)) return;
+        try { await trustAndLoad(row.path, row.packageHash); toast(`插件「${row.manifest.name}」已授权并启用`); }
+        catch (e) { toast('授权失败：' + e.message); }
         render();
       });
       el.querySelector('.plg-del')?.addEventListener('click', async () => {
+        if (!window.confirm(`删除插件「${row.manifest.name}」并撤销其授权？`)) return;
+        await revokeTrust(id);
         await window.mazz.invoke('fs:delete', { path: row.path }).catch(() => {});
-        await setEnabled(id, false);
-        toast('插件已删除（已加载的实例重启后卸载）');
+        toast('插件已删除且授权已撤销（已运行实例重启后卸载）');
         render();
       });
     });

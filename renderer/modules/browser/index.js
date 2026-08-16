@@ -1431,8 +1431,18 @@ export default {
           try {
             const share = await current.clipper.shareCurrent();
             await window.mazz.invoke('clipboard:write', { text: share.url });
-            const m = modal('局域网临时分享');
-            m.body.innerHTML = `<div style="min-width:440px;max-width:620px"><p style="margin:0 0 10px">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class="rb-input" style="width:100%;padding:7px 9px" readonly value="${escapeAttr(share.url)}"><div style="font-size:12px;color:#83817a;margin-top:8px">到期：${new Date(share.expiresAt).toLocaleString('zh-CN')} · 不经过云端</div></div>`;
+            if (isElectron()) {
+              // Browser 前台的 DOM modal 会被 WebContentsView 原生层遮挡；信息确认走 OS 原生对话框。
+              await window.mazz.invoke('dialog:confirm', {
+                title: '局域网临时分享',
+                message: '链接已复制；同一局域网内可访问，10 分钟后自动失效。',
+                detail: `${share.url}\n\n到期：${new Date(share.expiresAt).toLocaleString('zh-CN')} · 不经过云端`,
+                buttons: ['知道了'],
+              });
+            } else {
+              const m = modal('局域网临时分享');
+              m.body.innerHTML = `<div style="min-width:440px;max-width:620px"><p style="margin:0 0 10px">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class="rb-input" style="width:100%;padding:7px 9px" readonly value="${escapeAttr(share.url)}"><div style="font-size:12px;color:#83817a;margin-top:8px">到期：${new Date(share.expiresAt).toLocaleString('zh-CN')} · 不经过云端</div></div>`;
+            }
             toast('局域网临时链接已复制');
           } catch (error) { toast('分享失败：' + (error?.message || error)); }
         } },

@@ -79,11 +79,13 @@ shell.boot().then(() => {
   if (!new URLSearchParams(location.search).get('role')) {
     import('./lib/agreement.js').then(m => m.maybeAutoShowAgreement()).catch(() => {});
   }
-  // 后台加载工作区插件（不阻塞启动）
+  // 后台加载工作区插件（不阻塞启动；未授权或内容变化的包保持隔离）
   if (window.mazz?.isElectron) {
     loadAllPlugins().then(rs => {
       const ok = rs.filter(r => r.status === 'loaded').length;
+      const quarantined = rs.filter(r => r.status === 'untrusted' || r.status === 'changed').length;
       if (ok) console.log(`[plugins] 已加载 ${ok} 个插件`);
+      if (quarantined) console.warn(`[plugins] ${quarantined} 个插件未获当前内容授权，已保持隔离`);
       rs.filter(r => r.status === 'error').forEach(r => console.warn('[plugins]', r.manifest.name, r.error));
     }).catch(() => {});
   }

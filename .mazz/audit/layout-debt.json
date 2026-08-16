@@ -878,7 +878,7 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1435,
+      "line": 1444,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
     },
     {
@@ -1900,8 +1900,8 @@
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/plugins/manager.js",
-      "line": 35,
-      "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${r.error || r.manifest.description || r.manifest.id}</div>"
+      "line": 37,
+      "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${esc(r.error || r.manifest.description || r.manifest.id)}</div>"
     },
     {
       "rule": "fixed-width-px",
@@ -1970,7 +1970,7 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/ribbon.js",
-      "line": 229,
+      "line": 225,
       "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
     },
     {
@@ -1991,21 +1991,21 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3125,
+      "line": 3149,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3140,
+      "line": 3164,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3162,
+      "line": 3186,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {

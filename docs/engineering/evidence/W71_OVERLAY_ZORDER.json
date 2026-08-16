@@ -1,0 +1,167 @@
+{
+  "generatedAt": "2026-08-16T07:57:33.028Z",
+  "executable": "release/win-unpacked/Mazz Editor.exe",
+  "viewBefore": {
+    "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%3Cstyle%3Ehtml%2Cbody%7Bmargin%3A0%3Bheight%3A100%25%3Bbackground%3A%23172554%3Bcolor%3A%23dbeafe%3Bfont%3A600%2030px%2F1.4%20system-ui%7Dmain%7Bheight%3A100%25%3Bdisplay%3Agrid%3Bplace-items%3Acenter%3Bbackground%3Alinear-gradient(135deg%2C%23172554%2C%230f766e)%7Dsmall%7Bdisplay%3Ablock%3Bfont-size%3A15px%3Bcolor%3A%23bae6fd%7D%3C%2Fstyle%3E%3Cmain%3ENative%20Surface%3Csmall%3EW71%20WebContentsView%20z-order%20probe%3C%2Fsmall%3E%3C%2Fmain%3E",
+    "title": "data:text/html;charset=utf-8,<!doctype html><style>html%2Cbody%7Bmargin%3A0%3Bheight%3A100%25%3Bbackground%3A%23172554%3Bcolor%3A%23dbeafe%3Bfont%3A600 30px%2F1.4 system-ui%7Dmain%7Bheight%3A100%25%3Bdisplay%3Agrid%3Bplace-items%3Acenter%3Bbackground%3Alinear-gradient(135deg%2C%23172554%2C%230f766e)%7Dsmall%7Bdisplay%3Ablock%3Bfont-size%3A15px%3Bcolor%3A%23bae6fd%7D<%2Fstyle><main>Native Surface<small>W71 WebContentsView z-order probe<%2Fsmall><%2Fmain>",
+    "loading": true,
+    "canBack": false,
+    "canFwd": false,
+    "dead": false,
+    "hidden": false,
+    "reviveGen": 0,
+    "bounds": {
+      "x": 232,
+      "y": 243,
+      "width": 1207,
+      "height": 557
+    },
+    "lastCtxMenuAt": 0,
+    "invalidateCount": 0
+  },
+  "firstRunAgreement": {
+    "topology": {
+      "main": {
+        "id": 1,
+        "bounds": {
+          "x": 48,
+          "y": 0,
+          "width": 1440,
+          "height": 824
+        },
+        "contentBounds": {
+          "x": 48,
+          "y": 0,
+          "width": 1440,
+          "height": 824
+        },
+        "focused": false
+      },
+      "panel": {
+        "id": 2,
+        "kind": "agreement",
+        "bounds": {
+          "x": 417,
+          "y": 112,
+          "width": 701,
+          "height": 600
+        },
+        "focused": true,
+        "visible": true,
+        "parentId": 1
+      }
+    },
+    "screenshot": {
+      "file": "evidence/W71_OVERLAY_FIRST_RUN_AGREEMENT.png",
+      "bytes": 276278,
+      "size": {
+        "width": 1800,
+        "height": 1030
+      },
+      "method": "main + WebContentsView + child BrowserWindow exact-bounds composite"
+    },
+    "persistedNoMore": true
+  },
+  "contextMenu": {
+    "topology": {
+      "main": {
+        "id": 1,
+        "bounds": {
+          "x": 48,
+          "y": 0,
+          "width": 1440,
+          "height": 824
+        },
+        "contentBounds": {
+          "x": 48,
+          "y": 0,
+          "width": 1440,
+          "height": 824
+        },
+        "focused": false
+      },
+      "panel": {
+        "id": 3,
+        "kind": "ctxmenu",
+        "bounds": {
+          "x": 944,
+          "y": 437,
+          "width": 223,
+          "height": 323
+        },
+        "focused": true,
+        "visible": true,
+        "parentId": 1
+      }
+    },
+    "screenshot": {
+      "file": "evidence/W71_OVERLAY_CONTEXT_MENU.png",
+      "bytes": 175266,
+      "size": {
+        "width": 1800,
+        "height": 1030
+      },
+      "method": "main + WebContentsView + child BrowserWindow exact-bounds composite"
+    }
+  },
+  "commandPalette": {
+    "topology": {
+      "main": {
+        "id": 1,
+        "bounds": {
+          "x": 48,
+          "y": 0,
+          "width": 1440,
+          "height": 824
+        },
+        "contentBounds": {
+          "x": 48,
+          "y": 0,
+          "width": 1440,
+          "height": 824
+        },
+        "focused": false
+      },
+      "panel": {
+        "id": 4,
+        "kind": "palette",
+        "bounds": {
+          "x": 408,
+          "y": 141,
+          "width": 720,
+          "height": 541
+        },
+        "focused": true,
+        "visible": true,
+        "parentId": 1
+      }
+    },
+    "screenshot": {
+      "file": "evidence/W71_OVERLAY_COMMAND_PALETTE.png",
+      "bytes": 170413,
+      "size": {
+        "width": 1800,
+        "height": 1030
+      },
+      "method": "main + WebContentsView + child BrowserWindow exact-bounds composite"
+    }
+  },
+  "dragCloak": {
+    "hiddenDuringDrag": true,
+    "domOverlayVisible": true,
+    "screenshot": {
+      "file": "evidence/W71_OVERLAY_DRAG_CLOAK.png",
+      "bytes": 241540
+    }
+  },
+  "resources": {
+    "baseline": 3,
+    "final": 3
+  },
+  "conclusions": {
+    "firstRunAgreementAboveWebContentsView": true,
+    "nativeChildWindowAboveWebContentsView": true,
+    "dragOverlayUsesTemporarySurfaceCloak": true,
+    "universalOverlayManagerRequired": false
+  }
+}

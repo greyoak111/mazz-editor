@@ -32,6 +32,13 @@ try {
   const win = await app.firstWindow({ timeout: 120000 });
   await win.waitForLoadState('domcontentloaded');
   await win.evaluate(() => window.mazz.invoke('settings:set', { key: 'closeBehavior', value: 'quit' }));
+  await win.waitForFunction(() => !!window.MazzShell, null, { timeout: 30000 });
+  await win.evaluate(async () => {
+    await window.mazz.invoke('settings:set', { key: 'agreement.noMore', value: true });
+    await window.mazz.invoke('panel:close', { kind: 'agreement' });
+  });
+  await new Promise(resolve => setTimeout(resolve, 250));
+  await win.evaluate(() => window.mazz.invoke('panel:close', { kind: 'agreement' }));
   const result = await win.evaluate(async ({ watchedFile, viewerFile }) => {
     const waitFor = async (predicate, message, timeout = 8000) => {
       const until = Date.now() + timeout;

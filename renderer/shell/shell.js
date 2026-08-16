@@ -2314,15 +2314,28 @@ export class Shell {
         // W53 插件管理桥（逻辑单源在 plugins/loader.js——面板页只渲染）
         if (pl.type === 'pluginsQuery') {
           try {
-            const { listPluginFiles, readMaz, isEnabled } = await import('../plugins/loader.js');
+            const { listPluginFiles, inspectPlugin } = await import('../plugins/loader.js');
             const files = await listPluginFiles();
             const rows = [];
             for (const f2 of files) {
               try {
-                const { manifest } = await readMaz(f2.path);
-                rows.push({ id: manifest.id, name: manifest.name, version: manifest.version, desc: manifest.description || manifest.id, enabled: await isEnabled(manifest.id), error: null, path: f2.path });
+                const info = await inspectPlugin(f2.path);
+                const { manifest } = info;
+                rows.push({
+                  id: manifest.id,
+                  name: manifest.name,
+                  version: manifest.version,
+                  desc: manifest.description || manifest.id,
+                  enabled: info.enabled,
+                  loaded: info.loaded,
+                  trustStatus: info.trustStatus,
+                  packageHash: info.packageHash,
+                  permissions: info.permissions,
+                  error: null,
+                  path: f2.path,
+                });
               } catch (e) {
-                rows.push({ id: f2.name, name: f2.name, version: '?', desc: '', enabled: false, error: e.message, path: f2.path });
+                rows.push({ id: f2.name, name: f2.name, version: '?', desc: '', enabled: false, loaded: false, trustStatus: 'invalid', error: e.message, path: f2.path });
               }
             }
             window.mazz.invoke('panel:push', { kind: 'plugins', payload: { type: 'plugins', rows } }).catch(() => {});
@@ -2334,22 +2347,33 @@ export class Shell {
           try {
             const L = await import('../plugins/loader.js');
             if (pl.act === 'toggle') {
-              await L.setEnabled(pl.id, !pl.enabled);
-              if (!pl.enabled) {
-                try { const { manifest, code } = await L.readMaz(pl.path); await L.loadPlugin(code, manifest); }
-                catch (e) { toast('加载失败：' + e.message); }
+              if (pl.enabled) {
+                await L.setEnabled(pl.id, false);
+                toast(`插件「${pl.name}」已禁用（已运行实例重启后卸载）`);
+              } else {
+                await L.enableTrusted(pl.path, pl.packageHash);
+                toast(`插件「${pl.name}」已启用`);
               }
-              toast(pl.enabled ? `插件「${pl.name}」已禁用（重载后生效）` : `插件「${pl.name}」已启用`);
+            } else if (pl.act === 'trust') {
+              const result = await L.trustAndLoad(pl.path, pl.packageHash);
+              toast(result.requiresRestart
+                ? `插件「${pl.name}」新内容已授权，重启后生效`
+                : `插件「${pl.name}」已按当前内容授权并启用`);
             } else if (pl.act === 'del') {
+              await L.revokeTrust(pl.id);
               await window.mazz.invoke('fs:delete', { path: pl.path }).catch(() => {});
-              await L.setEnabled(pl.id, false);
-              toast('插件已删除（已加载的实例重启后卸载）');
+              toast('插件已删除且授权已撤销（已运行实例重启后卸载）');
             } else if (pl.act === 'open') {
               window.MazzHost?.openTab('plugin:' + pl.id, { title: pl.name, content: '' });
             } else if (pl.act === 'install') {
               const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: 'Mazz 插件', extensions: ['maz'] }] }).catch(() => null);
               if (p) {
-                try { await L.installFromFile(p); toast('插件已安装'); }
+                try {
+                  const result = await L.installFromFile(p);
+                  toast(result.status === 'disabled'
+                    ? '插件已安装，保持禁用；请在插件管理中启用'
+                    : '插件已安装并隔离；审查并授权后才会运行');
+                }
                 catch (e) { toast('安装失败：' + e.message); }
               }
             }

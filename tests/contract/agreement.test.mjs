@@ -7,7 +7,7 @@ if (!globalThis.sessionStorage) globalThis.sessionStorage = window.sessionStorag
 
 const { installBrowserBridge } = await import('../../renderer/lib/browser-bridge.js');
 installBrowserBridge();
-const { agreementContent, shouldAutoShow } = await import('../../renderer/lib/agreement.js');
+const { agreementContent, shouldAutoShow, showAgreement } = await import('../../renderer/lib/agreement.js');
 
 describe('用户服务协议及隐私政策', () => {
   test('内容跟随界面语言（由 i18n 当前语言驱动）', async () => {
@@ -41,5 +41,21 @@ describe('用户服务协议及隐私政策', () => {
     assert.equal(await shouldAutoShow(), true);
     await window.mazz.invoke('settings:set', { key: 'agreement.noMore', value: true });
     assert.equal(await shouldAutoShow(), false);
+  });
+
+  test('Electron 首启协议只走原生 agreement 子窗，不创建会被 WebContentsView 遮挡的 DOM modal', async () => {
+    const original = window.mazz;
+    const calls = [];
+    window.mazz = {
+      isElectron: true,
+      invoke: async (channel, payload) => { calls.push({ channel, payload }); return { ok: true }; },
+    };
+    try {
+      await showAgreement();
+      assert.deepEqual(calls, [{ channel: 'panel:open', payload: { kind: 'agreement' } }]);
+      assert.equal(document.querySelector('#agree-accept'), null, 'Electron 路径不得创建主窗 DOM 协议框');
+    } finally {
+      window.mazz = original;
+    }
   });
 });

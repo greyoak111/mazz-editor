@@ -19,6 +19,8 @@
     "audit:w71:native": "node scripts/w71-native-audit.js --out .mazz/audit/native-binary-census.json",
     "test:w71:native-stage": "node scripts/w71-native-stage-verify.js",
     "test:w71:security-ui": "node tests/e2e/w71-security-settings.mjs",
+    "test:w71:plugin-trust": "node tests/e2e/w71-plugin-trust.mjs",
+    "test:w71:overlay": "node tests/e2e/w71-overlay-zorder.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },

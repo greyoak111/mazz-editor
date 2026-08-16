@@ -90,6 +90,13 @@ export async function shouldAutoShow() {
 
 /** 展示协议窗格（force=false 时遵循"不再弹出"设置仅供首启判断调用方使用） */
 export async function showAgreement() {
+  // Electron 必须走原生子窗：主窗 DOM modal 会被 WebContentsView 的独立合成层压住，首启时不可操作。
+  if (window.mazz?.isElectron) {
+    try {
+      const result = await window.mazz.invoke('panel:open', { kind: 'agreement' });
+      if (!result?.error) return result;
+    } catch {}
+  }
   const c = agreementContent();
   const { modal } = await import('../shell/shell.js');
   const m = modal(c.title);

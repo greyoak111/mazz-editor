@@ -38,7 +38,7 @@ describe('七面板全原生子窗格', () => {
 describe('调用点收编（浏览器前台零 DOM modal）', () => {
   test('七处入口全走 panel:open', () => {
     assert.ok(readSrc('renderer/shell/shell.js').includes("kind: 'settings'"), '设置收编');
-    assert.ok(readSrc('renderer/shell/ribbon.js').includes("kind: 'agreement'"), '协议收编');
+    assert.ok(readSrc('renderer/lib/agreement.js').includes("kind: 'agreement'"), '协议单一入口收编');
     assert.ok(readSrc('renderer/help/index.js').includes("kind: 'help'"), '帮助收编');
     assert.ok(readSrc('renderer/translate.js').includes("kind: 'translate'"), '翻译收编');
     assert.ok(readSrc('renderer/plugins/manager.js').includes("kind: 'plugins'"), '插件收编');

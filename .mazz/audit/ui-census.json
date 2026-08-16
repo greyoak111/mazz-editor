@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 209,
-    "scannedLines": 56173
+    "scannedLines": 56396
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -23,12 +23,12 @@
   },
   "visual": {
     "summary": {
-      "totalFindings": 1638,
+      "totalFindings": 1642,
       "filesWithFindings": 95,
       "byRule": {
-        "inline-style-attribute": 553,
+        "inline-style-attribute": 555,
         "loading-state-term": 35,
-        "native-form-control": 1005,
+        "native-form-control": 1007,
         "inline-css-text": 43,
         "tooltip-or-title": 2
       },
@@ -114,6 +114,10 @@
           "count": 23
         },
         {
+          "file": "renderer/plugins/manager.js",
+          "count": 20
+        },
+        {
           "file": "renderer/modules/code/debug.js",
           "count": 19
         },
@@ -131,10 +135,6 @@
         },
         {
           "file": "renderer/modules/viewer/imgedit.js",
-          "count": 17
-        },
-        {
-          "file": "renderer/plugins/manager.js",
           "count": 17
         },
         {
@@ -159,7 +159,7 @@
       {
         "rule": "inline-style-attribute",
         "file": "renderer/app.js",
-        "line": 92,
+        "line": 94,
         "sample": "document.body.innerHTML = `<div style=\"padding:40px;font-family:sans-serif\">启动失败：${e.message}</div>`;"
       },
       {
@@ -255,61 +255,61 @@
       {
         "rule": "inline-style-attribute",
         "file": "renderer/lib/agreement.js",
-        "line": 97,
+        "line": 104,
         "sample": "<div class=\"agree-body\" style=\"max-width:640px;max-height:56vh;overflow-y:auto;font-size:13px;line-height:1.85;padding-right:6px\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/lib/agreement.js",
-        "line": 98,
+        "line": 105,
         "sample": "<div style=\"display:flex;align-items:center;gap:12px;margin-top:14px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/lib/agreement.js",
-        "line": 99,
+        "line": 106,
         "sample": "<label style=\"display:flex;align-items:center;gap:6px;font-size:12.5px;color:#83817a;cursor:pointer;flex:1\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/lib/agreement.js",
-        "line": 100,
+        "line": 107,
         "sample": "<input type=\"checkbox\" id=\"agree-nomore\"> ${c.noMore}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/lib/agreement.js",
-        "line": 102,
+        "line": 109,
         "sample": "<button id=\"agree-close\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px\">${c.close}</button>"
       },
       {
         "rule": "native-form-control",
-        "file": "renderer/lib/agreement.js",
-        "line": 102,
-        "sample": "<button id=\"agree-close\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px\">${c.close}</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/lib/agreement.js",
-        "line": 103,
-        "sample": "<button id=\"agree-accept\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px;background:var(--acc,#4f46e5);color:#fff\">${c.accept}</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/lib/agreement.js",
-        "line": 103,
-        "sample": "<button id=\"agree-accept\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px;background:var(--acc,#4f46e5);color:#fff\">${c.accept}</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
         "file": "renderer/lib/agreement.js",
         "line": 109,
-        "sample": "if (p.startsWith('## ')) return `<h3 style=\"margin:14px 0 6px\">${p.slice(3)}</h3>`;"
+        "sample": "<button id=\"agree-close\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px\">${c.close}</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/lib/agreement.js",
         "line": 110,
+        "sample": "<button id=\"agree-accept\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px;background:var(--acc,#4f46e5);color:#fff\">${c.accept}</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/lib/agreement.js",
+        "line": 110,
+        "sample": "<button id=\"agree-accept\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px;background:var(--acc,#4f46e5);color:#fff\">${c.accept}</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/lib/agreement.js",
+        "line": 116,
+        "sample": "if (p.startsWith('## ')) return `<h3 style=\"margin:14px 0 6px\">${p.slice(3)}</h3>`;"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/lib/agreement.js",
+        "line": 117,
         "sample": "return `<p style=\"margin:6px 0\">${p.replace(/\\*\\*(.+?)\\*\\*/g, '<b>$1</b>').replace(/\\n/g, '<br>')}</p>`;"
       },
       {
@@ -1263,13 +1263,13 @@
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1435,
+        "line": 1444,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1435,
+        "line": 1444,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
@@ -7497,31 +7497,37 @@
       {
         "rule": "native-form-control",
         "file": "renderer/panels/plugins.html",
-        "line": 35,
+        "line": 40,
         "sample": "<div class=\"p-winbtns\"><button id=\"p-min\" title=\"最小化\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/></svg></button><button id=\"p-max\" title=\"最大化/还原\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fil"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/panels/plugins.html",
-        "line": 39,
+        "line": 44,
         "sample": "<button class=\"btn\" id=\"install\">＋ 安装插件</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/panels/plugins.html",
-        "line": 73,
-        "sample": "<button class=\"btn\" data-a=\"open\" ${r.enabled ? '' : 'disabled'}>打开</button>"
+        "line": 93,
+        "sample": "<button class=\"btn\" data-a=\"open\" ${r.enabled && r.loaded ? '' : 'disabled'}>打开</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/panels/plugins.html",
-        "line": 74,
-        "sample": "<button class=\"btn\" data-a=\"toggle\">${r.enabled ? '禁用' : '启用'}</button>`}"
+        "line": 95,
+        "sample": "? `<button class=\"btn\" data-a=\"toggle\">${r.enabled ? '禁用' : '启用'}</button>`"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/panels/plugins.html",
-        "line": 75,
+        "line": 96,
+        "sample": ": `<button class=\"btn\" data-a=\"trust\">审查并授权</button>`}`}"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/panels/plugins.html",
+        "line": 97,
         "sample": "<button class=\"btn\" data-a=\"del\">删除</button>"
       },
       {
@@ -8055,103 +8061,121 @@
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
-        "line": 25,
+        "line": 27,
         "sample": "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
-        "line": 26,
-        "sample": "<span style=\"font-size:12px;color:#83817a\">.maz 插件 = zip 包（plugin.json + main.js）· 放置于工作区 plugins/ 自动加载</span>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/plugins/manager.js",
-        "line": 27,
-        "sample": "<button id=\"plg-install\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 安装插件</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/plugins/manager.js",
-        "line": 27,
-        "sample": "<button id=\"plg-install\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 安装插件</button>"
+        "line": 28,
+        "sample": "<span style=\"font-size:12px;color:#83817a\">插件默认隔离；只运行已按内容哈希授权的版本</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
         "line": 29,
-        "sample": "<div style=\"max-height:50vh;overflow-y:auto\">"
+        "sample": "<button id=\"plg-install\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 安装插件</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/plugins/manager.js",
+        "line": 29,
+        "sample": "<button id=\"plg-install\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 安装插件</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
         "line": 31,
-        "sample": "<div class=\"plg-item\" data-id=\"${r.manifest.id}\" style=\"display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd,#e0ded8)\">"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/plugins/manager.js",
-        "line": 32,
-        "sample": "<span style=\"font-size:20px\">${iconHtml(r.error ? '⚠' : '🧩')}</span>"
+        "sample": "<div style=\"max-height:50vh;overflow-y:auto\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
         "line": 33,
-        "sample": "<div style=\"flex:1;min-width:0\">"
+        "sample": "<div class=\"plg-item\" data-id=\"${r.manifest.id}\" style=\"display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd,#e0ded8)\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
         "line": 34,
-        "sample": "<div style=\"font-weight:600;font-size:13px\">${r.manifest.name} <small style=\"color:#83817a\">v${r.manifest.version}</small></div>"
+        "sample": "<span style=\"font-size:20px\">${iconHtml(r.error ? '⚠' : '🧩')}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
         "line": 35,
-        "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${r.error || r.manifest.description || r.manifest.id}</div>"
+        "sample": "<div style=\"flex:1;min-width:0\">"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/plugins/manager.js",
+        "line": 36,
+        "sample": "<div style=\"font-weight:600;font-size:13px\">${esc(r.manifest.name)} <small style=\"color:#83817a\">v${esc(r.manifest.version)}</small></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/plugins/manager.js",
+        "line": 37,
+        "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${esc(r.error || r.manifest.description || r.manifest.id)}</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
         "line": 38,
-        "sample": "<button class=\"rb-btn plg-open\" style=\"flex-direction:row\" ${r.enabled ? '' : 'disabled'}>打开</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/plugins/manager.js",
-        "line": 38,
-        "sample": "<button class=\"rb-btn plg-open\" style=\"flex-direction:row\" ${r.enabled ? '' : 'disabled'}>打开</button>"
+        "sample": "${r.error ? '' : `<div style=\"font-size:10.5px;color:#83817a;margin-top:3px\">${r.trustStatus === 'changed' ? '内容已变化 · 旧授权失效' : r.trustStatus === 'trusted' ? (r.enabled ? '已授权' : '已授权 · 已禁用') : '隔离中 · 未授权'} · SHA-256 ${esc(r.packageHash.slice(0, 12))}…</div>`}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
-        "line": 39,
-        "sample": "<button class=\"rb-btn plg-toggle\" style=\"flex-direction:row\">${r.enabled ? '禁用' : '启用'}</button>`}"
+        "line": 41,
+        "sample": "<button class=\"rb-btn plg-open\" style=\"flex-direction:row\" ${r.enabled && r.loaded ? '' : 'disabled'}>打开</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/plugins/manager.js",
-        "line": 39,
-        "sample": "<button class=\"rb-btn plg-toggle\" style=\"flex-direction:row\">${r.enabled ? '禁用' : '启用'}</button>`}"
+        "line": 41,
+        "sample": "<button class=\"rb-btn plg-open\" style=\"flex-direction:row\" ${r.enabled && r.loaded ? '' : 'disabled'}>打开</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
-        "line": 40,
+        "line": 43,
+        "sample": "? `<button class=\"rb-btn plg-toggle\" style=\"flex-direction:row\">${r.enabled ? '禁用' : '启用'}</button>`"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/plugins/manager.js",
+        "line": 43,
+        "sample": "? `<button class=\"rb-btn plg-toggle\" style=\"flex-direction:row\">${r.enabled ? '禁用' : '启用'}</button>`"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/plugins/manager.js",
+        "line": 44,
+        "sample": ": '<button class=\"rb-btn plg-trust\" style=\"flex-direction:row\">审查并授权</button>'}`}"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/plugins/manager.js",
+        "line": 44,
+        "sample": ": '<button class=\"rb-btn plg-trust\" style=\"flex-direction:row\">审查并授权</button>'}`}"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/plugins/manager.js",
+        "line": 45,
         "sample": "<button class=\"rb-btn plg-del\" style=\"flex-direction:row\">删除</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/plugins/manager.js",
-        "line": 40,
+        "line": 45,
         "sample": "<button class=\"rb-btn plg-del\" style=\"flex-direction:row\">删除</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/plugins/manager.js",
-        "line": 42,
+        "line": 47,
         "sample": ": '<div style=\"text-align:center;color:#83817a;padding:30px 0\">还没有安装插件——点「安装插件」选择 .maz 文件<br><small>交付包 samples/ 目录自带两个示例插件</small></div>'}"
       },
       {
@@ -8697,7 +8721,7 @@
       {
         "rule": "inline-css-text",
         "file": "renderer/shell/ribbon.js",
-        "line": 229,
+        "line": 225,
         "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
       },
       {
@@ -8925,379 +8949,379 @@
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2781,
+        "line": 2805,
         "sample": "<button>全部恢复</button><button class=\"ghost\">忽略</button>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2832,
+        "line": 2856,
         "sample": "<select id=\"s-lang\" class=\"rb-select\">${LANGUAGES.map(l => `<option value=\"${l.id}\">${l.name}</option>`).join('')}</select></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2834,
+        "line": 2858,
         "sample": "<select id=\"s-close\" class=\"rb-select\"><option value=\"ask\">每次询问</option><option value=\"tray\">最小化到托盘</option><option value=\"quit\">直接退出</option></select></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2836,
+        "line": 2860,
         "sample": "<select id=\"s-tsource\" class=\"rb-select\"><option value=\"system\">跟随系统</option><option value=\"light\">浅色</option><option value=\"dark\">深色</option></select></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 2838,
+        "line": 2862,
         "sample": "<select id=\"s-theme\" class=\"rb-select\" style=\"max-width:56%\"></select>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2838,
+        "line": 2862,
         "sample": "<select id=\"s-theme\" class=\"rb-select\" style=\"max-width:56%\"></select>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 2839,
+        "line": 2863,
         "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2839,
+        "line": 2863,
         "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 2841,
+        "line": 2865,
         "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2841,
+        "line": 2865,
         "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 2842,
+        "line": 2866,
         "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2842,
+        "line": 2866,
         "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 2843,
+        "line": 2867,
         "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2843,
+        "line": 2867,
         "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2845,
-        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2845,
-        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2846,
-        "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2848,
-        "sample": "<select id=\"s-qn\" class=\"rb-select\"><option value=\"daily\">每日笔记</option><option value=\"inbox\">inbox.md</option></select></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2850,
-        "sample": "<select id=\"s-spell\" class=\"rb-select\"><option value=\"on\">开启</option><option value=\"off\">关闭</option></select></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2852,
-        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2852,
-        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2854,
-        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2854,
-        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2855,
-        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2855,
-        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2856,
-        "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2858,
-        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2858,
-        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2859,
-        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2859,
-        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2860,
-        "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2861,
-        "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2862,
-        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2862,
-        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2863,
-        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2863,
-        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2864,
-        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2864,
-        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2865,
-        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2865,
-        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2867,
-        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2867,
-        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2868,
-        "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
         "line": 2869,
+        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2869,
+        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2870,
+        "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2872,
+        "sample": "<select id=\"s-qn\" class=\"rb-select\"><option value=\"daily\">每日笔记</option><option value=\"inbox\">inbox.md</option></select></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2874,
+        "sample": "<select id=\"s-spell\" class=\"rb-select\"><option value=\"on\">开启</option><option value=\"off\">关闭</option></select></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2876,
+        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2876,
+        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2878,
+        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2878,
+        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2879,
+        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2879,
+        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2880,
+        "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2882,
+        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2882,
+        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2883,
+        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2883,
+        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2884,
+        "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2885,
+        "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2886,
+        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2886,
+        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2887,
+        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2887,
+        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2888,
+        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2888,
+        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2889,
+        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2889,
+        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2891,
+        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2891,
+        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2892,
+        "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2893,
         "sample": "<div style=\"margin-top:14px;color:var(--fg-dim);font-size:11.5px;line-height:1.7\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3034,
+        "line": 3058,
         "sample": "<div style=\"margin-bottom:12px\"><div style=\"font-weight:600;margin-bottom:6px\">${g}</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3035,
+        "line": 3059,
         "sample": "${rows.map(r => `<div style=\"display:flex;justify-content:space-between;padding:2px 0;font-size:12.5px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3036,
+        "line": 3060,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3122,
+        "line": 3146,
         "sample": "mask.innerHTML = `<div class=\"mazz-palette\" style=\"padding:18px 20px;max-height:76vh;overflow:auto\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3123,
+        "line": 3147,
         "sample": "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:12px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3124,
+        "line": 3148,
         "sample": "<b style=\"font-size:15px\">${title}</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3125,
+        "line": 3149,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3125,
+        "line": 3149,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3140,
+        "line": 3164,
         "sample": "<div style=\"min-width:430px;max-width:600px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3142,
+        "line": 3166,
         "sample": "<div style=\"font-size:11.5px;color:var(--fg-dim);margin:10px 0 6px\">${g}</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3143,
+        "line": 3167,
         "sample": "<div style=\"display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:7px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3145,
+        "line": 3169,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3145,
+        "line": 3169,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3146,
+        "line": 3170,
         "sample": "<span style=\"color:var(--accent);font-weight:700\">.${t.ext}</span><span>${t.label.replace(/ *\\([^)]*\\)/g, '')}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3162,
+        "line": 3186,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3163,
+        "line": 3187,
         "sample": "<input id=\"im-input\" class=\"rb-input\" style=\"flex:1;padding:6px 8px\" value=\"${String(initial).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3163,
+        "line": 3187,
         "sample": "<input id=\"im-input\" class=\"rb-input\" style=\"flex:1;padding:6px 8px\" value=\"${String(initial).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3164,
+        "line": 3188,
         "sample": "<button id=\"im-ok\" class=\"rb-btn\" style=\"flex-direction:row\">确定</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3164,
+        "line": 3188,
         "sample": "<button id=\"im-ok\" class=\"rb-btn\" style=\"flex-direction:row\">确定</button>"
       },
       {
@@ -12771,25 +12795,25 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1439,
+        "line": 1449,
         "sample": "{ id: 'browser.manageBookmarks', title: '收藏管理', icon: '📁', group: '浏览器',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
-        "line": 1439,
+        "line": 1449,
         "sample": "{ id: 'browser.manageBookmarks', title: '收藏管理', icon: '📁', group: '浏览器',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1463,
+        "line": 1473,
         "sample": "{ id: 'browser.devtools', title: '开发者工具（F12）', icon: '🔧', group: '浏览器', when: \"module=='browser'\","
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
-        "line": 1463,
+        "line": 1473,
         "sample": "{ id: 'browser.devtools', title: '开发者工具（F12）', icon: '🔧', group: '浏览器', when: \"module=='browser'\","
       },
       {
@@ -15825,19 +15849,19 @@
       {
         "rule": "inline-svg",
         "file": "renderer/panels/plugins.html",
-        "line": 35,
+        "line": 40,
         "sample": "<div class=\"p-winbtns\"><button id=\"p-min\" title=\"最小化\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/></svg></button><button id=\"p-max\" title=\"最大化/还原\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fil"
       },
       {
         "rule": "current-color",
         "file": "renderer/panels/plugins.html",
-        "line": 35,
+        "line": 40,
         "sample": "<div class=\"p-winbtns\"><button id=\"p-min\" title=\"最小化\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/></svg></button><button id=\"p-max\" title=\"最大化/还原\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fil"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/panels/plugins.html",
-        "line": 67,
+        "line": 82,
         "sample": "<span class=\"ico\">${r.error ? '⚠' : '🧩'}</span>"
       },
       {
@@ -15999,31 +16023,31 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/plugins/manager.js",
-        "line": 32,
+        "line": 34,
         "sample": "<span style=\"font-size:20px\">${iconHtml(r.error ? '⚠' : '🧩')}</span>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/plugins/manager.js",
-        "line": 32,
+        "line": 34,
         "sample": "<span style=\"font-size:20px\">${iconHtml(r.error ? '⚠' : '🧩')}</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/plugins/manager.js",
-        "line": 86,
+        "line": 93,
         "sample": "title: '插件管理', icon: '🧩', group: '工具',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/plugins/manager.js",
-        "line": 86,
+        "line": 93,
         "sample": "title: '插件管理', icon: '🧩', group: '工具',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/plugins/manager.js",
-        "line": 90,
+        "line": 97,
         "sample": "title: '重载全部插件', icon: '↻', group: '工具',"
       },
       {
@@ -16335,19 +16359,19 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/ribbon.js",
-        "line": 127,
+        "line": 123,
         "sample": "help.innerHTML = `<span class=\"ribbon-tab-ico\">${iconHtml('❓')}</span> 帮助`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/ribbon.js",
-        "line": 127,
+        "line": 123,
         "sample": "help.innerHTML = `<span class=\"ribbon-tab-ico\">${iconHtml('❓')}</span> 帮助`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/ribbon.js",
-        "line": 171,
+        "line": 167,
         "sample": "btn.innerHTML = `<i class=\"ico\">${iconHtml(b.icon || '')}</i><span>${b.label || ''}</span>`;"
       },
       {
@@ -17607,79 +17631,79 @@
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 2449,
+        "line": 2473,
         "sample": "const svgGroups = groups.map(([g, items]) => [g, items.map(it => ({ ...it, ico: it.ico ? iconHtml(it.ico) : '' }))]);"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 2568,
+        "line": 2592,
         "sample": "const items = (menus._ctxItems || []).map(it => ({ ...it, svg: it.icon ? iconHtml(it.icon) : '' }));"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2780,
+        "line": 2804,
         "sample": "bar.innerHTML = `<span>⚠ 检测到 ${snaps.length} 份未正常关闭的快照（自动保存/崩溃恢复）</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2839,
+        "line": 2863,
         "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2841,
+        "line": 2865,
         "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2842,
+        "line": 2866,
         "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2843,
+        "line": 2867,
         "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2845,
+        "line": 2869,
         "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2855,
+        "line": 2879,
         "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2988,
+        "line": 3012,
         "sample": "st.textContent = ok ? '✓ 已发送到桌面' : '创建失败';"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3020,
+        "line": 3044,
         "sample": "status.textContent = sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3021,
+        "line": 3045,
         "sample": "} catch (e) { status.textContent = '✗ ' + e.message; }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3125,
+        "line": 3149,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
@@ -18238,13 +18262,13 @@
   },
   "theme": {
     "summary": {
-      "totalFindings": 3137,
+      "totalFindings": 3144,
       "filesWithFindings": 91,
       "byRule": {
-        "hardcoded-hex-color": 596,
-        "font-family": 155,
-        "semantic-token-use": 1575,
-        "border-radius": 473,
+        "hardcoded-hex-color": 599,
+        "font-family": 156,
+        "semantic-token-use": 1577,
+        "border-radius": 474,
         "box-shadow": 100,
         "hardcoded-rgb-hsl": 124,
         "theme-selector": 114
@@ -18335,6 +18359,10 @@
           "count": 29
         },
         {
+          "file": "renderer/panels/plugins.html",
+          "count": 27
+        },
+        {
           "file": "renderer/panels/harvest.html",
           "count": 26
         },
@@ -18348,10 +18376,6 @@
         },
         {
           "file": "renderer/panels/agreement.html",
-          "count": 21
-        },
-        {
-          "file": "renderer/panels/plugins.html",
           "count": 21
         },
         {
@@ -18382,7 +18406,7 @@
       {
         "rule": "font-family",
         "file": "renderer/app.js",
-        "line": 92,
+        "line": 94,
         "sample": "document.body.innerHTML = `<div style=\"padding:40px;font-family:sans-serif\">启动失败：${e.message}</div>`;"
       },
       {
@@ -20650,19 +20674,19 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/lib/agreement.js",
-        "line": 99,
+        "line": 106,
         "sample": "<label style=\"display:flex;align-items:center;gap:6px;font-size:12.5px;color:#83817a;cursor:pointer;flex:1\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/lib/agreement.js",
-        "line": 103,
+        "line": 110,
         "sample": "<button id=\"agree-accept\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px;background:var(--acc,#4f46e5);color:#fff\">${c.accept}</button>"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/lib/agreement.js",
-        "line": 103,
+        "line": 110,
         "sample": "<button id=\"agree-accept\" class=\"rb-btn\" style=\"flex-direction:row;padding:6px 18px;background:var(--acc,#4f46e5);color:#fff\">${c.accept}</button>"
       },
       {
@@ -21274,7 +21298,7 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1435,
+        "line": 1444,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
@@ -26687,12 +26711,48 @@
         "rule": "semantic-token-use",
         "file": "renderer/panels/plugins.html",
         "line": 31,
+        "sample": ".plg .meta { display:flex; flex-wrap:wrap; gap:5px 10px; margin-top:3px; color:var(--fg-dim); font-size:10.5px; }"
+      },
+      {
+        "rule": "font-family",
+        "file": "renderer/panels/plugins.html",
+        "line": 32,
+        "sample": ".plg .hash { font-family:ui-monospace,Consolas,monospace; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/panels/plugins.html",
+        "line": 33,
+        "sample": ".state { border:1px solid var(--border); border-radius:999px; padding:1px 6px; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/panels/plugins.html",
+        "line": 33,
+        "sample": ".state { border:1px solid var(--border); border-radius:999px; padding:1px 6px; }"
+      },
+      {
+        "rule": "hardcoded-hex-color",
+        "file": "renderer/panels/plugins.html",
+        "line": 34,
+        "sample": ".state.warn { border-color:#d97706; color:#b45309; }"
+      },
+      {
+        "rule": "hardcoded-hex-color",
+        "file": "renderer/panels/plugins.html",
+        "line": 35,
+        "sample": ".state.ok { border-color:#16865a; color:#16865a; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/panels/plugins.html",
+        "line": 36,
         "sample": ".empty { color:var(--fg-dim); text-align:center; padding:40px 0; line-height:2; }"
       },
       {
         "rule": "theme-selector",
         "file": "renderer/panels/plugins.html",
-        "line": 51,
+        "line": 56,
         "sample": "window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));"
       },
       {
@@ -27790,37 +27850,43 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/plugins/manager.js",
-        "line": 26,
-        "sample": "<span style=\"font-size:12px;color:#83817a\">.maz 插件 = zip 包（plugin.json + main.js）· 放置于工作区 plugins/ 自动加载</span>"
+        "line": 28,
+        "sample": "<span style=\"font-size:12px;color:#83817a\">插件默认隔离；只运行已按内容哈希授权的版本</span>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/plugins/manager.js",
-        "line": 31,
+        "line": 33,
         "sample": "<div class=\"plg-item\" data-id=\"${r.manifest.id}\" style=\"display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd,#e0ded8)\">"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/plugins/manager.js",
-        "line": 31,
+        "line": 33,
         "sample": "<div class=\"plg-item\" data-id=\"${r.manifest.id}\" style=\"display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd,#e0ded8)\">"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/plugins/manager.js",
-        "line": 34,
-        "sample": "<div style=\"font-weight:600;font-size:13px\">${r.manifest.name} <small style=\"color:#83817a\">v${r.manifest.version}</small></div>"
+        "line": 36,
+        "sample": "<div style=\"font-weight:600;font-size:13px\">${esc(r.manifest.name)} <small style=\"color:#83817a\">v${esc(r.manifest.version)}</small></div>"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/plugins/manager.js",
-        "line": 35,
-        "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${r.error || r.manifest.description || r.manifest.id}</div>"
+        "line": 37,
+        "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${esc(r.error || r.manifest.description || r.manifest.id)}</div>"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/plugins/manager.js",
-        "line": 42,
+        "line": 38,
+        "sample": "${r.error ? '' : `<div style=\"font-size:10.5px;color:#83817a;margin-top:3px\">${r.trustStatus === 'changed' ? '内容已变化 · 旧授权失效' : r.trustStatus === 'trusted' ? (r.enabled ? '已授权' : '已授权 · 已禁用') : '隔离中 · 未授权'} · SHA-256 ${esc(r.packageHash.slice(0, 12))}…</div>`}"
+      },
+      {
+        "rule": "hardcoded-hex-color",
+        "file": "renderer/plugins/manager.js",
+        "line": 47,
         "sample": ": '<div style=\"text-align:center;color:#83817a;padding:30px 0\">还没有安装插件——点「安装插件」选择 .maz 文件<br><small>交付包 samples/ 目录自带两个示例插件</small></div>'}"
       },
       {
@@ -28030,31 +28096,31 @@
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/ribbon.js",
-        "line": 229,
+        "line": 225,
         "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/shell/ribbon.js",
-        "line": 229,
+        "line": 225,
         "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
       },
       {
         "rule": "hardcoded-rgb-hsl",
         "file": "renderer/shell/ribbon.js",
-        "line": 229,
+        "line": 225,
         "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
       },
       {
         "rule": "border-radius",
         "file": "renderer/shell/ribbon.js",
-        "line": 229,
+        "line": 225,
         "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
       },
       {
         "rule": "box-shadow",
         "file": "renderer/shell/ribbon.js",
-        "line": 229,
+        "line": 225,
         "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
       },
       {
@@ -28174,85 +28240,85 @@
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2846,
+        "line": 2870,
         "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2856,
+        "line": 2880,
         "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2860,
+        "line": 2884,
         "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2861,
+        "line": 2885,
         "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2867,
+        "line": 2891,
         "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2868,
+        "line": 2892,
         "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2869,
+        "line": 2893,
         "sample": "<div style=\"margin-top:14px;color:var(--fg-dim);font-size:11.5px;line-height:1.7\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3036,
+        "line": 3060,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "border-radius",
         "file": "renderer/shell/shell.js",
-        "line": 3036,
+        "line": 3060,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "font-family",
         "file": "renderer/shell/shell.js",
-        "line": 3036,
+        "line": 3060,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3142,
+        "line": 3166,
         "sample": "<div style=\"font-size:11.5px;color:var(--fg-dim);margin:10px 0 6px\">${g}</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3145,
+        "line": 3169,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "border-radius",
         "file": "renderer/shell/shell.js",
-        "line": 3145,
+        "line": 3169,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3146,
+        "line": 3170,
         "sample": "<span style=\"color:var(--accent);font-weight:700\">.${t.ext}</span><span>${t.label.replace(/ *\\([^)]*\\)/g, '')}</span>"
       },
       {
@@ -38069,7 +38135,7 @@
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/browser/index.js",
-        "line": 1435,
+        "line": 1444,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
@@ -39091,8 +39157,8 @@
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/plugins/manager.js",
-        "line": 35,
-        "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${r.error || r.manifest.description || r.manifest.id}</div>"
+        "line": 37,
+        "sample": "<div style=\"font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${esc(r.error || r.manifest.description || r.manifest.id)}</div>"
       },
       {
         "rule": "fixed-width-px",
@@ -39161,7 +39227,7 @@
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/ribbon.js",
-        "line": 229,
+        "line": 225,
         "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
       },
       {
@@ -39182,21 +39248,21 @@
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3125,
+        "line": 3149,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3140,
+        "line": 3164,
         "sample": "<div style=\"min-width:430px;max-width:600px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3162,
+        "line": 3186,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {

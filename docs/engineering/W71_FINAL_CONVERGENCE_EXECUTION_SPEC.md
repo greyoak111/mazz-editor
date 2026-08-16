@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.15
+> 版本：v2.16
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / Wave 1–2 Monaco 生命周期与 packaged worker 检查点已落地**
+> 状态：**IN PROGRESS / 插件安全与代表性 Overlay/Z-order 子 Gate 已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,7 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W86，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
-8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request 与 Monaco/Code 四个检查点；只关闭有测试和 packaged 证据的子 Gate，Agent/多窗/真实媒体设备等未尽项保持 OPEN。
+8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全与代表性 Overlay/Z-order 检查点；只关闭有测试和 packaged 证据的子 Gate，Agent/多窗/真实媒体设备等未尽项保持 OPEN。
 
 ---
 
@@ -472,6 +472,8 @@ SearXNG 默认 endpoint / 凭据 / TLS / health / fallback
 ```
 
 已吊销旧 API key 是历史卫生项，不再作为生产 CRITICAL；仍有效的 secret、Updater 正式不安全链和未授权插件自动执行属于 Hard Gate blocker。
+
+2026-08-16：未授权插件自动执行 blocker 已以默认隔离、整包 SHA-256 授权、审查后替换拒绝和内容变化撤权关闭；packaged 安装/授权/重启/改包证据见第 14 节检查点。插件仍无进程级沙箱、签名和 permissions enforcement，因此产品分类继续是 Preview。
 
 ---
 
@@ -1223,6 +1225,8 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 下一检查点把 PythonKernel 与 DebugService 接入共享 ResourceLedger，关闭 DAP 旧进程退出覆盖新会话、pending timer 残留和初始化失败留进程三类风险；Python 在正式 packaged 程序中完成 20 次真执行/销毁，DAP 完成 20 次替换/停止契约循环。证据见 [`W71_WAVE1_PROCESS_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_PROCESS_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
 
 随后完成 Viewer/Player owner、Factory request owner 与 Monaco/Code 三个检查点：Viewer、Factory request、Code/Monaco 均通过 packaged 20 次；Factory 的非流式/流式请求、timeout、SSE reader、renderer-destroy 与每任务 AbortController 已闭环，W68 补遗路径也完成真机回写；TypeScript worker 返回真实语义诊断，Code 关签后 model/DOM/活动锚点归零，迟到初始化不能复活宿主。证据见 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md)、[`W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_FACTORY_REQUEST_LIFECYCLE_CHECKPOINT_2026-08-15.md) 与 [`W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_MONACO_LIFECYCLE_CHECKPOINT_2026-08-15.md)。
+
+2026-08-16 检查点关闭未授权插件自动执行 Hard Gate：新装默认隔离，授权绑定整包 SHA-256，内容变化自动撤权，并完成干净 userData 下的安装、授权、重启与改包 packaged E2E。Plugins 因尚无进程级沙箱、签名与 permissions enforcement，继续保持 Preview。同期完成首启协议遮挡根因修复，以及协议、上下文菜单、Quick Switcher、拖拽四条活动 WebContentsView 同场 z-order 证据；未触发 SurfaceManager/Universal Overlay Manager。证据见 [`W71_SECURITY_OVERLAY_CHECKPOINT_2026-08-16.md`](./W71_SECURITY_OVERLAY_CHECKPOINT_2026-08-16.md) 与 [`W71_OVERLAY_ZORDER_CENSUS.md`](./W71_OVERLAY_ZORDER_CENSUS.md)。
 
 完整 Wave 0 / Wave 1 / Wave 2 Gate 仍未通过：真实媒体设备与部分 AudioContext/GIF/transcode 分支尚未完成 packaged 激活；Factory 外网慢响应/断网/半包 SSE 与 renderer crash 尚缺真注入；DAP 因本机缺 `debugpy` 尚无 packaged 真适配器证据；三个 `node-pty/build/Release` 产物仍需异机 ABI 证明，ffmpeg 与 `buffers@0.1.1` 许可仍未闭环，签名/安装卸载矩阵仍缺，真实 Agent Adapter 仍为 0，多窗迁移也未闭环。
 

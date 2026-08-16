@@ -50,7 +50,7 @@ describe('全应用子窗（设置/帮助/协议）', () => {
     assert.ok(sh.includes("kind: 'settings'"), '设置必须走 panel:open 子窗格');
     const help = readSrc('renderer/help/index.js');
     assert.ok(help.includes("kind: 'help'"), '帮助必须走 panel:open 子窗格');
-    const rb = readSrc('renderer/shell/ribbon.js');
-    assert.ok(rb.includes("kind: 'agreement'"), '协议必须走 panel:open 子窗格');
+    const agreement = readSrc('renderer/lib/agreement.js');
+    assert.ok(agreement.includes("kind: 'agreement'"), '协议单一入口必须走 panel:open 子窗格');
   });
 });

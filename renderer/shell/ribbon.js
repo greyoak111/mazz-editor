@@ -114,12 +114,8 @@ export class Ribbon {
     agree.title = '用户服务协议及隐私政策';
     agree.addEventListener('click', async () => {
       const { showAgreement } = await import('../lib/agreement.js');
-      // W52③ 协议走全应用子窗（Electron；网页预览留 modal 兜底）
-      if (window.mazz?.isElectron) {
-        window.mazz.invoke('panel:open', { kind: 'agreement' }).catch(() => showAgreement()); // W53：全原生独立子窗格（应用壳 lean 路线退役）
-        return;
-      }
-      showAgreement();
+      // 单一入口：Electron 原生子窗，网页预览 DOM modal。
+      await showAgreement();
     });
     this.tabsEl.appendChild(agree);
     const help = document.createElement('button');
