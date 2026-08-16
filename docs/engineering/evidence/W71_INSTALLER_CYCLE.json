@@ -1,12 +1,12 @@
 {
-  "schemaVersion": 4,
-  "generatedAt": "2026-08-16T09:48:08.285Z",
+  "schemaVersion": 5,
+  "generatedAt": "2026-08-16T10:07:44.348Z",
   "installer": {
     "file": "release/Mazz Editor Setup 0.2.0.exe",
-    "bytes": 141035138,
-    "sha256": "C7FEB742EDDEE416FDBD9C5055D684F2BE0E1DF2430F0600CDFF24FC9554F727"
+    "bytes": 141035258,
+    "sha256": "AC13C34A153D6B0190FBEF3C9519D3B84A9826B335391E271470394ADF5E15A9"
   },
-  "isolatedTarget": "MazzW71Install-nwCYFX",
+  "isolatedTarget": "MazzW71Install-2MEorV",
   "preflight": {
     "noExistingInstallRegistration": true,
     "noExistingShortcuts": true,
@@ -32,6 +32,40 @@
         "defaultValueExists": false,
         "defaultValue": ""
       }
+    ],
+    "userChoices": [
+      {
+        "ext": "md",
+        "keyExists": false,
+        "progIdExists": false,
+        "progId": "",
+        "hashExists": false,
+        "hash": ""
+      },
+      {
+        "ext": "markdown",
+        "keyExists": false,
+        "progIdExists": false,
+        "progId": "",
+        "hashExists": false,
+        "hash": ""
+      },
+      {
+        "ext": "txt",
+        "keyExists": true,
+        "progIdExists": true,
+        "progId": "txtfile",
+        "hashExists": true,
+        "hash": "vUchSL47IoA="
+      },
+      {
+        "ext": "mazz",
+        "keyExists": false,
+        "progIdExists": false,
+        "progId": "",
+        "hashExists": false,
+        "hash": ""
+      }
     ]
   },
   "install": {
@@ -44,7 +78,7 @@
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -57,7 +91,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "markdown",
@@ -69,7 +104,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "txt",
@@ -81,7 +117,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "mazz",
@@ -93,7 +130,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         }
       ]
     }
@@ -109,7 +147,7 @@
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -122,7 +160,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "markdown",
@@ -134,7 +173,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "txt",
@@ -146,7 +186,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "mazz",
@@ -158,7 +199,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-nwCYFX\\Mazz Editor.exe\" \"%1\""
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2MEorV\\Mazz Editor.exe\" \"%1\"",
+          "explorerOpenWithProgIdExists": false
         }
       ]
     }
@@ -182,26 +224,346 @@
       },
       "forcedCleanupProcesses": 0
     },
-    "associatedFile": {
-      "kind": "file",
-      "target": "cold-start-file.md",
-      "launchMode": "windows-shell-cold-start",
-      "visibleRendererTargetObserved": true,
-      "mainWindowTitle": "cold-start-file.md — Mazz Editor",
-      "processCountAtObservation": 4,
-      "gracefulCloseExitCode": 0,
-      "processExit": {
-        "exited": true,
-        "attempts": 1
+    "associatedFiles": {
+      "md": {
+        "kind": "md",
+        "target": "cold-start-file.md",
+        "launchMode": "registered-command-direct-cold-start",
+        "visibleRendererTargetObserved": true,
+        "mainWindowTitle": "cold-start-file.md — Mazz Editor",
+        "processCountAtObservation": 4,
+        "gracefulCloseExitCode": 0,
+        "processExit": {
+          "exited": true,
+          "attempts": 1
+        },
+        "executableRelease": {
+          "released": true,
+          "attempts": 1
+        },
+        "forcedCleanupProcesses": 0,
+        "baselineUserChoice": {
+          "ext": "md",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        "defaultShellDispatchAsserted": false
       },
-      "executableRelease": {
-        "released": true,
-        "attempts": 1
+      "markdown": {
+        "kind": "markdown",
+        "target": "cold-start-file.markdown",
+        "launchMode": "registered-command-direct-cold-start",
+        "visibleRendererTargetObserved": true,
+        "mainWindowTitle": "cold-start-file.markdown — Mazz Editor",
+        "processCountAtObservation": 4,
+        "gracefulCloseExitCode": 0,
+        "processExit": {
+          "exited": true,
+          "attempts": 1
+        },
+        "executableRelease": {
+          "released": true,
+          "attempts": 1
+        },
+        "forcedCleanupProcesses": 0,
+        "baselineUserChoice": {
+          "ext": "markdown",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        "defaultShellDispatchAsserted": false
       },
-      "forcedCleanupProcesses": 0
+      "txt": {
+        "kind": "txt",
+        "target": "cold-start-file.txt",
+        "launchMode": "registered-command-direct-cold-start",
+        "visibleRendererTargetObserved": true,
+        "mainWindowTitle": "cold-start-file.txt — Mazz Editor",
+        "processCountAtObservation": 4,
+        "gracefulCloseExitCode": 0,
+        "processExit": {
+          "exited": true,
+          "attempts": 1
+        },
+        "executableRelease": {
+          "released": true,
+          "attempts": 1
+        },
+        "forcedCleanupProcesses": 0,
+        "baselineUserChoice": {
+          "ext": "txt",
+          "keyExists": true,
+          "progIdExists": true,
+          "progId": "txtfile",
+          "hashExists": true,
+          "hash": "vUchSL47IoA="
+        },
+        "defaultShellDispatchAsserted": false
+      },
+      "mazz": {
+        "kind": "mazz",
+        "target": "cold-start-file.mazz",
+        "launchMode": "windows-shell-cold-start",
+        "visibleRendererTargetObserved": true,
+        "mainWindowTitle": "cold-start-file.mazz — Mazz Editor",
+        "processCountAtObservation": 4,
+        "gracefulCloseExitCode": 0,
+        "processExit": {
+          "exited": true,
+          "attempts": 1
+        },
+        "executableRelease": {
+          "released": true,
+          "attempts": 1
+        },
+        "forcedCleanupProcesses": 0,
+        "baselineUserChoice": {
+          "ext": "mazz",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        "defaultShellDispatchAsserted": true
+      }
     },
+    "protectedUserChoiceExtensions": [
+      "txt"
+    ],
+    "shellDefaultNotAssertedExtensions": [
+      "md",
+      "markdown",
+      "txt"
+    ],
+    "proprietaryShellExtensions": [
+      "mazz"
+    ],
     "allVisibleTargetsObserved": true,
-    "allGracefullyReleased": true
+    "allGracefullyReleased": true,
+    "allAssociationOutcomesValid": true
+  },
+  "userChoicePreservation": {
+    "baseline": [
+      {
+        "ext": "md",
+        "keyExists": false,
+        "progIdExists": false,
+        "progId": "",
+        "hashExists": false,
+        "hash": ""
+      },
+      {
+        "ext": "markdown",
+        "keyExists": false,
+        "progIdExists": false,
+        "progId": "",
+        "hashExists": false,
+        "hash": ""
+      },
+      {
+        "ext": "txt",
+        "keyExists": true,
+        "progIdExists": true,
+        "progId": "txtfile",
+        "hashExists": true,
+        "hash": "vUchSL47IoA="
+      },
+      {
+        "ext": "mazz",
+        "keyExists": false,
+        "progIdExists": false,
+        "progId": "",
+        "hashExists": false,
+        "hash": ""
+      }
+    ],
+    "snapshots": {
+      "afterInstall": [
+        {
+          "ext": "md",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "markdown",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "txt",
+          "keyExists": true,
+          "progIdExists": true,
+          "progId": "txtfile",
+          "hashExists": true,
+          "hash": "vUchSL47IoA="
+        },
+        {
+          "ext": "mazz",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        }
+      ],
+      "afterSameVersionReinstall": [
+        {
+          "ext": "md",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "markdown",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "txt",
+          "keyExists": true,
+          "progIdExists": true,
+          "progId": "txtfile",
+          "hashExists": true,
+          "hash": "vUchSL47IoA="
+        },
+        {
+          "ext": "mazz",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        }
+      ],
+      "afterColdStarts": [
+        {
+          "ext": "md",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "markdown",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "txt",
+          "keyExists": true,
+          "progIdExists": true,
+          "progId": "txtfile",
+          "hashExists": true,
+          "hash": "vUchSL47IoA="
+        },
+        {
+          "ext": "mazz",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        }
+      ],
+      "afterInstalledRuntime": [
+        {
+          "ext": "md",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "markdown",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "txt",
+          "keyExists": true,
+          "progIdExists": true,
+          "progId": "txtfile",
+          "hashExists": true,
+          "hash": "vUchSL47IoA="
+        },
+        {
+          "ext": "mazz",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        }
+      ],
+      "afterUninstall": [
+        {
+          "ext": "md",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "markdown",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        },
+        {
+          "ext": "txt",
+          "keyExists": true,
+          "progIdExists": true,
+          "progId": "txtfile",
+          "hashExists": true,
+          "hash": "vUchSL47IoA="
+        },
+        {
+          "ext": "mazz",
+          "keyExists": false,
+          "progIdExists": false,
+          "progId": "",
+          "hashExists": false,
+          "hash": ""
+        }
+      ]
+    },
+    "unchangedAfterEachPhase": {
+      "afterInstall": true,
+      "afterSameVersionReinstall": true,
+      "afterColdStarts": true,
+      "afterInstalledRuntime": true,
+      "afterUninstall": true
+    },
+    "allUnchanged": true
   },
   "installedRuntime": {
     "smokeExitCode": 0,
@@ -223,9 +585,9 @@
       "factoryRequestObserved": true,
       "monacoWorkerObserved": true,
       "monacoLateInitGuardObserved": true,
-      "monacoWorkersCreated": 22,
+      "monacoWorkersCreated": 20,
       "monacoWorkersActive": 2,
-      "monacoWorkersTerminated": 20,
+      "monacoWorkersTerminated": 18,
       "monacoWorkerErrors": 0,
       "monacoModelsAfterClose": 0,
       "lifecycleCycles": 20,
@@ -269,7 +631,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
-          "command": ""
+          "command": "",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "markdown",
@@ -281,7 +644,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
-          "command": ""
+          "command": "",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "txt",
@@ -293,7 +657,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
-          "command": ""
+          "command": "",
+          "explorerOpenWithProgIdExists": false
         },
         {
           "ext": "mazz",
@@ -305,7 +670,8 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": false,
-          "command": ""
+          "command": "",
+          "explorerOpenWithProgIdExists": false
         }
       ]
     },

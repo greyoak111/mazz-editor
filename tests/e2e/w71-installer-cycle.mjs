@@ -82,6 +82,7 @@ function windowsIntegrationSnapshot() {
     associations: associationSpecs.map(spec => {
       const extensionKey = `HKCU\\Software\\Classes\\.${spec.ext}`;
       const classKey = `HKCU\\Software\\Classes\\${spec.progId}`;
+      const explorerOpenWithKey = `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.${spec.ext}\\OpenWithProgids`;
       return {
         ...spec,
         extensionKey: registryKeySnapshot(extensionKey),
@@ -90,9 +91,46 @@ function windowsIntegrationSnapshot() {
         legacyBackup: registryValueSnapshot(extensionKey, spec.legacyBackup),
         classKey: registryKeySnapshot(classKey),
         command: registryValueSnapshot(`${classKey}\\shell\\open\\command`),
+        explorerOpenWithProgId: registryValueSnapshot(explorerOpenWithKey, spec.progId),
       };
     }),
   };
+}
+
+function userChoiceSnapshot() {
+  return associationSpecs.map(spec => {
+    const key = `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.${spec.ext}\\UserChoice`;
+    return {
+      ext: spec.ext,
+      key: registryKeySnapshot(key),
+      progId: registryValueSnapshot(key, 'ProgId'),
+      hash: registryValueSnapshot(key, 'Hash'),
+    };
+  });
+}
+
+function compactUserChoices(snapshot) {
+  return snapshot.map(item => ({
+    ext: item.ext,
+    keyExists: item.key.exists,
+    progIdExists: item.progId.exists,
+    progId: item.progId.value,
+    hashExists: item.hash.exists,
+    hash: item.hash.value,
+  }));
+}
+
+function userChoicesUnchanged(before, current) {
+  return JSON.stringify(compactUserChoices(current)) === JSON.stringify(compactUserChoices(before));
+}
+
+function assertUserChoicesPreserved(before, current, phase) {
+  if (!userChoicesUnchanged(before, current)) {
+    throw new Error(`Windows UserChoice changed during ${phase}: ${JSON.stringify({
+      before: compactUserChoices(before),
+      current: compactUserChoices(current),
+    })}`);
+  }
 }
 
 function integrationInstalled(snapshot, expectedCommand) {
@@ -122,7 +160,8 @@ function integrationRemoved(before, after) {
         ? (!item.extensionKey.exists || item.defaultValue.value === '')
         : item.defaultValue.exists === previous.defaultValue.exists
           && item.defaultValue.value === previous.defaultValue.value;
-      return defaultRestored && !item.backup.exists && !item.legacyBackup.exists && !item.classKey.exists;
+      return defaultRestored && !item.backup.exists && !item.legacyBackup.exists && !item.classKey.exists
+        && !item.explorerOpenWithProgId.exists;
     });
 }
 
@@ -145,6 +184,7 @@ function compactIntegration(snapshot) {
       legacyBackupExists: item.legacyBackup.exists,
       classKeyExists: item.classKey.exists,
       command: item.command.value,
+      explorerOpenWithProgIdExists: item.explorerOpenWithProgId.exists,
     })),
   };
 }
@@ -291,11 +331,11 @@ function stopOwnedInstalledProcesses(executable) {
   });
 }
 
-async function runColdStartShell(executable, kind) {
+async function runColdStartTarget(executable, kind, dispatchMode = 'windows-shell') {
   const userData = fs.mkdtempSync(path.join(tempRoot, `MazzW71Cold-${kind}-user-`));
   const workspace = fs.mkdtempSync(path.join(tempRoot, `MazzW71Cold-${kind}-ws-`));
-  const associatedFile = path.join(workspace, 'cold-start-file.md');
-  fs.writeFileSync(associatedFile, '# cold start shell\n', 'utf8');
+  const associatedFile = kind === 'protocol' ? null : path.join(workspace, `cold-start-file.${kind}`);
+  if (associatedFile) fs.writeFileSync(associatedFile, '# cold start shell\n', 'utf8');
   fs.writeFileSync(path.join(userData, 'mazz-settings.json'), JSON.stringify({
     workspace,
     closeBehavior: 'quit',
@@ -303,11 +343,13 @@ async function runColdStartShell(executable, kind) {
   }, null, 2), 'utf8');
 
   const target = kind === 'protocol' ? 'mazz://home' : associatedFile;
-  const expectedTitle = kind === 'protocol' ? '隐私浏览器 — Mazz Editor' : 'cold-start-file.md — Mazz Editor';
+  const expectedTitle = kind === 'protocol' ? '隐私浏览器 — Mazz Editor' : `cold-start-file.${kind} — Mazz Editor`;
   const launchEnv = {
     ...process.env,
     MAZZ_E2E_USER_DATA: userData,
     MAZZ_E2E_WORKSPACE: workspace,
+    MAZZ_E2E_SHELL_TARGET: target,
+    MAZZ_E2E_TARGET_EXE: executable,
     MAZZ_GPU_MODE: 'safe',
     NODE_ENV: 'test',
   };
@@ -317,14 +359,22 @@ async function runColdStartShell(executable, kind) {
   let release = null;
   let forcedCleanupProcesses = 0;
   try {
-    // 冷启动必须模拟 Explorer 的可见 ShellExecute；windowsHide 会被文件关联链传给新主进程，
-    // 造成“进程已起但窗口永久隐藏”的测试自污染。暖启动只唤醒既有窗，不会暴露这个差异。
-    const launched = run('rundll32.exe', ['url.dll,FileProtocolHandler', target], {
+    // Shell 冷启动必须保持可见；windowsHide 会被关联链传给新主进程，造成“进程已起但窗口永久隐藏”。
+    // 公共扩展走已核对过的注册命令显式启动，避免在 UserChoice 未选 Mazz 时弹出无人值守“打开方式”。
+    const launchCommand = dispatchMode === 'windows-shell'
+      ? 'Start-Process -FilePath $env:MAZZ_E2E_SHELL_TARGET'
+      : 'Start-Process -FilePath $env:MAZZ_E2E_TARGET_EXE -ArgumentList @($env:MAZZ_E2E_SHELL_TARGET)';
+    const launched = run('powershell.exe', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      launchCommand,
+    ], {
       env: launchEnv,
       timeout: 30000,
       windowsHide: false,
     });
-    if (launched.status !== 0) throw new Error(`Cold-start ${kind} Shell dispatch failed: ${launched.stderr || launched.stdout}`);
+    if (launched.status !== 0) throw new Error(`Cold-start ${kind} ${dispatchMode} dispatch failed: ${launched.stderr || launched.stdout}`);
     observation = await waitForColdStartWindow(executable, expectedTitle);
     if (!observation.observed) throw new Error(`Cold-start ${kind} target did not reach a visible renderer window: ${JSON.stringify(observation)}`);
     const closed = closeInstalledMainWindow(executable, observation.windowProcess.processId);
@@ -337,7 +387,9 @@ async function runColdStartShell(executable, kind) {
     return {
       kind,
       target: kind === 'protocol' ? target : path.basename(target),
-      launchMode: 'windows-shell-cold-start',
+      launchMode: dispatchMode === 'windows-shell'
+        ? 'windows-shell-cold-start'
+        : 'registered-command-direct-cold-start',
       visibleRendererTargetObserved: true,
       mainWindowTitle: observation.windowProcess.mainWindowTitle,
       processCountAtObservation: observation.processCount,
@@ -362,9 +414,11 @@ const before = {
   registry: registrySnapshot(),
   shortcuts: shortcutSnapshot(),
   integration: windowsIntegrationSnapshot(),
+  userChoices: userChoiceSnapshot(),
 };
 const preexistingIntegration = before.integration.protocol.key.exists
-  || before.integration.associations.some(item => item.classKey.exists || item.backup.exists || item.legacyBackup.exists);
+  || before.integration.associations.some(item => item.classKey.exists || item.backup.exists
+    || item.legacyBackup.exists || item.explorerOpenWithProgId.exists);
 if (before.registry.exitCode === 0 || before.shortcuts.length || preexistingIntegration) {
   throw new Error(`Existing Mazz Editor installation/shortcut found; refusing destructive installer test: ${JSON.stringify(before)}`);
 }
@@ -378,8 +432,10 @@ let smokeExitCode = null;
 let uninstallExitCode = null;
 let installRegistry = null;
 let installIntegration = null;
+let installUserChoices = null;
 let sameVersionReinstallRegistry = null;
 let sameVersionReinstallIntegration = null;
+let sameVersionReinstallUserChoices = null;
 let sameVersionReinstallExeHash = '';
 let originalBackupsPreservedAfterInstall = false;
 let originalBackupsPreservedAfterReinstall = false;
@@ -388,7 +444,9 @@ let uninstaller = '';
 let smokeResult = null;
 let executableRelease = null;
 let coldStartProtocol = null;
-let coldStartFile = null;
+let coldStartFiles = {};
+let coldStartUserChoices = null;
+let installedRuntimeUserChoices = null;
 let primaryError = null;
 
 try {
@@ -405,6 +463,8 @@ try {
   installRegistry = registrySnapshot();
   if (installRegistry.exitCode !== 0) throw new Error('NSIS install did not register an uninstall entry');
   installIntegration = windowsIntegrationSnapshot();
+  installUserChoices = userChoiceSnapshot();
+  assertUserChoicesPreserved(before.userChoices, installUserChoices, 'initial install');
   const expectedCommand = `"${installedExe}" "%1"`;
   if (!integrationInstalled(installIntegration, expectedCommand)) {
     throw new Error(`Windows integration registration is incomplete: ${JSON.stringify(compactIntegration(installIntegration))}`);
@@ -432,6 +492,8 @@ try {
     throw new Error('Same-version reinstall removed the uninstall registration');
   }
   sameVersionReinstallIntegration = windowsIntegrationSnapshot();
+  sameVersionReinstallUserChoices = userChoiceSnapshot();
+  assertUserChoicesPreserved(before.userChoices, sameVersionReinstallUserChoices, 'same-version reinstall');
   if (!integrationInstalled(sameVersionReinstallIntegration, expectedCommand)) {
     throw new Error(`Same-version reinstall broke Windows integration: ${JSON.stringify(compactIntegration(sameVersionReinstallIntegration))}`);
   }
@@ -440,8 +502,19 @@ try {
     throw new Error(`Same-version reinstall overwrote original association owners: ${JSON.stringify(compactIntegration(sameVersionReinstallIntegration))}`);
   }
 
-  coldStartFile = await runColdStartShell(installedExe, 'file');
-  coldStartProtocol = await runColdStartShell(installedExe, 'protocol');
+  for (const { ext } of associationSpecs) {
+    const protectedChoice = compactUserChoices(before.userChoices).find(item => item.ext === ext);
+    const spec = associationSpecs.find(item => item.ext === ext);
+    const dispatchMode = spec?.proprietary ? 'windows-shell' : 'registered-command-direct';
+    coldStartFiles[ext] = {
+      ...await runColdStartTarget(installedExe, ext, dispatchMode),
+      baselineUserChoice: protectedChoice,
+      defaultShellDispatchAsserted: !!spec?.proprietary,
+    };
+  }
+  coldStartProtocol = await runColdStartTarget(installedExe, 'protocol');
+  coldStartUserChoices = userChoiceSnapshot();
+  assertUserChoicesPreserved(before.userChoices, coldStartUserChoices, 'cold-start Shell matrix');
 
   const smoke = run(process.execPath, [path.join(root, 'tests', 'e2e', 'w71-packaged-smoke.mjs')], {
     env: { ...process.env, MAZZ_E2E_EXECUTABLE: installedExe, MAZZ_E2E_WINDOWS_SHELL: '1' },
@@ -463,6 +536,8 @@ try {
   if (!executableRelease.released) {
     throw new Error(`Installed executable remained locked after app shutdown: ${JSON.stringify(executableRelease)}`);
   }
+  installedRuntimeUserChoices = userChoiceSnapshot();
+  assertUserChoicesPreserved(before.userChoices, installedRuntimeUserChoices, 'installed runtime smoke');
 } catch (error) {
   primaryError = error;
 } finally {
@@ -491,7 +566,20 @@ do {
 
 const residue = fs.existsSync(installDir) ? fs.readdirSync(installDir) : [];
 const afterIntegration = windowsIntegrationSnapshot();
+const afterUserChoices = userChoiceSnapshot();
 const windowsIntegrationRemoved = integrationRemoved(before.integration, afterIntegration);
+const userChoicePhases = {
+  afterInstall: installUserChoices,
+  afterSameVersionReinstall: sameVersionReinstallUserChoices,
+  afterColdStarts: coldStartUserChoices,
+  afterInstalledRuntime: installedRuntimeUserChoices,
+  afterUninstall: afterUserChoices,
+};
+const userChoiceUnchangedAfterEachPhase = Object.fromEntries(Object.entries(userChoicePhases).map(([phase, snapshot]) => [
+  phase,
+  !!snapshot && userChoicesUnchanged(before.userChoices, snapshot),
+]));
+const allUserChoicesUnchanged = Object.values(userChoiceUnchangedAfterEachPhase).every(Boolean);
 const productResidueRemoved = !after.installedExeExists
   && after.registry.exitCode !== 0
   && after.shortcuts.length === 0
@@ -501,7 +589,7 @@ const guardedTempCleanup = productResidueRemoved
   : { attempted: false, removed: !fs.existsSync(installDir), attempts: 0 };
 
 const evidence = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   generatedAt: new Date().toISOString(),
   installer: {
     file: `release/${installerName}`,
@@ -518,6 +606,7 @@ const evidence = {
       defaultValueExists: item.defaultValueExists,
       defaultValue: item.defaultValue,
     })),
+    userChoices: compactUserChoices(before.userChoices),
   },
   install: {
     exitCode: installExitCode,
@@ -536,9 +625,27 @@ const evidence = {
   },
   coldStartShell: {
     protocol: coldStartProtocol,
-    associatedFile: coldStartFile,
-    allVisibleTargetsObserved: !!coldStartProtocol?.visibleRendererTargetObserved && !!coldStartFile?.visibleRendererTargetObserved,
-    allGracefullyReleased: !!coldStartProtocol?.executableRelease?.released && !!coldStartFile?.executableRelease?.released,
+    associatedFiles: coldStartFiles,
+    protectedUserChoiceExtensions: associationSpecs
+      .filter(({ ext }) => coldStartFiles[ext]?.baselineUserChoice?.keyExists)
+      .map(({ ext }) => ext),
+    shellDefaultNotAssertedExtensions: associationSpecs.filter(item => !item.proprietary).map(item => item.ext),
+    proprietaryShellExtensions: associationSpecs.filter(item => item.proprietary).map(item => item.ext),
+    allVisibleTargetsObserved: !!coldStartProtocol?.visibleRendererTargetObserved
+      && associationSpecs.every(({ ext }) => !!coldStartFiles[ext]?.visibleRendererTargetObserved),
+    allGracefullyReleased: !!coldStartProtocol?.executableRelease?.released
+      && associationSpecs.every(({ ext }) => !!coldStartFiles[ext]?.executableRelease?.released),
+    allAssociationOutcomesValid: associationSpecs.every(({ ext }) => !!coldStartFiles[ext]?.visibleRendererTargetObserved
+      && !!coldStartFiles[ext]?.executableRelease?.released),
+  },
+  userChoicePreservation: {
+    baseline: compactUserChoices(before.userChoices),
+    snapshots: Object.fromEntries(Object.entries(userChoicePhases).map(([phase, snapshot]) => [
+      phase,
+      snapshot ? compactUserChoices(snapshot) : null,
+    ])),
+    unchangedAfterEachPhase: userChoiceUnchangedAfterEachPhase,
+    allUnchanged: allUserChoicesUnchanged,
   },
   installedRuntime: { smokeExitCode, smokeResult, executableRelease },
   uninstall: {
@@ -555,6 +662,9 @@ const evidence = {
 fs.writeFileSync(path.join(evidenceDir, 'W71_INSTALLER_CYCLE.json'), JSON.stringify(evidence, null, 2) + '\n', 'utf8');
 
 if (primaryError) throw primaryError;
+if (!allUserChoicesUnchanged) {
+  throw new Error(`Windows UserChoice was not preserved across the installer cycle: ${JSON.stringify(evidence.userChoicePreservation)}`);
+}
 if (uninstallExitCode !== 0 || !productResidueRemoved || !guardedTempCleanup.removed) {
   throw new Error(`Silent uninstall left product residue: ${JSON.stringify(evidence.uninstall)}`);
 }

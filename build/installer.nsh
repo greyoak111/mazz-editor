@@ -14,6 +14,11 @@
   DeleteRegValue SHELL_CONTEXT "Software\Classes\.markdown" "Markdown Document_backup"
   DeleteRegValue SHELL_CONTEXT "Software\Classes\.txt" "Text Document_backup"
   DeleteRegValue SHELL_CONTEXT "Software\Classes\.mazz" "Mazz Workspace File_backup"
+
+  ; electron-builder refreshes the Shell before registerFileAssociations/customInstall run.
+  ; Flush again only after the final association commands exist, otherwise uncommon extensions
+  ; can remain unresolved until Explorer refreshes its cache later.
+  System::Call "shell32::SHChangeNotify(i,i,i,i) (0x08000000, 0x1000, 0, 0)"
 !macroend
 
 !macro customUnInstall
@@ -29,9 +34,18 @@ mazz_protocol_not_owned:
   DeleteRegValue SHELL_CONTEXT "Software\Classes\.txt" "com.mazz.editor.text_backup"
   DeleteRegValue SHELL_CONTEXT "Software\Classes\.mazz" "com.mazz.editor.workspace_backup"
 
+  ; Windows may cache an app-specific ProgID here after Shell dispatch. Remove only Mazz's
+  ; own empty OpenWithProgids values; UserChoice and every foreign application stay untouched.
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.md\OpenWithProgids" "com.mazz.editor.markdown"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.markdown\OpenWithProgids" "com.mazz.editor.markdown"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\OpenWithProgids" "com.mazz.editor.text"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.mazz\OpenWithProgids" "com.mazz.editor.workspace"
+
   ; The proprietary extension did not exist before Mazz when its restored default is empty.
   ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.mazz" ""
   StrCmp $R0 "" 0 mazz_extension_has_owner
   DeleteRegKey SHELL_CONTEXT "Software\Classes\.mazz"
 mazz_extension_has_owner:
+  ; The stock uninstaller refresh happens before APP_UNASSOCIATE. Flush after all removals.
+  System::Call "shell32::SHChangeNotify(i,i,i,i) (0x08000000, 0x1000, 0, 0)"
 !macroend

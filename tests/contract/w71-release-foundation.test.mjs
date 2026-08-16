@@ -111,6 +111,9 @@ describe('W71 许可证据', () => {
     assert.ok(installerInclude.includes('WriteRegStr SHELL_CONTEXT "Software\\Classes\\mazz"'));
     assert.ok(installerInclude.includes('DeleteRegKey SHELL_CONTEXT "Software\\Classes\\mazz"'));
     assert.ok(installerInclude.includes('com.mazz.editor.markdown_backup'));
+    assert.ok(installerInclude.includes('SHChangeNotify'));
+    assert.ok(installerInclude.includes('Explorer\\FileExts\\.markdown\\OpenWithProgids'));
+    assert.ok(installerInclude.includes('"com.mazz.editor.markdown"'));
     assert.equal(main.includes('app.setAsDefaultProtocolClient(PROTOCOL)'), false);
     assert.ok(main.includes('extractProtocolUrls(argv)'));
     assert.ok(main.includes('pendingProtocolUrls.splice(0).forEach(handleProtocol)'));
@@ -131,18 +134,40 @@ describe('W71 许可证据', () => {
     assert.ok(cycle.includes('originalAssociationBackupsPreserved'));
     assert.ok(cycle.includes("MAZZ_E2E_WINDOWS_SHELL: '1'"));
     assert.ok(cycle.includes('waitForExecutableRelease(installedExe)'));
-    assert.ok(cycle.includes("runColdStartShell(installedExe, 'protocol')"));
-    assert.ok(cycle.includes("runColdStartShell(installedExe, 'file')"));
-    assert.ok(cycle.includes("launchMode: 'windows-shell-cold-start'"));
+    assert.ok(cycle.includes("runColdStartTarget(installedExe, 'protocol')"));
+    assert.ok(cycle.includes('runColdStartTarget(installedExe, ext, dispatchMode)'));
+    assert.ok(cycle.includes('UserChoice'));
+    assert.ok(cycle.includes('assertUserChoicesPreserved'));
+    assert.ok(cycle.includes("'windows-shell-cold-start'"));
+    assert.ok(cycle.includes("'registered-command-direct-cold-start'"));
     assert.ok(cycle.includes('visibleRendererTargetObserved: true'));
     assert.ok(cycle.includes('CloseMainWindow()'));
-    assert.ok(cycle.includes('schemaVersion: 4'));
-    assert.equal(cycleEvidence.schemaVersion, 4);
+    assert.ok(cycle.includes('schemaVersion: 5'));
+    assert.equal(cycleEvidence.schemaVersion, 5);
     assert.equal(cycleEvidence.coldStartShell.protocol.mainWindowTitle, '隐私浏览器 — Mazz Editor');
-    assert.equal(cycleEvidence.coldStartShell.associatedFile.mainWindowTitle, 'cold-start-file.md — Mazz Editor');
+    for (const ext of ['md', 'markdown', 'txt', 'mazz']) {
+      const baselineChoice = cycleEvidence.userChoicePreservation.baseline.find(item => item.ext === ext);
+      const result = cycleEvidence.coldStartShell.associatedFiles[ext];
+      assert.deepEqual(result.baselineUserChoice, baselineChoice);
+      assert.equal(result.mainWindowTitle, `cold-start-file.${ext} — Mazz Editor`);
+      assert.equal(result.forcedCleanupProcesses, 0);
+      assert.equal(result.launchMode, ext === 'mazz'
+        ? 'windows-shell-cold-start'
+        : 'registered-command-direct-cold-start');
+    }
+    assert.deepEqual(cycleEvidence.coldStartShell.shellDefaultNotAssertedExtensions, ['md', 'markdown', 'txt']);
+    assert.deepEqual(cycleEvidence.coldStartShell.proprietaryShellExtensions, ['mazz']);
     assert.equal(cycleEvidence.coldStartShell.allVisibleTargetsObserved, true);
     assert.equal(cycleEvidence.coldStartShell.allGracefullyReleased, true);
+    assert.equal(cycleEvidence.coldStartShell.allAssociationOutcomesValid, true);
     assert.equal(cycleEvidence.coldStartShell.protocol.forcedCleanupProcesses, 0);
-    assert.equal(cycleEvidence.coldStartShell.associatedFile.forcedCleanupProcesses, 0);
+    assert.equal(cycleEvidence.userChoicePreservation.allUnchanged, true);
+    assert.deepEqual(cycleEvidence.userChoicePreservation.unchangedAfterEachPhase, {
+      afterInstall: true,
+      afterSameVersionReinstall: true,
+      afterColdStarts: true,
+      afterInstalledRuntime: true,
+      afterUninstall: true,
+    });
   });
 });
