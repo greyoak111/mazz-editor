@@ -74,6 +74,27 @@ UTF-16 LE 文本
 
 全量测试：`150/150` 文件通过。
 
+### 3.1 当前源码的安装态回归
+
+提交 `9c3811f` 对应源码已重新生成 Windows 正式 specimen，并通过 schema v5 安装门禁：
+
+| 项目 | 当前结果 |
+|---|---|
+| NSIS installer | `141,035,270` bytes |
+| installer SHA-256 | `262D17B5D77CCA65C27110B3CF51CCE4C1736686CC72DF69A4D66F9250D1B030` |
+| win-unpacked | `597,463,879` bytes |
+| app.asar | `290,160,579` bytes |
+| packaged source map | `0` |
+| unpacked native | `10` files / `2,625,024` bytes |
+| ffmpeg 分发材料 | `5/5` 入包且有 SHA-256 |
+| 安装态生命周期 | `20` 轮，ResourceLedger `2→2` |
+| Agent Adapter / Session | `0 / 0`，没有冒充 W66 已完成 |
+| 卸载残留 | `0`；隔离临时目录受控清理成功 |
+
+同一轮还通过 clean install、同版本 reinstall、五类系统入口、协议/注册命令分发、UserChoice 不改写、正常退出与 silent uninstall。构建日志明确记录没有代码签名证书，因此签名被跳过；这一事实保留为条件 Gate，不表述成已签名发布物。
+
+机器证据：[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)、schema v5 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
+
 ## 4. 封板边界与完整主义预留
 
 本轮关闭的是代表性 RC Hard Gate，不把以下完整主义矩阵塞回 W71：
@@ -90,7 +111,7 @@ UTF-16 LE 文本
 
 继续封板顺序：
 
-1. 以当前源码重建最终 specimen 并复验安装/覆盖/五入口/卸载；
-2. 收口剩余可在本机确定验证的平台/发布 Gate；
-3. 将需要额外设备、证书、第三方账号或异机环境的项目明确归入条件 Gate / Known Limitations；
-4. 再形成 RC 剩余阻塞清单，而不是提前实施 W72+ 新功能。
+1. ~~以当前源码重建最终 specimen 并复验安装/覆盖/五入口/卸载~~：已完成；
+2. 依 [`W71_RC_CLOSURE_LEDGER_2026-08-16.md`](./W71_RC_CLOSURE_LEDGER_2026-08-16.md) 收口仍可在本机确定验证的产品与发布 Gate；
+3. 把需要额外设备、证书、第三方账号或异机环境的项目维持为条件 Gate / Known Limitations；
+4. 完成 RC 汇总回归后才选择 W71 之后的新功能波。

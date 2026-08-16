@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.24
+> 版本：v2.25
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 损坏、大文件、不支持格式与失败导入安全子 Gate 已落地**
+> 状态：**IN PROGRESS / 当前 specimen 安装回归已通过，推荐封板 RC 收口账本已冻结**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -22,6 +22,7 @@
 6. 本次授权不扩大 W71，不批准 W63–W86，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
 8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权、代表性编辑标签事务性交接与 20 次往返、代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复、单主窗整应用异常退出恢复、双窗口/双 renderer 同名 tabId 的事故数据保全与扁平恢复、Text/Code/Sheet/Slide/Mindmap/Draw 六类可序列化核心模块的 whole-app hard-kill 恢复，以及损坏/大文件/未知二进制/不支持编码/失败导入的 packaged 安全检查点；只关闭有测试和 packaged 证据的子 Gate，Notes/Library/Viewer 运行态、完整 Session 拓扑恢复、Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
+9. 维护者随后明确要求“按推荐封板先做，同时预留完整主义拓展可能”。从此首个 RC 的阻塞、条件门、入口启用门与 Post-W71 完整主义，以 [`W71_RC_CLOSURE_LEDGER_2026-08-16.md`](./W71_RC_CLOSURE_LEDGER_2026-08-16.md) 分账；历史欠账继续保留，但不得以需要证书、异机、真实硬件或尚未安装的两种外部 Agent 为由无限阻塞推荐封板。
 
 ---
 
@@ -202,7 +203,7 @@ W71 对 multi-surface、native integration、window/process lifecycle、filesyst
 | 移动壳 | 隐藏 | 保留代码和开发文档；没有可交付 native 工程前不设正式入口。 |
 | Updater | 隐藏 | 当前只有 manifest check 且 TLS 不合格；不以正式更新能力呈现。 |
 | W65 四站爬取 | Preview | 只呈现已实现的 DMHY 族能力，名称不得继续声称“四站完成”。 |
-| W66 Agent Harness Integration（原 Kimi Code 整合） | Foundation 进入 W71；Vendor Adapter 分别定级 | 已落地 Provider、Terminal/Toolchain 只算前件；建立通用 Harness v1，并用至少两种真实执行器验证，不承诺全厂商覆盖。 |
+| W66 Agent Harness Integration（原 Kimi Code 整合） | Foundation internal；Vendor Adapter/UI Hidden 或 Experimental | 通用 Harness v1 基础已经落地；当前真实 Adapter 为 0。双真实执行器仍是入口启用 Gate，不再因外部 CLI 不可用阻塞首个推荐 RC。 |
 | W62e 投喂 | 隐藏 | 搜索、采集、插件等前件保留，没有完整管线前不设正式入口。 |
 
 ### 4.2 低于正式 80 水位的 LANDED 模块
@@ -306,7 +307,7 @@ resume / checkpoint / approval / computerUse / structuredOutput
 |---|---|---|
 | Terminal / Toolchain / PTY | LANDED prerequisite | 复用并纳入资源账本，不冒充 Harness |
 | Kimi Provider 与路由前件 | PARTIAL prerequisite | 保留；与 Agent 身份解耦 |
-| Agent Harness Foundation | PARTIAL LANDED / W71 in progress | Registry、Session lifecycle、Capability、统一事件/错误/interrupt/dispose、资源账本与主进程 IPC 已落；通用 UI 与真实 Adapter 待补 |
+| Agent Harness Foundation | PARTIAL LANDED / internal | Registry、Session lifecycle、Capability、统一事件/错误/interrupt/dispose、资源账本与主进程 IPC 已落；首个 RC 不开放通用 Agent 正式入口 |
 | Kimi Code Adapter | 待验证 | 作为第一真实执行器；通过自身 detect/probe/auth/capability 与生命周期 Gate 后单独定级 |
 | Codex Adapter | 待评估/验证 | 作为第二真实执行器，证明公共协议跨厂商 |
 | 其他 Agent Adapter | DEFER | 后续按 Adapter 增加，不是首个 Windows RC 的数量 KPI |
@@ -319,7 +320,7 @@ Agent session 必须进入统一 resource ledger。关闭 Session、Tab、Worksp
 
 Agent 能编辑文件或执行命令，不能伪装成普通聊天 Provider。通用入口统一称“Agent / 执行器”，每个 Adapter 显示安装、版本、认证、capabilities、健康状态与运行状态。
 
-#### 4.4.5 W66 Final Gate
+#### 4.4.5 W66 Adapter Activation Gate
 
 ```text
 核心架构不存在 Kimi-specific 分支
@@ -334,7 +335,7 @@ Workspace 边界正确，切换 Agent 不要求 Factory 重写逻辑
 高权限 Agent 与普通模型调用在 UI 和权限提示上明确区分
 ```
 
-未满足 Gate 的具体 Adapter 只能标记 Experimental；不因此把 Harness Foundation 错写成“Kimi 兼容层”。
+未满足 Gate 的具体 Adapter 只能标记 Experimental 或 Hidden；不因此把 Harness Foundation 错写成“Kimi 兼容层”。在 2026-08-16 推荐封板范围缩减后，这一整组条件控制 **W66 Vendor Adapter / 通用 Agent UI 何时启用**，不再要求维护者为首个 RC 临时安装、登录或授权两个外部 Agent。Foundation 仍须通过现有契约和资源归零测试。
 
 ---
 
@@ -950,7 +951,7 @@ RSS / heap / handles / process / webContents / business resources
 
 ## 8. RC Hard Gate
 
-以下全部满足，才允许将 W71 标记为 RC 完成。
+8.1–8.7 全部满足，才允许将 W71 标记为 RC 完成。8.8 按 2026-08-16 范围缩减改为 Agent 正式入口的 Activation Gate：首个 RC 保持对应入口 Hidden/Experimental 时，不要求维护者临时安装、登录两个外部执行器；一旦开放入口，8.8 必须全部满足。
 
 ## 8.1 缺陷、安全与许可
 
@@ -1010,7 +1011,9 @@ RSS / heap / handles / process / webContents / business resources
 - 每个 RC 关键结论沿 `Source → Test → Packaged Runtime → Real Interaction Path → Screenshot/Visual Evidence → Acceptance` 形成证据链；单纯源码存在或 Node test pass 不得宣称用户路径完成。
 - Verification Throughput 必须追上 Generation Throughput：自动启动、操作、截图、比较、Console/Crash 收集、Evidence 归档和 Regression 复跑进入同一 release manifest；新增正式路径不得只增加生成吞吐而不登记验证 owner 与成本。
 
-## 8.8 Agent Harness
+## 8.8 Agent Harness 入口启用 Gate
+
+本节是 W66 正式入口的 Activation Gate。首个推荐 RC 中 Agent Foundation 只作为内部基础设施存在，通用 Agent UI 与 Vendor Adapter 保持 Hidden/Experimental，因此“至少两个真实 Adapter”不再是 W71 RC 的无条件阻塞；一旦要开放对应入口，以下条件仍全部适用：
 
 - `HarnessAdapter v1`、Agent Registry、Session state 与 Capability schema 已冻结并有契约测试。
 - 至少两个真实 Adapter 共用公共协议；核心层不存在 Kimi/Codex 特判。
@@ -1290,3 +1293,5 @@ Factory 故障矩阵随后用正式 `win-unpacked`、真实 Electron `net.fetch`
 跨窗口事务性交接检查点继而关闭代表性 Markdown 编辑标签的“发送即删除”和快照 owner 冲突：每次迁移生成一次性 `transferId`，主进程只接受目标 WebContents ACK；目标销毁、renderer crash、12 秒超时或重复同文件拒绝均使源标签保留。交接保留内容、脏态、固定态和选择区，目标先恢复并落 owner 快照后才确认；快照键加入 runId 与 sender WebContents id，跨 renderer/跨 run 的同名 `tabId` 不再互相覆盖或误删。正式 packaged E2E 完成 20 次主窗↔分窗往返、42 次成功交接，逐轮状态不漂移且 ResourceLedger `2→3→2`；重复目标的源/目标内容均保持，全量增至 `145/145`。最终 installer `141,020,301` bytes、SHA-256 `166161C2D798309657D76B9D730FC75D92DAC7DFD991F970AC5BFEE256AF6171`；schema v5 安装/覆盖/五入口/20 轮/卸载继续通过。该证据只覆盖代表性 Markdown 标签，不外推到 Viewer/Browser/Sheet/Slide/Mindmap；child crash restore、跨窗 Factory/Terminal/DAP/Agent owner、DPI/RDP 与 LAN Sync 三方冲突仍 OPEN。证据见 [`W71_WINDOW_HANDOFF_CHECKPOINT_2026-08-16.md`](./W71_WINDOW_HANDOFF_CHECKPOINT_2026-08-16.md)、[`W71_WINDOW_HANDOFF_RUNTIME.json`](./evidence/W71_WINDOW_HANDOFF_RUNTIME.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
 
 文件打开安全检查点随后关闭“解析失败却留下干净空签”的数据风险：Module Registry 将同步/异步 `setContent` 统一为可等待的 `{ok,error}`，DOCX/XLSX 不再吞拒绝，EPUB 入库空结果也会撤回临时标签；只有 load owner 仍存活且解析成功后，Shell 才登记 recent/watch。主进程新增 64 KiB 取样探针，未知二进制与不支持编码不再回退成可覆盖原件的乱码文本；UTF-16 LE 则按正确编码无损读取。正式 packaged 门禁中，损坏 DOCX/XLSX/EPUB、自有表格/画板空壳、未知二进制、未知编码和大损坏 DOCX 共 9 类全部返回失败，标签/recent/snapshot 零残留；合法 UTF-16 LE 中文通过。注入转换失败和真实写盘失败时，原目标字节、dirty 状态与原子临时件清理均正确。全量增至 `150/150`。穷举编码/格式/磁盘/权限矩阵和插件化格式识别保留到 Post-W71 完整主义扩展。证据见 [`W71_FILE_OPEN_SAFETY_CHECKPOINT_2026-08-16.md`](./W71_FILE_OPEN_SAFETY_CHECKPOINT_2026-08-16.md) 与 [`W71_FILE_OPEN_SAFETY.json`](./evidence/W71_FILE_OPEN_SAFETY.json)。
+
+当前源码随即完成发布回归：新 installer 为 `141,035,270` bytes，SHA-256 `262D17B5D77CCA65C27110B3CF51CCE4C1736686CC72DF69A4D66F9250D1B030`；win-unpacked `597,463,879` bytes，app.asar `290,160,579` bytes，packaged source map `0`，unpacked native `10` files / `2,625,024` bytes，FFmpeg 分发材料 `5/5`。schema v5 再次通过 clean install、同版本 reinstall、五入口、UserChoice 不改写、安装态 20 轮 ResourceLedger `2→2`、正常退出与 silent uninstall；Agent Adapter/Session 仍诚实记录为 `0/0`。构建明确因没有证书跳过代码签名。后续不再把所有 OPEN 混作同等级阻塞，而依 [`W71_RC_CLOSURE_LEDGER_2026-08-16.md`](./W71_RC_CLOSURE_LEDGER_2026-08-16.md) 分成 RC BLOCKER、CONDITIONAL GATE、ACTIVATION GATE 与 POST-W71 COMPLETENESS；常态预计四个宏观收口波次后进入新内容选择。
