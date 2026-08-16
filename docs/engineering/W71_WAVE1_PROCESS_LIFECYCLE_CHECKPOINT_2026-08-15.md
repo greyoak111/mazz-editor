@@ -89,3 +89,5 @@ packaged lifecycle smoke：20 次 × 6 族，PASS
 W62e、W63、W64、W65、W67、W69、W70 与 W72–W81 的历史欠账不受本检查点影响，继续以交付区《Mazz 当前未落地全景-W71归并版》为唯一总表。
 
 > 后续进展：Viewer owner、Player 全局监听和基础 Object URL 生命周期已在 [`W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md`](./W71_WAVE1_VIEWER_LIFECYCLE_CHECKPOINT_2026-08-15.md) 完成定向收敛与 packaged 20 轮；Factory/Agent/多窗与真实媒体设备分支仍保持 OPEN。
+
+> 2026-08-16 后续实证：固定 debugpy 1.8.21 已在正式 packaged 程序中完成真实 initialize/launch/initialized/configurationDone、断点、栈、变量、继续、终止与 20 轮资源回收，并修复握手自锁和 terminated 后 adapter 常驻两个根因。以 [`W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md`](./W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md) 为后续状态；其他语言 Adapter、远程/容器调试和异机矩阵仍 OPEN。

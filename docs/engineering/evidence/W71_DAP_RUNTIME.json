@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T10:54:14.984Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "adapter": {
+    "name": "debugpy",
+    "version": "1.8.21",
+    "pythonVersion": "3.14.6",
+    "pythonPath": "C:\\Users\\Administrator\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "site": "D:\\output\\Mazz Editor\\.mazz\\tmp-w71-debugpy\\site",
+    "wheel": "D:\\output\\Mazz Editor\\.mazz\\tmp-w71-debugpy\\wheel\\debugpy-1.8.21-cp314-cp314-win_amd64.whl",
+    "wheelSha256": "FE0744A12353406DE0AE8CCFF0D0A4A666F00801A3DB8FD04E7A5F761CD520E8"
+  },
+  "fullSession": {
+    "startMs": 854,
+    "breakpointVerified": true,
+    "stoppedLine": 2,
+    "stackFrames": 2,
+    "locals": {
+      "a": "2",
+      "b": "3"
+    },
+    "programResult": "5",
+    "outputEventObserved": true
+  },
+  "lifecycle": {
+    "cycles": 20,
+    "minMs": 1622,
+    "maxMs": 1711,
+    "averageMs": 1656,
+    "releasedDebugProcesses": 21,
+    "baselineResources": 2,
+    "finalResources": 2
+  },
+  "events": {
+    "output": 84,
+    "debugpySockets": 84,
+    "initialized": 21,
+    "process": 21,
+    "thread": 30,
+    "stopped": 1,
+    "module": 2,
+    "continued": 1,
+    "exited": 21,
+    "terminated": 21
+  }
+}

@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 209,
-    "scannedLines": 56437
+    "scannedLines": 56441
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -1281,115 +1281,115 @@
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 216,
+        "line": 220,
         "sample": "<button data-a=\"continue\" title=\"继续 (F5)\">▶</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 217,
+        "line": 221,
         "sample": "<button data-a=\"over\" title=\"单步跳过 (F10)\">↷</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 218,
+        "line": 222,
         "sample": "<button data-a=\"in\" title=\"单步进入 (F11)\">↓</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 219,
+        "line": 223,
         "sample": "<button data-a=\"out\" title=\"单步跳出 (Shift+F11)\">↑</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 220,
+        "line": 224,
         "sample": "<button data-a=\"stop\" title=\"停止 (Shift+F5)\">■</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 225,
+        "line": 229,
         "sample": "<div class=\"debug-sec\"><div class=\"debug-sec-title\">监视 <button data-a=\"addwatch\">＋</button></div><div class=\"debug-watch\"></div></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
-        "line": 228,
+        "line": 232,
         "sample": "<input class=\"debug-eval\" placeholder=\"回车求值（断点上下文）\" spellcheck=\"false\" />"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
-        "line": 303,
+        "line": 307,
         "sample": "<div class=\"set-row\"><label>程序</label><input id=\"lc-program\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program)}\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/code/debug.js",
-        "line": 303,
-        "sample": "<div class=\"set-row\"><label>程序</label><input id=\"lc-program\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program)}\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/code/debug.js",
-        "line": 304,
-        "sample": "<div class=\"set-row\"><label>参数（空格分隔）</label><input id=\"lc-args\" class=\"rb-input\" style=\"width:70%\" placeholder=\"arg1 arg2\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/code/debug.js",
-        "line": 304,
-        "sample": "<div class=\"set-row\"><label>参数（空格分隔）</label><input id=\"lc-args\" class=\"rb-input\" style=\"width:70%\" placeholder=\"arg1 arg2\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/code/debug.js",
-        "line": 305,
-        "sample": "<div class=\"set-row\"><label>工作目录</label><input id=\"lc-cwd\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program.replace(/[\\\\/][^\\\\/]*$/, ''))}\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/code/debug.js",
-        "line": 305,
-        "sample": "<div class=\"set-row\"><label>工作目录</label><input id=\"lc-cwd\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program.replace(/[\\\\/][^\\\\/]*$/, ''))}\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/code/debug.js",
-        "line": 306,
-        "sample": "<div class=\"set-row\"><label>Python 路径（可空=自动探测）</label><input id=\"lc-python\" class=\"rb-input\" style=\"width:70%\" placeholder=\"python\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/code/debug.js",
-        "line": 306,
-        "sample": "<div class=\"set-row\"><label>Python 路径（可空=自动探测）</label><input id=\"lc-python\" class=\"rb-input\" style=\"width:70%\" placeholder=\"python\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
         "line": 307,
-        "sample": "<div class=\"set-row\"><label>入口暂停</label><input id=\"lc-stop\" type=\"checkbox\"></div>"
+        "sample": "<div class=\"set-row\"><label>程序</label><input id=\"lc-program\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program)}\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
         "line": 308,
-        "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
+        "sample": "<div class=\"set-row\"><label>参数（空格分隔）</label><input id=\"lc-args\" class=\"rb-input\" style=\"width:70%\" placeholder=\"arg1 arg2\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/code/debug.js",
         "line": 308,
-        "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
+        "sample": "<div class=\"set-row\"><label>参数（空格分隔）</label><input id=\"lc-args\" class=\"rb-input\" style=\"width:70%\" placeholder=\"arg1 arg2\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/code/debug.js",
         "line": 309,
+        "sample": "<div class=\"set-row\"><label>工作目录</label><input id=\"lc-cwd\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program.replace(/[\\\\/][^\\\\/]*$/, ''))}\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/code/debug.js",
+        "line": 309,
+        "sample": "<div class=\"set-row\"><label>工作目录</label><input id=\"lc-cwd\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(program.replace(/[\\\\/][^\\\\/]*$/, ''))}\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/code/debug.js",
+        "line": 310,
+        "sample": "<div class=\"set-row\"><label>Python 路径（可空=自动探测）</label><input id=\"lc-python\" class=\"rb-input\" style=\"width:70%\" placeholder=\"python\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/code/debug.js",
+        "line": 310,
+        "sample": "<div class=\"set-row\"><label>Python 路径（可空=自动探测）</label><input id=\"lc-python\" class=\"rb-input\" style=\"width:70%\" placeholder=\"python\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/code/debug.js",
+        "line": 311,
+        "sample": "<div class=\"set-row\"><label>入口暂停</label><input id=\"lc-stop\" type=\"checkbox\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/code/debug.js",
+        "line": 312,
+        "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/code/debug.js",
+        "line": 312,
+        "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/code/debug.js",
+        "line": 313,
         "sample": "<div style=\"color:var(--fg-dim);font-size:11.5px\">需要本机 Python + debugpy（pip install debugpy）。配置自动记忆在本文件中。</div>`;"
       },
       {
@@ -21310,13 +21310,13 @@
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/code/debug.js",
-        "line": 308,
+        "line": 312,
         "sample": "<div class=\"set-row\"><label></label><button id=\"lc-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">启动调试 (F5)</button></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/code/debug.js",
-        "line": 309,
+        "line": 313,
         "sample": "<div style=\"color:var(--fg-dim);font-size:11.5px\">需要本机 Python + debugpy（pip install debugpy）。配置自动记忆在本文件中。</div>`;"
       },
       {

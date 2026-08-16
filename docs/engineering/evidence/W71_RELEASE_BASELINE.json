@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-16T10:36:44.875Z",
+  "generatedAt": "2026-08-16T10:53:35.363Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -8005,11 +8005,11 @@
   },
   "rendererSourceMaps": {
     "count": 209,
-    "bytes": 58041340,
+    "bytes": 58041541,
     "files": [
       {
         "path": "renderer/dist/app.js.map",
-        "bytes": 3432105
+        "bytes": 3432306
       },
       {
         "path": "renderer/dist/chunks/abap-G2Z2H6CX.js.map",
@@ -9059,11 +9059,11 @@
     "present": true,
     "unpacked": {
       "count": 438,
-      "bytes": 597418673
+      "bytes": 597421597
     },
     "asar": {
       "present": true,
-      "bytes": 290115373,
+      "bytes": 290118297,
       "entries": 9478,
       "sourceMaps": 0,
       "sourceMapBytes": 0,
@@ -9154,8 +9154,8 @@
     },
     "installer": {
       "path": "release/Mazz Editor Setup 0.2.0.exe",
-      "bytes": 141033837,
-      "sha256": "3F1907786A8A59C1E54017643532A1F322AA8441115E09866A345C9BFA783482"
+      "bytes": 141041336,
+      "sha256": "BB3AA049DBA22CC1FD13E6D50C1EA0536FDE7FB92BF0FB0827F70F836FCD193D"
     }
   }
 }

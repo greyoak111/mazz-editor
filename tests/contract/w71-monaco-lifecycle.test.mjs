@@ -42,6 +42,7 @@ describe('W71 Monaco / Code 生命周期契约', () => {
     assert.ok(debug.includes('disposable?.dispose?.()'));
     assert.ok(debug.includes("window.mazz?.invoke('debug:stop')"));
     assert.ok(debug.includes('this.panel?.remove()'));
+    assert.ok(debug.includes("event === 'terminated'"));
   });
 
   test('Monaco Worker 记录真实创建、错误和 terminate，不把文件存在冒充运行', () => {

@@ -25,6 +25,7 @@
     "test:w71:installer": "node tests/e2e/w71-installer-cycle.mjs",
     "test:w71:factory-faults": "node tests/e2e/w71-factory-faults.mjs",
     "test:w71:media-runtime": "node tests/e2e/w71-media-runtime.mjs",
+    "test:w71:dap-runtime": "node tests/e2e/w71-dap-runtime.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"
   },

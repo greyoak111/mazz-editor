@@ -146,6 +146,10 @@ export class DebugService {
       this.clearStopMark();
     } else if (event === 'output') {
       this.appendConsole(body.output || '', body.category || 'stdout');
+    } else if (event === 'terminated') {
+      this.active = false;
+      this.clearStopMark();
+      this.showPanel(false);
     } else if (event === 'thread') {
       // 线程创建/退出（简化：用 stopped 时的 threadId）
     }

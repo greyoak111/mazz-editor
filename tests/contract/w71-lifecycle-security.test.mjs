@@ -90,6 +90,39 @@ class FakeDapProcess extends EventEmitter {
   }
 }
 
+class HandshakeDapProcess extends FakeDapProcess {
+  constructor() {
+    super();
+    this.launchRequest = null;
+  }
+  frame(payload) {
+    const body = JSON.stringify(payload);
+    queueMicrotask(() => this.stdout.emit('data', Buffer.from(`Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`)));
+  }
+  respond(raw) {
+    const body = String(raw).split('\r\n\r\n').slice(1).join('\r\n\r\n');
+    const req = JSON.parse(body);
+    if (req.command === 'launch') {
+      this.launchRequest = req;
+      this.frame({ seq: req.seq + 500, type: 'event', event: 'initialized', body: {} });
+      return true;
+    }
+    this.frame({
+      seq: req.seq + 1000, type: 'response', request_seq: req.seq,
+      command: req.command, success: true, body: {},
+    });
+    if (req.command === 'configurationDone' && this.launchRequest) {
+      const launch = this.launchRequest;
+      this.launchRequest = null;
+      this.frame({
+        seq: launch.seq + 2000, type: 'response', request_seq: launch.seq,
+        command: 'launch', success: true, body: {},
+      });
+    }
+    return true;
+  }
+}
+
 const read = file => fs.readFileSync(path.resolve(file), 'utf8');
 
 describe('W71 长期资源生命周期', () => {
@@ -180,6 +213,42 @@ describe('W71 长期资源生命周期', () => {
       assert.equal(ledger.snapshot().activeCount, 0, `第 ${index + 1} 次 DAP 未释放`);
     }
     assert.equal(ledger.snapshot({ includeReleased: true }).released.length, 40);
+  });
+
+  test('DAP 标准握手在 initialized 后放行 configurationDone，不等待 launch response 自锁', async () => {
+    const process = new HandshakeDapProcess();
+    const debug = new DebugService({
+      bus: new FakeBus(), windowManager: { broadcast() {} },
+      spawnProcess: () => process, requestTimeout: 1000,
+    });
+    const started = await Promise.race([
+      debug.start({ type: 'python', program: 'fixture.py', cwd: os.tmpdir() }),
+      new Promise(resolve => setTimeout(() => resolve({ error: 'start-timeout' }), 500)),
+    ]);
+    assert.equal(started.ok, true, 'initialized 事件后必须把控制权交还客户端');
+    assert.ok(debug.session.pending.size >= 1, 'configurationDone 前 launch response 应保持待决');
+    const configured = await debug.request('configurationDone', {});
+    assert.equal(configured.error, undefined);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(debug.session.pending.size, 0, 'configurationDone 后 launch 与配置请求均应消账');
+    debug.kill('test-handshake');
+  });
+
+  test('DAP terminated 事件立即结束 adapter 会话并释放资源', async () => {
+    const ledger = new ResourceLedger({ historyLimit: 10 });
+    const process = new FakeDapProcess();
+    const debug = new DebugService({
+      bus: new FakeBus(), windowManager: { broadcast() {} }, resourceLedger: ledger,
+      spawnProcess: () => process, requestTimeout: 1000,
+    });
+    const started = await debug.start({ type: 'python', program: 'fixture.py', cwd: os.tmpdir() });
+    assert.equal(started.ok, true);
+    assert.equal(ledger.snapshot().byType['debug-process'], 1);
+    debug.onMessage({ type: 'event', event: 'terminated', body: {} }, debug.session);
+    assert.equal(debug.session, null);
+    assert.equal(process.killed, true);
+    assert.equal(ledger.snapshot().activeCount, 0);
+    assert.equal(ledger.snapshot({ includeReleased: true }).released[0].releaseReason, 'adapter-terminated');
   });
 
   test('总装配将 watcher/torrent/Python/DAP 接入同一账本并在退出时销毁', () => {
