@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T11:14:00.337Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "cleanReload": {
+    "reloadCalls": 1,
+    "dirty": false,
+    "toast": "「external-change.md」已同步外部修改"
+  },
+  "conflict": {
+    "dirtyPreserved": true,
+    "reloadCallsBeforeDecision": 1,
+    "actions": [
+      "保留当前",
+      "另存当前…",
+      "从磁盘载入"
+    ]
+  },
+  "explicitReload": {
+    "reloadCalls": 2,
+    "outcomes": [
+      true,
+      true
+    ]
+  },
+  "selfSave": {
+    "dirty": false,
+    "content": "# 应用自保存版本",
+    "reloadCalls": 2,
+    "conflictToast": false,
+    "diskMatched": true
+  },
+  "resources": {
+    "baseline": 2,
+    "final": 2
+  }
+}

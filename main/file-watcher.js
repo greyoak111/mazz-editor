@@ -9,6 +9,9 @@ class FileWatcher {
     this.watched = new Set();
     this.resourceLedger = resourceLedger;
     this.resourceKey = null;
+    this.readyPromise = null;
+    this._finishReady = null;
+    this._readyTimer = null;
 
     bus.handle('fs:closeAll', async () => {
       await this.close({ clearRoots: true, reason: 'fs-close-all' });
@@ -17,10 +20,18 @@ class FileWatcher {
     bus.handle('fs:watch', async ({ paths }) => {
       const list = Array.isArray(paths) ? paths : [paths];
       const fresh = list.filter(p => p && !this.watched.has(p));
-      if (!fresh.length) return true;
-      if (!this.watcher) this._createWatcher([]);
-      this.watcher.add(fresh);
+      if (!fresh.length) {
+        if (this.readyPromise) await this.readyPromise;
+        return true;
+      }
       fresh.forEach(p => this.watched.add(p));
+      if (!this.watcher) {
+        this._createWatcher(fresh);
+        await this.readyPromise;
+      } else {
+        this.watcher.add(fresh);
+        if (this.readyPromise) await this.readyPromise;
+      }
       this._updateLedger('watch');
       return true;
     });
@@ -40,7 +51,23 @@ class FileWatcher {
       depth: 8,
       ignored: /(^|[/\\])\.(git|mazz[/\\]temp)|node_modules/,
     });
-    this.watcher.on('all', (evt, p) => {
+    const watcher = this.watcher;
+    this.readyPromise = new Promise(resolve => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        if (this._readyTimer) clearTimeout(this._readyTimer);
+        if (this._finishReady === finish) this._finishReady = null;
+        this._readyTimer = null;
+        resolve(true);
+      };
+      this._finishReady = finish;
+      this._readyTimer = setTimeout(finish, 10000);
+      this._readyTimer.unref?.();
+      watcher.once('ready', finish);
+    });
+    watcher.on('all', (evt, p) => {
       // 渲染层路径统一正斜杠（与 fs:listDir / workspace:get 约定一致）
       this.wm.broadcast('file:changed', { event: evt, path: String(p).replace(/\\/g, '/'), at: Date.now() });
     });
@@ -70,10 +97,12 @@ class FileWatcher {
   async close({ clearRoots = true, reason = 'close' } = {}) {
     const current = this.watcher;
     this.watcher = null;
+    this._finishReady?.();
     if (current) {
       try { await current.close(); } catch {}
     }
     if (clearRoots) this.watched.clear();
+    this.readyPromise = null;
     this._releaseLedger(reason);
   }
 

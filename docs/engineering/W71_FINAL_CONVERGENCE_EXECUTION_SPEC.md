@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.16
+> 版本：v2.17
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 插件安全与代表性 Overlay/Z-order 子 Gate 已落地**
+> 状态：**IN PROGRESS / 外部文件变化与脏稿保护子 Gate 已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,7 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W86，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
-8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全与代表性 Overlay/Z-order 检查点；只关闭有测试和 packaged 证据的子 Gate，Agent/多窗/真实媒体设备等未尽项保持 OPEN。
+8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order 与外部文件变化检查点；只关闭有测试和 packaged 证据的子 Gate，Agent/多窗/真实媒体设备等未尽项保持 OPEN。
 
 ---
 
@@ -416,6 +416,8 @@ failure / cancel
 5. Office 格式只承诺经过语料验证的支持子集；unsupported 必须在覆盖/导出前提示。
 6. 自己保存触发的 watcher 回声不得重复通知或重复读盘。
 7. 快照恢复必须标明来源、时间和目标文件，不把旧快照伪装成磁盘新版本。
+
+当前进度：本地文件外部变化已由两条竞争 listener 收束为单一状态机；干净标签只重载一次，脏标签保留本地内容并提供“保留当前 / 另存当前… / 从磁盘载入”，应用自身保存以路径和文件指纹识别回声。`fs:watch` 现在等待 chokidar 真实 ready，ready 前关闭会立即结算并清除 timer；Save As 也改为写盘成功后才更新标签路径。正式 packaged 证据覆盖 clean reload、dirty conflict、显式磁盘载入、自保存回声与 ResourceLedger `2→2`。Office 支持子集、损坏/大文件语料、多窗同文件并发、LAN Sync 冲突与三方合并仍 OPEN。详见 [`W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md`](./W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md) 与 [`W71_EXTERNAL_FILE_CHANGE.json`](./evidence/W71_EXTERNAL_FILE_CHANGE.json)。
 
 ## 5.3 Windows Packaged Runtime Contract
 
@@ -1267,3 +1269,5 @@ Factory 故障矩阵随后用正式 `win-unpacked`、真实 Electron `net.fetch`
 媒体运行时激活检查点随后用正式 packaged Chromium 原生对象和产品现有 ffmpeg WASM 路径关闭本地文件分支：保存 150% 增益的 WAV 在播放手势内把 AudioContext 恢复到 `running`，关签后进入 `closed` 且只关闭一次；短 WebM 的 GIF 正常完成产出 `GIF89a`，录制中关签亦把 recorder 置为 `inactive`、全部 track 置为 `ended`，两路最终 ResourceLedger 均为 `2→2`。激活过程修复了 GIF 停止误用 `rec.rec` 和 WebAudio 图创建后播放按钮未恢复上下文两个产品根因。全量 `143/143`，最终 installer `141,033,837` bytes、SHA-256 `3F1907786A8A59C1E54017643532A1F322AA8441115E09866A345C9BFA783482`；schema v5 真安装/同版本覆盖/五入口/20 轮/卸载继续通过。本轮使用本地合成媒体、不访问硬件设备，因此只关闭 packaged AudioContext/GIF 子门禁；摄像头、麦克风、屏幕权限/拒绝/取消、Recorder 最小化/长录制与硬件/RDP 矩阵仍 OPEN，也不实施 W64。证据见 [`W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md`](./W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md)、[`W71_MEDIA_RUNTIME.json`](./evidence/W71_MEDIA_RUNTIME.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 schema v5 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
 
 真实 DAP 检查点随后以隔离固定的 Python 3.14.6 + debugpy 1.8.21 驱动正式 packaged 程序，实锤并修复两项伪适配器无法暴露的状态机缺陷：主进程不再等待 `launch` response 后才放行 `configurationDone`，而是在 `initialized` 事件后把控制权还给 renderer；debugpy 发出 `terminated` 后立即停止仍在等待的 adapter、释放资源并结束界面调试态。真调试已验证第 2 行断点、2 帧调用栈、Locals `a=2/b=3`、继续执行结果 `5` 与 stdout；完整 1 次加 20 次循环共释放 21 个 `debug-process`，ResourceLedger `2→2`。全量 `143/143`；最终 installer `141,041,336` bytes、SHA-256 `BB3AA049DBA22CC1FD13E6D50C1EA0536FDE7FB92BF0FB0827F70F836FCD193D`，schema v5 安装回归继续通过。产品不内置或暗装 debugpy；其他语言 Adapter、attach、远程/容器调试和异机矩阵仍 OPEN，W66 Agent Adapter 仍为 0。证据见 [`W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md`](./W71_DAP_RUNTIME_CHECKPOINT_2026-08-16.md)、[`W71_DAP_RUNTIME.json`](./evidence/W71_DAP_RUNTIME.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 schema v5 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。
+
+外部文件变化检查点继而关闭本地单机主路径的三项数据不变量：Shell 只保留一条 `file:changed` 决策入口，脏标签绝不静默覆盖，应用自身保存不重复通知或读盘；同时修复 chokidar 就绪竞态、Chromium timer `Illegal invocation`、Save As 失败后伪换路径和分屏 owner 错写。正式 packaged E2E 验证干净文件恰好重载一次、脏稿保留并给出三项显式动作、用户选择磁盘版本后正确清脏、自保存无伪冲突，ResourceLedger `2→2`。全量增至 `144/144`；最终 installer `141,039,701` bytes、SHA-256 `BCCBCCDD3C269138AA5FEC4765046A3839172EAEB1181283E7EF89C1665D4004`，schema v5 安装/覆盖/五入口/20 轮/卸载继续通过。Office 语料、多窗同文件并发、LAN Sync 冲突和三方合并仍 OPEN。证据见 [`W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md`](./W71_EXTERNAL_FILE_CHANGE_CHECKPOINT_2026-08-16.md)、[`W71_EXTERNAL_FILE_CHANGE.json`](./evidence/W71_EXTERNAL_FILE_CHANGE.json)、[`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) 与 [`W71_INSTALLER_CYCLE.json`](./evidence/W71_INSTALLER_CYCLE.json)。

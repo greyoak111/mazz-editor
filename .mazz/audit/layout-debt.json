@@ -1977,35 +1977,35 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 309,
+      "line": 314,
       "sample": "<div style=\"min-width:560px;max-width:720px\">"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/shell/shell.js",
-      "line": 315,
+      "line": 320,
       "sample": "<div style=\"font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${s.name}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3156,
+      "line": 3205,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3171,
+      "line": 3220,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3193,
+      "line": 3242,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {

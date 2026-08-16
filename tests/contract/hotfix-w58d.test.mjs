@@ -47,6 +47,6 @@ describe('② 大文件降级通道', () => {
   });
   test('⑤ 监看回刷不连坐降级 tab', () => {
     const sh = readSrc('renderer/shell/shell.js');
-    assert.ok(sh.includes("!['markdown', 'sheet', 'slide'].includes(inst.name)) return;"), '二进制族回刷模块闸必须在（{__docx} 对象抹空白实锤）');
+    assert.match(sh, /!\['markdown', 'sheet', 'slide'\]\.includes\(inst\.name\)\) return(?: false)?;/, '二进制族回刷模块闸必须在（{__docx} 对象抹空白实锤）');
   });
 });

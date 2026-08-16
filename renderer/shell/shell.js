@@ -9,6 +9,7 @@ import { palette, registerCommandSource } from '../core/command-palette.js';
 import { rankQuickCandidates } from '../core/quick-switcher.js';
 import { modules } from '../core/module-registry.js';
 import { snapshots } from '../core/snapshot-service.js';
+import { ExternalChangeService, externalChangeDecision, normalizeChangePath } from '../core/external-change-service.js';
 import { createTitlebar } from './titlebar.js';
 import { Ribbon } from './ribbon.js';
 import { Tabs } from './tabs.js';
@@ -120,6 +121,7 @@ export class Shell {
       markRead: (id) => this.activity.markRead(id),
       snapshot: () => this.activity.snapshot(),
     };
+    this.externalChanges = new ExternalChangeService();
     this.loadActivityCenter();
     this.sidebar = ws.querySelector('.sidebar');
     this.panesEl = ws.querySelector('.panes');
@@ -200,7 +202,10 @@ export class Shell {
       const active = this.tabs?.active;
       if (active) this.captureProgressFor(active.id);
     }, 1500);
-    window.addEventListener('beforeunload', () => this.progressRelay.flushAll(), { once: true });
+    window.addEventListener('beforeunload', () => {
+      this.progressRelay.flushAll();
+      this.externalChanges.dispose();
+    }, { once: true });
     registerCommandSource();
     this.registerFileSource();
   }
@@ -524,20 +529,49 @@ export class Shell {
     toast('已插入图片：' + alt);
   }
 
-  /** 磁盘内容重载到标签（外部编辑回传；脏标签只提示不覆盖） */
-  async reloadTabFromDisk(tab) {
+  findTabById(tabId) {
+    for (const leaf of this.paneTree.leaves()) {
+      const tab = leaf.tabs.get(tabId);
+      if (tab) return { tab, tabs: leaf.tabs };
+    }
+    return null;
+  }
+
+  tabsForPath(path) {
+    const key = normalizeChangePath(path);
+    const out = [];
+    for (const leaf of this.paneTree.leaves()) {
+      for (const tab of leaf.tabs.tabs) {
+        if (normalizeChangePath(tab.filePath) === key) out.push(tab);
+      }
+    }
+    return out;
+  }
+
+  showExternalConflict(tab) {
+    const current = this.findTabById(tab.id)?.tab;
+    if (!current || normalizeChangePath(current.filePath) !== normalizeChangePath(tab.filePath)) return;
+    toast(`「${current.title}」的磁盘版本已变化；本地未保存内容已保留`, [
+      { label: '保留当前', ghost: true, fn: () => {} },
+      { label: '另存当前…', fn: () => this.saveTab(current, { saveAs: true }) },
+      { label: '从磁盘载入', fn: () => this.reloadTabFromDisk(current, { force: true }) },
+    ], 9000);
+  }
+
+  /** 磁盘内容重载到标签；脏标签只在用户明确选择后覆盖。 */
+  async reloadTabFromDisk(tab, { force = false, silent = false } = {}) {
     const RELOADABLE = new Set(['markdown', 'text', 'sheet', 'slide', 'mindmap', 'code', 'notes', 'draw']);
     const inst = modules.instances.get(tab.id);
-    if (!inst || !RELOADABLE.has(inst.name)) return;
-    if (tab.dirty) {
-      toast(`「${tab.title}」在外部被修改，这边有未保存改动——请先保存或放弃改动`);
-      return;
+    if (!inst || !RELOADABLE.has(inst.name)) return false;
+    if (tab.dirty && !force) {
+      this.showExternalConflict(tab);
+      return false;
     }
     try {
       const ext = tab.filePath.split('.').pop().toLowerCase();
       // W58d：二进制族的对象契约只合 markdown/sheet/slide——降级 tab（超大 docx 走 code 纯文本）强灌 {__docx} 对象
       // 会被 string-only setContent 抹成空白（监看回刷连坐实锤）——模块不合直接跳过重载
-      if ((ext === 'xlsx' || ext === 'docx' || ext === 'pptx') && !['markdown', 'sheet', 'slide'].includes(inst.name)) return;
+      if ((ext === 'xlsx' || ext === 'docx' || ext === 'pptx') && !['markdown', 'sheet', 'slide'].includes(inst.name)) return false;
       let content;
       if (ext === 'xlsx' || ext === 'docx' || ext === 'pptx') {
         const b64 = await window.mazz.invoke('fs:readFileBase64', { path: tab.filePath });
@@ -554,11 +588,59 @@ export class Shell {
         content = await window.mazz.invoke('fs:readFile', { path: tab.filePath });
       }
       // 自己保存触发的 watcher：内容一致则跳过
-      try { if (inst.def.getContent(inst.state) === content) return; } catch {}
+      try { if (inst.def.getContent(inst.state) === content) return false; } catch {}
+      const current = this.findTabById(tab.id)?.tab;
+      if (!current || normalizeChangePath(current.filePath) !== normalizeChangePath(tab.filePath)) return false;
+      if (current.dirty && !force) {
+        this.showExternalConflict(current);
+        return false;
+      }
       inst.def.setContent(content, inst.state);
-      this.tabs.setDirty(tab.id, false);
-      toast(`「${tab.title}」已同步外部修改`);
-    } catch (e) { console.warn('[reload]', e.message); }
+      const owner = this.findTabById(tab.id);
+      owner?.tabs.setDirty(tab.id, false);
+      snapshots.untrack(tab.id);
+      snapshots.track(tab.id, () => ({
+        filePath: current.filePath, moduleId: inst.name,
+        content: safeGet(() => inst.def.getContent(inst.state)),
+      }));
+      if (!silent) toast(`「${tab.title}」已同步外部修改`);
+      return true;
+    } catch (e) {
+      console.warn('[reload]', e.message);
+      toast(`「${tab.title}」从磁盘载入失败：${e.message}`);
+      return false;
+    }
+  }
+
+  async handleExternalFileChanged({ path: rawPath, event = 'change' } = {}) {
+    if (!rawPath) return;
+    const path = String(rawPath).replace(/\\/g, '/');
+    if (event === 'unlink' || event === 'unlinkDir') {
+      import('../modules/search/shared-index.js').then(m => m.removeSharedIndexPath(path)).catch(() => {});
+    } else if (event === 'change' || event === 'add') {
+      import('../modules/search/shared-index.js').then(m => m.refreshSharedIndexFile(path)).catch(() => {});
+    }
+    const baseDecision = externalChangeDecision({ event });
+    if (baseDecision === 'delete') {
+      this.closeGhostTabs(path);
+      return;
+    }
+    if (baseDecision === 'ignore') return;
+    try {
+      const external = await import('../lib/extern-convert.js');
+      if (await external.handleExternalSave(path)) return;
+    } catch {}
+    const stat = await window.mazz.invoke('fs:stat', { path }).catch(() => null);
+    if (externalChangeDecision({ event, selfWrite: this.externalChanges.isOwnWrite(path, stat) }) === 'self-write') return;
+    for (const tab of this.tabsForPath(path)) {
+      this.externalChanges.schedule(tab.id, async () => {
+        const current = this.findTabById(tab.id)?.tab;
+        if (!current || normalizeChangePath(current.filePath) !== normalizeChangePath(path)) return;
+        const decision = externalChangeDecision({ event, dirty: current.dirty });
+        if (decision === 'conflict') this.showExternalConflict(current);
+        else if (decision === 'reload') await this.reloadTabFromDisk(current);
+      });
+    }
   }
 
   /** 外部文件/文件夹导入工作区（递归复制 + 重名避让） */
@@ -1011,8 +1093,6 @@ export class Shell {
         filters: saveFiltersFor(inst, tab.title),
       });
       if (!target) return false;
-      tab.filePath = target;
-      this.tabs.setTitle(tab.id, target.split(/[\\/]/).pop());
     }
     // 按目标扩展名转换内容（exportAs 契约；无则回落 getContent 原文）
     const ext = (target.match(/\.[^.]+$/)?.[0] || '').toLowerCase();
@@ -1033,15 +1113,21 @@ export class Shell {
         await window.mazz.invoke('fs:writeFile', { path: target, content });
       }
     } catch (e) { toast(`保存失败：${e.message}`); return false; }
+    tab.filePath = target;
+    const owner = this.findTabById(tab.id);
+    owner?.tabs.setTitle(tab.id, target.split(/[\\/]/).pop());
     try { inst.state.filePath = target; } catch {} // 同步模块实例路径（此前只更 tab.filePath：调试/外部打开等读实例路径的功能全是盲的）
     // W58 语言链根治②：保存后按扩展名同步 code 模块语言（保存为 .py 后 RUNNERS 仍 plaintext=无法运行的总根）
     if (inst.name === 'code') {
       const l = inst.def.langOfPath?.(target);
       if (l) { try { inst.state.language = l; } catch {} }
     }
-    this.tabs.setDirty(tab.id, false);
+    owner?.tabs.setDirty(tab.id, false);
     snapshots.untrack(tab.id);
     snapshots.track(tab.id, () => ({ filePath: target, moduleId: inst.name, content: safeGet(() => inst.def.getContent(inst.state)) }));
+    const signature = await window.mazz.invoke('fs:stat', { path: target }).catch(() => null);
+    this.externalChanges.markOwnWrite(target, signature);
+    await window.mazz?.invoke('fs:watch', { paths: [target] }).catch(() => {});
     await window.mazz?.invoke('recent:add', { path: target });
     this.syncTitle();
     toast(`已保存 ${target.split(/[\\/]/).pop()}`);
@@ -2023,24 +2109,6 @@ export class Shell {
     });
     // 资源管理器右键「导入到 Mazz 工作区」（--import 参数经主进程转发）
     if (window.mazz?.on) window.mazz.on('file:import', ({ paths }) => { if (paths?.length) this.importExternal(paths); });
-    // 外部编辑回传：磁盘文件变化 → 打开中的干净标签自动重载（外部软件保存后这边同步更新）
-    if (window.mazz?.isElectron && window.mazz?.on) {
-      const deb = new Map();
-      window.mazz.on('file:changed', ({ path: p }) => {
-        if (!p) return;
-        // 外部打开的转换文件被保存 → 优先走回传转换
-        import('../lib/extern-convert.js').then(m => {
-          if (m.handleExternalSave(p)) return;
-        }).catch(() => {});
-        for (const leaf of this.paneTree.leaves()) {
-          for (const tab of leaf.tabs.tabs) {
-            if (tab.filePath !== p) continue;
-            clearTimeout(deb.get(tab.id));
-            deb.set(tab.id, setTimeout(() => this.reloadTabFromDisk(tab), 400));
-          }
-        }
-      });
-    }
     // 文件树改名 → 同步所有打开标签的路径与标题（否则保存会写回旧名）
     bus.on('filetree:renamed', ({ from, to }) => {
       const newName = to.split(/[\\/]/).pop();
@@ -2767,27 +2835,8 @@ export class Shell {
         try { const { invalidateSharedSearchIndex } = await import('../modules/search/shared-index.js'); invalidateSharedSearchIndex(); } catch {}
       });
       window.mazz.on('window:role', ({ role }) => { contextKeys.set('windowRole', role); });
-      window.mazz.on('file:changed', ({ path: p, event }) => {
-        if (event === 'unlink' || event === 'unlinkDir') {
-          import('../modules/search/shared-index.js').then(m => m.removeSharedIndexPath(p)).catch(() => {});
-        } else if (event === 'change' || event === 'add') {
-          import('../modules/search/shared-index.js').then(m => m.refreshSharedIndexFile(p)).catch(() => {});
-        }
-        // 删除治理：文件/目录被删（回收站/外部/脚本）→ 打开中的标签不再虚空存在
-        if (event === 'unlink' || event === 'unlinkDir') { this.closeGhostTabs(p); return; }
-        const tab = this.tabs.tabs.find(t => t.filePath === p);
-        if (tab && event === 'change' && !tab.dirty) {
-          toast('磁盘文件已变更', [
-            { label: '重新载入', fn: async () => {
-              const c = await window.mazz.invoke('fs:readFile', { path: p });
-              const inst = modules.instances.get(tab.id);
-              inst?.def.setContent(c, inst.state);
-              this.tabs.setDirty(tab.id, false);
-            } },
-            { label: '忽略', fn: () => {} },
-          ]);
-        }
-      });
+      // 单一外部变化状态机：索引、转换回传、删除、clean reload、dirty conflict 与 self-write echo 共用此入口。
+      window.mazz.on('file:changed', payload => { this.handleExternalFileChanged(payload); });
     }
     bus.on('recovery:available', (snaps, restoreFn) => this.showRecoveryBar(snaps, restoreFn));
   }

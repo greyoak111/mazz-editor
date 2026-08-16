@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 31,
-    "scannedLines": 7293
+    "scannedLines": 7322
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -304,12 +304,12 @@
       "evidence": [
         {
           "file": "renderer/shell/shell.js",
-          "line": 432,
+          "line": 437,
           "sample": "const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 436,
+          "line": 441,
           "sample": "if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）"
         }
       ]
@@ -333,7 +333,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2014,
+          "line": 2100,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]
