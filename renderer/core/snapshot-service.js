@@ -31,6 +31,10 @@ class SnapshotService {
       if (snap?.content != null) await window.mazz.invoke('snapshot:write', { tabId, ...snap });
     } catch (e) { console.error('[snapshot] 写快照失败:', e); }
   }
+  async pruneRecovered(removeTabIds, keepTabIds) {
+    if (!window.mazz?.isElectron) return 0;
+    return window.mazz.invoke('snapshot:pruneOwned', { removeTabIds, keepTabIds }).catch(() => 0);
+  }
   start() {
     this.timer = setInterval(async () => {
       for (const tabId of this.getters.keys()) await this.writeOne(tabId);
@@ -39,17 +43,25 @@ class SnapshotService {
   stop() { clearInterval(this.timer); }
 
   /** 启动时检查崩溃残留 */
-  async checkRecovery(restoreFn) {
+  async checkRecovery(restoreFn, { role = 'main' } = {}) {
     if (!window.mazz?.isElectron) return;
     try {
+      // 分窗正常首启不得消费全局恢复材料；只有主进程确认“该 child renderer 刚崩溃并重载”才自动恢复本 owner。
+      if (role === 'child') {
+        const local = await window.mazz.invoke('crash:consumeRendererRecovery');
+        if (local?.crashed && local.snapshots?.length) {
+          await restoreFn(local.snapshots, { reason: 'renderer-crash', automatic: true });
+        }
+        return;
+      }
       const unclean = await window.mazz.invoke('crash:lastExitUnclean');
       const snaps = await window.mazz.invoke('snapshot:list');
       if (!snaps?.length) return;
       if (unclean) {
-        bus.emit('recovery:available', snaps, restoreFn);
+        bus.emit('recovery:available', snaps, selected => restoreFn(selected, { reason: 'app-unclean' }));
       } else {
         const unsaved = snaps.filter(s => !s.filePath);
-        if (unsaved.length) bus.emit('recovery:available', unsaved, restoreFn);
+        if (unsaved.length) bus.emit('recovery:available', unsaved, selected => restoreFn(selected, { reason: 'unsaved' }));
       }
     } catch (e) { console.warn('[snapshot] 恢复检查失败:', e.message); }
   }

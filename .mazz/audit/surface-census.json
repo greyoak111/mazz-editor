@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 31,
-    "scannedLines": 7385
+    "scannedLines": 7428
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -86,6 +86,12 @@
       "file": "main/browser-views.js",
       "line": 393,
       "sample": "wc.on('render-process-gone', (_e, details) => this.emit(tabId, 'render-process-gone', { reason: details?.reason }));"
+    },
+    {
+      "rule": "render-gone-hook",
+      "file": "main/crash-recovery.js",
+      "line": 22,
+      "sample": "app.on('render-process-gone', (_event, webContents, details = {}) => {"
     },
     {
       "rule": "render-gone-hook",
@@ -345,7 +351,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2132,
+          "line": 2141,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]

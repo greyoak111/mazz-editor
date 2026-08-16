@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T12:14:28.945Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "crashCycles": 5,
+  "initial": {
+    "id": "tab-1",
+    "title": "child-crash.md",
+    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-child-crash-ws-fLdAS9/child-crash.md",
+    "content": "# 分窗崩溃恢复\n\nalpha beta gamma",
+    "dirty": true,
+    "pinned": true,
+    "progress": {
+      "from": 3,
+      "to": 10
+    },
+    "role": "child"
+  },
+  "cycles": [
+    {
+      "cycle": 1,
+      "tabId": "tab-1",
+      "title": "child-crash.md（已恢复）",
+      "resources": 3,
+      "snapshots": 1
+    },
+    {
+      "cycle": 2,
+      "tabId": "tab-1",
+      "title": "child-crash.md（已恢复）",
+      "resources": 3,
+      "snapshots": 1
+    },
+    {
+      "cycle": 3,
+      "tabId": "tab-1",
+      "title": "child-crash.md（已恢复）",
+      "resources": 3,
+      "snapshots": 1
+    },
+    {
+      "cycle": 4,
+      "tabId": "tab-1",
+      "title": "child-crash.md（已恢复）",
+      "resources": 3,
+      "snapshots": 1
+    },
+    {
+      "cycle": 5,
+      "tabId": "tab-1",
+      "title": "child-crash.md（已恢复）",
+      "resources": 3,
+      "snapshots": 1
+    }
+  ],
+  "final": {
+    "id": "tab-2",
+    "title": "child-crash.md（已恢复）",
+    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-child-crash-ws-fLdAS9/child-crash.md",
+    "content": "# 分窗崩溃恢复\n\nalpha beta gamma",
+    "dirty": true,
+    "pinned": true,
+    "progress": {
+      "from": 3,
+      "to": 10
+    },
+    "role": "main"
+  },
+  "recoverySnapshots": [
+    {
+      "ownerId": "dfe33fd9-b13c-4db1-849c-45adf9685503:1",
+      "tabId": "tab-2",
+      "dirty": true,
+      "pinned": true,
+      "progress": {
+        "from": 3,
+        "to": 10
+      }
+    }
+  ],
+  "resources": {
+    "baseline": 2,
+    "withChild": 3,
+    "final": 2
+  }
+}

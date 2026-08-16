@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T11:50:02.670Z",
+  "generatedAt": "2026-08-16T12:14:42.169Z",
   "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
   "rejectedDuplicate": {
     "sourcePreserved": true,
@@ -27,7 +27,7 @@
   ],
   "final": {
     "id": "tab-23",
-    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-y5uaYv/handoff.md",
+    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-4NuBSH/handoff.md",
     "content": "# 交接证明\n\nalpha beta gamma delta",
     "dirty": true,
     "pinned": true,
@@ -38,10 +38,10 @@
   },
   "recoverySnapshots": [
     {
-      "ownerId": "7230261c-2c6b-439c-b513-0555fcee1c83:1",
+      "ownerId": "d5ef7f3a-f216-4ee7-bb7f-61f3b6b3da91:1",
       "tabId": "tab-23",
       "content": "# 交接证明\n\nalpha beta gamma delta",
-      "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-y5uaYv/handoff.md"
+      "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-4NuBSH/handoff.md"
     }
   ],
   "resources": {

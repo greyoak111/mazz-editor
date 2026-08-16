@@ -599,10 +599,7 @@ export class Shell {
       const owner = this.findTabById(tab.id);
       owner?.tabs.setDirty(tab.id, false);
       snapshots.untrack(tab.id);
-      snapshots.track(tab.id, () => ({
-        filePath: current.filePath, moduleId: inst.name,
-        content: safeGet(() => inst.def.getContent(inst.state)),
-      }));
+      snapshots.track(tab.id, () => this.snapshotPayload(current, inst));
       if (!silent) toast(`「${tab.title}」已同步外部修改`);
       return true;
     } catch (e) {
@@ -825,6 +822,20 @@ export class Shell {
   hideWelcome() { this.welcomeEl?.remove(); this.welcomeEl = null; }
 
   // ==================== 标签 ↔ 模块 ====================
+  snapshotPayload(tab, inst = tab && modules.instances.get(tab.id)) {
+    return {
+      title: tab?.title || null,
+      filePath: tab?.filePath || null,
+      moduleId: inst?.name || tab?.moduleId,
+      content: safeGet(() => inst?.def?.getContent(inst.state)),
+      dirty: !!tab?.dirty,
+      pinned: !!tab?.pinned,
+      progress: typeof inst?.def?.captureProgress === 'function'
+        ? safeGet(() => inst.def.captureProgress(inst.state))
+        : null,
+    };
+  }
+
   openTab(moduleId, { title, filePath = null, content = null }) {
     this.hideWelcome();
     const tab = this.tabs.add({ title, moduleId, filePath });
@@ -838,10 +849,7 @@ export class Shell {
     setTimeout(() => this.restoreProgressFor(tab, inst), 0);
     tab.forceClose = false;
     if (!inst.def.readOnly) {
-      snapshots.track(tab.id, () => ({
-        filePath, moduleId,
-        content: safeGet(() => inst.def.getContent(inst.state)),
-      }));
+      snapshots.track(tab.id, () => this.snapshotPayload(tab, inst));
     }
     this.rebuildModuleRibbon(tab);
     this.paneTree.paneOfTab(tab.id)?.refreshEmpty();
@@ -1124,7 +1132,7 @@ export class Shell {
     }
     owner?.tabs.setDirty(tab.id, false);
     snapshots.untrack(tab.id);
-    snapshots.track(tab.id, () => ({ filePath: target, moduleId: inst.name, content: safeGet(() => inst.def.getContent(inst.state)) }));
+    snapshots.track(tab.id, () => this.snapshotPayload(tab, inst));
     const signature = await window.mazz.invoke('fs:stat', { path: target }).catch(() => null);
     this.externalChanges.markOwnWrite(target, signature);
     await window.mazz?.invoke('fs:watch', { paths: [target] }).catch(() => {});
@@ -1878,9 +1886,10 @@ export class Shell {
     if (snapshot.dirty) {
       this.findTabById(tab.id)?.tabs.setDirty(tab.id, true);
       snapshots.markDirty(tab.id);
-      // 目标确认前先把新 owner 的恢复材料落盘；源标签随后才会清除自己的快照。
-      await snapshots.writeOne(tab.id);
     }
+    // 目标确认前先把新 owner 的恢复材料落盘；源标签随后才会清除自己的快照。
+    // 干净标签同样写入，保证迁移后立即 crash 仍能重建工作台位置。
+    await snapshots.writeOne(tab.id);
     this.syncTitle();
     if (snapshot.filePath) await window.mazz?.invoke('recent:add', { path: snapshot.filePath });
     return true;
@@ -2881,16 +2890,30 @@ export class Shell {
   }
 
   async checkRecovery() {
-    await snapshots.checkRecovery(async (snaps) => {
+    const role = new URLSearchParams(location.search).get('role') === 'child' ? 'child' : 'main';
+    await snapshots.checkRecovery(async (snaps, { reason } = {}) => {
+      const restoredOldIds = [];
+      const restoredNewIds = [];
       for (const s of snaps) {
         if (!modules.get(s.moduleId)) continue;
-        this.openTab(s.moduleId, {
-          title: (s.filePath ? s.filePath.split(/[\\/]/).pop() : '未保存') + '（已恢复）',
-          filePath: s.filePath, content: s.content,
+        const recoveryTitle = (s.title || (s.filePath ? s.filePath.split(/[\\/]/).pop() : '未保存'))
+          .replace(/(?:（已恢复）)+$/, '') + '（已恢复）';
+        const ok = await this.receiveHandoff({
+          ...s,
+          title: recoveryTitle,
+          dirty: s.dirty == null ? true : !!s.dirty,
         });
+        if (!ok) continue;
+        restoredOldIds.push(s.tabId);
+        restoredNewIds.push(this.tabs.activeId);
       }
-      toast(`已从快照恢复 ${snaps.length} 个标签`);
-    });
+      if (reason === 'renderer-crash') {
+        await snapshots.pruneRecovered(restoredOldIds, restoredNewIds);
+        toast(`分窗异常后已恢复 ${restoredNewIds.length} 个标签`);
+      } else {
+        toast(`已从快照恢复 ${restoredNewIds.length} 个标签`);
+      }
+    }, { role });
   }
 
   showRecoveryBar(snaps, restoreFn) {

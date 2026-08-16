@@ -66,6 +66,8 @@ registerHelpCommands();
 
 // —— 启动外壳 ——
 await initI18n();
+const startupWindowRole = new URLSearchParams(location.search).get('role') === 'child' ? 'child' : 'main';
+contextKeys.set('windowRole', startupWindowRole);
 const shell = new Shell(document.body);
 window.MazzShell = shell; // 调试/测试入口
 keymap.attach();

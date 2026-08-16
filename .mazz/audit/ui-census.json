@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 210,
-    "scannedLines": 56622
+    "scannedLines": 56659
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -159,7 +159,7 @@
       {
         "rule": "inline-style-attribute",
         "file": "renderer/app.js",
-        "line": 94,
+        "line": 96,
         "sample": "document.body.innerHTML = `<div style=\"padding:40px;font-family:sans-serif\">启动失败：${e.message}</div>`;"
       },
       {
@@ -8835,499 +8835,499 @@
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 798,
+        "line": 795,
         "sample": "<button class=\"w-card\" data-cmd=\"file.new\"><div class=\"t\">${iconHtml('＋')} ${t('新建文档')}</div><div class=\"d\">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 799,
+        "line": 796,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSheet\"><div class=\"t\">${iconHtml('📊')} ${t('新建表格')}</div><div class=\"d\">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 800,
+        "line": 797,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSlide\"><div class=\"t\">${iconHtml('📽')} ${t('新建演示')}</div><div class=\"d\">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 801,
+        "line": 798,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newBrowser\"><div class=\"t\">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class=\"d\">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 802,
+        "line": 799,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newCode\"><div class=\"t\">${iconHtml('💻')} ${t('新建代码')}</div><div class=\"d\">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 803,
+        "line": 800,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMath\"><div class=\"t\">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class=\"d\">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 804,
+        "line": 801,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newNotes\"><div class=\"t\">${iconHtml('📓')} ${t('笔记库')}</div><div class=\"d\">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 805,
+        "line": 802,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSearch\"><div class=\"t\">${iconHtml('🔎')} ${t('全局搜索')}</div><div class=\"d\">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 806,
+        "line": 803,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMindmap\"><div class=\"t\">${iconHtml('🧠')} ${t('思维导图')}</div><div class=\"d\">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 807,
+        "line": 804,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newDraw\"><div class=\"t\">${iconHtml('🎨')} ${t('画板')}</div><div class=\"d\">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 808,
+        "line": 805,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newLibrary\"><div class=\"t\">${iconHtml('📚')} ${t('书库')}</div><div class=\"d\">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 809,
+        "line": 806,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newText\"><div class=\"t\">${iconHtml('🄣')} ${t('新建纯文本')}</div><div class=\"d\">${t('即开即用')}<br>${t('TXT 读写')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 810,
+        "line": 807,
         "sample": "<button class=\"w-card\" data-cmd=\"file.open\"><div class=\"t\">${iconHtml('📂')} ${t('打开文件')}</div><div class=\"d\">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 811,
+        "line": 808,
         "sample": "<button class=\"w-card\" data-cmd=\"help.open\"><div class=\"t\">${iconHtml('❓')} ${t('使用指南')}</div><div class=\"d\">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 812,
+        "line": 809,
         "sample": "<button class=\"w-card\" data-cmd=\"app.openSettings\"><div class=\"t\">${iconHtml('⚙')} ${t('设置')}</div><div class=\"d\">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 814,
+        "line": 811,
         "sample": "<div style=\"margin-top:6px;font-size:11.5px\">${t('托盘常驻 Ctrl+Alt+M 唤起 · Ctrl+Alt+N 快速笔记')}</div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 915,
+        "line": 923,
         "sample": "btn.innerHTML = `<i class=\"ico\">${appIconHtml(app)}</i><span style=\"max-width:none\">${app.name}</span>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 946,
+        "line": 954,
         "sample": "addBtn.innerHTML = `<i class=\"ico\">${iconHtml('✚')}</i><span style=\"max-width:none\">添加应用…</span>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 1432,
+        "line": 1440,
         "sample": "let inner = pm ? pm.innerHTML : `<pre style=\"white-space:pre-wrap\">${String(ctl?.getContent?.() || '').replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}</pre>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 1443,
+        "line": 1451,
         "sample": "pages = [`<div class=\"md-body\" style=\"font-size:12pt;line-height:1.8\">${inner}</div>`];"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2900,
+        "line": 2923,
         "sample": "<button>全部恢复</button><button class=\"ghost\">忽略</button>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2951,
+        "line": 2974,
         "sample": "<select id=\"s-lang\" class=\"rb-select\">${LANGUAGES.map(l => `<option value=\"${l.id}\">${l.name}</option>`).join('')}</select></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2953,
+        "line": 2976,
         "sample": "<select id=\"s-close\" class=\"rb-select\"><option value=\"ask\">每次询问</option><option value=\"tray\">最小化到托盘</option><option value=\"quit\">直接退出</option></select></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2955,
+        "line": 2978,
         "sample": "<select id=\"s-tsource\" class=\"rb-select\"><option value=\"system\">跟随系统</option><option value=\"light\">浅色</option><option value=\"dark\">深色</option></select></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 2957,
+        "line": 2980,
         "sample": "<select id=\"s-theme\" class=\"rb-select\" style=\"max-width:56%\"></select>"
       },
       {
         "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2957,
-        "sample": "<select id=\"s-theme\" class=\"rb-select\" style=\"max-width:56%\"></select>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2958,
-        "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2958,
-        "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2960,
-        "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2960,
-        "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2961,
-        "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2961,
-        "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2962,
-        "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2962,
-        "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2964,
-        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2964,
-        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2965,
-        "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2967,
-        "sample": "<select id=\"s-qn\" class=\"rb-select\"><option value=\"daily\">每日笔记</option><option value=\"inbox\">inbox.md</option></select></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2969,
-        "sample": "<select id=\"s-spell\" class=\"rb-select\"><option value=\"on\">开启</option><option value=\"off\">关闭</option></select></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2971,
-        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2971,
-        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2973,
-        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2973,
-        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2974,
-        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2974,
-        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2975,
-        "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2977,
-        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2977,
-        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2978,
-        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2978,
-        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2979,
-        "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
         "line": 2980,
-        "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
+        "sample": "<select id=\"s-theme\" class=\"rb-select\" style=\"max-width:56%\"></select>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
         "line": 2981,
-        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
+        "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
         "line": 2981,
-        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/shell/shell.js",
-        "line": 2982,
-        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/shell/shell.js",
-        "line": 2982,
-        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
+        "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
         "line": 2983,
-        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
+        "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
         "line": 2983,
-        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
+        "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
         "line": 2984,
-        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
+        "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
         "line": 2984,
-        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
+        "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 2986,
-        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
+        "line": 2985,
+        "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 2986,
-        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
+        "line": 2985,
+        "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
         "line": 2987,
-        "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
+        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2987,
+        "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
         "line": 2988,
+        "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2990,
+        "sample": "<select id=\"s-qn\" class=\"rb-select\"><option value=\"daily\">每日笔记</option><option value=\"inbox\">inbox.md</option></select></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2992,
+        "sample": "<select id=\"s-spell\" class=\"rb-select\"><option value=\"on\">开启</option><option value=\"off\">关闭</option></select></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2994,
+        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2994,
+        "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2996,
+        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2996,
+        "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2997,
+        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 2997,
+        "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 2998,
+        "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3000,
+        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 3000,
+        "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3001,
+        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 3001,
+        "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3002,
+        "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3003,
+        "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3004,
+        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 3004,
+        "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3005,
+        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 3005,
+        "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3006,
+        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 3006,
+        "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3007,
+        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 3007,
+        "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3009,
+        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/shell/shell.js",
+        "line": 3009,
+        "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3010,
+        "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/shell/shell.js",
+        "line": 3011,
         "sample": "<div style=\"margin-top:14px;color:var(--fg-dim);font-size:11.5px;line-height:1.7\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3153,
+        "line": 3176,
         "sample": "<div style=\"margin-bottom:12px\"><div style=\"font-weight:600;margin-bottom:6px\">${g}</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3154,
+        "line": 3177,
         "sample": "${rows.map(r => `<div style=\"display:flex;justify-content:space-between;padding:2px 0;font-size:12.5px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3155,
+        "line": 3178,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3241,
+        "line": 3264,
         "sample": "mask.innerHTML = `<div class=\"mazz-palette\" style=\"padding:18px 20px;max-height:76vh;overflow:auto\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3242,
+        "line": 3265,
         "sample": "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:12px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3243,
+        "line": 3266,
         "sample": "<b style=\"font-size:15px\">${title}</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3244,
+        "line": 3267,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3244,
+        "line": 3267,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3259,
+        "line": 3282,
         "sample": "<div style=\"min-width:430px;max-width:600px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3261,
+        "line": 3284,
         "sample": "<div style=\"font-size:11.5px;color:var(--fg-dim);margin:10px 0 6px\">${g}</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3262,
+        "line": 3285,
         "sample": "<div style=\"display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:7px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3264,
+        "line": 3287,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3264,
+        "line": 3287,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3265,
+        "line": 3288,
         "sample": "<span style=\"color:var(--accent);font-weight:700\">.${t.ext}</span><span>${t.label.replace(/ *\\([^)]*\\)/g, '')}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3281,
+        "line": 3304,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3282,
+        "line": 3305,
         "sample": "<input id=\"im-input\" class=\"rb-input\" style=\"flex:1;padding:6px 8px\" value=\"${String(initial).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3282,
+        "line": 3305,
         "sample": "<input id=\"im-input\" class=\"rb-input\" style=\"flex:1;padding:6px 8px\" value=\"${String(initial).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3283,
+        "line": 3306,
         "sample": "<button id=\"im-ok\" class=\"rb-btn\" style=\"flex-direction:row\">确定</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3283,
+        "line": 3306,
         "sample": "<button id=\"im-ok\" class=\"rb-btn\" style=\"flex-direction:row\">确定</button>"
       },
       {
@@ -16839,877 +16839,877 @@
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 798,
+        "line": 795,
         "sample": "<button class=\"w-card\" data-cmd=\"file.new\"><div class=\"t\">${iconHtml('＋')} ${t('新建文档')}</div><div class=\"d\">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 799,
+        "line": 796,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSheet\"><div class=\"t\">${iconHtml('📊')} ${t('新建表格')}</div><div class=\"d\">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 799,
+        "line": 796,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSheet\"><div class=\"t\">${iconHtml('📊')} ${t('新建表格')}</div><div class=\"d\">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 800,
+        "line": 797,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSlide\"><div class=\"t\">${iconHtml('📽')} ${t('新建演示')}</div><div class=\"d\">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 800,
+        "line": 797,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSlide\"><div class=\"t\">${iconHtml('📽')} ${t('新建演示')}</div><div class=\"d\">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 801,
+        "line": 798,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newBrowser\"><div class=\"t\">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class=\"d\">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 801,
+        "line": 798,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newBrowser\"><div class=\"t\">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class=\"d\">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 802,
+        "line": 799,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newCode\"><div class=\"t\">${iconHtml('💻')} ${t('新建代码')}</div><div class=\"d\">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 802,
+        "line": 799,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newCode\"><div class=\"t\">${iconHtml('💻')} ${t('新建代码')}</div><div class=\"d\">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 803,
+        "line": 800,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMath\"><div class=\"t\">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class=\"d\">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 803,
+        "line": 800,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMath\"><div class=\"t\">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class=\"d\">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 804,
+        "line": 801,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newNotes\"><div class=\"t\">${iconHtml('📓')} ${t('笔记库')}</div><div class=\"d\">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 804,
+        "line": 801,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newNotes\"><div class=\"t\">${iconHtml('📓')} ${t('笔记库')}</div><div class=\"d\">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 805,
+        "line": 802,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSearch\"><div class=\"t\">${iconHtml('🔎')} ${t('全局搜索')}</div><div class=\"d\">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 805,
+        "line": 802,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSearch\"><div class=\"t\">${iconHtml('🔎')} ${t('全局搜索')}</div><div class=\"d\">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 806,
+        "line": 803,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMindmap\"><div class=\"t\">${iconHtml('🧠')} ${t('思维导图')}</div><div class=\"d\">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 806,
+        "line": 803,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMindmap\"><div class=\"t\">${iconHtml('🧠')} ${t('思维导图')}</div><div class=\"d\">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 807,
+        "line": 804,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newDraw\"><div class=\"t\">${iconHtml('🎨')} ${t('画板')}</div><div class=\"d\">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 807,
+        "line": 804,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newDraw\"><div class=\"t\">${iconHtml('🎨')} ${t('画板')}</div><div class=\"d\">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 808,
+        "line": 805,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newLibrary\"><div class=\"t\">${iconHtml('📚')} ${t('书库')}</div><div class=\"d\">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 808,
+        "line": 805,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newLibrary\"><div class=\"t\">${iconHtml('📚')} ${t('书库')}</div><div class=\"d\">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 809,
+        "line": 806,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newText\"><div class=\"t\">${iconHtml('🄣')} ${t('新建纯文本')}</div><div class=\"d\">${t('即开即用')}<br>${t('TXT 读写')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 810,
+        "line": 807,
         "sample": "<button class=\"w-card\" data-cmd=\"file.open\"><div class=\"t\">${iconHtml('📂')} ${t('打开文件')}</div><div class=\"d\">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 810,
+        "line": 807,
         "sample": "<button class=\"w-card\" data-cmd=\"file.open\"><div class=\"t\">${iconHtml('📂')} ${t('打开文件')}</div><div class=\"d\">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 811,
+        "line": 808,
         "sample": "<button class=\"w-card\" data-cmd=\"help.open\"><div class=\"t\">${iconHtml('❓')} ${t('使用指南')}</div><div class=\"d\">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 811,
+        "line": 808,
         "sample": "<button class=\"w-card\" data-cmd=\"help.open\"><div class=\"t\">${iconHtml('❓')} ${t('使用指南')}</div><div class=\"d\">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 812,
+        "line": 809,
         "sample": "<button class=\"w-card\" data-cmd=\"app.openSettings\"><div class=\"t\">${iconHtml('⚙')} ${t('设置')}</div><div class=\"d\">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 812,
+        "line": 809,
         "sample": "<button class=\"w-card\" data-cmd=\"app.openSettings\"><div class=\"t\">${iconHtml('⚙')} ${t('设置')}</div><div class=\"d\">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 889,
+        "line": 897,
         "sample": "btn.innerHTML = `<i class=\"ico\">${iconHtml(cmd.icon || '⚡')}</i><span>${cmd.title}</span>`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 889,
+        "line": 897,
         "sample": "btn.innerHTML = `<i class=\"ico\">${iconHtml(cmd.icon || '⚡')}</i><span>${cmd.title}</span>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 946,
+        "line": 954,
         "sample": "addBtn.innerHTML = `<i class=\"ico\">${iconHtml('✚')}</i><span style=\"max-width:none\">添加应用…</span>`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 946,
+        "line": 954,
         "sample": "addBtn.innerHTML = `<i class=\"ico\">${iconHtml('✚')}</i><span style=\"max-width:none\">添加应用…</span>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1159,
+        "line": 1167,
         "sample": "// 先定位所属窗格（非激活窗格的 ✕ 也能正常关闭并触发收缩）"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 1194,
+        "line": 1202,
         "sample": "this.statusbar.set(`${inst.def.icon ? iconHtml(inst.def.icon) + ' ' : ''}${inst.def.displayName}`,"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1294,
+        "line": 1302,
         "sample": "R('file.new', { title: '新建文档', icon: '＋', group: '文件', agent: { undo: { command: 'file.closeTab', args: {} } }, run: () => this.openTab('markdown', { title: '未命名.md', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1295,
+        "line": 1303,
         "sample": "R('file.newText', { title: '新建纯文本', icon: '🄣', group: '文件', agent: { undo: { command: 'file.closeTab', args: {} } }, run: () => this.openTab('text', { title: '未命名.txt', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1296,
+        "line": 1304,
         "sample": "R('file.newSheet', { title: '新建表格', icon: '📊', group: '文件', run: () => this.openTab('sheet', { title: '未命名.mazzsheet', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1296,
+        "line": 1304,
         "sample": "R('file.newSheet', { title: '新建表格', icon: '📊', group: '文件', run: () => this.openTab('sheet', { title: '未命名.mazzsheet', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1297,
+        "line": 1305,
         "sample": "R('file.newSlide', { title: '新建演示', icon: '📽', group: '文件', run: () => this.openTab('slide', { title: '未命名.mazzslide', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1297,
+        "line": 1305,
         "sample": "R('file.newSlide', { title: '新建演示', icon: '📽', group: '文件', run: () => this.openTab('slide', { title: '未命名.mazzslide', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1307,
+        "line": 1315,
         "sample": "R('archive.view', { title: '查看压缩包内容', icon: '📦', group: '压缩包', when: 'treeArchive', run: ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1307,
+        "line": 1315,
         "sample": "R('archive.view', { title: '查看压缩包内容', icon: '📦', group: '压缩包', when: 'treeArchive', run: ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1313,
+        "line": 1321,
         "sample": "R('archive.openPanel', { title: '压缩包面板', icon: '📦', group: '压缩包', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1313,
+        "line": 1321,
         "sample": "R('archive.openPanel', { title: '压缩包面板', icon: '📦', group: '压缩包', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1319,
+        "line": 1327,
         "sample": "R('archive.extractHere', { title: '解压缩到此处', icon: '📂', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1319,
+        "line": 1327,
         "sample": "R('archive.extractHere', { title: '解压缩到此处', icon: '📂', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1327,
+        "line": 1335,
         "sample": "R('archive.extractSub', { title: '解压缩到「包名」子文件夹', icon: '🗀', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1327,
+        "line": 1335,
         "sample": "R('archive.extractSub', { title: '解压缩到「包名」子文件夹', icon: '🗀', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1336,
+        "line": 1344,
         "sample": "R('archive.pack', { title: '压缩为 zip…', icon: '🗜', group: '压缩包', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1336,
+        "line": 1344,
         "sample": "R('archive.pack', { title: '压缩为 zip…', icon: '🗜', group: '压缩包', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1351,
+        "line": 1359,
         "sample": "R('file.newBrowser', { title: '打开浏览器', icon: '🌐', group: '文件', run: () => this.openTab('browser', { title: '隐私浏览器', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1351,
+        "line": 1359,
         "sample": "R('file.newBrowser', { title: '打开浏览器', icon: '🌐', group: '文件', run: () => this.openTab('browser', { title: '隐私浏览器', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1352,
+        "line": 1360,
         "sample": "R('file.newCode', { title: '新建代码文件', icon: '💻', group: '文件', run: () => this.openTab('code', { title: '未命名.js', content: CODE_SAMPLE }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1352,
+        "line": 1360,
         "sample": "R('file.newCode', { title: '新建代码文件', icon: '💻', group: '文件', run: () => this.openTab('code', { title: '未命名.js', content: CODE_SAMPLE }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1353,
+        "line": 1361,
         "sample": "R('file.newMath', { title: '打开计算器', icon: '🧮', group: '文件', run: () => this.openTab('math', { title: '计算 REPL', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1353,
+        "line": 1361,
         "sample": "R('file.newMath', { title: '打开计算器', icon: '🧮', group: '文件', run: () => this.openTab('math', { title: '计算 REPL', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1354,
+        "line": 1362,
         "sample": "R('file.newNotes', { title: '打开笔记库', icon: '📓', group: '文件', run: () => this.openTab('notes', { title: '笔记', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1354,
+        "line": 1362,
         "sample": "R('file.newNotes', { title: '打开笔记库', icon: '📓', group: '文件', run: () => this.openTab('notes', { title: '笔记', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1355,
+        "line": 1363,
         "sample": "R('file.newSearch', { title: '全局搜索', icon: '🔎', group: '文件', run: () => this.openTab('search', { title: '全局搜索', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1355,
+        "line": 1363,
         "sample": "R('file.newSearch', { title: '全局搜索', icon: '🔎', group: '文件', run: () => this.openTab('search', { title: '全局搜索', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1356,
+        "line": 1364,
         "sample": "R('file.newMindmap', { title: '新建思维导图', icon: '🧠', group: '文件', run: () => this.openTab('mindmap', { title: '未命名.mindmap', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1356,
+        "line": 1364,
         "sample": "R('file.newMindmap', { title: '新建思维导图', icon: '🧠', group: '文件', run: () => this.openTab('mindmap', { title: '未命名.mindmap', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1357,
+        "line": 1365,
         "sample": "R('file.newViewer', { title: '新建播放器（无视频启动）', icon: '🎬', group: '文件', run: () => this.openTab('viewer', { title: '播放器', content: '' }) }); // W44：裸播放器起手——侧栏三源选源即播"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1357,
+        "line": 1365,
         "sample": "R('file.newViewer', { title: '新建播放器（无视频启动）', icon: '🎬', group: '文件', run: () => this.openTab('viewer', { title: '播放器', content: '' }) }); // W44：裸播放器起手——侧栏三源选源即播"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1358,
+        "line": 1366,
         "sample": "R('file.newDraw', { title: '新建画板', icon: '🎨', group: '文件', run: () => this.openTab('draw', { title: '未命名.mazzdraw', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1358,
+        "line": 1366,
         "sample": "R('file.newDraw', { title: '新建画板', icon: '🎨', group: '文件', run: () => this.openTab('draw', { title: '未命名.mazzdraw', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1359,
+        "line": 1367,
         "sample": "R('file.newLibrary', { title: '打开书库', icon: '📚', group: '文件', run: () => this.openTab('library', { title: '书库', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1359,
+        "line": 1367,
         "sample": "R('file.newLibrary', { title: '打开书库', icon: '📚', group: '文件', run: () => this.openTab('library', { title: '书库', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1361,
+        "line": 1369,
         "sample": "title: '打开文件…', icon: '📂', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1361,
+        "line": 1369,
         "sample": "title: '打开文件…', icon: '📂', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1368,
+        "line": 1376,
         "sample": "title: '查看器预览…（图片/PDF/音视频）', icon: '🖼', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1368,
+        "line": 1376,
         "sample": "title: '查看器预览…（图片/PDF/音视频）', icon: '🖼', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1379,
+        "line": 1387,
         "sample": "title: '打开播放器…（音视频）', icon: '🎬', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1379,
+        "line": 1387,
         "sample": "title: '打开播放器…（音视频）', icon: '🎬', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1387,
+        "line": 1395,
         "sample": "title: '用系统默认程序打开…', icon: '🚀', group: '文件', when: 'hasWorkspace || electron', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1387,
+        "line": 1395,
         "sample": "title: '用系统默认程序打开…', icon: '🚀', group: '文件', when: 'hasWorkspace || electron', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1395,
+        "line": 1403,
         "sample": "R('file.save', { title: '保存', icon: '💾', group: '文件', when: 'hasTabs', run: () => this.tabs.active && this.saveTab(this.tabs.active) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1395,
+        "line": 1403,
         "sample": "R('file.save', { title: '保存', icon: '💾', group: '文件', when: 'hasTabs', run: () => this.tabs.active && this.saveTab(this.tabs.active) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1398,
+        "line": 1406,
         "sample": "R('file.print', { title: '打印…', icon: '🖨', group: '文件', when: 'hasTabs', run: () => window.mazz.invoke('print:print') });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1398,
+        "line": 1406,
         "sample": "R('file.print', { title: '打印…', icon: '🖨', group: '文件', when: 'hasTabs', run: () => window.mazz.invoke('print:print') });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1460,
+        "line": 1468,
         "sample": "title: '发送到工作软件…', icon: '📤', group: '文件', when: 'hasTabs', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1460,
+        "line": 1468,
         "sample": "title: '发送到工作软件…', icon: '📤', group: '文件', when: 'hasTabs', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1466,
+        "line": 1474,
         "sample": "title: '导入到工作区…', icon: '📥', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1466,
+        "line": 1474,
         "sample": "title: '导入到工作区…', icon: '📥', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1472,
+        "line": 1480,
         "sample": "title: '打印预览…（表格）', icon: '🖨', group: '输出', when: \"module=='sheet'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1472,
+        "line": 1480,
         "sample": "title: '打印预览…（表格）', icon: '🖨', group: '输出', when: \"module=='sheet'\", run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1481,
+        "line": 1489,
         "sample": "title: '打印预览…（演示）', icon: '🖨', group: '输出', when: \"module=='slide'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1481,
+        "line": 1489,
         "sample": "title: '打印预览…（演示）', icon: '🖨', group: '输出', when: \"module=='slide'\", run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1490,
+        "line": 1498,
         "sample": "title: '提取标题结构为思维导图', icon: '🧠', group: '桥接', when: \"module=='markdown'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1490,
+        "line": 1498,
         "sample": "title: '提取标题结构为思维导图', icon: '🧠', group: '桥接', when: \"module=='markdown'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1515,
+        "line": 1523,
         "sample": "title: '全局内录（窗口/混音/变速）…', icon: '⏺', group: '工具', run: () => this.openScreenRecorderDialog(),"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1518,
+        "line": 1526,
         "sample": "title: '重新扫描已安装软件（外部打开列表）', icon: '🔄', group: '工具', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1518,
+        "line": 1526,
         "sample": "title: '重新扫描已安装软件（外部打开列表）', icon: '🔄', group: '工具', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1523,
+        "line": 1531,
         "sample": "R('file.quickOpen', { title: 'Quick Switcher（文件/命令/最近/全文）', icon: '⚡', group: '文件', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1523,
+        "line": 1531,
         "sample": "R('file.quickOpen', { title: 'Quick Switcher（文件/命令/最近/全文）', icon: '⚡', group: '文件', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1532,
+        "line": 1540,
         "sample": "R('factory.copyMantra', { title: '新建立项并复制模板母版', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1532,
+        "line": 1540,
         "sample": "R('factory.copyMantra', { title: '新建立项并复制模板母版', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1533,
+        "line": 1541,
         "sample": "R('factory.generate', { title: '新建立项并开始创作', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1533,
+        "line": 1541,
         "sample": "R('factory.generate', { title: '新建立项并开始创作', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1534,
+        "line": 1542,
         "sample": "R('factory.runAll', { title: '全部启动创作任务', icon: '▶', group: '智能创作', run: () => this.sideDock?.factoryPanel?.runAllTasks() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1535,
+        "line": 1543,
         "sample": "R('factory.newGenre', { title: '新建创作模板', icon: '✚', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openGenreEditor() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1535,
+        "line": 1543,
         "sample": "R('factory.newGenre', { title: '新建创作模板', icon: '✚', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openGenreEditor() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1536,
+        "line": 1544,
         "sample": "R('factory.provider', { title: 'AI 服务设置（智能创作）', icon: '⚙', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProviderDialog() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1536,
+        "line": 1544,
         "sample": "R('factory.provider', { title: 'AI 服务设置（智能创作）', icon: '⚙', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProviderDialog() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1561,
+        "line": 1569,
         "sample": "title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1561,
+        "line": 1569,
         "sample": "title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1574,
+        "line": 1582,
         "sample": "title: '批注清屏', icon: '⌫', group: '工具', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1581,
+        "line": 1589,
         "sample": "title: '轮换主题', icon: '🎨', group: '视图', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1581,
+        "line": 1589,
         "sample": "title: '轮换主题', icon: '🎨', group: '视图', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1590,
+        "line": 1598,
         "sample": "R('view.splitRight', { title: '向右分屏', icon: '◫', group: '视图', run: () => this.splitRight() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1591,
+        "line": 1599,
         "sample": "R('view.splitDown', { title: '向下分屏', icon: '⬒', group: '视图', run: () => this.splitDown() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1617,
+        "line": 1625,
         "sample": "title: '移到已有外部窗格…', icon: '🪟', group: '标签', when: \"hasTabs && windowRole!='child'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1617,
+        "line": 1625,
         "sample": "title: '移到已有外部窗格…', icon: '🪟', group: '标签', when: \"hasTabs && windowRole!='child'\", run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1631,
+        "line": 1639,
         "sample": "R('tab.moveToNewWindow', { title: '移到新窗口', icon: '🗔', group: '标签', when: 'hasTabs',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1631,
+        "line": 1639,
         "sample": "R('tab.moveToNewWindow', { title: '移到新窗口', icon: '🗔', group: '标签', when: 'hasTabs',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1634,
+        "line": 1642,
         "sample": "R('tab.moveToMainWindow', { title: '移回主窗口', icon: '⬅', group: '标签', when: \"windowRole=='child' && hasTabs\","
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1652,
+        "line": 1660,
         "sample": "R('app.commandPalette', { title: 'Quick Switcher', icon: '⌘', group: '应用', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1657,
+        "line": 1665,
         "sample": "R('app.openSettings', { title: '设置…', icon: '⚙', group: '应用', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1657,
+        "line": 1665,
         "sample": "R('app.openSettings', { title: '设置…', icon: '⚙', group: '应用', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1662,
+        "line": 1670,
         "sample": "R('app.language', { title: '界面语言设置 (Language)', icon: '🌐', group: '应用', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1662,
+        "line": 1670,
         "sample": "R('app.language', { title: '界面语言设置 (Language)', icon: '🌐', group: '应用', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2024,
+        "line": 2033,
         "sample": "recentItems.push({ label: p.split(/[\\\\/]/).pop(), detail: p, path: p, icon: '🕘', recentOrder });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 2024,
+        "line": 2033,
         "sample": "recentItems.push({ label: p.split(/[\\\\/]/).pop(), detail: p, path: p, icon: '🕘', recentOrder });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2036,
+        "line": 2045,
         "sample": "items.push({ label: e.name, detail: e.path, path: e.path, icon: '📄' });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 2036,
+        "line": 2045,
         "sample": "items.push({ label: e.name, detail: e.path, path: e.path, icon: '📄' });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2050,
+        "line": 2059,
         "sample": "label: path.split(/[\\\\/]/).pop(), detail: path, path, icon: '🕘', recentOrder,"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 2050,
+        "line": 2059,
         "sample": "label: path.split(/[\\\\/]/).pop(), detail: path, path, icon: '🕘', recentOrder,"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2190,
+        "line": 2199,
         "sample": "if (pl?.ok) { toast('✓ ' + (pl.info || '解压缩完成')); this.fileTree?.refresh?.(); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2191,
+        "line": 2200,
         "sample": "else if (pl && pl.info !== '已取消') toast('✗ ' + (pl.info || '解压缩失败'), [], 4000);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2206,
+        "line": 2215,
         "sample": "// W53 坞浮动联动：dockfloat 子窗格 ✕ 关闭 → 坞回停靠上岗"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2393,
+        "line": 2402,
         "sample": "back('shortcut', ok ? '✓ 已发送到桌面' : '创建失败', false);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2403,
+        "line": 2412,
         "sample": "back('searxSave', sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；'), false);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2404,
+        "line": 2413,
         "sample": "} catch (e) { back('searxSave', '✗ ' + e.message, false); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 2587,
+        "line": 2596,
         "sample": "const svgGroups = groups.map(([g, items]) => [g, items.map(it => ({ ...it, ico: it.ico ? iconHtml(it.ico) : '' }))]);"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 2706,
+        "line": 2715,
         "sample": "const items = (menus._ctxItems || []).map(it => ({ ...it, svg: it.icon ? iconHtml(it.icon) : '' }));"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2899,
+        "line": 2922,
         "sample": "bar.innerHTML = `<span>⚠ 检测到 ${snaps.length} 份未正常关闭的快照（自动保存/崩溃恢复）</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2958,
+        "line": 2981,
         "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2960,
+        "line": 2983,
         "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2961,
+        "line": 2984,
         "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2962,
+        "line": 2985,
         "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2964,
+        "line": 2987,
         "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2974,
+        "line": 2997,
         "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3107,
+        "line": 3130,
         "sample": "st.textContent = ok ? '✓ 已发送到桌面' : '创建失败';"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3139,
+        "line": 3162,
         "sample": "status.textContent = sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3140,
+        "line": 3163,
         "sample": "} catch (e) { status.textContent = '✗ ' + e.message; }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3244,
+        "line": 3267,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
@@ -18406,13 +18406,13 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/app.js",
-        "line": 76,
+        "line": 78,
         "sample": "console.log('%c◆ Mazz Editor%c 已启动 — 一切操作皆命令', 'color:#818cf8;font-weight:bold', '');"
       },
       {
         "rule": "font-family",
         "file": "renderer/app.js",
-        "line": 94,
+        "line": 96,
         "sample": "document.body.innerHTML = `<div style=\"padding:40px;font-family:sans-serif\">启动失败：${e.message}</div>`;"
       },
       {
@@ -28234,97 +28234,97 @@
       {
         "rule": "theme-selector",
         "file": "renderer/shell/shell.js",
-        "line": 739,
+        "line": 736,
         "sample": "// 自定义主题包/图片主题干脆只有 id 没有变量通道=面板无 [data-theme] 规则可匹配=透明裸奔（真机实锤）"
       },
       {
         "rule": "theme-selector",
         "file": "renderer/shell/shell.js",
-        "line": 2177,
+        "line": 2186,
         "sample": "window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2965,
+        "line": 2988,
         "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2975,
+        "line": 2998,
         "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2979,
+        "line": 3002,
         "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2980,
+        "line": 3003,
         "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2986,
+        "line": 3009,
         "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2987,
+        "line": 3010,
         "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 2988,
+        "line": 3011,
         "sample": "<div style=\"margin-top:14px;color:var(--fg-dim);font-size:11.5px;line-height:1.7\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3155,
+        "line": 3178,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "border-radius",
         "file": "renderer/shell/shell.js",
-        "line": 3155,
+        "line": 3178,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "font-family",
         "file": "renderer/shell/shell.js",
-        "line": 3155,
+        "line": 3178,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3261,
+        "line": 3284,
         "sample": "<div style=\"font-size:11.5px;color:var(--fg-dim);margin:10px 0 6px\">${g}</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3264,
+        "line": 3287,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "border-radius",
         "file": "renderer/shell/shell.js",
-        "line": 3264,
+        "line": 3287,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3265,
+        "line": 3288,
         "sample": "<span style=\"color:var(--accent);font-weight:700\">.${t.ext}</span><span>${t.label.replace(/ *\\([^)]*\\)/g, '')}</span>"
       },
       {
@@ -39254,21 +39254,21 @@
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3244,
+        "line": 3267,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3259,
+        "line": 3282,
         "sample": "<div style=\"min-width:430px;max-width:600px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3281,
+        "line": 3304,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {

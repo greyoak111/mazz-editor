@@ -1,10 +1,10 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.19
+> 版本：v2.20
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
-> 状态：**IN PROGRESS / 代表性编辑标签事务性交接与 20 次往返子 Gate 已落地**
+> 状态：**IN PROGRESS / 代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复子 Gate 已落地**
 > 权威级别：W71 唯一施工真源
 > 依据：[`W71_FINAL_CONVERGENCE_ASSESSMENT.md`](./W71_FINAL_CONVERGENCE_ASSESSMENT.md)、维护者《评估修订与施工补充说明 v2》、《W66 Agent Harness 架构意图修正》、《0814接续用》与《MAZZ 新上下文技术梳理 v0.2》
 
@@ -21,7 +21,7 @@
 5. 2026-08-15 维护者已明确授权“按照合理的施工逻辑安排三小时任务”；按等价授权进入首轮 W71 检查点。
 6. 本次授权不扩大 W71，不批准 W63–W86，不允许删除既有 workaround，也不代表任何完整 Wave 已通过退出 Gate。
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
-8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权，以及代表性编辑标签事务性交接与 20 次往返检查点；只关闭有测试和 packaged 证据的子 Gate，Agent、跨窗运行时 owner、child crash restore、真实媒体设备等未尽项保持 OPEN。
+8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权、代表性编辑标签事务性交接与 20 次往返，以及代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复检查点；只关闭有测试和 packaged 证据的子 Gate，其他模块崩溃恢复、整应用异常退出恢复、Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
 
 ---
 
@@ -1257,6 +1257,8 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 ```
 
 每个检查点完成后必须回写完整未尽波次总表、记录测试/构建证据并提交，下一检查点继续按本规格 Gate 推进。
+
+2026-08-16 分窗 renderer 崩溃恢复检查点补上事务性交接之后最直接的数据可靠性断口：主进程只为 `role=child` 的完整工作台 crash 建立一次性 token，重载后的分窗按 WebContents owner 领取自己的快照；renderer 启动时由 URL 同步恢复 window role，快照补齐标题、脏态、固定态与选择区，并在恢复后只裁剪当前 owner 的旧 tabId。正式 packaged 程序连续 5 次 `forcefullyCrashRenderer()` 后均恢复同一份完整 Markdown 脏稿，标题没有重复后缀，快照稳定为 1 份，最终仍可事务性交接回主窗，ResourceLedger `2→3→2`。全量测试增至 `146/146`；installer `141,034,491` bytes，SHA-256 `4C601AA91388EBA0A31C4B8FF6438B986827784B51D90607562BB28D273FC906`，schema v5 真安装/覆盖/五入口/20 轮/卸载继续通过。该结果只关闭代表性 Markdown child renderer 恢复；其他模块、运行时对象、整应用异常退出拓扑、debounce 窗口、DPI/RDP 和 LAN Sync 冲突仍 OPEN。证据见 [`W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md`](./W71_CHILD_CRASH_RECOVERY_CHECKPOINT_2026-08-16.md) 与 [`W71_CHILD_CRASH_RECOVERY.json`](./evidence/W71_CHILD_CRASH_RECOVERY.json)。
 
 2026-08-16 FFmpeg 分发子检查点进一步收口：vendored `esm/` 六文件已归一匹配官方 `@ffmpeg/ffmpeg@0.12.10`，wrapper MIT 身份闭环；core 继续由 npm 字节身份与真实 `--enable-gpl` 运行证据支撑。完整 GPLv2、wrapper MIT、组件 NOTICE、provenance 与 source reproducibility 状态五份材料已进入真实 `app.asar`，release audit schema v2 对五份材料逐项抽取、计量并记录 SHA-256。新 installer 为 `141,036,193` bytes，SHA-256 `6F816396A4D09F5C9304017D21DA34F879CEFD08E11D168191411F19295011C2`；packaged smoke、20-cycle 生命周期和真转码/释放/重载均通过。但上游 `v0.12.10` 构建脚本仍含 `x264#4-cores`、`lame#master` 等可变 ref，原始发布 commit set 尚未恢复，故总 Gate 明确保持 `OPEN_CORRESPONDING_SOURCE`。证据见 [`W71_FFMPEG_DISTRIBUTION_CHECKPOINT_2026-08-16.md`](./W71_FFMPEG_DISTRIBUTION_CHECKPOINT_2026-08-16.md)、[`W71_LICENSE_AUDIT.json`](./evidence/W71_LICENSE_AUDIT.json) 与 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。
 
