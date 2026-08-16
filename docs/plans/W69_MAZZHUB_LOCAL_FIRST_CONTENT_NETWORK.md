@@ -3,13 +3,14 @@
 ### World Branch Governance × Transparent AI Production Market
 
 > 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
-> 版本：v1.4
+> 版本：v1.5
 > 登记日期：2026-08-15
 > 基础材料：维护者《MazzHub 内容生态升格纲要》，SHA-256 `089FD81DDFC5F07829199F9A7DCA6250E4AC902E1E92F4FEFDAD46EF15837195`
 > 增量材料：维护者《World Branch Governance × Transparent AI Production Market》，SHA-256 `E5DAF440261A56AAE97EF99B8453298D1D76D0205A0D9C4A90A27AA0E2A2D127`
 > 第二增量：维护者《Media Production Workflows / Industry Workflow Compiler》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 第三增量：维护者《Production Organization Compiler / Organizational Compiler》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 第四增量：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
+> 第五增量：维护者《Secure Production Assets / Expert Capability Encoding》，SHA-256 `98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0`
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
 
 ## 0. 升格结论
@@ -80,6 +81,18 @@ MazzHub 只消费已经公开的 Publication 及其明确公开的 Creator、Wor
 ### 1.3 Distribution Plane
 
 内容字节可由 HTTP Origin、Mazz/Web Peer、作者节点、读者缓存、LAN、NAS、VPS 等混合提供。Discovery metadata 与 Content bytes 分离，Hub 可以保存可靠副本，但不能被模型定义为唯一副本。
+
+### 1.4 Distribution 与 Usage Rights 分离
+
+对商业 `.maz`，缓存或 Seed 密文不等于取得读取或使用权：
+
+```text
+Content Distribution     Hub / P2P / NAS / CDN 可分发同一 Ciphertext
+Cryptographic Access     Entitlement / Key Envelope 决定可读取 Payload
+Runtime Permission       本地 Gate 决定可执行的系统操作
+```
+
+未购买节点仍可帮助分发公开包络与密文；Hub/Peer 不需要知道明文。License、Entitlement、Encryption 和 Runtime Permission 必须正交，具体容器与密钥语义归 W84。W69 不持有用户私钥、不把购买记录当 Canon/Quality，也不因撤销公共页面自动删除用户合法本地资产。
 
 ## 2. 核心对象模型
 
@@ -484,7 +497,7 @@ Canon Merge 提升事实而不吞并 Branch。一个 Fact 被 Partial Merge 只�
 | W81 Event Ledger | 私有个人工作运行史，可为本地 Factory 提供只读证据 | 不替代 Production Run Ledger，不把个人行为默认投影到 Hub |
 | W82 Organizational Compiler | 本地组织考古、Workflow Package、Compiler、Artifact DAG、Authority 与跨域垂直生产线 | W69 只持有 Workflow Publication/Market，不另造 Compiler/Factory Runtime 或托管私有生产事实 |
 | W83 Danmaku Runtime | 本地 media-clock scheduler/lane/render；W69 只提供公共 Danmaku Event | Event Feed 不进入 Publication blob，W83 不接管 Player/P2P |
-| W84 `.maz` Standard | Workflow/organization/world 等 Definition Profile 的可移植包络 | Hub 只分发显式 Promotion 的包，不执行脚本、不保存 Run/secret |
+| W84 `.maz` Standard | Definition Profile、公开包络、密文分发与 Entitlement delivery | Hub 不执行脚本、不保存 Run/secret/private key，拥有密文不等于拥有使用权 |
 | W85 Context/Coverage | 可为本地发布流程提供上下文与义务证据 | Hub 不接收私人 Context Package 或 Wave Graph |
 | W86 Physical Production | 仅远期公共方法/Capability 元数据候选 | Hub 不控制设备、不托管现场状态或安全凭据 |
 | 旧 W69 模板市场 | 降为 Publication/Capability 的一个市场与 registry 分支 | 不再代表 W69 全部定位 |
@@ -608,12 +621,13 @@ Public World → Hub Discover → Open in Mazz → Fork
 
 - W82 Local Workflow Package → W74c Promotion → Workflow Publication；
 - W84 只读检查通过的 workflow/organization Profile 可作为一种交付容器，但 `.maz` 文件、Workflow Publication 与运行实例仍是三层对象；
+- Public Envelope 可被发现、索引、验证和 P2P Seed；Encrypted Payload、Entitlement/Key Envelope 与 Runtime Permission 分层，Hub 不接触用户解密私钥；
 - Hub Workflow Page、搜索/收藏/Fork、版本/许可证/兼容性与 migration preview；
 - Workflow/Team/Seat/成本/质量/返工/交付时间的跨行业透明市场视图；
 - Fork 回本地后先做 Capability、权限、许可证与缺件检查，再由 W82 编译；
 - Official Workflow 不默认加权，热门 Fork 不覆盖原 Package。
 
-依赖：W82a/g、W84a–c、W69a/b/c/j/k 与 W74c。退出 Gate：公共包可被另一台 Mazz 无执行检查、Fork、迁移预览和重新编译，同时不泄露原项目私有资产、仓库、数据、密钥、本机路径或 Runtime Instance。
+依赖：W82a/g、W84a–f、W69a/b/c/j/k 与 W74c。退出 Gate：公共包可被另一台 Mazz 无执行检查、Fork、迁移预览和重新编译；加密样本可由无权节点分发但不能读取或执行，同时不泄露原项目私有资产、仓库、数据、密钥、本机路径或 Runtime Instance。
 
 ## 8. 五个 Hard Validation Samples
 

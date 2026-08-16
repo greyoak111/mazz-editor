@@ -2,11 +2,12 @@
 ## Production Organization Compiler / 生产组织编译器
 
 > 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
-> 版本：v0.3
+> 版本：v0.4
 > 登记日期：2026-08-15
 > 基础材料：维护者《Media Production Workflows / Industry Workflow Compiler 增量》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 升格材料：维护者《Production Organization Compiler / Organizational Compiler 增量》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 技术补遗：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
+> 严格增量 II：维护者《Secure Production Assets / Expert Capability Encoding》，SHA-256 `98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0`
 > 公共生态接口：[`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
 
@@ -256,6 +257,26 @@ Produce
 
 Machine Governance 的目标不是继续提醒模型守纪律，而是把 repository/symbol evidence、Blueprint Authority、reuse inventory、mandatory test gate、architecture lock、UNKNOWN/BLOCKED、diff scope 和 destructive action authority 编译成“没有证据或权限就没有生效权”。
 
+### 4.2 Expert Capability Composition / 专家能力资产编排
+
+W82 不把“专家”压成统一风格模板，而把可外置部分表达为接口化能力：
+
+```text
+Expert Capability Asset
+├─ attention / decision / negative knowledge
+├─ Artifact Contract / Gate / exception policy
+├─ examples / failure experience / routing preference
+└─ Authority boundary
+```
+
+标准化对象是能力的表达、调用、验证和组合方式，不是导演、研究员、审稿人或工程师的创造风格。Director A 与 Director B 应保留不同 identity、方法、证据和适用域。
+
+当 Artifact Contract、Seat Boundary、Authority 与 Capability Interface 兼容时，Compiler 可以把 A 的结构能力、B 的人物能力、C 的剪辑判断、D 的成本控制和 E 的审稿能力组合为同一 Production Organization；组合不复制内部实现，也不扩大原资产权限。
+
+专家不可或不应编译的剩余部分进入 Human Authority / Exception Executor：大量常规判断可由规则、Gate、Tool 或模型执行，关键异常和最终裁决仍提交合格责任主体。Human 不是默认占满全流程的工位，也不是可被“80% 已自动化”吞并的尾注。
+
+运行事故只能先进入 W73 Production Ledger / Finding，再经明确 Authority 升格为 Rule、Gate、Routing 或新版本 Expert Capability。使用次数、通过率或市场排名不得自动改写方法。
+
 ## 5. Artifact DAG 与局部重做
 
 生产线的价值来自可检查的中间工件，不来自最后一个文件。媒体链只是最直观的例子：
@@ -416,6 +437,7 @@ Workflow 排名属于 W69k/l 市场视图：比较“完成某类交付物的生
 - 冻结 Goal/Constraint/Asset/Method/Budget 输入与 Team/Seat/Artifact/Gate/Authority/Executor/Routing/Recovery 输出；
 - 冻结组织考古记录：岗位保留、合并、消失的理由和证据；
 - 冻结 Verification/Review/Evaluation/Authority 分层与 Evidence-backed State Transition；
+- 冻结 Expert Capability Asset、Human Authority remainder、组合兼容与生产史升格边界；
 - 冻结 UNKNOWN/BLOCKED、权限拒绝、破坏性动作和异常恢复为合法状态；
 - Package validation、确定性编译、Artifact DAG、预算和恢复点；
 - 纸面 fixtures 证明 Seat/Model/Harness/Capability 分层，以及 Compiler/Runtime 分权。
@@ -564,10 +586,12 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 10. 缺工具、失败、取消、重开均不留下幽灵进程、越权动作或伪成品；
 11. Workflow 的本地真相与 Hub 公共投影可分别撤回和导出；
 12. 任一正式完成态都有 Evidence Bundle、Authority owner 与可解释 State Transition；
-13. Sample D 与 Sample E 全链通过。
+13. 至少两个不同 Expert Capability Asset 可在不混写 identity、style、permission 与 Authority 的情况下组合、替换和局部回退；
+14. 生产事故只有经 Finding → Authority → Rule/Gate/Version 链才可修改 Workflow Definition；
+15. Sample D 与 Sample E 全链通过。
 
 ## 16. 当前停止线
 
-本文件只完成 W82 v0.3 Design Capsule、W69 第六柱/AI Market 接口、Evidence-backed State Transition 与施工拆波。W71 内不得据此引入模型、外部工具、后台服务、Workflow Runtime、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
+本文件只完成 W82 v0.4 Design Capsule、W69 第六柱/AI Market 接口、Evidence-backed State Transition、Expert Capability Composition 与施工拆波。W71 内不得据此引入模型、外部工具、后台服务、Workflow Runtime、专家资产市场、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
 
 下一步只允许在 W71 RC 后经维护者独立批准，先冻结 W82a Organizational Kernel/Archaeology ADR；不得直接从“做成动画”“发布 repo”或“生成研究报告”按钮开工。

@@ -17,6 +17,7 @@ describe('W69 Local-first Content Network architecture intake', () => {
     assert.ok(capsule.includes('92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679'));
     assert.ok(capsule.includes('EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E'));
     assert.ok(capsule.includes('79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408'));
+    assert.ok(capsule.includes('98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0'));
     assert.ok(capsule.includes('DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION'));
     assert.ok(planIndex.includes('W69a–W69m 已拆波，未施工'));
     assert.ok(planIndex.includes('W82a–W82h 未施工'));

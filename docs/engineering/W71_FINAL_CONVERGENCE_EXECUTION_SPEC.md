@@ -1,6 +1,6 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.14
+> 版本：v2.15
 > 日期：2026-08-16
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
@@ -179,6 +179,17 @@ Layout Debt Census
 ```
 
 第一阶段的 `68` 只保留在历史评估中，不得用作排期、验收或对外表述。
+
+### 3.5 “80 分战略”不是 Electron 平台验收上限
+
+历史“80 分战略”只描述高速扩张期的资源配置：垂直专业软件的全部深度可以取舍，不代表 Mazz 主动放弃 Electron/Windows 平台本身可可靠实现的能力。
+
+```text
+Vertical feature depth        可以按产品价值取舍
+Desktop platform correctness  不以“够用 80 分”为停止理由
+```
+
+W71 对 multi-surface、native integration、window/process lifecycle、filesystem、drag/drop、DPI、fullscreen、GPU、packaging、installation、upgrade、sleep/resume、process isolation 与 system shell integration 的目标是逼近当前平台和项目边界；不能用旧口号掩盖已知 P0/P1、生命周期错误或缺失证据。与此同时，这不授权全量 SurfaceManager、Electron 升级或无限兼容矩阵，具体 Hard/Stretch Gate 仍以本规格为准。
 
 ---
 
@@ -752,6 +763,14 @@ resize 后状态稳定
 
 Wave 0 建立通用 Layout E2E helper，后续模块不得各写一套不可比较的尺寸探针。
 
+## 6.4 Global Overlay Plane / Multi-Surface Z-order
+
+Mazz 的统一对象是生产环境，不是强迫 Spreadsheet、Browser、Player、Editor 采用同一种 UI 范式。异质 Surface 共享 Workspace、Asset Identity、Context、Lifecycle、Permission 和 Production Flow，但保留各自专业交互。
+
+必须承认：`DOM z-index != Electron Native/WebContents Surface z-order`。Context Menu、Tooltip、Drag Preview、Modal、Command Palette、Selection Overlay 等跨 Surface 浮层进入 Overlay Census，记录 owner、host、coordinate space、clipping、focus、dismiss、native/DOM 实现和遮挡风险。
+
+W71 先做代表性真实路径的 z-order/截图证据，并按根因选择 portal、surface clipping、临时 bounds 协调或独立 overlay window；禁止用 `z-index: 999999` 冒充跨原生 Surface 修复。此项不自动授权 Universal Overlay Manager 或全量 Surface 迁移。
+
 ---
 
 ## 7. 修订后的 Wave
@@ -980,10 +999,12 @@ RSS / heap / handles / process / webContents / business resources
 
 ## 8.7 自动化
 
-- 当前统一入口 139 个测试文件 100% 通过（含 W69/W82–W86 Design Capsule 防漂移契约）。
+- 当前统一入口 140 个测试文件 100% 通过（含 W69/W82–W86 Design Capsule 防漂移契约）。
 - release E2E manifest 必跑场景在 packaged app 100% 通过。
 - 主进程 uncaught、渲染 pageerror、非预期 render-process-gone 和未批准 console error 为 0。
 - 每份结果记录 commit、Windows、Electron、GPU、DPI 和耗时。
+- 每个 RC 关键结论沿 `Source → Test → Packaged Runtime → Real Interaction Path → Screenshot/Visual Evidence → Acceptance` 形成证据链；单纯源码存在或 Node test pass 不得宣称用户路径完成。
+- Verification Throughput 必须追上 Generation Throughput：自动启动、操作、截图、比较、Console/Crash 收集、Evidence 归档和 Regression 复跑进入同一 release manifest；新增正式路径不得只增加生成吞吐而不登记验证 owner 与成本。
 
 ## 8.8 Agent Harness
 
@@ -1034,6 +1055,8 @@ SurfaceManager PoC 未触发或未实施，不记为 Known Limitation，也不�
 | Icon state debt | emoji/SVG/iconId 以及 create/restore/back/reopen 多真源 | IconRegistry + 单 iconId 真源 + 状态转换 E2E |
 | Theme contract debt | 主题只覆盖颜色或部分 Surface | color/radius/type/spacing/icon/motion 等统一 Theme Contract |
 | Layout debt | Shell/Sidebar/Module 缺明确剩余空间和退化协议 | Layout Contract + container-responsive + Responsive Levels |
+| Overlay/Z-order debt | DOM 浮层跨 Native/WebContents Surface 后被原生层遮挡 | Overlay Census + 真实交互截图 + 最小 host-aware 协调；不默认建万能 Overlay Manager |
+| Verification throughput debt | Agent 生成速度高于 packaged/E2E/视觉验收速度 | release manifest 自动产证、失败聚合与可重复 Regression；没有 Evidence 不迁移完成态 |
 
 这三项与原评估中的生命周期、数据策略、Surface、Windows/Electron、ABI、发布、安全、许可和测试不确定性共同构成 W71 债务地图。
 
@@ -1164,7 +1187,7 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 
 同理，Post-W71 OSS Research Reserve 的全文入库不等于任何外部依赖已经获准。W71 期间禁止据此引入 daemon、native dependency、OCR/LLM 权重、图数据库、向量库或新的后台采集器。
 
-同步/桌面性能研究、W69 与 W82–W86 Capsule 的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hub 服务、账号系统、公共 Seed、World runtime、Organizational Compiler/Factory Runtime、Danmaku Runtime、统一 `.maz` loader/migration、Context daemon/Coverage UI、工业协议/SDK/设备连接、Production Record 公共服务、AI 排行榜、AUTO Router、AI Challenge、软件发布/研究/动画/游戏入口、跨行业 Worker Market、外部工具引入、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环与有限 soak；不得借研究或架构材料扩大产品行为或重做 Browser/Player/Mindmap 生命周期。
+同步/桌面性能研究、W69 与 W82–W86 Capsule 的入库同样不授权 Runtime 重构、同步协议替换、数据库迁移、Hub 服务、账号系统、公共 Seed、World runtime、Organizational Compiler/Factory Runtime、Danmaku Runtime、统一 `.maz` loader/migration/encryption/entitlement/Marketplace、Context daemon/Coverage UI/Decision service、工业协议/SDK/设备连接、Production Record 公共服务、AI 排行榜、AUTO Router、AI Challenge、软件发布/研究/动画/游戏入口、跨行业 Worker Market、外部工具引入、Hyper-V 镜像或 8 小时 Hard Gate。W71 继续执行本规格已经批准的资源记账、真实泄漏修复、20 次循环、Global Overlay 代表性证据与有限 soak；不得借研究或架构材料扩大产品行为、建设万能 Overlay Manager，或重做 Browser/Player/Mindmap 生命周期。
 
 ---
 

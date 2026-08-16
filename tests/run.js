@@ -80,6 +80,7 @@ const files = [
   'tests/contract/w65-plan-intake.test.mjs',
   'tests/contract/w69-architecture-intake.test.mjs',
   'tests/contract/post-w71-architecture-increment.test.mjs',
+  'tests/contract/post-w71-security-evidence-increment.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
   'tests/contract/hotfix-w61a.test.mjs',

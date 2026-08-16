@@ -23,13 +23,13 @@ describe('Post-W71 architecture increment intake', () => {
       assert.ok(doc.includes('NOT APPROVED FOR IMPLEMENTATION'), `missing stop status: ${wave}`);
     }
     assert.ok(index.includes('W83a–W83e 未施工'));
-    assert.ok(index.includes('W84a–W84e 未施工'));
+    assert.ok(index.includes('W84a–W84f 未施工'));
     assert.ok(index.includes('W85a–W85e 未施工'));
     assert.ok(index.includes('W86a–W86e 未施工'));
   });
 
   test('W82 requires evidence-backed transitions and separates seats from machines', () => {
-    assert.ok(w82.includes('版本：v0.3'));
+    assert.ok(w82.includes('版本：v0.4'));
     for (const layer of ['Verification', 'Review', 'Evaluation', 'Authority']) {
       assert.ok(w82.includes(layer), `missing transition layer: ${layer}`);
     }
