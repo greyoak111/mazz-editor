@@ -101,4 +101,6 @@ Viewer
 
 因此本检查点只把“Viewer 关签后 owner 和基础播放器资源是否持续累积”从未知变成可复验通过，不把整个 `media / Object URL` 大类误报为全部结案。
 
+> 2026-08-16 后续实证：本地文件的 packaged AudioContext、GIF 正常导出和录制中关签分支已经完成真实激活，且修复了 WebAudio 播放手势恢复与 MediaRecorder 停止根因；真实媒体设备和权限矩阵仍 OPEN。以 [`W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md`](./W71_MEDIA_RUNTIME_ACTIVATION_CHECKPOINT_2026-08-16.md) 为后续状态，不改写本检查点的历史结论。
+
 历史 W62e、W63、W64、W65、W67、W69、W70 与 W72–W81 仍以交付区《Mazz 当前未落地全景-W71归并版》为唯一总表。本轮没有实施 Post-W71 Runtime、Replica、Snapshot/Delta 或 8 小时 soak 设计。

@@ -169,7 +169,11 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
     assert.ok(player.includes("removeEventListener('resize', applySide)"));
     assert.ok(player.includes('cancelAnimationFrame(waveRaf)'));
     assert.ok(player.includes('stream.getTracks().forEach(t => t.stop())'));
+    assert.ok(player.includes("if (rec.state !== 'inactive') rec.stop()"));
+    assert.equal(player.includes('rec.rec.stop()'), false, 'GIF 停止不得把 MediaRecorder 误当包装对象');
     assert.ok(player.includes("new Set([ctl._actx, ctl._chain?.ctx].filter(Boolean))"));
+    assert.ok(player.includes('const context = ctl._chain?.ctx || ctl._actx'));
+    assert.ok(player.includes('context?.resume?.()'));
     assert.ok(viewer.includes('dispose(state)'));
     assert.ok(viewer.includes("invoke?.('fs:delete', { path: tempPath })"));
     assert.ok(viewer.includes('instances.delete(container)'));

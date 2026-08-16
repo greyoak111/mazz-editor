@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 209,
-    "scannedLines": 56430
+    "scannedLines": 56437
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -15363,73 +15363,73 @@
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 767,
+        "line": 774,
         "sample": "media.addEventListener('play', () => { playBtn.innerHTML = iconHtml('⏸'); root.querySelector('.mz-audio-disc')?.classList.add('spin'); });"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 768,
+        "line": 775,
         "sample": "media.addEventListener('pause', () => { playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 893,
+        "line": 900,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 893,
+        "line": 900,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 936,
+        "line": 943,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 936,
+        "line": 943,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 962,
+        "line": 969,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 962,
+        "line": 969,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 991,
+        "line": 998,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 991,
+        "line": 998,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1010,
+        "line": 1017,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1010,
+        "line": 1017,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
@@ -23386,7 +23386,7 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1145,
+        "line": 1152,
         "sample": "grad.addColorStop(0, getComputedStyle(root).getPropertyValue('--accent') || '#e3b341');"
       },
       {
@@ -38505,7 +38505,7 @@
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1042,
+        "line": 1049,
         "sample": "window.addEventListener('resize', applySide);"
       },
       {

@@ -1242,7 +1242,7 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1042,
+      "line": 1049,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {

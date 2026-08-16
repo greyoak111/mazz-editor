@@ -760,7 +760,14 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   }).catch(() => {});
 
   // ---------- 播放/进度 ----------
-  const togglePlay = () => { media.paused ? media.play().catch(() => {}) : media.pause(); };
+  const togglePlay = () => {
+    if (!media.paused) { media.pause(); return; }
+    // 增益设置会在加载期提前创建 WebAudio 图；Chromium 在没有用户手势时会让 resume 保持 suspended。
+    // 播放按钮本身就是合法手势，必须在此再次恢复上下文，否则媒体已接入 WebAudio 后可能时间走而无声。
+    const context = ctl._chain?.ctx || ctl._actx;
+    context?.resume?.().catch?.(() => {});
+    media.play().catch(() => {});
+  };
   playBtn.addEventListener('click', togglePlay);
   root.querySelector('[data-a=prev]').addEventListener('click', prev);
   root.querySelector('[data-a=next]').addEventListener('click', next);
@@ -893,7 +900,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       btn.innerHTML = iconHtml('🎞');
       btn.classList.remove('on');
       clearInterval(drawTimer); // 停抽帧
-      try { rec.rec?.state !== 'inactive' && rec.rec.stop(); } catch {}
+      try { if (rec.state !== 'inactive') rec.stop(); } catch {}
       stream.getTracks().forEach(t => t.stop());
       return;
     }
