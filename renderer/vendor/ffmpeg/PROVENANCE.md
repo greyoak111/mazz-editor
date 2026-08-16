@@ -1,6 +1,6 @@
 # ffmpeg.wasm Vendored Runtime Provenance
 
-> Status: `PARTIAL / RELEASE BLOCKER UNTIL COMPLETED`
+> Status: `PARTIAL / LICENSE AND WRAPPER ID CLOSED; CORRESPONDING SOURCE BLOCKED`
 > Recorded: 2026-08-16
 
 ## Files and fixed hashes
@@ -54,6 +54,28 @@ ffmpeg version 5.1.4
 
 It successfully converted a generated WAV specimen to MP3, terminated its worker/WASM instance, reloaded a fresh instance and ran `ffmpeg -version` again. The core must therefore be handled as **GPL-2.0-or-later**, not as an assumed LGPL-only FFmpeg build.
 
+## Recovered wrapper identity (2026-08-16)
+
+All six files under `esm/` match the official `@ffmpeg/ffmpeg@0.12.10` ESM distribution after normalizing CRLF/LF and outer whitespace:
+
+```text
+classes.js
+const.js
+errors.js
+types.js
+utils.js
+worker.js
+```
+
+| Evidence | Result |
+|---|---|
+| Official npm tarball SHA-256 | `B2F2418BE6CC3C29A0765C1376EBFBFEA94073B287767460851A3CE487666D8F` |
+| npm integrity | `sha512-lVtk8PW8e+NUzGZhPTWj2P1J4/NyuCrbDD3O9IGpSeLYtUZKBqZO8CNj1WYGghep/MXoM8e1qVY1GztTkf8YYQ==` |
+| Declared license | `MIT` |
+| Vendored match | six of six normalized matches |
+
+The complete wrapper license is shipped as `LICENSE.wrapper-MIT`. The complete core license text is shipped as `COPYING.GPLv2`; `NOTICE.md` ties both components to their package coordinates and hashes.
+
 ## Known use
 
 The runtime is loaded lazily by `renderer/lib/ffmpeg-transcode.js` for local media conversion. It is a real product runtime, not a development fixture, and must remain in packaged builds unless the feature is explicitly removed.
@@ -61,11 +83,11 @@ The runtime is loaded lazily by `renderer/lib/ffmpeg-transcode.js` for local med
 ## Evidence still missing
 
 ```text
-wrapper package/version for the vendored esm files
-full GPL-2.0-or-later license text and component notices in the final distributable
 a durable corresponding-source archive or download mechanism for the shipped `v0.12.10` core payload
+the immutable commit set used for every build-time source input, including mutable refs in the upstream Dockerfile
+rebuild or equivalent attestation tying that source set to the shipped core bytes
 verification that the source delivery remains available for the required compliance period
 documented release procedure that keeps binary, source offer and hashes together
 ```
 
-The byte identity, npm metadata and live `--enable-gpl` configuration close the former classification uncertainty. They do **not** by themselves complete GPL distribution compliance. Do not close the W71 licensing gate until the final installer includes the required license/notices and the corresponding-source delivery path has been built and tested.
+The byte identity, wrapper identity, npm metadata, live `--enable-gpl` configuration and dedicated license files close the former classification, attribution and license-text uncertainty. They do **not** by themselves complete GPL distribution compliance. `SOURCE_REPRODUCIBILITY.md` records why the current upstream tag cannot yet serve as a proven corresponding-source archive. Do not close the W71 licensing gate until the corresponding-source delivery path has been built and tested.

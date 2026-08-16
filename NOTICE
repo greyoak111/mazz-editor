@@ -8,7 +8,8 @@ This product includes third-party software distributed under separate
 licenses. See THIRD_PARTY_NOTICES.md and the license files shipped with those
 components.
 
-The vendored ffmpeg.wasm runtime has a dedicated provenance record at
-renderer/vendor/ffmpeg/PROVENANCE.md. Its exact upstream source archive, build
-configuration and corresponding-source package are not yet preserved in this
-repository; release licensing remains open until that record is completed.
+The vendored ffmpeg.wasm runtime ships its complete GPLv2 and wrapper MIT
+license texts, component notice, provenance record and source-reproducibility
+status under renderer/vendor/ffmpeg/. Its exact immutable build input set and
+tested corresponding-source delivery are not yet preserved; release licensing
+remains open until that source gate is completed.

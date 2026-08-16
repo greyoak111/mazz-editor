@@ -1255,3 +1255,5 @@ W71 Wave 0 建 OSS 发布底账，不等于 W72 Capability Registry 已实施；
 ```
 
 每个检查点完成后必须回写完整未尽波次总表、记录测试/构建证据并提交，下一检查点继续按本规格 Gate 推进。
+
+2026-08-16 FFmpeg 分发子检查点进一步收口：vendored `esm/` 六文件已归一匹配官方 `@ffmpeg/ffmpeg@0.12.10`，wrapper MIT 身份闭环；core 继续由 npm 字节身份与真实 `--enable-gpl` 运行证据支撑。完整 GPLv2、wrapper MIT、组件 NOTICE、provenance 与 source reproducibility 状态五份材料已进入真实 `app.asar`，release audit schema v2 对五份材料逐项抽取、计量并记录 SHA-256。新 installer 为 `141,036,193` bytes，SHA-256 `6F816396A4D09F5C9304017D21DA34F879CEFD08E11D168191411F19295011C2`；packaged smoke、20-cycle 生命周期和真转码/释放/重载均通过。但上游 `v0.12.10` 构建脚本仍含 `x264#4-cores`、`lame#master` 等可变 ref，原始发布 commit set 尚未恢复，故总 Gate 明确保持 `OPEN_CORRESPONDING_SOURCE`。证据见 [`W71_FFMPEG_DISTRIBUTION_CHECKPOINT_2026-08-16.md`](./W71_FFMPEG_DISTRIBUTION_CHECKPOINT_2026-08-16.md)、[`W71_LICENSE_AUDIT.json`](./evidence/W71_LICENSE_AUDIT.json) 与 [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json)。

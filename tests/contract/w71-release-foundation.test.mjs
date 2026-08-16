@@ -1,5 +1,6 @@
 // tests/contract/w71-release-foundation.test.mjs —— W71 发布/许可基线
 import { createRequire } from 'node:module';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, test, assert } from '../harness.mjs';
@@ -39,11 +40,15 @@ describe('W71 发布边界', () => {
     assert.equal(report.licenses.evidence.ffmpegWasm.byteMatch, false);
     assert.equal(report.licenses.evidence.ffmpegWasm.recoveredOfficialArtifacts.wasmExactByteMatch, true);
     assert.equal(report.licenses.evidence.ffmpegWasm.recoveredOfficialArtifacts.declaredLicense, 'GPL-2.0-or-later');
+    assert.equal(report.licenses.evidence.ffmpegWrapper.gate, 'CLOSED_IDENTIFIED');
+    assert.equal(report.licenses.evidence.ffmpegWasm.sourceReproducibility.gate, 'OPEN_BLOCKED_MISSING_IMMUTABLE_BUILD_INPUTS');
     if (report.packagedSpecimen.present) {
       assert.ok(report.packagedSpecimen.asar.present);
       assert.deepEqual(report.packagedSpecimen.asar.rootNotices.sort(), ['\\LICENSE', '\\NOTICE', '\\THIRD_PARTY_NOTICES.md']);
       assert.equal(report.packagedSpecimen.asar.sourceMaps, 0);
       assert.equal(report.packagedSpecimen.asar.sourceMapBytes, 0);
+      assert.equal(report.packagedSpecimen.asar.ffmpegNotices.length, 5);
+      assert.ok(report.packagedSpecimen.asar.ffmpegNotices.every(file => file.present && file.sha256.length === 64));
       assert.equal(report.packagedSpecimen.installer.sha256.length, 64);
       assert.equal(report.packagedSpecimen.asarUnpackedNative.count, 10);
     }
@@ -52,15 +57,34 @@ describe('W71 发布边界', () => {
 
 describe('W71 许可证据', () => {
   test('根许可、NOTICE、第三方指针与 ffmpeg 缺口声明齐全', () => {
-    for (const file of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'renderer/vendor/ffmpeg/PROVENANCE.md']) {
+    const ffmpegFiles = [
+      'renderer/vendor/ffmpeg/COPYING.GPLv2',
+      'renderer/vendor/ffmpeg/LICENSE.wrapper-MIT',
+      'renderer/vendor/ffmpeg/NOTICE.md',
+      'renderer/vendor/ffmpeg/PROVENANCE.md',
+      'renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md',
+    ];
+    for (const file of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', ...ffmpegFiles]) {
       assert.ok(fs.existsSync(path.join(root, file)), `${file} 缺失`);
     }
     const provenance = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/PROVENANCE.md'), 'utf8');
-    assert.ok(provenance.includes('RELEASE BLOCKER UNTIL COMPLETED'));
+    const gpl = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/COPYING.GPLv2'), 'utf8');
+    const wrapperLicense = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/LICENSE.wrapper-MIT'), 'utf8');
+    const notice = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/NOTICE.md'), 'utf8');
+    const sourceStatus = fs.readFileSync(path.join(root, 'renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md'), 'utf8');
+    assert.ok(provenance.includes('CORRESPONDING SOURCE BLOCKED'));
     assert.ok(provenance.includes('--enable-gpl'));
     assert.ok(provenance.includes('0.12.6'));
     assert.ok(provenance.includes('GPL-2.0-or-later'));
     assert.ok(provenance.includes('ffmpeg version 5.1.4'));
+    assert.ok(provenance.includes('@ffmpeg/ffmpeg@0.12.10'));
+    assert.ok(gpl.includes('3. You may copy and distribute the Program'));
+    assert.ok(gpl.replace(/\s+/g, ' ').includes('complete corresponding machine-readable source code'));
+    assert.equal(crypto.createHash('sha256').update(gpl).digest('hex').toUpperCase(), '8177F97513213526DF2CF6184D8FF986C675AFB514D4E68A404010521B880643');
+    assert.ok(wrapperLicense.includes('Copyright (c) 2019 Jerome Wu'));
+    assert.ok(notice.includes('B2F2418BE6CC3C29A0765C1376EBFBFEA94073B287767460851A3CE487666D8F'));
+    assert.ok(sourceStatus.includes('BLOCKED / DO NOT CLAIM COMPLETE CORRESPONDING SOURCE'));
+    assert.ok(sourceStatus.includes('ffmpegwasm/x264#4-cores') && sourceStatus.includes('ffmpegwasm/lame#master'));
   });
 
   test('ffmpeg 转码任务串行化且成功/失败路径均释放监听器、虚拟文件与 worker', () => {

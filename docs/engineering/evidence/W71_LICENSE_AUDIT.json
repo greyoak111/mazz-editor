@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "recordedAt": "2026-08-16",
   "buffers": {
     "name": "buffers",
@@ -29,6 +29,27 @@
     "gate": "CLOSED_REMOVED_FROM_RUNTIME",
     "reason": "The unlicensed package was removed from the runtime graph through a scoped compatible unzipper override; no license was inferred."
   },
+  "ffmpegWrapper": {
+    "package": "@ffmpeg/ffmpeg",
+    "version": "0.12.10",
+    "selectedTarball": "https://registry.npmjs.org/@ffmpeg/ffmpeg/-/ffmpeg-0.12.10.tgz",
+    "selectedTarballSha256": "B2F2418BE6CC3C29A0765C1376EBFBFEA94073B287767460851A3CE487666D8F",
+    "npmIntegrity": "sha512-lVtk8PW8e+NUzGZhPTWj2P1J4/NyuCrbDD3O9IGpSeLYtUZKBqZO8CNj1WYGghep/MXoM8e1qVY1GztTkf8YYQ==",
+    "declaredLicense": "MIT",
+    "vendoredFiles": [
+      "classes.js",
+      "const.js",
+      "errors.js",
+      "types.js",
+      "utils.js",
+      "worker.js"
+    ],
+    "normalizedMatches": 6,
+    "normalization": "CRLF/LF and outer whitespace only",
+    "licenseFile": "renderer/vendor/ffmpeg/LICENSE.wrapper-MIT",
+    "gate": "CLOSED_IDENTIFIED",
+    "reason": "All six vendored wrapper files match the official 0.12.10 ESM distribution after non-executable whitespace normalization, and the MIT text is shipped."
+  },
   "ffmpegWasm": {
     "claimedCandidate": "@ffmpeg/core@0.12.6",
     "candidateTarballSha256": "9812C82188E8CA434A3D0E9EDC2435458B55DF0CE3F700A8DF867C22EC8A8CED",
@@ -57,7 +78,39 @@
     "runtimeEvidence": "W71_FFMPEG_RUNTIME.json",
     "runtimeVersion": "ffmpeg version 5.1.4",
     "runtimeGplEnabled": true,
-    "gate": "OPEN",
-    "reason": "Core identity and GPL-2.0-or-later classification are now recovered, but the distributable must still carry the full license/notices and a durable corresponding-source delivery mechanism."
+    "distributionArtifacts": [
+      "renderer/vendor/ffmpeg/COPYING.GPLv2",
+      "renderer/vendor/ffmpeg/LICENSE.wrapper-MIT",
+      "renderer/vendor/ffmpeg/NOTICE.md",
+      "renderer/vendor/ffmpeg/PROVENANCE.md",
+      "renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md"
+    ],
+    "sourceReproducibility": {
+      "upstreamTag": "v0.12.10",
+      "upstreamTagCommit": "c3a763857c5e615ae8674715ad5e4f63ff469e9d",
+      "emscripten": "3.1.40",
+      "ffmpeg": "n5.1.4",
+      "mutableRefs": [
+        {
+          "component": "x264",
+          "dockerRef": "ffmpegwasm/x264#4-cores",
+          "observedHead2026-08-16": "33cac6b77d5b9259c552156013a817ab23119612"
+        },
+        {
+          "component": "lame",
+          "dockerRef": "ffmpegwasm/lame#master",
+          "observedHead2026-08-16": "2badea1974ae36cb8312afe99cff1e6b3b5decee"
+        },
+        {
+          "component": "zimg",
+          "dockerRef": "sekrit-twc/zimg#release-3.0.5",
+          "observedHead2026-08-16": null
+        }
+      ],
+      "statusDocument": "renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md",
+      "gate": "OPEN_BLOCKED_MISSING_IMMUTABLE_BUILD_INPUTS"
+    },
+    "gate": "OPEN_CORRESPONDING_SOURCE",
+    "reason": "Core identity, GPL classification, full license text, wrapper license and component notice are closed. Exact immutable build inputs, a rebuildable source archive and durable source delivery remain open."
   }
 }

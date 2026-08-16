@@ -69,25 +69,45 @@ function packagedSpecimen() {
     : null;
   const unpackedFiles = walk(unpackedDir).map(fileRecord);
   const unpackedNative = walk(asarUnpackedDir, file => file.endsWith('.node')).map(fileRecord);
-  let asar = { present: false, bytes: 0, entries: 0, sourceMaps: 0, rootNotices: [] };
+  const requiredFfmpegNotices = [
+    'renderer/vendor/ffmpeg/COPYING.GPLv2',
+    'renderer/vendor/ffmpeg/LICENSE.wrapper-MIT',
+    'renderer/vendor/ffmpeg/NOTICE.md',
+    'renderer/vendor/ffmpeg/PROVENANCE.md',
+    'renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md',
+  ];
+  let asar = { present: false, bytes: 0, entries: 0, sourceMaps: 0, rootNotices: [], ffmpegNotices: [] };
   if (fs.existsSync(asarFile)) {
     const record = fileRecord(asarFile);
     try {
       const { extractFile, listPackage } = require('@electron/asar');
       const entries = listPackage(asarFile);
+      const normalizedEntries = new Map(entries.map(name => [slash(name).replace(/^\//, ''), name]));
       const sourceMapFiles = entries.filter(name => name.endsWith('.map')).map(name => ({
         path: slash(name).replace(/^\//, ''),
         bytes: extractFile(asarFile, name.replace(/^\\/, '')).length,
       }));
+      const ffmpegNotices = requiredFfmpegNotices.map(expectedPath => {
+        const entry = normalizedEntries.get(expectedPath);
+        if (!entry) return { path: expectedPath, present: false };
+        const content = extractFile(asarFile, entry.replace(/^\\/, ''));
+        return {
+          path: expectedPath,
+          present: true,
+          bytes: content.length,
+          sha256: crypto.createHash('sha256').update(content).digest('hex').toUpperCase(),
+        };
+      });
       asar = {
         present: true, bytes: record.bytes, entries: entries.length,
         sourceMaps: sourceMapFiles.length,
         sourceMapBytes: sourceMapFiles.reduce((total, file) => total + file.bytes, 0),
         sourceMapFiles,
         rootNotices: entries.filter(name => /^\\(?:LICENSE|NOTICE|THIRD_PARTY_NOTICES\.md)$/.test(name)),
+        ffmpegNotices,
       };
     } catch (error) {
-      asar = { present: true, bytes: record.bytes, entries: 0, sourceMaps: null, rootNotices: [], auditError: error.message };
+      asar = { present: true, bytes: record.bytes, entries: 0, sourceMaps: null, rootNotices: [], ffmpegNotices: [], auditError: error.message };
     }
   }
   const installerFile = installer ? path.join(releaseDir, installer) : '';
@@ -115,7 +135,7 @@ function auditRelease() {
   } catch {}
   const sum = rows => rows.reduce((total, row) => total + row.bytes, 0);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     app: { name: pkg.name, version: pkg.version, license: pkg.license },
     build: {
