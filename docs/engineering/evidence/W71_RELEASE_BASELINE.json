@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-16T11:31:58.767Z",
+  "generatedAt": "2026-08-16T11:50:13.541Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -8005,7 +8005,7 @@
   },
   "rendererSourceMaps": {
     "count": 209,
-    "bytes": 58050334,
+    "bytes": 58053139,
     "files": [
       {
         "path": "renderer/dist/app.js.map",
@@ -8020,7 +8020,7 @@
         "bytes": 4920
       },
       {
-        "path": "renderer/dist/chunks/agreement-2T6GTZHB.js.map",
+        "path": "renderer/dist/chunks/agreement-ZQUT2GNC.js.map",
         "bytes": 13257
       },
       {
@@ -8068,8 +8068,8 @@
         "bytes": 8678
       },
       {
-        "path": "renderer/dist/chunks/chunk-5EEXORBB.js.map",
-        "bytes": 17812
+        "path": "renderer/dist/chunks/chunk-4LZJP7B5.js.map",
+        "bytes": 546290
       },
       {
         "path": "renderer/dist/chunks/chunk-5HQQI2VW.js.map",
@@ -8100,8 +8100,16 @@
         "bytes": 7478
       },
       {
+        "path": "renderer/dist/chunks/chunk-CIJLLRBZ.js.map",
+        "bytes": 17812
+      },
+      {
         "path": "renderer/dist/chunks/chunk-D4JQWGRO.js.map",
         "bytes": 10310
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-DR5ALG5Q.js.map",
+        "bytes": 518615
       },
       {
         "path": "renderer/dist/chunks/chunk-ECI2W5KO.js.map",
@@ -8128,12 +8136,12 @@
         "bytes": 9399
       },
       {
-        "path": "renderer/dist/chunks/chunk-GYVGGTW3.js.map",
-        "bytes": 24669
+        "path": "renderer/dist/chunks/chunk-GSFBBDTZ.js.map",
+        "bytes": 27708
       },
       {
-        "path": "renderer/dist/chunks/chunk-I7XRNVLK.js.map",
-        "bytes": 515810
+        "path": "renderer/dist/chunks/chunk-GYVGGTW3.js.map",
+        "bytes": 24669
       },
       {
         "path": "renderer/dist/chunks/chunk-ISCH7X5M.js.map",
@@ -8164,16 +8172,16 @@
         "bytes": 2553
       },
       {
+        "path": "renderer/dist/chunks/chunk-LPZJIR5R.js.map",
+        "bytes": 302273
+      },
+      {
         "path": "renderer/dist/chunks/chunk-MNRO2PBN.js.map",
         "bytes": 229289
       },
       {
         "path": "renderer/dist/chunks/chunk-NAQKA54E.js.map",
         "bytes": 93
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-O3OYWULD.js.map",
-        "bytes": 546290
       },
       {
         "path": "renderer/dist/chunks/chunk-OXGECBOR.js.map",
@@ -8212,10 +8220,6 @@
         "bytes": 13597
       },
       {
-        "path": "renderer/dist/chunks/chunk-UUGQUJT4.js.map",
-        "bytes": 27708
-      },
-      {
         "path": "renderer/dist/chunks/chunk-UVEJ2AFQ.js.map",
         "bytes": 15926
       },
@@ -8228,12 +8232,8 @@
         "bytes": 87486
       },
       {
-        "path": "renderer/dist/chunks/chunk-WQ7GMVO3.js.map",
+        "path": "renderer/dist/chunks/chunk-WXGU7ZTK.js.map",
         "bytes": 12942
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-X35QSTBT.js.map",
-        "bytes": 302273
       },
       {
         "path": "renderer/dist/chunks/chunk-XPFNG65H.js.map",
@@ -8288,7 +8288,7 @@
         "bytes": 14978
       },
       {
-        "path": "renderer/dist/chunks/custom-apps-WXKWGIXD.js.map",
+        "path": "renderer/dist/chunks/custom-apps-P3ER2M5N.js.map",
         "bytes": 8126
       },
       {
@@ -8320,7 +8320,7 @@
         "bytes": 5970
       },
       {
-        "path": "renderer/dist/chunks/docx-io-2MC2UPGS.js.map",
+        "path": "renderer/dist/chunks/docx-io-2ZD4QNYL.js.map",
         "bytes": 93
       },
       {
@@ -8356,15 +8356,15 @@
         "bytes": 3559516
       },
       {
-        "path": "renderer/dist/chunks/extern-convert-K53U4OHC.js.map",
+        "path": "renderer/dist/chunks/extern-convert-YJARUQP5.js.map",
         "bytes": 15478
       },
       {
-        "path": "renderer/dist/chunks/factory-THYRSSKR.js.map",
+        "path": "renderer/dist/chunks/factory-5LVJYKJ6.js.map",
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/ffmpeg-transcode-7EH4HCH3.js.map",
+        "path": "renderer/dist/chunks/ffmpeg-transcode-25UKGQIY.js.map",
         "bytes": 8273
       },
       {
@@ -8376,7 +8376,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/formats-io-7T2ME5R7.js.map",
+        "path": "renderer/dist/chunks/formats-io-D5DBI5G5.js.map",
         "bytes": 6111
       },
       {
@@ -8420,7 +8420,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/imgedit-KWWAYNOW.js.map",
+        "path": "renderer/dist/chunks/imgedit-4IBFXKVA.js.map",
         "bytes": 42263
       },
       {
@@ -8504,7 +8504,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/mindmap-7CPK2MEU.js.map",
+        "path": "renderer/dist/chunks/mindmap-KV3IDVTJ.js.map",
         "bytes": 93
       },
       {
@@ -8548,7 +8548,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/paginate-UIRPKTDQ.js.map",
+        "path": "renderer/dist/chunks/paginate-BGGZQ76K.js.map",
         "bytes": 93
       },
       {
@@ -8580,7 +8580,7 @@
         "bytes": 5568
       },
       {
-        "path": "renderer/dist/chunks/player-PGE3WUSY.js.map",
+        "path": "renderer/dist/chunks/player-GYA3BYIU.js.map",
         "bytes": 238947
       },
       {
@@ -8608,15 +8608,15 @@
         "bytes": 683045
       },
       {
-        "path": "renderer/dist/chunks/print-JLEL7FAM.js.map",
-        "bytes": 3689
-      },
-      {
-        "path": "renderer/dist/chunks/print-KW2NVSWS.js.map",
+        "path": "renderer/dist/chunks/print-NQNFPRRI.js.map",
         "bytes": 5323
       },
       {
-        "path": "renderer/dist/chunks/print-preview-USPN4KHM.js.map",
+        "path": "renderer/dist/chunks/print-W7YI6PI2.js.map",
+        "bytes": 3689
+      },
+      {
+        "path": "renderer/dist/chunks/print-preview-PQEL7GCQ.js.map",
         "bytes": 93
       },
       {
@@ -8640,7 +8640,7 @@
         "bytes": 10174
       },
       {
-        "path": "renderer/dist/chunks/queue-OZ5IOLB3.js.map",
+        "path": "renderer/dist/chunks/queue-52MEWCFF.js.map",
         "bytes": 3826
       },
       {
@@ -8652,7 +8652,7 @@
         "bytes": 29006
       },
       {
-        "path": "renderer/dist/chunks/recorder-4YLK6H6M.js.map",
+        "path": "renderer/dist/chunks/recorder-Z36RL36S.js.map",
         "bytes": 72998
       },
       {
@@ -8664,7 +8664,7 @@
         "bytes": 28146
       },
       {
-        "path": "renderer/dist/chunks/replace-PDJMRYWJ.js.map",
+        "path": "renderer/dist/chunks/replace-5V2DAHLG.js.map",
         "bytes": 14873
       },
       {
@@ -8700,7 +8700,7 @@
         "bytes": 7201
       },
       {
-        "path": "renderer/dist/chunks/share-ZEZ3LZQW.js.map",
+        "path": "renderer/dist/chunks/share-ERM2H7U7.js.map",
         "bytes": 15750
       },
       {
@@ -8712,15 +8712,15 @@
         "bytes": 8877
       },
       {
-        "path": "renderer/dist/chunks/shell-QUVSW7BN.js.map",
+        "path": "renderer/dist/chunks/shell-Y7D7RSRN.js.map",
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/side-dock-46UT5YGT.js.map",
+        "path": "renderer/dist/chunks/side-dock-YF7IWQZZ.js.map",
         "bytes": 37786
       },
       {
-        "path": "renderer/dist/chunks/sidebar-panels-AKEU33US.js.map",
+        "path": "renderer/dist/chunks/sidebar-panels-G2PS2VXE.js.map",
         "bytes": 35865
       },
       {
@@ -8776,7 +8776,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/theme-custom-3HD6B6EJ.js.map",
+        "path": "renderer/dist/chunks/theme-custom-SD3RJPGP.js.map",
         "bytes": 20096
       },
       {
@@ -9059,11 +9059,11 @@
     "present": true,
     "unpacked": {
       "count": 438,
-      "bytes": 597433328
+      "bytes": 597438656
     },
     "asar": {
       "present": true,
-      "bytes": 290130028,
+      "bytes": 290135356,
       "entries": 9479,
       "sourceMaps": 0,
       "sourceMapBytes": 0,
@@ -9154,8 +9154,8 @@
     },
     "installer": {
       "path": "release/Mazz Editor Setup 0.2.0.exe",
-      "bytes": 141038151,
-      "sha256": "F26C888453C3E0F4AAD404528AAF1718623ACC70F25420EA7D176FAB720135F6"
+      "bytes": 141020301,
+      "sha256": "166161C2D798309657D76B9D730FC75D92DAC7DFD991F970AC5BFEE256AF6171"
     }
   }
 }

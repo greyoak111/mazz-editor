@@ -1,12 +1,12 @@
 {
   "schemaVersion": 5,
-  "generatedAt": "2026-08-16T11:33:41.037Z",
+  "generatedAt": "2026-08-16T11:55:39.245Z",
   "installer": {
     "file": "release/Mazz Editor Setup 0.2.0.exe",
-    "bytes": 141038151,
-    "sha256": "F26C888453C3E0F4AAD404528AAF1718623ACC70F25420EA7D176FAB720135F6"
+    "bytes": 141020301,
+    "sha256": "166161C2D798309657D76B9D730FC75D92DAC7DFD991F970AC5BFEE256AF6171"
   },
-  "isolatedTarget": "MazzW71Install-2o9J6A",
+  "isolatedTarget": "MazzW71Install-pUyohi",
   "preflight": {
     "noExistingInstallRegistration": true,
     "noExistingShortcuts": true,
@@ -71,14 +71,14 @@
   "install": {
     "exitCode": 0,
     "uninstallRegistrationCreated": true,
-    "installedExeSha256": "5829EA05E9F7EE0035E0E77BE6A338B39E1C195A16C910EEEFF7069FBA3F7489",
+    "installedExeSha256": "B959F4742454F217D6A9BDA3BC92C5DEA124E399BEFCC02A789E4F5467585F62",
     "originalAssociationBackupsPreserved": true,
     "windowsIntegration": {
       "protocol": {
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -91,7 +91,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -104,7 +104,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -117,7 +117,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -130,7 +130,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         }
       ]
@@ -139,7 +139,7 @@
   "sameVersionReinstall": {
     "exitCode": 0,
     "executablePreserved": true,
-    "installedExeSha256": "5829EA05E9F7EE0035E0E77BE6A338B39E1C195A16C910EEEFF7069FBA3F7489",
+    "installedExeSha256": "B959F4742454F217D6A9BDA3BC92C5DEA124E399BEFCC02A789E4F5467585F62",
     "uninstallRegistrationPreserved": true,
     "originalAssociationBackupsPreserved": true,
     "windowsIntegration": {
@@ -147,7 +147,7 @@
         "exists": true,
         "label": "URL:mazz",
         "markerExists": true,
-        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\""
+        "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\""
       },
       "associations": [
         {
@@ -160,7 +160,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -173,7 +173,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -186,7 +186,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         },
         {
@@ -199,7 +199,7 @@
           "backupValue": "",
           "legacyBackupExists": false,
           "classKeyExists": true,
-          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-2o9J6A\\Mazz Editor.exe\" \"%1\"",
+          "command": "\"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\MazzW71Install-pUyohi\\Mazz Editor.exe\" \"%1\"",
           "explorerOpenWithProgIdExists": false
         }
       ]
@@ -585,9 +585,9 @@
       "factoryRequestObserved": true,
       "monacoWorkerObserved": true,
       "monacoLateInitGuardObserved": true,
-      "monacoWorkersCreated": 18,
+      "monacoWorkersCreated": 21,
       "monacoWorkersActive": 2,
-      "monacoWorkersTerminated": 16,
+      "monacoWorkersTerminated": 19,
       "monacoWorkerErrors": 0,
       "monacoModelsAfterClose": 0,
       "lifecycleCycles": 20,

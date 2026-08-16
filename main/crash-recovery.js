@@ -2,10 +2,12 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
 
 class CrashRecovery {
   constructor({ app, bus }) {
     this.dir = path.join(app.getPath('userData'), 'snapshots');
+    this.runId = randomUUID();
     this.flagFile = path.join(this.dir, 'RUNNING.flag');
     fs.mkdirSync(this.dir, { recursive: true });
 
@@ -15,10 +17,12 @@ class CrashRecovery {
     app.on('will-quit', () => { try { fs.unlinkSync(this.flagFile); } catch {} });
 
     // 渲染进程每 30s（及内容变更防抖后）推送快照，主进程原子落盘
-    bus.handle('snapshot:write', async ({ tabId, filePath, moduleId, content }) => {
+    const ownerId = event => `${this.runId}:${String(event?.sender?.id || 'legacy')}`;
+    const snapshotFile = (tabId, event) => path.join(this.dir, encodeURIComponent(`${ownerId(event)}:${tabId}`) + '.json');
+    bus.handle('snapshot:write', async ({ tabId, filePath, moduleId, content }, event) => {
       if (!tabId) return false;
-      const file = path.join(this.dir, encodeURIComponent(tabId) + '.json');
-      const rec = { tabId, filePath, moduleId, content, savedAt: Date.now() };
+      const file = snapshotFile(tabId, event);
+      const rec = { tabId, ownerId: ownerId(event), filePath, moduleId, content, savedAt: Date.now() };
       const tmp = file + '.tmp';
       fs.writeFileSync(tmp, JSON.stringify(rec));
       fs.renameSync(tmp, file);
@@ -30,9 +34,10 @@ class CrashRecovery {
         catch { return null; }
       }).filter(Boolean).sort((a, b) => b.savedAt - a.savedAt);
     });
-    bus.handle('snapshot:clear', async ({ tabId }) => {
-      const file = path.join(this.dir, encodeURIComponent(tabId) + '.json');
-      try { fs.unlinkSync(file); } catch {}
+    bus.handle('snapshot:clear', async ({ tabId }, event) => {
+      try { fs.unlinkSync(snapshotFile(tabId, event)); } catch {}
+      // 兼容清理旧版未分 owner 的快照；不会碰其他 renderer 的同名 tab。
+      try { fs.unlinkSync(path.join(this.dir, encodeURIComponent(tabId) + '.json')); } catch {}
       return true;
     });
     bus.handle('snapshot:clearAll', async () => {

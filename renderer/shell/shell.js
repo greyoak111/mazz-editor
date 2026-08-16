@@ -1635,11 +1635,7 @@ export class Shell {
       run: async () => {
         const tab = this.tabs.active;
         if (!tab) return;
-        const inst = modules.instances.get(tab.id);
-        const snapshot = {
-          moduleId: tab.moduleId, title: tab.title, filePath: tab.filePath,
-          content: inst ? inst.def.getContent(inst.state) : '',
-        };
+        const snapshot = await this.buildTabHandoff(tab);
         const ok = await window.mazz.invoke('window:toMain', { handoff: snapshot });
         if (ok) {
           tab.forceClose = true;
@@ -1797,20 +1793,36 @@ export class Shell {
     this.statusbar.setZoom(this.zoom * this.activePaneZoom());
   }
 
-  /** 把标签移交到新窗口（快照内容 → 新窗口开同标签 → 本窗口关闭） */
-  async moveTabToNewWindow(tabId, pos = null) {
-    const tab = this.tabs.get(tabId);
-    if (!tab) return;
-    const inst = modules.instances.get(tabId);
-    const snapshot = {
+  /** 生成可确认交付的标签快照；dirty / pinned / progress 都属于迁移语义。 */
+  async buildTabHandoff(tab) {
+    const inst = tab && modules.instances.get(tab.id);
+    if (!tab || !inst) throw new Error('标签实例尚未就绪');
+    const content = inst.def.readOnly && tab.filePath
+      ? { path: tab.filePath }
+      : safeGet(() => inst.def.getContent(inst.state));
+    const progress = typeof inst.def.captureProgress === 'function'
+      ? safeGet(() => inst.def.captureProgress(inst.state))
+      : null;
+    const meta = this.progressMeta(tab, inst);
+    if (meta && progress != null) await this.progressRelay.put(meta.kind, meta.path, progress, { immediate: true });
+    return {
+      schemaVersion: 1,
       moduleId: tab.moduleId,
       title: tab.title,
       filePath: tab.filePath,
-      // 只读查看器：交接路径而非空内容（getContent 返回 ''，子窗要能重新加载）
-      content: inst ? (inst.def.readOnly && tab.filePath ? { path: tab.filePath } : inst.def.getContent(inst.state)) : '',
+      content: content == null ? '' : content,
+      dirty: !!tab.dirty,
+      pinned: !!tab.pinned,
+      progress,
     };
-    if (snapshot.content == null) snapshot.content = '';
+  }
+
+  /** 把标签移交到新窗口（快照内容 → 目标确认收讫 → 本窗口关闭） */
+  async moveTabToNewWindow(tabId, pos = null) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) return;
     try {
+      const snapshot = await this.buildTabHandoff(tab);
       // 指定/拖到既有外部窗格 → 迁入该窗（v33 反馈：只会新建窗格进不去）
       const targetId = pos?.childId || (pos && Number.isFinite(pos.x)
         ? (await window.mazz.invoke('window:childAt', { x: pos.x, y: pos.y }).catch(() => null))?.id
@@ -1828,7 +1840,8 @@ export class Shell {
           return;
         }
       }
-      await window.mazz.invoke('window:openChild', { handoff: snapshot });
+      const ok = await window.mazz.invoke('window:openChild', { handoff: snapshot });
+      if (!ok) throw new Error('目标窗口未确认接收');
       tab.forceClose = true;
       modules.detach(tabId);
       snapshots.untrack(tabId);
@@ -1845,13 +1858,32 @@ export class Shell {
   async receiveHandoff(snapshot) {
     // W52③ 全应用子窗 modal 支路：settings/help/agreement 大 UI 零重写落第二窗
     // W53：openModal/lean 支路全体退役——设置/帮助/协议/翻译/插件/快开/内录全走 panel-windows 全原生子窗格
-    if (!snapshot?.moduleId || !modules.get(snapshot.moduleId)) return;
-    this.openTab(snapshot.moduleId, {
+    if (!snapshot?.moduleId || !modules.get(snapshot.moduleId)) return false;
+    const duplicate = snapshot.filePath && this.paneTree.leaves()
+      .flatMap(leaf => leaf.tabs.tabs)
+      .some(tab => tab.filePath === snapshot.filePath && tab.moduleId === snapshot.moduleId);
+    if (duplicate) return false;
+    const { tab, inst } = this.openTab(snapshot.moduleId, {
       title: snapshot.title || '分窗标签',
       filePath: snapshot.filePath || null,
       content: snapshot.content,
     });
+    if (snapshot.progress != null && typeof inst?.def?.applyProgress === 'function') {
+      await inst.def.applyProgress(snapshot.progress, inst.state);
+    }
+    if (snapshot.pinned) {
+      tab.pinned = true;
+      this.findTabById(tab.id)?.tabs.render();
+    }
+    if (snapshot.dirty) {
+      this.findTabById(tab.id)?.tabs.setDirty(tab.id, true);
+      snapshots.markDirty(tab.id);
+      // 目标确认前先把新 owner 的恢复材料落盘；源标签随后才会清除自己的快照。
+      await snapshots.writeOne(tab.id);
+    }
+    this.syncTitle();
     if (snapshot.filePath) await window.mazz?.invoke('recent:add', { path: snapshot.filePath });
+    return true;
   }
 
   async newFileInTree() {
@@ -2134,7 +2166,14 @@ export class Shell {
         if (parsed.hostname === 'home') await commands.execute('file.newBrowser');
       });
       window.mazz.on('command:invoke', ({ id, payload }) => commands.execute(id, payload));
-      window.mazz.on('window:handoff', async (snapshot) => { await this.receiveHandoff(snapshot); });
+      window.mazz.on('window:handoff', async (snapshot) => {
+        let ok = false;
+        try { ok = await this.receiveHandoff(snapshot); }
+        catch (error) { console.error('[handoff] 接收失败:', error); }
+        if (snapshot?.__transferId) {
+          await window.mazz.invoke('window:handoffAck', { transferId: snapshot.__transferId, ok }).catch(() => {});
+        }
+      });
       window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });
       window.mazz.on('sync:positionChanged', () => this.refreshOpenProgress());
       window.mazz.on('sync:completed', (pl = {}) => {

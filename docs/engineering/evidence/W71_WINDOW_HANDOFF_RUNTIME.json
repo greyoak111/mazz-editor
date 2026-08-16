@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-16T11:50:02.670Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "rejectedDuplicate": {
+    "sourcePreserved": true,
+    "targetPreserved": true
+  },
+  "roundTrips": 20,
+  "transfers": 42,
+  "samples": [
+    {
+      "cycle": 1,
+      "mainTabId": "tab-3",
+      "childTabId": "tab-2"
+    },
+    {
+      "cycle": 10,
+      "mainTabId": "tab-12",
+      "childTabId": "tab-11"
+    },
+    {
+      "cycle": 20,
+      "mainTabId": "tab-22",
+      "childTabId": "tab-21"
+    }
+  ],
+  "final": {
+    "id": "tab-23",
+    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-y5uaYv/handoff.md",
+    "content": "# 交接证明\n\nalpha beta gamma delta",
+    "dirty": true,
+    "pinned": true,
+    "progress": {
+      "from": 4,
+      "to": 12
+    }
+  },
+  "recoverySnapshots": [
+    {
+      "ownerId": "7230261c-2c6b-439c-b513-0555fcee1c83:1",
+      "tabId": "tab-23",
+      "content": "# 交接证明\n\nalpha beta gamma delta",
+      "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-y5uaYv/handoff.md"
+    }
+  ],
+  "resources": {
+    "baseline": 2,
+    "withChild": 3,
+    "final": 2
+  }
+}

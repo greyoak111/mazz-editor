@@ -10,6 +10,7 @@ const files = [
   'tests/unit/factory-sse.test.mjs',
   'tests/unit/formula.test.mjs',
   'tests/contract/w71-external-change.test.mjs',
+  'tests/contract/w71-window-handoff.test.mjs',
   'tests/contract/module-contract.test.mjs',
   'tests/contract/markdown-roundtrip.test.mjs',
   'tests/contract/browser-history.test.mjs',

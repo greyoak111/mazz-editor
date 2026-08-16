@@ -797,17 +797,59 @@ function registerChannels() {
     return next;
   });
 
+  // 分窗交接必须由目标 renderer 明确收讫后，源窗才允许删除本地标签。
+  // 这不是通用 Event Bus，只是一条有 timeout / owner 校验的单用途两阶段提交。
+  const pendingHandoffs = new Map();
+  const deliverHandoff = (target, handoff, { afterLoad = false } = {}) => new Promise(resolve => {
+    if (!target || target.isDestroyed() || target.webContents.isDestroyed()) { resolve(false); return; }
+    const transferId = require('crypto').randomUUID();
+    let settled = false;
+    let timer = null;
+    const cleanup = () => {
+      clearTimeout(timer);
+      pendingHandoffs.delete(transferId);
+      try { target.webContents.removeListener('destroyed', onGone); } catch {}
+      try { target.webContents.removeListener('render-process-gone', onGone); } catch {}
+    };
+    const finish = ok => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(!!ok);
+    };
+    const onGone = () => finish(false);
+    const send = () => {
+      if (target.isDestroyed() || target.webContents.isDestroyed()) { finish(false); return; }
+      target.webContents.send('mazz:event', {
+        channel: 'window:handoff', payload: { ...handoff, __transferId: transferId },
+      });
+    };
+    pendingHandoffs.set(transferId, { targetId: target.webContents.id, finish });
+    target.webContents.once('destroyed', onGone);
+    target.webContents.once('render-process-gone', onGone);
+    timer = setTimeout(() => finish(false), 12000);
+    if (afterLoad) target.webContents.once('did-finish-load', () => setTimeout(send, 600));
+    else send();
+  });
+  bus.handle('window:handoffAck', async ({ transferId, ok } = {}, event) => {
+    const pending = pendingHandoffs.get(transferId);
+    if (!pending || pending.targetId !== event?.sender?.id) return false;
+    pending.finish(ok);
+    return true;
+  });
+
   // 分窗：开新窗口并交接标签快照
   bus.handle('window:openChild', async ({ handoff }) => {
     // W53：lean 路线退役（七面板+坞浮动全走 panel-windows 全原生子窗格）——openChild 只服务模块分窗
     const child = wm.createChild();
     child.webContents.once('did-finish-load', () => {
       child.webContents.send('mazz:event', { channel: 'window:role', payload: { role: 'child' } });
-      setTimeout(() => {
-        child.webContents.send('mazz:event', { channel: 'window:handoff', payload: handoff });
-      }, 600);
     });
-    return true;
+    // 兼容“只创建空工作台分窗”的既有调用；没有数据要提交时无需 ACK。
+    if (!handoff?.moduleId) return true;
+    const ok = await deliverHandoff(child, handoff, { afterLoad: true });
+    if (!ok && !child.isDestroyed()) child.close();
+    return ok;
   });
   // 已存在子窗口清单（「移到已有外部窗格」选单用）
   bus.handle('window:listChildren', async () => {
@@ -831,8 +873,7 @@ function registerChannels() {
     for (const child of wm.children) {
       if (child.id === winId && !child.isDestroyed()) {
         child.show(); child.focus();
-        child.webContents.send('mazz:event', { channel: 'window:handoff', payload: handoff });
-        return true;
+        return deliverHandoff(child, handoff);
       }
     }
     return false;
@@ -858,8 +899,7 @@ function registerChannels() {
   bus.handle('window:toMain', async ({ handoff }) => {
     if (wm.main && !wm.main.isDestroyed()) {
       wm.main.show(); wm.main.focus();
-      wm.main.webContents.send('mazz:event', { channel: 'window:handoff', payload: handoff });
-      return true;
+      return deliverHandoff(wm.main, handoff);
     }
     return false;
   });

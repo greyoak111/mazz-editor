@@ -12,7 +12,7 @@ const INVOKE_CHANNELS = new Set([
   'recent:list', 'recent:add', 'recent:clear',
   'settings:get', 'settings:set', 'workspace:get',
   'window:minimize', 'window:toggleMaximize', 'window:close', 'window:setTitle',
-  'window:isMaximized', 'window:isFullScreen', 'window:toggleFullScreen', 'window:openChild', 'window:toMain',
+  'window:isMaximized', 'window:isFullScreen', 'window:toggleFullScreen', 'window:openChild', 'window:toMain', 'window:handoffAck',
   'theme:setSource', 'theme:isDark',
   'print:print', 'print:toPDF', 'print:html',
   'clipboard:write', 'clipboard:read', 'clipboard:readImagePNG',

@@ -1991,21 +1991,21 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3205,
+      "line": 3244,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3220,
+      "line": 3259,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3242,
+      "line": 3281,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
