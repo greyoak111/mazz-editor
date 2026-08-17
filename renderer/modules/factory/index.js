@@ -33,6 +33,10 @@ import {
   buildFactoryRunProtocolProjection, createW68FactoryProcessProtocol, factoryProcessDeskEvent,
   factoryProcessProjectionPaths, saveFactoryProcessProjectionAsset, saveFactoryProcessProtocolAsset,
 } from './process-protocol-assets.js';
+import {
+  FACTORY_RUNTIME_CONVERGENCE_SCHEMA, inspectFactoryRunConvergence,
+  saveFactoryRunConvergenceCheckpoint,
+} from './runtime-convergence.js';
 import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
@@ -70,6 +74,7 @@ export class FactoryPanel {
     this.previewTasks = new Map(); // taskId -> { task, tpl, folder, currentPath }
     this.workshopWrites = new Map(); // folder -> Promise；同项目归档串行，任务并发不互踩
     this.productionRunLedgers = new Map(); // taskId -> W73b 单 Run 串行账本；只接 W68 单次路径
+    this.productionRunOwnerLeases = new Map(); // taskId -> W73h 主进程单 Run owner 租约
     this.reworkAuditLedgers = new Map(); // taskId -> W73c Finding/Rework append-only 账本
     this.qualificationLedgers = new Map(); // taskId -> W73d 项目级资格/证书账本
     this.delegationLedgers = new Map(); // taskId -> W73d 单 Run 委托账本
@@ -78,6 +83,9 @@ export class FactoryPanel {
     this.economicsEvaluationLedgers = new Map(); // taskId -> W73f 成本、版本化指标/公式与本地评估账本
     this.staffingCoordinator = new ElasticStaffingCoordinator({ capacity: this.concurrency }); // 旁路租约；runningTasks 仍是执行真相
     this.schedulerSequence = 0;
+    this.taskSettlements = new Map(); // taskId -> 当前执行最终收口 Promise
+    this.taskSettlementResolvers = new Map(); // taskId -> settlement resolver；覆盖所有 claimTask 路径
+    this.disposePromise = null;
     this.editorTasks = new Map();  // taskId -> { task, path }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
@@ -115,6 +123,11 @@ export class FactoryPanel {
 
   taskShouldStop(task) { return this.stopRequested || !!this.taskSignal(task)?.aborted; }
 
+  taskStopReason(task) {
+    const reason = this.taskSignal(task)?.reason;
+    return String(reason?.message || reason || '').trim();
+  }
+
   abortTask(taskId, reason = 'task-stop') {
     const controller = this.taskControllers.get(taskId);
     if (!controller || controller.signal.aborted) return false;
@@ -129,27 +142,47 @@ export class FactoryPanel {
   }
 
   dispose() {
-    if (this.disposed) return;
+    if (this.disposePromise) return this.disposePromise;
     this.disposed = true;
     this.requestStopAll('factory-dispose');
     window.removeEventListener('mazz:factory-task-updated', this.taskUpdateListener);
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
-    this.agentRuntime?.cancel?.().catch?.(() => {});
-    for (const ledger of this.productionRunLedgers.values()) ledger.dispose().catch(() => {});
-    this.productionRunLedgers.clear();
-    for (const ledger of this.reworkAuditLedgers.values()) ledger.dispose().catch(() => {});
-    this.reworkAuditLedgers.clear();
-    for (const service of this.qualificationDelegationServices.values()) service.dispose().catch(() => {});
-    this.qualificationDelegationServices.clear();
-    for (const ledger of this.qualificationLedgers.values()) ledger.dispose().catch(() => {});
-    this.qualificationLedgers.clear();
-    for (const ledger of this.delegationLedgers.values()) ledger.dispose().catch(() => {});
-    this.delegationLedgers.clear();
-    for (const ledger of this.scheduleLedgers.values()) ledger.dispose().catch(() => {});
-    this.scheduleLedgers.clear();
-    for (const ledger of this.economicsEvaluationLedgers.values()) ledger.dispose().catch(() => {});
-    this.economicsEvaluationLedgers.clear();
-    this.staffingCoordinator?.dispose?.();
+    const pendingTasks = [...this.taskSettlements.values()];
+    this.disposePromise = (async () => {
+      const cleanupErrors = [];
+      const attempt = async (label, operation) => {
+        try { await operation(); }
+        catch (error) { cleanupErrors.push({ label, message: String(error?.message || error) }); }
+      };
+      await Promise.allSettled(pendingTasks);
+      if (this.agentRuntime?.cancel) await Promise.resolve(this.agentRuntime.cancel()).catch(() => {});
+      // Harness Session 必须先 cancel/dispose，再关闭承接其终态记录的 Delegation Ledger。
+      for (const service of this.qualificationDelegationServices.values()) await attempt('delegation-service', () => service.dispose());
+      if (this.staffingCoordinator?.dispose) await attempt('staffing-coordinator', () => this.staffingCoordinator.dispose());
+      for (const taskId of [...this.productionRunOwnerLeases.keys()]) await attempt('run-owner', () => this.releaseProductionRunOwner({ id: taskId }, 'factory-dispose'));
+      await Promise.allSettled([...this.workshopWrites.values()]);
+      for (const ledger of this.scheduleLedgers.values()) await attempt('schedule-ledger', () => ledger.dispose());
+      for (const ledger of this.economicsEvaluationLedgers.values()) await attempt('economics-ledger', () => ledger.dispose());
+      for (const ledger of this.reworkAuditLedgers.values()) await attempt('audit-ledger', () => ledger.dispose());
+      for (const ledger of this.delegationLedgers.values()) await attempt('delegation-ledger', () => ledger.dispose());
+      for (const ledger of this.qualificationLedgers.values()) await attempt('qualification-ledger', () => ledger.dispose());
+      for (const ledger of this.productionRunLedgers.values()) await attempt('production-ledger', () => ledger.dispose());
+      this.qualificationDelegationServices.clear();
+      this.scheduleLedgers.clear();
+      this.economicsEvaluationLedgers.clear();
+      this.reworkAuditLedgers.clear();
+      this.delegationLedgers.clear();
+      this.qualificationLedgers.clear();
+      this.productionRunLedgers.clear();
+      this.productionRunOwnerLeases.clear();
+      this.taskSettlements.clear();
+      this.taskSettlementResolvers?.clear();
+      return { disposed: cleanupErrors.length === 0, cleanupErrors, activeTasks: this.runningTasks.size, activeOwners: 0, activeLeases: this.staffingCoordinator?.healthSnapshot?.().active || 0 };
+    })().catch(error => {
+      console.error('[factory] dispose 收口失败:', error?.message || error);
+      return { disposed: false, error: String(error?.message || error) };
+    });
+    return this.disposePromise;
   }
 
   // ==================== W53 坞浮动状态镜像（dockfloat 子窗格=远程视图，本实例是真相源） ====================
@@ -195,7 +228,7 @@ export class FactoryPanel {
     };
   }
   tasksSnapshot() {
-    const STATUS = { pending: '⏳ 等待', running: '⚡ 执行中', done: '✓ 完成', 'done-warn': '⚠ 完成(有警告)', failed: '✗ 失败', paused: '⏸ 已终止' };
+    const STATUS = { pending: '⏳ 等待', running: '⚡ 执行中', done: '✓ 完成', 'done-warn': '⚠ 完成(有警告)', failed: '✗ 失败', paused: '⏸ 已终止', cancelled: '✕ 已取消' };
     return (this.tasks || []).map(t => ({
       title: (t.mode === 'max' ? '📖 ' : '📄 ') + t.label + (t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}章]` : '') + (t.manualRevision?.count ? ` · ✎人工修订×${t.manualRevision.count}` : ''),
       statusText: STATUS[t.status] || t.status, desc: t.desc || '', pct: t.pct ?? null,
@@ -920,6 +953,37 @@ export class FactoryPanel {
     };
   }
 
+  async acquireProductionRunOwner(task, runId) {
+    if (!this.productionRunOwnerLeases) this.productionRunOwnerLeases = new Map();
+    const current = this.productionRunOwnerLeases.get(task?.id);
+    if (current?.runId === runId) return current;
+    if (current) await this.releaseProductionRunOwner(task, 'run-owner-replaced');
+    const result = await window.mazz.invoke('factory:runAcquire', { runId, taskId: task?.id });
+    if (!result?.ok) {
+      const error = new Error(result?.message || 'BLOCKED: RUN_OWNER_ACTIVE');
+      error.code = result?.code || 'RUN_OWNER_ACTIVE';
+      throw error;
+    }
+    const lease = Object.freeze({ runId, taskId: task.id, leaseId: result.leaseId });
+    this.productionRunOwnerLeases.set(task.id, lease);
+    return lease;
+  }
+
+  async releaseProductionRunOwner(task, reason = 'task-settled') {
+    const lease = this.productionRunOwnerLeases?.get(task?.id);
+    if (!lease) return { ok: true, code: 'ALREADY_RELEASED' };
+    const result = await window.mazz.invoke('factory:runRelease', {
+      runId: lease.runId, leaseId: lease.leaseId, reason,
+    });
+    if (result?.ok) this.productionRunOwnerLeases.delete(task.id);
+    else {
+      const error = new Error(result?.message || 'BLOCKED: RUN_OWNER_MISMATCH');
+      error.code = result?.code || 'RUN_OWNER_MISMATCH';
+      throw error;
+    }
+    return result;
+  }
+
   shouldTrackProductionRun(task) {
     // W73b 只选择一条现有 W68 单次任务路径；max/legacy 等待独立迁移 Gate。
     return task?.reviewProtocol === W68_PROTOCOL && task?.mode !== 'max';
@@ -975,7 +1039,46 @@ export class FactoryPanel {
       processProtocolProjectionVersion: task?.processProtocolProjectionVersion || '',
       processProtocolProjectionPath: task?.processProtocolProjectionPath || '',
       processProtocolProjectionEnvelopePath: task?.processProtocolProjectionEnvelopePath || '',
+      factoryRuntimeConvergenceSchema: task?.factoryRuntimeConvergenceSchema || '',
+      factoryRuntimeConvergencePath: task?.factoryRuntimeConvergencePath || '',
+      factoryRuntimeConvergenceStatus: task?.factoryRuntimeConvergenceStatus || '',
+      factoryRuntimeConvergenceBlockers: Number(task?.factoryRuntimeConvergenceBlockers) || 0,
     };
+  }
+
+  inspectW73hConvergence(task) {
+    const runLedger = this.productionRunLedgers?.get(task?.id);
+    if (!runLedger) return null;
+    const lease = this.productionRunOwnerLeases?.get(task.id);
+    return inspectFactoryRunConvergence({
+      task, runLedger,
+      auditLedger: this.reworkAuditLedgers?.get(task.id),
+      qualificationLedger: this.qualificationLedgers?.get(task.id),
+      delegationLedger: this.delegationLedgers?.get(task.id),
+      delegationService: this.qualificationDelegationServices?.get(task.id),
+      scheduleLedger: this.scheduleLedgers?.get(task.id),
+      economicsLedger: this.economicsEvaluationLedgers?.get(task.id),
+      taskActive: this.runningTasks?.has(task.id),
+      controllerActive: this.taskControllers?.has(task.id),
+      workshopPending: this.workshopWrites?.has(task.folder),
+      ownerHeld: lease?.runId === runLedger.runId,
+    });
+  }
+
+  async recordW73hConvergence(task) {
+    const runLedger = this.productionRunLedgers?.get(task?.id);
+    if (!runLedger) return null;
+    const checkpoint = this.inspectW73hConvergence(task);
+    const saved = await saveFactoryRunConvergenceCheckpoint({
+      io: this.productionRunIo(), runFolder: runLedger.paths.root, checkpoint,
+    });
+    task.factoryRuntimeConvergenceSchema = FACTORY_RUNTIME_CONVERGENCE_SCHEMA;
+    task.factoryRuntimeConvergencePath = saved.path;
+    task.factoryRuntimeConvergenceStatus = saved.checkpoint.status;
+    task.factoryRuntimeConvergenceBlockers = saved.checkpoint.blockers.length;
+    Object.assign(task, this.productionRunState(task));
+    this.persistTasks();
+    return saved;
   }
 
   redactProductionRunMessage(value) {
@@ -1160,16 +1263,27 @@ export class FactoryPanel {
       previousRunId = ledger.runId;
       await ledger.dispose();
       this.productionRunLedgers.delete(task.id);
+      await this.releaseProductionRunOwner(task, 'terminal-run-rollover');
       ledger = null;
     }
+    if (ledger) await this.acquireProductionRunOwner(task, ledger.runId);
     if (!ledger && task.productionRunId) {
-      ledger = await openProductionRunLedger({
-        io: this.productionRunIo(), folder: task.folder, runId: task.productionRunId, taskId: task.id,
-        recoverOrphaned: true,
-      });
+      // 先取得主进程 owner，才有资格把磁盘上的 running Run 判断为孤儿并恢复。
+      // 否则第二个 renderer 会把仍在其他窗口执行的 Run 误写成 recovery-required。
+      await this.acquireProductionRunOwner(task, task.productionRunId);
+      try {
+        ledger = await openProductionRunLedger({
+          io: this.productionRunIo(), folder: task.folder, runId: task.productionRunId, taskId: task.id,
+          recoverOrphaned: true,
+        });
+      } catch (error) {
+        await this.releaseProductionRunOwner(task, 'run-open-failed').catch(() => {});
+        throw error;
+      }
       if (['failed', 'completed', 'cancelled'].includes(ledger.snapshot.status)) {
         previousRunId = ledger.runId;
         await ledger.dispose();
+        await this.releaseProductionRunOwner(task, 'terminal-run-reopened');
         ledger = null;
       }
     }
@@ -1180,14 +1294,20 @@ export class FactoryPanel {
       task.productionRunPath = `${String(task.folder).replace(/\\/g, '/').replace(/\/$/, '')}/.mazz/runs/${nextRunId}`;
       task.productionRunStatus = 'proposed';
       this.persistTasks();
-      ledger = await openProductionRunLedger({
-        io: this.productionRunIo(), folder: task.folder, runId: nextRunId,
-        taskId: task.id, projectId: task.id, title: task.label,
-        domain: 'content-production', taskType: 'factory.single.w68',
-        workflowRef: 'W68', workflowVersion: 'W68a', governanceProfile: task.reviewRitual || 'light',
-        budgetProfile: { capTokens: Number(task.reviewBudgetCap) || 32000 }, previousRunId,
-        provenance: { source: 'mazz.factory', protocol: 'W73b' },
-      });
+      await this.acquireProductionRunOwner(task, nextRunId);
+      try {
+        ledger = await openProductionRunLedger({
+          io: this.productionRunIo(), folder: task.folder, runId: nextRunId,
+          taskId: task.id, projectId: task.id, title: task.label,
+          domain: 'content-production', taskType: 'factory.single.w68',
+          workflowRef: 'W68', workflowVersion: 'W68a', governanceProfile: task.reviewRitual || 'light',
+          budgetProfile: { capTokens: Number(task.reviewBudgetCap) || 32000 }, previousRunId,
+          provenance: { source: 'mazz.factory', protocol: 'W73b' },
+        });
+      } catch (error) {
+        await this.releaseProductionRunOwner(task, 'run-create-failed').catch(() => {});
+        throw error;
+      }
     }
     this.productionRunLedgers.set(task.id, ledger);
     task.productionRunSchema = PRODUCTION_RUN_SCHEMA;
@@ -1219,6 +1339,19 @@ export class FactoryPanel {
       }
       const error = new Error('W73c 审计账处于恢复阻断态；未结旗语已保留');
       error.code = 'W73_AUDIT_RECOVERY_REQUIRED';
+      throw error;
+    }
+    const convergence = this.inspectW73hConvergence(task);
+    if (convergence?.status === 'INCONSISTENT') {
+      if (ledger.snapshot.status !== 'blocked') {
+        await ledger.append({
+          type: 'run-recovery-required', toStatus: 'blocked', reasonCode: 'W73_RUNTIME_RECOVERY_REQUIRED',
+          message: `W73h 跨账本收敛检查失败：${convergence.blockers.map(row => row.code).join(', ')}`,
+          artifactRefs: [],
+        });
+      }
+      const error = new Error('W73h 运行时事实不一致；Production Run 保持阻断');
+      error.code = 'W73_RUNTIME_RECOVERY_REQUIRED';
       throw error;
     }
     if (['proposed', 'paused', 'blocked'].includes(ledger.snapshot.status)) {
@@ -1946,7 +2079,7 @@ export class FactoryPanel {
 
   // ==================== 任务执行 ====================
   claimTask(task, { scheduled = false } = {}) {
-    if (!task || this.runningTasks.has(task.id)) return false;
+    if (this.disposed || !task || this.runningTasks.has(task.id)) return false;
     if (this.runningTasks.size >= this.concurrency) {
       if (!scheduled) toast(`并发额度已满（${this.concurrency}）`);
       return false;
@@ -1954,12 +2087,24 @@ export class FactoryPanel {
     if (!this.running) this.stopRequested = false;
     this.taskControllers.set(task.id, new AbortController());
     this.runningTasks.add(task.id);
+    let settle;
+    const settlement = new Promise(resolve => { settle = resolve; });
+    this.taskSettlements.set(task.id, settlement);
+    this.taskSettlementResolvers.set(task.id, settle);
     this.running = true;
     this.pushSnapshot();
     return true;
   }
 
-  releaseTask(task, { scheduled = false } = {}) {
+  settleTask(task) {
+    const taskId = task?.id;
+    const settle = this.taskSettlementResolvers?.get(taskId);
+    settle?.();
+    this.taskSettlementResolvers?.delete(taskId);
+    this.taskSettlements?.delete(taskId);
+  }
+
+  releaseTask(task, { scheduled = false, settle = true } = {}) {
     if (task) {
       this.runningTasks.delete(task.id);
       this.taskControllers.delete(task.id);
@@ -1968,6 +2113,7 @@ export class FactoryPanel {
     this.persistTasks();
     this.pushSnapshot();
     if (!scheduled && !this.running) this.stopRequested = false;
+    if (settle) this.settleTask(task);
   }
 
   async runTask(task, { scheduled = false } = {}) {
@@ -2006,17 +2152,21 @@ export class FactoryPanel {
         status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder },
       });
     } catch (e) {
-      if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED', 'W73E_SCHEDULER_RECOVERY_REQUIRED'].includes(e?.code)) {
+      if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED', 'W73E_SCHEDULER_RECOVERY_REQUIRED', 'W73F_ECONOMICS_RECOVERY_REQUIRED', 'W73_RUNTIME_RECOVERY_REQUIRED', 'RUN_OWNER_ACTIVE'].includes(e?.code)) {
         task.status = 'paused';
         if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
         this.log(`⚠ 任务「${task.label}」因事实账恢复要求保持阻断：${e.message}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '事实账需要人工恢复', content: e.message, stage: 'ledger-recovery-required', progress: 100 })).catch(() => {});
       } else if (this.taskShouldStop(task) || e?.name === 'AbortError') {
-        task.status = 'paused';
-        await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'TASK_STOPPED', message: '任务暂停；现有工件保持不变' }).catch(error => this.log(`⚠ Production Run 暂停记账失败：${error.message}`));
-        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
-        this.log(`⏹ 任务「${task.label}」已停止并保留断点`);
-        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务已暂停', content: '请求已取消；现有断点与工件保持不变。', stage: 'stopped', progress: 100 })).catch(() => {});
+        const cancelled = this.taskStopReason(task) === 'task-deleted';
+        task.status = cancelled ? 'cancelled' : 'paused';
+        await this.appendProductionRun(task, cancelled
+          ? { type: 'run-cancelled', toStatus: 'cancelled', reasonCode: 'TASK_DELETED', message: '任务由维护者删除；现有工件保持不变' }
+          : { type: 'run-paused', toStatus: 'paused', reasonCode: 'TASK_STOPPED', message: '任务暂停；现有工件保持不变' }
+        ).catch(error => this.log(`⚠ Production Run ${cancelled ? '取消' : '暂停'}记账失败：${error.message}`));
+        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: cancelled ? 'cancelled' : 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
+        this.log(`${cancelled ? '✕' : '⏹'} 任务「${task.label}」已${cancelled ? '取消' : '停止并保留断点'}`);
+        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: cancelled ? '任务已取消' : '任务已暂停', content: cancelled ? '执行已取消；现有工件保持不变。' : '请求已取消；现有断点与工件保持不变。', stage: cancelled ? 'cancelled' : 'stopped', progress: 100 })).catch(() => {});
       } else {
         task.status = 'failed';
         await this.appendProductionRun(task, { type: 'run-failed', toStatus: 'failed', reasonCode: e.code || 'TASK_FAILED', message: this.redactProductionRunMessage(e.message) }).catch(error => this.log(`⚠ Production Run 失败记账失败：${error.message}`));
@@ -2027,11 +2177,17 @@ export class FactoryPanel {
         window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
       }
     } finally {
-      if (scheduleDispatch?.dispatchId) {
-        const outcome = task.status === 'failed' ? 'failed' : task.status === 'paused' ? 'cancelled' : task.status === 'done' || task.status === 'done-warn' ? 'completed' : 'released';
-        await this.releaseFactorySchedule(task, scheduleDispatch, outcome).catch(error => this.log(`⚠ W73e dispatch 释放记账失败：${error.message}`));
+      try {
+        if (scheduleDispatch?.dispatchId) {
+          const outcome = task.status === 'failed' ? 'failed' : ['paused', 'cancelled'].includes(task.status) ? 'cancelled' : task.status === 'done' || task.status === 'done-warn' ? 'completed' : 'released';
+          await this.releaseFactorySchedule(task, scheduleDispatch, outcome).catch(error => this.log(`⚠ W73e dispatch 释放记账失败：${error.message}`));
+        }
+        this.releaseTask(task, { scheduled, settle: false });
+        await this.releaseProductionRunOwner(task, `task-${task.status || 'settled'}`).catch(error => this.log(`⚠ W73h Run owner 释放失败：${error.message}`));
+        await this.recordW73hConvergence(task).catch(error => this.log(`⚠ W73h 收敛检查点写入失败：${error.message}`));
+      } finally {
+        this.settleTask(task);
       }
-      this.releaseTask(task, { scheduled });
     }
     return true;
   }
@@ -2812,7 +2968,7 @@ export class FactoryPanel {
 
   // ==================== 任务/历史渲染 ====================
   renderTasks() {
-    const STATUS = { pending: iconHtml('⏳') + ' 等待', running: iconHtml('⚡') + ' 执行中', done: iconHtml('✓') + ' 完成', 'done-warn': iconHtml('⚠') + ' 完成(有警告)', failed: iconHtml('✗') + ' 失败', paused: iconHtml('⏸') + ' 已终止' };
+    const STATUS = { pending: iconHtml('⏳') + ' 等待', running: iconHtml('⚡') + ' 执行中', done: iconHtml('✓') + ' 完成', 'done-warn': iconHtml('⚠') + ' 完成(有警告)', failed: iconHtml('✗') + ' 失败', paused: iconHtml('⏸') + ' 已终止', cancelled: iconHtml('✕') + ' 已取消' };
     this.taskListEl.innerHTML = this.tasks.length
       ? this.tasks.map((t, i) => `
         <div class="fc-task ${t.status}" data-i="${i}">

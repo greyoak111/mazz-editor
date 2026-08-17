@@ -20,11 +20,14 @@ function specimen() {
       }
       if (channel === 'fs:writeFile') { files.set(payload.path, String(payload.content)); return true; }
       if (channel === 'fs:mkdir') { directories.add(payload.path); return true; }
+      if (channel === 'factory:runAcquire') return { ok: true, code: 'ACQUIRED', leaseId: `lease:${payload.runId}` };
+      if (channel === 'factory:runRelease') return { ok: true, code: 'RELEASED' };
       throw new Error(`unexpected channel ${channel}`);
     },
   };
   const panel = Object.create(FactoryPanel.prototype);
   panel.productionRunLedgers = new Map();
+  panel.productionRunOwnerLeases = new Map();
   panel.reworkAuditLedgers = new Map();
   panel.cfg = { providerId: 'provider-a', model: 'model-a', apiKey: 'TOP-SECRET-KEY' };
   panel.persistTasks = () => {};

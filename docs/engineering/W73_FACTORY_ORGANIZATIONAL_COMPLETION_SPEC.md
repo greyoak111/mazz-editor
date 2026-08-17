@@ -1,14 +1,15 @@
 # W73 Factory Organizational Completion — 施工规格
 
-> 状态：`W73g IMPLEMENTED / W73h NOT APPROVED`
-> 版本：v1.6
-> 审计坐标：`main@94a82aa`
+> 状态：`W73 COMPLETE / SEALED TO SPEC`
+> 版本：v1.7
+> 审计坐标：`main@9ac443d`
 > W73b 开工基线：`main@c6a76d7`
 > W73c 开工基线：`main@b443908`
 > W73d 开工基线：`main@95f51a4`
 > W73e 开工基线：`main@d663cb1`
 > W73f 开工基线：`main@3b924c2`
 > W73g 开工基线：`main@94a82aa`
+> W73h 开工基线：`main@9ac443d`
 > 日期：2026-08-17
 > 机器可读差额表：[`W73_FACTORY_GAP_MATRIX.json`](./evidence/W73_FACTORY_GAP_MATRIX.json)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
@@ -19,7 +20,7 @@ W73 值得做，但它不是“下一代 Factory 重写”。当前 W68a/b/c 已
 
 > 在不改变 W68 审理语义的前提下，为现有生产行为建立唯一、可重开、可追踪的本地 Production Run 事实链，再让组织审计、持证、委托、调度、成本与评估共享这条事实链。
 
-W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`。W73e 继续在同一 Run 上补充可重算的候选/排除/人工决定/dispatch 事实，并让旧 1–4 worker pool 服从显式优先级、资格、健康、预算、风险和背压；AUTO 只提议，多候选必须由人类显式选择。W73f 已把同一 Run 的成本、版本化 Metric/Formula、本地评价与 Pareto 前沿落入 `economics.ndjson`：W68 字符折算只记作 estimate，真实 usage、结算金额和缺失证据保持分离或 UNKNOWN；九条能力轴、Production/Author/Audience 三张成绩单与七项系统健康 KPI 均可追溯，但真实样本不足时不宣称排名有效。W73g 又把 W68 Director table、handoff、exception、artifact chain 与 gate/recovery 冻结为项目级不可变协议资产，并把每个 Run 的既有引用按 sequence 投影为只读资产；两类资产均带 W72 Asset Envelope，并通过原 `工厂群.md` 被现有 Factory Desk 消费。它没有新增导演中心、流程图编辑器、第二 Factory 或执行权。W68 max/legacy、W73h soak、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73h，尚未批准。
+W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`。W73e 继续在同一 Run 上补充可重算的候选/排除/人工决定/dispatch 事实，并让旧 1–4 worker pool 服从显式优先级、资格、健康、预算、风险和背压；AUTO 只提议，多候选必须由人类显式选择。W73f 已把同一 Run 的成本、版本化 Metric/Formula、本地评价与 Pareto 前沿落入 `economics.ndjson`：W68 字符折算只记作 estimate，真实 usage、结算金额和缺失证据保持分离或 UNKNOWN；九条能力轴、Production/Author/Audience 三张成绩单与七项系统健康 KPI 均可追溯，但真实样本不足时不宣称排名有效。W73g 又把 W68 Director table、handoff、exception、artifact chain 与 gate/recovery 冻结为项目级不可变协议资产，并把每个 Run 的既有引用按 sequence 投影为只读资产；两类资产均带 W72 Asset Envelope，并通过原 `工厂群.md` 被现有 Factory Desk 消费。W73h 最终补上主进程单 Run owner、跨 W73b–g 事实账收敛检查点、取消终态、有序 Harness/ledger 释放和 20 轮关闭—转交—重开 soak。W73 至此按本规格关闭；W68 max/legacy、Hub、统一导入、组织编译、Persona 与外部工具仍按原波次冻结，不因 W73 完成而自动开工。
 
 ## 2. 不可破坏的所有权
 
@@ -341,6 +342,8 @@ AUTO 只提议；必须可禁 Provider、锁 executor、改预算或选备选。
 
 ### W73h — Integration, Recovery & Soak
 
+状态：`COMPLETE`。开工基线：`main@9ac443d`。
+
 入口：W73c–g。
 
 验证矩阵：
@@ -354,6 +357,19 @@ renderer crash / whole-app crash / app quit / corrupted ledger tail
 ```
 
 退出 Gate：旧 W68 合同全绿；Run 无幽灵终态；Ledger 可恢复或报告明确损坏；ResourceLedger、Harness Session、writer/listener/timer 回基线；无 P0/P1 数据可靠性缺陷。
+
+实际实现：
+
+- `main/factory-run-owners.js` 以主进程 lease 保证同一 Production Run 同时只有一个 renderer owner；同 owner 幂等、异 owner fail closed，renderer gone/destroyed 与 app quit 都释放 ResourceLedger 登记；
+- `FactoryPanel.ensureProductionRun()` 必须先取得 owner，才允许以 `recoverOrphaned` 重开磁盘 Run，避免第二窗口把仍在执行的 Run 误判为孤儿；终态滚代先释放旧 owner；
+- `renderer/modules/factory/runtime-convergence.js` 以 `mazz.factory-runtime-convergence/v0` 汇总 Production Run、Audit、Qualification、Delegation/Harness、Scheduler、Economics、task/controller、Workshop writer 与 owner 健康，只生成派生 `convergence.json`，不夺取任何子账或 W68 工件所有权；
+- 收敛检查显式识别 recovery-required、跨 Run 混写、ghost running、terminal-with-activity 与 completed-with-unresolved-findings；只有 completed + CONVERGED 才 `safeToSeal=true`；
+- `task-deleted` 进入 `run-cancelled/cancelled`，普通停止仍进入 `run-paused/paused`；W73f 损坏尾与跨账本不一致均纳入正式恢复阻断，不再漏接；
+- Factory dispose 先等待在飞 task settlement，再 cancel/dispose Harness Session，随后收 scheduler/economics/audit/delegation/qualification/Production Run ledger；关闭后拒绝新 claim，writer 与 owner 在账本关闭前回基线；
+- 20 轮 create/start/pause/open-close/owner transfer/reopen/resume/complete 实文件 soak 全绿；每轮 checkpoint 可重读、Production ledger `activeWrites=0`、Run owner 与 ResourceLedger 回到零；既有 W71 Factory 慢响应、离线、partial SSE、renderer/app crash 与 W73b–f 损坏尾/预算/资格/背压证据作为故障矩阵复用；
+- 未新增页面、模块注册、BrowserWindow、万能数据库或第二 Factory；max/legacy、W74/W79/W82/W69/W64 仍在边界外。
+
+完整证据见 [`W73H_INTEGRATION_RECOVERY_SOAK_CHECKPOINT_2026-08-17.md`](./W73H_INTEGRATION_RECOVERY_SOAK_CHECKPOINT_2026-08-17.md)。
 
 ## 6. 跨波次路由
 
@@ -421,3 +437,5 @@ W73 只有在以下可测试条件全部成立时才能标记完成：
 8. crash/resume/cancel/损坏尾/预算停/无 executor 路径通过；20 轮资源回基线。
 9. W68 既有合同与正式主路径无回退；没有第二 Factory、万能数据库或身份混写。
 10. W74/W79/W82/W69/W64 的外部项仍在其波次，不以占位按钮或半成品入口冒充 W73 完成。
+
+关闭判定：以上十项均由 W73a–h 的 schema/contract/roundtrip/fault/soak 证据闭合。W73 状态为 `COMPLETE / SEALED TO SPEC`；后续扩展必须新开所属波次，不得回写 W73 语义或暗中扩大当前 Factory owner。

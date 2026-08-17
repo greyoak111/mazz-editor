@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "coordinate": "main@94a82aa",
-  "status": "W73G_IMPLEMENTED",
+  "coordinate": "main@9ac443d",
+  "status": "W73_COMPLETE",
   "generatedAt": "2026-08-17",
   "classificationEnum": [
     "LANDED",
@@ -24,7 +24,7 @@
     "W82 compiles organizations and execution plans; W73 owns runtime state and Production Run facts.",
     "W72 Registry describes providers and capabilities; it neither schedules nor executes them.",
     "No Overall Score, hidden AUTO router, automatic promotion or automatic method mutation is permitted.",
-    "W73g adds versioned local Director/process protocol assets and read-only Run projections only; W73h soak, W82 compilation and public Hub/Promotion remain excluded."
+    "W73h adds main-process Run ownership, cross-ledger convergence checkpoints and bounded recovery/soak only; W82 compilation and public Hub/Promotion remain excluded."
   ],
   "sources": [
     {
@@ -60,6 +60,16 @@
     {
       "path": "renderer/modules/factory/economics-evaluation.js",
       "role": "W73f versioned cost, metric, formula, local evaluation and Pareto ledger",
+      "status": "CURRENT"
+    },
+    {
+      "path": "renderer/modules/factory/runtime-convergence.js",
+      "role": "W73h cross-ledger recovery, ghost-terminal detection and seal-safe convergence checkpoint",
+      "status": "CURRENT"
+    },
+    {
+      "path": "main/factory-run-owners.js",
+      "role": "W73h main-process single-owner lease for active Production Runs",
       "status": "CURRENT"
     },
     {
@@ -404,7 +414,7 @@
     {
       "id": "W73h",
       "name": "Integration, Recovery and Soak",
-      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
+      "status": "COMPLETE_BY_THIS_CHANGE",
       "dependsOn": ["W73c", "W73d", "W73e", "W73f", "W73g"],
       "runtimeChange": true,
       "exitGate": "Existing W68 flows remain compatible; crash/resume/cancel and 20-cycle resource evidence pass with no orphan run, listener or executor."

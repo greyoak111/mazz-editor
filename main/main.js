@@ -117,6 +117,7 @@ const TerminalService = require('./terminal');
 const { ResourceLedger } = require('./resource-ledger');
 const { AgentHarnessService } = require('./agent-harness');
 const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
+const { FactoryRunOwnerRegistry } = require('./factory-run-owners');
 const { FactorySseDecoder } = require('./factory-sse');
 
 const PROTOCOL = 'mazz';
@@ -138,11 +139,13 @@ const store = new Store(path.join(app.getPath('userData'), 'mazz-settings.json')
 const bus = new IpcBus();
 const resourceLedger = new ResourceLedger();
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
+const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
+  globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
   globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
 }
-const factoryAiOwners = new WeakSet();
+const factoryRuntimeOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
 const tray = new TrayService({
   windowManager: wm, store,
@@ -241,12 +244,18 @@ function addRecent(filePath) {
 
 // ---------- 白名单通道注册 ----------
 function registerChannels() {
-  const bindFactoryAiOwner = sender => {
-    if (!sender || factoryAiOwners.has(sender)) return String(sender?.id || '');
-    factoryAiOwners.add(sender);
+  const bindFactoryOwner = sender => {
+    if (!sender || factoryRuntimeOwners.has(sender)) return String(sender?.id || '');
+    factoryRuntimeOwners.add(sender);
     const ownerId = String(sender.id || '');
-    sender.on('render-process-gone', () => factoryAiRequests.cancelOwner(ownerId, 'renderer-gone').catch(() => {}));
-    sender.once('destroyed', () => factoryAiRequests.cancelOwner(ownerId, 'renderer-destroyed').catch(() => {}));
+    sender.on('render-process-gone', () => {
+      factoryAiRequests.cancelOwner(ownerId, 'renderer-gone').catch(() => {});
+      factoryRunOwners.releaseOwner(ownerId, 'renderer-gone');
+    });
+    sender.once('destroyed', () => {
+      factoryAiRequests.cancelOwner(ownerId, 'renderer-destroyed').catch(() => {});
+      factoryRunOwners.releaseOwner(ownerId, 'renderer-destroyed');
+    });
     return ownerId;
   };
   // —— 文件系统 ——
@@ -542,7 +551,7 @@ function registerChannels() {
   bus.handle('factory:aiChat', async ({ requestId, baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192 }, event) => {
     const req = factoryAiRequests.begin(requestId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, {
       kind: 'chat', timeoutMs: factoryTimeout('MAZZ_E2E_FACTORY_CHAT_TIMEOUT_MS', 180000), model,
-      ownerId: bindFactoryAiOwner(event?.sender),
+      ownerId: bindFactoryOwner(event?.sender),
     });
     let outcome = 'completed';
     try {
@@ -583,11 +592,17 @@ function registerChannels() {
   bus.handle('factory:aiCancel', async ({ requestId, reason = 'renderer-cancel' }, event) => ({
     cancelled: await factoryAiRequests.cancel(requestId, reason, { ownerId: String(event?.sender?.id || '') }),
   }));
+  bus.handle('factory:runAcquire', async ({ runId, taskId }, event) => factoryRunOwners.acquire({
+    runId, taskId, ownerId: bindFactoryOwner(event?.sender),
+  }));
+  bus.handle('factory:runRelease', async ({ runId, leaseId, reason = 'renderer-release' }, event) => factoryRunOwners.release({
+    runId, leaseId, reason, ownerId: String(event?.sender?.id || ''),
+  }));
   // 流式：SSE 逐 delta 广播 factory:aiChunk {requestId, delta}，结束推 done，出错推 error
   bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }, event) => {
     const req = factoryAiRequests.begin(requestId, {
       kind: 'stream', timeoutMs: factoryTimeout('MAZZ_E2E_FACTORY_STREAM_TIMEOUT_MS', 300000), model,
-      ownerId: bindFactoryAiOwner(event?.sender),
+      ownerId: bindFactoryOwner(event?.sender),
     });
     const push = (payload) => { if (!req.cancelled && wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'factory:aiChunk', { requestId, ...payload }); };
     let outcome = 'completed';
@@ -1470,6 +1485,7 @@ app.whenReady().then(() => {
   });
   app.on('before-quit', () => torrentDaemon.destroy().catch(e => console.warn('[torrent] quit cleanup:', e.message)));
   app.on('before-quit', () => factoryAiRequests.destroy('app-quit').catch(e => console.warn('[factory-ai] quit cleanup:', e.message)));
+  app.on('before-quit', () => factoryRunOwners.destroy('app-quit'));
   const TorrentSites = require('./torrent-sites');
   new TorrentSites({ bus });
 

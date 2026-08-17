@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "wave": "W73h",
+  "baseline": "main@9ac443d",
+  "date": "2026-08-17",
+  "status": "PASS_W73_COMPLETE",
+  "scope": "W68 single-path Factory runtime convergence only",
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "status": "PASS"
+    },
+    "w73hContract": {
+      "command": "node tests/contract/w73h-runtime-convergence.test.mjs",
+      "status": "PASS",
+      "tests": 6
+    },
+    "runOwnerUnit": {
+      "command": "node tests/unit/factory-run-owners.test.mjs",
+      "status": "PASS",
+      "tests": 3,
+      "cycles": 20
+    },
+    "productionSoak": {
+      "status": "PASS",
+      "cycles": 20,
+      "steps": [
+        "create",
+        "start",
+        "pause",
+        "close",
+        "owner-transfer",
+        "reopen",
+        "resume",
+        "complete",
+        "checkpoint",
+        "dispose"
+      ],
+      "finalResourceBaseline": {
+        "productionRunActiveWrites": 0,
+        "factoryRunOwners": 0,
+        "resourceLedgerActive": 0
+      }
+    },
+    "w68Compatibility": {
+      "status": "PASS",
+      "w68a": "11/11",
+      "w68b": "9/9",
+      "w68c": "9/9"
+    },
+    "fullRegression": {
+      "command": "npm test",
+      "status": "PASS",
+      "files": "172/172"
+    }
+  },
+  "invariants": [
+    "Production Run remains the single local runtime truth.",
+    "W68 review and artifacts remain the business kernel.",
+    "Run owner is an ephemeral execution lease, not persisted business truth.",
+    "Convergence checkpoint is derived and cannot mutate source ledgers.",
+    "Only completed plus CONVERGED may report safeToSeal.",
+    "Factory seal never implies Promotion, Publication or Canon authority.",
+    "No W74, W79, W82, W69 or W64 runtime was introduced."
+  ]
+}

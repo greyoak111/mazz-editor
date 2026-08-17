@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 37,
-    "scannedLines": 8194
+    "scannedFiles": 38,
+    "scannedLines": 8290
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -96,43 +96,43 @@
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 248,
-      "sample": "sender.on('render-process-gone', () => factoryAiRequests.cancelOwner(ownerId, 'renderer-gone').catch(() => {}));"
+      "line": 251,
+      "sample": "sender.on('render-process-gone', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 772,
+      "line": 787,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 813,
+      "line": 828,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 830,
+      "line": 845,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1103,
+      "line": 1118,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1442,
+      "line": 1457,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1518,
+      "line": 1534,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -370,17 +370,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1291,
+          "line": 1306,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1384,
+          "line": 1399,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1413,
+          "line": 1428,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -418,7 +418,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 1444,
+          "line": 1459,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
