@@ -10,8 +10,8 @@ export const PRODUCTION_RUN_STATUSES = Object.freeze([
 
 export const PRODUCTION_RUN_EVENT_TYPES = Object.freeze([
   'run-created', 'run-started', 'review-recorded', 'audit-recorded', 'qualification-recorded',
-  'delegation-recorded', 'artifact-recorded',
-  'run-paused', 'run-recovery-required', 'run-failed', 'run-completed', 'run-cancelled',
+  'delegation-recorded', 'scheduling-recorded', 'artifact-recorded',
+  'run-paused', 'run-blocked', 'run-recovery-required', 'run-failed', 'run-completed', 'run-cancelled',
 ]);
 
 const TERMINAL = new Set(['failed', 'completed', 'cancelled']);
@@ -22,13 +22,13 @@ const RUN_KEYS = new Set([
   'schema', 'runId', 'taskId', 'projectId', 'title', 'domain', 'taskType', 'status',
   'createdAt', 'startedAt', 'endedAt', 'lastSequence', 'workflowRef', 'workflowVersion',
   'governanceProfile', 'budgetProfile', 'inputArtifactRefs', 'outputArtifactRefs',
-  'gateRefs', 'findingRefs', 'reworkRefs', 'qualificationRefs', 'delegationRefs',
+  'gateRefs', 'findingRefs', 'reworkRefs', 'qualificationRefs', 'delegationRefs', 'scheduleRefs',
   'recoveryState', 'provenance', 'previousRunId',
 ]);
 const EVENT_KEYS = new Set([
   'schema', 'eventId', 'runId', 'sequence', 'occurredAt', 'type', 'actorRef', 'authorityRef',
   'fromStatus', 'toStatus', 'reasonCode', 'message', 'artifactRefs', 'gateRefs', 'findingRefs', 'reworkRefs', 'providerBoundary',
-  'qualificationRefs', 'delegationRefs',
+  'qualificationRefs', 'delegationRefs', 'scheduleRefs',
 ]);
 const REF_KEYS = new Set(['kind', 'id', 'path', 'type', 'version', 'role', 'sourceRef']);
 const PROVIDER_KEYS = new Set(['providerId', 'model', 'role', 'outcome', 'finishReason', 'responseRef', 'observed']);
@@ -128,7 +128,7 @@ export function createProductionRunSnapshot(input = {}, { clock = Date.now } = {
       actualStatus: 'UNKNOWN',
     },
     inputArtifactRefs: uniqueRefs(input.inputArtifactRefs),
-    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [],
+    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [], scheduleRefs: [],
     recoveryState: { required: false, reasonCode: '', evidenceRef: '' },
     provenance: {
       source: asString(input.provenance?.source || 'mazz.factory', 160),
@@ -155,6 +155,7 @@ export function normalizeProductionRunSnapshot(value = {}) {
   base.reworkRefs = [...new Set(asArray(value.reworkRefs).map(x => asString(x, 360)).filter(Boolean))];
   base.qualificationRefs = [...new Set(asArray(value.qualificationRefs).map(x => asString(x, 360)).filter(Boolean))];
   base.delegationRefs = [...new Set(asArray(value.delegationRefs).map(x => asString(x, 360)).filter(Boolean))];
+  base.scheduleRefs = [...new Set(asArray(value.scheduleRefs).map(x => asString(x, 360)).filter(Boolean))];
   base.recoveryState = {
     required: value.recoveryState?.required === true,
     reasonCode: asString(value.recoveryState?.reasonCode, 160),
@@ -191,6 +192,7 @@ export function normalizeProductionRunEvent(value = {}, context = {}) {
     reworkRefs: [...new Set(asArray(value.reworkRefs).map(x => asString(x, 360)).filter(Boolean))],
     qualificationRefs: [...new Set(asArray(value.qualificationRefs).map(x => asString(x, 360)).filter(Boolean))],
     delegationRefs: [...new Set(asArray(value.delegationRefs).map(x => asString(x, 360)).filter(Boolean))],
+    scheduleRefs: [...new Set(asArray(value.scheduleRefs).map(x => asString(x, 360)).filter(Boolean))],
     providerBoundary: normalizeProviderBoundary(value.providerBoundary),
   };
   if (!event.eventId || !event.runId || !event.occurredAt) throw new Error('Production Run event 缺 eventId/runId/occurredAt');
@@ -210,8 +212,10 @@ function assertTransition(snapshot, event) {
     'audit-recorded': [snapshot.status],
     'qualification-recorded': [snapshot.status],
     'delegation-recorded': [snapshot.status],
+    'scheduling-recorded': [snapshot.status],
     'artifact-recorded': [snapshot.status],
     'run-paused': ['paused'],
+    'run-blocked': ['blocked'],
     'run-recovery-required': ['blocked'],
     'run-failed': ['failed'],
     'run-completed': ['completed'],
@@ -238,6 +242,7 @@ export function reduceProductionRun(snapshotValue, eventValue) {
   next.reworkRefs = [...new Set([...next.reworkRefs, ...event.reworkRefs])];
   next.qualificationRefs = [...new Set([...next.qualificationRefs, ...event.qualificationRefs])];
   next.delegationRefs = [...new Set([...next.delegationRefs, ...event.delegationRefs])];
+  next.scheduleRefs = [...new Set([...next.scheduleRefs, ...event.scheduleRefs])];
   if (event.type === 'run-completed' || event.type === 'artifact-recorded') {
     next.outputArtifactRefs = uniqueRefs([...next.outputArtifactRefs, ...event.artifactRefs]);
   }
@@ -274,7 +279,7 @@ export function parseProductionRunEventLog(text, { runId = '' } = {}) {
 function replaySnapshot(staticSnapshot, events) {
   let snapshot = normalizeProductionRunSnapshot({
     ...staticSnapshot, status: 'proposed', startedAt: '', endedAt: '', lastSequence: 0,
-    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [],
+    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [], scheduleRefs: [],
     recoveryState: { required: false, reasonCode: '', evidenceRef: '' },
   });
   for (const event of events) snapshot = reduceProductionRun(snapshot, event);
@@ -298,6 +303,7 @@ function ledgerPaths(folder, runId) {
     economics: `${root}/economics.ndjson`,
     qualifications: `${base}/.mazz/qualifications.ndjson`,
     delegations: `${root}/delegations.ndjson`,
+    scheduling: `${root}/scheduling.ndjson`,
     references: `${root}/references.json`,
     corruptTail: `${root}/corrupt-tail.txt`,
   });

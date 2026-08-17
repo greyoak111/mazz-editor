@@ -18,8 +18,12 @@ import { PRODUCTION_RUN_SCHEMA, createProductionRunId, openProductionRunLedger }
 import { buildW68AuditBatch, openReworkAuditLedger } from './rework-audit.js';
 import {
   QUALIFICATION_RECORD_SCHEMA, DELEGATION_RECORD_SCHEMA, QualificationDelegationService,
-  openQualificationLedger, openDelegationLedger,
+  evaluateQualification, openQualificationLedger, openDelegationLedger,
 } from './qualification-delegation.js';
+import {
+  SCHEDULER_RECORD_SCHEMA, ElasticStaffingCoordinator, createScheduleProposal,
+  finalizeSchedule, openScheduleLedger,
+} from './joint-scheduler.js';
 import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
@@ -61,6 +65,9 @@ export class FactoryPanel {
     this.qualificationLedgers = new Map(); // taskId -> W73d 项目级资格/证书账本
     this.delegationLedgers = new Map(); // taskId -> W73d 单 Run 委托账本
     this.qualificationDelegationServices = new Map(); // taskId -> 资格门禁 + 内/外执行边界
+    this.scheduleLedgers = new Map(); // taskId -> W73e 单 Run 调度提议/人工决定/dispatch 账本
+    this.staffingCoordinator = new ElasticStaffingCoordinator({ capacity: this.concurrency }); // 旁路租约；runningTasks 仍是执行真相
+    this.schedulerSequence = 0;
     this.editorTasks = new Map();  // taskId -> { task, path }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
@@ -128,6 +135,9 @@ export class FactoryPanel {
     this.qualificationLedgers.clear();
     for (const ledger of this.delegationLedgers.values()) ledger.dispose().catch(() => {});
     this.delegationLedgers.clear();
+    for (const ledger of this.scheduleLedgers.values()) ledger.dispose().catch(() => {});
+    this.scheduleLedgers.clear();
+    this.staffingCoordinator?.dispose?.();
   }
 
   // ==================== W53 坞浮动状态镜像（dockfloat 子窗格=远程视图，本实例是真相源） ====================
@@ -907,9 +917,11 @@ export class FactoryPanel {
     const audit = this.reworkAuditLedgers?.get(task?.id);
     const qualification = this.qualificationLedgers?.get(task?.id);
     const delegation = this.delegationLedgers?.get(task?.id);
+    const scheduling = this.scheduleLedgers?.get(task?.id);
     const auditHealth = audit?.healthSnapshot?.();
     const qualificationHealth = qualification?.healthSnapshot?.();
     const delegationHealth = delegation?.healthSnapshot?.();
+    const schedulingHealth = scheduling?.healthSnapshot?.();
     return {
       productionRunSchema: ledger ? PRODUCTION_RUN_SCHEMA : task?.productionRunSchema,
       productionRunId: ledger?.runId || task?.productionRunId || '',
@@ -927,6 +939,11 @@ export class FactoryPanel {
       delegationCount: delegationHealth?.delegations ?? task?.delegationCount ?? 0,
       delegationBlockedCount: delegationHealth?.blockedDelegations ?? task?.delegationBlockedCount ?? 0,
       w73dRecoveryRequired: !!(qualificationHealth?.recoveryRequired || delegationHealth?.recoveryRequired || task?.w73dRecoveryRequired),
+      schedulerLedgerSchema: scheduling ? SCHEDULER_RECORD_SCHEMA : task?.schedulerLedgerSchema,
+      schedulerLedgerPath: scheduling?.path || task?.schedulerLedgerPath || '',
+      schedulerProposalCount: schedulingHealth?.proposals ?? task?.schedulerProposalCount ?? 0,
+      schedulerActiveDispatches: schedulingHealth?.activeDispatches ?? task?.schedulerActiveDispatches ?? 0,
+      w73eRecoveryRequired: !!(schedulingHealth?.recoveryRequired || task?.w73eRecoveryRequired),
     };
   }
 
@@ -995,6 +1012,33 @@ export class FactoryPanel {
     return service;
   }
 
+  async ensureW73eLedger(task, runLedger) {
+    if (!this.scheduleLedgers) this.scheduleLedgers = new Map();
+    let scheduling = this.scheduleLedgers.get(task.id) || null;
+    if (scheduling && (scheduling.runId !== runLedger.runId || scheduling.path !== runLedger.paths.scheduling)) {
+      await scheduling.dispose();
+      this.scheduleLedgers.delete(task.id);
+      scheduling = null;
+    }
+    if (!scheduling) {
+      scheduling = await openScheduleLedger({ io: this.productionRunIo(), path: runLedger.paths.scheduling, runId: runLedger.runId });
+      this.scheduleLedgers.set(task.id, scheduling);
+    }
+    if (scheduling.healthSnapshot().recoveryRequired) {
+      if (runLedger.snapshot.status !== 'blocked') {
+        await runLedger.append({
+          type: 'run-recovery-required', toStatus: 'blocked', reasonCode: 'W73E_SCHEDULER_RECOVERY_REQUIRED',
+          message: 'W73e 调度账存在损坏尾或未释放 dispatch；须人工核对后继续',
+          artifactRefs: [{ kind: 'evidence', path: scheduling.path, type: 'application/x-ndjson', role: 'scheduler-recovery-evidence' }],
+        });
+      }
+      const error = new Error('W73e 调度账处于恢复阻断态');
+      error.code = 'W73E_SCHEDULER_RECOVERY_REQUIRED';
+      throw error;
+    }
+    return scheduling;
+  }
+
   async ensureProductionRun(task, tpl) {
     if (!this.shouldTrackProductionRun(task)) return null;
     let ledger = this.productionRunLedgers.get(task.id) || null;
@@ -1050,6 +1094,7 @@ export class FactoryPanel {
       this.reworkAuditLedgers.set(task.id, audit);
     }
     await this.ensureW73dLedgers(task, ledger);
+    await this.ensureW73eLedger(task, ledger);
     if (audit.healthSnapshot().recoveryRequired) {
       if (ledger.snapshot.status !== 'blocked') {
         await ledger.append({
@@ -1209,6 +1254,141 @@ export class FactoryPanel {
     return result;
   }
 
+  staffing() {
+    if (!this.staffingCoordinator || this.staffingCoordinator.disposed) {
+      this.staffingCoordinator = new ElasticStaffingCoordinator({ capacity: this.concurrency || 1 });
+    }
+    return this.staffingCoordinator;
+  }
+
+  schedulerPriority(task) {
+    const value = Number(task?.schedulerPriority ?? task?.priority);
+    return Math.max(0, Math.min(100, Math.trunc(Number.isFinite(value) ? value : 50)));
+  }
+
+  buildSchedulerCandidates(task, options = {}, requestedAt = new Date().toISOString()) {
+    if (Array.isArray(options.candidates)) return options.candidates;
+    const coordinator = this.staffing().healthSnapshot();
+    const healthStatus = providerReady(this.cfg) ? 'available' : 'unavailable';
+    const executorRef = options.executorRef || 'factory-runtime:w68';
+    const seatRef = options.seatRequirement || 'seat:factory-production';
+    const certificateRef = options.certificateRef || '';
+    const restricted = options.qualificationRequired === true;
+    const qualification = restricted
+      ? evaluateQualification(this.qualificationLedgers?.get(task?.id)?.state, { restricted: true, certificateRef, executorRef, seatRef, at: requestedAt })
+      : { ok: true, code: 'QUALIFICATION_UNRESTRICTED' };
+    const capabilityId = options.capabilityRequirements?.[0] || 'factory.w68.execute';
+    const providerRef = this.cfg?.providerId ? `provider:${this.cfg.providerId}` : '';
+    return [{
+      candidateId: options.candidateId || 'candidate:factory-runtime:w68', executorRef, seatRefs: [seatRef],
+      capabilityProviders: [{
+        schema: 'mazz.capability-provider/v0', capabilityId, providerId: 'mazz.factory.w68-runtime',
+        displayName: 'Mazz Factory W68 Runtime', inputTypes: ['factory-task'], outputTypes: ['factory-artifact'],
+        agentUsable: false, execution: { mode: 'embedded' }, cost: { type: 'api', note: '受 W68 token cap 约束' },
+        health: { status: healthStatus, checkedAt: requestedAt, reason: healthStatus === 'available' ? '当前 Factory Provider 配置可用' : '当前 Factory Provider 未配置' },
+        provenance: { source: 'mazz.factory', protocol: 'W72/W73e' },
+      }],
+      certificateRef, qualification: { restricted, ok: qualification.ok === true, code: qualification.code || '', evidenceRef: certificateRef },
+      health: { status: healthStatus, checkedAt: requestedAt, reason: healthStatus === 'available' ? 'Factory runtime ready' : 'Factory Provider unavailable' },
+      estimatedCost: { status: 'bounded', tokens: Number(options.estimatedTokens ?? task?.reviewBudgetCap) || 0, sourceRef: `${task?.folder || ''}/成本台账.json` },
+      estimatedLatency: { status: 'unknown', ms: 0, sourceRef: '' },
+      backpressure: { active: coordinator.active, maxActive: coordinator.capacity, queued: Math.max(0, Number(options.queued) || 0) },
+      risk: { level: options.riskLevel || 'normal', reason: 'W68 单次正式主链', evidenceRef: task?.productionRunPath || '' },
+      providerRef, modelRef: this.cfg?.model ? `model:${this.cfg.model}` : '',
+      evidenceRefs: [task?.productionRunPath, certificateRef].filter(Boolean), confidence: healthStatus === 'available' ? 0.9 : 0,
+    }];
+  }
+
+  async scheduleFactoryTask(task, options = {}) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    const runLedger = this.productionRunLedgers.get(task?.id);
+    const scheduling = this.scheduleLedgers?.get(task?.id);
+    if (!runLedger || !scheduling) throw Object.assign(new Error('W73e Schedule Ledger 缺失'), { code: 'W73E_SCHEDULER_LEDGER_MISSING' });
+    this.schedulerSequence = Math.max(0, Number(this.schedulerSequence) || 0) + 1;
+    const requestedAt = options.requestedAt || new Date().toISOString();
+    const requestId = options.requestId || `schedule:${runLedger.runId}:${this.schedulerSequence}`;
+    const coordinator = this.staffing().healthSnapshot();
+    const request = {
+      schema: 'mazz.scheduler-request/v0', requestId, runId: runLedger.runId,
+      taskRef: options.taskRef || `factory-task:${task.id}`,
+      seatRequirement: options.seatRequirement || 'seat:factory-production',
+      capabilityRequirements: options.capabilityRequirements || ['factory.w68.execute'],
+      qualificationRequired: options.qualificationRequired === true,
+      budget: { remainingTokens: Number(options.remainingTokens ?? task.reviewBudgetCap) || 0 },
+      priority: options.priority ?? this.schedulerPriority(task),
+      backpressure: { active: coordinator.active, maxActive: coordinator.capacity, queued: Math.max(0, Number(options.queued) || 0) },
+      risk: { maxLevel: options.maxRisk || 'normal', reason: options.riskReason || '', evidenceRef: options.riskEvidenceRef || '' },
+      manualLock: options.manualLock || task.schedulerManualLock || {},
+      candidates: this.buildSchedulerCandidates(task, options, requestedAt),
+      evidenceWindow: { from: options.evidenceFrom || requestedAt, to: options.evidenceTo || requestedAt, refs: [scheduling.path, task.qualificationLedgerPath].filter(Boolean) },
+      requestedAt,
+    };
+    const proposal = createScheduleProposal(request);
+    const decision = finalizeSchedule(proposal, {
+      authorityRef: options.authorityRef || 'human:factory-operator',
+      selectedCandidateId: options.selectedCandidateId || '',
+      overrideReason: options.overrideReason || '', decidedAt: options.decidedAt || requestedAt,
+    });
+    await scheduling.appendBatch([
+      { recordId: `${proposal.proposalId}:proposed`, type: 'schedule-proposed', proposalId: proposal.proposalId, request, proposal },
+      { recordId: `${proposal.proposalId}:decided`, type: 'schedule-decided', proposalId: proposal.proposalId, decision, authorityRef: decision.authorityRef },
+    ]);
+    await this.appendProductionRun(task, {
+      type: 'scheduling-recorded', reasonCode: decision.reasonCode,
+      message: decision.status === 'selected' ? `W73e 人工确认执行候选：${decision.selectedCandidateId}` : `W73e 调度阻断：${decision.reasonCode}`,
+      artifactRefs: [{ kind: 'artifact', id: `${runLedger.runId}:scheduling`, path: scheduling.path, type: 'application/x-ndjson', role: 'scheduler-ledger' }],
+      scheduleRefs: [proposal.proposalId],
+    });
+    if (decision.status === 'blocked') {
+      await this.appendProductionRun(task, { type: 'run-blocked', toStatus: 'blocked', reasonCode: decision.reasonCode, message: `BLOCKED: ${decision.reasonCode}` });
+      Object.assign(task, this.productionRunState(task)); this.persistTasks();
+      return Object.freeze({ status: 'blocked', code: decision.reasonCode, request, proposal, decision });
+    }
+    const dispatchId = options.dispatchId || `dispatch:${runLedger.runId}:${this.schedulerSequence}`;
+    const acquired = this.staffing().acquire({ dispatchId, candidateId: decision.selectedCandidateId, taskRef: request.taskRef });
+    if (!acquired.ok) {
+      await scheduling.appendBatch([{ recordId: `${dispatchId}:rejected`, type: 'dispatch-rejected', proposalId: proposal.proposalId, dispatchId, candidateId: decision.selectedCandidateId, reasonCode: acquired.code, message: acquired.message }]);
+      await this.appendProductionRun(task, { type: 'run-blocked', toStatus: 'blocked', reasonCode: acquired.code, message: acquired.message });
+      Object.assign(task, this.productionRunState(task)); this.persistTasks();
+      return Object.freeze({ status: 'blocked', code: acquired.code, request, proposal, decision, dispatchId });
+    }
+    try {
+      await scheduling.appendBatch([{ recordId: `${dispatchId}:started`, type: 'dispatch-started', proposalId: proposal.proposalId, dispatchId, candidateId: decision.selectedCandidateId, reasonCode: 'DISPATCH_ACQUIRED', message: 'Existing W68 task pool retained execution ownership' }]);
+    } catch (error) {
+      this.staffing().release(dispatchId, 'ledger-write-failed');
+      throw error;
+    }
+    Object.assign(task, this.productionRunState(task)); this.persistTasks();
+    return Object.freeze({ status: 'selected', code: decision.reasonCode, request, proposal, decision, dispatchId });
+  }
+
+  async releaseFactorySchedule(task, schedulingResult, outcome = 'released') {
+    const dispatchId = schedulingResult?.dispatchId;
+    if (!dispatchId) return false;
+    const ledger = this.scheduleLedgers?.get(task?.id);
+    if (!ledger) throw new Error('W73e dispatch 释放时 Schedule Ledger 缺失');
+    try {
+      await ledger.appendBatch([{
+        recordId: `${dispatchId}:released`, type: 'dispatch-released', dispatchId, outcome,
+        reasonCode: `DISPATCH_${String(outcome).toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`,
+        message: 'W68 task pool execution ended; staffing lease released',
+      }]);
+    } finally {
+      // 写盘失败时仍须释放内存 lease；账本留下 active dispatch，重开后按 orphan 进入恢复阻断。
+      this.staffing().release(dispatchId, outcome);
+    }
+    Object.assign(task, this.productionRunState(task)); this.persistTasks();
+    return true;
+  }
+
+  async resolveSchedulerRecovery(task, { authorityRef, evidenceRefs, reason } = {}) {
+    const ledger = this.scheduleLedgers?.get(task?.id);
+    if (!ledger) throw new Error('W73e Schedule Ledger 缺失');
+    const health = await ledger.resolveRecovery({ authorityRef, evidenceRefs, reason });
+    Object.assign(task, this.productionRunState(task)); this.persistTasks();
+    return health;
+  }
+
   updateProviderBadge() {
     const hint = this.el.querySelector('.fc-provider-hint');
     const daily = this.el.querySelector('.fc-daily-hint');
@@ -1297,6 +1477,7 @@ export class FactoryPanel {
 
   setConcurrency(value) {
     this.concurrency = Math.max(1, Math.min(4, Number(value) || 1));
+    this.staffing().setCapacity(this.concurrency);
     this.saveJSON(CONCURRENCY_KEY, this.concurrency);
     const el = this.el.querySelector('.fc-concurrency');
     if (el) el.value = String(this.concurrency);
@@ -1644,8 +1825,9 @@ export class FactoryPanel {
   }
 
   async runTask(task, { scheduled = false } = {}) {
-    if (!providerReady(this.cfg)) { toast('先配置 AI 服务'); return false; }
+    if (!this.shouldTrackProductionRun(task) && !providerReady(this.cfg)) { toast('先配置 AI 服务'); return false; }
     if (!this.claimTask(task, { scheduled })) return false;
+    let scheduleDispatch = null;
     const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
     task.status = 'running';
     this.renderTasks();
@@ -1655,6 +1837,19 @@ export class FactoryPanel {
     try {
       await this.ensureTaskFolder(task, tpl);
       await this.ensureProductionRun(task, tpl);
+      if (this.shouldTrackProductionRun(task)) {
+        scheduleDispatch = await this.scheduleFactoryTask(task, {
+          ...(task.schedulerPolicy || {}),
+          authorityRef: task.schedulerPolicy?.authorityRef || (scheduled ? 'human:factory-batch-start' : 'human:factory-task-start'),
+        });
+        if (scheduleDispatch?.status === 'blocked') {
+          task.status = 'paused';
+          if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
+          this.log(`⚠ 任务「${task.label}」调度阻断：${scheduleDispatch.code}`);
+          await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '联合调度已阻断', content: `BLOCKED: ${scheduleDispatch.code}\n\n没有暗降到任意模型或执行器。`, stage: 'scheduler-blocked', progress: 100 })).catch(() => {});
+          return false;
+        }
+      }
       await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务开工', content: `「${task.label}」进入生产线。\n\n- 模式：${task.mode === 'max' ? '连写' : '单次'}\n- 审理：${task.reviewRitual === 'full' ? '全仪式' : '轻仪式'}\n- 预算：${task.reviewBudgetCap || 32000} token`, stage: 'start', progress: 0 }));
       if (task.mode === 'max') await this.runMaxTask(task, tpl, dual);
       else await this.runSingleTask(task, tpl, dual);
@@ -1665,7 +1860,7 @@ export class FactoryPanel {
         status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder },
       });
     } catch (e) {
-      if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED'].includes(e?.code)) {
+      if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED', 'W73E_SCHEDULER_RECOVERY_REQUIRED'].includes(e?.code)) {
         task.status = 'paused';
         if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
         this.log(`⚠ 任务「${task.label}」因事实账恢复要求保持阻断：${e.message}`);
@@ -1686,13 +1881,20 @@ export class FactoryPanel {
         window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
       }
     } finally {
+      if (scheduleDispatch?.dispatchId) {
+        const outcome = task.status === 'failed' ? 'failed' : task.status === 'paused' ? 'cancelled' : task.status === 'done' || task.status === 'done-warn' ? 'completed' : 'released';
+        await this.releaseFactorySchedule(task, scheduleDispatch, outcome).catch(error => this.log(`⚠ W73e dispatch 释放记账失败：${error.message}`));
+      }
       this.releaseTask(task, { scheduled });
     }
     return true;
   }
 
   async runTaskPool(tasks) {
-    const queue = (tasks || []).filter(t => !this.runningTasks.has(t.id));
+    const queue = (tasks || []).map((task, order) => ({ task, order }))
+      .filter(row => !this.runningTasks.has(row.task.id))
+      .sort((a, b) => this.schedulerPriority(b.task) - this.schedulerPriority(a.task) || a.order - b.order)
+      .map(row => row.task);
     const slots = Math.max(0, this.concurrency - this.runningTasks.size);
     if (!queue.length || !slots) { if (!slots) toast(`并发额度已满（${this.concurrency}）`); return false; }
     if (!this.running) this.stopRequested = false;

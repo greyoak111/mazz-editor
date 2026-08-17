@@ -1,11 +1,12 @@
 # W73 Factory Organizational Completion — 施工规格
 
-> 状态：`W73d IMPLEMENTED / W73e–h NOT APPROVED`
-> 版本：v1.3
-> 审计坐标：`main@95f51a4`
+> 状态：`W73e IMPLEMENTED / W73f–h NOT APPROVED`
+> 版本：v1.4
+> 审计坐标：`main@d663cb1`
 > W73b 开工基线：`main@c6a76d7`
 > W73c 开工基线：`main@b443908`
 > W73d 开工基线：`main@95f51a4`
+> W73e 开工基线：`main@d663cb1`
 > 日期：2026-08-17
 > 机器可读差额表：[`W73_FACTORY_GAP_MATRIX.json`](./evidence/W73_FACTORY_GAP_MATRIX.json)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
@@ -16,7 +17,7 @@ W73 值得做，但它不是“下一代 Factory 重写”。当前 W68a/b/c 已
 
 > 在不改变 W68 审理语义的前提下，为现有生产行为建立唯一、可重开、可追踪的本地 Production Run 事实链，再让组织审计、持证、委托、调度、成本与评估共享这条事实链。
 
-W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`，但协议测试已证明真实 Adapter 到位后必须走 Harness Session 的 create/send/interrupt/dispose/result provenance。W68 max/legacy、Scheduler、KPI、Router、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73e，尚未批准。
+W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`。W73e 继续在同一 Run 上补充可重算的候选/排除/人工决定/dispatch 事实，并让旧 1–4 worker pool 服从显式优先级、资格、健康、预算、风险和背压；AUTO 只提议，多候选必须由人类显式选择。W68 max/legacy、W73f KPI、Router、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73f，尚未批准。
 
 ## 2. 不可破坏的所有权
 
@@ -261,7 +262,7 @@ Rework {
 
 ### W73e — Joint Scheduler & Elastic Staffing
 
-入口：W73b、W73d、W72 Registry；外部 executor 路线继续服从 W66/W79 可用性。
+状态：`COMPLETE`。入口：W73b、W73d、W72 Registry；外部 executor 路线继续服从 W66/W79 可用性。
 
 调度输入：Seat requirement、Capability requirement、qualification、health、budget、priority、backpressure、risk、manual lock。输出不是“最佳模型”，而是：
 
@@ -273,6 +274,18 @@ Rework {
 AUTO 只提议；必须可禁 Provider、锁 executor、改预算或选备选。无合格 executor 时合法结果是 BLOCKED，不是暗降到任意模型。
 
 退出 Gate：同一输入可重算同一候选；每次路由可解释；并发、取消、背压和恢复不破坏旧任务池。
+
+实际实现：
+
+- `renderer/modules/factory/joint-scheduler.js` 冻结 `mazz.scheduler-request/v0`、`mazz.scheduler-proposal/v0` 与 `mazz.scheduler-record/v0`；候选必须携带 W72 `mazz.capability-provider/v0` 快照，Seat / Capability / Qualification / Health / Budget / Backpressure / Risk / Manual Lock 分别给出排除理由；
+- 排序使用公开、确定性的字典序规则，不生成 One Overall Score。输出同时保留候选、排除、推荐、备选、证据窗口、预计成本/延迟和 confidence；相同输入可逐字重算；
+- AUTO 只创建 proposal；最终决定必须由 `human:*` Authority 作出。多个可用候选若未显式选择则拒绝继续；选择备选必须保存覆盖理由；禁 Provider、锁 executor 与改预算均通过输入重算，不绕过资格/健康硬闸；
+- 单 Run `<run>/scheduling.ndjson` 以 append-only 记录 proposal、human decision、dispatch start/reject/release 与 recovery acknowledgement；Production Run v0 只增加 `scheduling-recorded`、`run-blocked` 和 `scheduleRefs`，不复制工件正文；
+- 调度账支持精确幂等、并发串行、损坏尾隔离、中段损坏拒绝；重开存在未释放 dispatch 时合法进入 recovery-required，只有 human Authority + evidence 可把孤儿标为 abandoned；
+- `ElasticStaffingCoordinator` 只给现有 worker pool 发 1–4 路旁路 lease；缩容不强杀在途，新增派工受背压，release/cancel/dispose 归零。`runningTasks`、AbortController 与 W68 task pool 继续拥有实际执行；
+- `FactoryPanel.runTaskPool()` 仅按显式 priority 稳定排序，并在 W68 单次任务开工前写入调度决定；无健康/合格 executor 时写 `BLOCKED`，不暗降模型。max/legacy、W73f KPI/Router、W73g Protocol Asset、W73h soak 与 W69/W74/W79/W82 均未进入本波。
+
+完整证据见 [`W73E_JOINT_SCHEDULER_CHECKPOINT_2026-08-17.md`](./W73E_JOINT_SCHEDULER_CHECKPOINT_2026-08-17.md)。
 
 ### W73f — Cost, KPI & Local Evaluation
 

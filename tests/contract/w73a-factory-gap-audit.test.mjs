@@ -13,8 +13,8 @@ const matrix = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
 describe('W73a Factory gap audit', () => {
   test('22 项恢复账只有五种明确分类且计数闭合', () => {
     assert.equal(matrix.schemaVersion, 1);
-    assert.equal(matrix.coordinate, 'main@95f51a4');
-    assert.equal(matrix.status, 'W73D_IMPLEMENTED');
+    assert.equal(matrix.coordinate, 'main@d663cb1');
+    assert.equal(matrix.status, 'W73E_IMPLEMENTED');
     assert.deepEqual(matrix.classificationEnum, ['LANDED', 'PARTIAL', 'METHOD_ASSET', 'POST_W71', 'OBSOLETE']);
     assert.equal(matrix.items.length, 22);
     const counts = Object.fromEntries(matrix.classificationEnum.map(value => [value, 0]));
@@ -63,14 +63,15 @@ describe('W73a Factory gap audit', () => {
     assert.ok(matrix.invariants.some(value => /W82 compiles organizations/.test(value)));
   });
 
-  test('施工依赖从 W73a 到 W73h 单向，W73a-d 完成且唯一下一波是未批准 W73e', () => {
+  test('施工依赖从 W73a 到 W73h 单向，W73a-e 完成且唯一下一波是未批准 W73f', () => {
     assert.deepEqual(matrix.waves.map(row => row.id), ['W73a', 'W73b', 'W73c', 'W73d', 'W73e', 'W73f', 'W73g', 'W73h']);
     assert.equal(matrix.waves[0].status, 'COMPLETE_BY_THIS_CHANGE');
     assert.equal(matrix.waves[1].status, 'COMPLETE_AT_B443908');
     assert.equal(matrix.waves[2].status, 'COMPLETE_AT_95F51A4');
     assert.equal(matrix.waves[3].status, 'COMPLETE_BY_THIS_CHANGE');
+    assert.equal(matrix.waves[4].status, 'COMPLETE_BY_THIS_CHANGE');
     const next = matrix.waves.filter(row => row.status === 'NEXT_RECOMMENDED_NOT_APPROVED');
-    assert.deepEqual(next.map(row => row.id), ['W73e']);
+    assert.deepEqual(next.map(row => row.id), ['W73f']);
     assert.equal(matrix.waves[0].runtimeChange, false);
     assert.equal(matrix.waves.slice(1).every(row => row.runtimeChange), true);
     assert.ok(matrix.waves.find(row => row.id === 'W73d').dependsOn.includes('W66_REAL_ADAPTER_FOR_EXTERNAL_EXECUTION'));
@@ -81,7 +82,7 @@ describe('W73a Factory gap audit', () => {
     const spec = fs.readFileSync(specPath, 'utf8');
     const checkpoint = fs.readFileSync(checkpointPath, 'utf8');
     for (const needle of [
-      'W73d IMPLEMENTED / W73e–h NOT APPROVED',
+      'W73e IMPLEMENTED / W73f–h NOT APPROVED',
       '一个运行一个目录 + append-only 事件 + 小型快照',
       'Model != Provider != Harness != Seat',
       '不提供 One Overall Score',

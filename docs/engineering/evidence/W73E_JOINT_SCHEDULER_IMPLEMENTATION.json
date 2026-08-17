@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "wave": "W73e",
+  "status": "COMPLETE",
+  "baseline": "main@d663cb1",
+  "date": "2026-08-17",
+  "schemas": {
+    "request": "mazz.scheduler-request/v0",
+    "proposal": "mazz.scheduler-proposal/v0",
+    "record": "mazz.scheduler-record/v0",
+    "capabilityProviderInput": "mazz.capability-provider/v0",
+    "productionRun": "mazz.production-run/v0"
+  },
+  "storage": {
+    "scheduleLedger": "<factory-project>/.mazz/runs/<runId>/scheduling.ndjson",
+    "bodyPolicy": "references-and-explanations-only; prompts, responses and secrets are excluded"
+  },
+  "inputs": [
+    "seatRequirement",
+    "capabilityRequirements",
+    "qualification",
+    "health",
+    "budget",
+    "priority",
+    "backpressure",
+    "risk",
+    "manualLock",
+    "evidenceWindow"
+  ],
+  "outputs": [
+    "candidates",
+    "exclusions",
+    "recommendedCandidateId",
+    "alternateCandidateIds",
+    "estimatedCost",
+    "estimatedLatency",
+    "confidence",
+    "humanDecision"
+  ],
+  "authority": {
+    "autoMayPropose": true,
+    "autoMayFinalize": false,
+    "finalAuthority": "human:* only",
+    "multiCandidateRequiresExplicitSelection": true,
+    "alternateRequiresOverrideReason": true
+  },
+  "ranking": {
+    "deterministic": true,
+    "opaqueOverallScore": false,
+    "order": [
+      "health",
+      "risk",
+      "backpressure",
+      "costKnownAndValue",
+      "latencyKnownAndValue",
+      "confidence",
+      "candidateId"
+    ]
+  },
+  "recovery": {
+    "serializedWrites": true,
+    "idempotentDuplicate": true,
+    "semanticIdConflictRejected": true,
+    "corruptTailQuarantined": true,
+    "middleCorruptionRejected": true,
+    "orphanDispatchBlocksRun": true,
+    "humanEvidenceRequiredForRecovery": true,
+    "disposeWaitsForWrites": true
+  },
+  "elasticStaffing": {
+    "capacityRange": [1, 4],
+    "shrinkKillsActiveWork": false,
+    "newLeaseBackpressure": true,
+    "executionOwner": "existing W68 runTaskPool/runningTasks/AbortController",
+    "activeAfterReleaseCancelDispose": 0
+  },
+  "productionRunChanges": {
+    "eventTypes": [
+      "scheduling-recorded",
+      "run-blocked"
+    ],
+    "referenceFields": [
+      "scheduleRefs"
+    ],
+    "businessBodyCopied": false
+  },
+  "scopeExclusions": [
+    "W68 max/legacy",
+    "W73f cost/KPI/local evaluation",
+    "W73g director/protocol assets",
+    "W73h packaged integration and soak",
+    "W69 Hub/Market/Router",
+    "W74 Promotion",
+    "W79 external tool runtime",
+    "W82 Organizational Compiler",
+    "one overall score",
+    "hidden AUTO"
+  ],
+  "tests": {
+    "w73eAssertions": {
+      "passed": 17,
+      "total": 17
+    },
+    "relatedAssertions": {
+      "passed": 125,
+      "total": 125
+    },
+    "fullRegressionFiles": {
+      "status": "PASS",
+      "passed": 166,
+      "total": 166
+    },
+    "rendererBuild": "PASS"
+  },
+  "next": "W73f Cost / KPI / Local Evaluation — NOT APPROVED"
+}
