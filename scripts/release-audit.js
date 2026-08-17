@@ -59,6 +59,35 @@ function lockedPackages() {
   return packages.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+function provenanceLedgerStatus() {
+  const relative = '.mazz/audit/oss-provenance-ledger.json';
+  const file = path.join(ROOT, relative);
+  if (!fs.existsSync(file)) return { present: false, path: relative, status: 'MISSING' };
+  try {
+    const ledger = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const inputs = (ledger.inputs?.files || []).map(record => {
+      const current = path.join(ROOT, ...String(record.path || '').split('/'));
+      const present = !!record.path && fs.existsSync(current) && fs.statSync(current).isFile();
+      const currentSha256 = present ? sha256(current) : '';
+      return { path: record.path, present, currentSha256, matchesLedger: present && currentSha256 === record.sha256 };
+    });
+    const current = inputs.length > 0 && inputs.every(item => item.matchesLedger);
+    return {
+      present: true,
+      path: relative,
+      sha256: sha256(file),
+      schema: ledger.schema || '',
+      status: current ? ledger.gates?.overall || 'UNKNOWN' : 'STALE_INPUTS',
+      current,
+      summary: ledger.summary || {},
+      blockers: ledger.gates?.blockers || [],
+      staleInputs: inputs.filter(item => !item.matchesLedger),
+    };
+  } catch (error) {
+    return { present: true, path: relative, status: 'INVALID', error: error.message };
+  }
+}
+
 function packagedSpecimen() {
   const releaseDir = path.join(ROOT, 'release');
   const unpackedDir = path.join(releaseDir, 'win-unpacked');
@@ -149,7 +178,7 @@ function auditRelease() {
   const ffmpegExclusions = ffmpegCorePaths.map(item => `!${item}`);
   const buildFiles = pkg.build?.files || [];
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     generatedAt: new Date().toISOString(),
     app: { name: pkg.name, version: pkg.version, license: pkg.license },
     build: {
@@ -164,6 +193,7 @@ function auditRelease() {
       missingDeclaredLicense: locked.filter(item => !item.license),
       packages: locked,
       evidence: licenseEvidence,
+      provenanceLedger: provenanceLedgerStatus(),
     },
     rendererSourceMaps: { count: sourceMaps.length, bytes: sum(sourceMaps), files: sourceMaps },
     nativeBinaries: { count: nativeBinaries.length, bytes: sum(nativeBinaries), files: nativeBinaries },
@@ -193,4 +223,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { auditRelease, lockedPackages, packagedSpecimen, sha256, walk };
+module.exports = { auditRelease, lockedPackages, packagedSpecimen, provenanceLedgerStatus, sha256, walk };

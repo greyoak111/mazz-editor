@@ -1,14 +1,14 @@
 # W72 Asset & Capability Foundation 施工规格
 
-> 版本：v0.2
+> 版本：v0.3
 >
 > 日期：2026-08-17
 >
-> 状态：**W72a–W72b COMPLETE / W72c–W72d NOT APPROVED**
+> 状态：**W72a–W72c COMPLETE / W72d NOT APPROVED**
 >
 > 前置：W71 `SEAL / COMPLETE`，严格 C4 提交 `cf35f5c`
 >
-> 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md` v1.42
+> 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md` v1.43
 >
 > 设计来源：`C:\Users\Administrator\Downloads\MAZZ_新上下文技术梳理_资产Factory关系检索多父导图_v0.2.md`
 
@@ -81,9 +81,20 @@ W72 完成不等于这些消费者波次自动获批。
 
 退出 Gate：盘点、适配器、描述和定向契约测试齐全；Envelope 不含 Mindmap roots/正文；现有 W62d 保存往返继续通过。证据见 [`W72B_EXISTING_ADAPTER_CHECKPOINT_2026-08-17.md`](./W72B_EXISTING_ADAPTER_CHECKPOINT_2026-08-17.md) 与 [`W72_EXISTING_ASSET_CAPABILITY_CENSUS.md`](./W72_EXISTING_ASSET_CAPABILITY_CENSUS.md)。
 
-### W72c — Continuous OSS Provenance Ledger
+### W72c — Continuous OSS Provenance Ledger（COMPLETE）
 
-后续另行施工：把项目、固定版本/commit、来源、许可证、修改、分发、NOTICE/源码义务、更新和漏洞状态形成持续账本，并和 release audit 对接。不得把研究储备中的许可证推测直接当最新事实。
+本次完成：
+
+- 以 `package-lock.json` 为固定坐标，生成 801 个 npm 包的确定性来源/许可账；
+- 区分 runtime-graph candidate、development 和 Electron platform runtime，不把锁图冒充实包；
+- 记录 resolved/integrity、declared license、修改、证据文件、分发状态、更新/漏洞状态；
+- `limiter@1.1.5` 的 lock license 缺失只由实际包 metadata + LICENSE 精确 override；
+- WebTorrent patch-package、ExcelJS override、Electron/Chromium 与 libass 复合 notice 均入账；
+- FFmpeg wrapper 固定哈希与 core 未分发激活账分离；core 对应源码 Gate 不因 ledger 存在而关闭；
+- 生成器不联网、不写时间/绝对路径，并把自身、配置、锁文件、补丁和证据文件哈希纳入输入；
+- `release-audit` schema v4 读取 ledger、检查全部输入是否 current。
+
+账本不是法律意见、在线漏洞扫描、最新版本查询、标准化公共 SBOM 或真实 installer 内容证明。退出 Gate 与证据见 [`W72C_OSS_PROVENANCE_CHECKPOINT_2026-08-17.md`](./W72C_OSS_PROVENANCE_CHECKPOINT_2026-08-17.md)。
 
 ### W72d — External Tool Adapter Spec
 
@@ -116,4 +127,4 @@ provenance
 
 ## 6. 当前停止线
 
-W72a–b 已通过，只能宣称“薄契约与一个现有样本适配已落”，不能宣称 W72 完成。W72c 持续 OSS Provenance Ledger、W72d External Tool Adapter Spec 仍未施工；下一步必须先回写完整未尽总表，再按依赖选择其中一个，不得顺手启动 W73、W74、W79 或 W84。
+W72a–c 已通过，只能宣称“薄契约、一个现有样本适配和持续 OSS 来源账已落”，不能宣称 W72 完成。W72d External Tool Adapter Spec 仍未施工；下一步必须先回写完整未尽总表，再冻结纯协议，不得顺手安装 Blender、调用外部工具或启动 W73、W74、W79、W84。

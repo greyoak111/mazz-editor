@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-17",
+  "rootEvidence": [
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "KNOWN_LIMITATIONS.md"
+  ],
+  "npmLicenseOverrides": [
+    {
+      "package": "limiter",
+      "version": "1.1.5",
+      "license": "MIT",
+      "evidenceState": "PUBLISHED_PACKAGE_LEGACY_METADATA",
+      "repository": "https://github.com/jhurliman/node-rate-limiter",
+      "licenseFile": "node_modules/limiter/LICENSE.txt",
+      "reason": "package-lock omits the legacy licenses[] field; the installed package declares licenses[0].type=MIT and carries LICENSE.txt"
+    }
+  ],
+  "packageModifications": [
+    {
+      "package": "webtorrent",
+      "version": "2.8.5",
+      "patch": "patches/webtorrent+2.8.5.patch",
+      "kind": "PATCH_PACKAGE",
+      "reason": "accept string infoHash without sending it through arr2hex"
+    }
+  ],
+  "packageEvidenceRequirements": [
+    {
+      "package": "electron",
+      "version": "33.4.11",
+      "distributionStatus": "SHIPPED_PLATFORM_RUNTIME",
+      "files": [
+        {
+          "path": "node_modules/electron/dist/LICENSE",
+          "role": "ELECTRON_LICENSE"
+        },
+        {
+          "path": "node_modules/electron/dist/LICENSES.chromium.html",
+          "role": "CHROMIUM_THIRD_PARTY_LICENSES"
+        }
+      ]
+    },
+    {
+      "package": "libass-wasm",
+      "version": "4.1.0",
+      "files": [
+        {
+          "path": "node_modules/libass-wasm/dist/js/COPYRIGHT",
+          "role": "COMPOUND_RUNTIME_LICENSE_NOTICE"
+        }
+      ]
+    }
+  ],
+  "vendoredComponents": [
+    {
+      "componentId": "npm:@ffmpeg/ffmpeg@0.12.10:vendored-wrapper",
+      "name": "@ffmpeg/ffmpeg",
+      "version": "0.12.10",
+      "source": "https://github.com/ffmpegwasm/ffmpeg.wasm",
+      "sourceRef": "v0.12.10",
+      "sourceArtifactSha256": "B2F2418BE6CC3C29A0765C1376EBFBFEA94073B287767460851A3CE487666D8F",
+      "declaredLicense": "MIT",
+      "distributionStatus": "SHIPPED_OPTIONAL_WRAPPER",
+      "modifications": "line-ending and outer-whitespace normalization only; Mazz integration remains separate",
+      "gate": "CLOSED_IDENTIFIED",
+      "files": [
+        {
+          "path": "renderer/vendor/ffmpeg/esm/classes.js",
+          "sha256": "6B85865810718AB8EC25F1DF673F65D706C68CE7E95E32A992CC8642E9C38E95",
+          "role": "RUNTIME_WRAPPER"
+        },
+        {
+          "path": "renderer/vendor/ffmpeg/esm/const.js",
+          "sha256": "F2BD8D9AD542BB6B693AA31770B1460686F2A2C8E687D474F10D67C7098FC3E3",
+          "role": "RUNTIME_WRAPPER"
+        },
+        {
+          "path": "renderer/vendor/ffmpeg/esm/errors.js",
+          "sha256": "3B6A31E4D930BAE8EA5FA35365F2FA74A408B43AEBE713CB08F88A2EE2AE1545",
+          "role": "RUNTIME_WRAPPER"
+        },
+        {
+          "path": "renderer/vendor/ffmpeg/esm/types.js",
+          "sha256": "FCFCC4502302B1C555964FF7F98C2589195F319F78573A4C9B8059737FF99B32",
+          "role": "RUNTIME_WRAPPER"
+        },
+        {
+          "path": "renderer/vendor/ffmpeg/esm/utils.js",
+          "sha256": "8E07B6E68B7F1460757DDE716C193CB72D83E5A4DA019049F59EE8E49B10A83A",
+          "role": "RUNTIME_WRAPPER"
+        },
+        {
+          "path": "renderer/vendor/ffmpeg/esm/worker.js",
+          "sha256": "B7F8936464CBF5AE329C6DD354270D4594F9931C120954C326DC27FB2691435F",
+          "role": "RUNTIME_WRAPPER"
+        },
+        {
+          "path": "renderer/vendor/ffmpeg/LICENSE.wrapper-MIT",
+          "sha256": "3E123E29517D76504FFCE77B3F8E2CCFFD4712493F27694B0ABA3E376676459F",
+          "role": "LICENSE_TEXT"
+        }
+      ],
+      "evidenceFiles": [
+        "renderer/vendor/ffmpeg/NOTICE.md",
+        "renderer/vendor/ffmpeg/PROVENANCE.md"
+      ]
+    },
+    {
+      "componentId": "npm:@ffmpeg/core@0.12.10:deferred-core",
+      "name": "@ffmpeg/core",
+      "version": "0.12.10",
+      "source": "https://github.com/ffmpegwasm/ffmpeg.wasm",
+      "sourceRef": "v0.12.10@c3a763857c5e615ae8674715ad5e4f63ff469e9d",
+      "sourceArtifactSha256": "D00089CE82E1BDF637DDBE42E0C3D41A1BA8CF4C9E825E7FA4D0BB970E844BD4",
+      "declaredLicense": "GPL-2.0-or-later",
+      "distributionStatus": "NOT_DISTRIBUTED_ACTIVATION_CAPSULE",
+      "modifications": "none present in current tree; historical hashes retained as evidence only",
+      "gate": "DEFERRED_OPEN_CORRESPONDING_SOURCE",
+      "historicalArtifacts": [
+        {
+          "name": "ffmpeg-core.js",
+          "sha256": "B642482AC79F8F619DD06DE77A557EECA6390E4F4E80C8A709EC1E7E9091E876"
+        },
+        {
+          "name": "ffmpeg-core.wasm",
+          "sha256": "9F57947A5BD530D8F00C5B3F2CB2A3492FAA7E5D823315342D6A8656D0A6B7B7"
+        }
+      ],
+      "mustBeAbsent": [
+        "renderer/vendor/ffmpeg/ffmpeg-core.js",
+        "renderer/vendor/ffmpeg/ffmpeg-core.wasm"
+      ],
+      "files": [
+        {
+          "path": "renderer/vendor/ffmpeg/COPYING.GPLv2",
+          "sha256": "8177F97513213526DF2CF6184D8FF986C675AFB514D4E68A404010521B880643",
+          "role": "HISTORICAL_LICENSE_TEXT"
+        }
+      ],
+      "evidenceFiles": [
+        "renderer/vendor/ffmpeg/NOTICE.md",
+        "renderer/vendor/ffmpeg/PROVENANCE.md",
+        "renderer/vendor/ffmpeg/SOURCE_REPRODUCIBILITY.md"
+      ]
+    }
+  ]
+}

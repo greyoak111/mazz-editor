@@ -31,7 +31,10 @@ describe('W71 发布边界', () => {
     assert.ok(report.nativeBinaries.count > 0);
     assert.ok(report.nativeBinaries.files.some(file => file.path.includes('node-pty') && file.path.endsWith('.node')));
     assert.equal(report.licenses.missingDeclaredLicense.some(item => item.name === 'limiter'), false, 'legacy licenses[] 也必须识别');
-    assert.equal(report.schemaVersion, 3);
+    assert.equal(report.schemaVersion, 4);
+    assert.equal(report.licenses.provenanceLedger.present, true);
+    assert.equal(report.licenses.provenanceLedger.current, true);
+    assert.equal(report.licenses.provenanceLedger.status, 'PASS_REPOSITORY_PROVENANCE_BASELINE');
     assert.equal(report.ffmpegDistribution.mode, 'DEFERRED_NOT_BUNDLED');
     assert.deepEqual(report.ffmpegDistribution.repositoryCoreArtifactsPresent, []);
     assert.ok(report.ffmpegDistribution.buildExclusions.every(item => item.present));

@@ -7,10 +7,11 @@ Mazz Editor includes npm/Electron dependencies and vendored runtimes governed by
 The authoritative dependency versions are locked in `package-lock.json`. Run:
 
 ```text
+npm run audit:provenance
 npm run audit:release
 ```
 
-The generated release baseline records every locked package for which npm metadata declares a license, plus packages whose license field is missing and therefore needs manual review.
+The deterministic W72 provenance ledger records locked source artifacts and integrity values, declared licenses, local package patches, dependency overrides, required evidence files, vendored hashes and deferred activation gates. The release baseline then links that ledger to the actual packaged specimen. Neither report is a legal opinion or a substitute for reviewing the license texts and distribution obligations.
 
 Important direct runtime dependencies include:
 

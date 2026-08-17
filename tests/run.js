@@ -96,6 +96,7 @@ const files = [
   'tests/contract/post-w71-security-evidence-increment.test.mjs',
   'tests/contract/w72-foundation.test.mjs',
   'tests/contract/w72b-existing-adapters.test.mjs',
+  'tests/contract/w72c-oss-provenance.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
   'tests/contract/hotfix-w61a.test.mjs',
