@@ -83,6 +83,11 @@ describe('W68a 双环、开庭与四闸', () => {
     assert(calls.includes('factory_writer') && calls.includes('factory_point'));
     assert(calls.includes('factory_review_a') && calls.includes('factory_review_b'));
     assert(Object.values(result.gates).every(Boolean));
+    assert.equal(result.reworkHistory.length, 1);
+    assert.equal(result.reworkHistory[0].beforeText, '本文已通过所有校验。现在启航。');
+    assert.equal(result.reworkHistory[0].afterText, '现在启航。风从港口吹来。');
+    assert.equal(result.reworkHistory[0].residueReport.pass, true);
+    assert.equal(result.reworkHistory[0].assignedSeatRef, 'seat:M3');
   });
 
   test('质询必须引用工件与规则；两轮不撤回自动开庭并可形成判例', async () => {

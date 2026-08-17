@@ -1,9 +1,10 @@
 # W73 Factory Organizational Completion — 施工规格
 
-> 状态：`W73b IMPLEMENTED / W73c–h NOT APPROVED`
-> 版本：v1.1
+> 状态：`W73c IMPLEMENTED / W73d–h NOT APPROVED`
+> 版本：v1.2
 > 审计坐标：`main@e23e3f9`
 > W73b 开工基线：`main@c6a76d7`
+> W73c 开工基线：`main@b443908`
 > 日期：2026-08-17
 > 机器可读差额表：[`W73_FACTORY_GAP_MATRIX.json`](./evidence/W73_FACTORY_GAP_MATRIX.json)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
@@ -14,7 +15,7 @@ W73 值得做，但它不是“下一代 Factory 重写”。当前 W68a/b/c 已
 
 > 在不改变 W68 审理语义的前提下，为现有生产行为建立唯一、可重开、可追踪的本地 Production Run 事实链，再让组织审计、持证、委托、调度、成本与评估共享这条事实链。
 
-W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references；W68 max/legacy、Router、KPI、资格、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73c，尚未批准。
+W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W68 max/legacy、Router、KPI、资格、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73d，尚未批准且外部委托子门仍受 W66 真 Adapter 约束。
 
 ## 2. 不可破坏的所有权
 
@@ -209,7 +210,7 @@ Rework {
 
 ### W73c — Rework & Audit Discipline
 
-入口：W73b。
+状态：`COMPLETE`。入口：W73b。
 
 把既有修订单、机检、对点、审理、判例和保护项挂到 Run：
 
@@ -221,9 +222,20 @@ Rework {
 
 退出 Gate：任一返工可回答“谁因何证据要求改什么、保护什么、改前改后是什么、谁复验”；恢复后未结旗语不丢。
 
+实际实现：
+
+- `renderer/modules/factory/review.js` 保持原修订单字段与四闸语义不变，只在每次真实机检/对点回炉后补充 `reworkHistory`：stage、reason、执行席、attempt、改前/改后正文和确定性 residue scan；下一轮原有机检与 M2 对点继续承担复审；
+- `renderer/modules/factory/rework-audit.js` 冻结 `mazz.rework-audit-record/v0`，以 append-only `findings.ndjson` 记录 Finding 提出、状态改变、Rework、人工升级和审计恢复；六类幻锚全部强制 `sourceRef + anchorRef + evidenceRefs`；
+- `renderer/modules/factory/index.js` 在 W68 十一类旧工件写完后旁路落审计账与 `回炉记录/Rnn-改前.md、改后.md、复验.json`，再把 finding/rework 引用挂回同一 Production Run；正文不进入 NDJSON；
+- Finding 状态只允许 `open → accepted/disputed/resolved/waived` 的冻结迁移；提出、争议、解决、豁免均需证据，状态改变需 authority；`open/disputed/accepted` 在重开后仍算未结；
+- 审计账精确重复幂等，同键异义拒绝；并发批次串行；尾损坏隔离到 `findings-corrupt-tail.txt` 并把 Run 保持 `blocked`，中段损坏硬拒绝；恢复记录没有被暗自清除；
+- 三轮不收敛仍由 W68 原逻辑退骨，W73c 只记一次 `human-escalation-requested`，不增加重试；W68 max/legacy、资格、外部委托、调度、KPI、Router、Hub 均未进入本波。
+
+完整证据见 [`W73C_REWORK_AUDIT_CHECKPOINT_2026-08-17.md`](./W73C_REWORK_AUDIT_CHECKPOINT_2026-08-17.md)。
+
 ### W73d — Qualification & Delegation
 
-入口：W73b。外部 Agent 执行子门禁另依赖 W66 至少一个真实 Adapter；没有真 Adapter 时必须显示 `BLOCKED: HARNESS_UNAVAILABLE`。
+状态：`NEXT RECOMMENDED / NOT APPROVED`。入口：W73b。外部 Agent 执行子门禁另依赖 W66 至少一个真实 Adapter；没有真 Adapter 时必须显示 `BLOCKED: HARNESS_UNAVAILABLE`。
 
 - `QualificationDefinition/Attempt/Certificate` 分离；
 - probe pack、版本、分数、证据、适用 Seat、有效期和撤销明确；

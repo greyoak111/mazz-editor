@@ -15,6 +15,7 @@ import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Revi
 import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, normalizeFactoryEvent } from './workshop.js';
 import { detectHumanHelpMoments, evaluateBudgetCap, makeBudgetCard, makeFinalReviewCard } from './command-gate.js';
 import { PRODUCTION_RUN_SCHEMA, createProductionRunId, openProductionRunLedger } from './production-run.js';
+import { buildW68AuditBatch, openReworkAuditLedger } from './rework-audit.js';
 import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
@@ -52,6 +53,7 @@ export class FactoryPanel {
     this.previewTasks = new Map(); // taskId -> { task, tpl, folder, currentPath }
     this.workshopWrites = new Map(); // folder -> Promise；同项目归档串行，任务并发不互踩
     this.productionRunLedgers = new Map(); // taskId -> W73b 单 Run 串行账本；只接 W68 单次路径
+    this.reworkAuditLedgers = new Map(); // taskId -> W73c Finding/Rework append-only 账本
     this.editorTasks = new Map();  // taskId -> { task, path }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
@@ -111,6 +113,8 @@ export class FactoryPanel {
     this.agentRuntime?.cancel?.().catch?.(() => {});
     for (const ledger of this.productionRunLedgers.values()) ledger.dispose().catch(() => {});
     this.productionRunLedgers.clear();
+    for (const ledger of this.reworkAuditLedgers.values()) ledger.dispose().catch(() => {});
+    this.reworkAuditLedgers.clear();
   }
 
   // ==================== W53 坞浮动状态镜像（dockfloat 子窗格=远程视图，本实例是真相源） ====================
@@ -887,11 +891,17 @@ export class FactoryPanel {
 
   productionRunState(task) {
     const ledger = this.productionRunLedgers.get(task?.id);
+    const audit = this.reworkAuditLedgers?.get(task?.id);
+    const auditHealth = audit?.healthSnapshot?.();
     return {
       productionRunSchema: ledger ? PRODUCTION_RUN_SCHEMA : task?.productionRunSchema,
       productionRunId: ledger?.runId || task?.productionRunId || '',
       productionRunPath: ledger?.paths?.root || task?.productionRunPath || '',
       productionRunStatus: ledger?.snapshot?.status || task?.productionRunStatus || '',
+      auditLedgerPath: audit?.path || task?.auditLedgerPath || '',
+      auditUnresolvedFindings: auditHealth?.unresolvedFindings ?? task?.auditUnresolvedFindings ?? 0,
+      auditReworkCount: auditHealth?.reworks ?? task?.auditReworkCount ?? 0,
+      auditRecoveryRequired: auditHealth?.recoveryRequired ?? task?.auditRecoveryRequired ?? false,
     };
   }
 
@@ -944,6 +954,31 @@ export class FactoryPanel {
     task.productionRunSchema = PRODUCTION_RUN_SCHEMA;
     task.productionRunId = ledger.runId;
     task.productionRunPath = ledger.paths.root;
+    if (!this.reworkAuditLedgers) this.reworkAuditLedgers = new Map();
+    let audit = this.reworkAuditLedgers.get(task.id) || null;
+    if (audit && audit.runId !== ledger.runId) {
+      await audit.dispose();
+      this.reworkAuditLedgers.delete(task.id);
+      audit = null;
+    }
+    if (!audit) {
+      audit = await openReworkAuditLedger({
+        io: this.productionRunIo(), path: ledger.paths.findings, runId: ledger.runId,
+      });
+      this.reworkAuditLedgers.set(task.id, audit);
+    }
+    if (audit.healthSnapshot().recoveryRequired) {
+      if (ledger.snapshot.status !== 'blocked') {
+        await ledger.append({
+          type: 'run-recovery-required', toStatus: 'blocked', reasonCode: 'AUDIT_RECOVERY_REQUIRED',
+          message: 'W73c 审计账需人工检查，生产任务保持阻断',
+          artifactRefs: [{ kind: 'evidence', path: audit.path.replace(/findings\.ndjson$/i, 'findings-corrupt-tail.txt'), type: 'text/plain', role: 'corrupt-audit-tail' }],
+        });
+      }
+      const error = new Error('W73c 审计账处于恢复阻断态；未结旗语已保留');
+      error.code = 'W73_AUDIT_RECOVERY_REQUIRED';
+      throw error;
+    }
     if (['proposed', 'paused', 'blocked'].includes(ledger.snapshot.status)) {
       await ledger.append({
         type: 'run-started', toStatus: 'running', reasonCode: ledger.snapshot.status === 'blocked' ? 'EXPLICIT_RECOVERY' : 'TASK_STARTED',
@@ -978,6 +1013,39 @@ export class FactoryPanel {
     task.productionRunStatus = ledger.snapshot.status;
     this.persistTasks();
     return true;
+  }
+
+  async appendW73cAudit(task, result, { artifactDir, unitNo = 1 } = {}) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    const runLedger = this.productionRunLedgers.get(task?.id);
+    const auditLedger = this.reworkAuditLedgers?.get(task?.id);
+    if (!runLedger || !auditLedger || runLedger.runId !== auditLedger.runId) {
+      const error = new Error('W73c Rework Audit Ledger 缺失或与 Production Run 不一致');
+      error.code = 'W73_AUDIT_LEDGER_MISSING';
+      throw error;
+    }
+    const batch = buildW68AuditBatch({
+      runId: runLedger.runId, result, artifactDir, unitNo,
+      redact: value => this.redactProductionRunMessage(value),
+    });
+    if (batch.artifactsToWrite.length) {
+      await window.mazz.invoke('fs:mkdir', { path: `${artifactDir}/回炉记录` });
+      for (const artifact of batch.artifactsToWrite) {
+        await window.mazz.invoke('fs:writeFile', { path: artifact.path, content: artifact.content });
+      }
+    }
+    await auditLedger.appendBatch(batch.records);
+    const health = auditLedger.healthSnapshot();
+    await this.appendProductionRun(task, {
+      type: 'audit-recorded', reasonCode: result.sealed ? 'W73C_AUDIT_CLOSED' : 'W73C_AUDIT_BLOCKED',
+      message: `W73c 记录 ${batch.findingRefs.length} 项 Finding、${batch.reworkRefs.length} 次 Rework；未结 ${health.unresolvedFindings}`,
+      artifactRefs: [{ kind: 'artifact', id: `${runLedger.runId}:audit`, path: auditLedger.path, type: 'application/x-ndjson', role: 'rework-audit-ledger' }],
+      findingRefs: batch.findingRefs,
+      reworkRefs: batch.reworkRefs,
+    });
+    Object.assign(task, this.productionRunState(task));
+    this.persistTasks();
+    return { ...batch, health };
   }
 
   updateProviderBadge() {
@@ -1436,7 +1504,12 @@ export class FactoryPanel {
         status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder },
       });
     } catch (e) {
-      if (this.taskShouldStop(task) || e?.name === 'AbortError') {
+      if (e?.code === 'W73_AUDIT_RECOVERY_REQUIRED') {
+        task.status = 'paused';
+        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
+        this.log(`⚠ 任务「${task.label}」因审计账恢复要求保持阻断：${e.message}`);
+        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '审计账需要人工恢复', content: e.message, stage: 'audit-recovery-required', progress: 100 })).catch(() => {});
+      } else if (this.taskShouldStop(task) || e?.name === 'AbortError') {
         task.status = 'paused';
         await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'TASK_STOPPED', message: '任务暂停；现有工件保持不变' }).catch(error => this.log(`⚠ Production Run 暂停记账失败：${error.message}`));
         if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
@@ -1581,6 +1654,7 @@ export class FactoryPanel {
       kind: 'artifact', id: `${task.id}:${unitNo}:${role}`, path: `${artifactDir}/${filename}`,
       type: role === 'manifest' ? 'application/json' : 'text/markdown', role,
     }));
+    await this.appendW73cAudit(task, result, { artifactDir, unitNo });
     await this.appendProductionRun(task, {
       type: 'review-recorded', reasonCode: result.sealed ? 'W68_REVIEW_SEALED' : 'W68_REVIEW_BLOCKED',
       message: result.reason || result.verdict,

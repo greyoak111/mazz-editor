@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "wave": "W73c",
+  "status": "COMPLETE_ONE_W68_SINGLE_PATH_SLICE",
+  "baselineCoordinate": "main@b443908",
+  "protocol": "mazz.rework-audit-record/v0",
+  "selectedPath": "W68 single review result -> Finding/AuditFlag/Rework -> same Production Run",
+  "recordTypes": [
+    "finding-raised",
+    "finding-status-changed",
+    "rework-recorded",
+    "human-escalation-requested",
+    "audit-recovery-required"
+  ],
+  "hallucinatedAnchorKinds": [
+    "missing-source",
+    "wrong-source",
+    "stale-source",
+    "authority-mismatch",
+    "dead-proposal-revival",
+    "self-certification"
+  ],
+  "implementation": [
+    "renderer/modules/factory/rework-audit.js",
+    "renderer/modules/factory/review.js",
+    "renderer/modules/factory/production-run.js",
+    "renderer/modules/factory/index.js"
+  ],
+  "invariants": [
+    "Existing W68 repair-order shape, three-round loop and four-gate semantics remain authoritative.",
+    "Audit ledger stores references and state transitions, never before/after body content.",
+    "Protection entries reference the repair artifact and audit messages redact the current Provider key.",
+    "Every hallucinated-anchor finding requires sourceRef, anchorRef and evidenceRefs.",
+    "Finding status changes require authority, resolution and evidence.",
+    "Open, disputed and accepted findings survive reopen as unresolved.",
+    "Corrupt tail is isolated and blocks the Run; corrupt middle is rejected.",
+    "Three-round nonconvergence records one human escalation and never adds retries.",
+    "W68 max/legacy and W73d+ qualification, scheduling, KPI and Router remain excluded."
+  ],
+  "targetedTests": {
+    "w73c-rework-audit-ledger": "8/8",
+    "w73c-factory-integration": "4/4",
+    "w68a": "11/11",
+    "w68b": "9/9",
+    "w68c": "9/9",
+    "w73b-production-run-ledger": "13/13",
+    "w73b-factory-integration": "4/4",
+    "w71-factory-request-lifecycle": "6/6"
+  },
+  "fullSuite": "162/162",
+  "next": "W73d Qualification & Delegation — NOT APPROVED; external execution still requires a real W66 Adapter"
+}

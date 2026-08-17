@@ -336,7 +336,7 @@
     {
       "id": "W73b",
       "name": "Production Run Identity and Append-only Ledger",
-      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
+      "status": "COMPLETE_AT_B443908",
       "dependsOn": ["W73a"],
       "runtimeChange": true,
       "exitGate": "One existing W68 production path writes and reopens a versioned local run chain without changing review behavior or requiring W66/W69/W82."
@@ -344,7 +344,7 @@
     {
       "id": "W73c",
       "name": "Rework and Audit Discipline",
-      "status": "NOT_APPROVED",
+      "status": "COMPLETE_BY_THIS_CHANGE",
       "dependsOn": ["W73b"],
       "runtimeChange": true,
       "exitGate": "Repair, audit flags, hallucinated anchors and resolution evidence are traceable to artifacts and survive resume."
@@ -352,7 +352,7 @@
     {
       "id": "W73d",
       "name": "Qualification and Delegation",
-      "status": "NOT_APPROVED",
+      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
       "dependsOn": ["W73b", "W66_REAL_ADAPTER_FOR_EXTERNAL_EXECUTION"],
       "runtimeChange": true,
       "exitGate": "Qualification is explicit and external delegation either uses a real Harness session or reports BLOCKED without impersonation."

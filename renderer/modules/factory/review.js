@@ -454,6 +454,7 @@ export async function runW68Review({
   let polishRecord = null;
   let polishAttempted = false;
   const repairs = [];
+  const reworkHistory = [];
   const pointReports = [];
   const reviews = [];
   const objections = [];
@@ -471,7 +472,7 @@ export async function runW68Review({
     return base;
   };
   if (ritualPlan.stopped) {
-    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: ritualPlan.reason, ritual: ritualPlan, gates: { machine: false, point: false, review: false, objection: false }, text, schema, transitions: [...transitions, 'budget-stop'], budget: ledger.summary() };
+    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: ritualPlan.reason, ritual: ritualPlan, gates: { machine: false, point: false, review: false, objection: false }, text, schema, repairs, reworkHistory, pointReports, reviews, objections, answers, transitions: [...transitions, 'budget-stop'], budget: ledger.summary() };
     result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, verdict: verdictMarkdown(result) };
     return result;
   }
@@ -499,14 +500,20 @@ export async function runW68Review({
         const order = buildRepairOrder(machine, { protectionList, source: `machine:${round}` });
         repairs.push(order);
         transitions.push(`repair:${round}`);
+        const before = text;
         const revised = await invoke({
           seat: 'M3', role: 'factory_writer', phase: `main-repair-${round}`, expected: 2600,
           system: 'MAZZ_W68_REPAIR\n你是 M3 执笔席。修订单是唯一改稿授权；只修列明项目，保护其余内容。不得解释，不得宣称自己通过验收，只输出完整修订正文。',
           user: `【骨架与验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【初稿】\n${text}\n\n【修订单】\n${repairOrderMarkdown(order)}`,
           temperature: 0.35, maxTokens: 8192,
         });
-        previousText = text;
+        previousText = before;
         text = revised || text;
+        reworkHistory.push({
+          source: order.source, stage: 'draft', reasonCode: 'MACHINE_FINDING', order,
+          beforeText: before, afterText: text, residueReport: inspectText(text),
+          assignedSeatRef: 'seat:M3', attempt: reworkHistory.length + 1,
+        });
         continue;
       }
       if (ritualPlan.effective === 'full' && !polishAttempted) {
@@ -565,20 +572,26 @@ export async function runW68Review({
       if (!order.items.length) order.items = list(point.findings).map((x, i) => ({ id: `P${i + 1}`, position: x.artifactRef || 'draft', error: x.message || asText(x), change: '作最小修订', reason: x.ruleRef || REVIEW_RULES.machineBeforePoint }));
       repairs.push(order);
       transitions.push(`repair:${round}`);
-      previousText = text;
+      const before = text;
+      previousText = before;
       text = await invoke({
         seat: 'M3', role: 'factory_writer', phase: `point-repair-${round}`, expected: 2600,
         system: 'MAZZ_W68_REPAIR\n你是 M3 执笔席。严格依修订单最小修订；不得扩写未授权内容，只输出完整正文。',
         user: `【正文】\n${text}\n\n【修订单】\n${repairOrderMarkdown(order)}\n\n【保护项】\n${list(protectionList).join('\n')}`,
         temperature: 0.35, maxTokens: 8192,
       }) || text;
+      reworkHistory.push({
+        source: order.source, stage: 'point', reasonCode: 'POINT_FINDING', order,
+        beforeText: before, afterText: text, residueReport: inspectText(text),
+        assignedSeatRef: 'seat:M3', attempt: reworkHistory.length + 1,
+      });
     }
     machine = inspectText(text);
     machineHistory.push({ round: 'final', report: machine });
     const mainConverged = machine.pass && point?.decision === 'pass';
     if (!mainConverged) {
       transitions.push('nonconvergence:skeleton');
-      const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'return-skeleton', reason: '主环三轮未收敛；依规则推定骨架/验收点需重开', ritual: ritualPlan, gates: { machine: machine.pass, point: false, review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, transitions, budget: ledger.summary(), bible };
+      const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'return-skeleton', reason: '主环三轮未收敛；依规则推定骨架/验收点需重开', ritual: ritualPlan, gates: { machine: machine.pass, point: false, review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, repairs, reworkHistory, pointReports, reviews, objections, answers, transitions, budget: ledger.summary(), bible };
       result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n'), point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n---\n\n'), repair: repairs.map(repairOrderMarkdown).join('\n\n---\n\n'), consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', verdict: verdictMarkdown(result) };
       return result;
     }
@@ -668,7 +681,7 @@ export async function runW68Review({
     transitions.push(sealed ? 'sealed' : 'blocked');
     const result = {
       protocol: W68_PROTOCOL, sealed, verdict: sealed ? 'pass' : 'block', reason: final.reason || (sealed ? '四闸全开' : '四闸未全开'),
-      ritual: ritualPlan, gates, text, schema, machine, machineHistory, polishRecord, point, consultation, repairs, reviews, objections, answers,
+      ritual: ritualPlan, gates, text, schema, machine, machineHistory, polishRecord, point, consultation, repairs, reworkHistory, pointReports, reviews, objections, answers,
       transitions, budget: ledger.summary(), bible,
       precedent: precedentMarkdown({ unitRef, objections, verdict: sealed ? 'pass' : 'block' }),
     };
@@ -682,7 +695,7 @@ export async function runW68Review({
     return result;
   } catch (error) {
     if (error?.code !== 'W68_BUDGET_STOP') throw error;
-    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: error.message, ritual: ritualPlan, gates: { machine: !!machine?.pass, point: point?.decision === 'pass', review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, transitions: [...transitions, 'budget-stop'], budget: ledger.summary(), bible };
+    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: error.message, ritual: ritualPlan, gates: { machine: !!machine?.pass, point: point?.decision === 'pass', review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, repairs, reworkHistory, pointReports, reviews, objections, answers, transitions: [...transitions, 'budget-stop'], budget: ledger.summary(), bible };
     result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.length ? machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n') : '# 机检报告\n\n- 未执行', point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n') || '# 对点报告\n\n- 未执行', repair: repairs.map(repairOrderMarkdown).join('\n\n') || '# 修订单\n\n- 无', consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', review: reviewMarkdown(reviews), objection: objectionMarkdown(objections), answer: answerMarkdown(answers), verdict: verdictMarkdown(result) };
     return result;
   }

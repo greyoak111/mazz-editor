@@ -63,11 +63,13 @@ describe('W73a Factory gap audit', () => {
     assert.ok(matrix.invariants.some(value => /W82 compiles organizations/.test(value)));
   });
 
-  test('施工依赖从 W73a 到 W73h 单向，唯一下一波是未批准 W73b', () => {
+  test('施工依赖从 W73a 到 W73h 单向，W73a-c 完成且唯一下一波是未批准 W73d', () => {
     assert.deepEqual(matrix.waves.map(row => row.id), ['W73a', 'W73b', 'W73c', 'W73d', 'W73e', 'W73f', 'W73g', 'W73h']);
     assert.equal(matrix.waves[0].status, 'COMPLETE_BY_THIS_CHANGE');
+    assert.equal(matrix.waves[1].status, 'COMPLETE_AT_B443908');
+    assert.equal(matrix.waves[2].status, 'COMPLETE_BY_THIS_CHANGE');
     const next = matrix.waves.filter(row => row.status === 'NEXT_RECOMMENDED_NOT_APPROVED');
-    assert.deepEqual(next.map(row => row.id), ['W73b']);
+    assert.deepEqual(next.map(row => row.id), ['W73d']);
     assert.equal(matrix.waves[0].runtimeChange, false);
     assert.equal(matrix.waves.slice(1).every(row => row.runtimeChange), true);
     assert.ok(matrix.waves.find(row => row.id === 'W73d').dependsOn.includes('W66_REAL_ADAPTER_FOR_EXTERNAL_EXECUTION'));
@@ -78,7 +80,7 @@ describe('W73a Factory gap audit', () => {
     const spec = fs.readFileSync(specPath, 'utf8');
     const checkpoint = fs.readFileSync(checkpointPath, 'utf8');
     for (const needle of [
-      'W73b IMPLEMENTED / W73c–h NOT APPROVED',
+      'W73c IMPLEMENTED / W73d–h NOT APPROVED',
       '一个运行一个目录 + append-only 事件 + 小型快照',
       'Model != Provider != Harness != Seat',
       '不提供 One Overall Score',
