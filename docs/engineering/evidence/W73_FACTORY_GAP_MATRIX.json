@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "coordinate": "main@3b924c2",
-  "status": "W73F_IMPLEMENTED",
+  "coordinate": "main@94a82aa",
+  "status": "W73G_IMPLEMENTED",
   "generatedAt": "2026-08-17",
   "classificationEnum": [
     "LANDED",
@@ -24,7 +24,7 @@
     "W82 compiles organizations and execution plans; W73 owns runtime state and Production Run facts.",
     "W72 Registry describes providers and capabilities; it neither schedules nor executes them.",
     "No Overall Score, hidden AUTO router, automatic promotion or automatic method mutation is permitted.",
-    "W73f adds local versioned economics, metrics, formulas, evaluations and Pareto facts only; W73g protocol assets, W73h soak and public Hub/Promotion remain excluded."
+    "W73g adds versioned local Director/process protocol assets and read-only Run projections only; W73h soak, W82 compilation and public Hub/Promotion remain excluded."
   ],
   "sources": [
     {
@@ -253,10 +253,12 @@
       "classification": "METHOD_ASSET",
       "ownerWave": "W73g",
       "currentEvidence": [
-        { "path": "renderer/modules/factory/desk.js", "needle": "export", "claim": "Factory Desk displays production artifacts but is not a reusable process-graph definition" }
+        { "path": "renderer/modules/factory/process-protocol-assets.js", "needle": "FACTORY_PROCESS_PROTOCOL_SCHEMA", "claim": "a strict versioned protocol definition now describes Director, handoff, exception, artifact and gate/recovery structure" },
+        { "path": "renderer/modules/factory/process-protocol-assets.js", "needle": "buildFactoryRunProtocolProjection", "claim": "read-only sequence-versioned projections connect the protocol to existing Run references without taking ownership" },
+        { "path": "renderer/modules/factory/index.js", "needle": "ensureW73gProtocolAssets", "claim": "the existing W68 single-path runtime records and refreshes process assets through its existing ownership point" }
       ],
-      "gap": "No queryable, versioned process-graph asset with step, gate, artifact and recovery references.",
-      "decision": "Freeze a protocol asset and projection only; W82 later owns compiled organization graphs and W79 owns external rendering."
+      "gap": "The W73g protocol definition and Run projection are landed; a compiled multi-industry organization graph or process-graph editor is intentionally absent.",
+      "decision": "Keep W73g as a readable protocol asset and projection only; W82 later owns compiled organization graphs and W79 owns external rendering."
     },
     {
       "id": "F16",
@@ -276,10 +278,12 @@
       "classification": "METHOD_ASSET",
       "ownerWave": "W73g",
       "currentEvidence": [
-        { "path": "docs/plans/W82_ORGANIZATIONAL_COMPILER.md", "needle": "Execution Plan", "claim": "director responsibilities belong to explicit plan, authority and artifact relationships" }
+        { "path": "renderer/modules/factory/process-protocol-assets.js", "needle": "directorTable", "claim": "the W68 process asset now carries explicit stage, Director/Seat, responsibility, authority, input/output, Gate and exception relationships" },
+        { "path": "renderer/modules/factory/process-protocol-assets.js", "needle": "handoffs", "claim": "explicit evidence-bearing handoffs and exception recovery points are versioned with the Director table" },
+        { "path": "renderer/modules/factory/index.js", "needle": "process-protocol", "claim": "the current Factory archive and Desk consume the readable protocol without a second module shell" }
       ],
-      "gap": "No versioned showrunner/director protocol asset or explicit decision/exception handoff.",
-      "decision": "Define a protocol asset consumed by Factory Desk; do not create a new standalone module shell."
+      "gap": "The Factory-facing versioned Director/handoff/exception asset is landed; W82 compilation and product-specific visual authoring remain future work.",
+      "decision": "Consume the protocol through Factory Desk and keep the standalone director-center idea rejected."
     },
     {
       "id": "F18",
@@ -287,11 +291,11 @@
       "classification": "METHOD_ASSET",
       "ownerWave": "W73g",
       "currentEvidence": [
-        { "path": "renderer/modules/factory/style-studio.js", "needle": "export", "claim": "style assets are an adjacent implementation precursor" },
-        { "path": "renderer/modules/factory/provider.js", "needle": "AI_ROLES", "claim": "runtime role cards are not a contributor manual" }
+        { "path": "renderer/modules/factory/process-protocol-assets.js", "needle": "authorityScope", "claim": "the Factory-facing protocol now records responsibility and authority scope without conflating style, Provider or model identity" },
+        { "path": "renderer/modules/factory/process-protocol-assets.js", "needle": "Factory seal 不等于 Promotion", "claim": "the readable asset states the contributor and authority boundary without granting persona or publication powers" }
       ],
-      "gap": "No formal asset identity, applicability, evidence, authority or gate contract.",
-      "decision": "Define only the Factory-facing protocol and leave product-persona presentation to W64."
+      "gap": "Factory-facing contributor responsibility, evidence, authority and Gate contracts are landed; product persona presentation remains absent by design.",
+      "decision": "Keep the landed Factory protocol separate from style assets and leave product-persona presentation to W64."
     },
     {
       "id": "F19",
@@ -392,7 +396,7 @@
     {
       "id": "W73g",
       "name": "Director and Process Protocol Assets",
-      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
+      "status": "COMPLETE_BY_THIS_CHANGE",
       "dependsOn": ["W73b", "W72b"],
       "runtimeChange": true,
       "exitGate": "Protocol assets are inspectable and consumed by the current Factory surface without a second module shell."
@@ -400,7 +404,7 @@
     {
       "id": "W73h",
       "name": "Integration, Recovery and Soak",
-      "status": "NOT_APPROVED",
+      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
       "dependsOn": ["W73c", "W73d", "W73e", "W73f", "W73g"],
       "runtimeChange": true,
       "exitGate": "Existing W68 flows remain compatible; crash/resume/cancel and 20-cycle resource evidence pass with no orphan run, listener or executor."

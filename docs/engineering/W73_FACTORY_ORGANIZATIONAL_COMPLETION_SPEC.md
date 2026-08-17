@@ -1,13 +1,14 @@
 # W73 Factory Organizational Completion — 施工规格
 
-> 状态：`W73f IMPLEMENTED / W73g–h NOT APPROVED`
-> 版本：v1.5
-> 审计坐标：`main@3b924c2`
+> 状态：`W73g IMPLEMENTED / W73h NOT APPROVED`
+> 版本：v1.6
+> 审计坐标：`main@94a82aa`
 > W73b 开工基线：`main@c6a76d7`
 > W73c 开工基线：`main@b443908`
 > W73d 开工基线：`main@95f51a4`
 > W73e 开工基线：`main@d663cb1`
 > W73f 开工基线：`main@3b924c2`
+> W73g 开工基线：`main@94a82aa`
 > 日期：2026-08-17
 > 机器可读差额表：[`W73_FACTORY_GAP_MATRIX.json`](./evidence/W73_FACTORY_GAP_MATRIX.json)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
@@ -18,7 +19,7 @@ W73 值得做，但它不是“下一代 Factory 重写”。当前 W68a/b/c 已
 
 > 在不改变 W68 审理语义的前提下，为现有生产行为建立唯一、可重开、可追踪的本地 Production Run 事实链，再让组织审计、持证、委托、调度、成本与评估共享这条事实链。
 
-W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`。W73e 继续在同一 Run 上补充可重算的候选/排除/人工决定/dispatch 事实，并让旧 1–4 worker pool 服从显式优先级、资格、健康、预算、风险和背压；AUTO 只提议，多候选必须由人类显式选择。W73f 已把同一 Run 的成本、版本化 Metric/Formula、本地评价与 Pareto 前沿落入 `economics.ndjson`：W68 字符折算只记作 estimate，真实 usage、结算金额和缺失证据保持分离或 UNKNOWN；九条能力轴、Production/Author/Audience 三张成绩单与七项系统健康 KPI 均可追溯，但真实样本不足时不宣称排名有效。W68 max/legacy、W73g Protocol Asset、W73h soak、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73g，尚未批准。
+W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`。W73e 继续在同一 Run 上补充可重算的候选/排除/人工决定/dispatch 事实，并让旧 1–4 worker pool 服从显式优先级、资格、健康、预算、风险和背压；AUTO 只提议，多候选必须由人类显式选择。W73f 已把同一 Run 的成本、版本化 Metric/Formula、本地评价与 Pareto 前沿落入 `economics.ndjson`：W68 字符折算只记作 estimate，真实 usage、结算金额和缺失证据保持分离或 UNKNOWN；九条能力轴、Production/Author/Audience 三张成绩单与七项系统健康 KPI 均可追溯，但真实样本不足时不宣称排名有效。W73g 又把 W68 Director table、handoff、exception、artifact chain 与 gate/recovery 冻结为项目级不可变协议资产，并把每个 Run 的既有引用按 sequence 投影为只读资产；两类资产均带 W72 Asset Envelope，并通过原 `工厂群.md` 被现有 Factory Desk 消费。它没有新增导演中心、流程图编辑器、第二 Factory 或执行权。W68 max/legacy、W73h soak、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73h，尚未批准。
 
 ## 2. 不可破坏的所有权
 
@@ -319,11 +320,24 @@ AUTO 只提议；必须可禁 Provider、锁 executor、改预算或选备选。
 
 ### W73g — Director & Process Protocol Assets
 
-入口：W73b、W72 Asset Envelope。
+状态：`COMPLETE`。入口：W73b、W72 Asset Envelope。
 
 只定义可读、可 diff 的 protocol assets：Director table、handoff、exception、artifact chain、gate/recovery projection。显示仍进入现有 Factory Desk；不建设新“导演中心”、新流程图编辑器或第二 Factory 壳。W82 将来可以编译更完整的组织图，但不反向取得 Run 所有权。
 
 退出 Gate：protocol asset 可保存、重开、版本化；引用现有 Run/Artifact/Gate；删除视图不删除事实。
+
+实际实现：
+
+- `renderer/modules/factory/process-protocol-assets.js` 冻结 `mazz.factory-process-protocol/v0` 与 `mazz.factory-process-protocol-projection/v0`。项目级 W68 协议含 7 个 Director stage、7 条 handoff、6 类 exception、12 个 artifact role、4 个既有 W68 Gate 与 6 个恢复点；所有 Exception 明确 `automaticFallback=false`；
+- 项目级定义落在 `<factory-project>/.mazz/protocols/w68-governed-review/1.0.0/`，同一 `protocolId/version` 内容冲突拒绝覆盖；JSON、Asset Envelope 与普通 Markdown README 三件并存，可重开且逐字 diff；
+- Run 投影落在 `<run>/process-protocol/run-seq-NNNNNN/`，按 Production Run `sequence` 留存历史版本，只引用现有 Artifact/Gate/Finding/Rework/recovery，不复制正文或取得事实所有权；删除视图或投影不删除 Run、领域工件或项目级协议；
+- 两类资产都生成 `mazz.asset-envelope/v0`，分别以 `describesWorkflow`、`projectsRun`、`usesProtocol` 关系连接 W68 与当前 Run；这只是 W72 薄包络，不建立全局资产注册表或 Universal Graph；
+- `ProductionRun v0` 只增加 `protocol-assets-recorded` 与 `protocolRefs[]`。初次登记和有新 Run 事实时生成可追溯投影；终态只刷新派生投影，不向已完成 Run 追加幽灵事件；
+- `FactoryPanel.ensureProductionRun()` 继续是唯一接线入口；原 `工厂群.md` 获得幂等的 `process-protocol` 系统卡，Factory Desk 沿原 archive 加载链读取协议摘要与可读文件路径。没有新增 Module Registry 项、IPC、BrowserWindow、导演中心或第二 Factory 壳；
+- schema 未知字段、secret、悬空 Stage/Gate/Artifact/Exception/Recovery 引用全部拒绝；Provider/Model/Harness/Executor 不被写成 Director 身份，协议不调用 `chatStream`、Agent Session、外部工具或 Router；
+- max/legacy、W73h soak、W82 Compiler、W64 Persona presentation、W69/W74/W79 均未进入本波。
+
+完整证据见 [`W73G_DIRECTOR_PROCESS_PROTOCOL_ASSETS_CHECKPOINT_2026-08-17.md`](./W73G_DIRECTOR_PROCESS_PROTOCOL_ASSETS_CHECKPOINT_2026-08-17.md)。
 
 ### W73h — Integration, Recovery & Soak
 
@@ -398,7 +412,7 @@ renderer crash / whole-app crash / app quit / corrupted ledger tail
 W73 只有在以下可测试条件全部成立时才能标记完成：
 
 1. 一条且只有一条本地 Production Run 真相链；现有 W68 审理和工件仍是唯一业务内核。
-2. Run、Event、Finding、Rework、Qualification、Assignment、Economics、Metric 均版本化、可重开、可追溯。
+2. Run、Event、Finding、Rework、Qualification、Assignment、Economics、Metric 与 Process Protocol/Projection 均版本化、可重开、可追溯。
 3. 外部 Agent 委托只经真实 W66 Harness；不可用时明确 BLOCKED。
 4. Router 的候选、证据窗、成本、风险、置信度和覆盖决定可复验；没有 hidden AUTO。
 5. cost actual 与 estimate 分开；未知不伪造；Metric/Formula 可重算且无 Overall Score。

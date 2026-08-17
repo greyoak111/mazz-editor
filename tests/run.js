@@ -109,6 +109,8 @@ const files = [
   'tests/contract/w73e-factory-integration.test.mjs',
   'tests/contract/w73f-economics-evaluation.test.mjs',
   'tests/contract/w73f-factory-integration.test.mjs',
+  'tests/contract/w73g-process-protocol-assets.test.mjs',
+  'tests/contract/w73g-factory-integration.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
   'tests/contract/hotfix-w61a.test.mjs',

@@ -11,6 +11,7 @@ export const PRODUCTION_RUN_STATUSES = Object.freeze([
 export const PRODUCTION_RUN_EVENT_TYPES = Object.freeze([
   'run-created', 'run-started', 'review-recorded', 'audit-recorded', 'qualification-recorded',
   'delegation-recorded', 'scheduling-recorded', 'economics-recorded', 'evaluation-recorded', 'artifact-recorded',
+  'protocol-assets-recorded',
   'run-paused', 'run-blocked', 'run-recovery-required', 'run-failed', 'run-completed', 'run-cancelled',
 ]);
 
@@ -23,14 +24,14 @@ const RUN_KEYS = new Set([
   'createdAt', 'startedAt', 'endedAt', 'lastSequence', 'workflowRef', 'workflowVersion',
   'governanceProfile', 'budgetProfile', 'inputArtifactRefs', 'outputArtifactRefs',
   'gateRefs', 'findingRefs', 'reworkRefs', 'qualificationRefs', 'delegationRefs', 'scheduleRefs',
-  'economicsRefs', 'evaluationRefs',
+  'economicsRefs', 'evaluationRefs', 'protocolRefs',
   'recoveryState', 'provenance', 'previousRunId',
 ]);
 const EVENT_KEYS = new Set([
   'schema', 'eventId', 'runId', 'sequence', 'occurredAt', 'type', 'actorRef', 'authorityRef',
   'fromStatus', 'toStatus', 'reasonCode', 'message', 'artifactRefs', 'gateRefs', 'findingRefs', 'reworkRefs', 'providerBoundary',
   'qualificationRefs', 'delegationRefs', 'scheduleRefs',
-  'economicsRefs', 'evaluationRefs',
+  'economicsRefs', 'evaluationRefs', 'protocolRefs',
 ]);
 const REF_KEYS = new Set(['kind', 'id', 'path', 'type', 'version', 'role', 'sourceRef']);
 const PROVIDER_KEYS = new Set(['providerId', 'model', 'role', 'outcome', 'finishReason', 'responseRef', 'observed']);
@@ -130,7 +131,7 @@ export function createProductionRunSnapshot(input = {}, { clock = Date.now } = {
       actualStatus: 'UNKNOWN',
     },
     inputArtifactRefs: uniqueRefs(input.inputArtifactRefs),
-    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [], scheduleRefs: [], economicsRefs: [], evaluationRefs: [],
+    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [], scheduleRefs: [], economicsRefs: [], evaluationRefs: [], protocolRefs: [],
     recoveryState: { required: false, reasonCode: '', evidenceRef: '' },
     provenance: {
       source: asString(input.provenance?.source || 'mazz.factory', 160),
@@ -160,6 +161,7 @@ export function normalizeProductionRunSnapshot(value = {}) {
   base.scheduleRefs = [...new Set(asArray(value.scheduleRefs).map(x => asString(x, 360)).filter(Boolean))];
   base.economicsRefs = [...new Set(asArray(value.economicsRefs).map(x => asString(x, 360)).filter(Boolean))];
   base.evaluationRefs = [...new Set(asArray(value.evaluationRefs).map(x => asString(x, 360)).filter(Boolean))];
+  base.protocolRefs = [...new Set(asArray(value.protocolRefs).map(x => asString(x, 360)).filter(Boolean))];
   base.recoveryState = {
     required: value.recoveryState?.required === true,
     reasonCode: asString(value.recoveryState?.reasonCode, 160),
@@ -199,6 +201,7 @@ export function normalizeProductionRunEvent(value = {}, context = {}) {
     scheduleRefs: [...new Set(asArray(value.scheduleRefs).map(x => asString(x, 360)).filter(Boolean))],
     economicsRefs: [...new Set(asArray(value.economicsRefs).map(x => asString(x, 360)).filter(Boolean))],
     evaluationRefs: [...new Set(asArray(value.evaluationRefs).map(x => asString(x, 360)).filter(Boolean))],
+    protocolRefs: [...new Set(asArray(value.protocolRefs).map(x => asString(x, 360)).filter(Boolean))],
     providerBoundary: normalizeProviderBoundary(value.providerBoundary),
   };
   if (!event.eventId || !event.runId || !event.occurredAt) throw new Error('Production Run event 缺 eventId/runId/occurredAt');
@@ -222,6 +225,7 @@ function assertTransition(snapshot, event) {
     'economics-recorded': [snapshot.status],
     'evaluation-recorded': [snapshot.status],
     'artifact-recorded': [snapshot.status],
+    'protocol-assets-recorded': [snapshot.status],
     'run-paused': ['paused'],
     'run-blocked': ['blocked'],
     'run-recovery-required': ['blocked'],
@@ -253,6 +257,7 @@ export function reduceProductionRun(snapshotValue, eventValue) {
   next.scheduleRefs = [...new Set([...next.scheduleRefs, ...event.scheduleRefs])];
   next.economicsRefs = [...new Set([...next.economicsRefs, ...event.economicsRefs])];
   next.evaluationRefs = [...new Set([...next.evaluationRefs, ...event.evaluationRefs])];
+  next.protocolRefs = [...new Set([...next.protocolRefs, ...event.protocolRefs])];
   if (event.type === 'run-completed' || event.type === 'artifact-recorded') {
     next.outputArtifactRefs = uniqueRefs([...next.outputArtifactRefs, ...event.artifactRefs]);
   }
@@ -289,7 +294,7 @@ export function parseProductionRunEventLog(text, { runId = '' } = {}) {
 function replaySnapshot(staticSnapshot, events) {
   let snapshot = normalizeProductionRunSnapshot({
     ...staticSnapshot, status: 'proposed', startedAt: '', endedAt: '', lastSequence: 0,
-    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [], scheduleRefs: [], economicsRefs: [], evaluationRefs: [],
+    outputArtifactRefs: [], gateRefs: [], findingRefs: [], reworkRefs: [], qualificationRefs: [], delegationRefs: [], scheduleRefs: [], economicsRefs: [], evaluationRefs: [], protocolRefs: [],
     recoveryState: { required: false, reasonCode: '', evidenceRef: '' },
   });
   for (const event of events) snapshot = reduceProductionRun(snapshot, event);

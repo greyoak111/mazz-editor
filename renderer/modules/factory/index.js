@@ -28,6 +28,11 @@ import {
   ECONOMICS_LEDGER_RECORD_SCHEMA, buildW68EconomicsEvaluationBatch,
   openEconomicsEvaluationLedger, standardEconomicsMetricRecords,
 } from './economics-evaluation.js';
+import {
+  FACTORY_PROCESS_PROTOCOL_SCHEMA, FACTORY_PROCESS_PROJECTION_SCHEMA,
+  buildFactoryRunProtocolProjection, createW68FactoryProcessProtocol, factoryProcessDeskEvent,
+  factoryProcessProjectionPaths, saveFactoryProcessProjectionAsset, saveFactoryProcessProtocolAsset,
+} from './process-protocol-assets.js';
 import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
@@ -888,6 +893,7 @@ export class FactoryPanel {
 
   async appendWorkshop(task, events) {
     if (!task?.folder) return false;
+    if (!this.workshopWrites) this.workshopWrites = new Map();
     const folder = String(task.folder).replace(/\\/g, '/').replace(/\/$/, '');
     const path = `${folder}/${FACTORY_ARCHIVE_FILE}`;
     const before = this.workshopWrites.get(folder) || Promise.resolve();
@@ -895,7 +901,7 @@ export class FactoryPanel {
       const old = await readOptionalFile(path);
       const next = appendFactoryArchiveText(old, events, { title: `${task.label} · 工厂群` });
       if (next !== old) await window.mazz.invoke('fs:writeFile', { path, content: next });
-      window.dispatchEvent(new CustomEvent('mazz:factory-workshop', { detail: { taskId: task.id, folder, path } }));
+      window.dispatchEvent(new window.CustomEvent('mazz:factory-workshop', { detail: { taskId: task.id, folder, path } }));
       return true;
     });
     this.workshopWrites.set(folder, write);
@@ -959,6 +965,16 @@ export class FactoryPanel {
       economicsEvaluationCount: economicsHealth?.evaluations ?? task?.economicsEvaluationCount ?? 0,
       economicsUnknownCostCount: economicsHealth?.costKinds?.unknown ?? task?.economicsUnknownCostCount ?? 0,
       w73fRecoveryRequired: !!(economicsHealth?.recoveryRequired || task?.w73fRecoveryRequired),
+      processProtocolSchema: task?.processProtocolSchema || '',
+      processProtocolAssetId: task?.processProtocolAssetId || '',
+      processProtocolVersion: task?.processProtocolVersion || '',
+      processProtocolPath: task?.processProtocolPath || '',
+      processProtocolEnvelopePath: task?.processProtocolEnvelopePath || '',
+      processProtocolProjectionSchema: task?.processProtocolProjectionSchema || '',
+      processProtocolProjectionId: task?.processProtocolProjectionId || '',
+      processProtocolProjectionVersion: task?.processProtocolProjectionVersion || '',
+      processProtocolProjectionPath: task?.processProtocolProjectionPath || '',
+      processProtocolProjectionEnvelopePath: task?.processProtocolProjectionEnvelopePath || '',
     };
   }
 
@@ -1086,6 +1102,56 @@ export class FactoryPanel {
     return economics;
   }
 
+  async ensureW73gProtocolAssets(task, runLedger) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    if (!runLedger || runLedger.runId !== task?.productionRunId) {
+      const error = new Error('W73g Process Protocol 缺同一 Production Run');
+      error.code = 'W73G_PRODUCTION_RUN_MISMATCH';
+      throw error;
+    }
+    const io = this.productionRunIo();
+    const protocolBundle = await saveFactoryProcessProtocolAsset({
+      io, projectFolder: task.folder, protocol: createW68FactoryProcessProtocol(),
+    });
+    const projectionId = `asset:factory-process-projection:${runLedger.runId}`;
+    const currentVersion = `run-seq-${String(runLedger.snapshot.lastSequence).padStart(6, '0')}`;
+    const currentRef = `${projectionId}@${currentVersion}`;
+    const terminal = ['failed', 'completed', 'cancelled'].includes(runLedger.snapshot.status);
+    if (!runLedger.snapshot.protocolRefs.includes(currentRef) && !terminal) {
+      const nextVersion = `run-seq-${String(runLedger.snapshot.lastSequence + 1).padStart(6, '0')}`;
+      const predicted = factoryProcessProjectionPaths(runLedger.paths.root, { version: nextVersion });
+      await runLedger.append({
+        type: 'protocol-assets-recorded', reasonCode: 'W73G_PROTOCOL_PROJECTION_RECORDED',
+        message: 'W73g Director、handoff、exception、artifact chain 与 gate/recovery 只读协议资产已登记；不取得执行或 Run 所有权',
+        artifactRefs: [
+          { kind: 'asset', id: protocolBundle.asset.id, path: protocolBundle.paths.json, type: 'application/json', version: protocolBundle.asset.version, role: 'process-protocol-definition' },
+          { kind: 'asset-envelope', id: `${protocolBundle.asset.id}:envelope`, path: protocolBundle.paths.envelope, type: 'application/json', version: protocolBundle.asset.version, role: 'process-protocol-envelope' },
+          { kind: 'asset-view', id: `${protocolBundle.asset.id}:readme`, path: protocolBundle.paths.markdown, type: 'text/markdown', version: protocolBundle.asset.version, role: 'process-protocol-readable' },
+          { kind: 'asset', id: projectionId, path: predicted.json, type: 'application/json', version: nextVersion, role: 'run-process-projection' },
+          { kind: 'asset-envelope', id: `${projectionId}:envelope`, path: predicted.envelope, type: 'application/json', version: nextVersion, role: 'run-process-projection-envelope' },
+          { kind: 'asset-view', id: `${projectionId}:readme`, path: predicted.markdown, type: 'text/markdown', version: nextVersion, role: 'run-process-projection-readable' },
+        ],
+        protocolRefs: [`${protocolBundle.asset.id}@${protocolBundle.asset.version}`, `${projectionId}@${nextVersion}`],
+      });
+    }
+    const projection = buildFactoryRunProtocolProjection({ protocolAsset: protocolBundle.asset, ledger: runLedger });
+    const projectionBundle = await saveFactoryProcessProjectionAsset({ io, runFolder: runLedger.paths.root, projection });
+    task.processProtocolSchema = FACTORY_PROCESS_PROTOCOL_SCHEMA;
+    task.processProtocolAssetId = protocolBundle.asset.id;
+    task.processProtocolVersion = protocolBundle.asset.version;
+    task.processProtocolPath = protocolBundle.paths.json;
+    task.processProtocolEnvelopePath = protocolBundle.paths.envelope;
+    task.processProtocolProjectionSchema = FACTORY_PROCESS_PROJECTION_SCHEMA;
+    task.processProtocolProjectionId = projectionBundle.asset.id;
+    task.processProtocolProjectionVersion = projectionBundle.asset.version;
+    task.processProtocolProjectionPath = projectionBundle.paths.json;
+    task.processProtocolProjectionEnvelopePath = projectionBundle.paths.envelope;
+    await this.appendWorkshop(task, normalizeFactoryEvent(factoryProcessDeskEvent({ task, protocolBundle, projectionBundle })));
+    Object.assign(task, this.productionRunState(task));
+    this.persistTasks();
+    return { protocolBundle, projectionBundle };
+  }
+
   async ensureProductionRun(task, tpl) {
     if (!this.shouldTrackProductionRun(task)) return null;
     let ledger = this.productionRunLedgers.get(task.id) || null;
@@ -1165,6 +1231,7 @@ export class FactoryPanel {
         },
       });
     }
+    await this.ensureW73gProtocolAssets(task, ledger);
     task.productionRunStatus = ledger.snapshot.status;
     this.persistTasks();
     return ledger;
@@ -2106,6 +2173,7 @@ export class FactoryPanel {
       artifactRefs,
       gateRefs: Object.entries(result.gates || {}).map(([gate, pass]) => `w68:${gate}:${pass ? 'pass' : 'block'}`),
     });
+    await this.ensureW73gProtocolAssets(task, this.productionRunLedgers.get(task.id));
     if (!result.sealed) {
       const error = new Error(`W68a 未准落盘：${result.reason || result.verdict}；中间工件已保存`);
       error.code = 'W68_REVIEW_BLOCK';
@@ -2194,6 +2262,8 @@ export class FactoryPanel {
       artifactRefs: [{ kind: 'artifact', id: `${task.id}:final`, path: mdPath, type: 'text/markdown', role: 'final-output' }],
       gateRefs: Object.entries(task.reviewState?.gates || {}).map(([gate, pass]) => `w68:${gate}:${pass ? 'pass' : 'block'}`),
     });
+    await this.ensureW73gProtocolAssets(task, this.productionRunLedgers.get(task.id))
+      .catch(error => this.log(`⚠ W73g 终态投影待重开重建：${error.message}`));
     await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) });
     task.status = fails.length ? 'done-warn' : 'done';
     this.log(fails.length ? `⚠ 完成但有 ${fails.length} 项校验未过：${fails[0].label}` : `✅ 完成，全部校验通过（${text.length} 字）`);

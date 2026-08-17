@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "wave": "W73g",
+  "status": "COMPLETE",
+  "baseline": "main@94a82aa",
+  "date": "2026-08-17",
+  "schemas": {
+    "protocol": "mazz.factory-process-protocol/v0",
+    "projection": "mazz.factory-process-protocol-projection/v0",
+    "assetEnvelope": "mazz.asset-envelope/v0",
+    "productionRun": "mazz.production-run/v0"
+  },
+  "definition": {
+    "protocolId": "w68-governed-review",
+    "version": "1.0.0",
+    "directorStages": 7,
+    "handoffs": 7,
+    "exceptions": 6,
+    "artifactRoles": 12,
+    "gates": 4,
+    "recoveryPoints": 6,
+    "automaticFallback": false,
+    "immutableIdVersion": true
+  },
+  "storage": {
+    "definition": "<factory-project>/.mazz/protocols/w68-governed-review/1.0.0/",
+    "projection": "<factory-project>/.mazz/runs/<runId>/process-protocol/run-seq-NNNNNN/",
+    "filesPerAsset": ["json", "asset-envelope.json", "README.md"],
+    "bodiesCopied": false,
+    "secretsAllowed": false
+  },
+  "assetEnvelope": {
+    "definitionType": "application/vnd.mazz.factory-process-protocol+json",
+    "projectionType": "application/vnd.mazz.factory-process-protocol-projection+json",
+    "relations": ["describesWorkflow", "projectsRun", "usesProtocol"],
+    "globalRegistryCreated": false,
+    "universalGraphCreated": false
+  },
+  "runProjection": {
+    "versionSource": "Production Run sequence",
+    "references": ["Run", "Task", "Project", "Artifact", "Gate", "Finding", "Rework", "Recovery"],
+    "readOnly": true,
+    "historicalVersionsPreserved": true,
+    "terminalRunMutation": false,
+    "viewDeletionDeletesFacts": false
+  },
+  "productionRunChanges": {
+    "eventTypes": ["protocol-assets-recorded"],
+    "referenceFields": ["protocolRefs"],
+    "executionOwnerChanged": false,
+    "gateOwnerChanged": false,
+    "businessBodyCopied": false
+  },
+  "factoryDesk": {
+    "existingArchive": "<factory-project>/工厂群.md",
+    "eventStage": "process-protocol",
+    "idempotentByRunAndProjectionVersion": true,
+    "newModuleShell": false,
+    "newWindowOrIpc": false,
+    "newProcessGraphEditor": false
+  },
+  "strictness": {
+    "unknownFieldsRejected": true,
+    "secretFieldsRejected": true,
+    "danglingStageGateArtifactExceptionRecoveryRefsRejected": true,
+    "sameIdVersionConflictRejected": true,
+    "automaticProviderOrExecutorFallback": false,
+    "automaticGateOrMethodMutation": false
+  },
+  "scopeExclusions": [
+    "W68 max/legacy",
+    "W73h packaged integration and soak",
+    "W82 Organizational Compiler",
+    "W79 external process rendering",
+    "W64 product persona presentation",
+    "W69 Hub/Market",
+    "W74 Promotion",
+    "new Director Center or second Factory shell"
+  ],
+  "tests": {
+    "w73gAssertions": { "passed": 9, "total": 9 },
+    "relatedW73Assertions": { "passed": 86, "total": 86 },
+    "fullRegressionFiles": { "status": "PASS", "passed": 170, "total": 170 },
+    "rendererBuild": "PASS",
+    "uiScreenshotRequired": false,
+    "uiScreenshotReason": "No visible layout or new UI surface was added; the existing Factory Desk consumes the existing archive path."
+  },
+  "next": "W73h Integration, Recovery & Soak — NOT APPROVED"
+}
