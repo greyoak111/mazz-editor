@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 35,
-    "scannedLines": 7862
+    "scannedFiles": 36,
+    "scannedLines": 7966
   },
   "inventory": {
     "managedWindowFamilies": [

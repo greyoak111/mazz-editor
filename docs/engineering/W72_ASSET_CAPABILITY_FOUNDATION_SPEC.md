@@ -1,14 +1,14 @@
 # W72 Asset & Capability Foundation 施工规格
 
-> 版本：v0.1
+> 版本：v0.2
 >
 > 日期：2026-08-17
 >
-> 状态：**W72a COMPLETE / W72b–W72d NOT APPROVED**
+> 状态：**W72a–W72b COMPLETE / W72c–W72d NOT APPROVED**
 >
 > 前置：W71 `SEAL / COMPLETE`，严格 C4 提交 `cf35f5c`
 >
-> 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md` v1.41
+> 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md` v1.42
 >
 > 设计来源：`C:\Users\Administrator\Downloads\MAZZ_新上下文技术梳理_资产Factory关系检索多父导图_v0.2.md`
 
@@ -68,9 +68,18 @@ W72 完成不等于这些消费者波次自动获批。
 - Registry 没有 `execute/resolve/spawn/createSession`，不抢 W73/W66/W79 职责；
 - 全量回归通过。
 
-### W72b — Existing Asset / Capability Adapters
+### W72b — Existing Asset / Capability Adapters（COMPLETE）
 
-后续另行施工：盘点现有正式模块的资产类型和第一方 capability，只做薄适配；先以 Markdown→Mindmap `sourceRef` 和一个无外部依赖的第一方能力作样本。不得批量迁移所有模块。
+本次按最小样本完成：
+
+- 建立现有正式模块的资产/能力候选盘点，不把盘点结果冒充全局注册；
+- 以保存—重开的 W62d Mindmap 文档为样本，把既有 `sourceRef` 投影到 Asset Envelope；
+- 只有调用方给出稳定 `sourceAssetId` 时才生成 `derivedFrom`，不得从 filePath 猜 ID；
+- 登记现有 `parseOutline` 为 `mindmap.outline.import` 第一方描述；
+- Provider 标为 local/embedded，但 `agentUsable=false`、health=unknown，因为本轮没有 Runtime Adapter 或统一探针；
+- 无批量迁移、无全局 Registry 实例、无 IPC/UI/Factory 接线。
+
+退出 Gate：盘点、适配器、描述和定向契约测试齐全；Envelope 不含 Mindmap roots/正文；现有 W62d 保存往返继续通过。证据见 [`W72B_EXISTING_ADAPTER_CHECKPOINT_2026-08-17.md`](./W72B_EXISTING_ADAPTER_CHECKPOINT_2026-08-17.md) 与 [`W72_EXISTING_ASSET_CAPABILITY_CENSUS.md`](./W72_EXISTING_ASSET_CAPABILITY_CENSUS.md)。
 
 ### W72c — Continuous OSS Provenance Ledger
 
@@ -107,4 +116,4 @@ provenance
 
 ## 6. 当前停止线
 
-W72a 已通过，只能宣称“薄契约地基已落”，不能宣称 W72 完成。验证见 [`W72A_CONTRACT_FOUNDATION_CHECKPOINT_2026-08-17.md`](./W72A_CONTRACT_FOUNDATION_CHECKPOINT_2026-08-17.md)。下一步必须先回写完整未尽总表，再在 W72b、W72c、W72d 中按依赖选择；不得顺手启动 W73、W74、W79 或 W84。
+W72a–b 已通过，只能宣称“薄契约与一个现有样本适配已落”，不能宣称 W72 完成。W72c 持续 OSS Provenance Ledger、W72d External Tool Adapter Spec 仍未施工；下一步必须先回写完整未尽总表，再按依赖选择其中一个，不得顺手启动 W73、W74、W79 或 W84。
