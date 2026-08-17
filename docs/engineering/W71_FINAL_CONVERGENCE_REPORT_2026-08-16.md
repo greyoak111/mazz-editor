@@ -32,7 +32,7 @@ W71 的推荐范围已经完成。当前 Mazz 可以冻结为首个可信的 Win
 | source map / FFmpeg core | `0 / 0` |
 | unpacked native | 10 files / `2,625,024` bytes / win32-x64 |
 
-三个独立复跑批次的前后哈希全部一致；机器清单见 [`W71_RC_THREE_RUN_MANIFEST.json`](./evidence/W71_RC_THREE_RUN_MANIFEST.json)。
+三个独立复跑批次的前后哈希全部一致；机器清单见 [`W71_RC_THREE_RUN_MANIFEST.json`](./evidence/W71_RC_THREE_RUN_MANIFEST.json)。2026-08-17 又按 C4 原始要求补做了三份各自独立的严格证据包，详见 [`W71_C4_STRICT_EVIDENCE_CHECKPOINT_2026-08-17.md`](./W71_C4_STRICT_EVIDENCE_CHECKPOINT_2026-08-17.md)。
 
 ## 3. 三次独立复跑
 
@@ -47,7 +47,7 @@ W71 的推荐范围已经完成。当前 Mazz 可以冻结为首个可信的 Win
 - silent uninstall 后安装目录、卸载注册、自有协议/ProgID/backup、快捷方式零产品残留；
 - release audit 与当前树 secret audit。
 
-结果：`3/3 PASS`，冻结产物漂移 `0`，安装残留 `0`，UserChoice 改写 `0`，当前 secret 候选 `0`。
+结果：最终批次 `20260817T012752968Z-e991dc` 连续 `3/3 PASS`，每轮 `9/9` 命令、`11/11` 派生证据；冻结产物漂移 `0`，安装残留 `0`，UserChoice 改写 `0`，当前 secret 候选 `0`。三个单轮 manifest 与 33 份派生证据均有独立 SHA-256，并由聚合器逐文件复算通过。
 
 ## 4. 最终模块矩阵
 

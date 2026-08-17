@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 2,
+  "protocol": "W71_C4_STRICT_INDEPENDENT_RC_RUN",
+  "batchId": "20260817T012752968Z-e991dc",
+  "runId": 3,
+  "status": "PASS",
+  "productSourceCommit": "e753dd0",
+  "repositoryHeadAtRun": "0560d7a8ecd4ccc934c090b8750cd236bb6484c3",
+  "startedAt": "2026-08-17T01:34:38.332Z",
+  "endedAt": "2026-08-17T01:38:02.791Z",
+  "evidenceDirectory": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3",
+  "frozenArtifactsBefore": {
+    "installer": {
+      "path": "release/Mazz Editor Setup 0.2.0.exe",
+      "bytes": 133676213,
+      "sha256": "69940814475FCF2C294EB280BC1A6AFF2755DFB2F28DDCCCA422BBA3D41A41FA"
+    },
+    "appAsar": {
+      "path": "release/win-unpacked/resources/app.asar",
+      "bytes": 257845274,
+      "sha256": "35961F6770A469DA0E2216BACDC7CC8EB588B93E5F10FD79C7AF63C363F312CC"
+    },
+    "hashesUnchanged": true
+  },
+  "commands": [
+    {
+      "id": "full-test-suite",
+      "command": "node.exe tests/run.js",
+      "startedAt": "2026-08-17T01:34:39.288Z",
+      "endedAt": "2026-08-17T01:36:10.023Z",
+      "durationMs": 90735,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 85210,
+      "stdoutSha256": "1591070F61C083A6B5F53C3E01933AEBCD02E7BEC77E2940F2C8D9F2DCD9FF5F",
+      "stderrBytes": 60803,
+      "stderrSha256": "42396C53F28D793D89587B3715BBE666EB14ADBB87AC9F0D6742F17C7EA8CB36",
+      "expectedOutputObserved": true,
+      "summary": {
+        "testFiles": "153/153"
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "product-maturity",
+      "command": "node.exe tests/e2e/w71-product-maturity.mjs",
+      "startedAt": "2026-08-17T01:36:10.024Z",
+      "endedAt": "2026-08-17T01:36:14.837Z",
+      "durationMs": 4813,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 1651,
+      "stdoutSha256": "9E98679C49F292C4046BD8D5140DEAE7B93F50C1E550E07D8F1C2FF022190C4E",
+      "stderrBytes": 264,
+      "stderrSha256": "277D98977C4FDFD63DFD1182BF710745ECA98D9889AD05B8AE7D0038B6A43C9A",
+      "expectedOutputObserved": true,
+      "summary": null,
+      "status": "PASS"
+    },
+    {
+      "id": "formal-main-paths",
+      "command": "node.exe tests/e2e/w71-formal-main-paths.mjs",
+      "startedAt": "2026-08-17T01:36:14.837Z",
+      "endedAt": "2026-08-17T01:36:18.386Z",
+      "durationMs": 3549,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 2797,
+      "stdoutSha256": "196B065E7174BA04BE958C1C4B88C569D576825427F3AD492C25F8DAA6A996A5",
+      "stderrBytes": 264,
+      "stderrSha256": "0AB1134210D4563AF5791F45A5DB3A9AA960AB8D2BAD454C1B8EBFAF9D60E39F",
+      "expectedOutputObserved": true,
+      "summary": null,
+      "status": "PASS"
+    },
+    {
+      "id": "ffmpeg-boundary",
+      "command": "node.exe tests/e2e/w71-ffmpeg-runtime.mjs",
+      "startedAt": "2026-08-17T01:36:18.387Z",
+      "endedAt": "2026-08-17T01:36:20.214Z",
+      "durationMs": 1827,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 168,
+      "stdoutSha256": "47B6DFEBAD8C70BFE5CE5282C3FB3A7CB9C1B677CEFDE0220DAAAA2EDF67DE02",
+      "stderrBytes": 263,
+      "stderrSha256": "1E34DE4BDC5EA243A5360BCD769EFBDB3D0A26D8420C4CE5FD2D431123972093",
+      "expectedOutputObserved": true,
+      "summary": {
+        "ok": true
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "native-media-boundary",
+      "command": "node.exe tests/e2e/w71-media-runtime.mjs",
+      "startedAt": "2026-08-17T01:36:20.214Z",
+      "endedAt": "2026-08-17T01:36:22.901Z",
+      "durationMs": 2687,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 737,
+      "stdoutSha256": "37C0A56E91CF1BC7F2CE91F9A1FD1B12A70D442945B3C297268645EB11A90FD4",
+      "stderrBytes": 264,
+      "stderrSha256": "1B12B879486F45D618574DF4227D12AC1539EA4F5136FA3956BE658D3101F730",
+      "expectedOutputObserved": true,
+      "summary": null,
+      "status": "PASS"
+    },
+    {
+      "id": "packaged-lifecycle",
+      "command": "node.exe tests/e2e/w71-packaged-smoke.mjs",
+      "startedAt": "2026-08-17T01:36:22.902Z",
+      "endedAt": "2026-08-17T01:36:45.242Z",
+      "durationMs": 22340,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 856,
+      "stdoutSha256": "8937B9C7CC1018AD8230ACB9311B740EF52168B41B609306031AB01B11A2806B",
+      "stderrBytes": 264,
+      "stderrSha256": "8A6EDEBDAC68C1EC70CA1FFE635B2DE4ADE9EAD5EC38606E4CA7E601520E14CC",
+      "expectedOutputObserved": true,
+      "summary": {
+        "ok": true,
+        "lifecycleCycles": 20,
+        "viewerLifecycleCycles": 20,
+        "factoryLifecycleCycles": 20,
+        "monacoLifecycleCycles": 20,
+        "activeResources": 2,
+        "baselineResources": 2,
+        "sessions": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "installer-cycle",
+      "command": "node.exe tests/e2e/w71-installer-cycle.mjs",
+      "startedAt": "2026-08-17T01:36:45.242Z",
+      "endedAt": "2026-08-17T01:38:00.726Z",
+      "durationMs": 75484,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 4242,
+      "stdoutSha256": "DEE6FBDFAB4F12B208D27B0F3EE88B871527F041FB2A693F0A14FC04172D1F98",
+      "stderrBytes": 0,
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedOutputObserved": true,
+      "summary": {
+        "ok": true
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "release-audit",
+      "command": "node.exe scripts/release-audit.js --out docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_RELEASE_BASELINE.json",
+      "startedAt": "2026-08-17T01:38:00.727Z",
+      "endedAt": "2026-08-17T01:38:01.606Z",
+      "durationMs": 879,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 92,
+      "stdoutSha256": "43594357C77B6E83EB8BE95D1F6A83820302138809F5020AD932C8C25A01C2C7",
+      "stderrBytes": 0,
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedOutputObserved": true,
+      "summary": null,
+      "status": "PASS"
+    },
+    {
+      "id": "secret-audit",
+      "command": "node.exe scripts/secret-audit.js --out docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_SECRET_AUDIT.json",
+      "startedAt": "2026-08-17T01:38:01.606Z",
+      "endedAt": "2026-08-17T01:38:01.750Z",
+      "durationMs": 144,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutBytes": 88,
+      "stdoutSha256": "4380998C742D5B768A6569C088592C304AF60E2110283B28AA5C541E6D3FF78E",
+      "stderrBytes": 0,
+      "stderrSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedOutputObserved": true,
+      "summary": null,
+      "status": "PASS"
+    }
+  ],
+  "generatedEvidence": [
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_PRODUCT_MATURITY.json",
+      "bytes": 1651,
+      "sha256": "9E98679C49F292C4046BD8D5140DEAE7B93F50C1E550E07D8F1C2FF022190C4E",
+      "generatedAt": "2026-08-17T01:36:14.630Z",
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_FORMAL_MAIN_PATHS.json",
+      "bytes": 2797,
+      "sha256": "196B065E7174BA04BE958C1C4B88C569D576825427F3AD492C25F8DAA6A996A5",
+      "generatedAt": "2026-08-17T01:36:18.151Z",
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_FFMPEG_DISTRIBUTION_DECISION.json",
+      "bytes": 778,
+      "sha256": "D047DEC400F7DC6891A35F9E5880C2C52B29BC0D95F21FE9BAE3AC370798600B",
+      "generatedAt": "2026-08-17T01:36:19.969Z",
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_MEDIA_RUNTIME.json",
+      "bytes": 737,
+      "sha256": "37C0A56E91CF1BC7F2CE91F9A1FD1B12A70D442945B3C297268645EB11A90FD4",
+      "generatedAt": "2026-08-17T01:36:22.668Z",
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_INSTALLER_CYCLE.json",
+      "bytes": 19447,
+      "sha256": "49E030FCEED70B4CD2C52B4F4637730F405B4B4093034315B0686BDF31114699",
+      "generatedAt": "2026-08-17T01:38:00.382Z",
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_RELEASE_BASELINE.json",
+      "bytes": 209063,
+      "sha256": "8CF85CCC2CC4BD737652CA3B99D56B172186A2BEE34621F775F246949C0E2DD4",
+      "generatedAt": "2026-08-17T01:38:01.125Z",
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_SECRET_AUDIT.json",
+      "bytes": 619,
+      "sha256": "37C92FDB2552AC4010F60CFF9C4B734CD65B93442DDDEFE86B88F29827D348AE",
+      "generatedAt": "2026-08-17T01:38:01.732Z",
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_PRODUCT_MATURITY_DOCK.png",
+      "bytes": 190870,
+      "sha256": "57839993ABCBB329C374FFF7FE45EBCF0DA4CCDB6660627294AAD7B219DF5DC0",
+      "generatedAt": null,
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_PRODUCT_MATURITY_HELP.png",
+      "bytes": 151673,
+      "sha256": "074E62A0D7CC36DF8A07FDBBC6DF5DCDEC63B7384B6706D87DFA3DB543586E9D",
+      "generatedAt": null,
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_FORMAL_LIBRARY_BOOK.png",
+      "bytes": 54352,
+      "sha256": "5B8B77AEF80762BA8C46683FCD2087CC0A9755E39379E5FA7381CA7996FBF86F",
+      "generatedAt": null,
+      "declaredPass": true
+    },
+    {
+      "path": "docs/engineering/evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_FORMAL_LIBRARY_NARROW_INK.png",
+      "bytes": 50584,
+      "sha256": "975D67B57313D22EC8A05F232AB95E5C3DCA19107CC1B3627E505836024FD23B",
+      "generatedAt": null,
+      "declaredPass": true
+    }
+  ],
+  "frozenArtifactsAfter": {
+    "installer": {
+      "path": "release/Mazz Editor Setup 0.2.0.exe",
+      "bytes": 133676213,
+      "sha256": "69940814475FCF2C294EB280BC1A6AFF2755DFB2F28DDCCCA422BBA3D41A41FA"
+    },
+    "appAsar": {
+      "path": "release/win-unpacked/resources/app.asar",
+      "bytes": 257845274,
+      "sha256": "35961F6770A469DA0E2216BACDC7CC8EB588B93E5F10FD79C7AF63C363F312CC"
+    },
+    "hashesUnchanged": true
+  }
+}

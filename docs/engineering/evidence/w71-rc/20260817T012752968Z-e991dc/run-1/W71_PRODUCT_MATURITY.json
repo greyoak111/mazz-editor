@@ -27,12 +27,12 @@
   "dock": {
     "updaterHidden": true,
     "previewLabelsVisible": true,
-      "screenshot": "evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_PRODUCT_MATURITY_DOCK.png"
+    "screenshot": "evidence/w71-rc/20260817T012752968Z-e991dc/run-1/W71_PRODUCT_MATURITY_DOCK.png"
   },
   "help": {
     "nativeMobileHidden": true,
     "sectionCount": 31,
-      "screenshot": "evidence/w71-rc/20260817T012752968Z-e991dc/run-3/W71_PRODUCT_MATURITY_HELP.png"
+    "screenshot": "evidence/w71-rc/20260817T012752968Z-e991dc/run-1/W71_PRODUCT_MATURITY_HELP.png"
   },
   "panelTitles": {
     "plugin.manage": "插件管理（预览）",
@@ -56,5 +56,5 @@
   },
   "noRendererErrors": true,
   "ok": true,
-  "generatedAt": "2026-08-17T01:25:16.308Z"
+  "generatedAt": "2026-08-17T01:29:28.142Z"
 }

@@ -7,7 +7,9 @@ import path from 'node:path';
 const root = path.resolve('.');
 const executablePath = path.resolve(process.env.MAZZ_E2E_EXECUTABLE
   || path.join(root, 'release', 'win-unpacked', 'Mazz Editor.exe'));
-const evidencePath = path.join(root, 'docs', 'engineering', 'evidence', 'W71_MEDIA_RUNTIME.json');
+const evidenceDir = path.resolve(process.env.MAZZ_W71_EVIDENCE_DIR
+  || path.join(root, 'docs', 'engineering', 'evidence'));
+const evidencePath = path.join(evidenceDir, 'W71_MEDIA_RUNTIME.json');
 if (!fs.existsSync(executablePath)) throw new Error(`Packaged app is missing: ${executablePath}`);
 
 function makeWav(seconds = 3, frequency = 440) {

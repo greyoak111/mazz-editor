@@ -7,8 +7,16 @@ import path from 'node:path';
 const root = path.resolve('.');
 const executablePath = path.resolve(process.env.MAZZ_E2E_EXECUTABLE
   || path.join(root, 'release', 'win-unpacked', 'Mazz Editor.exe'));
-const evidenceDir = path.join(root, 'docs', 'engineering', 'evidence');
+const evidenceDir = path.resolve(process.env.MAZZ_W71_EVIDENCE_DIR
+  || path.join(root, 'docs', 'engineering', 'evidence'));
 const evidencePath = path.join(evidenceDir, 'W71_FORMAL_MAIN_PATHS.json');
+const evidenceSuffix = String(process.env.MAZZ_W71_EVIDENCE_SUFFIX || '').replace(/[^A-Za-z0-9_-]/g, '');
+const bookScreenshotName = `W71_FORMAL_LIBRARY_BOOK${evidenceSuffix}.png`;
+const narrowScreenshotName = `W71_FORMAL_LIBRARY_NARROW_INK${evidenceSuffix}.png`;
+const evidenceReference = name => path.relative(
+  path.join(root, 'docs', 'engineering'),
+  path.join(evidenceDir, name),
+).replace(/\\/g, '/');
 if (!fs.existsSync(executablePath)) throw new Error(`packaged app 不存在：${executablePath}`);
 
 fs.mkdirSync(evidenceDir, { recursive: true });
@@ -96,7 +104,7 @@ try {
     throw new Error(`键盘焦点不可见：${JSON.stringify(interactionStates.focus)}`);
   }
   if (parseFloat(interactionStates.disabled.opacity) >= 0.8) throw new Error(`禁用态区分不足：${JSON.stringify(interactionStates.disabled)}`);
-  await main.screenshot({ path: path.join(evidenceDir, 'W71_FORMAL_LIBRARY_BOOK.png') });
+  await main.screenshot({ path: path.join(evidenceDir, bookScreenshotName) });
 
   await app.evaluate(({ BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows().find(candidate => !candidate.isDestroyed() && candidate.isVisible());
@@ -127,7 +135,7 @@ try {
     throw new Error(`窄窗书库控件不可达：${JSON.stringify(narrowState)}`);
   }
   await main.evaluate(() => window.MazzShell.setTheme('ink'));
-  await main.screenshot({ path: path.join(evidenceDir, 'W71_FORMAL_LIBRARY_NARROW_INK.png') });
+  await main.screenshot({ path: path.join(evidenceDir, narrowScreenshotName) });
   await app.evaluate(({ BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows().find(candidate => !candidate.isDestroyed() && candidate.isVisible());
     win?.setSize(1800, 1024);
@@ -223,8 +231,8 @@ try {
     notes: { path: notePath.replace(/\\/g, '/'), autoSavePersisted: true, ownerCountAfterClose: 0 },
     viewer: { unsupportedState: viewerFallback, ownerCountAfterClose: 0 },
     noRendererErrors: true,
-    screenshot: 'evidence/W71_FORMAL_LIBRARY_BOOK.png',
-    narrowScreenshot: 'evidence/W71_FORMAL_LIBRARY_NARROW_INK.png',
+    screenshot: evidenceReference(bookScreenshotName),
+    narrowScreenshot: evidenceReference(narrowScreenshotName),
     ok: true,
     generatedAt: new Date().toISOString(),
   };

@@ -8,7 +8,9 @@ import path from 'node:path';
 const root = path.resolve('.');
 const executablePath = path.join(root, 'release', 'win-unpacked', 'Mazz Editor.exe');
 const appAsarPath = path.join(root, 'release', 'win-unpacked', 'resources', 'app.asar');
-const evidencePath = path.join(root, 'docs', 'engineering', 'evidence', 'W71_FFMPEG_DISTRIBUTION_DECISION.json');
+const evidenceDir = path.resolve(process.env.MAZZ_W71_EVIDENCE_DIR
+  || path.join(root, 'docs', 'engineering', 'evidence'));
+const evidencePath = path.join(evidenceDir, 'W71_FFMPEG_DISTRIBUTION_DECISION.json');
 if (!fs.existsSync(executablePath)) throw new Error(`Packaged app is missing: ${executablePath}`);
 if (!fs.existsSync(appAsarPath)) throw new Error(`Packaged app.asar is missing: ${appAsarPath}`);
 

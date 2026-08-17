@@ -11,7 +11,8 @@ const installerName = fs.readdirSync(releaseDir).find(name => /^Mazz Editor Setu
 if (!installerName) throw new Error('NSIS installer is missing');
 const installer = path.join(releaseDir, installerName);
 const tempRoot = path.resolve(os.tmpdir());
-const evidenceDir = path.join(root, 'docs', 'engineering', 'evidence');
+const evidenceDir = path.resolve(process.env.MAZZ_W71_EVIDENCE_DIR
+  || path.join(root, 'docs', 'engineering', 'evidence'));
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 const shortcutPaths = [

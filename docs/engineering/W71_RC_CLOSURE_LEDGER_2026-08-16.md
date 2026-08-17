@@ -4,7 +4,7 @@
 >
 > 决策：**SEAL / W71 COMPLETE；完整主义扩展保留但后移**
 >
-> C4 检查点：同一冻结 hash 三次独立全链复跑 `3/3 PASS`，全量每次 `153/153`
+> C4 检查点：同一冻结 hash 三次独立全链复跑 `3/3 PASS`，全量每次 `153/153`；2026-08-17 严格独立证据包已闭环
 >
 > 作用：把“必须挡住首个可信 RC”的问题，与“需要外部条件”“某入口启用前再做”“长期完整主义”分开，避免历史欠账被遗忘，也避免它们无限阻塞新增内容。
 
@@ -84,11 +84,12 @@
 
 ### C4 — RC 汇总与三次独立复跑
 
-**状态：COMPLETE / 3 OF 3 PASS。** 证据见 [`W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md`](./W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md) 与 [`W71_RC_THREE_RUN_MANIFEST.json`](./evidence/W71_RC_THREE_RUN_MANIFEST.json)。
+**状态：COMPLETE / 3 OF 3 CONSECUTIVE PASS / STRICT EVIDENCE CLOSED。** 证据见 [`W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md`](./W71_FINAL_CONVERGENCE_REPORT_2026-08-16.md)、[`W71_C4_STRICT_EVIDENCE_CHECKPOINT_2026-08-17.md`](./W71_C4_STRICT_EVIDENCE_CHECKPOINT_2026-08-17.md) 与 [`W71_RC_THREE_RUN_MANIFEST.json`](./evidence/W71_RC_THREE_RUN_MANIFEST.json)。
 
 目标：冻结首个可信 Windows RC，而不是继续加入新能力。
 
 - 三次独立 packaged/release manifest；
+- 每轮 9 条命令的输出哈希、11 份派生证据哈希与独立目录；
 - 全量测试、正式入口、数据、生命周期、安装/升级策略、许可与 Known Limitations 汇总；
 - 已知 P0/P1 = 0；失败不得伪成功；应用退出无产品子进程残留；
 - 固定版本、hash、证据路径、回滚点和维护者可复跑命令；

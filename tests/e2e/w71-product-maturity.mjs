@@ -7,8 +7,16 @@ import path from 'node:path';
 const root = path.resolve('.');
 const executablePath = path.resolve(process.env.MAZZ_E2E_EXECUTABLE
   || path.join(root, 'release', 'win-unpacked', 'Mazz Editor.exe'));
-const evidenceDir = path.join(root, 'docs', 'engineering', 'evidence');
+const evidenceDir = path.resolve(process.env.MAZZ_W71_EVIDENCE_DIR
+  || path.join(root, 'docs', 'engineering', 'evidence'));
 const evidencePath = path.join(evidenceDir, 'W71_PRODUCT_MATURITY.json');
+const evidenceSuffix = String(process.env.MAZZ_W71_EVIDENCE_SUFFIX || '').replace(/[^A-Za-z0-9_-]/g, '');
+const dockScreenshotName = `W71_PRODUCT_MATURITY_DOCK${evidenceSuffix}.png`;
+const helpScreenshotName = `W71_PRODUCT_MATURITY_HELP${evidenceSuffix}.png`;
+const evidenceReference = name => path.relative(
+  path.join(root, 'docs', 'engineering'),
+  path.join(evidenceDir, name),
+).replace(/\\/g, '/');
 if (!fs.existsSync(executablePath)) throw new Error(`packaged app 不存在：${executablePath}`);
 
 fs.mkdirSync(evidenceDir, { recursive: true });
@@ -79,7 +87,7 @@ try {
   for (const label of ['压缩包（预览）', '图片文字识别（预览）', '全局内录（预览）']) {
     if (!dock.text.includes(label)) throw new Error(`工具坞缺少诚实的 Preview 标识：${label}`);
   }
-  await main.screenshot({ path: path.join(evidenceDir, 'W71_PRODUCT_MATURITY_DOCK.png') });
+  await main.screenshot({ path: path.join(evidenceDir, dockScreenshotName) });
 
   await main.evaluate(() => window.MazzCommands.execute('help.open'));
   const help = await waitPanel('/panels/help.html');
@@ -89,7 +97,7 @@ try {
     text: document.querySelector('#toc')?.textContent || '',
   }));
   if (helpState.ids.includes('mobile')) throw new Error('Hidden 移动壳仍暴露在 Electron 原生帮助窗');
-  await help.screenshot({ path: path.join(evidenceDir, 'W71_PRODUCT_MATURITY_HELP.png') });
+  await help.screenshot({ path: path.join(evidenceDir, helpScreenshotName) });
   await help.close();
 
   const panelTitles = {};
@@ -156,12 +164,12 @@ try {
     dock: {
       updaterHidden: !dock.hasUpdateCommand && !dock.text.includes('检查更新'),
       previewLabelsVisible: true,
-      screenshot: 'evidence/W71_PRODUCT_MATURITY_DOCK.png',
+      screenshot: evidenceReference(dockScreenshotName),
     },
     help: {
       nativeMobileHidden: !helpState.ids.includes('mobile'),
       sectionCount: helpState.ids.length,
-      screenshot: 'evidence/W71_PRODUCT_MATURITY_HELP.png',
+      screenshot: evidenceReference(helpScreenshotName),
     },
     panelTitles,
     optionalFfmpegRuntime: {

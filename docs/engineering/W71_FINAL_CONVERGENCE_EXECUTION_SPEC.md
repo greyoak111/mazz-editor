@@ -1,7 +1,7 @@
 # Mazz W71 Final Convergence / 封板式收敛施工规格
 
-> 版本：v2.27
-> 日期：2026-08-16
+> 版本：v2.28
+> 日期：2026-08-17
 > 审计坐标：`main@7eb33387a976863bd2e0c434d19b1dfc0c760916`
 > 决策：**GO WITH SCOPE REDUCTION**
 > 状态：**COMPLETE / SEAL — unsigned internal Windows RC**
@@ -23,6 +23,7 @@
 7. 首轮提交后维护者指令“继续推进”，按同一范围继续完成 Wave 0 Census 与 Native Surface Ledger；仍不构成 SurfaceManager、UI 大改或 Post-W71 功能授权。
 8. 后续“继续推进”已完成 Python/DAP、Viewer/Player、Factory request、Monaco/Code、插件安全、代表性 Overlay/Z-order、外部文件变化、多窗口文件/基础窗控所有权、代表性编辑标签事务性交接与 20 次往返、代表性 Markdown 分窗连续 5 次 renderer 崩溃恢复、单主窗整应用异常退出恢复、双窗口/双 renderer 同名 tabId 的事故数据保全与扁平恢复、Text/Code/Sheet/Slide/Mindmap/Draw 六类可序列化核心模块的 whole-app hard-kill 恢复，以及损坏/大文件/未知二进制/不支持编码/失败导入的 packaged 安全检查点；只关闭有测试和 packaged 证据的子 Gate，Notes/Library/Viewer 运行态、完整 Session 拓扑恢复、Agent、跨窗运行时 owner、真实媒体设备等未尽项保持 OPEN。
 9. 维护者随后明确要求“按推荐封板先做，同时预留完整主义拓展可能”。从此首个 RC 的阻塞、条件门、入口启用门与 Post-W71 完整主义，以 [`W71_RC_CLOSURE_LEDGER_2026-08-16.md`](./W71_RC_CLOSURE_LEDGER_2026-08-16.md) 分账；历史欠账继续保留，但不得以需要证书、异机、真实硬件或尚未安装的两种外部 Agent 为由无限阻塞推荐封板。
+10. 2026-08-17 对 C4 原始退出条件做严格复核，发现旧证据只有三轮汇总而没有三份独立 manifest；现已由 [`W71_C4_STRICT_EVIDENCE_CHECKPOINT_2026-08-17.md`](./W71_C4_STRICT_EVIDENCE_CHECKPOINT_2026-08-17.md) 补齐同一冻结 specimen 的三轮连续独立证据包。此后 C4 只有在单轮命令输出哈希、派生证据哈希、冻结产物前后哈希和聚合复算同时通过时才算 COMPLETE。
 
 ---
 
