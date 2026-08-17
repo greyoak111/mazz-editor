@@ -74,6 +74,7 @@ const files = [
   'tests/contract/hotfix-w58b.test.mjs',
   'tests/contract/hotfix-w66.test.mjs',
   'tests/contract/w71-harness-foundation.test.mjs',
+  'tests/contract/w66-real-adapter-plan.test.mjs',
   'tests/contract/w71-release-foundation.test.mjs',
   'tests/contract/w71-reproducible-samples.test.mjs',
   'tests/contract/w71-native-surface-ledger.test.mjs',
