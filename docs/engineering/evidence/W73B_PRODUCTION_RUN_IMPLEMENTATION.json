@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "wave": "W73b",
+  "status": "COMPLETE_ONE_W68_SINGLE_PATH_SLICE",
+  "baselineCoordinate": "main@c6a76d7",
+  "protocols": [
+    "mazz.production-run/v0",
+    "mazz.production-run-event/v0",
+    "mazz.production-run-references/v0"
+  ],
+  "selectedPath": "W68 single task -> review artifacts -> final Markdown",
+  "excludedPaths": [
+    "W68 max/multi-unit",
+    "legacy review",
+    "Router/KPI/qualification",
+    "Hub/Promotion",
+    "external Agent/tool execution"
+  ],
+  "layout": [
+    "run.json",
+    "events.ndjson",
+    "findings.ndjson",
+    "economics.ndjson",
+    "references.json"
+  ],
+  "implementation": [
+    "renderer/modules/factory/production-run.js",
+    "renderer/modules/factory/index.js"
+  ],
+  "invariants": [
+    "Existing W68 review and artifact files remain authoritative.",
+    "Run records references and state transitions, never artifact body content.",
+    "Event is persisted before snapshot; partial persistence requires reopen.",
+    "Corrupt tail is preserved and blocks the run; corrupt middle is rejected.",
+    "Provider route is recorded as not observed and cannot impersonate Harness or Seat.",
+    "Missing ledger blocks the selected W68 path before formal completion.",
+    "Terminal rerun creates a new run linked by previousRunId."
+  ],
+  "targetedTests": {
+    "w73b-production-run-ledger": "13/13",
+    "w73b-factory-integration": "4/4",
+    "w68a": "11/11",
+    "w68b": "9/9",
+    "w68c": "9/9",
+    "w71-factory-request-lifecycle": "6/6"
+  },
+  "fullSuite": "160/160",
+  "next": "W73c Rework & Audit Discipline — NOT APPROVED"
+}

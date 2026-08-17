@@ -1,8 +1,9 @@
 # W73 Factory Organizational Completion — 施工规格
 
-> 状态：`SPEC FROZEN / IMPLEMENTATION NOT APPROVED`
-> 版本：v1.0
+> 状态：`W73b IMPLEMENTED / W73c–h NOT APPROVED`
+> 版本：v1.1
 > 审计坐标：`main@e23e3f9`
+> W73b 开工基线：`main@c6a76d7`
 > 日期：2026-08-17
 > 机器可读差额表：[`W73_FACTORY_GAP_MATRIX.json`](./evidence/W73_FACTORY_GAP_MATRIX.json)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
@@ -13,7 +14,7 @@ W73 值得做，但它不是“下一代 Factory 重写”。当前 W68a/b/c 已
 
 > 在不改变 W68 审理语义的前提下，为现有生产行为建立唯一、可重开、可追踪的本地 Production Run 事实链，再让组织审计、持证、委托、调度、成本与评估共享这条事实链。
 
-因此建议从 `W73b Production Run Identity and Append-only Ledger` 开始。W73a 到此只冻结审计和施工合同；没有批准 W73b，也没有修改产品运行时。
+W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references；W68 max/legacy、Router、KPI、资格、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73c，尚未批准。
 
 ## 2. 不可破坏的所有权
 
@@ -182,7 +183,7 @@ Rework {
 
 ### W73b — Production Run Identity & Append-only Ledger
 
-入口：W73a 完成；W72 协议已冻结。W66 真 Adapter、W69、W74、W82 均不是本波前件。
+状态：`COMPLETE`。入口：W73a 完成；W72 协议已冻结。W66 真 Adapter、W69、W74、W82 均不是本波前件。
 
 只接一条现有 W68 生产路径做双写 PoC：
 
@@ -194,6 +195,17 @@ Rework {
 6. 证明关闭/崩溃/取消后无孤儿 writer/listener/timer。
 
 退出 Gate：同一 run 可 create → start → gate → seal/fail → reopen；事件可重放，旧 W68 结果不变，关闭后资源归零。回滚：关掉双写开关后旧主链仍完整可用，已写账本保留为可检查证据。
+
+实际实现坐标：
+
+- `renderer/modules/factory/production-run.js` 冻结 `ProductionRun/Event/Reference v0`、严格字段、secret 拒绝、状态迁移、事件重放、写串行化、损坏尾隔离、orphan running 恢复与 dispose；
+- `renderer/modules/factory/index.js` 只在 `W68_PROTOCOL && mode != max` 时创建 Run；审理工件只按路径引用，完成账先于任务 `done`；缺账直接阻断；
+- 目录为 `<factory-project>/.mazz/runs/<runId>/`，五件套是 `run.json / events.ndjson / findings.ndjson / economics.ndjson / references.json`；后两类空文件只冻结归属，不冒充 W73c/W73f 已实现；
+- Provider 边界只登记 `route-requested-not-observed`，不把配置路由冒充实际执行，也不保存 API key/baseURL；
+- event log 先于 snapshot/reference 写入；后两者写失败会将内存账标为 `requiresReload`，禁止继续覆盖，重开后从事件补回；
+- 损坏尾隔离到 `corrupt-tail.txt` 并转 `blocked`，中段损坏硬拒绝；重开未闭合 `running` 先转 recovery-required。
+
+完整证据见 [`W73B_PRODUCTION_RUN_CHECKPOINT_2026-08-17.md`](./W73B_PRODUCTION_RUN_CHECKPOINT_2026-08-17.md)。
 
 ### W73c — Rework & Audit Discipline
 

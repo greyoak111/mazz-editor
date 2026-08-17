@@ -14,6 +14,7 @@ import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown,
 import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Review } from './review.js';
 import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, normalizeFactoryEvent } from './workshop.js';
 import { detectHumanHelpMoments, evaluateBudgetCap, makeBudgetCard, makeFinalReviewCard } from './command-gate.js';
+import { PRODUCTION_RUN_SCHEMA, createProductionRunId, openProductionRunLedger } from './production-run.js';
 import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
@@ -50,6 +51,7 @@ export class FactoryPanel {
     this.concurrency = Math.max(1, Math.min(4, Number(this.loadJSON(CONCURRENCY_KEY, 1)) || 1));
     this.previewTasks = new Map(); // taskId -> { task, tpl, folder, currentPath }
     this.workshopWrites = new Map(); // folder -> Promise；同项目归档串行，任务并发不互踩
+    this.productionRunLedgers = new Map(); // taskId -> W73b 单 Run 串行账本；只接 W68 单次路径
     this.editorTasks = new Map();  // taskId -> { task, path }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
@@ -107,6 +109,8 @@ export class FactoryPanel {
     window.removeEventListener('mazz:factory-task-updated', this.taskUpdateListener);
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
     this.agentRuntime?.cancel?.().catch?.(() => {});
+    for (const ledger of this.productionRunLedgers.values()) ledger.dispose().catch(() => {});
+    this.productionRunLedgers.clear();
   }
 
   // ==================== W53 坞浮动状态镜像（dockfloat 子窗格=远程视图，本实例是真相源） ====================
@@ -864,6 +868,118 @@ export class FactoryPanel {
     try { return await write; } finally { if (this.workshopWrites.get(folder) === write) this.workshopWrites.delete(folder); }
   }
 
+  productionRunIo() {
+    return {
+      exists: async path => {
+        const stat = await window.mazz.invoke('fs:stat', { path });
+        return !!stat?.exists && !stat.isDir;
+      },
+      read: path => window.mazz.invoke('fs:readFile', { path }),
+      write: (path, content) => window.mazz.invoke('fs:writeFile', { path, content }),
+      mkdir: path => window.mazz.invoke('fs:mkdir', { path }),
+    };
+  }
+
+  shouldTrackProductionRun(task) {
+    // W73b 只选择一条现有 W68 单次任务路径；max/legacy 等待独立迁移 Gate。
+    return task?.reviewProtocol === W68_PROTOCOL && task?.mode !== 'max';
+  }
+
+  productionRunState(task) {
+    const ledger = this.productionRunLedgers.get(task?.id);
+    return {
+      productionRunSchema: ledger ? PRODUCTION_RUN_SCHEMA : task?.productionRunSchema,
+      productionRunId: ledger?.runId || task?.productionRunId || '',
+      productionRunPath: ledger?.paths?.root || task?.productionRunPath || '',
+      productionRunStatus: ledger?.snapshot?.status || task?.productionRunStatus || '',
+    };
+  }
+
+  redactProductionRunMessage(value) {
+    let message = String(value || '').slice(0, 1200);
+    for (const secret of [this.cfg?.apiKey].filter(item => typeof item === 'string' && item.length >= 6)) {
+      message = message.split(secret).join('[REDACTED]');
+    }
+    return message;
+  }
+
+  async ensureProductionRun(task, tpl) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    let ledger = this.productionRunLedgers.get(task.id) || null;
+    let previousRunId = '';
+    if (ledger && ['failed', 'completed', 'cancelled'].includes(ledger.snapshot.status)) {
+      previousRunId = ledger.runId;
+      await ledger.dispose();
+      this.productionRunLedgers.delete(task.id);
+      ledger = null;
+    }
+    if (!ledger && task.productionRunId) {
+      ledger = await openProductionRunLedger({
+        io: this.productionRunIo(), folder: task.folder, runId: task.productionRunId, taskId: task.id,
+        recoverOrphaned: true,
+      });
+      if (['failed', 'completed', 'cancelled'].includes(ledger.snapshot.status)) {
+        previousRunId = ledger.runId;
+        await ledger.dispose();
+        ledger = null;
+      }
+    }
+    if (!ledger) {
+      const nextRunId = createProductionRunId(task.id);
+      task.productionRunSchema = PRODUCTION_RUN_SCHEMA;
+      task.productionRunId = nextRunId;
+      task.productionRunPath = `${String(task.folder).replace(/\\/g, '/').replace(/\/$/, '')}/.mazz/runs/${nextRunId}`;
+      task.productionRunStatus = 'proposed';
+      this.persistTasks();
+      ledger = await openProductionRunLedger({
+        io: this.productionRunIo(), folder: task.folder, runId: nextRunId,
+        taskId: task.id, projectId: task.id, title: task.label,
+        domain: 'content-production', taskType: 'factory.single.w68',
+        workflowRef: 'W68', workflowVersion: 'W68a', governanceProfile: task.reviewRitual || 'light',
+        budgetProfile: { capTokens: Number(task.reviewBudgetCap) || 32000 }, previousRunId,
+        provenance: { source: 'mazz.factory', protocol: 'W73b' },
+      });
+    }
+    this.productionRunLedgers.set(task.id, ledger);
+    task.productionRunSchema = PRODUCTION_RUN_SCHEMA;
+    task.productionRunId = ledger.runId;
+    task.productionRunPath = ledger.paths.root;
+    if (['proposed', 'paused', 'blocked'].includes(ledger.snapshot.status)) {
+      await ledger.append({
+        type: 'run-started', toStatus: 'running', reasonCode: ledger.snapshot.status === 'blocked' ? 'EXPLICIT_RECOVERY' : 'TASK_STARTED',
+        message: `W68 单次任务进入生产线：${task.label}`,
+        providerBoundary: {
+          providerId: this.cfg?.providerId || '', model: this.cfg?.model || '', role: 'factory-role-routing',
+          outcome: 'route-requested-not-observed', observed: false,
+        },
+      });
+    }
+    task.productionRunStatus = ledger.snapshot.status;
+    this.persistTasks();
+    return ledger;
+  }
+
+  async appendProductionRun(task, event) {
+    const ledger = this.productionRunLedgers.get(task?.id);
+    if (!ledger) {
+      if (this.shouldTrackProductionRun(task)) {
+        const error = new Error('W73b Production Run Ledger 缺失；拒绝让 W68 单次任务无账继续');
+        error.code = 'W73_RUN_LEDGER_MISSING';
+        throw error;
+      }
+      return false;
+    }
+    if (['failed', 'completed', 'cancelled'].includes(ledger.snapshot.status)) {
+      const error = new Error(`W73b Production Run 已终态：${ledger.snapshot.status}`);
+      error.code = 'W73_RUN_LEDGER_TERMINAL';
+      throw error;
+    }
+    await ledger.append(event);
+    task.productionRunStatus = ledger.snapshot.status;
+    this.persistTasks();
+    return true;
+  }
+
   updateProviderBadge() {
     const hint = this.el.querySelector('.fc-provider-hint');
     const daily = this.el.querySelector('.fc-daily-hint');
@@ -1309,6 +1425,7 @@ export class FactoryPanel {
     this.log(`开始任务：「${task.label}」（${tpl.name} · ${task.mode === 'max' ? '连写' : '单次'}模式）`);
     try {
       await this.ensureTaskFolder(task, tpl);
+      await this.ensureProductionRun(task, tpl);
       await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务开工', content: `「${task.label}」进入生产线。\n\n- 模式：${task.mode === 'max' ? '连写' : '单次'}\n- 审理：${task.reviewRitual === 'full' ? '全仪式' : '轻仪式'}\n- 预算：${task.reviewBudgetCap || 32000} token`, stage: 'start', progress: 0 }));
       if (task.mode === 'max') await this.runMaxTask(task, tpl, dual);
       else await this.runSingleTask(task, tpl, dual);
@@ -1321,12 +1438,14 @@ export class FactoryPanel {
     } catch (e) {
       if (this.taskShouldStop(task) || e?.name === 'AbortError') {
         task.status = 'paused';
-        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
+        await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'TASK_STOPPED', message: '任务暂停；现有工件保持不变' }).catch(error => this.log(`⚠ Production Run 暂停记账失败：${error.message}`));
+        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
         this.log(`⏹ 任务「${task.label}」已停止并保留断点`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务已暂停', content: '请求已取消；现有断点与工件保持不变。', stage: 'stopped', progress: 100 })).catch(() => {});
       } else {
         task.status = 'failed';
-        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState }).catch(() => {});
+        await this.appendProductionRun(task, { type: 'run-failed', toStatus: 'failed', reasonCode: e.code || 'TASK_FAILED', message: this.redactProductionRunMessage(e.message) }).catch(error => this.log(`⚠ Production Run 失败记账失败：${error.message}`));
+        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
         this.log(`✗ 任务「${task.label}」失败：${e.message}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务中断', content: e.message, stage: 'failed', progress: 100 })).catch(() => {});
         await this.finishTaskPreview(task, e.message).catch(() => {});
@@ -1458,6 +1577,16 @@ export class FactoryPanel {
       gates: result.gates, budget: result.budget, unitNo, artifactDir, updatedAt: Date.now(),
     };
     this.persistTasks();
+    const artifactRefs = Object.entries(REVIEW_ARTIFACT_NAMES).map(([role, filename]) => ({
+      kind: 'artifact', id: `${task.id}:${unitNo}:${role}`, path: `${artifactDir}/${filename}`,
+      type: role === 'manifest' ? 'application/json' : 'text/markdown', role,
+    }));
+    await this.appendProductionRun(task, {
+      type: 'review-recorded', reasonCode: result.sealed ? 'W68_REVIEW_SEALED' : 'W68_REVIEW_BLOCKED',
+      message: result.reason || result.verdict,
+      artifactRefs,
+      gateRefs: Object.entries(result.gates || {}).map(([gate, pass]) => `w68:${gate}:${pass ? 'pass' : 'block'}`),
+    });
     if (!result.sealed) {
       const error = new Error(`W68a 未准落盘：${result.reason || result.verdict}；中间工件已保存`);
       error.code = 'W68_REVIEW_BLOCK';
@@ -1472,7 +1601,7 @@ export class FactoryPanel {
     const folder = await this.ensureTaskFolder(task, tpl);
     const m = buildMantra(tpl, task.values, task.dump);
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/创作蓝图.md`, content: m.doc });
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision });
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) });
     await this.openTaskPreview(task, tpl, folder);
     // 创作增强注入：嵌入资料（最高优先级）+ 插件规则 + 文风包
     const embedBlocks = buildEmbedBlocks(task.embeds || []);
@@ -1503,7 +1632,8 @@ export class FactoryPanel {
     } catch (e) { this.liveWrapEl && (this.liveWrapEl.style.display = 'none'); throw e; }
     if (this.taskShouldStop(task)) {
       task.status = 'paused';
-      await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', currentChapter: 0, maxChapters: 1, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState });
+      await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'STREAM_STOPPED', message: '流式生成停止，半稿未成为正式产物' });
+      await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', currentChapter: 0, maxChapters: 1, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState, ...this.productionRunState(task) });
       this.log(`⏹ 任务「${task.label}」已终止，未把流式半稿冒充成正式成稿`);
       return;
     }
@@ -1536,10 +1666,16 @@ export class FactoryPanel {
     const snapshotSchema = getSnapshotSchema(tpl);
     const snapshot = `# ${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照\n\n- 状态：${fails.length ? '完成（有警告）' : '完成'}\n- 字数：${text.length}\n- 文体：${tpl.name}\n- 更新时间：${new Date().toISOString()}\n`;
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第001${unitName}后.md`, content: snapshot });
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision });
     this.liveDone(task, 1, mdPath, text, getSnapshotSchema(tpl).unitName);
     if (!this.previewEnabled(task)) this.shell.openTab('markdown', { title: task.label + '.md', filePath: mdPath, content: text });
     this.pushHistory({ label: task.label, genre: tpl.name, ok: !fails.length, when: Date.now(), text });
+    await this.appendProductionRun(task, {
+      type: 'run-completed', toStatus: 'completed', reasonCode: fails.length ? 'W68_COMPLETED_WITH_WARNINGS' : 'W68_COMPLETED',
+      message: fails.length ? `完成但有 ${fails.length} 项质量警告` : '正文、审理工件与状态快照已落盘',
+      artifactRefs: [{ kind: 'artifact', id: `${task.id}:final`, path: mdPath, type: 'text/markdown', role: 'final-output' }],
+      gateRefs: Object.entries(task.reviewState?.gates || {}).map(([gate, pass]) => `w68:${gate}:${pass ? 'pass' : 'block'}`),
+    });
+    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) });
     task.status = fails.length ? 'done-warn' : 'done';
     this.log(fails.length ? `⚠ 完成但有 ${fails.length} 项校验未过：${fails[0].label}` : `✅ 完成，全部校验通过（${text.length} 字）`);
   }

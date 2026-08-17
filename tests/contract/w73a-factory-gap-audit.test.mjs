@@ -78,7 +78,7 @@ describe('W73a Factory gap audit', () => {
     const spec = fs.readFileSync(specPath, 'utf8');
     const checkpoint = fs.readFileSync(checkpointPath, 'utf8');
     for (const needle of [
-      'SPEC FROZEN / IMPLEMENTATION NOT APPROVED',
+      'W73b IMPLEMENTED / W73c–h NOT APPROVED',
       '一个运行一个目录 + append-only 事件 + 小型快照',
       'Model != Provider != Harness != Seat',
       '不提供 One Overall Score',
