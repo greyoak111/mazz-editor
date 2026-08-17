@@ -1,0 +1,409 @@
+{
+  "schemaVersion": 1,
+  "coordinate": "main@e23e3f9",
+  "status": "W73A_AUDIT_ONLY",
+  "generatedAt": "2026-08-17",
+  "classificationEnum": [
+    "LANDED",
+    "PARTIAL",
+    "METHOD_ASSET",
+    "POST_W71",
+    "OBSOLETE"
+  ],
+  "classificationCounts": {
+    "LANDED": 1,
+    "PARTIAL": 10,
+    "METHOD_ASSET": 6,
+    "POST_W71": 3,
+    "OBSOLETE": 2
+  },
+  "invariants": [
+    "W73 extends the landed W68 state machine and artifacts; it does not create a second Factory.",
+    "Production Run facts remain local and file-first; Hub receives only explicit W74c evidence projections.",
+    "Model, Provider, Harness, Seat, Capability and Executor remain distinct identities.",
+    "W82 compiles organizations and execution plans; W73 owns runtime state and Production Run facts.",
+    "W72 Registry describes providers and capabilities; it neither schedules nor executes them.",
+    "No Overall Score, hidden AUTO router, automatic promotion or automatic method mutation is permitted.",
+    "W73a changes documentation and contract tests only; no renderer, main, preload, IPC, UI or production-state code is changed."
+  ],
+  "sources": [
+    {
+      "path": "renderer/modules/factory/review.js",
+      "role": "landed review, repair, budget and four-gate implementation",
+      "status": "CURRENT"
+    },
+    {
+      "path": "renderer/modules/factory/index.js",
+      "role": "landed queue, concurrency, checkpoint and cost-ledger integration",
+      "status": "CURRENT"
+    },
+    {
+      "path": "renderer/modules/factory/command-gate.js",
+      "role": "landed command, final-card, budget and health-metric implementation",
+      "status": "CURRENT"
+    },
+    {
+      "path": "renderer/modules/factory/agent.js",
+      "role": "landed closed-card multi-step agent runtime",
+      "status": "CURRENT"
+    },
+    {
+      "path": "renderer/modules/factory/provider.js",
+      "role": "landed provider/model routing and error boundary",
+      "status": "CURRENT"
+    },
+    {
+      "path": "docs/plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md",
+      "role": "public evidence projection and transparent market boundary",
+      "status": "CURRENT"
+    },
+    {
+      "path": "docs/plans/W82_ORGANIZATIONAL_COMPILER.md",
+      "role": "compiler/runtime ownership boundary",
+      "status": "CURRENT"
+    },
+    {
+      "path": "C:/Users/Administrator/Desktop/0814接续用.pdf",
+      "role": "maintainer handoff and Factory backlog recovery source",
+      "status": "SOURCE_REVIEWED"
+    }
+  ],
+  "items": [
+    {
+      "id": "F01",
+      "name": "回炉五件套",
+      "classification": "PARTIAL",
+      "ownerWave": "W73c",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/review.js", "needle": "buildRepairOrder", "claim": "machine and point findings already produce bounded repair orders" },
+        { "path": "renderer/modules/factory/review.js", "needle": "三轮未收敛", "claim": "non-convergence already returns to skeleton instead of looping forever" },
+        { "path": "renderer/modules/factory/index.js", "needle": "retryChapter", "claim": "a single production unit can already be retried" }
+      ],
+      "gap": "No normalized rework stage, reason code, lineage, affected-artifact set or cross-project query contract.",
+      "decision": "Extend existing W68 repair artifacts into run-linked rework records; do not replace the review loop."
+    },
+    {
+      "id": "F02",
+      "name": "统一导入消化管线",
+      "classification": "POST_W71",
+      "ownerWave": "W74a",
+      "currentEvidence": [
+        { "path": "docs/engineering/W72_EXISTING_ASSET_CAPABILITY_CENSUS.md", "needle": "Mindmap", "claim": "existing format entry points are heterogeneous and were only inventoried" }
+      ],
+      "gap": "No unified source registration, layering, chunking, conflict policy or material-zone pipeline.",
+      "decision": "Keep out of W73; W73 may consume explicit AssetEnvelope references after W74a exists."
+    },
+    {
+      "id": "F03",
+      "name": "幻锚防线",
+      "classification": "PARTIAL",
+      "ownerWave": "W73c",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/review.js", "needle": "runDeterministicInspection", "claim": "deterministic findings already block unsupported draft conditions" },
+        { "path": "renderer/modules/factory/engine.js", "needle": "buildConstantAnchor", "claim": "constant and window anchors already constrain generation" }
+      ],
+      "gap": "No shared hallucinated-anchor taxonomy, source evidence requirement, dead-proposal revival scan or run-level finding lineage.",
+      "decision": "Add evidence-bearing findings to the existing review path; W70 may later consume them but is not a W73 prerequisite."
+    },
+    {
+      "id": "F04",
+      "name": "审理工艺升级",
+      "classification": "LANDED",
+      "ownerWave": "W73h",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/review.js", "needle": "runW68Review", "claim": "M2 point review, M4/M5 review, objection, answer and M6 verdict are implemented" },
+        { "path": "renderer/modules/factory/review.js", "needle": "fourGates", "claim": "the four-gate rule is a named protocol invariant" }
+      ],
+      "gap": "Only calibration, defect-spectrum evolution and integrated recovery evidence remain.",
+      "decision": "Preserve as the W73 review kernel and use it as a compatibility gate."
+    },
+    {
+      "id": "F05",
+      "name": "审计旗语与团队纪律",
+      "classification": "PARTIAL",
+      "ownerWave": "W73c",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/review.js", "needle": "protectionList", "claim": "protected content and cited findings already constrain repair" },
+        { "path": "renderer/modules/factory/command-gate.js", "needle": "FACTORY_HEALTH_METRICS", "claim": "seven operational health metrics already exist" }
+      ],
+      "gap": "No independent audit-flag lifecycle, ownership, resolution evidence, expiration or organizational discipline registry.",
+      "decision": "Model audit flags as run-linked findings and resolutions, not as a second review engine."
+    },
+    {
+      "id": "F06",
+      "name": "岗前培训与持证上岗",
+      "classification": "METHOD_ASSET",
+      "ownerWave": "W73d",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/provider.js", "needle": "AI_ROLES", "claim": "role routing exists but does not constitute qualification" }
+      ],
+      "gap": "No course, probe pack, qualification result, certificate level, expiry or assignment gate.",
+      "decision": "Introduce inspectable qualification records and explicit gates; never infer certification from provider connection or model name."
+    },
+    {
+      "id": "F07",
+      "name": "联合调度器",
+      "classification": "PARTIAL",
+      "ownerWave": "W73e",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/index.js", "needle": "runTaskPool", "claim": "bounded concurrency worker pool already schedules current tasks" },
+        { "path": "renderer/modules/factory/index.js", "needle": "setConcurrency", "claim": "user-controlled concurrency 1-4 already exists" }
+      ],
+      "gap": "No joint choice over capability, qualification, seat health, budget, priority, backpressure and recovery state.",
+      "decision": "Build only after Run identity and qualification facts exist; retain manual override and explain every AUTO proposal."
+    },
+    {
+      "id": "F08",
+      "name": "声明式绘图与图形工件",
+      "classification": "POST_W71",
+      "ownerWave": "W79",
+      "currentEvidence": [
+        { "path": "docs/engineering/W72D_EXTERNAL_TOOL_ADAPTER_SPEC.md", "needle": "External Tool Adapter", "claim": "a safe external capability protocol exists but no drawing runtime is connected" }
+      ],
+      "gap": "No Factory-native graphical artifact contract or executing drawing capability.",
+      "decision": "Keep as a future capability/provider concern; W73 records references and results but does not build an editor or tool clone."
+    },
+    {
+      "id": "F09",
+      "name": "计算委托",
+      "classification": "PARTIAL",
+      "ownerWave": "W73e",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/review.js", "needle": "10× 嗅探命中", "claim": "deterministic arithmetic recheck and ten-times error sniff are implemented" }
+      ],
+      "gap": "No generic calculator or solver capability selection, execution provenance or typed output contract.",
+      "decision": "W73 may schedule a registered deterministic capability after W79 supplies it; it must not ask a model to impersonate a solver."
+    },
+    {
+      "id": "F10",
+      "name": "弹性编制",
+      "classification": "PARTIAL",
+      "ownerWave": "W73e",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/provider.js", "needle": "resolveProviderRoute", "claim": "role-specific provider/model routing exists" },
+        { "path": "renderer/modules/factory/review.js", "needle": "planReviewRitual", "claim": "review ritual can already degrade under a budget profile" }
+      ],
+      "gap": "No explicit candidate set or staffing decision across capability, cost, risk, qualification and health.",
+      "decision": "Produce an explainable staffing proposal over distinct Seat and Executor identities; user authority remains final."
+    },
+    {
+      "id": "F11",
+      "name": "厂花与产品人格呈现",
+      "classification": "METHOD_ASSET",
+      "ownerWave": "W64",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/style-studio.js", "needle": "export", "claim": "Style Studio is an adjacent style asset, not a product-persona system" }
+      ],
+      "gap": "No formal persona asset, authority boundary, disclosure rule or product-level presentation contract.",
+      "decision": "Keep discussion-stage and route product-persona work to W64; it is not a W73 seal gate."
+    },
+    {
+      "id": "F12",
+      "name": "完整成本核算",
+      "classification": "PARTIAL",
+      "ownerWave": "W73f",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/review.js", "needle": "ReviewBudgetLedger", "claim": "review token budget and hard stop already exist" },
+        { "path": "renderer/modules/factory/index.js", "needle": "成本台账.json", "claim": "per-unit token totals are already persisted" }
+      ],
+      "gap": "No provider-reported usage, versioned price table, estimate-versus-actual settlement, quota state or period reconciliation.",
+      "decision": "Record observed and estimated cost separately with currency, price-table version and UNKNOWN states; never fabricate actual cost."
+    },
+    {
+      "id": "F13",
+      "name": "岗位 KPI 与系统健康",
+      "classification": "PARTIAL",
+      "ownerWave": "W73f",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/command-gate.js", "needle": "FACTORY_HEALTH_METRICS", "claim": "seven trend metrics already summarize review events" }
+      ],
+      "gap": "No attribution by seat, executor, defect class, workflow or version; no formula version or anti-Goodhart constraint.",
+      "decision": "Retain health trends, add drill-down and versioned definitions, and prohibit metric targets from automatically rewriting gates."
+    },
+    {
+      "id": "F14",
+      "name": "本地模型测评中心",
+      "classification": "METHOD_ASSET",
+      "ownerWave": "W73f",
+      "currentEvidence": [
+        { "path": "docs/plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md", "needle": "Production Run 最小审计链", "claim": "the required local evidence chain and public projection boundary are designed" }
+      ],
+      "gap": "No ProductionRun, WorkerProfile, MetricDefinition, RankingFormula, amplification curve, Pareto view or transparent router implementation.",
+      "decision": "Implement local, replayable facts and views only; public records remain W74c to W69j/k/l, and no one-number ranking is allowed."
+    },
+    {
+      "id": "F15",
+      "name": "正式流程图与过程图资产",
+      "classification": "METHOD_ASSET",
+      "ownerWave": "W73g",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/desk.js", "needle": "export", "claim": "Factory Desk displays production artifacts but is not a reusable process-graph definition" }
+      ],
+      "gap": "No queryable, versioned process-graph asset with step, gate, artifact and recovery references.",
+      "decision": "Freeze a protocol asset and projection only; W82 later owns compiled organization graphs and W79 owns external rendering."
+    },
+    {
+      "id": "F16",
+      "name": "任务委托",
+      "classification": "PARTIAL",
+      "ownerWave": "W73d",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/agent.js", "needle": "class AgentRuntime", "claim": "closed-card, bounded multi-step delegation exists in-process" },
+        { "path": "renderer/modules/factory/agent.js", "needle": "AGENT_MAX_STEPS", "claim": "agent execution is bounded and recorded" }
+      ],
+      "gap": "No real external HarnessAdapter session supplies lifecycle, cancellation and result provenance.",
+      "decision": "Internal delegation can adopt Run facts; external Agent execution remains gated on W66 real adapters and must not be simulated by Provider routing."
+    },
+    {
+      "id": "F17",
+      "name": "导演表",
+      "classification": "METHOD_ASSET",
+      "ownerWave": "W73g",
+      "currentEvidence": [
+        { "path": "docs/plans/W82_ORGANIZATIONAL_COMPILER.md", "needle": "Execution Plan", "claim": "director responsibilities belong to explicit plan, authority and artifact relationships" }
+      ],
+      "gap": "No versioned showrunner/director protocol asset or explicit decision/exception handoff.",
+      "decision": "Define a protocol asset consumed by Factory Desk; do not create a new standalone module shell."
+    },
+    {
+      "id": "F18",
+      "name": "贡献者与产品人格手册",
+      "classification": "METHOD_ASSET",
+      "ownerWave": "W73g",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/style-studio.js", "needle": "export", "claim": "style assets are an adjacent implementation precursor" },
+        { "path": "renderer/modules/factory/provider.js", "needle": "AI_ROLES", "claim": "runtime role cards are not a contributor manual" }
+      ],
+      "gap": "No formal asset identity, applicability, evidence, authority or gate contract.",
+      "decision": "Define only the Factory-facing protocol and leave product-persona presentation to W64."
+    },
+    {
+      "id": "F19",
+      "name": "Promotion 通用升格",
+      "classification": "POST_W71",
+      "ownerWave": "W74c",
+      "currentEvidence": [
+        { "path": "docs/plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md", "needle": "显式 Promotion", "claim": "promotion is explicitly separated from local production and public projection" }
+      ],
+      "gap": "No generic promotion record, authority, revocation or supersession API.",
+      "decision": "W73 exposes eligible local evidence references only; sealing never auto-promotes or publishes."
+    },
+    {
+      "id": "F20",
+      "name": "Provider 边界透明",
+      "classification": "PARTIAL",
+      "ownerWave": "W73b",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/provider.js", "needle": "finish_reason=", "claim": "empty completion surfaces provider finish reason" },
+        { "path": "renderer/modules/factory/provider.js", "needle": "resolveProviderRoute", "claim": "provider and model route are explicit" }
+      ],
+      "gap": "No normalized run event separates provider response, Mazz transformation, refusal, truncation, permission and acceptance.",
+      "decision": "Capture boundary events in the run ledger before evaluation; preserve raw references without storing secrets."
+    },
+    {
+      "id": "F21",
+      "name": "Provider 或 Model 等同 Seat 或 Agent",
+      "classification": "OBSOLETE",
+      "ownerWave": "NONE",
+      "currentEvidence": [
+        { "path": "docs/plans/W82_ORGANIZATIONAL_COMPILER.md", "needle": "Seat != Model", "claim": "identity separation is a permanent invariant" }
+      ],
+      "gap": "The old conflation would destroy attribution, qualification and replacement semantics.",
+      "decision": "Reject permanently; no compatibility alias may reintroduce it."
+    },
+    {
+      "id": "F22",
+      "name": "表单中心或独立预览作为 Factory 主形态",
+      "classification": "OBSOLETE",
+      "ownerWave": "NONE",
+      "currentEvidence": [
+        { "path": "renderer/modules/factory/desk.js", "needle": "export", "claim": "Factory Desk is the current integrated product surface" },
+        { "path": "renderer/modules/factory/index.js", "needle": "previewTasks", "claim": "legacy preview remains an implementation detail rather than product ownership" }
+      ],
+      "gap": "Reviving the old shell would create parallel state ownership and duplicate the current Desk.",
+      "decision": "Keep only compatibility code where proven necessary; never reopen this as a W73 product direction."
+    }
+  ],
+  "waves": [
+    {
+      "id": "W73a",
+      "name": "Gap Audit and Construction Spec",
+      "status": "COMPLETE_BY_THIS_CHANGE",
+      "dependsOn": ["W72d"],
+      "runtimeChange": false,
+      "exitGate": "All 22 recovered backlog items have one classification, one owner and repository-verifiable evidence."
+    },
+    {
+      "id": "W73b",
+      "name": "Production Run Identity and Append-only Ledger",
+      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
+      "dependsOn": ["W73a"],
+      "runtimeChange": true,
+      "exitGate": "One existing W68 production path writes and reopens a versioned local run chain without changing review behavior or requiring W66/W69/W82."
+    },
+    {
+      "id": "W73c",
+      "name": "Rework and Audit Discipline",
+      "status": "NOT_APPROVED",
+      "dependsOn": ["W73b"],
+      "runtimeChange": true,
+      "exitGate": "Repair, audit flags, hallucinated anchors and resolution evidence are traceable to artifacts and survive resume."
+    },
+    {
+      "id": "W73d",
+      "name": "Qualification and Delegation",
+      "status": "NOT_APPROVED",
+      "dependsOn": ["W73b", "W66_REAL_ADAPTER_FOR_EXTERNAL_EXECUTION"],
+      "runtimeChange": true,
+      "exitGate": "Qualification is explicit and external delegation either uses a real Harness session or reports BLOCKED without impersonation."
+    },
+    {
+      "id": "W73e",
+      "name": "Joint Scheduler and Elastic Staffing",
+      "status": "NOT_APPROVED",
+      "dependsOn": ["W73b", "W73d", "W72d"],
+      "runtimeChange": true,
+      "exitGate": "Candidate, reason, budget, health, backpressure and manual override are recorded for every staffing decision."
+    },
+    {
+      "id": "W73f",
+      "name": "Cost, KPI and Local Evaluation",
+      "status": "NOT_APPROVED",
+      "dependsOn": ["W73b", "W73c"],
+      "runtimeChange": true,
+      "exitGate": "Versioned metrics recompute from runs; estimates and actuals are separate; no Overall Score or hidden routing exists."
+    },
+    {
+      "id": "W73g",
+      "name": "Director and Process Protocol Assets",
+      "status": "NOT_APPROVED",
+      "dependsOn": ["W73b", "W72b"],
+      "runtimeChange": true,
+      "exitGate": "Protocol assets are inspectable and consumed by the current Factory surface without a second module shell."
+    },
+    {
+      "id": "W73h",
+      "name": "Integration, Recovery and Soak",
+      "status": "NOT_APPROVED",
+      "dependsOn": ["W73c", "W73d", "W73e", "W73f", "W73g"],
+      "runtimeChange": true,
+      "exitGate": "Existing W68 flows remain compatible; crash/resume/cancel and 20-cycle resource evidence pass with no orphan run, listener or executor."
+    }
+  ],
+  "routedOut": [
+    { "itemId": "F02", "target": "W74a", "reason": "ingestion ownership" },
+    { "itemId": "F08", "target": "W79", "reason": "external graphical capability ownership" },
+    { "itemId": "F11", "target": "W64", "reason": "product-persona presentation ownership" },
+    { "itemId": "F19", "target": "W74c", "reason": "explicit promotion ownership" }
+  ],
+  "forbidden": [
+    "second Factory runtime or second review state machine",
+    "universal asset, graph, workflow or run database",
+    "Provider routing presented as a real Harness Adapter",
+    "Seat, Model, Provider, Harness, Capability or Executor identity conflation",
+    "automatic Promotion, publication, Canon merge or method mutation",
+    "single Overall Score, hidden AUTO router or context-free cross-industry worker ranking",
+    "W82 compiler, W69 Hub, W74 ingestion/promotion, W79 tool runtime or W64 persona implementation inside W73",
+    "renderer/main/preload/IPC/UI/runtime code changes in W73a"
+  ]
+}

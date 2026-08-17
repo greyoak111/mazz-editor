@@ -98,6 +98,7 @@ const files = [
   'tests/contract/w72b-existing-adapters.test.mjs',
   'tests/contract/w72c-oss-provenance.test.mjs',
   'tests/contract/w72d-external-tool-adapter.test.mjs',
+  'tests/contract/w73a-factory-gap-audit.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
   'tests/contract/hotfix-w61a.test.mjs',
