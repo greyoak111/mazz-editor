@@ -46,6 +46,17 @@ const AUTO_PREVIEW_KEY = 'mazz.factory.autoPreview';
 const CONCURRENCY_KEY = 'mazz.factory.concurrency';
 const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const W74A_INGESTION_REQUEST_SCHEMA = 'mazz.ingestion-request/v0';
+
+function createMaterialAssetId() {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  return `asset:factory-material:${uuid || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`}`;
+}
+
+function materialLayerForPath(filePath = '') {
+  const ext = String(filePath).split('.').pop().toLowerCase();
+  return ['txt', 'md', 'markdown'].includes(ext) ? 'source-fact' : 'derived';
+}
 
 // 首次生成前探测蓝图/大纲/快照/checkpoint 属于正常分支；先 stat，避免用异常充当流程控制并污染主进程错误账。
 async function readOptionalFile(filePath) {
@@ -714,7 +725,11 @@ export class FactoryPanel {
       const { extractText } = await import('./style-studio.js');
       let text = await extractText(p);
       if (text.length > 8000) text = text.slice(0, 8000) + '\n[截断至8000字]';
-      this.embeds.push({ name: p.split(/[\\/]/).pop(), text });
+      this.embeds.push({
+        assetId: createMaterialAssetId(), name: p.split(/[\\/]/).pop(), text,
+        sourcePath: p, sourceKind: 'local-file', provenanceSource: 'factory.embed',
+        layer: materialLayerForPath(p), importedAt: new Date().toISOString(),
+      });
       this.renderEmbeds();
       this.updateExtraBadge();
       this.log(`已嵌入资料：${p.split(/[\\/]/).pop()}（${text.length} 字）`);
@@ -799,7 +814,12 @@ export class FactoryPanel {
         selectedIds: [...this.researchSelected],
         onStage: row => { this.researchStatus = `M0 · ${row.label || row.stage}`; this.pushSnapshot(); },
       });
-      this.embeds.push({ name: `M0检索：${this.researchPrepared.topic}`, text: done.report.slice(0, 20_000), note: done.path });
+      this.embeds.push({
+        assetId: createMaterialAssetId(), name: `M0检索：${this.researchPrepared.topic}`,
+        text: done.report.slice(0, 20_000), note: done.path, sourcePath: done.path,
+        sourceKind: 'approved-local-report', provenanceSource: 'factory.research',
+        layer: 'derived', importedAt: new Date().toISOString(),
+      });
       this.researchResultPath = done.path;
       this.researchStatus = `已核准、落盘并投喂 M0：${done.path}`;
       this.renderEmbeds();
@@ -1043,6 +1063,9 @@ export class FactoryPanel {
       factoryRuntimeConvergencePath: task?.factoryRuntimeConvergencePath || '',
       factoryRuntimeConvergenceStatus: task?.factoryRuntimeConvergenceStatus || '',
       factoryRuntimeConvergenceBlockers: Number(task?.factoryRuntimeConvergenceBlockers) || 0,
+      materialIngestionSchema: task?.materialIngestionSchema || '',
+      materialCatalogPath: task?.materialCatalogPath || '',
+      materialRefs: Array.isArray(task?.materialRefs) ? task.materialRefs : [],
     };
   }
 
@@ -1302,6 +1325,7 @@ export class FactoryPanel {
           domain: 'content-production', taskType: 'factory.single.w68',
           workflowRef: 'W68', workflowVersion: 'W68a', governanceProfile: task.reviewRitual || 'light',
           budgetProfile: { capTokens: Number(task.reviewBudgetCap) || 32000 }, previousRunId,
+          inputArtifactRefs: Array.isArray(task.materialRefs) ? task.materialRefs : [],
           provenance: { source: 'mazz.factory', protocol: 'W73b' },
         });
       } catch (error) {
@@ -1911,6 +1935,56 @@ export class FactoryPanel {
     return task.folder;
   }
 
+  async ensureW74aMaterials(task) {
+    const embeds = Array.isArray(task?.embeds) ? task.embeds : [];
+    if (!embeds.length || !window.mazz?.isElectron) return [];
+    const { extractText } = await import('./style-studio.js');
+    const refs = [];
+    for (const embed of embeds) {
+      if (embed.materialRef?.id && embed.materialRef?.path) {
+        refs.push(embed.materialRef);
+        continue;
+      }
+      embed.assetId ||= createMaterialAssetId();
+      embed.importedAt ||= new Date().toISOString();
+      embed.layer ||= embed.sourcePath ? materialLayerForPath(embed.sourcePath) : 'derived';
+      const fullText = embed.sourcePath ? await extractText(embed.sourcePath) : String(embed.text || '');
+      const sourcePath = embed.sourcePath || embed.note || '';
+      const result = await window.mazz.invoke('ingestion:registerText', {
+        schema: W74A_INGESTION_REQUEST_SCHEMA,
+        assetId: embed.assetId,
+        projectId: task.id,
+        projectPath: task.folder,
+        title: embed.name || '项目材料',
+        mediaType: 'text/plain; charset=utf-8',
+        layer: embed.layer,
+        text: fullText,
+        sourceRef: { kind: embed.sourceKind || (embed.sourcePath ? 'local-file' : 'approved-local-report'), path: sourcePath, title: embed.name || '项目材料' },
+        provenance: { kind: 'user-approved-import', source: embed.provenanceSource || (embed.sourcePath ? 'factory.embed' : 'factory.research'), protocol: 'W74a' },
+        importedAt: embed.importedAt,
+      });
+      if (!result?.ok) {
+        const error = new Error(result?.message || 'W74a 材料登记冲突；现有材料未覆盖');
+        error.code = result?.code === 'INGESTION_CONFLICT' ? 'W74A_INGESTION_CONFLICT' : (result?.code || 'W74A_INGESTION_FAILED');
+        error.conflictPath = result?.conflictPath || '';
+        throw error;
+      }
+      const ref = Object.freeze({
+        kind: 'asset-envelope', id: embed.assetId, path: result.paths.envelope,
+        type: 'application/json', version: result.manifest.version, role: 'input-material',
+        sourceRef: sourcePath,
+      });
+      embed.materialRef = ref;
+      embed.materialManifestPath = result.paths.manifest;
+      refs.push(ref);
+      task.materialCatalogPath = result.paths.catalog;
+    }
+    task.materialRefs = refs;
+    task.materialIngestionSchema = W74A_INGESTION_REQUEST_SCHEMA;
+    this.persistTasks();
+    return refs;
+  }
+
   async exportTaskFormat(task, markdown, outStem) {
     const fmt = task.exportFmt || 'md';
     if (fmt === 'md') return null;
@@ -2128,6 +2202,7 @@ export class FactoryPanel {
     this.log(`开始任务：「${task.label}」（${tpl.name} · ${task.mode === 'max' ? '连写' : '单次'}模式）`);
     try {
       await this.ensureTaskFolder(task, tpl);
+      await this.ensureW74aMaterials(task);
       await this.ensureProductionRun(task, tpl);
       if (this.shouldTrackProductionRun(task)) {
         scheduleDispatch = await this.scheduleFactoryTask(task, {
@@ -2152,7 +2227,12 @@ export class FactoryPanel {
         status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder },
       });
     } catch (e) {
-      if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED', 'W73E_SCHEDULER_RECOVERY_REQUIRED', 'W73F_ECONOMICS_RECOVERY_REQUIRED', 'W73_RUNTIME_RECOVERY_REQUIRED', 'RUN_OWNER_ACTIVE'].includes(e?.code)) {
+      if (e?.code === 'W74A_INGESTION_CONFLICT') {
+        task.status = 'paused';
+        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, materialConflictPath: e.conflictPath || '', ...this.productionRunState(task) }).catch(() => {});
+        this.log(`⚠ 任务「${task.label}」因材料身份冲突保持阻断：${e.message}`);
+        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '项目材料需要人工裁决', content: `${e.message}${e.conflictPath ? `\n\n冲突证据：${e.conflictPath}` : ''}`, stage: 'material-conflict', progress: 100 })).catch(() => {});
+      } else if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED', 'W73E_SCHEDULER_RECOVERY_REQUIRED', 'W73F_ECONOMICS_RECOVERY_REQUIRED', 'W73_RUNTIME_RECOVERY_REQUIRED', 'RUN_OWNER_ACTIVE'].includes(e?.code)) {
         task.status = 'paused';
         if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
         this.log(`⚠ 任务「${task.label}」因事实账恢复要求保持阻断：${e.message}`);
@@ -2900,6 +2980,7 @@ export class FactoryPanel {
       task.status = 'running';
       this.renderTasks();
       try {
+        await this.ensureW74aMaterials(task);
         await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, prog);
         if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
         if (task.status === 'done' || task.status === 'done-warn') window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作完成：${task.label}`, detail: '续写任务已收口并落盘。', status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder } });

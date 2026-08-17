@@ -118,6 +118,7 @@ const { ResourceLedger } = require('./resource-ledger');
 const { AgentHarnessService } = require('./agent-harness');
 const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
 const { FactoryRunOwnerRegistry } = require('./factory-run-owners');
+const { IngestionPipeline } = require('./ingestion-pipeline');
 const { FactorySseDecoder } = require('./factory-sse');
 
 const PROTOCOL = 'mazz';
@@ -140,9 +141,11 @@ const bus = new IpcBus();
 const resourceLedger = new ResourceLedger();
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
 const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
+const ingestionPipeline = new IngestionPipeline();
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
+  globalThis.__MAZZ_E2E_INGESTION_PIPELINE__ = ingestionPipeline;
   globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
 }
 const factoryRuntimeOwners = new WeakSet();
@@ -598,6 +601,7 @@ function registerChannels() {
   bus.handle('factory:runRelease', async ({ runId, leaseId, reason = 'renderer-release' }, event) => factoryRunOwners.release({
     runId, leaseId, reason, ownerId: String(event?.sender?.id || ''),
   }));
+  bus.handle('ingestion:registerText', async payload => ingestionPipeline.register(payload));
   // 流式：SSE 逐 delta 广播 factory:aiChunk {requestId, delta}，结束推 done，出错推 error
   bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }, event) => {
     const req = factoryAiRequests.begin(requestId, {

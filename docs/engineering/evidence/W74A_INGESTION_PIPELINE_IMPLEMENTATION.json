@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "wave": "W74a",
+  "baseline": "main@607d030",
+  "date": "2026-08-17",
+  "status": "PASS_W74A_COMPLETE_TO_THIN_SLICE_SPEC",
+  "scope": "explicit existing local materials into one Factory project",
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "status": "PASS"
+    },
+    "w74aContract": {
+      "command": "node tests/contract/w74a-ingestion-pipeline.test.mjs",
+      "status": "PASS",
+      "tests": 8
+    },
+    "w68Compatibility": {
+      "status": "PASS",
+      "w68a": "11/11",
+      "w68b": "9/9",
+      "w68c": "9/9"
+    },
+    "w73Compatibility": {
+      "status": "PASS",
+      "w73bFactoryIntegration": "4/4",
+      "w73hRuntimeConvergence": "6/6"
+    },
+    "fullRegression": {
+      "command": "node tests/run.js",
+      "status": "PASS",
+      "files": "173/173"
+    },
+    "uiAndElectronE2E": {
+      "status": "NOT_REQUIRED",
+      "reason": "No new UI, page, window, native surface, or product entry was added."
+    }
+  },
+  "invariants": [
+    "The source file or approved report remains the source of truth.",
+    "Asset identity is semantic and never derived from a filesystem path.",
+    "Asset Envelope and catalog never contain the material body.",
+    "Chunks and catalog are rebuildable derived indexes, not asset truth.",
+    "The same registration is idempotent; conflicting registration never overwrites current.",
+    "Factory registers material before creating a new W68 single Production Run.",
+    "No W74b, W74c, W65, W69, W79, W82, Promotion, Publication, Canon, or universal database runtime was introduced."
+  ]
+}
