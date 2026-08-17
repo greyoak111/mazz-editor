@@ -16,6 +16,10 @@ import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, n
 import { detectHumanHelpMoments, evaluateBudgetCap, makeBudgetCard, makeFinalReviewCard } from './command-gate.js';
 import { PRODUCTION_RUN_SCHEMA, createProductionRunId, openProductionRunLedger } from './production-run.js';
 import { buildW68AuditBatch, openReworkAuditLedger } from './rework-audit.js';
+import {
+  QUALIFICATION_RECORD_SCHEMA, DELEGATION_RECORD_SCHEMA, QualificationDelegationService,
+  openQualificationLedger, openDelegationLedger,
+} from './qualification-delegation.js';
 import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
@@ -54,6 +58,9 @@ export class FactoryPanel {
     this.workshopWrites = new Map(); // folder -> Promise；同项目归档串行，任务并发不互踩
     this.productionRunLedgers = new Map(); // taskId -> W73b 单 Run 串行账本；只接 W68 单次路径
     this.reworkAuditLedgers = new Map(); // taskId -> W73c Finding/Rework append-only 账本
+    this.qualificationLedgers = new Map(); // taskId -> W73d 项目级资格/证书账本
+    this.delegationLedgers = new Map(); // taskId -> W73d 单 Run 委托账本
+    this.qualificationDelegationServices = new Map(); // taskId -> 资格门禁 + 内/外执行边界
     this.editorTasks = new Map();  // taskId -> { task, path }
     this.cfg = null;
     this.pluginSel = new Set();   // 勾选的创作插件 id
@@ -115,6 +122,12 @@ export class FactoryPanel {
     this.productionRunLedgers.clear();
     for (const ledger of this.reworkAuditLedgers.values()) ledger.dispose().catch(() => {});
     this.reworkAuditLedgers.clear();
+    for (const service of this.qualificationDelegationServices.values()) service.dispose().catch(() => {});
+    this.qualificationDelegationServices.clear();
+    for (const ledger of this.qualificationLedgers.values()) ledger.dispose().catch(() => {});
+    this.qualificationLedgers.clear();
+    for (const ledger of this.delegationLedgers.values()) ledger.dispose().catch(() => {});
+    this.delegationLedgers.clear();
   }
 
   // ==================== W53 坞浮动状态镜像（dockfloat 子窗格=远程视图，本实例是真相源） ====================
@@ -892,7 +905,11 @@ export class FactoryPanel {
   productionRunState(task) {
     const ledger = this.productionRunLedgers.get(task?.id);
     const audit = this.reworkAuditLedgers?.get(task?.id);
+    const qualification = this.qualificationLedgers?.get(task?.id);
+    const delegation = this.delegationLedgers?.get(task?.id);
     const auditHealth = audit?.healthSnapshot?.();
+    const qualificationHealth = qualification?.healthSnapshot?.();
+    const delegationHealth = delegation?.healthSnapshot?.();
     return {
       productionRunSchema: ledger ? PRODUCTION_RUN_SCHEMA : task?.productionRunSchema,
       productionRunId: ledger?.runId || task?.productionRunId || '',
@@ -902,6 +919,14 @@ export class FactoryPanel {
       auditUnresolvedFindings: auditHealth?.unresolvedFindings ?? task?.auditUnresolvedFindings ?? 0,
       auditReworkCount: auditHealth?.reworks ?? task?.auditReworkCount ?? 0,
       auditRecoveryRequired: auditHealth?.recoveryRequired ?? task?.auditRecoveryRequired ?? false,
+      qualificationLedgerSchema: qualification ? QUALIFICATION_RECORD_SCHEMA : task?.qualificationLedgerSchema,
+      qualificationLedgerPath: qualification?.path || task?.qualificationLedgerPath || '',
+      qualificationCertificateCount: qualificationHealth?.certificates ?? task?.qualificationCertificateCount ?? 0,
+      delegationLedgerSchema: delegation ? DELEGATION_RECORD_SCHEMA : task?.delegationLedgerSchema,
+      delegationLedgerPath: delegation?.path || task?.delegationLedgerPath || '',
+      delegationCount: delegationHealth?.delegations ?? task?.delegationCount ?? 0,
+      delegationBlockedCount: delegationHealth?.blockedDelegations ?? task?.delegationBlockedCount ?? 0,
+      w73dRecoveryRequired: !!(qualificationHealth?.recoveryRequired || delegationHealth?.recoveryRequired || task?.w73dRecoveryRequired),
     };
   }
 
@@ -911,6 +936,63 @@ export class FactoryPanel {
       message = message.split(secret).join('[REDACTED]');
     }
     return message;
+  }
+
+  harnessClient() {
+    return {
+      listAdapters: () => window.mazz.invoke('harness:adapters'),
+      createSession: payload => window.mazz.invoke('harness:createSession', payload),
+      send: (sessionId, input) => window.mazz.invoke('harness:send', { sessionId, input }),
+      interrupt: sessionId => window.mazz.invoke('harness:interrupt', { sessionId }),
+      dispose: (sessionId, reason) => window.mazz.invoke('harness:dispose', { sessionId, reason }),
+    };
+  }
+
+  async ensureW73dLedgers(task, runLedger) {
+    if (!this.qualificationLedgers) this.qualificationLedgers = new Map();
+    if (!this.delegationLedgers) this.delegationLedgers = new Map();
+    if (!this.qualificationDelegationServices) this.qualificationDelegationServices = new Map();
+    const io = this.productionRunIo();
+    let qualification = this.qualificationLedgers.get(task.id) || null;
+    if (qualification && qualification.path !== runLedger.paths.qualifications) {
+      await qualification.dispose();
+      qualification = null;
+    }
+    if (!qualification) {
+      qualification = await openQualificationLedger({ io, path: runLedger.paths.qualifications });
+      this.qualificationLedgers.set(task.id, qualification);
+    }
+    let delegation = this.delegationLedgers.get(task.id) || null;
+    if (delegation && delegation.runId !== runLedger.runId) {
+      await this.qualificationDelegationServices.get(task.id)?.dispose?.();
+      this.qualificationDelegationServices.delete(task.id);
+      await delegation.dispose();
+      delegation = null;
+    }
+    if (!delegation) {
+      delegation = await openDelegationLedger({ io, path: runLedger.paths.delegations, runId: runLedger.runId });
+      this.delegationLedgers.set(task.id, delegation);
+    }
+    let service = this.qualificationDelegationServices.get(task.id) || null;
+    if (!service) {
+      service = new QualificationDelegationService({
+        qualificationLedger: qualification, delegationLedger: delegation, harnessClient: this.harnessClient(),
+      });
+      this.qualificationDelegationServices.set(task.id, service);
+    }
+    if (qualification.healthSnapshot().recoveryRequired || delegation.healthSnapshot().recoveryRequired) {
+      if (runLedger.snapshot.status !== 'blocked') {
+        await runLedger.append({
+          type: 'run-recovery-required', toStatus: 'blocked', reasonCode: 'W73D_LEDGER_RECOVERY_REQUIRED',
+          message: 'W73d 资格或委托账尾损坏已隔离；须人工检查后继续',
+          artifactRefs: [{ kind: 'evidence', path: qualification.healthSnapshot().recoveryRequired ? `${qualification.path}.corrupt-tail.txt` : `${delegation.path}.corrupt-tail.txt`, type: 'text/plain', role: 'w73d-corrupt-tail' }],
+        });
+      }
+      const error = new Error('W73d 资格或委托账处于恢复阻断态');
+      error.code = 'W73D_LEDGER_RECOVERY_REQUIRED';
+      throw error;
+    }
+    return service;
   }
 
   async ensureProductionRun(task, tpl) {
@@ -967,6 +1049,7 @@ export class FactoryPanel {
       });
       this.reworkAuditLedgers.set(task.id, audit);
     }
+    await this.ensureW73dLedgers(task, ledger);
     if (audit.healthSnapshot().recoveryRequired) {
       if (ledger.snapshot.status !== 'blocked') {
         await ledger.append({
@@ -1046,6 +1129,84 @@ export class FactoryPanel {
     Object.assign(task, this.productionRunState(task));
     this.persistTasks();
     return { ...batch, health };
+  }
+
+  async appendQualificationRecords(task, records = []) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    const runLedger = this.productionRunLedgers.get(task?.id);
+    const qualification = this.qualificationLedgers?.get(task?.id);
+    if (!runLedger || !qualification) {
+      const error = new Error('W73d Qualification Ledger 缺失或与 Production Run 未接通');
+      error.code = 'W73D_QUALIFICATION_LEDGER_MISSING';
+      throw error;
+    }
+    await qualification.appendBatch(records);
+    const qualificationRefs = [...new Set(records.flatMap(record => [record.definitionId, record.attemptId, record.certificateId]).filter(Boolean))];
+    await this.appendProductionRun(task, {
+      type: 'qualification-recorded', reasonCode: 'W73D_QUALIFICATION_RECORDED',
+      message: `W73d 记录 ${records.length} 项资格事实；证书总数 ${qualification.healthSnapshot().certificates}`,
+      artifactRefs: [{ kind: 'artifact', id: `${runLedger.runId}:qualification`, path: qualification.path, type: 'application/x-ndjson', role: 'qualification-ledger' }],
+      qualificationRefs,
+    });
+    Object.assign(task, this.productionRunState(task));
+    this.persistTasks();
+    return qualification.healthSnapshot();
+  }
+
+  async delegateInternalAgent(task, instruction, options = {}) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    const runLedger = this.productionRunLedgers.get(task?.id);
+    const service = this.qualificationDelegationServices?.get(task?.id);
+    const delegation = this.delegationLedgers?.get(task?.id);
+    if (!runLedger || !service || !delegation) throw Object.assign(new Error('W73d Delegation Service 缺失'), { code: 'W73D_DELEGATION_MISSING' });
+    const result = await service.delegateInternal({
+      taskRef: options.taskRef || `factory-task:${task.id}`,
+      seatRef: options.seatRef || 'seat:factory-command',
+      executorRef: options.executorRef || 'agent-runtime:closed',
+      certificateRef: options.certificateRef || '',
+      restricted: options.restricted !== false,
+      authorityRef: options.authorityRef || '',
+      instructionRef: options.instructionRef || `${runLedger.paths.root}/events.ndjson#agent-instruction`,
+      evidenceRefs: options.evidenceRefs || [],
+      resultRef: options.resultRef || `${runLedger.paths.root}/delegations.ndjson#internal-result`,
+      instruction, runtime: options.runtime || this.agentRuntime,
+    });
+    await this.appendProductionRun(task, {
+      type: 'delegation-recorded', reasonCode: result.code || 'W73D_INTERNAL_DELEGATION',
+      message: result.message || `内部 AgentRuntime 委托：${result.status}`,
+      artifactRefs: [{ kind: 'artifact', id: `${runLedger.runId}:delegation`, path: delegation.path, type: 'application/x-ndjson', role: 'delegation-ledger' }],
+      delegationRefs: [result.delegationId],
+    });
+    Object.assign(task, this.productionRunState(task));
+    this.persistTasks();
+    return result;
+  }
+
+  async delegateExternalAgent(task, instruction, options = {}) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    const runLedger = this.productionRunLedgers.get(task?.id);
+    const service = this.qualificationDelegationServices?.get(task?.id);
+    const delegation = this.delegationLedgers?.get(task?.id);
+    if (!runLedger || !service || !delegation) throw Object.assign(new Error('W73d Delegation Service 缺失'), { code: 'W73D_DELEGATION_MISSING' });
+    const result = await service.delegateExternal({
+      taskRef: options.taskRef || `factory-task:${task.id}`,
+      seatRef: options.seatRef || 'seat:external-agent',
+      executorRef: options.executorRef || `harness-executor:${options.adapterId || 'unavailable'}`,
+      certificateRef: options.certificateRef || '', restricted: options.restricted !== false,
+      authorityRef: options.authorityRef || '', adapterId: options.adapterId || '',
+      workspace: options.workspace || task.folder, instruction, payload: options.payload ?? instruction,
+      instructionRef: options.instructionRef || `${runLedger.paths.root}/events.ndjson#external-instruction`,
+      evidenceRefs: options.evidenceRefs || [], resultRef: options.resultRef || '',
+    });
+    await this.appendProductionRun(task, {
+      type: 'delegation-recorded', reasonCode: result.code || 'W73D_EXTERNAL_DELEGATION',
+      message: result.message || `外部 Harness 委托：${result.status}`,
+      artifactRefs: [{ kind: 'artifact', id: `${runLedger.runId}:delegation`, path: delegation.path, type: 'application/x-ndjson', role: 'delegation-ledger' }],
+      delegationRefs: [result.delegationId],
+    });
+    Object.assign(task, this.productionRunState(task));
+    this.persistTasks();
+    return result;
   }
 
   updateProviderBadge() {
@@ -1504,11 +1665,11 @@ export class FactoryPanel {
         status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder },
       });
     } catch (e) {
-      if (e?.code === 'W73_AUDIT_RECOVERY_REQUIRED') {
+      if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED'].includes(e?.code)) {
         task.status = 'paused';
         if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
-        this.log(`⚠ 任务「${task.label}」因审计账恢复要求保持阻断：${e.message}`);
-        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '审计账需要人工恢复', content: e.message, stage: 'audit-recovery-required', progress: 100 })).catch(() => {});
+        this.log(`⚠ 任务「${task.label}」因事实账恢复要求保持阻断：${e.message}`);
+        await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '事实账需要人工恢复', content: e.message, stage: 'ledger-recovery-required', progress: 100 })).catch(() => {});
       } else if (this.taskShouldStop(task) || e?.name === 'AbortError') {
         task.status = 'paused';
         await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'TASK_STOPPED', message: '任务暂停；现有工件保持不变' }).catch(error => this.log(`⚠ Production Run 暂停记账失败：${error.message}`));

@@ -93,6 +93,24 @@ describe('W62a 最小 agent 环', () => {
     await runtime.answer('B');
     assert.equal(seen[1][0].result, '用户选择：B');
   });
+
+  test('W73d 委托等待澄清/确认后的真实终态，不把 pending 冒充完成', async () => {
+    const registry = new CommandRegistry();
+    const queue = [
+      { command: 'agent.clarify', args: { question: '继续吗？', options: [{ label: '继续', value: 'yes' }, { label: '停止', value: 'no' }] } },
+      { command: 'agent.finish', args: { message: '澄清后完成' } },
+    ];
+    const runtime = new AgentRuntime({ registry, ledger: normalizeLedger(), decide: async () => queue.shift() });
+    let settled = false;
+    const delegated = runtime.submitForDelegation('需要澄清的委托').then(result => { settled = true; return result; });
+    for (let i = 0; i < 5 && !runtime.pending; i++) await Promise.resolve();
+    assert.equal(runtime.pending?.type, 'clarify');
+    assert.equal(settled, false);
+    await runtime.answer('yes');
+    const result = await delegated;
+    assert.equal(result.status, 'done');
+    assert.equal(settled, true);
+  });
 });
 
 describe('W62a 台账、指代与车间落点', () => {

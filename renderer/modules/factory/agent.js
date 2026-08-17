@@ -160,6 +160,8 @@ export class AgentRuntime {
     this.maxSteps = maxSteps;
     this.session = null;
     this.pending = null;
+    this.completionPromise = null;
+    this.resolveCompletion = null;
   }
 
   cards() { return this.registry.toolCards({ includeDisabled: true }); }
@@ -172,10 +174,24 @@ export class AgentRuntime {
     if (!literal) throw new Error('先写清楚要交办什么');
     if (/^(撤销|撤销上一步|undo)[。！!\s]*$/i.test(literal)) return this.undoLast();
     const resolved = resolveLedgerInput(literal, this.ledger);
+    this.completionPromise = new Promise(resolve => { this.resolveCompletion = resolve; });
     await this.record({ type: 'user', input: resolved.input, original: literal, replay: resolved.replay });
     this.session = { input: resolved.input, transcript: [], steps: 0 };
     this.emit('start', { input: resolved.input, replay: resolved.replay });
     return this.advance();
+  }
+
+  async submitForDelegation(raw) {
+    const immediate = await this.submit(raw);
+    if (!this.session && !this.pending) return immediate;
+    return this.completionPromise;
+  }
+
+  settleCompletion(result) {
+    const resolve = this.resolveCompletion;
+    this.resolveCompletion = null;
+    this.completionPromise = null;
+    resolve?.(result);
   }
 
   async advance() {
@@ -202,6 +218,7 @@ export class AgentRuntime {
     } catch (e) {
       this.emit('error', { message: e.message || String(e) });
       this.session = null; this.pending = null;
+      this.settleCompletion({ status: 'failed', message: e.message || String(e) });
       throw e;
     }
   }
@@ -273,6 +290,8 @@ export class AgentRuntime {
     await this.record({ type: 'finish', message: clip(message, 1200), status });
     this.emit('finish', { message: clip(message, 1200), status });
     this.session = null; this.pending = null;
-    return { status, message };
+    const result = { status, message };
+    this.settleCompletion(result);
+    return result;
   }
 }

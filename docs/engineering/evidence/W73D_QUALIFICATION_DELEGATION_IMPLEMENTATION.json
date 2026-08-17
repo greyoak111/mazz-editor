@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "wave": "W73d",
+  "status": "COMPLETE",
+  "baseline": "main@95f51a4",
+  "date": "2026-08-17",
+  "schemas": {
+    "qualification": "mazz.qualification-record/v0",
+    "delegation": "mazz.delegation-record/v0",
+    "productionRun": "mazz.production-run/v0"
+  },
+  "storage": {
+    "qualificationLedger": "<factory-project>/.mazz/qualifications.ndjson",
+    "delegationLedger": "<factory-project>/.mazz/runs/<runId>/delegations.ndjson",
+    "bodyPolicy": "references-only; instruction/result bodies and secrets are excluded"
+  },
+  "qualificationGate": {
+    "separateIdentities": [
+      "QualificationDefinition",
+      "QualificationAttempt",
+      "QualificationCertificate"
+    ],
+    "requiredFacts": [
+      "probePackRef",
+      "probePackVersion",
+      "passingScore",
+      "attemptScore",
+      "evidenceRefs",
+      "seatRefs",
+      "validFrom",
+      "expiresAt",
+      "revocation"
+    ],
+    "issuerRule": "human:* only",
+    "blockedCodes": [
+      "QUALIFICATION_REQUIRED",
+      "QUALIFICATION_EXECUTOR_MISMATCH",
+      "QUALIFICATION_SEAT_MISMATCH",
+      "QUALIFICATION_NOT_YET_VALID",
+      "QUALIFICATION_EXPIRED",
+      "QUALIFICATION_REVOKED"
+    ]
+  },
+  "delegation": {
+    "internal": "existing closed AgentRuntime with task/instruction/result references",
+    "external": "W66 Harness listAdapters/createSession/send/interrupt/dispose only",
+    "currentRegisteredAdapterCount": 0,
+    "currentExternalResult": "BLOCKED: HARNESS_UNAVAILABLE",
+    "providerImpersonation": false,
+    "sessionProvenance": [
+      "harnessAdapterRef",
+      "harnessSessionRef",
+      "resultRef",
+      "cancelRef",
+      "disposeRef"
+    ]
+  },
+  "recovery": {
+    "serializedWrites": true,
+    "idempotentDuplicate": true,
+    "semanticIdConflictRejected": true,
+    "corruptTailQuarantined": true,
+    "middleCorruptionRejected": true,
+    "productionRunBlockedOnRecovery": true,
+    "disposeWaitsForWrites": true,
+    "activeExternalAfterDispose": 0
+  },
+  "productionRunChanges": {
+    "eventTypes": [
+      "qualification-recorded",
+      "delegation-recorded"
+    ],
+    "referenceFields": [
+      "qualificationRefs",
+      "delegationRefs"
+    ],
+    "businessBodyCopied": false
+  },
+  "scopeExclusions": [
+    "W68 max/legacy",
+    "W73e scheduler and elastic staffing",
+    "W73f cost/KPI/ranking",
+    "W73g protocol assets",
+    "W69 Hub/Market",
+    "W74 Promotion",
+    "W70 Cognition",
+    "W79 external tool runtime",
+    "W82 Organizational Compiler"
+  ],
+  "tests": {
+    "targetedAssertions": {
+      "passed": 90,
+      "total": 90
+    },
+    "fullRegressionFiles": {
+      "status": "PASS",
+      "passed": 164,
+      "total": 164
+    },
+    "rendererBuild": "PASS"
+  },
+  "next": "W73e Joint Scheduler & Elastic Staffing — NOT APPROVED"
+}

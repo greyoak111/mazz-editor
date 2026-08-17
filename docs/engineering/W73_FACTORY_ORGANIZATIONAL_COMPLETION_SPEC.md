@@ -1,10 +1,11 @@
 # W73 Factory Organizational Completion — 施工规格
 
-> 状态：`W73c IMPLEMENTED / W73d–h NOT APPROVED`
-> 版本：v1.2
-> 审计坐标：`main@e23e3f9`
+> 状态：`W73d IMPLEMENTED / W73e–h NOT APPROVED`
+> 版本：v1.3
+> 审计坐标：`main@95f51a4`
 > W73b 开工基线：`main@c6a76d7`
 > W73c 开工基线：`main@b443908`
+> W73d 开工基线：`main@95f51a4`
 > 日期：2026-08-17
 > 机器可读差额表：[`W73_FACTORY_GAP_MATRIX.json`](./evidence/W73_FACTORY_GAP_MATRIX.json)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
@@ -15,7 +16,7 @@ W73 值得做，但它不是“下一代 Factory 重写”。当前 W68a/b/c 已
 
 > 在不改变 W68 审理语义的前提下，为现有生产行为建立唯一、可重开、可追踪的本地 Production Run 事实链，再让组织审计、持证、委托、调度、成本与评估共享这条事实链。
 
-W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W68 max/legacy、Router、KPI、资格、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73d，尚未批准且外部委托子门仍受 W66 真 Adapter 约束。
+W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`，但协议测试已证明真实 Adapter 到位后必须走 Harness Session 的 create/send/interrupt/dispose/result provenance。W68 max/legacy、Scheduler、KPI、Router、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73e，尚未批准。
 
 ## 2. 不可破坏的所有权
 
@@ -235,7 +236,7 @@ Rework {
 
 ### W73d — Qualification & Delegation
 
-状态：`NEXT RECOMMENDED / NOT APPROVED`。入口：W73b。外部 Agent 执行子门禁另依赖 W66 至少一个真实 Adapter；没有真 Adapter 时必须显示 `BLOCKED: HARNESS_UNAVAILABLE`。
+状态：`COMPLETE`。入口：W73b。外部 Agent 执行子门禁另依赖 W66 至少一个真实 Adapter；没有真 Adapter 时必须显示 `BLOCKED: HARNESS_UNAVAILABLE`。
 
 - `QualificationDefinition/Attempt/Certificate` 分离；
 - probe pack、版本、分数、证据、适用 Seat、有效期和撤销明确；
@@ -244,6 +245,19 @@ Rework {
 - 外部任务只能经 W66 Harness Session，保留 cancel/dispose/result provenance。
 
 退出 Gate：未持证不能进入受限 Seat；过期/撤销即时阻断新派工；外部执行失败不会被改写成 Provider 成功。
+
+实际实现：
+
+- `renderer/modules/factory/qualification-delegation.js` 冻结 `mazz.qualification-record/v0` 与 `mazz.delegation-record/v0`；Definition、Attempt、Certificate 使用不同身份，probe pack/version、passing score/actual score、evidence、Seat applicability、valid-from/expiry/revocation 均为严格字段；
+- 证书签发与撤销只接受 `human:*` Authority。模型、Provider、未知字段、secret、分数/结果不一致、未通过 Attempt 签证、超范围 Seat 全部在代码层拒绝；
+- 项目级 `<factory-project>/.mazz/qualifications.ndjson` 可跨同项目 Run 复用；单 Run `<run>/delegations.ndjson` 只记 assignment 与执行生命周期，不复制指令正文或结果正文；
+- 受限 Seat 在 assignment 之前检查证书、executor、Seat、有效期与撤销；未持证、错执行器、错 Seat、未生效、过期或撤销均合法 BLOCKED，绝不暗降为任意模型；
+- `FactoryPanel.delegateInternalAgent()` 只接现有闭集 `AgentRuntime`，把 task/instruction/result evidence 引回同一 Production Run；max/legacy 不迁移；
+- `FactoryPanel.delegateExternalAgent()` 只经 preload 白名单后的 W66 Harness IPC；有 Adapter 时必须保留 Adapter/Session/result/cancel/dispose provenance，失败记录为 Harness/Executor failure，不生成 Provider success；当前产品 Adapter=0，因此真产品路径固定返回 `BLOCKED: HARNESS_UNAVAILABLE` 且零 Session 创建；
+- 两类账均串行、幂等、可重开；同键异义、中段损坏拒绝，尾损坏隔离并让 Production Run 保持 recovery-required；dispose 后 active writer / active external session 回零；
+- Production Run v0 只增加 `qualification-recorded` / `delegation-recorded` 与引用数组，不取得证书正文或执行结果正文，也没有引入 W73e Scheduler、W73f KPI、W73g Protocol Asset、W69/W70/W79/W82。
+
+完整证据见 [`W73D_QUALIFICATION_DELEGATION_CHECKPOINT_2026-08-17.md`](./W73D_QUALIFICATION_DELEGATION_CHECKPOINT_2026-08-17.md)。
 
 ### W73e — Joint Scheduler & Elastic Staffing
 
