@@ -1,14 +1,14 @@
 # W72 Asset & Capability Foundation 施工规格
 
-> 版本：v0.3
+> 版本：v0.4
 >
 > 日期：2026-08-17
 >
-> 状态：**W72a–W72c COMPLETE / W72d NOT APPROVED**
+> 状态：**W72 COMPLETE — FOUNDATION ONLY**
 >
 > 前置：W71 `SEAL / COMPLETE`，严格 C4 提交 `cf35f5c`
 >
-> 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md` v1.43
+> 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md` v1.44
 >
 > 设计来源：`C:\Users\Administrator\Downloads\MAZZ_新上下文技术梳理_资产Factory关系检索多父导图_v0.2.md`
 
@@ -96,11 +96,22 @@ W72 完成不等于这些消费者波次自动获批。
 
 账本不是法律意见、在线漏洞扫描、最新版本查询、标准化公共 SBOM 或真实 installer 内容证明。退出 Gate 与证据见 [`W72C_OSS_PROVENANCE_CHECKPOINT_2026-08-17.md`](./W72C_OSS_PROVENANCE_CHECKPOINT_2026-08-17.md)。
 
-### W72d — External Tool Adapter Spec
+### W72d — External Tool Adapter Spec（COMPLETE）
 
-后续另行施工：只冻结 `probe/version/workdir/input/output/stdout/stderr/exit/duration/cancel/dispose/provenance` 契约。Blender 或其它工具试点归 W79，W72 不安装、不调用外部生产软件。
+本次只冻结 `probe/version/workdir/input/output/stdout/stderr/exit/duration/cancel/dispose/provenance` 契约：
 
-## 5. W72a 数据契约
+- Adapter 只有 `probe/run/cancel/dispose`，不复制 W66 Session Harness；
+- Probe 的 available 必须与 executable path/version 或 unavailable reason 对应；
+- Run Request 强制显式 workdir、稳定输入资产、预声明输出与 operation id；
+- 顶层 raw command/shell/env 被拒绝，协议不成为任意命令执行器；
+- Terminal Result 强制 status/exit 一致，并记录 stdout/stderr、duration、产物版本和 provenance；
+- cancel 可表达 accepted/cancelled/already-terminal/not-found；
+- dispose 只有在 `activeRuns=0` 时才允许宣称完成；
+- 实现没有进程、文件、网络、Electron、IPC、UI 或真实工具副作用。
+
+Blender 或其它工具试点仍归 W79，W72 不安装、不调用外部生产软件。协议、真实激活 Gate 与证据见 [`W72D_EXTERNAL_TOOL_ADAPTER_SPEC.md`](./W72D_EXTERNAL_TOOL_ADAPTER_SPEC.md) 和 [`W72D_EXTERNAL_TOOL_ADAPTER_CHECKPOINT_2026-08-17.md`](./W72D_EXTERNAL_TOOL_ADAPTER_CHECKPOINT_2026-08-17.md)。
+
+## 5. W72 数据契约
 
 Asset Envelope v0：
 
@@ -125,6 +136,16 @@ provenance
 
 这些 schema 是内部 v0 契约，不是 `.maz v1`、公共 Hub 协议或跨生态标准。
 
+External Tool Adapter v0：
+
+```text
+adapter = id / toolId / provenance + probe / run / cancel / dispose
+request = runId / operation / workdir / inputs / outputs / provenance
+result  = status / stdout / stderr / exit / durationMs / outputs / provenance
+```
+
+协议只描述外部工具调用边界，不持有进程、不登记 Capability、不调度 Factory，也不替代 Resource Ledger 的真实释放证据。
+
 ## 6. 当前停止线
 
-W72a–c 已通过，只能宣称“薄契约、一个现有样本适配和持续 OSS 来源账已落”，不能宣称 W72 完成。W72d External Tool Adapter Spec 仍未施工；下一步必须先回写完整未尽总表，再冻结纯协议，不得顺手安装 Blender、调用外部工具或启动 W73、W74、W79、W84。
+W72a–d 已通过，W72 只能按 `FOUNDATION ONLY` 标记完成：四项依赖根交付已闭合，但没有自动批准任何消费者。下一步必须先回写完整未尽总表；不得顺手安装 Blender、调用外部工具或启动 W74/W79/W84。若继续依赖顺序进入 W73，第一子波只能做 Factory 现状—设计差额审计与施工规格，不能直接扩写下一代 Runtime。
