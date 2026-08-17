@@ -114,6 +114,7 @@ const files = [
   'tests/unit/factory-run-owners.test.mjs',
   'tests/contract/w73h-runtime-convergence.test.mjs',
   'tests/contract/w74a-ingestion-pipeline.test.mjs',
+  'tests/contract/w74c-conversation-promotion.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
   'tests/contract/hotfix-w61a.test.mjs',

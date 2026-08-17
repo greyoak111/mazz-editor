@@ -95,5 +95,28 @@ export function createHarvestRuntime({ ctl } = {}) {
     return saved;
   }
 
-  return { collectCurrent, exportSelection, feedStyle, distillSelection, normalizedPayload };
+  async function promoteSelection(payload) {
+    const { meta, messages } = normalizedPayload(payload);
+    const workspace = await invoke('workspace:get');
+    const markdown = buildHarvestMarkdown(meta, messages);
+    const result = await invoke('promotion:promoteConversation', {
+      schema: 'mazz.conversation-promotion-request/v0',
+      projectId: 'workspace:conversation-assets',
+      projectPath: workspace,
+      title: `AI 对话：${meta.topic}`,
+      markdown,
+      sourceRef: {
+        kind: 'ai-conversation', adapterId: meta.adapterId || 'generic', site: meta.site,
+        url: meta.url, capturedAt: meta.capturedAt, messageIds: messages.map(row => row.id),
+      },
+      capturedAt: meta.capturedAt,
+      authorityRef: 'human:interactive-local-user',
+      reason: '用户在 AI 对话整理面板明确选择“升格为本地资产”',
+      decidedAt: new Date().toISOString(),
+    });
+    if (!result?.ok) throw new Error(result?.promotion?.message || result?.ingestion?.message || '本地资产升格失败；现有资产未改写');
+    return result;
+  }
+
+  return { collectCurrent, exportSelection, feedStyle, distillSelection, promoteSelection, normalizedPayload };
 }

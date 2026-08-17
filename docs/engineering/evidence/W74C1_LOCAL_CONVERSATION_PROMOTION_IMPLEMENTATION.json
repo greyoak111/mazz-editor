@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "wave": "W74c-1",
+  "baseline": "main@14ab4b3",
+  "date": "2026-08-17",
+  "status": "PASS_W74C1_COMPLETE_TO_THIN_SLICE_SPEC",
+  "scope": "explicit selected W62f conversation to W74a local asset and human-approved local Promotion",
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "status": "PASS"
+    },
+    "w74cContract": {
+      "command": "node tests/contract/w74c-conversation-promotion.test.mjs",
+      "status": "PASS",
+      "tests": 6
+    },
+    "w74aCompatibility": {
+      "command": "node tests/contract/w74a-ingestion-pipeline.test.mjs",
+      "status": "PASS",
+      "tests": 8
+    },
+    "w62fCompatibility": {
+      "command": "node tests/contract/hotfix-w62f.test.mjs",
+      "status": "PASS",
+      "tests": 6
+    },
+    "w72Compatibility": {
+      "command": "node tests/contract/w72-foundation.test.mjs",
+      "status": "PASS",
+      "tests": 6
+    },
+    "electronE2E": {
+      "command": "node tests/e2e/run87.mjs",
+      "status": "PASS",
+      "scenarios": "6/6",
+      "mainProcessErrors": 0,
+      "rendererErrors": 0,
+      "screenshot": "tests/e2e/shots/w74c-local-promotion.png"
+    },
+    "fullRegression": {
+      "status": "NOT_RUN_SCOPED",
+      "reason": "Military rule 5b limits this UI/local-ledger wave to affected contracts and run87; last committed baseline was 173/173."
+    }
+  },
+  "invariants": [
+    "A system may propose a candidate, but only human:* Authority may change Promotion state.",
+    "Promotion references a verified W72 Asset Envelope and never stores the conversation body.",
+    "The same selection is idempotent across partial failure and retry.",
+    "Revocation and supersession require an active prior state and preserve evidence.",
+    "Local Promotion never grants Publication, Hub, Canon, Factory Gate, or public evidence authority.",
+    "No W74b, W65, automatic semantic promotion, workspace scan, universal database, or Graph Bus was introduced."
+  ]
+}

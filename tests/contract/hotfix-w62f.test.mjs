@@ -57,12 +57,12 @@ describe('W62f 对话采集纯内核', () => {
 });
 
 describe('W62f 面板、回喂与正式术语接线', () => {
-  test('对话整理面板具备单选/批量/全选/反选、角色翻转与三条交付动作', () => {
+  test('对话整理面板具备单选/批量/全选/反选、角色翻转与四条交付动作', () => {
     const panel = src('renderer/panels/harvest.html');
     assert.ok(panel.includes('data-mode="single"') && panel.includes('data-mode="batch"'));
     assert.ok(panel.includes('id="select-all"') && panel.includes('id="select-invert"'));
     assert.ok(panel.includes('data-role-flip'));
-    assert.ok(panel.includes('harvestExport') && panel.includes('harvestStyle') && panel.includes('harvestMindmap'));
+    assert.ok(panel.includes('harvestExport') && panel.includes('harvestStyle') && panel.includes('harvestMindmap') && panel.includes('harvestPromote'));
   });
 
   test('浏览器、面板窗、文风素材与无损提炼回喂形成闭环', () => {
@@ -75,6 +75,7 @@ describe('W62f 面板、回喂与正式术语接线', () => {
     assert.ok(runtime.includes('/AI对话归档') && runtime.includes('saveStyleText'));
     assert.equal(runtime.includes('/AI收割'), false);
     assert.ok(runtime.includes('markdown.distillDocumentToMindmap'));
+    assert.ok(runtime.includes('promotion:promoteConversation'));
     assert.ok(styles.includes('export async function saveStyleText'));
   });
 

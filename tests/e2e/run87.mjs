@@ -116,6 +116,21 @@ await scenario('按选择导出带来源的 Markdown', async () => {
   await human.assert(markdown.includes('第二问：怎样核对潮位与值班簿？') && !markdown.includes('第二答：先按时间戳对齐'), '未勾选消息不得混入导出');
 });
 
+await scenario('用户明确升格当前选择为本地资产', async () => {
+  await panel.locator('#promote').click();
+  await panel.waitForFunction(() => document.querySelector('#status')?.textContent.startsWith('已升格为本地资产'), null, { timeout: 12000 });
+  const materialCatalogPath = path.join(WS, '.mazz', 'materials', 'catalog.json');
+  const promotionCatalogPath = path.join(WS, '.mazz', 'promotions', 'catalog.json');
+  await human.assert(fs.existsSync(materialCatalogPath) && fs.existsSync(promotionCatalogPath), '升格必须同时生成 W74a 材料目录与 W74c Promotion 目录');
+  const materials = JSON.parse(fs.readFileSync(materialCatalogPath, 'utf8'));
+  const promotions = JSON.parse(fs.readFileSync(promotionCatalogPath, 'utf8'));
+  await human.assert(materials.entryCount === 1 && promotions.entryCount === 1 && promotions.entries[0].status === 'active', '本地材料与显式 Promotion 必须各有一个 active 身份');
+  const contentPath = path.join(WS, ...materials.entries[0].manifestPath.split('/').slice(0, -1), 'content.txt');
+  const content = fs.readFileSync(contentPath, 'utf8');
+  await human.assert(content.includes('消息数量：3') && !content.includes('第二答：先按时间戳对齐'), 'Promotion 只能消费当前勾选的三条消息');
+  await panel.screenshot({ path: path.join(SHOT_DIR, 'w74c-local-promotion.png') });
+});
+
 await scenario('选定 AI 回复加入文风素材', async () => {
   await panel.locator('#select-all').click();
   await panel.locator('#style').click();

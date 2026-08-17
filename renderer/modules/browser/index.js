@@ -958,6 +958,10 @@ function createBrowser(container) {
           toast(`已加入文风素材（${result.count} 条）`);
         } else if (pl.type === 'harvestMindmap') {
           await ctl.harvester.distillSelection(pl);
+        } else if (pl.type === 'harvestPromote') {
+          const result = await ctl.harvester.promoteSelection(pl);
+          push({ type: 'harvestResult', message: '已升格为本地资产；身份、来源与撤销链已登记。' });
+          toast('AI 对话已升格为本地资产');
         }
       } catch (error) {
         const message = error?.message || String(error);
@@ -970,7 +974,7 @@ function createBrowser(container) {
       else if (pl?.type === 'fillPassword' && pl.id) fillPassword(pl.id);
       // 每个浏览器实例都订阅同一主窗信道；只允许当前实例响应一次，否则开过 N 个浏览器就会启动 N 份批队列。
       else if (pl?.type === 'clipBookmarks' && ctl === current) window.MazzCommands?.execute('browser.clipBookmarks');
-      else if (/^harvest(?:Export|Style|Mindmap)$/.test(pl?.type || '') && ctl === current) handleHarvestPanelAction(pl);
+      else if (/^harvest(?:Export|Style|Mindmap|Promote)$/.test(pl?.type || '') && ctl === current) handleHarvestPanelAction(pl);
       // W54 B3 收藏当前页桥（panel 子窗格：预填+保存，ctl 真相源）
       else if (pl?.type === 'bookmarkQuery') {
         const t = activeTab();
