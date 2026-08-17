@@ -1,12 +1,13 @@
 # W73 Factory Organizational Completion — 施工规格
 
-> 状态：`W73e IMPLEMENTED / W73f–h NOT APPROVED`
-> 版本：v1.4
-> 审计坐标：`main@d663cb1`
+> 状态：`W73f IMPLEMENTED / W73g–h NOT APPROVED`
+> 版本：v1.5
+> 审计坐标：`main@3b924c2`
 > W73b 开工基线：`main@c6a76d7`
 > W73c 开工基线：`main@b443908`
 > W73d 开工基线：`main@95f51a4`
 > W73e 开工基线：`main@d663cb1`
+> W73f 开工基线：`main@3b924c2`
 > 日期：2026-08-17
 > 机器可读差额表：[`W73_FACTORY_GAP_MATRIX.json`](./evidence/W73_FACTORY_GAP_MATRIX.json)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
@@ -17,7 +18,7 @@ W73 值得做，但它不是“下一代 Factory 重写”。当前 W68a/b/c 已
 
 > 在不改变 W68 审理语义的前提下，为现有生产行为建立唯一、可重开、可追踪的本地 Production Run 事实链，再让组织审计、持证、委托、调度、成本与评估共享这条事实链。
 
-W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`。W73e 继续在同一 Run 上补充可重算的候选/排除/人工决定/dispatch 事实，并让旧 1–4 worker pool 服从显式优先级、资格、健康、预算、风险和背压；AUTO 只提议，多候选必须由人类显式选择。W68 max/legacy、W73f KPI、Router、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73f，尚未批准。
+W73b 已按本规格完成单路径薄实现：只有 W68 单次任务进入 `mazz.production-run/v0`，以每 Run 独立目录保存 snapshot、append-only 事件语义和 Artifact references。W73c 又在同一条 W68 单次路径上补齐 `Finding / AuditFlag / Rework` 旁路事实链和恢复阻断；没有重写 W68 审理引擎。W73d 在同一事实链旁补齐项目级资格账、单 Run 委托账、受限 Seat 持证门禁与内部闭集 `AgentRuntime` 委托；由于当前产品真实 W66 Adapter 仍为 0，外部委托只允许确定性落 `BLOCKED: HARNESS_UNAVAILABLE`。W73e 继续在同一 Run 上补充可重算的候选/排除/人工决定/dispatch 事实，并让旧 1–4 worker pool 服从显式优先级、资格、健康、预算、风险和背压；AUTO 只提议，多候选必须由人类显式选择。W73f 已把同一 Run 的成本、版本化 Metric/Formula、本地评价与 Pareto 前沿落入 `economics.ndjson`：W68 字符折算只记作 estimate，真实 usage、结算金额和缺失证据保持分离或 UNKNOWN；九条能力轴、Production/Author/Audience 三张成绩单与七项系统健康 KPI 均可追溯，但真实样本不足时不宣称排名有效。W68 max/legacy、W73g Protocol Asset、W73h soak、Hub、统一导入与外部工具仍未迁移。下一建议波为 W73g，尚未批准。
 
 ## 2. 不可破坏的所有权
 
@@ -203,7 +204,7 @@ Rework {
 
 - `renderer/modules/factory/production-run.js` 冻结 `ProductionRun/Event/Reference v0`、严格字段、secret 拒绝、状态迁移、事件重放、写串行化、损坏尾隔离、orphan running 恢复与 dispose；
 - `renderer/modules/factory/index.js` 只在 `W68_PROTOCOL && mode != max` 时创建 Run；审理工件只按路径引用，完成账先于任务 `done`；缺账直接阻断；
-- 目录为 `<factory-project>/.mazz/runs/<runId>/`，五件套是 `run.json / events.ndjson / findings.ndjson / economics.ndjson / references.json`；后两类空文件只冻结归属，不冒充 W73c/W73f 已实现；
+- 目录为 `<factory-project>/.mazz/runs/<runId>/`，五件套是 `run.json / events.ndjson / findings.ndjson / economics.ndjson / references.json`；W73c 已取得 findings，W73f 已取得 economics，正文仍只由引用连接；
 - Provider 边界只登记 `route-requested-not-observed`，不把配置路由冒充实际执行，也不保存 API key/baseURL；
 - event log 先于 snapshot/reference 写入；后两者写失败会将内存账标为 `requiresReload`，禁止继续覆盖，重开后从事件补回；
 - 损坏尾隔离到 `corrupt-tail.txt` 并转 `blocked`，中段损坏硬拒绝；重开未闭合 `running` 先转 recovery-required。
@@ -289,7 +290,7 @@ AUTO 只提议；必须可禁 Provider、锁 executor、改预算或选备选。
 
 ### W73f — Cost, KPI & Local Evaluation
 
-入口：W73b、W73c；真实样本不足时可以完成协议但不能宣称排名有效。
+状态：`COMPLETE`。入口：W73b、W73c；真实样本不足时可以完成协议但不能宣称排名有效。
 
 - 成本分 `estimate / provider-reported / settled-actual / unknown`；
 - price table、currency、effective date、provider usage version 在位；
@@ -301,6 +302,20 @@ AUTO 只提议；必须可禁 Provider、锁 executor、改预算或选备选。
 - KPI 先用于系统健康，不自动奖惩 Seat、改 Gate 或改方法。
 
 退出 Gate：任一视图可钻回 Sample → Run → Task → Artifact → Finding/Gate → Human Decision；公式变更可对旧记录重算且保留旧结果。
+
+实际实现：
+
+- `renderer/modules/factory/economics-evaluation.js` 冻结 `mazz.economics-evaluation-record/v0`、`mazz.cost-record/v0`、`mazz.price-table/v0`、`mazz.metric-definition/v0`、`mazz.metric-formula/v0` 与 `mazz.local-evaluation/v0`；字段闭集、secret 拒绝、版本引用、确定性重算和 evidence window 都在代码层执行；
+- 成本只允许 `estimate / provider-reported / settled-actual / unknown` 四种事实。W68 `ReviewBudgetLedger` 的字符折算明确写为 `estimate + w68.review-budget-char-estimate/v0`，金额保持 unknown；供应商回报必须有 provider、usage version 与 evidence，结算实付必须有 settled amount 与 evidence；四类汇总不生成 combined total；
+- Price table 显式保存 provider/model、currency、effective-from/to、版本、输入/输出单价与 sourceRef；没有真实表时不猜金额。现仓没有可信 Provider usage 或账单样本，因此本波只证明协议和本地估算链有效，不宣称 actual coverage；
+- 标准目录覆盖 Raw Ability、Governance Uplift、Final Quality、Governance Dependency、Reliability、Cost、Latency、Revision Cost、Canon Compliance 九轴；MetricDefinition 冻结 scorecard、样本窗、适用上下文，Formula 独立版本化；seat/executor/provider/model/workflow version/defect class 可归因；
+- Production、Author、Audience 保持三张独立成绩单；原始能力、治理增益、治理依赖、作者接受度与受众接受度在缺匹配样本或人工决定时保持 unknown，可靠性样本不足时保持 insufficient-sample；
+- 七项 `FACTORY_HEALTH_METRICS` 获得 system-health 版本定义，描述中硬钉“不得自动处罚 Seat、改 Gate 或改方法”；该类 KPI 不参与业务成绩单或调度决定；
+- `computeParetoFrontier()` 只返回非支配前沿、支配证据和缺轴排除；`overallScore` 固定为 null，未引入 hidden Router；
+- 单 Run `economics.ndjson` 保存目录、成本与评价；精确重复幂等、同键异义拒绝、写入串行、损坏尾隔离、中段损坏拒绝、human + evidence 恢复和 dispose 等待在飞写均通过。Production Run v0 只新增 `economics-recorded / evaluation-recorded` 与引用数组，不取得评价正文；
+- W68 单次审理完成 W73c 审计后旁路登记成本与评价，再继续原 `review-recorded`；Finding/Rework 使用真实 W73c 引用，成本证据指向项目 `成本台账.json`。max/legacy、W73g/h、W69/W74/W79/W82、UI、排行榜与真实外部执行均未进入本波。
+
+完整证据见 [`W73F_COST_KPI_LOCAL_EVALUATION_CHECKPOINT_2026-08-17.md`](./W73F_COST_KPI_LOCAL_EVALUATION_CHECKPOINT_2026-08-17.md)。
 
 ### W73g — Director & Process Protocol Assets
 

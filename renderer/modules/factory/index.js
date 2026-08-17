@@ -24,6 +24,10 @@ import {
   SCHEDULER_RECORD_SCHEMA, ElasticStaffingCoordinator, createScheduleProposal,
   finalizeSchedule, openScheduleLedger,
 } from './joint-scheduler.js';
+import {
+  ECONOMICS_LEDGER_RECORD_SCHEMA, buildW68EconomicsEvaluationBatch,
+  openEconomicsEvaluationLedger, standardEconomicsMetricRecords,
+} from './economics-evaluation.js';
 import { productText } from './terms.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
@@ -66,6 +70,7 @@ export class FactoryPanel {
     this.delegationLedgers = new Map(); // taskId -> W73d 单 Run 委托账本
     this.qualificationDelegationServices = new Map(); // taskId -> 资格门禁 + 内/外执行边界
     this.scheduleLedgers = new Map(); // taskId -> W73e 单 Run 调度提议/人工决定/dispatch 账本
+    this.economicsEvaluationLedgers = new Map(); // taskId -> W73f 成本、版本化指标/公式与本地评估账本
     this.staffingCoordinator = new ElasticStaffingCoordinator({ capacity: this.concurrency }); // 旁路租约；runningTasks 仍是执行真相
     this.schedulerSequence = 0;
     this.editorTasks = new Map();  // taskId -> { task, path }
@@ -137,6 +142,8 @@ export class FactoryPanel {
     this.delegationLedgers.clear();
     for (const ledger of this.scheduleLedgers.values()) ledger.dispose().catch(() => {});
     this.scheduleLedgers.clear();
+    for (const ledger of this.economicsEvaluationLedgers.values()) ledger.dispose().catch(() => {});
+    this.economicsEvaluationLedgers.clear();
     this.staffingCoordinator?.dispose?.();
   }
 
@@ -918,10 +925,12 @@ export class FactoryPanel {
     const qualification = this.qualificationLedgers?.get(task?.id);
     const delegation = this.delegationLedgers?.get(task?.id);
     const scheduling = this.scheduleLedgers?.get(task?.id);
+    const economics = this.economicsEvaluationLedgers?.get(task?.id);
     const auditHealth = audit?.healthSnapshot?.();
     const qualificationHealth = qualification?.healthSnapshot?.();
     const delegationHealth = delegation?.healthSnapshot?.();
     const schedulingHealth = scheduling?.healthSnapshot?.();
+    const economicsHealth = economics?.healthSnapshot?.();
     return {
       productionRunSchema: ledger ? PRODUCTION_RUN_SCHEMA : task?.productionRunSchema,
       productionRunId: ledger?.runId || task?.productionRunId || '',
@@ -944,6 +953,12 @@ export class FactoryPanel {
       schedulerProposalCount: schedulingHealth?.proposals ?? task?.schedulerProposalCount ?? 0,
       schedulerActiveDispatches: schedulingHealth?.activeDispatches ?? task?.schedulerActiveDispatches ?? 0,
       w73eRecoveryRequired: !!(schedulingHealth?.recoveryRequired || task?.w73eRecoveryRequired),
+      economicsLedgerSchema: economics ? ECONOMICS_LEDGER_RECORD_SCHEMA : task?.economicsLedgerSchema,
+      economicsLedgerPath: economics?.path || task?.economicsLedgerPath || '',
+      economicsCostCount: economicsHealth?.costs ?? task?.economicsCostCount ?? 0,
+      economicsEvaluationCount: economicsHealth?.evaluations ?? task?.economicsEvaluationCount ?? 0,
+      economicsUnknownCostCount: economicsHealth?.costKinds?.unknown ?? task?.economicsUnknownCostCount ?? 0,
+      w73fRecoveryRequired: !!(economicsHealth?.recoveryRequired || task?.w73fRecoveryRequired),
     };
   }
 
@@ -1039,6 +1054,38 @@ export class FactoryPanel {
     return scheduling;
   }
 
+  async ensureW73fLedger(task, runLedger) {
+    if (!this.economicsEvaluationLedgers) this.economicsEvaluationLedgers = new Map();
+    let economics = this.economicsEvaluationLedgers.get(task.id) || null;
+    if (economics && (economics.runId !== runLedger.runId || economics.path !== runLedger.paths.economics)) {
+      await economics.dispose();
+      this.economicsEvaluationLedgers.delete(task.id);
+      economics = null;
+    }
+    if (!economics) {
+      economics = await openEconomicsEvaluationLedger({
+        io: this.productionRunIo(), path: runLedger.paths.economics, runId: runLedger.runId,
+      });
+      this.economicsEvaluationLedgers.set(task.id, economics);
+    }
+    if (economics.healthSnapshot().recoveryRequired) {
+      if (runLedger.snapshot.status !== 'blocked') {
+        await runLedger.append({
+          type: 'run-recovery-required', toStatus: 'blocked', reasonCode: 'W73F_ECONOMICS_RECOVERY_REQUIRED',
+          message: 'W73f 成本/评估账存在损坏尾；须人工核对后继续',
+          artifactRefs: [{ kind: 'evidence', path: `${economics.path}.corrupt-tail.txt`, type: 'text/plain', role: 'economics-recovery-evidence' }],
+        });
+      }
+      const error = new Error('W73f 成本/评估账处于恢复阻断态');
+      error.code = 'W73F_ECONOMICS_RECOVERY_REQUIRED';
+      throw error;
+    }
+    if (economics.healthSnapshot().metrics === 0) {
+      await economics.appendBatch(standardEconomicsMetricRecords(runLedger.runId, { at: runLedger.snapshot.createdAt }));
+    }
+    return economics;
+  }
+
   async ensureProductionRun(task, tpl) {
     if (!this.shouldTrackProductionRun(task)) return null;
     let ledger = this.productionRunLedgers.get(task.id) || null;
@@ -1095,6 +1142,7 @@ export class FactoryPanel {
     }
     await this.ensureW73dLedgers(task, ledger);
     await this.ensureW73eLedger(task, ledger);
+    await this.ensureW73fLedger(task, ledger);
     if (audit.healthSnapshot().recoveryRequired) {
       if (ledger.snapshot.status !== 'blocked') {
         await ledger.append({
@@ -1174,6 +1222,37 @@ export class FactoryPanel {
     Object.assign(task, this.productionRunState(task));
     this.persistTasks();
     return { ...batch, health };
+  }
+
+  async appendW73fEconomics(task, result, { artifactDir, findingRefs = [], reworkRefs = [], unitNo = 1 } = {}) {
+    if (!this.shouldTrackProductionRun(task)) return null;
+    const runLedger = this.productionRunLedgers.get(task?.id);
+    const economics = this.economicsEvaluationLedgers?.get(task?.id);
+    if (!runLedger || !economics || runLedger.runId !== economics.runId) {
+      const error = new Error('W73f Economics Evaluation Ledger 缺失或与 Production Run 不一致');
+      error.code = 'W73F_ECONOMICS_LEDGER_MISSING';
+      throw error;
+    }
+    const at = result?.budget?.entries?.at?.(-1)?.at || new Date().toISOString();
+    const records = buildW68EconomicsEvaluationBatch({
+      runId: runLedger.runId, taskId: task.id, result, artifactDir, costLedgerPath: `${task.folder}/成本台账.json`,
+      findingRefs, reworkRefs, unitNo, at,
+      metricState: economics.state,
+    });
+    await economics.appendBatch(records);
+    const costRefs = records.filter(row => row.type === 'cost-recorded').map(row => row.cost.costId);
+    const evaluationRefs = records.filter(row => row.type === 'evaluation-recorded').map(row => row.evaluation.evaluationId);
+    if (costRefs.length) await this.appendProductionRun(task, {
+      type: 'economics-recorded', reasonCode: 'W73F_COST_ESTIMATE_RECORDED',
+      message: 'W68 字符折算预算已按 estimate 记账；未伪装为 Provider usage 或结算实付', economicsRefs: costRefs,
+    });
+    if (evaluationRefs.length) await this.appendProductionRun(task, {
+      type: 'evaluation-recorded', reasonCode: 'W73F_LOCAL_EVALUATION_RECORDED',
+      message: '版本化 Metric/Formula 本地评估已落盘；未知与样本不足保持显式', evaluationRefs,
+    });
+    Object.assign(task, this.productionRunState(task));
+    this.persistTasks();
+    return { costRefs, evaluationRefs, health: economics.healthSnapshot() };
   }
 
   async appendQualificationRecords(task, records = []) {
@@ -2017,7 +2096,10 @@ export class FactoryPanel {
       kind: 'artifact', id: `${task.id}:${unitNo}:${role}`, path: `${artifactDir}/${filename}`,
       type: role === 'manifest' ? 'application/json' : 'text/markdown', role,
     }));
-    await this.appendW73cAudit(task, result, { artifactDir, unitNo });
+    const auditBatch = await this.appendW73cAudit(task, result, { artifactDir, unitNo });
+    await this.appendW73fEconomics(task, result, {
+      artifactDir, findingRefs: auditBatch?.findingRefs || [], reworkRefs: auditBatch?.reworkRefs || [], unitNo,
+    });
     await this.appendProductionRun(task, {
       type: 'review-recorded', reasonCode: result.sealed ? 'W68_REVIEW_SEALED' : 'W68_REVIEW_BLOCKED',
       message: result.reason || result.verdict,

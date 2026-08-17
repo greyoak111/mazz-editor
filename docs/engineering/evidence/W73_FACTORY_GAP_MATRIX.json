@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "coordinate": "main@d663cb1",
-  "status": "W73E_IMPLEMENTED",
+  "coordinate": "main@3b924c2",
+  "status": "W73F_IMPLEMENTED",
   "generatedAt": "2026-08-17",
   "classificationEnum": [
     "LANDED",
@@ -24,7 +24,7 @@
     "W82 compiles organizations and execution plans; W73 owns runtime state and Production Run facts.",
     "W72 Registry describes providers and capabilities; it neither schedules nor executes them.",
     "No Overall Score, hidden AUTO router, automatic promotion or automatic method mutation is permitted.",
-    "W73e adds explainable scheduling and elastic staffing facts only; W73f KPI, W73g protocol assets, W73h soak and public Hub/Promotion remain excluded."
+    "W73f adds local versioned economics, metrics, formulas, evaluations and Pareto facts only; W73g protocol assets, W73h soak and public Hub/Promotion remain excluded."
   ],
   "sources": [
     {
@@ -55,6 +55,11 @@
     {
       "path": "renderer/modules/factory/joint-scheduler.js",
       "role": "W73e deterministic proposal, human decision, backpressure and dispatch ledger",
+      "status": "CURRENT"
+    },
+    {
+      "path": "renderer/modules/factory/economics-evaluation.js",
+      "role": "W73f versioned cost, metric, formula, local evaluation and Pareto ledger",
       "status": "CURRENT"
     },
     {
@@ -209,10 +214,12 @@
       "ownerWave": "W73f",
       "currentEvidence": [
         { "path": "renderer/modules/factory/review.js", "needle": "ReviewBudgetLedger", "claim": "review token budget and hard stop already exist" },
-        { "path": "renderer/modules/factory/index.js", "needle": "成本台账.json", "claim": "per-unit token totals are already persisted" }
+        { "path": "renderer/modules/factory/index.js", "needle": "成本台账.json", "claim": "per-unit token totals are already persisted" },
+        { "path": "renderer/modules/factory/economics-evaluation.js", "needle": "COST_KINDS", "claim": "estimate, provider reported, settled actual and unknown facts are strictly separated" },
+        { "path": "renderer/modules/factory/economics-evaluation.js", "needle": "PRICE_TABLE_SCHEMA", "claim": "currency, effective dates and price-table versions have a frozen local schema" }
       ],
-      "gap": "No provider-reported usage, versioned price table, estimate-versus-actual settlement, quota state or period reconciliation.",
-      "decision": "Record observed and estimated cost separately with currency, price-table version and UNKNOWN states; never fabricate actual cost."
+      "gap": "The protocol is landed, but the current W68 adapter has no trustworthy provider-reported usage, settled invoice or quota sample; monetary actual coverage therefore remains UNKNOWN.",
+      "decision": "Keep W68 character-derived tokens as estimate, accept reported or settled facts only with versioned source evidence, and never fabricate actual cost."
     },
     {
       "id": "F13",
@@ -220,10 +227,12 @@
       "classification": "PARTIAL",
       "ownerWave": "W73f",
       "currentEvidence": [
-        { "path": "renderer/modules/factory/command-gate.js", "needle": "FACTORY_HEALTH_METRICS", "claim": "seven trend metrics already summarize review events" }
+        { "path": "renderer/modules/factory/command-gate.js", "needle": "FACTORY_HEALTH_METRICS", "claim": "seven trend metrics already summarize review events" },
+        { "path": "renderer/modules/factory/economics-evaluation.js", "needle": "systemHealthOnly", "claim": "versioned KPI definitions are constrained to advisory system-health use" },
+        { "path": "renderer/modules/factory/economics-evaluation.js", "needle": "workflowVersion", "claim": "local evaluation context can attribute workflow, seat, executor, provider, model and defect class" }
       ],
-      "gap": "No attribution by seat, executor, defect class, workflow or version; no formula version or anti-Goodhart constraint.",
-      "decision": "Retain health trends, add drill-down and versioned definitions, and prohibit metric targets from automatically rewriting gates."
+      "gap": "Definitions, attribution and anti-Goodhart constraints are landed; real rolling samples remain sparse and no KPI may be treated as a seat verdict.",
+      "decision": "Retain health trends as advisory local evidence and prohibit metric targets from automatically punishing seats or rewriting gates/methods."
     },
     {
       "id": "F14",
@@ -231,10 +240,12 @@
       "classification": "METHOD_ASSET",
       "ownerWave": "W73f",
       "currentEvidence": [
-        { "path": "docs/plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md", "needle": "Production Run 最小审计链", "claim": "the required local evidence chain and public projection boundary are designed" }
+        { "path": "docs/plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md", "needle": "Production Run 最小审计链", "claim": "the required local evidence chain and public projection boundary are designed" },
+        { "path": "renderer/modules/factory/economics-evaluation.js", "needle": "createLocalEvaluation", "claim": "versioned local evaluations recompute from drillable samples and preserve prior outputs" },
+        { "path": "renderer/modules/factory/economics-evaluation.js", "needle": "computeParetoFrontier", "claim": "transparent non-dominated views exist without a one-number ranking" }
       ],
-      "gap": "No ProductionRun, WorkerProfile, MetricDefinition, RankingFormula, amplification curve, Pareto view or transparent router implementation.",
-      "decision": "Implement local, replayable facts and views only; public records remain W74c to W69j/k/l, and no one-number ranking is allowed."
+      "gap": "ProductionRun, MetricDefinition, Formula, local scorecards and Pareto are landed; matched governance amplification and WorkerProfile ranking remain invalid until enough real samples exist.",
+      "decision": "Keep evaluation local and replayable, report UNKNOWN or insufficient sample truthfully, and leave public records to W74c→W69j/k/l without one-number ranking."
     },
     {
       "id": "F15",
@@ -373,7 +384,7 @@
     {
       "id": "W73f",
       "name": "Cost, KPI and Local Evaluation",
-      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
+      "status": "COMPLETE_BY_THIS_CHANGE",
       "dependsOn": ["W73b", "W73c"],
       "runtimeChange": true,
       "exitGate": "Versioned metrics recompute from runs; estimates and actuals are separate; no Overall Score or hidden routing exists."
@@ -381,7 +392,7 @@
     {
       "id": "W73g",
       "name": "Director and Process Protocol Assets",
-      "status": "NOT_APPROVED",
+      "status": "NEXT_RECOMMENDED_NOT_APPROVED",
       "dependsOn": ["W73b", "W72b"],
       "runtimeChange": true,
       "exitGate": "Protocol assets are inspectable and consumed by the current Factory surface without a second module shell."

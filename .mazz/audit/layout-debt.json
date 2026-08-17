@@ -920,49 +920,49 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 264,
+      "line": 271,
       "sample": "<label class=\"fc-check\" title=\"每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停\">预算 <input type=\"number\" class=\"fc-review-budget\" min=\"8000\" step=\"1000\" value=\"32000\" style=\"width:72px\"> token</label>"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 267,
+      "line": 274,
       "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 594,
+      "line": 601,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-height:60vh;overflow:auto\">${ids.map(id => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 650,
+      "line": 657,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;max-height:55vh;overflow:auto\">${this.styles.length ? this.styles.map(s => `"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 2617,
+      "line": 2699,
       "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 2727,
+      "line": 2809,
       "sample": "<div style=\"min-width:420px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 2798,
+      "line": 2880,
       "sample": "<div style=\"min-width:460px\">"
     },
     {

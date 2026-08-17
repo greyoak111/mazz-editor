@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "wave": "W73f",
+  "status": "COMPLETE",
+  "baseline": "main@3b924c2",
+  "date": "2026-08-17",
+  "schemas": {
+    "ledgerRecord": "mazz.economics-evaluation-record/v0",
+    "cost": "mazz.cost-record/v0",
+    "priceTable": "mazz.price-table/v0",
+    "metricDefinition": "mazz.metric-definition/v0",
+    "metricFormula": "mazz.metric-formula/v0",
+    "localEvaluation": "mazz.local-evaluation/v0",
+    "costSummary": "mazz.cost-summary/v0",
+    "pareto": "mazz.pareto-frontier/v0",
+    "productionRun": "mazz.production-run/v0"
+  },
+  "storage": {
+    "ledger": "<factory-project>/.mazz/runs/<runId>/economics.ndjson",
+    "costEvidence": "<factory-project>/成本台账.json",
+    "bodyPolicy": "references-and-results-only; prompts, responses, artifact bodies and secrets are excluded"
+  },
+  "costKinds": [
+    "estimate",
+    "provider-reported",
+    "settled-actual",
+    "unknown"
+  ],
+  "w68Adapter": {
+    "kind": "estimate",
+    "usageVersion": "w68.review-budget-char-estimate/v0",
+    "amountStatus": "unknown",
+    "providerReportedCoverage": "UNKNOWN",
+    "settledActualCoverage": "UNKNOWN",
+    "reason": "ReviewBudgetLedger derives token units from character counts and current provider calls expose no verified usage or invoice"
+  },
+  "priceTable": {
+    "versioned": true,
+    "currencyRequired": true,
+    "effectiveDateRequired": true,
+    "sourceRefRequired": true,
+    "defaultOrGuessedPrice": false
+  },
+  "metricAxes": [
+    "raw-ability",
+    "governance-uplift",
+    "final-quality",
+    "governance-dependency",
+    "reliability",
+    "cost",
+    "latency",
+    "revision-cost",
+    "canon-compliance"
+  ],
+  "scorecards": {
+    "business": ["production", "author", "audience"],
+    "systemHealth": "separate advisory-only definitions",
+    "mutuallySubstitutable": false
+  },
+  "attribution": [
+    "workflow",
+    "workflowVersion",
+    "governanceProfile",
+    "artifactType",
+    "seatRef",
+    "executorRef",
+    "providerRef",
+    "modelRef",
+    "defectClass"
+  ],
+  "sampleTruth": {
+    "unknownFailClosed": true,
+    "notApplicableDistinct": true,
+    "insufficientSampleDistinct": true,
+    "matchedGovernanceSamplesAvailable": false,
+    "authorSamplesAvailable": false,
+    "audienceSamplesAvailable": false,
+    "rankingValidityClaimed": false
+  },
+  "kpi": {
+    "versionedFactoryHealthDefinitions": 7,
+    "systemHealthOnly": true,
+    "automaticSeatConsequences": false,
+    "automaticGateChanges": false,
+    "automaticMethodChanges": false,
+    "automaticSchedulingDecision": false
+  },
+  "pareto": {
+    "deterministic": true,
+    "missingDimensionsExcluded": true,
+    "dominanceEvidence": true,
+    "overallScore": null
+  },
+  "drilldown": [
+    "Sample",
+    "Run",
+    "Task",
+    "Artifact",
+    "Finding/Gate",
+    "Human Decision"
+  ],
+  "recompute": {
+    "metricVersioned": true,
+    "formulaVersioned": true,
+    "oldEvaluationPreserved": true,
+    "supersedesReference": true,
+    "recordedResultVerifiedAgainstFormula": true
+  },
+  "recovery": {
+    "serializedWrites": true,
+    "idempotentDuplicate": true,
+    "semanticIdConflictRejected": true,
+    "corruptTailQuarantined": true,
+    "middleCorruptionRejected": true,
+    "humanEvidenceRequiredForRecovery": true,
+    "disposeWaitsForWrites": true
+  },
+  "productionRunChanges": {
+    "eventTypes": ["economics-recorded", "evaluation-recorded"],
+    "referenceFields": ["economicsRefs", "evaluationRefs"],
+    "businessBodyCopied": false
+  },
+  "scopeExclusions": [
+    "W68 max/legacy",
+    "W73g director/protocol assets",
+    "W73h packaged integration and soak",
+    "provider usage or settled invoice fabrication",
+    "W69 Hub/Market/public ranking",
+    "W74 Promotion",
+    "W79 external tool runtime",
+    "W82 Organizational Compiler",
+    "new KPI UI",
+    "one overall score",
+    "hidden AUTO"
+  ],
+  "tests": {
+    "w73fAssertions": { "passed": 9, "total": 9 },
+    "relatedW73Assertions": { "passed": 77, "total": 77 },
+    "fullRegressionFiles": { "status": "PASS", "passed": 168, "total": 168 },
+    "rendererBuild": "PASS"
+  },
+  "next": "W73g Director / Process Protocol Assets — NOT APPROVED"
+}
