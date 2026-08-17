@@ -962,10 +962,20 @@ function createBrowser(container) {
           const result = await ctl.harvester.promoteSelection(pl);
           push({ type: 'harvestResult', message: '已升格为本地资产；身份、来源与撤销链已登记。' });
           toast('AI 对话已升格为本地资产');
+        } else if (pl.type === 'harvestReviewPromotion') {
+          const result = await ctl.harvester.reviewPromotionCandidate(pl);
+          const approved = result.action === 'approve';
+          push({
+            type: 'harvestResult', closeReview: true,
+            message: approved
+              ? '结构化候选已批准入库；来源与人工决定已登记。'
+              : '结构化候选已驳回；审阅证据已保留，未进入有效 Promotion。',
+          });
+          toast(approved ? '结构化候选已批准入库' : '结构化候选已驳回');
         }
       } catch (error) {
         const message = error?.message || String(error);
-        push({ type: 'harvestError', message });
+        push({ type: 'harvestError', message, preserveSelection: pl.type === 'harvestReviewPromotion' });
         toast('AI 对话整理失败：' + message);
       }
     }
@@ -974,7 +984,7 @@ function createBrowser(container) {
       else if (pl?.type === 'fillPassword' && pl.id) fillPassword(pl.id);
       // 每个浏览器实例都订阅同一主窗信道；只允许当前实例响应一次，否则开过 N 个浏览器就会启动 N 份批队列。
       else if (pl?.type === 'clipBookmarks' && ctl === current) window.MazzCommands?.execute('browser.clipBookmarks');
-      else if (/^harvest(?:Export|Style|Mindmap|Promote)$/.test(pl?.type || '') && ctl === current) handleHarvestPanelAction(pl);
+      else if (/^harvest(?:Export|Style|Mindmap|Promote|ReviewPromotion)$/.test(pl?.type || '') && ctl === current) handleHarvestPanelAction(pl);
       // W54 B3 收藏当前页桥（panel 子窗格：预填+保存，ctl 真相源）
       else if (pl?.type === 'bookmarkQuery') {
         const t = activeTab();

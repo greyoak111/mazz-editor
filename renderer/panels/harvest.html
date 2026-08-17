@@ -24,6 +24,13 @@
   .text{white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto;font-size:12.5px}.uncertain{opacity:.72}
   footer{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 16px;border-top:1px solid var(--border);background:var(--bg-elev);flex:none}
   #status{flex:1 0 100%;min-width:0;color:var(--fg-dim);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .candidate-review{flex:none;max-height:42vh;overflow:auto;padding:12px 16px;border-top:1px solid var(--border);background:color-mix(in srgb,var(--bg-elev) 82%,var(--bg))}
+  .candidate-review[hidden]{display:none}.candidate-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}.candidate-head b{font-size:13px}.candidate-head span{color:var(--fg-dim);font-size:11.5px}
+  .candidate-grid{display:grid;grid-template-columns:112px minmax(0,1fr);gap:8px 10px;align-items:center}.candidate-grid label{color:var(--fg-dim);font-size:12px}
+  .candidate-grid input,.candidate-grid select,.candidate-grid textarea{width:100%;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--fg);font:inherit;padding:6px 8px;outline:none}
+  .candidate-grid input:focus,.candidate-grid select:focus,.candidate-grid textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}
+  .candidate-grid textarea{min-height:92px;max-height:220px;resize:vertical;line-height:1.55}.candidate-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+  #candidate-reject{color:#c94b4b}#candidate-reject:hover:not(:disabled){border-color:#c94b4b;color:#c94b4b}
 </style></head><body>
 <div class="pwin">
   <div class="p-drag"></div>
@@ -35,15 +42,25 @@
     <span class="count" id="count">0 / 0 条</span>
   </div>
   <main class="mazz-scroll" id="list"><div class="empty">正在循环滚顶并识别对话结构…</div></main>
+  <section class="candidate-review mazz-scroll" id="candidate-review" hidden>
+    <div class="candidate-head"><b>结构化候选审阅</b><span>系统只生成草稿；类型与正文须由你确认。</span></div>
+    <div class="candidate-grid">
+      <label for="candidate-kind">候选类型</label>
+      <select id="candidate-kind"><option value="stage-summary">阶段总结</option><option value="decision">正式决策</option><option value="method">可复用方法</option><option value="finding">事实发现</option></select>
+      <label for="candidate-title">候选标题</label><input id="candidate-title" maxlength="500">
+      <label for="candidate-statement">候选正文</label><textarea id="candidate-statement" maxlength="100000"></textarea>
+    </div>
+    <div class="candidate-actions"><button id="candidate-cancel">取消审阅</button><button id="candidate-reject">驳回候选</button><button class="pri" id="candidate-approve">批准入库</button></div>
+  </section>
   <footer>
     <span id="status">角色后的“?”表示启发式推断；点击角色标签可翻转。</span>
-    <button id="style">添加到文风素材</button><button id="mindmap">AI 提炼成图</button><button id="promote">升格为本地资产</button><button class="pri" id="export">导出 Markdown</button>
+    <button id="style">添加到文风素材</button><button id="mindmap">AI 提炼成图</button><button id="candidate-open">提炼结构化候选</button><button id="promote">升格为本地资产</button><button class="pri" id="export">导出 Markdown</button>
   </footer>
 </div>
 <script>
 const $=selector=>document.querySelector(selector);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const DATA={meta:null,messages:[],mode:'batch',busy:false};
+const DATA={meta:null,messages:[],mode:'batch',busy:false,review:null};
 const pwb=action=>window.mazz.invoke('window:'+action).catch(()=>{});
 $('#p-min').addEventListener('click',()=>pwb('minimize'));$('#p-max').addEventListener('click',()=>pwb('toggleMaximize'));$('#p-close').addEventListener('click',()=>pwb('close'));
 const applyTheme=(id,vars)=>{if(id)document.documentElement.dataset.theme=id;if(vars)for(const[key,value]of Object.entries(vars))if(value)document.documentElement.style.setProperty('--'+key,value)};
@@ -53,14 +70,18 @@ window.mazz.on('theme:changed',({id,vars})=>applyTheme(id,vars));
 function selected(){return DATA.messages.filter(row=>row.selected)}
 function syncCount(){
   $('#count').textContent=`${selected().length} / ${DATA.messages.length} 条`;
-  const disabled=DATA.busy||!selected().length;
-  $('#export').disabled=disabled;$('#style').disabled=disabled;$('#mindmap').disabled=disabled;$('#promote').disabled=disabled;
+  const selectionLocked=Boolean(DATA.review);const disabled=DATA.busy||!selected().length||selectionLocked;
+  $('#export').disabled=disabled;$('#style').disabled=disabled;$('#mindmap').disabled=disabled;$('#promote').disabled=disabled;$('#candidate-open').disabled=disabled;
+  $('#select-all').disabled=DATA.busy||selectionLocked;$('#select-invert').disabled=DATA.busy||selectionLocked;
+  document.querySelectorAll('[data-mode]').forEach(button=>button.disabled=DATA.busy||selectionLocked);
+  $('#candidate-kind').disabled=DATA.busy;$('#candidate-title').disabled=DATA.busy;$('#candidate-statement').disabled=DATA.busy;
+  $('#candidate-cancel').disabled=DATA.busy;$('#candidate-reject').disabled=DATA.busy;$('#candidate-approve').disabled=DATA.busy;
 }
 function render(){
   if(!DATA.messages.length){$('#list').innerHTML='<div class="empty">没有识别到对话消息</div>';syncCount();return}
   $('#list').innerHTML=DATA.messages.map(row=>`<label class="msg ${row.uncertain?'uncertain':''}" data-id="${esc(row.id)}">
-    <input type="checkbox" ${row.selected?'checked':''}>
-    <button type="button" class="role ${row.role}" data-role-flip title="点击翻转用户 / AI">${esc(row.roleLabel)}</button>
+    <input type="checkbox" ${row.selected?'checked':''} ${DATA.review?'disabled':''}>
+    <button type="button" class="role ${row.role}" data-role-flip title="点击翻转用户 / AI" ${DATA.review?'disabled':''}>${esc(row.roleLabel)}</button>
     <span class="text">${esc(row.text)}</span>
   </label>`).join('');
   syncCount();
@@ -95,6 +116,34 @@ $('#style').addEventListener('click',()=>send('harvestStyle','正在加入文风
 $('#mindmap').addEventListener('click',()=>send('harvestMindmap','正在建立无损提炼预览…'));
 $('#promote').addEventListener('click',()=>send('harvestPromote','正在登记并升格本地资产…'));
 
+const KIND_LABELS={'stage-summary':'阶段总结',decision:'正式决策',method:'可复用方法',finding:'事实发现'};
+function openCandidateReview(){
+  const messages=selected().map(({id,role,roleLabel,uncertain,text})=>({id,role,roleLabel,uncertain,text}));if(!messages.length)return;
+  DATA.review={messages,proposedAt:new Date().toISOString()};
+  $('#candidate-kind').value='stage-summary';
+  $('#candidate-title').value=`${DATA.meta?.topic||DATA.meta?.title||'未命名对话'} · 阶段总结`;
+  $('#candidate-statement').value=messages.map(row=>`${row.roleLabel||row.role}：${row.text}`).join('\n\n').slice(0,100000);
+  $('#candidate-review').hidden=false;$('#status').textContent='请审阅候选类型、标题与正文，再明确批准或驳回。';render();
+  $('#candidate-title').focus();
+}
+function closeCandidateReview(){DATA.review=null;$('#candidate-review').hidden=true;render()}
+$('#candidate-open').addEventListener('click',openCandidateReview);
+$('#candidate-kind').addEventListener('change',()=>{
+  const old=Object.values(KIND_LABELS).find(label=>$('#candidate-title').value.endsWith(` · ${label}`));
+  if(old)$('#candidate-title').value=$('#candidate-title').value.slice(0,-(` · ${old}`).length)+` · ${KIND_LABELS[$('#candidate-kind').value]}`;
+});
+$('#candidate-cancel').addEventListener('click',()=>{closeCandidateReview();$('#status').textContent='已取消本次结构化候选审阅。'});
+async function decideCandidate(action){
+  if(!DATA.review)return;const title=$('#candidate-title').value.trim();const statement=$('#candidate-statement').value.trim();
+  if(!title||!statement){$('#status').textContent='候选标题和正文不能为空。';return}
+  DATA.busy=true;$('#status').textContent=action==='approve'?'正在批准并登记候选…':'正在登记驳回决定…';syncCount();
+  const review={kind:$('#candidate-kind').value,title,statement,action,proposedAt:DATA.review.proposedAt};
+  await window.mazz.invoke('panel:action',{type:'harvestReviewPromotion',meta:DATA.meta,messages:DATA.review.messages,review})
+    .catch(error=>{$('#status').textContent=error.message||String(error);DATA.busy=false;syncCount()});
+}
+$('#candidate-approve').addEventListener('click',()=>decideCandidate('approve'));
+$('#candidate-reject').addEventListener('click',()=>decideCandidate('reject'));
+
 window.mazz.on('panel:push',payload=>{
   if(payload?.type==='themeInit'){applyTheme(payload.id,payload.vars);return}
   if(payload?.type==='harvestLoading'){$('#status').textContent=payload.message||'正在读取网页…';return}
@@ -103,7 +152,7 @@ window.mazz.on('panel:push',payload=>{
     $('#meta').textContent=`${DATA.meta.site||'通用网页对话'} · ${DATA.meta.topic||DATA.meta.title||'未命名'} · 滚顶 ${DATA.meta.scrollPasses||0} 轮`;
     $('#status').textContent=`识别到 ${DATA.messages.length} 条消息；“?”角色可点击翻转。`;DATA.busy=false;render();return;
   }
-  if(payload?.type==='harvestResult'){DATA.busy=false;$('#status').textContent=payload.message||'处理完成';syncCount();return}
-  if(payload?.type==='harvestError'){DATA.busy=false;DATA.messages=[];$('#list').innerHTML=`<div class="empty">${esc(payload.message||'读取失败')}</div>`;$('#status').textContent=payload.message||'读取失败';syncCount()}
+  if(payload?.type==='harvestResult'){DATA.busy=false;if(payload.closeReview){DATA.review=null;$('#candidate-review').hidden=true}$('#status').textContent=payload.message||'处理完成';render();return}
+  if(payload?.type==='harvestError'){DATA.busy=false;$('#status').textContent=payload.message||'读取失败';if(payload.preserveSelection){syncCount();return}DATA.messages=[];$('#list').innerHTML=`<div class="empty">${esc(payload.message||'读取失败')}</div>`;syncCount()}
 });
 </script></body></html>

@@ -1,6 +1,6 @@
 'use strict';
 
-// W74c-1：显式本地 Promotion。候选可以由系统生成，但只有 human:* 决定能改变状态。
+// W74c-1/2：显式本地 Promotion。候选可以由系统生成，但只有 human:* 决定能改变状态。
 // 本账只引用 W72 Asset Envelope，不保存正文，也不取得 Publication / Hub / Canon 权力。
 
 const crypto = require('crypto');
@@ -10,16 +10,22 @@ const { isAssetEnvelope } = require('./foundation/asset-envelope');
 const { assertKnownKeys, clonePlain, deepFreeze, isPlainObject, requiredString } = require('./foundation/plain-value');
 
 const CONVERSATION_PROMOTION_REQUEST_SCHEMA = 'mazz.conversation-promotion-request/v0';
+const STRUCTURED_PROMOTION_REVIEW_REQUEST_SCHEMA = 'mazz.structured-promotion-review-request/v0';
 const PROMOTION_COMMAND_SCHEMA = 'mazz.local-promotion-command/v0';
 const PROMOTION_EVENT_SCHEMA = 'mazz.local-promotion-event/v0';
 const PROMOTION_CATALOG_SCHEMA = 'mazz.local-promotion-catalog/v0';
 const PROMOTION_CONFLICT_SCHEMA = 'mazz.local-promotion-conflict/v0';
 const PROMOTION_KINDS = Object.freeze(['asset', 'stage-summary', 'decision', 'method', 'finding']);
+const STRUCTURED_PROMOTION_KINDS = Object.freeze(PROMOTION_KINDS.filter(kind => kind !== 'asset'));
 const PROMOTION_ACTIONS = Object.freeze(['approve', 'reject', 'revoke']);
 const ACTIVE_STATUS = new Set(['active']);
 const REQUEST_FIELDS = Object.freeze([
   'schema', 'projectId', 'projectPath', 'title', 'markdown', 'sourceRef', 'capturedAt',
   'authorityRef', 'reason', 'decidedAt',
+]);
+const STRUCTURED_REVIEW_FIELDS = Object.freeze([
+  'schema', 'projectId', 'projectPath', 'kind', 'title', 'markdown', 'sourceRef',
+  'proposedBy', 'proposedAt', 'action', 'authorityRef', 'reason', 'decidedAt', 'supersedes',
 ]);
 const COMMAND_FIELDS = Object.freeze([
   'schema', 'commandId', 'promotionId', 'projectId', 'projectPath', 'action', 'candidate',
@@ -375,6 +381,47 @@ function normalizeConversationPromotionRequest(input) {
   });
 }
 
+function normalizeStructuredPromotionReviewRequest(input) {
+  if (!isPlainObject(input)) throw new Error('Structured Promotion Review Request 必须是对象');
+  assertKnownKeys(input, STRUCTURED_REVIEW_FIELDS, 'Structured Promotion Review Request');
+  rejectSecrets(input);
+  if (input.schema != null && input.schema !== STRUCTURED_PROMOTION_REVIEW_REQUEST_SCHEMA) {
+    throw new Error(`不支持的 Structured Promotion Review schema：${input.schema}`);
+  }
+  const kind = requiredString(input.kind, 'kind');
+  if (!STRUCTURED_PROMOTION_KINDS.includes(kind)) throw new Error(`非法结构化候选类型：${kind}`);
+  const action = requiredString(input.action, 'action');
+  if (!['approve', 'reject'].includes(action)) throw new Error('结构化候选审阅只允许 approve/reject');
+  if (!isPlainObject(input.sourceRef)) throw new Error('sourceRef 必须是对象');
+  rejectEmbeddedBody(input.sourceRef, 'sourceRef');
+  const markdown = String(input.markdown ?? '').replace(/\r\n?/g, '\n');
+  if (!markdown.trim()) throw new Error('结构化候选正文不能为空');
+  if (markdown.length > 500_000) throw new Error('结构化候选超过 50 万字符');
+  const proposedBy = safeId(input.proposedBy, 'proposedBy');
+  if (!/^(?:system|human):/.test(proposedBy)) throw new Error('proposedBy 必须是 system:* 或 human:*');
+  const authorityRef = safeId(input.authorityRef, 'authorityRef');
+  if (!authorityRef.startsWith('human:')) throw new Error('结构化候选决定必须由 human:* Authority 作出');
+  const supersedes = [...new Set((Array.isArray(input.supersedes) ? input.supersedes : [])
+    .map((item, index) => safeId(item, `supersedes[${index}]`)))];
+  if (action !== 'approve' && supersedes.length) throw new Error('只有 approve 可以声明 supersedes');
+  return deepFreeze({
+    schema: STRUCTURED_PROMOTION_REVIEW_REQUEST_SCHEMA,
+    projectId: safeId(input.projectId, 'projectId'),
+    projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
+    kind,
+    title: requiredString(input.title, 'title').slice(0, 500),
+    markdown,
+    sourceRef: clonePlain(input.sourceRef, 'sourceRef'),
+    proposedBy,
+    proposedAt: iso(input.proposedAt, 'proposedAt'),
+    action,
+    authorityRef,
+    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    decidedAt: iso(input.decidedAt, 'decidedAt'),
+    supersedes,
+  });
+}
+
 class PromotionLedger {
   constructor() { this.queues = new Map(); }
 
@@ -425,6 +472,51 @@ class PromotionLedger {
     return deepFreeze({ ok: promotion.ok, code: promotion.code, assetId, promotionId, ingestion, promotion });
   }
 
+  async reviewStructuredConversationCandidate(input, ingestionPipeline) {
+    const request = normalizeStructuredPromotionReviewRequest(input);
+    const fingerprint = sha256(stableJson({
+      projectId: request.projectId, kind: request.kind, title: request.title,
+      markdown: request.markdown, sourceRef: request.sourceRef,
+    }));
+    const assetId = `asset:conversation-${request.kind}:${fingerprint.slice(0, 32)}`;
+    const promotionId = `promotion:${request.kind}:${fingerprint.slice(0, 32)}`;
+    const ingestion = await ingestionPipeline.register({
+      schema: 'mazz.ingestion-request/v0', assetId, projectId: request.projectId,
+      projectPath: request.projectPath, title: request.title, mediaType: 'text/markdown; charset=utf-8',
+      layer: 'derived', text: request.markdown, sourceRef: request.sourceRef,
+      provenance: {
+        kind: 'derived', source: 'w62f.structured-promotion-candidate',
+        protocol: 'W74c-2', candidateKind: request.kind,
+      },
+      importedAt: request.proposedAt,
+    });
+    if (!ingestion?.ok) return deepFreeze({ ok: false, code: ingestion.code || 'INGESTION_FAILED', ingestion });
+    const promotion = await this.apply({
+      schema: PROMOTION_COMMAND_SCHEMA,
+      commandId: `command:${request.action}:${fingerprint.slice(0, 32)}`,
+      promotionId,
+      projectId: request.projectId,
+      projectPath: request.projectPath,
+      action: request.action,
+      candidate: {
+        candidateId: `candidate:${request.kind}:${fingerprint.slice(0, 32)}`,
+        kind: request.kind,
+        assetRef: {
+          id: assetId, path: ingestion.paths.envelope,
+          type: 'text/markdown; charset=utf-8', version: ingestion.manifest.version,
+        },
+        sourceRef: request.sourceRef,
+        proposedBy: request.proposedBy,
+        proposedAt: request.proposedAt,
+      },
+      authorityRef: request.authorityRef,
+      reason: request.reason,
+      decidedAt: request.decidedAt,
+      supersedes: request.supersedes,
+    });
+    return deepFreeze({ ok: promotion.ok, code: promotion.code, assetId, promotionId, ingestion, promotion });
+  }
+
   healthSnapshot() { return Object.freeze({ activeProjects: this.queues.size }); }
 }
 
@@ -436,10 +528,13 @@ module.exports = {
   PROMOTION_CONFLICT_SCHEMA,
   PROMOTION_EVENT_SCHEMA,
   PROMOTION_KINDS,
+  STRUCTURED_PROMOTION_KINDS,
+  STRUCTURED_PROMOTION_REVIEW_REQUEST_SCHEMA,
   PromotionLedger,
   applyPromotionCommandSync,
   normalizeCommand,
   normalizeConversationPromotionRequest,
+  normalizeStructuredPromotionReviewRequest,
   parseEventLog,
   promotionPaths,
 };

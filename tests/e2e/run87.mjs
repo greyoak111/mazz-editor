@@ -86,7 +86,15 @@ async function harvestPanel() {
   const t0 = Date.now();
   while (Date.now() - t0 < 12000) {
     panel = app.windows().find(page => /panels\/harvest\.html/.test(page.url()));
-    if (panel) return panel;
+    if (panel) {
+      if (!panel.__mazzDiagnostics) {
+        panel.__mazzDiagnostics = true;
+        panel.on('pageerror', error => console.error('[harvest:pageerror]', error.stack || error.message));
+        panel.on('console', message => { if (message.type() === 'error') console.error('[harvest:console]', message.text()); });
+        panel.on('close', () => console.error('[harvest:closed] AI 对话整理面板已关闭'));
+      }
+      return panel;
+    }
     await win.waitForTimeout(100);
   }
   throw new Error('AI 对话整理面板未打开');
@@ -129,6 +137,28 @@ await scenario('用户明确升格当前选择为本地资产', async () => {
   const content = fs.readFileSync(contentPath, 'utf8');
   await human.assert(content.includes('消息数量：3') && !content.includes('第二答：先按时间戳对齐'), 'Promotion 只能消费当前勾选的三条消息');
   await panel.screenshot({ path: path.join(SHOT_DIR, 'w74c-local-promotion.png') });
+});
+
+await scenario('结构化候选经人工审阅后批准入库', async () => {
+  await panel.locator('#candidate-open').click();
+  await panel.waitForSelector('#candidate-review:not([hidden])', { timeout: 5000 });
+  await panel.locator('#candidate-kind').selectOption('decision');
+  await panel.locator('#candidate-title').fill('北向洋流证据链核对顺序');
+  await panel.locator('#candidate-statement').fill('先按时间戳对齐，再核对航标、潮位与船舶值班簿。');
+  await panel.screenshot({ path: path.join(SHOT_DIR, 'w74c2-structured-review.png') });
+  await panel.locator('#candidate-approve').click();
+  await panel.waitForFunction(() => document.querySelector('#status')?.textContent.startsWith('结构化候选已批准入库'), null, { timeout: 12000 });
+  const materialCatalogPath = path.join(WS, '.mazz', 'materials', 'catalog.json');
+  const promotionCatalogPath = path.join(WS, '.mazz', 'promotions', 'catalog.json');
+  const materials = JSON.parse(fs.readFileSync(materialCatalogPath, 'utf8'));
+  const promotions = JSON.parse(fs.readFileSync(promotionCatalogPath, 'utf8'));
+  const decision = promotions.entries.find(row => row.candidate?.kind === 'decision');
+  await human.assert(materials.entryCount === 2, `结构化候选应新增一个 W74a 材料（${materials.entryCount}）`);
+  await human.assert(decision?.status === 'active' && decision.authorityRef === 'human:interactive-local-user', '正式决策必须经 human Authority 批准为 active');
+  const decisionMaterial = materials.entries.find(row => row.assetId === decision.candidate.assetRef.id);
+  const contentPath = path.join(WS, ...decisionMaterial.manifestPath.split('/').slice(0, -1), 'content.txt');
+  const content = fs.readFileSync(contentPath, 'utf8');
+  await human.assert(content.includes('先按时间戳对齐') && content.includes('消息数量：3') && !content.includes('第二答：先按时间戳对齐'), '候选正文与冻结的三条来源证据必须同场落盘');
 });
 
 await scenario('选定 AI 回复加入文风素材', async () => {

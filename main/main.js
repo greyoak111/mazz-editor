@@ -606,6 +606,7 @@ function registerChannels() {
   }));
   bus.handle('ingestion:registerText', async payload => ingestionPipeline.register(payload));
   bus.handle('promotion:promoteConversation', async payload => promotionLedger.promoteConversation(payload, ingestionPipeline));
+  bus.handle('promotion:reviewConversationCandidate', async payload => promotionLedger.reviewStructuredConversationCandidate(payload, ingestionPipeline));
   // 流式：SSE 逐 delta 广播 factory:aiChunk {requestId, delta}，结束推 done，出错推 error
   bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }, event) => {
     const req = factoryAiRequests.begin(requestId, {

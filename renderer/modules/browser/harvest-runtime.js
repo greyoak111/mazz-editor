@@ -4,6 +4,9 @@ import { saveStyleText } from '../factory/style-studio.js';
 
 const invoke = (channel, payload) => window.mazz.invoke(channel, payload);
 const reservedPaths = new Set();
+const STRUCTURED_KIND_LABELS = Object.freeze({
+  'stage-summary': '阶段总结', decision: '正式决策', method: '可复用方法', finding: '事实发现',
+});
 
 async function uniqueMarkdownPath(dir, stem) {
   for (let n = 1; n < 10_000; n++) {
@@ -32,6 +35,30 @@ function normalizedPayload(payload = {}) {
   const totalChars = messages.reduce((sum, row) => sum + row.text.length, 0);
   if (totalChars > 500_000) throw new Error('一次最多处理 50 万字，请缩小选择范围');
   return { meta, messages };
+}
+
+function normalizedReview(review = {}) {
+  const kind = String(review.kind || '');
+  if (!Object.hasOwn(STRUCTURED_KIND_LABELS, kind)) throw new Error('请选择有效的结构化候选类型');
+  const action = String(review.action || '');
+  if (!['approve', 'reject'].includes(action)) throw new Error('候选审阅只允许批准或驳回');
+  const title = String(review.title || '').trim();
+  const statement = String(review.statement || '').replace(/\r\n?/g, '\n').trim();
+  if (!title) throw new Error('请填写候选标题');
+  if (title.length > 500) throw new Error('候选标题最多 500 字符');
+  if (!statement) throw new Error('请审阅并填写候选正文');
+  if (statement.length > 100_000) throw new Error('候选正文最多 10 万字符');
+  const proposedAt = new Date(String(review.proposedAt || '')).toISOString();
+  return { kind, action, title, statement, proposedAt };
+}
+
+function buildStructuredCandidateMarkdown(meta, messages, review) {
+  const label = STRUCTURED_KIND_LABELS[review.kind];
+  const evidence = buildHarvestMarkdown(meta, messages).replace(/^#/gm, '###');
+  return `# ${review.title}\n\n` +
+    `> 候选类型：${label}\n> 审阅要求：必须由 human:* Authority 明确决定\n> 来源：${meta.site} · ${meta.topic}\n\n` +
+    `## 审阅正文\n\n${review.statement}\n\n` +
+    `## 来源对话证据\n\n${evidence}\n`;
 }
 
 export function createHarvestRuntime({ ctl } = {}) {
@@ -118,5 +145,38 @@ export function createHarvestRuntime({ ctl } = {}) {
     return result;
   }
 
-  return { collectCurrent, exportSelection, feedStyle, distillSelection, promoteSelection, normalizedPayload };
+  async function reviewPromotionCandidate(payload) {
+    const { meta, messages } = normalizedPayload(payload);
+    const review = normalizedReview(payload.review);
+    const workspace = await invoke('workspace:get');
+    const markdown = buildStructuredCandidateMarkdown(meta, messages, review);
+    const result = await invoke('promotion:reviewConversationCandidate', {
+      schema: 'mazz.structured-promotion-review-request/v0',
+      projectId: 'workspace:conversation-assets',
+      projectPath: workspace,
+      kind: review.kind,
+      title: review.title,
+      markdown,
+      sourceRef: {
+        kind: 'ai-conversation-structured-candidate', adapterId: meta.adapterId || 'generic', site: meta.site,
+        url: meta.url, capturedAt: meta.capturedAt, messageIds: messages.map(row => row.id), candidateKind: review.kind,
+      },
+      proposedBy: 'system:w62f-structured-draft',
+      proposedAt: review.proposedAt,
+      action: review.action,
+      authorityRef: 'human:interactive-local-user',
+      reason: review.action === 'approve'
+        ? '用户在结构化候选审阅区明确批准入库'
+        : '用户在结构化候选审阅区明确驳回候选',
+      decidedAt: new Date().toISOString(),
+      supersedes: [],
+    });
+    if (!result?.ok) throw new Error(result?.promotion?.message || result?.ingestion?.message || '结构化候选审阅失败；现有状态未改写');
+    return { ...result, action: review.action, kind: review.kind };
+  }
+
+  return {
+    collectCurrent, exportSelection, feedStyle, distillSelection, promoteSelection,
+    reviewPromotionCandidate, normalizedPayload, normalizedReview,
+  };
 }

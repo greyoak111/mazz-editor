@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "wave": "W74c-2",
+  "baseline": "main@6a2e041",
+  "date": "2026-08-17",
+  "status": "PASS_W74C2_COMPLETE_TO_THIN_SLICE_SPEC",
+  "scope": "four structured conversation candidate kinds with editable human approve/reject review",
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "status": "PASS"
+    },
+    "w74c2Contract": {
+      "command": "node tests/contract/w74c2-structured-promotion-review.test.mjs",
+      "status": "PASS",
+      "tests": 5
+    },
+    "affectedContracts": {
+      "status": "PASS",
+      "tests": "31/31",
+      "domains": {
+        "w74c2": "5/5",
+        "w74c1": "6/6",
+        "w74a": "8/8",
+        "w62f": "6/6",
+        "w72": "6/6"
+      }
+    },
+    "electronE2E": {
+      "command": "node tests/e2e/run87.mjs",
+      "status": "PASS",
+      "scenarios": "7/7",
+      "mainProcessErrors": 0,
+      "rendererErrors": 0,
+      "screenshot": "tests/e2e/shots/w74c2-structured-review.png",
+      "visualReview": "PASS"
+    },
+    "fullRegression": {
+      "status": "NOT_RUN_SCOPED",
+      "reason": "Military rule 5b limits this W62f/W74c UI and ledger wave to affected contracts and run87; last committed full baseline was 173/173."
+    }
+  },
+  "diagnostics": [
+    {
+      "stage": "non-final first E2E",
+      "finding": "panel:action aggregation regex omitted harvestReviewPromotion",
+      "resolution": "added the action to the single aggregation point and a static regression assertion"
+    },
+    {
+      "stage": "non-final post-fix E2E",
+      "finding": "renderer/dist still contained the pre-fix aggregation regex",
+      "resolution": "rebuilt renderer/dist before the final Electron run"
+    },
+    {
+      "stage": "non-final first post-build launch",
+      "finding": "existing 4/4 harvest startup timed out before entering the W74c-2 scenario",
+      "resolution": "single-suite rerun passed all 7/7 scenarios; no product change was made for the startup flake"
+    }
+  ],
+  "invariants": [
+    "System code may draft a candidate, but only human:* Authority may approve or reject it.",
+    "The reviewed source selection is frozen while the candidate editor is open.",
+    "Candidate bodies live in W74a material assets and never in Promotion events or catalogs.",
+    "Rejected candidates preserve evidence but never become active Promotion state.",
+    "No automatic classification, automatic approval, Publication, Hub, Canon, W74b, W65, universal graph, or universal database was introduced."
+  ]
+}
