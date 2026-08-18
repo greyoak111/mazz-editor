@@ -2,12 +2,13 @@
 ## Production Organization Compiler / 生产组织编译器
 
 > 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
-> 版本：v0.4
-> 登记日期：2026-08-15
+> 版本：v0.5
+> 登记日期：2026-08-18
 > 基础材料：维护者《Media Production Workflows / Industry Workflow Compiler 增量》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 升格材料：维护者《Production Organization Compiler / Organizational Compiler 增量》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 技术补遗：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
 > 严格增量 II：维护者《Secure Production Assets / Expert Capability Encoding》，SHA-256 `98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0`
+> 三工程修正：维护者《Mazz 技术路线升格：从 Agent Harness 到“三工程”与组织运行时》，SHA-256 `0908423812CCC4DA07BDE35E4980569FA19C2869FB04EB2CA7EBFD24D3B89E80`
 > 公共生态接口：[`W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md`](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
 
@@ -47,6 +48,18 @@ Workflow Publication → Discovery / Fork / Charts / Market Projection
 ```
 
 W82 不建设动画引擎、游戏引擎、NLE、DAW、IDE、科研平台、ERP 或“超级 Agent”。它复用现有工作台、W73 Factory Runtime、W66 Harness 与经 W79 接入的结构化工具，把它们组织成可复验生产线。
+
+### 0.1 三工程定位与实证纪律
+
+W82 属于三门正交工程中的“组织工程”，不吞并另外两门：
+
+```text
+人的思维工程     Method / Rule / Heuristic / Training Asset
+机器的智能工程   Model / Perception / Reasoning / Memory / Agency
+组织工程         Seat / Staffing / Delegation / Authority / Gate / Recovery
+```
+
+Mazz 是三工程的真实试验场，不是理论已经成立的证明。未来以同一任务、近似相同模型/预算比较 Raw Agent、Method Asset、Rule Pack、Gate/Regression 与完整 Factory，记录质量、事故复发、返工、Human Attention、成本和恢复；没有跨域真实样本时只能称研究假说。
 
 ## 1. 产品原则：实例化生产组织，不是黑箱一键生成
 
@@ -121,7 +134,16 @@ Workflow 固化“能读什么、能改什么、必须交付什么、谁独立�
 
 ```text
 Seat != Model
+Seat != Executor
 Seat != Harness
+Agent != Harness
+Executor != Harness
+Harness != Tool
+Sub-Agent != Child Seat
+Staffing != Tool Routing
+Delegation != Authority Transfer
+Qualification != Delegable Credential
+Multi-Agent != Factory
 Capability != Executor
 Workflow Package != Running Workflow
 Artifact != Publication
@@ -140,6 +162,22 @@ Capability != Executor
 ```
 
 同一“表面检测”Seat 可以由 Vision Machine A、Machine B 或 Machine B + Human inspection 承担；更换执行者不能偷改 Artifact Contract、Gate、Authority 或 Safety requirement。
+
+### 2.1 Staffing、Child Seat 与 Delegation Graph
+
+正式关系固定为：
+
+```text
+Seat（职责、交付、权力、责任）
+  ↓ Staffing / Delegation
+Executor（Human / Agent / Script / Supplier）
+  ↓ Harness / Runtime
+Tool / Capability
+```
+
+同一 Seat 因工作量增加而临时加入多个 Executor，不自动生成 Child Seat。只有出现独立职责、独立输入、独立 Artifact、独立 Gate 与独立 Authority/Responsibility，才编译为 Child Seat。
+
+W82 负责编译 Work Package、允许的 delegation depth、subcontract policy、responsibility owner 与 Authority boundary；W73 才能把实际委托每一跳保存为 Production Run 内的 Delegation Graph。嵌套委托必须禁止 cycle 和隐式 subcontract，每一跳有 provenance 与全链成本；Authority、Qualification 均不随转包继承，最终 Executor 必须取得有效 Task Contract，Parent Seat 默认保留责任。W73a–h 当前完成态不含这项未来扩展，不能反写为已落地。
 
 ## 3. Workflow Package 一等资产
 
@@ -434,6 +472,8 @@ Workflow 排名属于 W69k/l 市场视图：比较“完成某类交付物的生
 
 ### W82a — Organizational Kernel, Archaeology & Transition Contract
 
+- 冻结三工程边界与 `Seat → Staffing/Delegation → Executor → Harness → Tool` 关系；
+- 冻结 Sub-Agent/Child Seat 判定、Work Package、delegation depth/cycle/provenance/cost/liability/qualification/authority contract；
 - 冻结 Goal/Constraint/Asset/Method/Budget 输入与 Team/Seat/Artifact/Gate/Authority/Executor/Routing/Recovery 输出；
 - 冻结组织考古记录：岗位保留、合并、消失的理由和证据；
 - 冻结 Verification/Review/Evaluation/Authority 分层与 Evidence-backed State Transition；
@@ -536,8 +576,8 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 
 | 前件 | W82 消费内容 | 不得误写 |
 |---|---|---|
-| W66 Harness | Agent executor 与生命周期 | Terminal/Provider 不冒充 Seat |
-| W68/W73 Factory | 任务、工件、Gate、预算、生产记录和运行时 | W82 不另造 Factory 或运行数据库 |
+| W66 Harness | Agent executor、Doctrine/Tool reality、Session 与生命周期 | Terminal/Provider 不冒充 Seat；W66 不拥有 Staffing/Run |
+| W68/W73 Factory | 任务、工件、Gate、预算、生产记录、实际 Staffing/Delegation 与运行时 | W82 不另造 Factory 或运行数据库；嵌套 Delegation 仍是未来扩展 |
 | W72 Asset/Capability | Workflow/Artifact 身份与 Capability contract | 不建 Universal Asset DB |
 | W74c Promotion | Workflow/Artifact/Public Evidence 显式升格 | 不自动发布项目 |
 | W79 External Tool | Blender/FFmpeg/engine/CLI 等结构化执行 | 不揉入外部工具源码或克隆 UI |
@@ -553,6 +593,9 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 × Idea → one opaque prompt → finished binary
 × 机械复制传统 org chart / 一个旧岗位 = 一个 Agent
 × Seat = Model / Provider / Harness
+× Seat = Executor / Sub-Agent = Child Seat
+× Delegation 自动转移 Authority、责任或 Qualification
+× 隐式 subcontract、无限 delegation depth 或 delegation cycle
 × Workflow Package = 运行时数据库
 × 全部 Artifact 塞入一个通用 JSON
 × 为动画重造 NLE / 为游戏重造 Engine / 为音频重造 DAW
@@ -589,9 +632,11 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 13. 至少两个不同 Expert Capability Asset 可在不混写 identity、style、permission 与 Authority 的情况下组合、替换和局部回退；
 14. 生产事故只有经 Finding → Authority → Rule/Gate/Version 链才可修改 Workflow Definition；
 15. Sample D 与 Sample E 全链通过。
+16. Staffing/Delegation 的每一跳可追到 Work Package、Executor、成本、Authority、Qualification 与责任 owner；required child result 未收齐不能 COMPLETE。
+17. 至少一组 Raw Agent / Governed Agent 对照只按可重算证据报告，不以模型自评证明三工程假说。
 
 ## 16. 当前停止线
 
-本文件只完成 W82 v0.4 Design Capsule、W69 第六柱/AI Market 接口、Evidence-backed State Transition、Expert Capability Composition 与施工拆波。W71 内不得据此引入模型、外部工具、后台服务、Workflow Runtime、专家资产市场、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
+本文件只完成 W82 v0.5 Design Capsule、W69 第六柱/AI Market 接口、三工程边界、Staffing/Delegation Contract、Evidence-backed State Transition、Expert Capability Composition 与施工拆波。不得据此引入模型、外部工具、后台服务、Workflow Runtime、嵌套 Delegation Runtime、专家资产市场、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
 
 下一步只允许在 W71 RC 后经维护者独立批准，先冻结 W82a Organizational Kernel/Archaeology ADR；不得直接从“做成动画”“发布 repo”或“生成研究报告”按钮开工。

@@ -29,7 +29,7 @@ describe('Post-W71 architecture increment intake', () => {
   });
 
   test('W82 requires evidence-backed transitions and separates seats from machines', () => {
-    assert.ok(w82.includes('版本：v0.4'));
+    assert.ok(w82.includes('版本：v0.5'));
     for (const layer of ['Verification', 'Review', 'Evaluation', 'Authority']) {
       assert.ok(w82.includes(layer), `missing transition layer: ${layer}`);
     }

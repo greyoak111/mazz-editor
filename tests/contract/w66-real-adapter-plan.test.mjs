@@ -21,7 +21,7 @@ describe('W66 real Adapter activation plan', () => {
 
   test('W66-R0 是所有真实 Adapter 与 UI 的共同前置', () => {
     for (let wave = 0; wave <= 6; wave += 1) assert.ok(spec.includes(`W66-R${wave}`), `W66-R${wave} 不得漏排`);
-    assert.match(spec, /W66-R0\s+AgentRulePack 必载 \+ Adapter Contract v2/);
+    assert.match(spec, /W66-R0\s+AgentRulePack \+ Doctrine Compiler \+ Adapter Contract v2/);
     assert.match(spec, /任何真实 Adapter 施工和 UI 激活的共同前置/);
   });
 
