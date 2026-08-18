@@ -161,6 +161,63 @@ await scenario('结构化候选经人工审阅后批准入库', async () => {
   await human.assert(content.includes('先按时间戳对齐') && content.includes('消息数量：3') && !content.includes('第二答：先按时间戳对齐'), '候选正文与冻结的三条来源证据必须同场落盘');
 });
 
+await scenario('升格管理可生成并撤回安全证据投影', async () => {
+  await panel.locator('#promotion-manage').click();
+  await panel.waitForSelector('#promotion-manager:not([hidden])', { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('[data-promotion-id]').length >= 2, null, { timeout: 8000 });
+  const decisionRow = panel.locator('[data-promotion-id]').filter({ hasText: '正式决策' }).filter({ hasText: '有效' }).first();
+  await decisionRow.click();
+  await panel.locator('#promotion-reason').fill('人工确认生成公开安全证据投影');
+  await panel.locator('#promotion-project').click();
+  await panel.waitForFunction(() => document.querySelector('#status')?.textContent.startsWith('已生成去正文'), null, { timeout: 12000 });
+  const projectionCatalogPath = path.join(WS, '.mazz', 'promotions', 'evidence-projections', 'catalog.json');
+  const projectionCatalog = JSON.parse(fs.readFileSync(projectionCatalogPath, 'utf8'));
+  await human.assert(projectionCatalog.entryCount === 1 && projectionCatalog.entries[0].status === 'active', '证据投影目录必须登记一个 active 投影');
+  const artifact = JSON.parse(fs.readFileSync(projectionCatalog.entries[0].artifactPath, 'utf8'));
+  const artifactText = JSON.stringify(artifact);
+  await human.assert(artifact.boundaries.publicationGranted === false && artifact.boundaries.contentIncluded === false, '安全投影不得取得发布权或携带正文');
+  await human.assert(!artifactText.includes(WS) && !artifactText.includes(ORIGIN) && !artifactText.includes('先按时间戳对齐'), '安全投影不得携带本地路径、来源网址或正文');
+  await panel.screenshot({ path: path.join(SHOT_DIR, 'w74c3-promotion-management.png') });
+
+  await panel.locator('[data-projection-id]').first().click();
+  await panel.locator('#promotion-reason').fill('人工确认撤回本次证据投影');
+  await panel.locator('#projection-withdraw').click();
+  await panel.waitForFunction(() => document.querySelector('#status')?.textContent.startsWith('所选证据投影已撤回'), null, { timeout: 12000 });
+  const withdrawn = JSON.parse(fs.readFileSync(projectionCatalogPath, 'utf8'));
+  await human.assert(withdrawn.entries[0].status === 'withdrawn', '撤回后目录必须为 withdrawn');
+  await panel.locator('#promotion-manager-close').click();
+});
+
+await scenario('同类人工批准可替代旧记录，active 新记录可撤销', async () => {
+  await panel.locator('#promotion-manage').click();
+  await panel.waitForSelector('#promotion-manager:not([hidden])', { timeout: 8000 });
+  const oldDecision = panel.locator('[data-promotion-id]').filter({ hasText: '正式决策' }).filter({ hasText: '有效' }).first();
+  await oldDecision.click();
+  await panel.locator('#promotion-supersede').click();
+  await panel.locator('#candidate-open').click();
+  await panel.waitForSelector('#candidate-review:not([hidden])', { timeout: 5000 });
+  await human.assert(await panel.locator('#candidate-kind').inputValue() === 'decision', '同类替代必须锁定为正式决策');
+  await panel.locator('#candidate-title').fill('北向洋流证据链核对顺序（修订）');
+  await panel.locator('#candidate-statement').fill('先核对航标记录，再按时间戳对齐潮位与船舶值班簿。');
+  await panel.locator('#candidate-approve').click();
+  await panel.waitForFunction(() => document.querySelector('#status')?.textContent.startsWith('结构化候选已批准入库'), null, { timeout: 12000 });
+  const promotionCatalogPath = path.join(WS, '.mazz', 'promotions', 'catalog.json');
+  let promotions = JSON.parse(fs.readFileSync(promotionCatalogPath, 'utf8'));
+  const decisions = promotions.entries.filter(row => row.candidate?.kind === 'decision');
+  await human.assert(decisions.some(row => row.status === 'superseded') && decisions.some(row => row.status === 'active'), '旧决策必须标为 superseded，新决策必须 active');
+
+  await panel.locator('#promotion-manage').click();
+  await panel.waitForSelector('#promotion-manager:not([hidden])', { timeout: 8000 });
+  const activeDecision = panel.locator('[data-promotion-id]').filter({ hasText: '正式决策' }).filter({ hasText: '有效' }).first();
+  await activeDecision.click();
+  await panel.locator('#promotion-reason').fill('人工确认该修订决策需要撤销');
+  await panel.locator('#promotion-revoke').click();
+  await panel.waitForFunction(() => document.querySelector('#status')?.textContent.startsWith('所选升格记录已撤销'), null, { timeout: 12000 });
+  promotions = JSON.parse(fs.readFileSync(promotionCatalogPath, 'utf8'));
+  await human.assert(promotions.entries.filter(row => row.candidate?.kind === 'decision').some(row => row.status === 'revoked'), '新决策必须可人工撤销并保留历史');
+  await panel.locator('#promotion-manager-close').click();
+});
+
 await scenario('选定 AI 回复加入文风素材', async () => {
   await panel.locator('#select-all').click();
   await panel.locator('#style').click();

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "wave": "W74c-3",
+  "baseline": "main@55b5579",
+  "date": "2026-08-18",
+  "status": "PASS_W74C3_COMPLETE_TO_THIN_SLICE_SPEC",
+  "scope": "local Promotion management, human revoke/same-kind supersede, and explicitly withdrawable public-safe evidence projection boundary",
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "status": "PASS"
+    },
+    "w74c3Contract": {
+      "command": "node tests/contract/w74c3-promotion-management.test.mjs",
+      "status": "PASS",
+      "tests": 7
+    },
+    "affectedContracts": {
+      "status": "PASS",
+      "tests": "38/38",
+      "domains": {
+        "w74c3": "7/7",
+        "w74c2": "5/5",
+        "w74c1": "6/6",
+        "w74a": "8/8",
+        "w62f": "6/6",
+        "w72": "6/6"
+      }
+    },
+    "electronE2E": {
+      "command": "node tests/e2e/run87.mjs",
+      "status": "PASS",
+      "scenarios": "9/9",
+      "mainProcessErrors": 0,
+      "rendererErrors": 0,
+      "screenshot": "tests/e2e/shots/w74c3-promotion-management.png",
+      "visualReview": "PASS_AFTER_STICKY_HEADER_ACTION_REFINEMENT"
+    },
+    "fullRegression": {
+      "status": "NOT_RUN_SCOPED",
+      "reason": "Military rule 5b limits this W62f/W74c UI and ledger wave to affected contracts plus run87; last committed full baseline remains 173/173."
+    }
+  },
+  "storage": {
+    "promotionLedger": ".mazz/promotions/events.ndjson",
+    "promotionCatalog": ".mazz/promotions/catalog.json",
+    "projectionLedger": ".mazz/promotions/evidence-projections/events.ndjson",
+    "projectionCatalog": ".mazz/promotions/evidence-projections/catalog.json",
+    "safeArtifacts": ".mazz/promotions/evidence-projections/artifacts/*.json"
+  },
+  "invariants": [
+    "Only human:* Authority may revoke, supersede through a new approval, project, or withdraw.",
+    "Supersede targets must be active and have the same Promotion kind as the newly approved candidate.",
+    "Public-safe projections contain no body, local path, source URL, message IDs, raw Authority identity, or secret.",
+    "Every projection records publicationGranted=false, published=false, and requiresIndependentPublicationGate=true.",
+    "Projection withdrawal preserves append-only history and the historical safe artifact; current catalog state governs eligibility.",
+    "No Publication, Hub, Canon, World, W74b, W65, automatic Promotion, universal graph, or universal database was introduced."
+  ]
+}

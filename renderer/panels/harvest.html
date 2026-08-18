@@ -31,6 +31,14 @@
   .candidate-grid input:focus,.candidate-grid select:focus,.candidate-grid textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}
   .candidate-grid textarea{min-height:92px;max-height:220px;resize:vertical;line-height:1.55}.candidate-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
   #candidate-reject{color:#c94b4b}#candidate-reject:hover:not(:disabled){border-color:#c94b4b;color:#c94b4b}
+  .manager{flex:none;max-height:55vh;overflow:auto;padding:12px 16px;border-top:1px solid var(--border);background:color-mix(in srgb,var(--bg-elev) 82%,var(--bg))}
+  .manager[hidden]{display:none}.manager-head{position:sticky;top:-12px;z-index:2;display:flex;align-items:flex-start;gap:10px;margin:-12px -16px 10px;padding:12px 16px 9px;background:color-mix(in srgb,var(--bg-elev) 94%,var(--bg));border-bottom:1px solid var(--border)}.manager-head>div{flex:1}.manager-head b{font-size:13px}.manager-note{display:block;color:var(--fg-dim);font-size:11.5px;margin-top:2px}
+  .manager h3{font-size:12px;margin:11px 0 6px;color:var(--fg-dim);font-weight:600}.manager-list{display:grid;gap:6px}.manager-empty{padding:12px;border:1px dashed var(--border);border-radius:8px;color:var(--fg-dim);text-align:center}
+  .manager-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;text-align:left;padding:8px 10px}.manager-row.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .manager-row strong{display:block;font-size:12.5px;font-weight:600}.manager-row small{display:block;color:var(--fg-dim);margin-top:2px}.manager-row.on small{color:color-mix(in srgb,var(--accent-fg,#fff) 74%,transparent)}.status-pill{border-radius:999px;padding:2px 7px;background:var(--bg);color:var(--fg-dim);font-size:11px;white-space:nowrap}
+  .manager-reason{width:100%;margin-top:10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--fg);font:inherit;padding:7px 9px;outline:none}.manager-reason:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}
+  .manager-actions{position:sticky;bottom:-12px;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px;margin:9px -16px -12px;padding:9px 16px 12px;background:color-mix(in srgb,var(--bg-elev) 94%,var(--bg));border-top:1px solid var(--border)}.danger{color:#c94b4b}.boundary{margin-top:8px;padding:7px 9px;border-left:3px solid var(--accent);background:var(--bg);color:var(--fg-dim);font-size:11.5px}
+  #candidate-supersede-note{display:block;margin:7px 0 0;padding:6px 8px;border-left:3px solid var(--accent);background:var(--bg);color:var(--fg-dim);font-size:11.5px}#candidate-supersede-note[hidden]{display:none}
 </style></head><body>
 <div class="pwin">
   <div class="p-drag"></div>
@@ -51,16 +59,25 @@
       <label for="candidate-statement">候选正文</label><textarea id="candidate-statement" maxlength="100000"></textarea>
     </div>
     <div class="candidate-actions"><button id="candidate-cancel">取消审阅</button><button id="candidate-reject">驳回候选</button><button class="pri" id="candidate-approve">批准入库</button></div>
+    <span id="candidate-supersede-note" hidden></span>
+  </section>
+  <section class="manager mazz-scroll" id="promotion-manager" hidden>
+    <div class="manager-head"><div><b>本地升格记录</b><span class="manager-note">管理人工决定与安全证据投影；这里不会把内容发布到 Hub 或公开网络。</span></div><button id="promotion-manager-close">关闭</button></div>
+    <h3>升格记录</h3><div class="manager-list" id="promotion-list"><div class="manager-empty">正在读取…</div></div>
+    <h3>证据投影</h3><div class="manager-list" id="projection-list"><div class="manager-empty">暂无证据投影</div></div>
+    <input class="manager-reason" id="promotion-reason" maxlength="1200" placeholder="填写本次撤销、投影或撤回原因（至少 4 个字）">
+    <div class="boundary">证据投影只含身份、类型、来源摘要和哈希证据；不含正文、本地路径、来源网址或消息 ID，且始终标记“未获发布许可”。</div>
+    <div class="manager-actions"><button id="promotion-refresh">刷新</button><button id="promotion-supersede-clear">取消替代标记</button><button id="promotion-supersede">下次同类批准替代所选</button><button id="promotion-project">生成证据投影</button><button class="danger" id="promotion-revoke">撤销所选</button><button class="danger" id="projection-withdraw">撤回所选投影</button></div>
   </section>
   <footer>
     <span id="status">角色后的“?”表示启发式推断；点击角色标签可翻转。</span>
-    <button id="style">添加到文风素材</button><button id="mindmap">AI 提炼成图</button><button id="candidate-open">提炼结构化候选</button><button id="promote">升格为本地资产</button><button class="pri" id="export">导出 Markdown</button>
+    <button id="style">添加到文风素材</button><button id="mindmap">AI 提炼成图</button><button id="candidate-open">提炼结构化候选</button><button id="promote">升格为本地资产</button><button id="promotion-manage">管理升格记录</button><button class="pri" id="export">导出 Markdown</button>
   </footer>
 </div>
 <script>
 const $=selector=>document.querySelector(selector);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const DATA={meta:null,messages:[],mode:'batch',busy:false,review:null};
+const DATA={meta:null,messages:[],mode:'batch',busy:false,review:null,management:null,selectedPromotionId:'',selectedProjectionId:'',supersede:null};
 const pwb=action=>window.mazz.invoke('window:'+action).catch(()=>{});
 $('#p-min').addEventListener('click',()=>pwb('minimize'));$('#p-max').addEventListener('click',()=>pwb('toggleMaximize'));$('#p-close').addEventListener('click',()=>pwb('close'));
 const applyTheme=(id,vars)=>{if(id)document.documentElement.dataset.theme=id;if(vars)for(const[key,value]of Object.entries(vars))if(value)document.documentElement.style.setProperty('--'+key,value)};
@@ -76,6 +93,7 @@ function syncCount(){
   document.querySelectorAll('[data-mode]').forEach(button=>button.disabled=DATA.busy||selectionLocked);
   $('#candidate-kind').disabled=DATA.busy;$('#candidate-title').disabled=DATA.busy;$('#candidate-statement').disabled=DATA.busy;
   $('#candidate-cancel').disabled=DATA.busy;$('#candidate-reject').disabled=DATA.busy;$('#candidate-approve').disabled=DATA.busy;
+  $('#promotion-manage').disabled=DATA.busy||selectionLocked;syncManagerControls();
 }
 function render(){
   if(!DATA.messages.length){$('#list').innerHTML='<div class="empty">没有识别到对话消息</div>';syncCount();return}
@@ -109,7 +127,8 @@ async function send(type,label){
   const messages=selected().map(({id,role,roleLabel,uncertain,text})=>({id,role,roleLabel,uncertain,text}));
   if(!messages.length)return;
   DATA.busy=true;$('#status').textContent=label;syncCount();
-  await window.mazz.invoke('panel:action',{type,meta:DATA.meta,messages}).catch(error=>{$('#status').textContent=error.message||String(error);DATA.busy=false;syncCount()});
+  if(type==='harvestPromote'&&DATA.supersede?.kind!=='asset'&&DATA.supersede){$('#status').textContent='所选记录不是普通资产，请使用结构化候选审阅完成同类替代。';DATA.busy=false;syncCount();return}
+  await window.mazz.invoke('panel:action',{type,meta:DATA.meta,messages,supersedes:DATA.supersede?[DATA.supersede.promotionId]:[]}).catch(error=>{$('#status').textContent=error.message||String(error);DATA.busy=false;syncCount()});
 }
 $('#export').addEventListener('click',()=>send('harvestExport','正在写入工作区…'));
 $('#style').addEventListener('click',()=>send('harvestStyle','正在加入文风素材…'));
@@ -119,10 +138,14 @@ $('#promote').addEventListener('click',()=>send('harvestPromote','正在登记�
 const KIND_LABELS={'stage-summary':'阶段总结',decision:'正式决策',method:'可复用方法',finding:'事实发现'};
 function openCandidateReview(){
   const messages=selected().map(({id,role,roleLabel,uncertain,text})=>({id,role,roleLabel,uncertain,text}));if(!messages.length)return;
+  if(DATA.supersede?.kind==='asset'){$('#status').textContent='所选记录是普通资产，请使用“升格为本地资产”完成替代。';return}
+  $('#promotion-manager').hidden=true;
   DATA.review={messages,proposedAt:new Date().toISOString()};
-  $('#candidate-kind').value='stage-summary';
-  $('#candidate-title').value=`${DATA.meta?.topic||DATA.meta?.title||'未命名对话'} · 阶段总结`;
+  $('#candidate-kind').value=DATA.supersede?.kind||'stage-summary';
+  const initialLabel=KIND_LABELS[$('#candidate-kind').value];
+  $('#candidate-title').value=`${DATA.meta?.topic||DATA.meta?.title||'未命名对话'} · ${initialLabel}`;
   $('#candidate-statement').value=messages.map(row=>`${row.roleLabel||row.role}：${row.text}`).join('\n\n').slice(0,100000);
+  $('#candidate-supersede-note').hidden=!DATA.supersede;$('#candidate-supersede-note').textContent=DATA.supersede?'本次批准将替代所选同类 active 记录；旧记录保留并标记为“已替代”。':'';
   $('#candidate-review').hidden=false;$('#status').textContent='请审阅候选类型、标题与正文，再明确批准或驳回。';render();
   $('#candidate-title').focus();
 }
@@ -137,12 +160,59 @@ async function decideCandidate(action){
   if(!DATA.review)return;const title=$('#candidate-title').value.trim();const statement=$('#candidate-statement').value.trim();
   if(!title||!statement){$('#status').textContent='候选标题和正文不能为空。';return}
   DATA.busy=true;$('#status').textContent=action==='approve'?'正在批准并登记候选…':'正在登记驳回决定…';syncCount();
-  const review={kind:$('#candidate-kind').value,title,statement,action,proposedAt:DATA.review.proposedAt};
+  const review={kind:$('#candidate-kind').value,title,statement,action,proposedAt:DATA.review.proposedAt,supersedes:action==='approve'&&DATA.supersede?[DATA.supersede.promotionId]:[]};
   await window.mazz.invoke('panel:action',{type:'harvestReviewPromotion',meta:DATA.meta,messages:DATA.review.messages,review})
     .catch(error=>{$('#status').textContent=error.message||String(error);DATA.busy=false;syncCount()});
 }
 $('#candidate-approve').addEventListener('click',()=>decideCandidate('approve'));
 $('#candidate-reject').addEventListener('click',()=>decideCandidate('reject'));
+
+const PROMOTION_KIND_LABELS={asset:'本地资产','stage-summary':'阶段总结',decision:'正式决策',method:'可复用方法',finding:'事实发现'};
+const STATUS_LABELS={active:'有效',rejected:'已驳回',revoked:'已撤销',superseded:'已替代',withdrawn:'已撤回'};
+function promotionEntries(){return DATA.management?.promotions?.entries||[]}
+function projectionEntries(){return DATA.management?.projections?.entries||[]}
+function syncManagerControls(){
+  const promotion=promotionEntries().find(row=>row.promotionId===DATA.selectedPromotionId);
+  const projection=projectionEntries().find(row=>row.projectionId===DATA.selectedProjectionId);
+  const alreadyProjected=projectionEntries().some(row=>row.promotionId===promotion?.promotionId);
+  $('#promotion-refresh').disabled=DATA.busy;$('#promotion-manager-close').disabled=DATA.busy;
+  $('#promotion-supersede').disabled=DATA.busy||promotion?.status!=='active';$('#promotion-supersede-clear').disabled=DATA.busy||!DATA.supersede;
+  $('#promotion-revoke').disabled=DATA.busy||promotion?.status!=='active';$('#promotion-project').disabled=DATA.busy||promotion?.status!=='active'||alreadyProjected;
+  $('#projection-withdraw').disabled=DATA.busy||projection?.status!=='active';$('#promotion-reason').disabled=DATA.busy;
+}
+function renderPromotionManagement(){
+  const promotions=promotionEntries(),projections=projectionEntries();
+  if(!promotions.some(row=>row.promotionId===DATA.selectedPromotionId))DATA.selectedPromotionId=promotions.find(row=>row.status==='active')?.promotionId||promotions[0]?.promotionId||'';
+  if(!projections.some(row=>row.projectionId===DATA.selectedProjectionId))DATA.selectedProjectionId=projections.find(row=>row.status==='active')?.projectionId||projections[0]?.projectionId||'';
+  $('#promotion-list').innerHTML=promotions.length?promotions.map(row=>{
+    const site=row.candidate?.sourceRef?.site||'本地来源',kind=PROMOTION_KIND_LABELS[row.candidate?.kind]||'升格记录';
+    const stamp=String(row.decidedAt||'').replace('T',' ').slice(0,16);
+    return `<button class="manager-row ${row.promotionId===DATA.selectedPromotionId?'on':''}" data-promotion-id="${esc(row.promotionId)}"><span><strong>${esc(kind)} · ${esc(site)}</strong><small>${esc(stamp)}${row.supersededBy?' · 已由后续记录替代':''}</small></span><span class="status-pill">${esc(STATUS_LABELS[row.status]||row.status)}</span></button>`;
+  }).join(''):'<div class="manager-empty">还没有升格记录</div>';
+  $('#projection-list').innerHTML=projections.length?projections.map(row=>{
+    const source=promotions.find(item=>item.promotionId===row.promotionId),kind=PROMOTION_KIND_LABELS[source?.candidate?.kind]||'证据';
+    const blocked=row.status==='active'&&source?.status!=='active';
+    return `<button class="manager-row ${row.projectionId===DATA.selectedProjectionId?'on':''}" data-projection-id="${esc(row.projectionId)}"><span><strong>${esc(kind)}证据投影</strong><small>${blocked?'来源已失效，不可进入发布闸':'不含正文与本地路径；未获发布许可'}</small></span><span class="status-pill">${esc(blocked?'来源失效':STATUS_LABELS[row.status]||row.status)}</span></button>`;
+  }).join(''):'<div class="manager-empty">暂无证据投影</div>';
+  syncManagerControls();
+}
+async function requestPromotionManagement(message='正在读取升格记录…'){
+  DATA.busy=true;$('#promotion-manager').hidden=false;$('#candidate-review').hidden=true;DATA.review=null;$('#status').textContent=message;syncCount();
+  await window.mazz.invoke('panel:action',{type:'harvestPromotionList'}).catch(error=>{$('#status').textContent=error.message||String(error);DATA.busy=false;syncCount()});
+}
+async function promotionManagerAction(type,payload,label){
+  DATA.busy=true;$('#status').textContent=label;syncCount();
+  await window.mazz.invoke('panel:action',{type,...payload}).catch(error=>{$('#status').textContent=error.message||String(error);DATA.busy=false;syncCount()});
+}
+$('#promotion-manage').addEventListener('click',()=>requestPromotionManagement());$('#promotion-refresh').addEventListener('click',()=>requestPromotionManagement('正在刷新升格记录…'));
+$('#promotion-manager-close').addEventListener('click',()=>{$('#promotion-manager').hidden=true;$('#status').textContent='已关闭升格记录管理。'});
+$('#promotion-list').addEventListener('click',event=>{const row=event.target.closest('[data-promotion-id]');if(!row)return;DATA.selectedPromotionId=row.dataset.promotionId;renderPromotionManagement()});
+$('#projection-list').addEventListener('click',event=>{const row=event.target.closest('[data-projection-id]');if(!row)return;DATA.selectedProjectionId=row.dataset.projectionId;renderPromotionManagement()});
+$('#promotion-supersede').addEventListener('click',()=>{const row=promotionEntries().find(item=>item.promotionId===DATA.selectedPromotionId);if(!row||row.status!=='active')return;DATA.supersede={promotionId:row.promotionId,kind:row.candidate?.kind};$('#promotion-manager').hidden=true;$('#status').textContent=row.candidate?.kind==='asset'?'已标记替代目标；选择消息后点击“升格为本地资产”。':'已标记同类替代目标；选择消息后打开结构化候选审阅。';syncCount()});
+$('#promotion-supersede-clear').addEventListener('click',()=>{DATA.supersede=null;$('#status').textContent='已取消替代标记。';syncCount()});
+$('#promotion-revoke').addEventListener('click',()=>promotionManagerAction('harvestPromotionRevoke',{promotionId:DATA.selectedPromotionId,reason:$('#promotion-reason').value},'正在撤销所选升格记录…'));
+$('#promotion-project').addEventListener('click',()=>promotionManagerAction('harvestPromotionProject',{promotionId:DATA.selectedPromotionId,reason:$('#promotion-reason').value},'正在生成安全证据投影…'));
+$('#projection-withdraw').addEventListener('click',()=>{const row=projectionEntries().find(item=>item.projectionId===DATA.selectedProjectionId);if(!row)return;promotionManagerAction('harvestProjectionWithdraw',{promotionId:row.promotionId,reason:$('#promotion-reason').value},'正在撤回所选证据投影…')});
 
 window.mazz.on('panel:push',payload=>{
   if(payload?.type==='themeInit'){applyTheme(payload.id,payload.vars);return}
@@ -152,7 +222,8 @@ window.mazz.on('panel:push',payload=>{
     $('#meta').textContent=`${DATA.meta.site||'通用网页对话'} · ${DATA.meta.topic||DATA.meta.title||'未命名'} · 滚顶 ${DATA.meta.scrollPasses||0} 轮`;
     $('#status').textContent=`识别到 ${DATA.messages.length} 条消息；“?”角色可点击翻转。`;DATA.busy=false;render();return;
   }
-  if(payload?.type==='harvestResult'){DATA.busy=false;if(payload.closeReview){DATA.review=null;$('#candidate-review').hidden=true}$('#status').textContent=payload.message||'处理完成';render();return}
+  if(payload?.type==='harvestResult'){DATA.busy=false;if(payload.closeReview){DATA.review=null;$('#candidate-review').hidden=true}if(payload.clearSupersedes)DATA.supersede=null;$('#status').textContent=payload.message||'处理完成';render();return}
+  if(payload?.type==='harvestPromotionManagement'){DATA.busy=false;DATA.management=payload.management||null;$('#promotion-manager').hidden=false;$('#promotion-reason').value='';$('#status').textContent=payload.message||'升格记录已刷新。';renderPromotionManagement();syncCount();return}
   if(payload?.type==='harvestError'){DATA.busy=false;$('#status').textContent=payload.message||'读取失败';if(payload.preserveSelection){syncCount();return}DATA.messages=[];$('#list').innerHTML=`<div class="empty">${esc(payload.message||'读取失败')}</div>`;syncCount()}
 });
 </script></body></html>

@@ -1,6 +1,6 @@
 'use strict';
 
-// W74c-1/2：显式本地 Promotion。候选可以由系统生成，但只有 human:* 决定能改变状态。
+// W74c-1/2/3：显式本地 Promotion。候选可以由系统生成，但只有 human:* 决定能改变状态。
 // 本账只引用 W72 Asset Envelope，不保存正文，也不取得 Publication / Hub / Canon 权力。
 
 const crypto = require('crypto');
@@ -15,13 +15,20 @@ const PROMOTION_COMMAND_SCHEMA = 'mazz.local-promotion-command/v0';
 const PROMOTION_EVENT_SCHEMA = 'mazz.local-promotion-event/v0';
 const PROMOTION_CATALOG_SCHEMA = 'mazz.local-promotion-catalog/v0';
 const PROMOTION_CONFLICT_SCHEMA = 'mazz.local-promotion-conflict/v0';
+const PROMOTION_MANAGEMENT_QUERY_SCHEMA = 'mazz.promotion-management-query/v0';
+const PROMOTION_REVOKE_REQUEST_SCHEMA = 'mazz.promotion-revoke-request/v0';
+const EVIDENCE_PROJECTION_REQUEST_SCHEMA = 'mazz.evidence-projection-request/v0';
+const EVIDENCE_PROJECTION_EVENT_SCHEMA = 'mazz.evidence-projection-event/v0';
+const EVIDENCE_PROJECTION_CATALOG_SCHEMA = 'mazz.evidence-projection-catalog/v0';
+const EVIDENCE_PROJECTION_CONFLICT_SCHEMA = 'mazz.evidence-projection-conflict/v0';
+const PUBLIC_EVIDENCE_PROJECTION_SCHEMA = 'mazz.public-evidence-projection/v0';
 const PROMOTION_KINDS = Object.freeze(['asset', 'stage-summary', 'decision', 'method', 'finding']);
 const STRUCTURED_PROMOTION_KINDS = Object.freeze(PROMOTION_KINDS.filter(kind => kind !== 'asset'));
 const PROMOTION_ACTIONS = Object.freeze(['approve', 'reject', 'revoke']);
 const ACTIVE_STATUS = new Set(['active']);
 const REQUEST_FIELDS = Object.freeze([
   'schema', 'projectId', 'projectPath', 'title', 'markdown', 'sourceRef', 'capturedAt',
-  'authorityRef', 'reason', 'decidedAt',
+  'authorityRef', 'reason', 'decidedAt', 'supersedes',
 ]);
 const STRUCTURED_REVIEW_FIELDS = Object.freeze([
   'schema', 'projectId', 'projectPath', 'kind', 'title', 'markdown', 'sourceRef',
@@ -40,6 +47,20 @@ const EVENT_FIELDS = Object.freeze([
   'action', 'candidate', 'authorityRef', 'reason', 'decidedAt', 'supersedes',
   'automaticPromotion', 'publicationGranted', 'eventHash',
 ]);
+const MANAGEMENT_QUERY_FIELDS = Object.freeze(['schema', 'projectId', 'projectPath']);
+const REVOKE_REQUEST_FIELDS = Object.freeze([
+  'schema', 'projectId', 'projectPath', 'promotionId', 'authorityRef', 'reason', 'decidedAt',
+]);
+const PROJECTION_REQUEST_FIELDS = Object.freeze([
+  'schema', 'projectId', 'projectPath', 'action', 'promotionId', 'projectionId',
+  'authorityRef', 'reason', 'decidedAt',
+]);
+const PROJECTION_EVENT_FIELDS = Object.freeze([
+  'schema', 'sequence', 'previousHash', 'commandId', 'commandHash', 'projectionId',
+  'projectId', 'promotionId', 'action', 'projection', 'authorityRef', 'reason',
+  'decidedAt', 'automaticPublication', 'publicationGranted', 'eventHash',
+]);
+const PROJECTION_ACTIONS = Object.freeze(['project', 'withdraw']);
 const SECRET_KEYS = new Set([
   'apikey', 'authorization', 'secret', 'password', 'accesstoken', 'refreshtoken', 'credential', 'cookie',
 ]);
@@ -163,6 +184,18 @@ function promotionPaths(projectPath) {
   });
 }
 
+function projectionPaths(projectPath) {
+  const root = path.resolve(projectPath, '.mazz', 'promotions', 'evidence-projections');
+  return Object.freeze({
+    root,
+    events: path.join(root, 'events.ndjson'),
+    catalog: path.join(root, 'catalog.json'),
+    artifacts: path.join(root, 'artifacts'),
+    conflicts: path.join(root, 'conflicts'),
+    recovery: path.join(root, 'recovery'),
+  });
+}
+
 function atomicWrite(filePath, content) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   const temp = `${filePath}.tmp-${process.pid}-${crypto.randomBytes(4).toString('hex')}`;
@@ -213,22 +246,28 @@ function stateFromEvents(events) {
         promotionId: event.promotionId, status: 'active', candidate: event.candidate,
         authorityRef: event.authorityRef, decidedAt: event.decidedAt, reason: event.reason,
         supersedes: event.supersedes, supersededBy: '', lastSequence: event.sequence,
+        lastEventHash: event.eventHash,
       });
       for (const targetId of event.supersedes) {
         const target = states.get(targetId);
-        if (target) states.set(targetId, { ...target, status: 'superseded', supersededBy: event.promotionId, lastSequence: event.sequence });
+        if (target) states.set(targetId, {
+          ...target, status: 'superseded', supersededBy: event.promotionId,
+          lastSequence: event.sequence, lastEventHash: event.eventHash,
+        });
       }
     } else if (event.action === 'reject') {
       states.set(event.promotionId, {
         promotionId: event.promotionId, status: 'rejected', candidate: event.candidate,
         authorityRef: event.authorityRef, decidedAt: event.decidedAt, reason: event.reason,
         supersedes: [], supersededBy: '', lastSequence: event.sequence,
+        lastEventHash: event.eventHash,
       });
     } else if (event.action === 'revoke') {
       const current = states.get(event.promotionId);
       states.set(event.promotionId, {
         ...current, status: 'revoked', authorityRef: event.authorityRef,
         decidedAt: event.decidedAt, reason: event.reason, lastSequence: event.sequence,
+        lastEventHash: event.eventHash,
       });
     }
   }
@@ -245,6 +284,7 @@ function validateTransition(command, states) {
   for (const targetId of command.supersedes) {
     const target = states.get(targetId);
     if (!target || !ACTIVE_STATUS.has(target.status)) throw new Error(`supersedes 目标不是 active：${targetId}`);
+    if (command.candidate?.kind !== target.candidate?.kind) throw new Error(`supersedes 目标类型不一致：${targetId}`);
   }
 }
 
@@ -279,6 +319,72 @@ function catalogFromEvents(projectId, events) {
   return catalog;
 }
 
+function normalizeManagementQuery(input) {
+  if (!isPlainObject(input)) throw new Error('Promotion management query 必须是对象');
+  assertKnownKeys(input, MANAGEMENT_QUERY_FIELDS, 'Promotion management query');
+  rejectSecrets(input);
+  if (input.schema != null && input.schema !== PROMOTION_MANAGEMENT_QUERY_SCHEMA) {
+    throw new Error(`不支持的 Promotion management schema：${input.schema}`);
+  }
+  return deepFreeze({
+    schema: PROMOTION_MANAGEMENT_QUERY_SCHEMA,
+    projectId: safeId(input.projectId, 'projectId'),
+    projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
+  });
+}
+
+function readPromotionCatalogSync(input) {
+  const query = normalizeManagementQuery(input);
+  const paths = promotionPaths(query.projectPath);
+  const parsed = parseEventLog(fs.existsSync(paths.events) ? fs.readFileSync(paths.events, 'utf8') : '');
+  if (parsed.events.some(event => event.projectId !== query.projectId)) throw new Error('Promotion ledger projectId 与项目不一致');
+  const recoveryPath = recoverTail(paths, parsed);
+  const catalog = catalogFromEvents(query.projectId, parsed.events);
+  if (parsed.events.length || fs.existsSync(paths.root)) atomicWrite(paths.catalog, JSON.stringify(catalog, null, 2));
+  return deepFreeze({
+    ok: true, catalog, recoveryPath,
+    paths: { events: slash(paths.events), catalog: slash(paths.catalog) },
+  });
+}
+
+function normalizeRevokeRequest(input) {
+  if (!isPlainObject(input)) throw new Error('Promotion revoke request 必须是对象');
+  assertKnownKeys(input, REVOKE_REQUEST_FIELDS, 'Promotion revoke request');
+  rejectSecrets(input);
+  if (input.schema != null && input.schema !== PROMOTION_REVOKE_REQUEST_SCHEMA) {
+    throw new Error(`不支持的 Promotion revoke schema：${input.schema}`);
+  }
+  const authorityRef = safeId(input.authorityRef, 'authorityRef');
+  if (!authorityRef.startsWith('human:')) throw new Error('Promotion 撤销必须由 human:* Authority 作出');
+  return deepFreeze({
+    schema: PROMOTION_REVOKE_REQUEST_SCHEMA,
+    projectId: safeId(input.projectId, 'projectId'),
+    projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
+    promotionId: safeId(input.promotionId, 'promotionId'),
+    authorityRef,
+    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    decidedAt: iso(input.decidedAt, 'decidedAt'),
+  });
+}
+
+function revokeCommandFromRequest(input) {
+  const request = normalizeRevokeRequest(input);
+  const fingerprint = sha256(stableJson({ projectId: request.projectId, promotionId: request.promotionId }));
+  return {
+    schema: PROMOTION_COMMAND_SCHEMA,
+    commandId: `command:revoke:${fingerprint.slice(0, 32)}`,
+    promotionId: request.promotionId,
+    projectId: request.projectId,
+    projectPath: request.projectPath,
+    action: 'revoke',
+    candidate: null,
+    authorityRef: request.authorityRef,
+    reason: request.reason,
+    decidedAt: request.decidedAt,
+    supersedes: [],
+  };
+}
+
 function recoverTail(paths, parsed) {
   if (!parsed.corruptTail) return '';
   fs.mkdirSync(paths.recovery, { recursive: true });
@@ -301,6 +407,268 @@ function writeConflict(paths, command, message) {
   const conflictPath = path.join(paths.conflicts, `${sha256(command.commandId).slice(0, 24)}-${command.commandHash.slice(0, 12)}.json`);
   atomicWrite(conflictPath, JSON.stringify(row, null, 2));
   return slash(conflictPath);
+}
+
+function normalizeProjectionRequest(input) {
+  if (!isPlainObject(input)) throw new Error('Evidence projection request 必须是对象');
+  assertKnownKeys(input, PROJECTION_REQUEST_FIELDS, 'Evidence projection request');
+  rejectSecrets(input);
+  if (input.schema != null && input.schema !== EVIDENCE_PROJECTION_REQUEST_SCHEMA) {
+    throw new Error(`不支持的 Evidence projection schema：${input.schema}`);
+  }
+  const action = requiredString(input.action, 'action');
+  if (!PROJECTION_ACTIONS.includes(action)) throw new Error(`非法 Evidence projection action：${action}`);
+  const authorityRef = safeId(input.authorityRef, 'authorityRef');
+  if (!authorityRef.startsWith('human:')) throw new Error('证据投影决定必须由 human:* Authority 作出');
+  const projectId = safeId(input.projectId, 'projectId');
+  const promotionId = safeId(input.promotionId, 'promotionId');
+  const derivedId = `projection:${sha256(`${projectId}\n${promotionId}`).slice(0, 40)}`;
+  const projectionId = input.projectionId == null ? derivedId : safeId(input.projectionId, 'projectionId');
+  if (projectionId !== derivedId) throw new Error('projectionId 必须由 projectId + promotionId 确定性派生');
+  const request = {
+    schema: EVIDENCE_PROJECTION_REQUEST_SCHEMA,
+    projectId,
+    projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
+    action,
+    promotionId,
+    projectionId,
+    authorityRef,
+    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    decidedAt: iso(input.decidedAt, 'decidedAt'),
+  };
+  request.commandId = `command:${action}:${sha256(stableJson({ projectId, promotionId, projectionId })).slice(0, 32)}`;
+  request.commandHash = sha256(stableJson({
+    ...request, projectPath: slash(request.projectPath), decidedAt: undefined,
+  }));
+  return deepFreeze(request);
+}
+
+function parseProjectionEventLog(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const events = [];
+  let corruptTail = '';
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index].trim();
+    if (!line) continue;
+    try {
+      const event = JSON.parse(line);
+      if (!isPlainObject(event)) throw new Error('event 必须是对象');
+      assertKnownKeys(event, PROJECTION_EVENT_FIELDS, 'Evidence projection event');
+      if (event.schema !== EVIDENCE_PROJECTION_EVENT_SCHEMA || event.sequence !== events.length + 1) throw new Error('schema/sequence 不连续');
+      if (!PROJECTION_ACTIONS.includes(event.action)) throw new Error('action 非法');
+      if (!String(event.authorityRef || '').startsWith('human:')) throw new Error('Authority 非 human:*');
+      if (event.automaticPublication !== false || event.publicationGranted !== false) throw new Error('Publication 权力边界漂移');
+      if (event.action === 'project' && event.projection?.schema !== PUBLIC_EVIDENCE_PROJECTION_SCHEMA) throw new Error('public projection 缺失或 schema 非法');
+      if (event.action === 'withdraw' && event.projection != null) throw new Error('withdraw 不得重写 projection');
+      rejectSecrets(event);
+      rejectEmbeddedBody(event.projection, 'projection');
+      const expectedPrevious = events.at(-1)?.eventHash || '';
+      if (event.previousHash !== expectedPrevious) throw new Error('hash chain 不连续');
+      const expectedHash = sha256(stableJson({ ...event, eventHash: undefined }));
+      if (event.eventHash !== expectedHash) throw new Error('eventHash 不匹配');
+      events.push(event);
+    } catch (error) {
+      const later = lines.slice(index + 1).some(value => value.trim());
+      if (later) throw new Error(`Evidence projection ledger 中段损坏（第 ${index + 1} 行）：${error.message}`);
+      corruptTail = line;
+      break;
+    }
+  }
+  return { events, corruptTail };
+}
+
+function projectionStateFromEvents(events) {
+  const states = new Map();
+  for (const event of events) {
+    if (event.action === 'project') {
+      states.set(event.projectionId, {
+        projectionId: event.projectionId,
+        promotionId: event.promotionId,
+        status: 'active',
+        projection: event.projection,
+        authorityRef: event.authorityRef,
+        reason: event.reason,
+        decidedAt: event.decidedAt,
+        lastSequence: event.sequence,
+        lastEventHash: event.eventHash,
+      });
+    } else {
+      const current = states.get(event.projectionId);
+      states.set(event.projectionId, {
+        ...current,
+        status: 'withdrawn',
+        authorityRef: event.authorityRef,
+        reason: event.reason,
+        decidedAt: event.decidedAt,
+        lastSequence: event.sequence,
+        lastEventHash: event.eventHash,
+      });
+    }
+  }
+  return states;
+}
+
+function projectionCatalogFromEvents(projectId, events, paths) {
+  const entries = [...projectionStateFromEvents(events).values()]
+    .map(entry => ({ ...entry, artifactPath: slash(path.join(paths.artifacts, `${sha256(entry.projectionId).slice(0, 40)}.json`)) }))
+    .sort((a, b) => a.projectionId.localeCompare(b.projectionId, 'en'));
+  const catalog = {
+    schema: EVIDENCE_PROJECTION_CATALOG_SCHEMA,
+    projectId,
+    generatedFrom: 'evidence-projection-events',
+    lastSequence: events.length,
+    entryCount: entries.length,
+    entries,
+    publicationGranted: false,
+  };
+  catalog.catalogHash = sha256(stableJson(catalog));
+  return catalog;
+}
+
+function publicProjectionFromPromotion(request, promotion, promotionCatalog) {
+  const candidate = promotion?.candidate;
+  if (!candidate || promotion.status !== 'active') throw new Error('只有 active Promotion 可以生成证据投影');
+  const source = candidate.sourceRef || {};
+  const publicSource = {};
+  for (const key of ['kind', 'adapterId', 'site', 'capturedAt', 'candidateKind']) {
+    if (typeof source[key] === 'string' && source[key]) publicSource[key] = source[key].slice(0, 500);
+  }
+  const projection = {
+    schema: PUBLIC_EVIDENCE_PROJECTION_SCHEMA,
+    projectionId: request.projectionId,
+    projectFingerprint: sha256(request.projectId),
+    sourcePromotionId: promotion.promotionId,
+    kind: candidate.kind,
+    assetRef: {
+      id: candidate.assetRef.id,
+      type: candidate.assetRef.type,
+      version: candidate.assetRef.version,
+    },
+    source: publicSource,
+    evidence: {
+      candidateId: candidate.candidateId,
+      promotionSequence: promotion.lastSequence,
+      promotionEventHash: promotion.lastEventHash || '',
+      promotionCatalogHash: promotionCatalog.catalogHash,
+    },
+    decision: { authorityClass: 'human', projectedAt: request.decidedAt },
+    boundaries: {
+      contentIncluded: false,
+      localPathIncluded: false,
+      sourceUrlIncluded: false,
+      messageIdsIncluded: false,
+      publicationGranted: false,
+      published: false,
+      requiresIndependentPublicationGate: true,
+    },
+  };
+  rejectSecrets(projection);
+  rejectEmbeddedBody(projection, 'projection');
+  return deepFreeze(projection);
+}
+
+function recoverProjectionTail(paths, parsed) {
+  if (!parsed.corruptTail) return '';
+  fs.mkdirSync(paths.recovery, { recursive: true });
+  const recoveryPath = path.join(paths.recovery, `corrupt-tail-${Date.now()}-${sha256(parsed.corruptTail).slice(0, 12)}.txt`);
+  fs.writeFileSync(recoveryPath, parsed.corruptTail + '\n', 'utf8');
+  atomicWrite(paths.events, parsed.events.map(row => JSON.stringify(row)).join('\n') + (parsed.events.length ? '\n' : ''));
+  return slash(recoveryPath);
+}
+
+function writeProjectionArtifact(paths, projection) {
+  if (!projection) return '';
+  const artifactPath = path.join(paths.artifacts, `${sha256(projection.projectionId).slice(0, 40)}.json`);
+  atomicWrite(artifactPath, JSON.stringify(projection, null, 2));
+  return slash(artifactPath);
+}
+
+function writeProjectionConflict(paths, request, message) {
+  const row = {
+    schema: EVIDENCE_PROJECTION_CONFLICT_SCHEMA,
+    commandId: request.commandId,
+    projectionId: request.projectionId,
+    promotionId: request.promotionId,
+    commandHash: request.commandHash,
+    reason: message,
+    automaticMutation: false,
+    publicationGranted: false,
+  };
+  fs.mkdirSync(paths.conflicts, { recursive: true });
+  const conflictPath = path.join(paths.conflicts, `${sha256(request.commandId).slice(0, 24)}-${request.commandHash.slice(0, 12)}.json`);
+  atomicWrite(conflictPath, JSON.stringify(row, null, 2));
+  return slash(conflictPath);
+}
+
+function applyEvidenceProjectionSync(input, promotionCatalog) {
+  const request = normalizeProjectionRequest(input);
+  const paths = projectionPaths(request.projectPath);
+  fs.mkdirSync(paths.root, { recursive: true });
+  const parsed = parseProjectionEventLog(fs.existsSync(paths.events) ? fs.readFileSync(paths.events, 'utf8') : '');
+  if (parsed.events.some(event => event.projectId !== request.projectId)) throw new Error('Evidence projection ledger projectId 与项目不一致');
+  const recoveryPath = recoverProjectionTail(paths, parsed);
+  const duplicate = parsed.events.find(event => event.commandId === request.commandId);
+  if (duplicate) {
+    if (duplicate.commandHash !== request.commandHash) {
+      const conflictPath = writeProjectionConflict(paths, request, '同 commandId 出现不同投影决定');
+      return deepFreeze({ ok: false, code: 'PROJECTION_COMMAND_CONFLICT', conflictPath, recoveryPath });
+    }
+    if (duplicate.projection) writeProjectionArtifact(paths, duplicate.projection);
+    const catalog = projectionCatalogFromEvents(request.projectId, parsed.events, paths);
+    atomicWrite(paths.catalog, JSON.stringify(catalog, null, 2));
+    return deepFreeze({ ok: true, code: 'ALREADY_APPLIED', event: duplicate, catalog, recoveryPath });
+  }
+  const states = projectionStateFromEvents(parsed.events);
+  const current = states.get(request.projectionId);
+  const promotion = promotionCatalog.entries.find(entry => entry.promotionId === request.promotionId);
+  try {
+    if (request.action === 'project') {
+      if (current) throw new Error(`证据投影已存在：${request.projectionId} (${current.status})`);
+      if (!promotion || promotion.status !== 'active') throw new Error('只有 active Promotion 可以生成证据投影');
+    } else if (!current || current.status !== 'active') {
+      throw new Error('只有 active 证据投影可以撤回');
+    }
+  } catch (error) {
+    const conflictPath = writeProjectionConflict(paths, request, error.message);
+    return deepFreeze({ ok: false, code: 'PROJECTION_STATE_CONFLICT', message: error.message, conflictPath, recoveryPath });
+  }
+  const projection = request.action === 'project'
+    ? publicProjectionFromPromotion(request, promotion, promotionCatalog)
+    : null;
+  const event = {
+    schema: EVIDENCE_PROJECTION_EVENT_SCHEMA,
+    sequence: parsed.events.length + 1,
+    previousHash: parsed.events.at(-1)?.eventHash || '',
+    commandId: request.commandId,
+    commandHash: request.commandHash,
+    projectionId: request.projectionId,
+    projectId: request.projectId,
+    promotionId: request.promotionId,
+    action: request.action,
+    projection,
+    authorityRef: request.authorityRef,
+    reason: request.reason,
+    decidedAt: request.decidedAt,
+    automaticPublication: false,
+    publicationGranted: false,
+  };
+  event.eventHash = sha256(stableJson({ ...event, eventHash: undefined }));
+  fs.appendFileSync(paths.events, JSON.stringify(event) + '\n', 'utf8');
+  const artifactPath = writeProjectionArtifact(paths, projection);
+  const catalog = projectionCatalogFromEvents(request.projectId, [...parsed.events, event], paths);
+  atomicWrite(paths.catalog, JSON.stringify(catalog, null, 2));
+  return deepFreeze({ ok: true, code: 'APPLIED', event, catalog, artifactPath, recoveryPath });
+}
+
+function readProjectionCatalogSync(input) {
+  const query = normalizeManagementQuery(input);
+  const paths = projectionPaths(query.projectPath);
+  const parsed = parseProjectionEventLog(fs.existsSync(paths.events) ? fs.readFileSync(paths.events, 'utf8') : '');
+  if (parsed.events.some(event => event.projectId !== query.projectId)) throw new Error('Evidence projection ledger projectId 与项目不一致');
+  const recoveryPath = recoverProjectionTail(paths, parsed);
+  const catalog = projectionCatalogFromEvents(query.projectId, parsed.events, paths);
+  if (parsed.events.length || fs.existsSync(paths.root)) atomicWrite(paths.catalog, JSON.stringify(catalog, null, 2));
+  return deepFreeze({ ok: true, catalog, recoveryPath });
 }
 
 function applyPromotionCommandSync(input) {
@@ -367,6 +735,8 @@ function normalizeConversationPromotionRequest(input) {
   if (markdown.length > 500_000) throw new Error('对话资产超过 50 万字符');
   const authorityRef = safeId(input.authorityRef, 'authorityRef');
   if (!authorityRef.startsWith('human:')) throw new Error('对话升格必须由 human:* Authority 明确触发');
+  const supersedes = [...new Set((Array.isArray(input.supersedes) ? input.supersedes : [])
+    .map((item, index) => safeId(item, `supersedes[${index}]`)))];
   return deepFreeze({
     schema: CONVERSATION_PROMOTION_REQUEST_SCHEMA,
     projectId: safeId(input.projectId, 'projectId'),
@@ -378,6 +748,7 @@ function normalizeConversationPromotionRequest(input) {
     authorityRef,
     reason: requiredString(input.reason, 'reason').slice(0, 1200),
     decidedAt: iso(input.decidedAt, 'decidedAt'),
+    supersedes,
   });
 }
 
@@ -425,13 +796,54 @@ function normalizeStructuredPromotionReviewRequest(input) {
 class PromotionLedger {
   constructor() { this.queues = new Map(); }
 
-  apply(input) {
-    const projectPath = path.resolve(requiredString(input?.projectPath, 'projectPath'));
+  _enqueue(projectPath, operation) {
+    projectPath = path.resolve(requiredString(projectPath, 'projectPath'));
     const key = process.platform === 'win32' ? projectPath.toLocaleLowerCase('en-US') : projectPath;
     const previous = this.queues.get(key) || Promise.resolve();
-    const current = previous.catch(() => {}).then(() => applyPromotionCommandSync(input));
+    const current = previous.catch(() => {}).then(operation);
     this.queues.set(key, current);
     return current.finally(() => { if (this.queues.get(key) === current) this.queues.delete(key); });
+  }
+
+  apply(input) {
+    return this._enqueue(input?.projectPath, () => applyPromotionCommandSync(input));
+  }
+
+  listManagement(input) {
+    const query = normalizeManagementQuery(input);
+    return this._enqueue(query.projectPath, () => {
+      const promotions = readPromotionCatalogSync(query);
+      const projections = readProjectionCatalogSync(query);
+      return deepFreeze({
+        ok: true,
+        promotions: promotions.catalog,
+        projections: projections.catalog,
+        boundaries: {
+          automaticPromotion: false,
+          publicationGranted: false,
+          publicProjectionContainsBody: false,
+          independentPublicationGateRequired: true,
+        },
+        recoveryPaths: [promotions.recoveryPath, projections.recoveryPath].filter(Boolean),
+      });
+    });
+  }
+
+  revokePromotion(input) {
+    const command = revokeCommandFromRequest(input);
+    return this.apply(command);
+  }
+
+  manageEvidenceProjection(input) {
+    const request = normalizeProjectionRequest(input);
+    return this._enqueue(request.projectPath, () => {
+      const promotions = readPromotionCatalogSync({
+        schema: PROMOTION_MANAGEMENT_QUERY_SCHEMA,
+        projectId: request.projectId,
+        projectPath: request.projectPath,
+      });
+      return applyEvidenceProjectionSync(input, promotions.catalog);
+    });
   }
 
   async promoteConversation(input, ingestionPipeline) {
@@ -467,7 +879,7 @@ class PromotionLedger {
       authorityRef: request.authorityRef,
       reason: request.reason,
       decidedAt: request.decidedAt,
-      supersedes: [],
+      supersedes: request.supersedes,
     });
     return deepFreeze({ ok: promotion.ok, code: promotion.code, assetId, promotionId, ingestion, promotion });
   }
@@ -522,19 +934,33 @@ class PromotionLedger {
 
 module.exports = {
   CONVERSATION_PROMOTION_REQUEST_SCHEMA,
+  EVIDENCE_PROJECTION_CATALOG_SCHEMA,
+  EVIDENCE_PROJECTION_EVENT_SCHEMA,
+  EVIDENCE_PROJECTION_REQUEST_SCHEMA,
+  PUBLIC_EVIDENCE_PROJECTION_SCHEMA,
   PROMOTION_ACTIONS,
   PROMOTION_CATALOG_SCHEMA,
   PROMOTION_COMMAND_SCHEMA,
   PROMOTION_CONFLICT_SCHEMA,
   PROMOTION_EVENT_SCHEMA,
   PROMOTION_KINDS,
+  PROMOTION_MANAGEMENT_QUERY_SCHEMA,
+  PROMOTION_REVOKE_REQUEST_SCHEMA,
   STRUCTURED_PROMOTION_KINDS,
   STRUCTURED_PROMOTION_REVIEW_REQUEST_SCHEMA,
   PromotionLedger,
+  applyEvidenceProjectionSync,
   applyPromotionCommandSync,
   normalizeCommand,
   normalizeConversationPromotionRequest,
+  normalizeManagementQuery,
+  normalizeProjectionRequest,
+  normalizeRevokeRequest,
   normalizeStructuredPromotionReviewRequest,
   parseEventLog,
+  parseProjectionEventLog,
   promotionPaths,
+  projectionPaths,
+  readPromotionCatalogSync,
+  readProjectionCatalogSync,
 };

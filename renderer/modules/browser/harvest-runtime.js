@@ -49,7 +49,18 @@ function normalizedReview(review = {}) {
   if (!statement) throw new Error('请审阅并填写候选正文');
   if (statement.length > 100_000) throw new Error('候选正文最多 10 万字符');
   const proposedAt = new Date(String(review.proposedAt || '')).toISOString();
-  return { kind, action, title, statement, proposedAt };
+  const supersedes = [...new Set((Array.isArray(review.supersedes) ? review.supersedes : [])
+    .map(value => String(value || '').trim()).filter(Boolean))];
+  if (action !== 'approve' && supersedes.length) throw new Error('只有批准候选时可以替代旧记录');
+  if (supersedes.some(value => value.length > 300 || /[\u0000-\u001f]/.test(value))) throw new Error('替代目标无效');
+  return { kind, action, title, statement, proposedAt, supersedes };
+}
+
+function managementReason(value, action) {
+  const reason = String(value || '').trim();
+  if (reason.length < 4) throw new Error(`${action}前请填写至少 4 个字的原因`);
+  if (reason.length > 1200) throw new Error('原因最多 1200 字符');
+  return reason;
 }
 
 function buildStructuredCandidateMarkdown(meta, messages, review) {
@@ -140,6 +151,8 @@ export function createHarvestRuntime({ ctl } = {}) {
       authorityRef: 'human:interactive-local-user',
       reason: '用户在 AI 对话整理面板明确选择“升格为本地资产”',
       decidedAt: new Date().toISOString(),
+      supersedes: [...new Set((Array.isArray(payload.supersedes) ? payload.supersedes : [])
+        .map(value => String(value || '').trim()).filter(Boolean))],
     });
     if (!result?.ok) throw new Error(result?.promotion?.message || result?.ingestion?.message || '本地资产升格失败；现有资产未改写');
     return result;
@@ -166,17 +179,62 @@ export function createHarvestRuntime({ ctl } = {}) {
       action: review.action,
       authorityRef: 'human:interactive-local-user',
       reason: review.action === 'approve'
-        ? '用户在结构化候选审阅区明确批准入库'
+        ? (review.supersedes.length
+          ? '用户在结构化候选审阅区明确批准，并替代所选同类 active Promotion'
+          : '用户在结构化候选审阅区明确批准入库')
         : '用户在结构化候选审阅区明确驳回候选',
       decidedAt: new Date().toISOString(),
-      supersedes: [],
+      supersedes: review.supersedes,
     });
     if (!result?.ok) throw new Error(result?.promotion?.message || result?.ingestion?.message || '结构化候选审阅失败；现有状态未改写');
     return { ...result, action: review.action, kind: review.kind };
   }
 
+  async function promotionManagement() {
+    const workspace = await invoke('workspace:get');
+    return invoke('promotion:listManagement', {
+      schema: 'mazz.promotion-management-query/v0',
+      projectId: 'workspace:conversation-assets',
+      projectPath: workspace,
+    });
+  }
+
+  async function revokePromotion(payload = {}) {
+    const workspace = await invoke('workspace:get');
+    const result = await invoke('promotion:revoke', {
+      schema: 'mazz.promotion-revoke-request/v0',
+      projectId: 'workspace:conversation-assets',
+      projectPath: workspace,
+      promotionId: String(payload.promotionId || ''),
+      authorityRef: 'human:interactive-local-user',
+      reason: managementReason(payload.reason, '撤销'),
+      decidedAt: new Date().toISOString(),
+    });
+    if (!result?.ok) throw new Error(result?.message || '撤销失败；原状态未改写');
+    return result;
+  }
+
+  async function manageEvidenceProjection(payload = {}) {
+    const workspace = await invoke('workspace:get');
+    const action = String(payload.action || '');
+    if (!['project', 'withdraw'].includes(action)) throw new Error('证据投影动作无效');
+    const result = await invoke('promotion:manageEvidenceProjection', {
+      schema: 'mazz.evidence-projection-request/v0',
+      projectId: 'workspace:conversation-assets',
+      projectPath: workspace,
+      action,
+      promotionId: String(payload.promotionId || ''),
+      authorityRef: 'human:interactive-local-user',
+      reason: managementReason(payload.reason, action === 'project' ? '生成证据投影' : '撤回证据投影'),
+      decidedAt: new Date().toISOString(),
+    });
+    if (!result?.ok) throw new Error(result?.message || '证据投影操作失败；原状态未改写');
+    return result;
+  }
+
   return {
     collectCurrent, exportSelection, feedStyle, distillSelection, promoteSelection,
-    reviewPromotionCandidate, normalizedPayload, normalizedReview,
+    reviewPromotionCandidate, promotionManagement, revokePromotion, manageEvidenceProjection,
+    normalizedPayload, normalizedReview,
   };
 }
