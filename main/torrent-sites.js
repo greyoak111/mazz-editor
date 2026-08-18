@@ -1,95 +1,160 @@
-// main/torrent-sites.js —— 种子站适配器（动漫花园系：搜索行(日期/类型/标题/大小/上传者) + 详情页 magnet）
-// 结构已破（resource-row 五列规整 + detail 页 btih 直出），懒加载：先出行，点播放再取详情
+// main/torrent-sites.js —— W65a 四站严格适配器与礼貌访问接线
 'use strict';
-const { net } = require('electron');
+
+const {
+  parseDmhyRows,
+  parseMikanRows,
+  parseUploadbtRows,
+  parseMagnet,
+  normalizeInfoHash,
+} = require('./torrent-site-core');
+const {
+  PoliteSiteTransport,
+  isDeterministicVisitorGate,
+} = require('./torrent-site-network');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+const MAX_RESPONSE_BYTES = 12 * 1024 * 1024;
+const REQUEST_TIMEOUT_MS = 25_000;
 
-const SITES = {
-  dmhy: {
+const SITES = Object.freeze({
+  dmhy: Object.freeze({
     id: 'dmhy', name: '动漫花园 DMHY（预览）',
-    homeUrl: 'https://dongmanhuayuan.com/',
-    searchUrl: (kw) => `https://dongmanhuayuan.com/search/${encodeURIComponent(kw)}/`,
-    detailBase: 'https://dongmanhuayuan.com',
-  },
-  'dmhy-sync': {
-    id: 'dmhy-sync', name: '动漫花园 DMHY（同步站 · 预览）',
-    homeUrl: 'https://dongmanhuayuan.myheartsite.com/',
-    searchUrl: (kw) => `https://dongmanhuayuan.myheartsite.com/search/${encodeURIComponent(kw)}/`,
-    detailBase: 'https://dongmanhuayuan.myheartsite.com',
-  },
-};
+    homeUrl: 'https://share.dmhy.org/',
+    searchUrl: (kw) => `https://share.dmhy.org/topics/list?keyword=${encodeURIComponent(kw)}`,
+    detailBase: 'https://share.dmhy.org',
+    parseRows: (html) => parseDmhyRows(html, { baseUrl: 'https://share.dmhy.org/' }),
+  }),
+  mikan: Object.freeze({
+    id: 'mikan', name: '蜜柑计划 Mikan（预览）',
+    homeUrl: 'https://mikanime.tv/',
+    searchUrl: (kw) => `https://mikanime.tv/Home/Search?searchstr=${encodeURIComponent(kw)}`,
+    detailBase: 'https://mikanime.tv',
+    parseRows: (html) => parseMikanRows(html, { baseUrl: 'https://mikanime.tv/' }),
+  }),
+  kisssub: Object.freeze({
+    id: 'kisssub', name: '爱恋动漫 KissSub（预览）',
+    homeUrl: 'https://kisssub.org/',
+    searchUrl: (kw) => `https://kisssub.org/search.php?keyword=${encodeURIComponent(kw)}`,
+    detailBase: 'https://kisssub.org',
+    visitorGateUrl: 'https://kisssub.org/addon.php?r=document/view&page=visitor-test',
+    parseRows: (html) => parseUploadbtRows(html, { siteId: 'kisssub', baseUrl: 'https://kisssub.org/' }),
+  }),
+  comicat: Object.freeze({
+    id: 'comicat', name: '漫猫动漫 ComiCat（预览）',
+    homeUrl: 'https://comicat.org/',
+    searchUrl: (kw) => `https://comicat.org/search.php?keyword=${encodeURIComponent(kw)}`,
+    detailBase: 'https://comicat.org',
+    visitorGateUrl: 'https://comicat.org/addon.php?r=document/view&page=visitor-test',
+    parseRows: (html) => parseUploadbtRows(html, { siteId: 'comicat', baseUrl: 'https://comicat.org/' }),
+  }),
+});
 
-function fetchText(url) {
+function electronRequest({ url, method = 'GET', headers = {}, body = '' }) {
+  const { net } = require('electron');
   return new Promise((resolve, reject) => {
-    const req = net.request({ url });
+    const req = net.request({ url, method });
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      callback(value);
+    };
+    const timeout = setTimeout(() => {
+      finish(reject, Object.assign(new Error(`站点请求超过 ${REQUEST_TIMEOUT_MS / 1000} 秒`), { code: 'ETIMEDOUT' }));
+      req.abort();
+    }, REQUEST_TIMEOUT_MS);
     req.setHeader('User-Agent', UA);
     req.setHeader('Accept-Language', 'zh-CN,zh;q=0.9,en;q=0.8');
-    let body = '';
+    for (const [name, value] of Object.entries(headers)) req.setHeader(name, value);
     req.on('response', (res) => {
-      if (res.statusCode >= 400) { reject(new Error(`HTTP ${res.statusCode}`)); return; }
-      res.on('data', (c) => { body += c.toString('utf8'); });
-      res.on('end', () => resolve(body));
+      const chunks = [];
+      let bytes = 0;
+      res.on('data', (chunk) => {
+        bytes += chunk.length;
+        if (bytes > MAX_RESPONSE_BYTES) {
+          req.abort();
+          finish(reject, Object.assign(new Error('站点响应超过 12 MiB 安全上限'), { code: 'W65_RESPONSE_TOO_LARGE' }));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      res.on('end', () => finish(resolve, {
+        statusCode: res.statusCode,
+        url: res.headers.location || url,
+        headers: res.headers,
+        body: Buffer.concat(chunks).toString('utf8'),
+      }));
+      res.on('error', (error) => finish(reject, error));
     });
-    req.on('error', reject);
+    req.on('error', (error) => finish(reject, error));
+    if (body) req.write(body);
     req.end();
   });
 }
 
-const stripTags = (s) => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+class TorrentSites {
+  constructor({ bus, request = electronRequest, transport } = {}) {
+    if (!bus?.handle) throw new TypeError('TorrentSites requires IPC bus');
+    this.bus = bus;
+    this.transport = transport || new PoliteSiteTransport({ request });
 
-/** resource-row 五行解析（日期/类型/标题+详情链/大小/上传者） */
-function parseDmhyRows(html) {
-  const rows = [];
-  const parts = String(html).split(/<tr class="resource-row[^"]*"/).slice(1);
-  for (const part of parts) {
-    const row = part.slice(0, part.indexOf('</tr>') > -1 ? part.indexOf('</tr>') : part.length);
-    const m = /whitespace-nowrap">([^<]{4,20})<\/td>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>[\s\S]*?<a href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?whitespace-nowrap">([^<]{2,20})<\/td>[\s\S]*?text-gray-600">([\s\S]*?)<\/td>/.exec(row);
-    if (!m) continue;
-    const [, date, type, href, title, size, uploader] = m;
-    rows.push({
-      date: stripTags(date), type: stripTags(type), href,
-      title: stripTags(title), size: stripTags(size), uploader: stripTags(uploader),
+    bus.handle('sites:list', async () => Object.values(SITES).map((site) => ({ id: site.id, name: site.name })));
+    bus.handle('sites:search', async ({ site, kw } = {}) => {
+      const adapter = this.#site(site);
+      const keyword = String(kw || '').trim();
+      if (!keyword) return { rows: [], kw: keyword };
+      const response = await this.#load(adapter, adapter.searchUrl(keyword), 'list');
+      return { rows: adapter.parseRows(response.body), kw: keyword, sourceSite: adapter.id, cached: response.cached };
+    });
+    bus.handle('sites:home', async ({ site } = {}) => {
+      const adapter = this.#site(site);
+      const response = await this.#load(adapter, adapter.homeUrl, 'list');
+      return { rows: adapter.parseRows(response.body), sourceSite: adapter.id, cached: response.cached };
+    });
+    bus.handle('sites:magnet', async ({ site, href, magnet, infoHash, sourceUrl, torrentUrl } = {}) => {
+      const adapter = this.#site(site);
+      if (String(magnet || href || '').startsWith('magnet:')) {
+        const direct = String(magnet || href);
+        return { magnet: direct, title: '', infoHash: normalizeInfoHash(direct) };
+      }
+      const knownHash = normalizeInfoHash(infoHash || href || torrentUrl || sourceUrl);
+      if (knownHash) return { magnet: `magnet:?xt=urn:btih:${knownHash}`, title: '', infoHash: knownHash };
+      const target = new URL(String(sourceUrl || href || ''), adapter.detailBase).href;
+      const response = await this.#load(adapter, target, 'detail');
+      const result = parseMagnet(response.body);
+      if (!result) throw Object.assign(new Error('详情页未取到 magnet（站点结构可能已变）'), { code: 'W65_MAGNET_NOT_FOUND' });
+      return result;
     });
   }
-  return rows;
-}
 
-function parseMagnet(html) {
-  const m = /magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'<]*/.exec(String(html));
-  if (!m) return null;
-  const t = /<h1[^>]*class="[^"]*seo-h1[^"]*"[^>]*>([\s\S]*?)<\/h1>/.exec(String(html));
-  return { magnet: m[0], title: t ? stripTags(t[1]) : '' };
-}
+  #site(siteId) {
+    const site = SITES[siteId];
+    if (!site) throw Object.assign(new Error(`未知站点：${siteId || ''}`), { code: 'W65_UNKNOWN_SITE' });
+    return site;
+  }
 
-class TorrentSites {
-  constructor({ bus }) {
-    this.bus = bus;
-    bus.handle('sites:list', async () => Object.values(SITES).map(s => ({ id: s.id, name: s.name })));
-    bus.handle('sites:search', async ({ site, kw }) => {
-      const s = SITES[site];
-      if (!s) throw new Error('未知站点：' + site);
-      if (!kw || !String(kw).trim()) return { rows: [], kw };
-      const html = await fetchText(s.searchUrl(String(kw).trim()));
-      return { rows: parseDmhyRows(html), kw };
-    });
-    // 首页即当日上传列表——与搜索页同构（resource-row 五列规整），解析器直接复用
-    bus.handle('sites:home', async ({ site }) => {
-      const s = SITES[site];
-      if (!s) throw new Error('未知站点：' + site);
-      const html = await fetchText(s.homeUrl);
-      return { rows: parseDmhyRows(html) };
-    });
-    bus.handle('sites:magnet', async ({ site, href }) => {
-      const s = SITES[site];
-      if (!s) throw new Error('未知站点：' + site);
-      const url = href.startsWith('http') ? href : s.detailBase + href;
-      const html = await fetchText(url);
-      const r = parseMagnet(html);
-      if (!r) throw new Error('详情页未取到 magnet（站点结构可能已变）');
-      return r;
-    });
+  async #load(site, url, kind) {
+    let response = await this.transport.request(site.id, { url }, { kind });
+    if (!isDeterministicVisitorGate(response.body)) return response;
+    if (!site.visitorGateUrl) {
+      throw Object.assign(new Error(`站点 ${site.id} 返回未知访客门`), { code: 'W65_VISITOR_GATE_UNSUPPORTED' });
+    }
+    await this.transport.request(site.id, {
+      url: site.visitorGateUrl,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'visitor_test=human',
+    }, { kind: 'detail', cache: false, bypassCache: true });
+    response = await this.transport.request(site.id, { url }, { kind, bypassCache: true });
+    if (isDeterministicVisitorGate(response.body)) {
+      throw Object.assign(new Error(`站点 ${site.id} 访客门未通过，自动访问已停止`), { code: 'W65_VISITOR_GATE_FAILED' });
+    }
+    return response;
   }
 }
 
 module.exports = TorrentSites;
+module.exports.SITES = SITES;
+module.exports.electronRequest = electronRequest;

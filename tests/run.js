@@ -119,6 +119,7 @@ const files = [
   'tests/contract/w74c-conversation-promotion.test.mjs',
   'tests/contract/w74c2-structured-promotion-review.test.mjs',
   'tests/contract/w74c3-promotion-management.test.mjs',
+  'tests/contract/w65a-four-site-adapters.test.mjs',
   'tests/contract/hotfix-w60a.test.mjs',
   'tests/contract/hotfix-w60b.test.mjs',
   'tests/contract/hotfix-w61a.test.mjs',

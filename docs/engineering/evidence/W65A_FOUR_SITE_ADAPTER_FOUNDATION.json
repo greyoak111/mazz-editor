@@ -1,0 +1,39 @@
+{
+  "schema": "mazz.w65a-four-site-adapter-foundation-evidence/v0",
+  "capturedAt": "2026-08-18",
+  "status": "COMPLETE_TO_SPEC",
+  "parentStatus": "W65_PARTIAL",
+  "sites": [
+    { "id": "dmhy", "preview": true, "liveHttp": 200, "fixtureParsedRows": 1 },
+    { "id": "mikan", "preview": true, "liveHttp": 200, "fixtureParsedRows": 1, "electronSearchRows": 465 },
+    { "id": "kisssub", "preview": true, "liveHttp": 200, "fixtureParsedRows": 1 },
+    { "id": "comicat", "preview": true, "liveHttp": 200, "fixtureParsedRows": 1 }
+  ],
+  "contract": {
+    "resourceRowFieldCount": 13,
+    "mergeKey": "infoHash",
+    "perSiteConcurrency": 1,
+    "minimumIntervalMs": 2000,
+    "listCacheTtlMs": 300000,
+    "detailCacheTtlMs": 1800000,
+    "retryDelaysMs": [2000, 8000, 20000],
+    "interactiveChallengeAction": "STOP_AND_OPEN_CIRCUIT"
+  },
+  "verification": {
+    "w65aContract": "12/12 PASS",
+    "playerW23": "5/5 PASS",
+    "playerW25": "5/5 PASS",
+    "w71ProductMaturity": "5/5 PASS",
+    "rendererBuild": "PASS",
+    "electronRun11": "5/5 PASS",
+    "rendererErrors": 0,
+    "mainErrors": 0,
+    "unrelatedFullSuiteRun": false
+  },
+  "screenshot": {
+    "path": "docs/engineering/evidence/W65A_FOUR_SITE_PREVIEW.png",
+    "sha256": "DD48FCE45D2016C6D59ADF0253F71B8A689DA606B107D02943EB9E292C2CC271",
+    "reviewed": true
+  },
+  "remaining": ["W65b", "W65c", "W74b"]
+}

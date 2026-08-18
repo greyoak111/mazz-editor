@@ -478,17 +478,20 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       </div>
       <div class="mz-web-watch"></div>
       <div class="mz-web-rows mz-dim">载入站点首页（当日上传列表）…</div>`;
-    // 行渲染共用：搜索与首页同结构（日期/类型/完整标题（名称一栏，按图样式直接扒）/大小/上传者）
+    const escapeSiteText = (value) => String(value || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    // 行渲染共用：消费 W65 统一资源行（来源/标题/大小/字幕组）；旧站点私有字段不再渗入 UI。
     const renderRows = (site, rows) => {
       const rowsEl = webEl.querySelector('.mz-web-rows');
       rowsEl.className = 'mz-web-rows';
       rowsEl.innerHTML = rows.map((x, i) => `
         <div class="mz-web-row" data-i="${i}">
-          <span class="mz-wr-date">${x.date || ''}</span>
-          <span class="mz-wr-type">${x.type || ''}</span>
-          <span class="mz-wr-title" title="${(x.title || '').replace(/"/g, '&quot;')}">${x.title || ''}</span>
-          <span class="mz-wr-size">${x.size || ''}</span>
-          <span class="mz-wr-up">${x.uploader || ''}</span>
+          <span class="mz-wr-date">${escapeSiteText(x.date)}</span>
+          <span class="mz-wr-type">${escapeSiteText(x.sourceSite)}</span>
+          <span class="mz-wr-title" title="${escapeSiteText(x.title)}">${escapeSiteText(x.title)}</span>
+          <span class="mz-wr-size">${escapeSiteText(x.size)}</span>
+          <span class="mz-wr-up">${escapeSiteText(x.subgroup)}</span>
         </div>`).join('');
       rowsEl.querySelectorAll('.mz-web-row').forEach(el => el.addEventListener('click', () => playRow(site, rows[+el.dataset.i], el)));
     };
@@ -543,7 +546,11 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const old = titleEl.textContent;
     titleEl.textContent = '取 magnet 中…';
     try {
-      const m = await window.mazz.invoke('sites:magnet', { site, href: row.href });
+      const m = row.magnet
+        ? { magnet: row.magnet, title: row.title, infoHash: row.infoHash }
+        : await window.mazz.invoke('sites:magnet', {
+          site, sourceUrl: row.sourceUrl, torrentUrl: row.torrentUrl, infoHash: row.infoHash,
+        });
       await playMagnet(m.magnet, m.title || row.title || old);
       el.remove();
     } catch (e) {

@@ -6,12 +6,13 @@ import path from 'node:path';
 
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
-describe('DMHY 首页当日上传', () => {
-  test('sites:home 通道与首页解析复用', () => {
+describe('W65 站点首页资源行', () => {
+  test('sites:home 通道委托当前站点严格解析器', () => {
     const src = readSrc('main/torrent-sites.js');
     assert.ok(src.includes('homeUrl'), '站点表必须有 homeUrl');
     assert.ok(src.includes("bus.handle('sites:home'"), 'sites:home 通道必须有');
-    assert.ok(/sites:home[\s\S]{0,300}parseDmhyRows/.test(src), '首页必须复用 resource-row 解析器（与搜索同构）');
+    assert.ok(/sites:home[\s\S]{0,500}adapter\.parseRows/.test(src), '首页必须委托所选站点的严格解析器');
+    assert.ok(!src.includes('dongmanhuayuan.com'), '旧 DMHY clone 端点不得回魂');
     assert.ok(readSrc('preload/bridge.js').includes("'sites:home'"), '桥白名单必须登记 sites:home');
   });
   test('首开即载与切站即载接线', () => {

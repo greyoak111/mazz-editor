@@ -30,13 +30,19 @@ describe('P2P 守护与通道', () => {
   });
 });
 
-describe('动漫花园适配器', () => {
-  test('搜索/详情两级懒取结构', () => {
+describe('W65 四站适配基础', () => {
+  test('四站严格解析、统一行与详情兜底结构', () => {
     const src = readSrc('main/torrent-sites.js');
-    assert.ok(src.includes('dongmanhuayuan.com/search/'), '搜索路径必须破译');
-    assert.ok(src.includes('resource-row'), 'resource-row 行结构必须破译');
+    const core = readSrc('main/torrent-site-core.js');
+    for (const endpoint of ['share.dmhy.org', 'mikanime.tv', 'kisssub.org', 'comicat.org']) {
+      assert.ok(src.includes(endpoint), `缺当前主站 ${endpoint}`);
+    }
+    for (const parser of ['parseDmhyRows', 'parseMikanRows', 'parseUploadbtRows']) {
+      assert.ok(src.includes(parser) && core.includes(`function ${parser}`), `缺严格解析器 ${parser}`);
+    }
+    assert.ok(core.includes('RESOURCE_ROW_FIELDS') && core.includes('aggregateResourceRows'), '统一资源行与 infoHash 聚合必须在册');
     assert.ok(src.includes('urn:btih:'), '详情页 magnet 必须破译');
-    assert.ok(src.includes('dmhy-sync'), '同步站必须在册');
+    assert.ok(!src.includes('dongmanhuayuan.com') && !src.includes('dmhy-sync'), '旧 clone / 同步站路线不得回魂');
   });
 });
 

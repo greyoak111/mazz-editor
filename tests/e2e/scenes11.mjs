@@ -1,5 +1,5 @@
 // tests/e2e/scenes11.mjs —— 波次二十三「P2P 边下边播」实证批
-// daemon 全链 / 三源面板 / 媒体库扫描 / 存不存模式（dmhy 外网用例宽容跳过）
+// daemon 全链 / 三源面板 / W65 四站 Preview / 媒体库扫描 / 存不存模式
 export async function scenes11({ win, human, WS, scenario }) {
   const evaluate = (fn, arg) => win.evaluate(fn, arg);
   const wait = (ms) => win.waitForTimeout(ms);
@@ -36,12 +36,11 @@ export async function scenes11({ win, human, WS, scenario }) {
 
   // ==================== 2：三源面板与媒体库扫描 ====================
   await scenario('P2P·三源面板·媒体库扫描', async () => {
-    // 往工作区媒体库丢一个视频
-    const { execSync } = await import('node:child_process');
+    // 使用 seedFixtures 已生成的合法 WAV，不依赖机器 PATH 中的 ffmpeg。
     const fs2 = await import('node:fs');
     fs2.mkdirSync(WS + '/媒体库', { recursive: true });
-    execSync(`ffmpeg -y -f lavfi -i testsrc=duration=2:size=320x180:rate=15 -c:v libvpx "${WS}/媒体库/库内番.webm"`, { stdio: 'pipe' });
-    await evaluate(async ([p]) => { await window.MazzCommands.execute('file.openPath', { path: p }); }, [WS + '/媒体库/库内番.webm']);
+    fs2.copyFileSync(WS + '/测试音.wav', WS + '/媒体库/库内音频.wav');
+    await evaluate(async ([p]) => { await window.MazzCommands.execute('file.openPath', { path: p }); }, [WS + '/媒体库/库内音频.wav']);
     await wait(1600);
     await evaluate(() => { [...document.querySelectorAll('[data-a=list]')].find(b => b.getBoundingClientRect().width > 0)?.click(); });
     await wait(500);
@@ -54,7 +53,7 @@ export async function scenes11({ win, human, WS, scenario }) {
       items: [...document.querySelectorAll('.mz-ml-item')].map(e => e.textContent.slice(0, 30)),
       hasBar: !!document.querySelector('.mz-ml-bar'),
     }));
-    await human.assert(ml.hasBar && ml.items.some(t => t.includes('库内番')), `媒体库应扫出库内番（${JSON.stringify(ml.items)}）`);
+    await human.assert(ml.hasBar && ml.items.some(t => t.includes('库内音频')), `媒体库应扫出库内音频（${JSON.stringify(ml.items)}）`);
     // 切网络资源
     await evaluate(() => { [...document.querySelectorAll('.mz-src-tab')].find(t => t.dataset.src === 'web')?.click(); });
     await wait(700);
@@ -62,28 +61,33 @@ export async function scenes11({ win, human, WS, scenario }) {
       site: !!document.querySelector('.mz-web-site'),
       kw: !!document.querySelector('.mz-web-kw'),
       magnet: !!document.querySelector('.mz-web-magnet'),
+      options: [...document.querySelectorAll('.mz-web-site option')].map(option => ({ id: option.value, name: option.textContent })),
     }));
     await human.assert(web.site && web.kw && web.magnet, `网络资源模式应有站选+搜索+手贴（${JSON.stringify(web)}）`);
+    await human.assert(JSON.stringify(web.options.map(option => option.id)) === JSON.stringify(['dmhy', 'mikan', 'kisssub', 'comicat']), `四个主站必须按冻结顺序在册（${JSON.stringify(web.options)}）`);
+    await human.assert(web.options.every(option => option.name.includes('（预览）')), `W65 未封板前四站必须全部诚实标识 Preview（${JSON.stringify(web.options)}）`);
+    await human.shot('w65a-四站网络资源入口');
   });
 
-  // ==================== 3：动漫花园真实搜索（外网宽容） ====================
-  await scenario('P2P·动漫花园·真实搜索懒取', async () => {
+  // ==================== 3：Mikan 真实搜索 + 统一资源行（外网宽容） ====================
+  await scenario('W65a·Mikan·真实统一资源行', async () => {
     const srch = await evaluate(async () => {
       try {
-        const r = await window.mazz.invoke('sites:search', { site: 'dmhy', kw: '葬送的芙莉莲' });
+        const r = await window.mazz.invoke('sites:search', { site: 'mikan', kw: '魔法少女奈叶' });
         return { count: r.rows?.length, first: r.rows?.[0] };
       } catch (e) { return { err: String(e.message || e).slice(0, 100) }; }
     });
     if (srch.err) { human.log('外网不可达，宽容跳过: ' + srch.err); return; }
-    await human.assert(srch.count >= 10, `搜索应出 10+ 行（实际 ${srch.count}）`);
+    await human.assert(srch.count >= 1, `搜索应出至少一条统一资源行（实际 ${srch.count}）`);
     const row = srch.first;
-    await human.assert(row?.title && row?.href && row?.size, `行应有完整标题/详情链/大小（${JSON.stringify(row)}）`);
-    const mg = await evaluate(async ([site, href]) => {
-      try { return await window.mazz.invoke('sites:magnet', { site, href }); }
+    const expectedKeys = ['title', 'date', 'size', 'seeders', 'leechers', 'completed', 'magnet', 'torrentUrl', 'sourceSite', 'sourceUrl', 'subgroup', 'resolution', 'infoHash'];
+    await human.assert(row?.title && row?.sourceUrl && row?.size && /^[a-f0-9]{40}$/.test(row?.infoHash || ''), `统一行应有完整标题/来源链/大小/infoHash（${JSON.stringify(row)}）`);
+    await human.assert(JSON.stringify(Object.keys(row)) === JSON.stringify(expectedKeys), `统一行必须恰为 13 字段（${JSON.stringify(Object.keys(row))}）`);
+    const mg = await evaluate(async ([site, infoHash]) => {
+      try { return await window.mazz.invoke('sites:magnet', { site, infoHash }); }
       catch (e) { return { err: String(e.message || e).slice(0, 100) }; }
-    }, ['dmhy', row.href]);
-    if (mg.err) { human.log('详情页不可达，宽容跳过: ' + mg.err); return; }
-    await human.assert(mg.magnet?.startsWith('magnet:'), '详情页应懒取到 magnet');
+    }, ['mikan', row.infoHash]);
+    await human.assert(!mg.err && mg.magnet === `magnet:?xt=urn:btih:${row.infoHash}`, '已知 infoHash 应零详情请求直接得到 magnet');
   });
 
   // ==================== 4：存/不存模式分支（tor:filePath→rename 存库 / remove 删除） ====================

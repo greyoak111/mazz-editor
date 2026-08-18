@@ -39,6 +39,7 @@ async function main() {
   await win.waitForLoadState('domcontentloaded');
   ownPid = app.process()?.pid ?? null;
   human = new Human(win);
+  human.watchMain(app);
   await human.until(() => !!(window.MazzCommands && window.MazzShell), { timeout: 15000, msg: '壳初始化' });
   await win.waitForTimeout(600);
   // Windows 双杀预防：关闭行为改直接退出（否则 cleanup 时 app.close() 弹「托盘/退出/取消」询问框卡死）
@@ -68,5 +69,6 @@ async function cleanup() {
   if (ownPid) { try { process.kill(ownPid, 'SIGTERM'); } catch {} }
   await new Promise(r => setTimeout(r, 800)); // Windows：句柄释放有延迟，等一拍再删
   try { fs.rmSync(USER_DATA, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); } catch {} // EPERM 容忍：清不干净也不许崩 runner
+  process.exit(process.exitCode || 0);
 }
 main().catch(e => { console.error('崩溃：', e); process.exitCode = 2; }).finally(cleanup);
