@@ -1,0 +1,85 @@
+{
+  "schema": "mazz.player-real-video-regression/v0",
+  "date": "2026-08-18",
+  "host": {
+    "platform": "Windows 10.0.19045",
+    "graphicsMode": "compatibility",
+    "reason": "detected spacedesk virtual display adapter",
+    "fullGpuSafe": false
+  },
+  "rootCause": {
+    "oldBehavior": "virtual display triggered complete GPU shutdown",
+    "failureSignature": "readyState=4 and time advances while videoWidth and decoded frames stay zero",
+    "fix": "retain GPU/platform decoding and disable DirectComposition video overlays for virtual displays",
+    "wmiTimeoutMs": 5000
+  },
+  "realMedia": [
+    {
+      "kind": "AVC baseline",
+      "basename": "[CASO&SumiSora][Puella_Magi_Madoka_Magica][BDRIP][01][1920x1080][x264_FLACx2][2582CC95].mkv",
+      "bytes": 1433156268,
+      "seekSeconds": 60,
+      "readyState": 4,
+      "error": null,
+      "videoWidth": 1920,
+      "videoHeight": 1080,
+      "totalVideoFrames": 149,
+      "droppedVideoFrames": 0,
+      "frameCallbacks": 30,
+      "failureOverlay": false,
+      "pass": true
+    },
+    {
+      "kind": "HEVC defect sample",
+      "basename": "Demon.Slayer.Kimetsu.no.Yaiba.The.Movie.Infinity.Castle.2025.1080p.WEBRip.x265.AAC-PorterRAWS.mkv",
+      "bytes": 3304035373,
+      "seekSeconds": 2537,
+      "readyState": 4,
+      "error": null,
+      "videoWidth": 1920,
+      "videoHeight": 1080,
+      "totalVideoFrames": 283,
+      "droppedVideoFrames": 0,
+      "frameCallbacks": 30,
+      "failureOverlay": false,
+      "pass": true
+    }
+  ],
+  "safeModeFallback": {
+    "sample": "HEVC defect sample at 2537 seconds",
+    "decodedFrames": 0,
+    "pausedByWatchdog": true,
+    "failureOverlay": true,
+    "pass": true
+  },
+  "screenshots": [
+    {
+      "file": "PLAYER_REAL_MADOKA_AVC.png",
+      "sha256": "FB1AB1196F955BF68AB6B2723C9EE31D6A9FA144EEFA81D60EF7815C143F8206"
+    },
+    {
+      "file": "PLAYER_REMOTE_HEVC_4217.png",
+      "sha256": "7D73A94095153148EA3FD28ACA5CA2A34C7F953229DCFDAD4F6817D7CD0E9615"
+    },
+    {
+      "file": "PLAYER_SAFE_ZERO_FRAME_FALLBACK.png",
+      "sha256": "D57C90EE81293103440BCB1149FE3B2E383DB8BB86F3A09E83251290D5A74451"
+    }
+  ],
+  "verification": {
+    "contract": {
+      "passed": 17,
+      "failed": 0
+    },
+    "realFileElectron": {
+      "passed": 2,
+      "failed": 0,
+      "mainErrors": 0,
+      "rendererErrors": 0
+    },
+    "build": "PASS",
+    "fullSuite": "NOT RUN",
+    "packagedGate": "NOT RUN"
+  }
+}
+

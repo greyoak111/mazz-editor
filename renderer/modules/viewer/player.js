@@ -4,6 +4,7 @@ import { iconHtml } from '../../lib/svg-icons.js';
 import { attachSubtitle, detachSubtitle, probeSubtitles, setSubtitleVisible, subtitleAttached } from './subtitles.js';
 import { nextEpisodePath } from '../../lib/episode-detect.js';
 import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
+import { classifyVideoFrameHealth, ZERO_VIDEO_FRAMES } from '../../lib/video-frame-health.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
@@ -318,6 +319,87 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   let dragCleanup = null;
   let autoNextTimer = null;
   let waveRaf = null;
+  let decodeWatchTimer = null;
+  let decodeWatchSeq = 0;
+  let decodedFrameSignals = 0;
+  let decodeFrameRequest = null;
+
+  const clearDecodeWatch = () => {
+    decodeWatchSeq += 1;
+    clearTimeout(decodeWatchTimer);
+    decodeWatchTimer = null;
+    if (decodeFrameRequest != null && media.cancelVideoFrameCallback) {
+      try { media.cancelVideoFrameCallback(decodeFrameRequest); } catch {}
+    }
+    decodeFrameRequest = null;
+  };
+
+  const removeDecodeFailure = () => root.querySelector('.mz-decode-failure')?.remove();
+
+  const showDecodeFailure = () => {
+    if (destroyed || root.querySelector('.mz-decode-failure')) return;
+    media.pause();
+    const overlay = document.createElement('div');
+    overlay.className = 'mz-stream-err mz-decode-failure';
+    overlay.innerHTML = `<b>${iconHtml('⚠')} 视频未解出画面，已停止假播放</b>
+      <span>时间轴虽然推进，但播放器连续 4 秒没有收到任何视频帧。远程桌面、虚拟显示或当前图形安全模式可能禁用了这段视频所需的解码路径。</span>
+      <div class="mz-decode-actions">
+        <button class="rb-btn" data-a="decode-retry">重试画面</button>
+        <button class="rb-btn" data-a="decode-open">用系统播放器打开</button>
+      </div>
+      <span class="mz-decode-guide"></span>`;
+    overlay.querySelector('[data-a=decode-retry]').addEventListener('click', () => {
+      removeDecodeFailure();
+      decodedFrameSignals = 0;
+      media.play().catch(() => {});
+    });
+    const openButton = overlay.querySelector('[data-a=decode-open]');
+    const localPath = curPath && !/^(?:https?|blob|mazz-res):/i.test(curPath);
+    if (localPath) openButton.addEventListener('click', () => window.mazz.invoke('shell:openPath', { path: curPath }).catch(() => {}));
+    else openButton.style.display = 'none';
+    stage.appendChild(overlay);
+    import('../../lib/codec-guide.js').then(({ probeCodecs, renderHevcGuide, currentPlatform }) => {
+      const hevc = probeCodecs().find(row => row.name.includes('HEVC'));
+      if (hevc && !hevc.ok && overlay.isConnected) renderHevcGuide(overlay.querySelector('.mz-decode-guide'), currentPlatform());
+    }).catch(() => {});
+  };
+
+  const armDecodeWatch = () => {
+    clearDecodeWatch();
+    if (!isVideo || destroyed || media.paused || media.ended) return;
+    const seq = decodeWatchSeq;
+    const startedAt = performance.now();
+    const startedTime = media.currentTime;
+    const quality = media.getVideoPlaybackQuality?.();
+    const startedFrames = quality?.totalVideoFrames ?? 0;
+    const startedSignals = decodedFrameSignals;
+    if (media.requestVideoFrameCallback) {
+      decodeFrameRequest = media.requestVideoFrameCallback(() => {
+        decodeFrameRequest = null;
+        decodedFrameSignals += 1;
+      });
+    }
+    decodeWatchTimer = setTimeout(() => {
+      decodeWatchTimer = null;
+      if (destroyed || seq !== decodeWatchSeq) return;
+      const currentQuality = media.getVideoPlaybackQuality?.();
+      const failure = classifyVideoFrameHealth({
+        isVideo,
+        paused: media.paused,
+        ended: media.ended,
+        errorCode: media.error?.code || 0,
+        readyState: media.readyState,
+        elapsedMs: performance.now() - startedAt,
+        currentTimeDelta: media.currentTime - startedTime,
+        frameDelta: currentQuality ? currentQuality.totalVideoFrames - startedFrames : 0,
+        frameCallbackDelta: decodedFrameSignals - startedSignals,
+        videoWidth: media.videoWidth,
+        qualityAvailable: !!currentQuality,
+      });
+      if (failure === ZERO_VIDEO_FRAMES) showDecodeFailure();
+      else if (!media.paused && !media.ended) armDecodeWatch();
+    }, 4000);
+  };
 
   root.querySelector('.mz-name').textContent = name;
 
@@ -880,7 +962,9 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   root.querySelector('[data-a=prev]').addEventListener('click', prev);
   root.querySelector('[data-a=next]').addEventListener('click', next);
   media.addEventListener('play', () => { playBtn.innerHTML = iconHtml('⏸'); root.querySelector('.mz-audio-disc')?.classList.add('spin'); });
-  media.addEventListener('pause', () => { playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });
+  media.addEventListener('playing', armDecodeWatch);
+  media.addEventListener('seeking', clearDecodeWatch);
+  media.addEventListener('pause', () => { clearDecodeWatch(); playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });
   media.addEventListener('loadedmetadata', () => {
     timeEl.innerHTML = `<b>00:00</b> / ${fmtTime(media.duration)}`;
   });
@@ -1304,6 +1388,9 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   /** 切歌复用：只换源不重建（stage 不销毁，全屏物理保持——比 wasFs 恢复 requestFullscreen 可靠） */
   function setSource(newUrl, newName, newPath, newSize = 0) {
     if (destroyed) return;
+    clearDecodeWatch();
+    removeDecodeFailure();
+    decodedFrameSignals = 0;
     saveProgMem(); // 旧片先存进度（用旧 curPath）
     // 同片 setSource（activate 重载/刷新）不得卸载字幕——detach+重挂的竞态杀 in-flight 是总根（三连实锤）
     const pathChanged = newPath !== curPath;
@@ -1362,6 +1449,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       clearTimeout(hoverTimer);
       clearTimeout(ctl._thumbHideT);
       clearTimeout(autoNextTimer);
+      clearDecodeWatch();
       clearInterval(watchPollT); // 种子状态轮询必清（泄漏会后台持续打 tor:stats）
       clearInterval(progMemTimer); // 进度记忆定时器必清（泄漏会持续写 settings）
       if (waveRaf != null) { cancelAnimationFrame(waveRaf); waveRaf = null; }

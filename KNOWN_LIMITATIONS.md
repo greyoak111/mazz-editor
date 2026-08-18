@@ -22,6 +22,12 @@ This document describes the boundary of the first sealed Windows release candida
 - Native audio/video playback, WebM recording and “open with the system default application” remain available.
 - Local fallback transcoding, Player GIF export and Recorder mp4 conversion are Hidden until complete corresponding source and durable source delivery are available and tested.
 
+## Remote and virtual-display video
+
+- spacedesk and comparable virtual-display drivers use Mazz's compatibility composition mode: GPU/platform video decoding stays enabled while DirectComposition video overlays are disabled.
+- True RDP/ICA/PCoIP sessions and explicitly selected safe mode still disable GPU acceleration. HEVC may be unavailable there; Player stops a time-advancing zero-frame stream and offers retry/system-player recovery instead of silently presenting a black picture.
+- The current host passed real AVC and HEVC files, including the reported HEVC seek point at 42:17. Broad GPU, driver, HDR, color-depth and remote-display combinations remain conditional validation gates.
+
 ## Preview and deferred capabilities
 
 - DMHY, Recorder, Plugins, OCR and Archive remain Preview.

@@ -20,26 +20,28 @@ app.commandLine.appendSwitch('noerrdialogs');
 app.commandLine.appendSwitch('disable-breakpad');
 app.commandLine.appendSwitch('disable-crash-reporter');
 
-function detectUnsafeGraphicsHost() {
-  if (process.env.MAZZ_GPU_MODE === 'hardware') return { safe: false, reason: '用户强制硬件模式' };
+function detectGraphicsMode() {
+  if (process.env.MAZZ_GPU_MODE === 'hardware') return { mode: 'hardware', safe: false, reason: '用户强制硬件模式' };
+  if (process.env.MAZZ_GPU_MODE === 'compatibility') return { mode: 'compatibility', safe: false, reason: '用户强制远程兼容模式' };
   if (process.env.MAZZ_GPU_MODE === 'safe' || process.env.MAZZ_E2E_DISABLE_GPU === '1' || process.argv.includes('--disable-gpu')) {
-    return { safe: true, reason: '显式安全图形模式' };
+    return { mode: 'safe', safe: true, reason: '显式安全图形模式' };
   }
-  if (process.platform !== 'win32') return { safe: false, reason: '' };
-  if (/^(rdp|ica|pcoip)/i.test(process.env.SESSIONNAME || '')) return { safe: true, reason: `远程会话 ${process.env.SESSIONNAME}` };
+  if (process.platform !== 'win32') return { mode: 'hardware', safe: false, reason: '' };
+  if (/^(rdp|ica|pcoip)/i.test(process.env.SESSIONNAME || '')) return { mode: 'safe', safe: true, reason: `远程会话 ${process.env.SESSIONNAME}` };
   try {
-    // spacedesk/虚拟显示镜像驱动与 Chromium GPU 子进程在锁屏、切换会话后会形成已实证的崩溃环。
-    // 只在 Windows 启动期查一次，1.5 秒硬超时；查询失败即保持正常硬件模式。
+    // spacedesk/虚拟显示镜像驱动需要禁用 DirectComposition 独立叠加层，不能把整个 GPU/平台视频解码器一起杀掉：
+    // 否则 H.265 会出现时间轴正常推进、videoWidth/decoded frames 永远为 0 的假播放黑屏。
+    // WMIC 冷启动在当前 Windows 10 真机约 2.8s；旧 1.5s 超时会让同一机器随机在 hardware/safe 间抖动。
     const adapters = execFileSync('wmic.exe', ['path', 'win32_videocontroller', 'get', 'name'], {
-      encoding: 'utf8', windowsHide: true, timeout: 1500, stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8', windowsHide: true, timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'],
     });
     const hit = String(adapters).match(/spacedesk|mirror driver|virtual display|remote display|indirect display|parsec|dummy display/i);
-    if (hit) return { safe: true, reason: `检测到虚拟显示驱动 ${hit[0]}` };
+    if (hit) return { mode: 'compatibility', safe: false, reason: `检测到虚拟显示驱动 ${hit[0]}` };
   } catch {}
-  return { safe: false, reason: '' };
+  return { mode: 'hardware', safe: false, reason: '' };
 }
 
-const GRAPHICS_MODE = detectUnsafeGraphicsHost();
+const GRAPHICS_MODE = detectGraphicsMode();
 if (GRAPHICS_MODE.safe) {
   // app.disableHardwareAcceleration 之外再钉三道命令行闸：不让 Chromium 用 SwiftShader 另起 GPU 子进程兜底。
   app.disableHardwareAcceleration();
@@ -47,6 +49,11 @@ if (GRAPHICS_MODE.safe) {
   app.commandLine.appendSwitch('disable-gpu-compositing');
   app.commandLine.appendSwitch('disable-software-rasterizer');
   app.commandLine.appendSwitch('disable-direct-composition');
+} else if (GRAPHICS_MODE.mode === 'compatibility') {
+  // 保留 GPU 进程与 Platform HEVC decoder，只禁止远程捕获/虚拟显示最容易出错的 DirectComposition 独立平面。
+  // 视频回到 Chromium 主合成面，spacedesk/录屏可见，且不再触发 video overlay 黑帧/异常窗。
+  app.commandLine.appendSwitch('disable-direct-composition');
+  app.commandLine.appendSwitch('disable-direct-composition-video-overlays');
 }
 
 // Windows 任务栏/开始菜单图标与分组归属（不设会回落成 Electron 默认图标）
@@ -665,6 +672,7 @@ function registerChannels() {
   try { const Toolchain = require('./toolchain'); new Toolchain({ bus }); } catch (e) { console.error('[toolchain] 装配失败:', e.message); }
 
   bus.handle('app:getAutoLaunch', async () => app.getLoginItemSettings().openAtLogin);
+  bus.handle('app:graphicsMode', async () => ({ ...GRAPHICS_MODE }));
   bus.handle('app:setAutoLaunch', async ({ enabled }) => {
     app.setLoginItemSettings({ openAtLogin: !!enabled });
     return !!enabled;
@@ -1451,8 +1459,9 @@ function applySettings() {
 }
 
 // ---------- 启动 ----------
-// GPU 异常环境（远程桌面/老显卡/虚拟机）可用 --disable-gpu 兜底
+// GPU 异常环境（远程桌面/老显卡/虚拟机）可用 --disable-gpu 兜底；虚拟显示默认走保留视频解码的兼容合成。
 if (GRAPHICS_MODE.safe) console.log(`[mazz] 安全图形模式：${GRAPHICS_MODE.reason}；GPU 子进程/系统错误框已禁用`);
+else if (GRAPHICS_MODE.mode === 'compatibility') console.log(`[mazz] 远程图形兼容模式：${GRAPHICS_MODE.reason}；保留硬件视频解码并禁用 DirectComposition 视频叠加层`);
 app.whenReady().then(() => {
   bus.start();
   registerChannels();

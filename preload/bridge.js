@@ -41,7 +41,7 @@ const INVOKE_CHANNELS = new Set([
   'ingestion:registerText',
   'promotion:promoteConversation', 'promotion:reviewConversationCandidate',
   'promotion:listManagement', 'promotion:revoke', 'promotion:manageEvidenceProjection',
-  'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut',
+  'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut', 'app:graphicsMode',
   'tr:translate', 'tr:getConfig', 'tr:setConfig',
   'sync:identity', 'sync:host', 'sync:stopHost', 'sync:join', 'sync:discover', 'sync:status',
   'sync:positionPut', 'sync:positionGet', 'sync:positions', 'sync:positionsMerge', 'sync:tempShare', 'sync:tempShareStop',

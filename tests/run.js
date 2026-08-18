@@ -178,6 +178,7 @@ const files = [
   'tests/contract/player-w23.test.mjs',
   'tests/contract/player-w24.test.mjs',
   'tests/contract/player-w25.test.mjs',
+  'tests/contract/player-video-frame-health.test.mjs',
   'tests/contract/player-w26.test.mjs',
   'tests/contract/player-w27.test.mjs',
   'tests/contract/player-w28.test.mjs',
