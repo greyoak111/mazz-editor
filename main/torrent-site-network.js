@@ -39,6 +39,7 @@ class PoliteSiteTransport {
     listTtlMs = 5 * 60_000,
     detailTtlMs = 30 * 60_000,
     retryDelaysMs = [2_000, 8_000, 20_000],
+    maxGlobalConcurrency = 2,
   } = {}) {
     if (typeof request !== 'function') throw new TypeError('PoliteSiteTransport requires request');
     this.requestImpl = request;
@@ -48,25 +49,39 @@ class PoliteSiteTransport {
     this.listTtlMs = listTtlMs;
     this.detailTtlMs = detailTtlMs;
     this.retryDelaysMs = [...retryDelaysMs];
+    this.maxGlobalConcurrency = Math.max(1, Number(maxGlobalConcurrency) || 2);
     this.cache = new Map();
     this.siteQueues = new Map();
     this.lastStartedAt = new Map();
     this.blockedSites = new Map();
+    this.health = new Map();
+    this.activeGlobal = 0;
+    this.globalWaiters = [];
   }
 
   clearSite(siteId) {
     this.blockedSites.delete(siteId);
+    this.lastStartedAt.delete(siteId);
     for (const key of this.cache.keys()) if (key.startsWith(`${siteId}\0`)) this.cache.delete(key);
+    this.health.set(siteId, this.#emptyHealth(siteId));
   }
 
-  async request(siteId, request, { kind = 'list', cache = true, bypassCache = false } = {}) {
+  snapshot(siteId) {
+    if (siteId) return { ...(this.health.get(siteId) || this.#emptyHealth(siteId)) };
+    return [...this.health.values()].map((entry) => ({ ...entry })).sort((left, right) => left.siteId.localeCompare(right.siteId));
+  }
+
+  async request(siteId, request, { kind = 'list', cache = true, bypassCache = false, staleIfError = true } = {}) {
     if (!siteId) throw new TypeError('siteId required');
     const blocked = this.blockedSites.get(siteId);
     if (blocked) throw new SiteRequestError('W65_CHALLENGE_REQUIRED', `站点 ${siteId} 需要人工验证，自动访问已停止`, blocked);
     const spec = typeof request === 'string' ? { url: request, method: 'GET' } : { method: 'GET', ...request };
     const cacheKey = `${siteId}\0${spec.method}\0${spec.url}\0${spec.body || ''}`;
     const cached = this.cache.get(cacheKey);
-    if (cache && !bypassCache && cached && cached.expiresAt > this.now()) return { ...cached.response, cached: true };
+    if (cache && !bypassCache && cached && cached.expiresAt > this.now()) {
+      this.#record(siteId, { status: 'healthy', sourceMode: 'cache', lastSuccessAt: new Date(this.now()).toISOString(), lastError: '' });
+      return { ...cached.response, cached: true, stale: false };
+    }
 
     const previous = this.siteQueues.get(siteId) || Promise.resolve();
     const task = previous.then(() => this.#perform(siteId, spec), () => this.#perform(siteId, spec));
@@ -75,7 +90,16 @@ class PoliteSiteTransport {
       () => { if (this.siteQueues.get(siteId) === queued) this.siteQueues.delete(siteId); },
     );
     this.siteQueues.set(siteId, queued);
-    const response = await task;
+    let response;
+    try {
+      response = await task;
+    } catch (error) {
+      if (cache && staleIfError && cached?.response && error?.transient) {
+        this.#record(siteId, { status: 'degraded', sourceMode: 'stale-cache', lastError: error.message || String(error) });
+        return { ...cached.response, cached: true, stale: true };
+      }
+      throw error;
+    }
     if (cache && !isDeterministicVisitorGate(response.body)) {
       const ttl = kind === 'detail' ? this.detailTtlMs : this.listTtlMs;
       this.cache.set(cacheKey, { expiresAt: this.now() + ttl, response });
@@ -89,8 +113,9 @@ class PoliteSiteTransport {
       const elapsed = this.now() - (this.lastStartedAt.get(siteId) ?? -Infinity);
       if (elapsed < this.minIntervalMs) await this.wait(this.minIntervalMs - elapsed);
       this.lastStartedAt.set(siteId, this.now());
+      this.#record(siteId, { lastAttemptAt: new Date(this.now()).toISOString() });
       try {
-        const response = await this.requestImpl({ ...spec, siteId, attempt });
+        const response = await this.#withGlobalSlot(() => this.requestImpl({ ...spec, siteId, attempt }));
         const statusCode = Number(response?.statusCode || 0);
         if (statusCode === 429 || statusCode >= 500) {
           throw new SiteRequestError('W65_TRANSIENT', `HTTP ${statusCode}`, { siteId, statusCode, attempt });
@@ -102,19 +127,50 @@ class PoliteSiteTransport {
         if (hasInteractiveChallenge(normalized.body)) {
           const evidence = { siteId, url: normalized.url, detectedAt: new Date(this.now()).toISOString() };
           this.blockedSites.set(siteId, evidence);
+          this.#record(siteId, { status: 'challenge', sourceMode: 'blocked', lastFailureAt: evidence.detectedAt, lastError: '需要人工验证', consecutiveFailures: (this.health.get(siteId)?.consecutiveFailures || 0) + 1 });
           throw new SiteRequestError('W65_CHALLENGE_REQUIRED', `站点 ${siteId} 出现交互式验证，自动访问已停止`, evidence);
         }
+        this.#record(siteId, { status: 'healthy', sourceMode: 'network', lastSuccessAt: new Date(this.now()).toISOString(), lastError: '', consecutiveFailures: 0 });
         return normalized;
       } catch (error) {
         const normalizedError = isTransientNetworkError(error)
           ? new SiteRequestError('W65_TRANSIENT', error.message || '网络暂时不可用', { siteId, attempt, causeCode: error.code || '' })
           : error;
         lastError = normalizedError;
+        if (normalizedError?.code !== 'W65_CHALLENGE_REQUIRED') {
+          this.#record(siteId, {
+            status: normalizedError?.transient ? 'degraded' : 'failed',
+            sourceMode: 'network',
+            lastFailureAt: new Date(this.now()).toISOString(),
+            lastError: normalizedError?.message || String(normalizedError),
+            consecutiveFailures: (this.health.get(siteId)?.consecutiveFailures || 0) + 1,
+          });
+        }
         if (normalizedError?.code === 'W65_CHALLENGE_REQUIRED' || !normalizedError?.transient || attempt >= this.retryDelaysMs.length) throw normalizedError;
         await this.wait(this.retryDelaysMs[attempt]);
       }
     }
     throw lastError;
+  }
+
+  #emptyHealth(siteId) {
+    return { siteId, status: 'unknown', sourceMode: 'none', lastAttemptAt: '', lastSuccessAt: '', lastFailureAt: '', consecutiveFailures: 0, lastError: '' };
+  }
+
+  #record(siteId, patch) {
+    this.health.set(siteId, { ...(this.health.get(siteId) || this.#emptyHealth(siteId)), ...patch, siteId });
+  }
+
+  async #withGlobalSlot(fn) {
+    if (this.activeGlobal >= this.maxGlobalConcurrency) {
+      await new Promise((resolve) => this.globalWaiters.push(resolve));
+    }
+    this.activeGlobal += 1;
+    try { return await fn(); }
+    finally {
+      this.activeGlobal -= 1;
+      this.globalWaiters.shift()?.();
+    }
   }
 }
 

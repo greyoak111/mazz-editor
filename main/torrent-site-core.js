@@ -3,6 +3,7 @@
 
 const RESOURCE_ROW_SCHEMA = 'mazz.torrent-resource-row/v0';
 const RESOURCE_AGGREGATE_SCHEMA = 'mazz.torrent-resource-aggregate/v0';
+const MIKAN_CATALOG_SCHEMA = 'mazz.mikan-catalog/v0';
 const RESOURCE_ROW_FIELDS = Object.freeze([
   'title', 'date', 'size', 'seeders', 'leechers', 'completed',
   'magnet', 'torrentUrl', 'sourceSite', 'sourceUrl', 'subgroup',
@@ -205,6 +206,108 @@ function parseUploadbtRows(html, { siteId, baseUrl }) {
   return rows;
 }
 
+function tagValue(fragment, tagName) {
+  const match = new RegExp(`<${tagName}\\b[^>]*>([\\s\\S]*?)<\\/${tagName}>`, 'i').exec(String(fragment || ''));
+  return stripTags(String(match?.[1] || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1'));
+}
+
+function parseUploadbtRss(xml, { siteId, baseUrl }) {
+  if (!siteId || !baseUrl) throw new TypeError('parseUploadbtRss requires siteId and baseUrl');
+  const rows = [];
+  for (const match of String(xml || '').matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)) {
+    const item = match[1];
+    const sourceHref = tagValue(item, 'link') || tagValue(item, 'guid');
+    const enclosure = /<enclosure\b[^>]*\burl\s*=\s*["']([^"']+)["']/i.exec(item)?.[1] || '';
+    const infoHash = normalizeInfoHash(sourceHref || enclosure);
+    if (!infoHash) continue;
+    const sourceUrl = absoluteUrl(baseUrl, sourceHref || `show-${infoHash}.html`);
+    const row = normalizeResourceRow({
+      title: tagValue(item, 'title'),
+      date: tagValue(item, 'pubDate'),
+      size: '',
+      seeders: null,
+      leechers: null,
+      completed: null,
+      magnet: `magnet:?xt=urn:btih:${infoHash}`,
+      torrentUrl: absoluteUrl(baseUrl, enclosure),
+      sourceSite: siteId,
+      sourceUrl,
+      subgroup: tagValue(item, 'author'),
+      infoHash,
+    });
+    if (isResourceRow(row)) rows.push(row);
+  }
+  return rows;
+}
+
+function parsePageInfo(html, currentPage = 1) {
+  const current = Math.max(1, Number.parseInt(currentPage, 10) || 1);
+  const pages = new Set([current]);
+  const decoded = decodeHtml(html);
+  for (const match of decoded.matchAll(/(?:[?&]page=|\/page\/)(\d{1,6})(?:\D|$)/gi)) {
+    const page = Number(match[1]);
+    if (Number.isSafeInteger(page) && page > 0) pages.add(page);
+  }
+  const totalPages = Math.max(...pages);
+  return {
+    page: current,
+    totalPages,
+    hasMore: totalPages > current,
+    nextPage: totalPages > current ? current + 1 : null,
+  };
+}
+
+function parseMikanCatalog(html, { baseUrl = 'https://mikanime.tv/', year = '', season = '' } = {}) {
+  const source = String(html || '');
+  const seasons = [];
+  const seasonKeys = new Set();
+  for (const match of source.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)) {
+    const attrs = match[1];
+    if (!/\bonclick\s*=\s*["'][^"']*Update(?:Mobile)?BangumiCoverFlow/i.test(attrs)) continue;
+    const itemYear = firstAttribute(attrs, 'data-year');
+    const itemSeason = firstAttribute(attrs, 'data-season');
+    if (!itemYear || !itemSeason) continue;
+    const key = `${itemYear}\0${itemSeason}`;
+    if (seasonKeys.has(key)) continue;
+    seasonKeys.add(key);
+    seasons.push({ year: itemYear, season: itemSeason, label: stripTags(match[2]) || `${itemYear} ${itemSeason}季番组` });
+  }
+
+  const starts = [...source.matchAll(/<div\b[^>]*class\s*=\s*["'][^"']*\bsk-bangumi\b[^"']*["'][^>]*>/gi)];
+  const items = [];
+  const itemKeys = new Set();
+  const dayLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '剧场版'];
+  for (let index = 0; index < starts.length; index += 1) {
+    const start = starts[index];
+    const block = source.slice(start.index, starts[index + 1]?.index ?? source.length);
+    const dayOfWeek = Math.max(0, Number.parseInt(firstAttribute(start[0], 'data-dayofweek'), 10) || 0);
+    for (const link of block.matchAll(/<a\b([^>]*)\bhref\s*=\s*["']([^"']*\/Home\/Bangumi\/(\d+)[^"']*)["']([^>]*)>([\s\S]*?)<\/a>/gi)) {
+      const bangumiId = link[3];
+      if (itemKeys.has(bangumiId)) continue;
+      itemKeys.add(bangumiId);
+      const before = block.slice(Math.max(0, link.index - 700), link.index);
+      const imageMatches = [...before.matchAll(/\bdata-src\s*=\s*["']([^"']+)["']/gi)];
+      const dateMatches = [...before.matchAll(/<div\b[^>]*class\s*=\s*["'][^"']*\bdate-text\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi)];
+      items.push({
+        bangumiId,
+        title: stripTags(link[5]) || stripTags(firstAttribute(`${link[1]} ${link[4]}`, 'title')),
+        url: absoluteUrl(baseUrl, link[2]),
+        imageUrl: absoluteUrl(baseUrl, imageMatches.at(-1)?.[1] || ''),
+        updatedAt: stripTags(dateMatches.at(-1)?.[1] || ''),
+        dayOfWeek,
+        dayLabel: dayLabels[dayOfWeek] || `周历 ${dayOfWeek}`,
+      });
+    }
+  }
+  return {
+    schema: MIKAN_CATALOG_SCHEMA,
+    year: String(year || seasons[0]?.year || ''),
+    season: String(season || seasons[0]?.season || ''),
+    seasons,
+    items,
+  };
+}
+
 function parseMagnet(html) {
   const decoded = decodeHtml(html);
   const match = /magnet:\?xt=urn:btih:[a-z0-9]{32,40}[^"'<\s]*/i.exec(decoded);
@@ -240,6 +343,7 @@ function aggregateResourceRows(rows) {
 module.exports = {
   RESOURCE_ROW_SCHEMA,
   RESOURCE_AGGREGATE_SCHEMA,
+  MIKAN_CATALOG_SCHEMA,
   RESOURCE_ROW_FIELDS,
   decodeHtml,
   stripTags,
@@ -250,6 +354,9 @@ module.exports = {
   parseDmhyRows,
   parseMikanRows,
   parseUploadbtRows,
+  parseUploadbtRss,
+  parsePageInfo,
+  parseMikanCatalog,
   parseMagnet,
   aggregateResourceRows,
 };

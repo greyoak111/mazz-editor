@@ -6,7 +6,7 @@ import path from 'node:path';
 
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
-describe('W65 站点首页资源行', () => {
+describe('W65 站点资源入口', () => {
   test('sites:home 通道委托当前站点严格解析器', () => {
     const src = readSrc('main/torrent-sites.js');
     assert.ok(src.includes('homeUrl'), '站点表必须有 homeUrl');
@@ -15,13 +15,13 @@ describe('W65 站点首页资源行', () => {
     assert.ok(!src.includes('dongmanhuayuan.com'), '旧 DMHY clone 端点不得回魂');
     assert.ok(readSrc('preload/bridge.js').includes("'sites:home'"), '桥白名单必须登记 sites:home');
   });
-  test('首开即载与切站即载接线', () => {
+  test('首开即载 Mikan 周历，四站多选走统一聚合检索', () => {
     const src = readSrc('renderer/modules/viewer/player.js');
-    assert.ok(src.includes('loadHome'), 'loadHome 必须有');
-    assert.ok(src.includes("invoke('sites:home'"), 'loadHome 必须走 sites:home');
-    assert.ok(src.includes("addEventListener('change', loadHome)"), '切站必须即载首页（选中即展示）');
-    assert.ok(src.includes('renderRows'), '行渲染必须与搜索共用 renderRows');
-    assert.ok(/renderWatching\(\);\s*\n\s*loadHome\(\)/.test(src), '首开必须即载首页');
+    assert.ok(src.includes('loadCatalog'), 'Mikan 周历入口必须有');
+    assert.ok(src.includes("invoke('sites:catalog'"), '周历必须走 sites:catalog');
+    assert.ok(src.includes("invoke('sites:searchMany'"), '检索必须走四站聚合通道');
+    assert.ok(src.includes('mz-web-sites'), '四站必须可多选');
+    assert.ok(/renderSiteHealth\(\);\s*\n\s*loadCatalog\(\)/.test(src), '首开必须载入健康态和目录');
   });
 });
 

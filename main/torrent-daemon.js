@@ -16,6 +16,7 @@ Module._load = function (request, parent, isMain) {
 
 const path = require('path');
 const fs = require('fs');
+const { normalizeInfoHash } = require('./torrent-site-core');
 
 // 公共 tracker 兜底表（实证过可达）：dmhy 系 magnet 全系裸 btih（详情页 grep tr= 为 0 实锤）——
 // 纯 DHT 发现在受限网络 60s 拿不到元数据（奈叶新种实锤），注入后同种 70s 内元数据+下载全通
@@ -48,6 +49,7 @@ class TorrentDaemon {
     this.clientResourceKey = null;
     this.serverResourceKey = null;
     this.torrents = new Map(); // infoHash -> { t, addedAt }
+    this.jobs = new Map(); // infoHash -> renderer 无关的下载状态机（关签后继续下载）
     // 启动即过一遍 storeRoot（内含旧 .download→download 一次性合并迁移——不能只等 tor:add，
     // 否则用户不加种子迁移永不触发，工作区树/媒体库扫描继续瞎（真机实锤））
     try { this.storeRoot(); } catch {}
@@ -141,35 +143,155 @@ class TorrentDaemon {
     return (t.files || []).map(f => ({ path: f.path, name: f.name, length: f.length, streamUrl: this.streamUrlOf(f) }));
   }
 
+  async _addTorrent({ magnet, name }) {
+    await this.ensureClient();
+    if (!magnet || !magnet.startsWith('magnet:')) throw new Error('不是合法的 magnet 链接');
+    try { fs.mkdirSync(this.storeRoot(), { recursive: true }); } catch {}
+    // 不预查 client.get()：2.8.5 的 get() 对未知 id 也会返回空壳 Torrent（metadata 未启动=files:0 实锤）——
+    // add() 本身幂等（同 infoHash 复用），直接 add 才是唯一活口
+    const t = this.client.add(enrichMagnet(magnet), { path: this.storeRoot() });
+    try {
+      await new Promise((resolve, reject) => {
+        const to = setTimeout(() => reject(new Error('元数据获取超时（60s，种子可能无热度）')), 60000);
+        // 同 infoHash 复用时元数据已在手——'metadata'/'ready' 不再重发（重复添加挂 60s 实锤），先查即态再挂耳
+        if (t.ready || t.info) { clearTimeout(to); resolve(); return; }
+        const done = () => { clearTimeout(to); resolve(); };
+        t.once('metadata', done);
+        t.once('ready', done);
+        t.once('error', (error) => { clearTimeout(to); reject(error); });
+      });
+    } catch (error) {
+      await this._destroyTorrent(t);
+      throw error;
+    }
+    const existing = this.torrents.get(t.infoHash);
+    this.torrents.set(t.infoHash, {
+      t, addedAt: existing?.addedAt || Date.now(), alias: name || t.name,
+      resourceKey: existing?.resourceKey || this._registerResource('torrent', t.infoHash, { name: name || t.name }),
+    });
+    return { infoHash: t.infoHash, name: t.name, files: this.filesOf(t) };
+  }
+
+  _jobSnapshot(job) {
+    const rec = this.torrents.get(job.infoHash);
+    const torrent = rec?.t;
+    const stats = torrent ? this.statsOf(torrent) : { progress: 0, downloaded: 0, length: 0, downSpeed: 0, upSpeed: 0, numPeers: 0, done: false };
+    const state = stats.done ? 'completed' : job.state;
+    if (stats.done && job.state !== 'completed') job.state = 'completed';
+    return {
+      infoHash: job.infoHash,
+      title: torrent?.name || job.title || job.infoHash.slice(0, 12),
+      state,
+      error: job.error || '',
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      files: torrent ? this.filesOf(torrent) : (job.files || []),
+      ...stats,
+    };
+  }
+
+  async _runJob(job) {
+    try {
+      const result = await this._addTorrent({ magnet: job.magnet, name: job.title });
+      if (job.cancelled || !this.jobs.has(job.infoHash)) {
+        await this._removeTorrent(result.infoHash, true);
+        return;
+      }
+      job.files = result.files;
+      job.title = result.name || job.title;
+      job.updatedAt = Date.now();
+      const rec = this.torrents.get(result.infoHash);
+      if (job.pauseRequested) {
+        rec?.t?.pause?.();
+        job.state = 'paused';
+      } else {
+        job.state = rec?.t?.done ? 'completed' : 'downloading';
+      }
+      rec?.t?.once?.('done', () => {
+        const current = this.jobs.get(job.infoHash);
+        if (current) { current.state = 'completed'; current.updatedAt = Date.now(); }
+      });
+      rec?.t?.once?.('error', (error) => {
+        const current = this.jobs.get(job.infoHash);
+        if (current && current.state !== 'completed') {
+          current.state = 'failed'; current.error = error?.message || String(error); current.updatedAt = Date.now();
+        }
+      });
+    } catch (error) {
+      if (!job.cancelled && this.jobs.has(job.infoHash)) {
+        job.state = 'failed';
+        job.error = error?.message || String(error);
+        job.updatedAt = Date.now();
+      }
+    } finally {
+      job.runPromise = null;
+    }
+  }
+
+  _enqueue({ magnet, name }) {
+    const infoHash = normalizeInfoHash(magnet);
+    if (!infoHash) throw new Error('magnet 缺少合法 BTIH');
+    const existing = this.jobs.get(infoHash);
+    if (existing) return this._jobSnapshot(existing);
+    if (this.jobs.size >= 50) throw new Error('下载队列已达 50 项上限，请先清理已完成或失败任务');
+    const now = Date.now();
+    const job = {
+      infoHash, magnet, title: String(name || '').trim(), state: 'queued', error: '', files: [],
+      createdAt: now, updatedAt: now, pauseRequested: false, cancelled: false, runPromise: null,
+    };
+    this.jobs.set(infoHash, job);
+    job.runPromise = this._runJob(job);
+    return this._jobSnapshot(job);
+  }
+
+  async _removeTorrent(infoHash, deleteFiles) {
+    const rec = this.torrents.get(infoHash);
+    if (rec) {
+      this.torrents.delete(infoHash);
+      await this._destroyTorrent(rec.t, { destroyStore: !!deleteFiles });
+      this._releaseResource(rec.resourceKey, deleteFiles ? 'remove-and-delete' : 'remove');
+    }
+    if (deleteFiles && rec?.t?.name) {
+      try { fs.rmSync(path.join(this.storeRoot(), rec.t.name), { recursive: true, force: true }); } catch {}
+    }
+    return true;
+  }
+
   register() {
     const bus = this.bus;
-    bus.handle('tor:add', async ({ magnet, name }) => {
-      await this.ensureClient();
-      if (!magnet || !magnet.startsWith('magnet:')) throw new Error('不是合法的 magnet 链接');
-      try { fs.mkdirSync(this.storeRoot(), { recursive: true }); } catch {}
-      // 不预查 client.get()：2.8.5 的 get() 对未知 id 也会返回空壳 Torrent（metadata 未启动=files:0 实锤）——
-      // add() 本身幂等（同 infoHash 复用），直接 add 才是唯一活口
-      const t = this.client.add(enrichMagnet(magnet), { path: this.storeRoot() });
-      try {
-        await new Promise((resolve, reject) => {
-          const to = setTimeout(() => reject(new Error('元数据获取超时（60s，种子可能无热度）')), 60000);
-          // 同 infoHash 复用时元数据已在手——'metadata'/'ready' 不再重发（重复添加挂 60s 实锤），先查即态再挂耳
-          if (t.ready || t.info) { clearTimeout(to); resolve(); return; }
-          const done = () => { clearTimeout(to); resolve(); };
-          t.once('metadata', done);
-          t.once('ready', done);
-          t.once('error', (e) => { clearTimeout(to); reject(e); });
-        });
-      } catch (error) {
-        await this._destroyTorrent(t);
-        throw error;
-      }
-      const existing = this.torrents.get(t.infoHash);
-      this.torrents.set(t.infoHash, {
-        t, addedAt: existing?.addedAt || Date.now(), alias: name || t.name,
-        resourceKey: existing?.resourceKey || this._registerResource('torrent', t.infoHash, { name: name || t.name }),
-      });
-      return { infoHash: t.infoHash, name: t.name, files: this.filesOf(t) };
+    bus.handle('tor:add', async ({ magnet, name }) => this._addTorrent({ magnet, name }));
+    bus.handle('tor:addBuffer', async ({ magnet, name }) => this._enqueue({ magnet, name }));
+    bus.handle('tor:queue', async () => [...this.jobs.values()].map((job) => this._jobSnapshot(job)).sort((left, right) => right.createdAt - left.createdAt));
+    bus.handle('tor:pause', async ({ infoHash }) => {
+      const job = this.jobs.get(infoHash);
+      if (!job) return null;
+      job.pauseRequested = true;
+      job.state = 'paused';
+      job.updatedAt = Date.now();
+      this.torrents.get(infoHash)?.t?.pause?.();
+      return this._jobSnapshot(job);
+    });
+    bus.handle('tor:resume', async ({ infoHash }) => {
+      const job = this.jobs.get(infoHash);
+      if (!job) return null;
+      job.pauseRequested = false;
+      job.error = '';
+      const torrent = this.torrents.get(infoHash)?.t;
+      torrent?.resume?.();
+      job.state = torrent ? (torrent.done ? 'completed' : 'downloading') : 'queued';
+      job.updatedAt = Date.now();
+      if (!torrent && !job.runPromise) job.runPromise = this._runJob(job);
+      return this._jobSnapshot(job);
+    });
+    bus.handle('tor:retry', async ({ infoHash }) => {
+      const job = this.jobs.get(infoHash);
+      if (!job || job.state !== 'failed') return job ? this._jobSnapshot(job) : null;
+      await this._removeTorrent(infoHash, false);
+      job.error = '';
+      job.state = 'queued';
+      job.updatedAt = Date.now();
+      job.runPromise = this._runJob(job);
+      return this._jobSnapshot(job);
     });
     bus.handle('tor:stats', async ({ infoHash }) => {
       const rec = this.torrents.get(infoHash);
@@ -203,16 +325,9 @@ class TorrentDaemon {
       return Buffer.concat(chunks);
     });
     bus.handle('tor:remove', async ({ infoHash, deleteFiles }) => {
-      const rec = this.torrents.get(infoHash);
-      if (rec) {
-        this.torrents.delete(infoHash);
-        await this._destroyTorrent(rec.t, { destroyStore: !!deleteFiles });
-        this._releaseResource(rec.resourceKey, deleteFiles ? 'remove-and-delete' : 'remove');
-      }
-      if (deleteFiles && rec?.t?.name) {
-        try { fs.rmSync(path.join(this.storeRoot(), rec.t.name), { recursive: true, force: true }); } catch {}
-      }
-      return true;
+      const job = this.jobs.get(infoHash);
+      if (job) { job.cancelled = true; this.jobs.delete(infoHash); }
+      return this._removeTorrent(infoHash, deleteFiles);
     });
     if (process.env.NODE_ENV === 'test') {
       bus.handle('tor:runtimeProbe', async () => {
@@ -227,6 +342,8 @@ class TorrentDaemon {
     if (this.destroying) return this.destroying;
     this.destroying = (async () => {
       const records = [...this.torrents.values()];
+      for (const job of this.jobs.values()) job.cancelled = true;
+      this.jobs.clear();
       this.torrents.clear();
       for (const rec of records) {
         await this._destroyTorrent(rec.t);

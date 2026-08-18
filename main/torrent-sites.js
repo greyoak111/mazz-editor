@@ -5,8 +5,12 @@ const {
   parseDmhyRows,
   parseMikanRows,
   parseUploadbtRows,
+  parseUploadbtRss,
+  parsePageInfo,
+  parseMikanCatalog,
   parseMagnet,
   normalizeInfoHash,
+  aggregateResourceRows,
 } = require('./torrent-site-core');
 const {
   PoliteSiteTransport,
@@ -19,31 +23,37 @@ const REQUEST_TIMEOUT_MS = 25_000;
 
 const SITES = Object.freeze({
   dmhy: Object.freeze({
-    id: 'dmhy', name: '动漫花园 DMHY（预览）',
+    id: 'dmhy', name: '动漫花园 DMHY',
     homeUrl: 'https://share.dmhy.org/',
-    searchUrl: (kw) => `https://share.dmhy.org/topics/list?keyword=${encodeURIComponent(kw)}`,
+    mirrorBase: 'https://dmhy.anoneko.com',
+    searchUrl: (kw, page = 1, base = 'https://share.dmhy.org') => `${base}/topics/list${page > 1 ? `/page/${page}` : ''}?keyword=${encodeURIComponent(kw)}`,
     detailBase: 'https://share.dmhy.org',
     parseRows: (html) => parseDmhyRows(html, { baseUrl: 'https://share.dmhy.org/' }),
   }),
   mikan: Object.freeze({
-    id: 'mikan', name: '蜜柑计划 Mikan（预览）',
+    id: 'mikan', name: '蜜柑计划 Mikan',
     homeUrl: 'https://mikanime.tv/',
     searchUrl: (kw) => `https://mikanime.tv/Home/Search?searchstr=${encodeURIComponent(kw)}`,
+    catalogUrl: ({ year, season } = {}) => year && season
+      ? `https://mikanime.tv/Home/BangumiCoverFlowByDayOfWeek?year=${encodeURIComponent(year)}&seasonStr=${encodeURIComponent(season)}`
+      : 'https://mikanime.tv/',
     detailBase: 'https://mikanime.tv',
     parseRows: (html) => parseMikanRows(html, { baseUrl: 'https://mikanime.tv/' }),
   }),
   kisssub: Object.freeze({
-    id: 'kisssub', name: '爱恋动漫 KissSub（预览）',
+    id: 'kisssub', name: '爱恋动漫 KissSub',
     homeUrl: 'https://kisssub.org/',
-    searchUrl: (kw) => `https://kisssub.org/search.php?keyword=${encodeURIComponent(kw)}`,
+    rssUrl: 'https://kisssub.org/rss.xml',
+    searchUrl: (kw, page = 1) => `https://kisssub.org/search.php?keyword=${encodeURIComponent(kw)}${page > 1 ? `&page=${page}` : ''}`,
     detailBase: 'https://kisssub.org',
     visitorGateUrl: 'https://kisssub.org/addon.php?r=document/view&page=visitor-test',
     parseRows: (html) => parseUploadbtRows(html, { siteId: 'kisssub', baseUrl: 'https://kisssub.org/' }),
   }),
   comicat: Object.freeze({
-    id: 'comicat', name: '漫猫动漫 ComiCat（预览）',
+    id: 'comicat', name: '漫猫动漫 ComiCat',
     homeUrl: 'https://comicat.org/',
-    searchUrl: (kw) => `https://comicat.org/search.php?keyword=${encodeURIComponent(kw)}`,
+    rssUrl: 'https://comicat.org/rss.xml',
+    searchUrl: (kw, page = 1) => `https://comicat.org/search.php?keyword=${encodeURIComponent(kw)}${page > 1 ? `&page=${page}` : ''}`,
     detailBase: 'https://comicat.org',
     visitorGateUrl: 'https://comicat.org/addon.php?r=document/view&page=visitor-test',
     parseRows: (html) => parseUploadbtRows(html, { siteId: 'comicat', baseUrl: 'https://comicat.org/' }),
@@ -51,9 +61,10 @@ const SITES = Object.freeze({
 });
 
 function electronRequest({ url, method = 'GET', headers = {}, body = '' }) {
-  const { net } = require('electron');
+  const { net, session } = require('electron');
   return new Promise((resolve, reject) => {
-    const req = net.request({ url, method });
+    const persistentSession = session.fromPartition('persist:mazz-torrent-sites');
+    const req = net.request({ url, method, session: persistentSession });
     let settled = false;
     const finish = (callback, value) => {
       if (settled) return;
@@ -99,19 +110,73 @@ class TorrentSites {
     if (!bus?.handle) throw new TypeError('TorrentSites requires IPC bus');
     this.bus = bus;
     this.transport = transport || new PoliteSiteTransport({ request });
+    this.visitorCookies = new Map();
 
     bus.handle('sites:list', async () => Object.values(SITES).map((site) => ({ id: site.id, name: site.name })));
     bus.handle('sites:search', async ({ site, kw } = {}) => {
-      const adapter = this.#site(site);
       const keyword = String(kw || '').trim();
       if (!keyword) return { rows: [], kw: keyword };
-      const response = await this.#load(adapter, adapter.searchUrl(keyword), 'list');
-      return { rows: adapter.parseRows(response.body), kw: keyword, sourceSite: adapter.id, cached: response.cached };
+      return this.#searchPage(this.#site(site), keyword, 1);
+    });
+    bus.handle('sites:searchPage', async ({ site, kw, page = 1 } = {}) => {
+      const keyword = String(kw || '').trim();
+      if (!keyword) return { rows: [], kw: keyword, page: 1, totalPages: 1, hasMore: false, nextPage: null };
+      return this.#searchPage(this.#site(site), keyword, page);
+    });
+    bus.handle('sites:searchMany', async ({ sites, kw, pageMap = {}, maxPages = 2 } = {}) => {
+      const keyword = String(kw || '').trim();
+      const cursorMode = pageMap && Object.keys(pageMap).length > 0;
+      const selected = [...new Set((Array.isArray(sites) ? sites : []).filter((id) => SITES[id] && (!cursorMode || Object.hasOwn(pageMap, id))))].slice(0, 4);
+      const boundedPages = Math.max(1, Math.min(3, Number.parseInt(maxPages, 10) || 1));
+      if (!keyword || !selected.length) return { rows: [], aggregates: [], perSite: {}, nextPages: {}, kw: keyword };
+      const entries = await Promise.all(selected.map(async (siteId) => {
+        const adapter = this.#site(siteId);
+        const startPage = Math.max(1, Number.parseInt(pageMap?.[siteId], 10) || 1);
+        const rows = [];
+        let current = null;
+        try {
+          for (let offset = 0; offset < boundedPages; offset += 1) {
+            current = await this.#searchPage(adapter, keyword, startPage + offset);
+            rows.push(...current.rows);
+            if (!current.hasMore) break;
+          }
+          return [siteId, { ...current, rows, error: '' }];
+        } catch (error) {
+          return [siteId, { rows, page: startPage, totalPages: startPage, hasMore: false, nextPage: null, sourceSite: siteId, sourceMode: 'failed', error: error.message || String(error) }];
+        }
+      }));
+      const perSite = Object.fromEntries(entries);
+      const rows = entries.flatMap(([, result]) => result.rows || []);
+      const nextPages = Object.fromEntries(entries.filter(([, result]) => result.nextPage).map(([siteId, result]) => [siteId, result.nextPage]));
+      return { rows, aggregates: aggregateResourceRows(rows), perSite, nextPages, kw: keyword };
     });
     bus.handle('sites:home', async ({ site } = {}) => {
       const adapter = this.#site(site);
-      const response = await this.#load(adapter, adapter.homeUrl, 'list');
-      return { rows: adapter.parseRows(response.body), sourceSite: adapter.id, cached: response.cached };
+      try {
+        const response = await this.#load(adapter, adapter.homeUrl, 'list');
+        const rows = adapter.parseRows(response.body);
+        if (rows.length || !adapter.rssUrl) return { rows, sourceSite: adapter.id, cached: response.cached, sourceMode: this.#sourceMode(response) };
+      } catch (error) {
+        if (!adapter.rssUrl) throw error;
+      }
+      const fallback = await this.#rss(adapter);
+      return { rows: fallback.rows, sourceSite: adapter.id, cached: fallback.cached, sourceMode: 'rss' };
+    });
+    bus.handle('sites:catalog', async ({ site = 'mikan', year = '', season = '' } = {}) => {
+      const adapter = this.#site(site);
+      if (!adapter.catalogUrl) throw Object.assign(new Error(`站点 ${site} 没有季度目录`), { code: 'W65_CATALOG_UNSUPPORTED' });
+      const response = await this.#load(adapter, adapter.catalogUrl({ year, season }), 'list');
+      return { ...parseMikanCatalog(response.body, { year, season }), cached: response.cached, sourceMode: this.#sourceMode(response) };
+    });
+    bus.handle('sites:health', async ({ site } = {}) => {
+      if (site) this.#site(site);
+      return this.transport.snapshot?.(site) || (site ? { siteId: site, status: 'unknown' } : []);
+    });
+    bus.handle('sites:reset', async ({ site } = {}) => {
+      const adapter = this.#site(site);
+      this.visitorCookies.delete(adapter.id);
+      this.transport.clearSite?.(adapter.id);
+      return this.transport.snapshot?.(adapter.id) || { siteId: adapter.id, status: 'unknown' };
     });
     bus.handle('sites:magnet', async ({ site, href, magnet, infoHash, sourceUrl, torrentUrl } = {}) => {
       const adapter = this.#site(site);
@@ -136,22 +201,69 @@ class TorrentSites {
   }
 
   async #load(site, url, kind) {
-    let response = await this.transport.request(site.id, { url }, { kind });
+    const cookie = this.visitorCookies.get(site.id) || '';
+    let response = await this.transport.request(site.id, { url, headers: cookie ? { Cookie: cookie } : {} }, { kind, staleIfError: true });
     if (!isDeterministicVisitorGate(response.body)) return response;
     if (!site.visitorGateUrl) {
       throw Object.assign(new Error(`站点 ${site.id} 返回未知访客门`), { code: 'W65_VISITOR_GATE_UNSUPPORTED' });
     }
-    await this.transport.request(site.id, {
+    const gateResponse = await this.transport.request(site.id, {
       url: site.visitorGateUrl,
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'visitor_test=human',
     }, { kind: 'detail', cache: false, bypassCache: true });
-    response = await this.transport.request(site.id, { url }, { kind, bypassCache: true });
+    const setCookie = Object.entries(gateResponse.headers || {}).find(([name]) => name.toLowerCase() === 'set-cookie')?.[1];
+    const cookieMatch = /visitor_test=([^;,\s]+)/i.exec(Array.isArray(setCookie) ? setCookie.join('; ') : String(setCookie || ''));
+    const visitorCookie = `visitor_test=${cookieMatch?.[1] || 'human'}`;
+    this.visitorCookies.set(site.id, visitorCookie);
+    response = await this.transport.request(site.id, { url, headers: { Cookie: visitorCookie } }, { kind, bypassCache: true });
     if (isDeterministicVisitorGate(response.body)) {
       throw Object.assign(new Error(`站点 ${site.id} 访客门未通过，自动访问已停止`), { code: 'W65_VISITOR_GATE_FAILED' });
     }
     return response;
+  }
+
+  #sourceMode(response) {
+    return response?.stale ? 'stale-cache' : response?.cached ? 'cache' : 'network';
+  }
+
+  async #rss(site) {
+    const response = await this.#load(site, site.rssUrl, 'list');
+    return {
+      rows: parseUploadbtRss(response.body, { siteId: site.id, baseUrl: site.detailBase }),
+      cached: response.cached,
+      sourceMode: this.#sourceMode(response),
+    };
+  }
+
+  async #searchPage(site, keyword, page) {
+    const currentPage = Math.max(1, Number.parseInt(page, 10) || 1);
+    const urls = site.id === 'dmhy'
+      ? [site.searchUrl(keyword, currentPage), site.searchUrl(keyword, currentPage, site.mirrorBase)]
+      : [site.searchUrl(keyword, currentPage)];
+    let lastError = null;
+    for (const url of urls) {
+      try {
+        const response = await this.#load(site, url, 'list');
+        const rows = site.parseRows(response.body);
+        const backendFailed = site.id === 'dmhy' && /(?:searchd|SQLSTATE|Connection refused)/i.test(response.body);
+        if (backendFailed) throw Object.assign(new Error('DMHY 搜索服务暂不可用'), { code: 'W65_DMHy_SEARCH_UNAVAILABLE' });
+        const paging = site.id === 'mikan' ? { page: 1, totalPages: 1, hasMore: false, nextPage: null } : parsePageInfo(response.body, currentPage);
+        return { rows, kw: keyword, sourceSite: site.id, cached: response.cached, sourceMode: url.startsWith(site.mirrorBase || '\0') ? 'mirror' : this.#sourceMode(response), ...paging };
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (site.rssUrl && currentPage === 1) {
+      try {
+        const fallback = await this.#rss(site);
+        const folded = keyword.toLocaleLowerCase('zh-CN');
+        const rows = fallback.rows.filter((row) => row.title.toLocaleLowerCase('zh-CN').includes(folded));
+        return { rows, kw: keyword, sourceSite: site.id, cached: fallback.cached, sourceMode: 'rss', page: 1, totalPages: 1, hasMore: false, nextPage: null };
+      } catch (error) { lastError = error; }
+    }
+    throw lastError || Object.assign(new Error(`站点 ${site.id} 搜索失败`), { code: 'W65_SEARCH_FAILED' });
   }
 }
 

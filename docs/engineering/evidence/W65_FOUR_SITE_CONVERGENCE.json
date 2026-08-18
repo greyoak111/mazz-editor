@@ -1,0 +1,54 @@
+{
+  "schema": "mazz.w65-four-site-convergence-evidence/v0",
+  "capturedAt": "2026-08-18",
+  "baseline": "main@bbda4b2",
+  "status": "W65_COMPLETE_FORMAL",
+  "successor": {
+    "wave": "W74b",
+    "status": "NOT_STARTED"
+  },
+  "sites": [
+    { "id": "dmhy", "formal": true, "features": ["primary", "mirror", "paging", "backend-failure-detection"] },
+    { "id": "mikan", "formal": true, "catalogItemsObserved": 92, "seasonsObserved": 53, "searchAggregatesObserved": 465 },
+    { "id": "kisssub", "formal": true, "rowsObserved": 50, "sourceMode": "network", "features": ["visitor-session", "paging", "rss-fallback"] },
+    { "id": "comicat", "formal": true, "rowsObserved": 50, "sourceMode": "network", "features": ["visitor-session", "paging", "rss-fallback"] }
+  ],
+  "aggregation": {
+    "mergeKey": "infoHash",
+    "sharedKisssubComicatObserved": 50,
+    "automaticPageBound": [1, 3]
+  },
+  "network": {
+    "perSiteConcurrency": 1,
+    "globalConcurrency": 2,
+    "healthStates": ["unknown", "healthy", "degraded", "failed", "challenge"],
+    "transientFallback": "stale-cache",
+    "interactiveChallengeAction": "STOP_AND_OPEN_CIRCUIT"
+  },
+  "downloads": {
+    "owner": "main-process",
+    "states": ["queued", "downloading", "completed", "failed", "paused"],
+    "actions": ["enqueue", "pause", "resume", "retry", "cancel", "stream", "file-access"],
+    "survivesRendererTabClosure": true,
+    "survivesApplicationRestart": false
+  },
+  "verification": {
+    "affectedContracts": "35/35 PASS",
+    "rendererBuild": "PASS",
+    "electronRun11": "5/5 PASS",
+    "rendererErrors": 0,
+    "mainErrors": 0,
+    "unrelatedFullSuiteRun": false,
+    "visualReview": "PASS"
+  },
+  "screenshots": [
+    {
+      "path": "docs/engineering/evidence/W65_FOUR_SITE_CONVERGENCE.png",
+      "sha256": "66B76E25B6C7C7FD7AC2480484E6286263E8A7071D9F04E49FC77CD1632B4990"
+    },
+    {
+      "path": "docs/engineering/evidence/W65_DOWNLOAD_QUEUE.png",
+      "sha256": "886103876414A13FB2ACB77F08FE01335B514CFEFD1A010FF2F12171778FA95B"
+    }
+  ]
+}

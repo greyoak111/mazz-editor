@@ -1417,17 +1417,17 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .mz-side-head { padding: 10px 12px; font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--border); color: var(--fg-dim); }
 .mz-list { flex: 1; min-height: 0; overflow-y: auto; padding: 6px; }
 /* 列表栏滚动链：父容器 flex 有界 + 列表区 min-height:0 滚动（三源同规） */
-.mz-medialib, .mz-web { flex: 1; min-height: 0; flex-direction: column; }
-.mz-ml-list, .mz-web-rows { flex: 1; min-height: 0; }
+.mz-medialib, .mz-web, .mz-downloads { flex: 1; min-height: 0; flex-direction: column; }
+.mz-ml-list, .mz-web-rows, .mz-downloads { flex: 1; min-height: 0; }
 /* —— W44 媒体库递归树 —— */
 .mz-ml-dir { display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 6px; cursor: pointer; font-size: 12px; color: #cbd5e1; user-select: none; }
 .mz-ml-dir:hover { background: rgba(255,255,255,.07); }
 .mz-ml-caret { flex: none; width: 14px; text-align: center; opacity: .7; font-size: 10px; }
 .mz-ml-dname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mz-ml-kids { display: block; }
-.mz-list::-webkit-scrollbar, .mz-ml-list::-webkit-scrollbar, .mz-web-rows::-webkit-scrollbar { width: 7px; }
-.mz-list::-webkit-scrollbar-thumb, .mz-ml-list::-webkit-scrollbar-thumb, .mz-web-rows::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 4px; border: 0; }
-.mz-list::-webkit-scrollbar-thumb:hover, .mz-ml-list::-webkit-scrollbar-thumb:hover, .mz-web-rows::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.32); }
+.mz-list::-webkit-scrollbar, .mz-ml-list::-webkit-scrollbar, .mz-web-rows::-webkit-scrollbar, .mz-downloads::-webkit-scrollbar { width: 7px; }
+.mz-list::-webkit-scrollbar-thumb, .mz-ml-list::-webkit-scrollbar-thumb, .mz-web-rows::-webkit-scrollbar-thumb, .mz-downloads::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 4px; border: 0; }
+.mz-list::-webkit-scrollbar-thumb:hover, .mz-ml-list::-webkit-scrollbar-thumb:hover, .mz-web-rows::-webkit-scrollbar-thumb:hover, .mz-downloads::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.32); }
 .mz-li { padding: 6px 9px; font-size: 12px; color: var(--fg-dim); border-radius: 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mz-li:hover { background: var(--bg-hover); color: var(--fg); }
 .mz-li.on { background: var(--accent-soft); color: var(--accent); }
@@ -1648,9 +1648,9 @@ body.player-borderless .titlebar, body.player-borderless .ribbon, body.player-bo
 body.player-borderless .sidebar { display: none !important; }
 /* 书库沙箱阅读帧：书籍内容 rendered 进 sandbox iframe（koodo 式隔离——书的样式/脚本与壳互不渗漏） */
 .lib-book-frame { width: 100%; height: 100%; border: 0; display: block; background: transparent; }
-/* 播放器资源三源（播放列表/媒体库/网络资源） */
-.mz-src-tabs { display: flex; gap: 2px; }
-.mz-src-tab { border: 0; background: transparent; color: #b8b6ae; font-size: 12px; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+/* 播放器资源四源（播放列表/媒体库/网络资源/下载队列） */
+.mz-src-tabs { display: flex; flex: 1; min-width: 0; gap: 2px; overflow-x: auto; }
+.mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: #b8b6ae; font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
 .mz-src-tab:hover { background: rgba(255,255,255,.08); }
 .mz-src-tab.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 600; }
 .mz-ml-bar { display: flex; gap: 8px; padding: 8px 10px; }
@@ -1661,13 +1661,45 @@ body.player-borderless .sidebar { display: none !important; }
 .mz-dim { color: #83817a; font-size: 12px; padding: 14px 12px; }
 .mz-web-bar { display: flex; gap: 6px; padding: 6px 10px; }
 .mz-web-bar .rb-input { flex: 1; min-width: 0; }
+.mz-web-sites { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 8px 10px 2px; }
+.mz-web-sites label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--fg-dim); cursor: pointer; }
+.mz-web-sites input { margin: 0; accent-color: var(--accent); }
+.mz-site-health { display: flex; flex-wrap: wrap; gap: 4px; padding: 1px 10px 6px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.mz-site-health button { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 6px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--fg-dim); font-size: 10px; cursor: pointer; }
+.mz-site-health button:hover { color: var(--fg); border-color: var(--accent); }
+.mz-site-health i { width: 6px; height: 6px; border-radius: 50%; background: #7f8a98; }
+.mz-site-health [data-status="healthy"] i { background: #43b581; }
+.mz-site-health [data-status="degraded"] i { background: #e5a84b; }
+.mz-site-health [data-status="failed"] i, .mz-site-health [data-status="challenge"] i { background: #e05d64; }
+.mz-site-health small { opacity: .72; }
+.mz-web-catalog-bar { display: flex; align-items: center; gap: 7px; padding: 5px 10px; color: var(--fg-dim); font-size: 10.5px; }
+.mz-mikan-season { min-width: 116px; max-width: 170px; }
 .mz-web-rows { overflow-y: auto; }
-.mz-web-row { display: grid; grid-template-columns: 64px 40px 1fr auto auto; gap: 6px; align-items: center; padding: 6px 10px; border-top: 1px solid rgba(255,255,255,.06); cursor: pointer; font-size: 12px; }
+.mz-web-row { display: grid; grid-template-columns: 64px 42px minmax(140px,1fr) auto auto; gap: 6px; align-items: center; padding: 6px 10px; border-top: 1px solid rgba(255,255,255,.06); font-size: 12px; }
 .mz-web-row:hover { background: rgba(255,255,255,.07); }
 .mz-wr-date { color: #83817a; font-size: 11px; }
 .mz-wr-type { color: #7cc4ff; font-size: 10.5px; border: 1px solid rgba(124,196,255,.4); border-radius: 999px; padding: 0 5px; text-align: center; }
 .mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mz-wr-size, .mz-wr-up { color: #83817a; font-size: 11px; white-space: nowrap; }
+.mz-wr-up { grid-column: 3 / -1; overflow: hidden; text-overflow: ellipsis; }
+.mz-wr-add { border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); background: var(--accent-soft); color: var(--accent); border-radius: 5px; padding: 2px 7px; cursor: pointer; font-size: 11px; }
+.mz-wr-add:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }
+.mz-catalog-rows { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; padding: 6px 10px 10px; align-content: start; }
+.mz-catalog-item { display: grid; grid-template-columns: 38px minmax(0,1fr); gap: 7px; align-items: center; min-height: 48px; padding: 5px; border: 1px solid var(--border); border-radius: 7px; background: transparent; color: var(--fg); text-align: left; cursor: pointer; }
+.mz-catalog-item:hover { border-color: var(--accent); background: var(--bg-hover); }
+.mz-catalog-cover { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 16px; font-weight: 650; }
+.mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mz-catalog-item b { font-size: 11.5px; font-weight: 500; }
+.mz-catalog-item small { margin-top: 3px; color: var(--fg-dim); font-size: 10px; }
+.mz-downloads { overflow-y: auto; }
+.mz-download { border-bottom: 1px solid rgba(255,255,255,.08); padding: 9px 10px; }
+.mz-download header { display: flex; align-items: center; gap: 7px; }
+.mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.mz-download header span { flex: none; padding: 1px 6px; border-radius: 999px; background: var(--bg-soft); color: var(--fg-dim); font-size: 10px; }
+.mz-download[data-state="completed"] header span { color: #55c491; }
+.mz-download[data-state="failed"] header span { color: #ef777c; }
+.mz-download[data-state="paused"] header span { color: #e5b95e; }
 .mz-watch { border-top: 1px solid rgba(255,255,255,.08); padding: 8px 10px; }
 .mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mz-watch-bar { height: 5px; background: rgba(255,255,255,.12); border-radius: 3px; margin: 6px 0 4px; overflow: hidden; }

@@ -160,7 +160,7 @@ describe('W65a 礼貌网络纪律', () => {
 });
 
 describe('W65a 主进程四站注册与访客门接线', () => {
-  test('只登记四个主站并保持 Preview；KissSub 固定门通过后回到原搜索 URL', async () => {
+  test('只登记四个主站并保持正式命名；KissSub 固定门通过后回到原搜索 URL', async () => {
     const handlers = new Map();
     const bus = { handle: (channel, handler) => handlers.set(channel, handler) };
     let clock = 0;
@@ -183,12 +183,13 @@ describe('W65a 主进程四站注册与访客门接线', () => {
     new TorrentSites({ bus, transport });
     const sites = await handlers.get('sites:list')();
     assert.deepEqual(sites.map((site) => site.id), ['dmhy', 'mikan', 'kisssub', 'comicat']);
-    assert.ok(sites.every((site) => site.name.includes('（预览）')));
+    assert.ok(sites.every((site) => !site.name.includes('（预览）')));
     const result = await handlers.get('sites:search')({ site: 'kisssub', kw: '奈叶' });
     assert.equal(result.rows.length, 1);
     assert.equal(result.rows[0].infoHash, HASH_B);
     assert.deepEqual(requests.map((request) => request.method), ['GET', 'POST', 'GET']);
     assert.equal(requests[1].body, 'visitor_test=human');
+    assert.equal(requests[2].headers.Cookie, 'visitor_test=human');
   });
 
   test('Electron transport 必须同时限制响应体与请求时长', () => {

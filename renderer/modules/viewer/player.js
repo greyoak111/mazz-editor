@@ -41,6 +41,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
             <button class="mz-src-tab on" data-src="playlist" title="同目录播放列表（原有）">播放列表</button>
             <button class="mz-src-tab" data-src="medialib" title="工作区媒体库（随工作区切换）">媒体库</button>
             <button class="mz-src-tab" data-src="web" title="网络资源（种子站搜索，边下边播）">网络资源</button>
+            <button class="mz-src-tab" data-src="downloads" title="下载队列（关掉播放器标签仍继续）">下载</button>
           </div>
           <span class="mz-side-count"></span>
           <button class="mz-side-x" data-a="side-close" title="收起列表栏（视频区铺满）">${iconHtml('›')}</button>
@@ -48,6 +49,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         <div class="mz-list"></div>
         <div class="mz-medialib" style="display:none"></div>
         <div class="mz-web" style="display:none"></div>
+        <div class="mz-downloads" style="display:none"></div>
       </div>
       <div class="mz-controls">
         <div class="mz-seek">
@@ -215,7 +217,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const m = modal('播放设置');
     const seedSites = [
       ['Nyaa（番剧种子总库）', 'https://nyaa.si'],
-      ['动漫花园 DMHY（预览）', 'https://dmhy.org'],
+      ['动漫花园 DMHY', 'https://share.dmhy.org'],
       ['MioBT 猫萌', 'https://www.miobt.com'],
       ['acg.rip', 'https://acg.rip'],
       ['bangumi.moe 萌番组', 'https://bangumi.moe'],
@@ -369,11 +371,12 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   const next = () => navTo(ctl.plIndex + 1 < ctl.playlist.length ? ctl.plIndex + 1 : 0);
   const prev = () => navTo(ctl.plIndex - 1 >= 0 ? ctl.plIndex - 1 : ctl.playlist.length - 1);
 
-  // ==================== 资源三源（播放列表/媒体库/网络资源——行文字带完整标题名称一栏） ====================
+  // ==================== 资源四源（播放列表/媒体库/网络资源/下载队列） ====================
   const srcTabs = root.querySelectorAll('.mz-src-tab');
   const sideList = root.querySelector('.mz-list');
   const mlEl = root.querySelector('.mz-medialib');
   const webEl = root.querySelector('.mz-web');
+  const downloadsEl = root.querySelector('.mz-downloads');
   ctl.srcMode = 'playlist';
   const setSrcMode = (m) => {
     ctl.srcMode = m;
@@ -381,8 +384,10 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     sideList.style.display = m === 'playlist' ? '' : 'none';
     mlEl.style.display = m === 'medialib' ? 'flex' : 'none'; // flex 链有界滚动（列表没做滚动条实锤：父链无 flex 高度约束，溢出撑爆）
     webEl.style.display = m === 'web' ? 'flex' : 'none';
+    downloadsEl.style.display = m === 'downloads' ? 'flex' : 'none';
     if (m === 'medialib') renderMedialib();
     if (m === 'web') renderWeb();
+    if (m === 'downloads') { startWatchPoll(); renderDownloads(); }
   };
   srcTabs.forEach(t => t.addEventListener('click', () => setSrcMode(t.dataset.src)));
 
@@ -460,210 +465,304 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   // 工作区切换 → 媒体库模式重扫（工作区切换则切换实装）
   window.mazz?.on?.('workspace:changed', () => { if (ctl.srcMode === 'medialib') renderMedialib(); });
 
-  // —— 网络资源：种子站搜索（懒取 magnet 边下边播）+ magnet 手贴 + 下载管理 ——
+  const escapeSiteText = (value) => String(value || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  // —— 网络资源：四站多选聚合 + 有界自动翻页 + Mikan 周历/季度目录 ——
   let webInited = false;
-  const watching = new Map(); // infoHash -> {title, filePath, streamUrl, done, progress, downSpeed, numPeers}
+  let webAggregates = [];
+  let webNextPages = {};
+  let webKeyword = '';
+  let siteNames = {};
   async function renderWeb() {
-    if (webInited) { renderWatching(); return; }
+    if (webInited) { renderSiteHealth(); return; }
     webInited = true;
     const sites = await window.mazz.invoke('sites:list').catch(() => []);
+    siteNames = Object.fromEntries(sites.map(site => [site.id, site.name]));
     webEl.innerHTML = `
-      <div class="mz-web-bar">
-        <select class="mz-web-site rb-select">${sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select>
+      <div class="mz-web-sites" aria-label="检索站点">
+        ${sites.map(site => `<label><input type="checkbox" value="${site.id}" checked> ${escapeSiteText(site.name)}</label>`).join('')}
+      </div>
+      <div class="mz-web-bar mz-web-searchbar">
         <input class="mz-web-kw rb-input" placeholder="搜索番名/关键词，回车搜…" spellcheck="false">
-        <button class="rb-btn mz-web-go" style="flex-direction:row">搜</button>
+        <button class="rb-btn mz-web-go" style="flex-direction:row">聚合检索</button>
       </div>
       <div class="mz-web-bar">
-        <input class="mz-web-magnet rb-input" placeholder="或直接粘贴 magnet:? 链接，回车边下边播" spellcheck="false">
+        <input class="mz-web-magnet rb-input" placeholder="直接粘贴 magnet:? 链接，回车加入下载" spellcheck="false">
+        <button class="rb-btn mz-web-add" style="flex-direction:row">加入下载</button>
       </div>
-      <div class="mz-web-watch"></div>
-      <div class="mz-web-rows mz-dim">载入站点首页（当日上传列表）…</div>`;
-    const escapeSiteText = (value) => String(value || '')
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    // 行渲染共用：消费 W65 统一资源行（来源/标题/大小/字幕组）；旧站点私有字段不再渗入 UI。
-    const renderRows = (site, rows) => {
+      <div class="mz-site-health"></div>
+      <div class="mz-web-catalog-bar"><select class="mz-mikan-season rb-select" title="Mikan 季度目录"></select><span>选择番组可直接带入检索词</span></div>
+      <div class="mz-web-rows mz-dim">载入 Mikan 本周番组目录…</div>`;
+
+    const selectedSites = () => [...webEl.querySelectorAll('.mz-web-sites input:checked')].map(input => input.value);
+    const mergeAggregates = (incoming, reset = false) => {
+      const merged = new Map((reset ? [] : webAggregates).map(group => [group.infoHash, group]));
+      for (const group of incoming || []) {
+        const previous = merged.get(group.infoHash);
+        if (!previous) { merged.set(group.infoHash, group); continue; }
+        const sources = [...previous.sources, ...group.sources];
+        previous.sources = sources.filter((source, index) => sources.findIndex(candidate => candidate.sourceSite === source.sourceSite && candidate.sourceUrl === source.sourceUrl) === index);
+      }
+      webAggregates = [...merged.values()];
+    };
+    const renderAggregates = () => {
       const rowsEl = webEl.querySelector('.mz-web-rows');
       rowsEl.className = 'mz-web-rows';
-      rowsEl.innerHTML = rows.map((x, i) => `
-        <div class="mz-web-row" data-i="${i}">
-          <span class="mz-wr-date">${escapeSiteText(x.date)}</span>
-          <span class="mz-wr-type">${escapeSiteText(x.sourceSite)}</span>
-          <span class="mz-wr-title" title="${escapeSiteText(x.title)}">${escapeSiteText(x.title)}</span>
-          <span class="mz-wr-size">${escapeSiteText(x.size)}</span>
-          <span class="mz-wr-up">${escapeSiteText(x.subgroup)}</span>
-        </div>`).join('');
-      rowsEl.querySelectorAll('.mz-web-row').forEach(el => el.addEventListener('click', () => playRow(site, rows[+el.dataset.i], el)));
+      root.querySelector('.mz-side-count').textContent = `（${webAggregates.length}）`;
+      if (!webAggregates.length) { rowsEl.className = 'mz-web-rows mz-dim'; rowsEl.textContent = '没有匹配资源；可调整关键词或站点范围。'; return; }
+      rowsEl.innerHTML = webAggregates.map((group, index) => {
+        const row = group.primary;
+        const sources = group.sources.map(source => siteNames[source.sourceSite] || source.sourceSite).join(' · ');
+        return `<div class="mz-web-row" data-i="${index}">
+          <span class="mz-wr-date">${escapeSiteText(row.date)}</span>
+          <span class="mz-wr-type" title="${escapeSiteText(sources)}">${group.sources.length} 源</span>
+          <span class="mz-wr-title" title="${escapeSiteText(row.title)}">${escapeSiteText(row.title)}</span>
+          <span class="mz-wr-size">${escapeSiteText(row.size)}</span>
+          <button class="mz-wr-add" type="button">加入</button>
+          <span class="mz-wr-up" title="${escapeSiteText(sources)}">${escapeSiteText(row.subgroup || sources)}</span>
+        </div>`;
+      }).join('') + (Object.keys(webNextPages).length ? '<button class="rb-btn mz-web-more" type="button">继续加载后续页</button>' : '');
+      rowsEl.querySelectorAll('.mz-wr-add').forEach(button => button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const item = button.closest('.mz-web-row');
+        enqueueResource(webAggregates[+item.dataset.i], item);
+      }));
+      rowsEl.querySelector('.mz-web-more')?.addEventListener('click', () => searchMany(false));
     };
-    // 站点首页=当日上传列表：首开即载 + 切站即载（选中即展示）
-    const loadHome = async () => {
-      const site = webEl.querySelector('.mz-web-site').value;
+
+    const renderCatalog = (catalog) => {
+      const rowsEl = webEl.querySelector('.mz-web-rows');
+      rowsEl.className = 'mz-web-rows mz-catalog-rows';
+      root.querySelector('.mz-side-count').textContent = `（${catalog.items?.length || 0}）`;
+      rowsEl.innerHTML = (catalog.items || []).map((item, index) => `<button class="mz-catalog-item" data-i="${index}" type="button">
+        <span class="mz-catalog-cover" aria-hidden="true">${escapeSiteText(item.title.slice(0, 1))}</span>
+        <span><b>${escapeSiteText(item.title)}</b><small>${escapeSiteText(item.dayLabel)} · ${escapeSiteText(item.updatedAt)}</small></span>
+      </button>`).join('') || '<div class="mz-dim">本季度目录为空。</div>';
+      rowsEl.querySelectorAll('.mz-catalog-item').forEach(item => item.addEventListener('click', () => {
+        const selected = catalog.items[+item.dataset.i];
+        webEl.querySelector('.mz-web-kw').value = selected.title;
+        searchMany(true);
+      }));
+    };
+
+    const loadCatalog = async (year = '', season = '') => {
       const rowsEl = webEl.querySelector('.mz-web-rows');
       rowsEl.className = 'mz-web-rows mz-dim';
-      rowsEl.textContent = '载入站点首页（当日上传列表）…';
+      rowsEl.textContent = '载入 Mikan 周历与季度目录…';
       try {
-        const r = await window.mazz.invoke('sites:home', { site });
-        if (!r.rows?.length) { rowsEl.textContent = '首页暂无资源行（站点结构可能已变）'; return; }
-        renderRows(site, r.rows);
-      } catch (e) {
+        const catalog = await window.mazz.invoke('sites:catalog', { site: 'mikan', year, season });
+        const select = webEl.querySelector('.mz-mikan-season');
+        if (!select.options.length && catalog.seasons?.length) {
+          select.innerHTML = catalog.seasons.map(entry => `<option value="${escapeSiteText(entry.year)}\t${escapeSiteText(entry.season)}">${escapeSiteText(entry.label)}</option>`).join('');
+          select.addEventListener('change', () => {
+            const [nextYear, nextSeason] = select.value.split('\t');
+            loadCatalog(nextYear, nextSeason);
+          });
+        }
+        renderCatalog(catalog);
+      } catch (error) {
         rowsEl.className = 'mz-web-rows mz-dim';
-        rowsEl.textContent = '首页载入失败：' + (e.message || e);
+        rowsEl.textContent = '番组目录载入失败：' + (error.message || error);
       }
     };
-    const go = async () => {
-      const site = webEl.querySelector('.mz-web-site').value;
+
+    const searchMany = async (reset) => {
       const kw = webEl.querySelector('.mz-web-kw').value.trim();
       if (!kw) return;
+      const selected = selectedSites();
       const rowsEl = webEl.querySelector('.mz-web-rows');
       rowsEl.className = 'mz-web-rows mz-dim';
-      rowsEl.textContent = '搜索中…';
+      rowsEl.textContent = reset ? '四站聚合检索中…' : '继续加载后续页…';
       try {
-        const r = await window.mazz.invoke('sites:search', { site, kw });
-        if (!r.rows?.length) { rowsEl.textContent = '无结果（换个关键词或站点试试）'; return; }
-        renderRows(site, r.rows);
-      } catch (e) {
+        if (!selected.length) throw new Error('至少选择一个站点');
+        if (reset || kw !== webKeyword) { webAggregates = []; webNextPages = {}; }
+        const result = await window.mazz.invoke('sites:searchMany', {
+          sites: selected, kw, pageMap: reset ? {} : webNextPages, maxPages: 2,
+        });
+        webKeyword = kw;
+        webNextPages = result.nextPages || {};
+        mergeAggregates(result.aggregates, reset);
+        renderAggregates();
+        renderSiteHealth(result.perSite);
+      } catch (error) {
         rowsEl.className = 'mz-web-rows mz-dim';
-        rowsEl.textContent = '搜索失败：' + (e.message || e);
+        rowsEl.textContent = '搜索失败：' + (error.message || error);
       }
     };
-    webEl.querySelector('.mz-web-site').addEventListener('change', loadHome);
-    webEl.querySelector('.mz-web-go').addEventListener('click', go);
-    webEl.querySelector('.mz-web-kw').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); e.stopPropagation(); });
-    webEl.querySelector('.mz-web-magnet').addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter') return;
-      const v = e.target.value.trim();
-      if (v.startsWith('magnet:')) playMagnet(v, v.slice(0, 40));
-      e.stopPropagation();
+
+    const addManual = () => {
+      const input = webEl.querySelector('.mz-web-magnet');
+      const magnet = input.value.trim();
+      if (magnet.startsWith('magnet:')) { enqueueMagnet(magnet, magnet.slice(0, 48)); input.value = ''; }
+    };
+    webEl.querySelector('.mz-web-go').addEventListener('click', () => searchMany(true));
+    webEl.querySelector('.mz-web-kw').addEventListener('keydown', (event) => { if (event.key === 'Enter') searchMany(true); event.stopPropagation(); });
+    webEl.querySelector('.mz-web-add').addEventListener('click', addManual);
+    webEl.querySelector('.mz-web-magnet').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') addManual();
+      event.stopPropagation();
     });
-    renderWatching();
-    loadHome(); // 首开即载：站点首页当日上传列表（同搜索行结构）
+    webEl.querySelectorAll('.mz-web-sites input').forEach(input => input.addEventListener('change', renderSiteHealth));
+    renderSiteHealth();
+    loadCatalog();
   }
 
-  async function playRow(site, row, el) {
-    if (el.dataset.busy) return;
-    el.dataset.busy = '1';
-    const titleEl = el.querySelector('.mz-wr-title');
-    const old = titleEl.textContent;
-    titleEl.textContent = '取 magnet 中…';
+  async function renderSiteHealth(perSite = null) {
+    const box = webEl.querySelector('.mz-site-health');
+    if (!box) return;
+    const snapshots = await window.mazz.invoke('sites:health', {}).catch(() => []);
+    const bySite = Object.fromEntries((Array.isArray(snapshots) ? snapshots : []).map(item => [item.siteId, item]));
+    box.innerHTML = Object.keys(siteNames).map(siteId => {
+      const result = perSite?.[siteId];
+      const health = bySite[siteId] || {};
+      const status = result?.error ? 'failed' : health.status || 'unknown';
+      const mode = result?.sourceMode || health.sourceMode || '待检';
+      return `<button type="button" data-site="${siteId}" data-status="${status}" title="${escapeSiteText(result?.error || health.lastError || '点击清除缓存并重置站点会话状态')}"><i></i>${escapeSiteText(siteNames[siteId])}<small>${escapeSiteText(mode)}</small></button>`;
+    }).join('');
+    box.querySelectorAll('button').forEach(button => button.addEventListener('click', async () => {
+      await window.mazz.invoke('sites:reset', { site: button.dataset.site }).catch(() => null);
+      renderSiteHealth();
+    }));
+  }
+
+  async function enqueueResource(group, element) {
+    if (element?.dataset.busy) return;
+    if (element) element.dataset.busy = '1';
+    const row = group.primary;
     try {
-      const m = row.magnet
-        ? { magnet: row.magnet, title: row.title, infoHash: row.infoHash }
-        : await window.mazz.invoke('sites:magnet', {
-          site, sourceUrl: row.sourceUrl, torrentUrl: row.torrentUrl, infoHash: row.infoHash,
-        });
-      await playMagnet(m.magnet, m.title || row.title || old);
-      el.remove();
-    } catch (e) {
-      titleEl.textContent = old;
-      delete el.dataset.busy;
+      const source = group.sources.find(item => item.magnet) || group.sources[0] || row;
+      const magnet = source.magnet || (await window.mazz.invoke('sites:magnet', {
+        site: source.sourceSite || row.sourceSite,
+        sourceUrl: source.sourceUrl || row.sourceUrl,
+        torrentUrl: source.torrentUrl || row.torrentUrl,
+        infoHash: group.infoHash,
+      })).magnet;
+      await enqueueMagnet(magnet, row.title);
+    } catch (error) {
       const { toast } = await import('../../shell/shell.js');
-      toast('取 magnet 失败：' + (e.message || e));
+      toast('加入下载失败：' + (error.message || error));
+      if (element) delete element.dataset.busy;
     }
   }
 
-  async function playMagnet(magnet, title) {
+  async function enqueueMagnet(magnet, title) {
     const { toast } = await import('../../shell/shell.js');
     try {
-      toast('连接种子 swarm，取元数据…');
-      const r = await window.mazz.invoke('tor:add', { magnet, name: title });
-      const file = (r.files || [])[0];
-      if (!file) throw new Error('种子内无可播放文件');
-      const rawUrl = await window.mazz.invoke('tor:streamUrl', { infoHash: r.infoHash, filePath: file.path });
-      // 流走 mazz-res://tor/ 代理（页面同源化：裸 http://127.0.0.1 在 file:// 页 media loader 零请求实锤根治；
-      // encodeURI：种子文件名带空格/中文时 URL 必须编码）
-      const streamUrl = 'mazz-res://tor/' + encodeURI(rawUrl).replace('http://', '');
-      watching.set(r.infoHash, { title: r.name || title, filePath: file.path, streamUrl, done: false, progress: 0 });
-      setSource(streamUrl, r.name || title, streamUrl, file.length);
-      renderWatching();
+      const job = await window.mazz.invoke('tor:addBuffer', { magnet, name: title });
+      toast(`已加入下载：${job.title || title}`);
       startWatchPoll();
-      // 种子内字幕：探 .ass/.srt/.ssa → tor:fileBytes 按需取块（小块下完即收）→ 内容直挂（播放即挂）
-      const subFile = (r.files || []).find(f => /\.(ass|srt|ssa)$/i.test(f.path || ''));
-      if (subFile) {
-        try {
-          const bytes = await window.mazz.invoke('tor:fileBytes', { infoHash: r.infoHash, filePath: subFile.path });
-          const u8 = bytes instanceof Uint8Array ? bytes : (bytes?.data ? new Uint8Array(bytes.data) : null);
-          if (u8?.length) {
-            await attachSubtitle(media, { subContent: new TextDecoder().decode(u8) });
-            subVisible = true; syncSubBtn();
-            toast('已挂载种子内字幕：' + (subFile.name || subFile.path.split('/').pop()));
-          }
-        } catch (e) { toast('种子内字幕挂载失败：' + (e.message || e)); }
-      }
-    } catch (e) {
-      toast('种子添加失败：' + (e.message || e));
+      setSrcMode('downloads');
+      await renderDownloads();
+      return job;
+    } catch (error) {
+      toast('加入下载失败：' + (error.message || error));
+      throw error;
     }
   }
 
-  function renderWatching() {
-    const box = webEl.querySelector('.mz-web-watch');
-    if (!box) return;
-    if (!watching.size) { box.innerHTML = ''; return; }
-    box.innerHTML = [...watching.entries()].map(([ih, w]) => `
-      <div class="mz-watch" data-ih="${ih}">
-        <div class="mz-watch-title" title="${(w.title || '').replace(/"/g, '&quot;')}">${w.title || ih.slice(0, 10)}</div>
-        <div class="mz-watch-bar"><div class="mz-watch-fill" style="width:${Math.round((w.progress || 0) * 100)}%"></div></div>
-        <div class="mz-watch-meta">${Math.round((w.progress || 0) * 100)}% · ${((w.downSpeed || 0) / 1024).toFixed(0)}KB/s · ${w.numPeers || 0}peers</div>
-        <div class="mz-watch-acts">
-          <button data-wa="play" title="打开流播放">${iconHtml('▶')}</button>
-          <button data-wa="rm" title="移除并删除文件">${iconHtml('✕')}</button>
-        </div>
-      </div>`).join('');
-    box.querySelectorAll('.mz-watch').forEach(el => {
-      const ih = el.dataset.ih;
-      el.querySelector('[data-wa=play]').addEventListener('click', () => {
-        const w = watching.get(ih);
-        if (w) setSource(w.streamUrl, w.title, w.streamUrl, 0);
-      });
-      el.querySelector('[data-wa=rm]').addEventListener('click', async () => {
-        watching.delete(ih);
-        await window.mazz.invoke('tor:remove', { infoHash: ih, deleteFiles: true });
-        renderWatching();
-      });
+  const downloadJobs = new Map();
+  const completedNotified = new Set();
+  const DOWNLOAD_STATE_LABELS = Object.freeze({ queued: '排队中', downloading: '下载中', completed: '已完成', failed: '失败', paused: '已暂停' });
+  async function renderDownloads(providedJobs = null) {
+    const jobs = providedJobs || await window.mazz.invoke('tor:queue').catch(() => []);
+    downloadJobs.clear();
+    for (const job of jobs) downloadJobs.set(job.infoHash, job);
+    root.querySelector('.mz-side-count').textContent = `（${jobs.length}）`;
+    downloadsEl.innerHTML = jobs.length ? jobs.map(job => {
+      const progress = Math.round((job.progress || 0) * 100);
+      const actions = job.state === 'failed'
+        ? '<button data-da="retry">重试</button><button data-da="remove">移除</button>'
+        : job.state === 'paused'
+          ? '<button data-da="resume">继续</button><button data-da="discard">删除</button>'
+          : job.state === 'completed'
+            ? '<button data-da="play">播放</button><button data-da="keep">存入媒体库</button><button data-da="discard">删除</button>'
+            : job.state === 'downloading'
+              ? '<button data-da="play">边下边播</button><button data-da="pause">暂停</button><button data-da="discard">取消</button>'
+              : '<button data-da="pause">暂停</button><button data-da="discard">取消</button>';
+      return `<article class="mz-download" data-ih="${job.infoHash}" data-state="${job.state}">
+        <header><b title="${escapeSiteText(job.title)}">${escapeSiteText(job.title)}</b><span>${DOWNLOAD_STATE_LABELS[job.state] || job.state}</span></header>
+        <div class="mz-watch-bar"><div class="mz-watch-fill" style="width:${progress}%"></div></div>
+        <div class="mz-watch-meta">${progress}% · ${((job.downSpeed || 0) / 1024).toFixed(0)} KB/s · ${job.numPeers || 0} peers${job.error ? ` · ${escapeSiteText(job.error)}` : ''}</div>
+        <div class="mz-watch-acts">${actions}</div>
+      </article>`;
+    }).join('') : '<div class="mz-dim">下载队列为空。网络资源加入后，即使关闭播放器标签也会由主进程继续下载。</div>';
+    downloadsEl.querySelectorAll('.mz-download').forEach(card => {
+      const infoHash = card.dataset.ih;
+      card.querySelectorAll('[data-da]').forEach(button => button.addEventListener('click', async () => {
+        const action = button.dataset.da;
+        if (action === 'play') await playTorrentJob(downloadJobs.get(infoHash));
+        if (action === 'pause') await window.mazz.invoke('tor:pause', { infoHash });
+        if (action === 'resume') await window.mazz.invoke('tor:resume', { infoHash });
+        if (action === 'retry') await window.mazz.invoke('tor:retry', { infoHash });
+        if (action === 'keep') await keepTorrentJob(downloadJobs.get(infoHash));
+        if (action === 'discard' || action === 'remove') await window.mazz.invoke('tor:remove', { infoHash, deleteFiles: action === 'discard' });
+        await renderDownloads();
+      }));
     });
+  }
+
+  async function playTorrentJob(job) {
+    if (!job?.files?.length) {
+      const { toast } = await import('../../shell/shell.js');
+      toast('种子元数据尚未就绪，请稍后再播放');
+      return;
+    }
+    const file = job.files.find(item => MEDIA_VIDEO.has(String(item.path || '').split('.').pop().toLowerCase())) || job.files[0];
+    const rawUrl = await window.mazz.invoke('tor:streamUrl', { infoHash: job.infoHash, filePath: file.path });
+    if (!rawUrl) return;
+    const streamUrl = 'mazz-res://tor/' + encodeURI(rawUrl).replace('http://', '');
+    setSource(streamUrl, job.title, streamUrl, file.length);
+    const subFile = job.files.find(item => /\.(ass|srt|ssa)$/i.test(item.path || ''));
+    if (subFile) {
+      try {
+        const bytes = await window.mazz.invoke('tor:fileBytes', { infoHash: job.infoHash, filePath: subFile.path });
+        const u8 = bytes instanceof Uint8Array ? bytes : (bytes?.data ? new Uint8Array(bytes.data) : null);
+        if (u8?.length) {
+          await attachSubtitle(media, { subContent: new TextDecoder().decode(u8) }); subVisible = true; syncSubBtn();
+          const { toast } = await import('../../shell/shell.js');
+          toast('已挂载种子内字幕：' + (subFile.name || subFile.path.split('/').pop()));
+        }
+      } catch {}
+    }
+  }
+
+  async function keepTorrentJob(job) {
+    if (!job?.files?.length) return;
+    const file = job.files.find(item => MEDIA_VIDEO.has(String(item.path || '').split('.').pop().toLowerCase())) || job.files[0];
+    const src = await window.mazz.invoke('tor:filePath', { infoHash: job.infoHash, filePath: file.path });
+    if (!src) return;
+    const workspace = await window.mazz.invoke('workspace:get');
+    const dest = workspace + '/媒体库/' + src.replace(/\\/g, '/').split('/').pop();
+    await window.mazz.invoke('fs:rename', { from: src, to: dest });
+    await window.mazz.invoke('tor:remove', { infoHash: job.infoHash, deleteFiles: false });
+    const { toast } = await import('../../shell/shell.js');
+    toast(`已存到：${dest}`, [{ label: '打开所在文件夹', fn: () => window.mazz.invoke('shell:showItemInFolder', { path: dest }).catch(() => {}) }], 12000);
+    if (ctl.srcMode === 'medialib') renderMedialib();
+  }
+
+  async function applyCompletionPolicy(job) {
+    if (!job || completedNotified.has(job.infoHash)) return;
+    completedNotified.add(job.infoHash);
+    const mode = (await window.mazz.invoke('settings:get', { key: 'player.torrentKeepMode' }).catch(() => 'ask')) || 'ask';
+    if (mode === 'keep') return keepTorrentJob(job);
+    if (mode === 'discard') return window.mazz.invoke('tor:remove', { infoHash: job.infoHash, deleteFiles: true });
+    const { toast } = await import('../../shell/shell.js');
+    toast(`「${job.title || '种子'}」下载完成`, [
+      { label: '存到媒体库', fn: () => keepTorrentJob(job) },
+      { label: '保留在下载区', fn: () => {}, ghost: true },
+    ], 15000);
   }
 
   let watchPollT = null;
   function startWatchPoll() {
     if (watchPollT) return;
     watchPollT = setInterval(async () => {
-      for (const [ih, w] of watching) {
-        const st = await window.mazz.invoke('tor:stats', { infoHash: ih }).catch(() => null);
-        if (!st) continue;
-        Object.assign(w, st);
-        if (st.done && !w.done) { w.done = true; onTorrentDone(ih, w); }
-      }
-      renderWatching();
+      const jobs = await window.mazz.invoke('tor:queue').catch(() => []);
+      for (const job of jobs) if (job.state === 'completed') applyCompletionPolicy(job);
+      if (ctl.srcMode === 'downloads') renderDownloads(jobs);
     }, 2500);
-  }
-
-  async function onTorrentDone(ih, w) {
-    const { toast } = await import('../../shell/shell.js');
-    const mode = (await window.mazz.invoke('settings:get', { key: 'player.torrentKeepMode' }).catch(() => 'ask')) || 'ask';
-    const keep = async () => {
-      const src = await window.mazz.invoke('tor:filePath', { infoHash: ih, filePath: w.filePath });
-      if (src) {
-        const ws = await window.mazz.invoke('workspace:get');
-        const dest = ws + '/媒体库/' + src.replace(/\\/g, '/').split('/').pop();
-        await window.mazz.invoke('fs:rename', { from: src, to: dest }).catch(() => null);
-        await window.mazz.invoke('tor:remove', { infoHash: ih, deleteFiles: false });
-        if (ctl.srcMode === 'medialib') renderMedialib();
-        // 保存路径必须明白话（此前只报「已存到媒体库」——用户找不到落点实锤）
-        toast(`已存到：${dest}`, [{ label: '打开所在文件夹', fn: () => window.mazz.invoke('shell:showItemInFolder', { path: dest }).catch(() => {}) }], 12000);
-      }
-      watching.delete(ih);
-      renderWatching();
-    };
-    const discard = async () => {
-      watching.delete(ih);
-      await window.mazz.invoke('tor:remove', { infoHash: ih, deleteFiles: true });
-      renderWatching();
-    };
-    if (mode === 'keep') return keep();
-    if (mode === 'discard') return discard();
-    toast(`「${w.title || '种子'}」下载完成——存到媒体库吗？`, [
-      { label: '存到媒体库', fn: keep },
-      { label: '不存，删除', fn: discard, ghost: true },
-    ], 15000);
   }
 
   // ==================== 多音轨（MKV 自解复用：EBML-lite 枚举轨表 + 全编码抽轨封装双元素同步） ====================

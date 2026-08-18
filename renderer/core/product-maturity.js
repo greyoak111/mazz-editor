@@ -13,7 +13,7 @@ export const PRODUCT_CAPABILITIES = Object.freeze({
   updater: Object.freeze({ maturity: MATURITY.HIDDEN, label: '自动更新' }),
   feed: Object.freeze({ maturity: MATURITY.HIDDEN, label: 'W62e 投喂管线' }),
   agent: Object.freeze({ maturity: MATURITY.HIDDEN, label: 'Agent 执行器整合', foundation: 'internal' }),
-  dmhy: Object.freeze({ maturity: MATURITY.PREVIEW, label: '动漫花园 DMHY' }),
+  dmhy: Object.freeze({ maturity: MATURITY.FORMAL, label: '四站聚合检索与下载' }),
   recorder: Object.freeze({ maturity: MATURITY.PREVIEW, label: '全局内录' }),
   plugins: Object.freeze({ maturity: MATURITY.PREVIEW, label: '插件系统' }),
   ocr: Object.freeze({ maturity: MATURITY.PREVIEW, label: '图片文字识别' }),

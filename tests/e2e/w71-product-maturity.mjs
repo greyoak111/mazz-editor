@@ -154,7 +154,7 @@ try {
 
   const sites = await main.evaluate(() => window.mazz.invoke('sites:list'));
   const dmhy = sites.find(site => site.id === 'dmhy');
-  if (!dmhy?.name?.includes('（预览）')) throw new Error(`DMHY 数据源未标识 Preview：${JSON.stringify(dmhy)}`);
+  if (!dmhy || dmhy.name.includes('（预览）')) throw new Error(`W65 已过门禁但数据源仍停留 Preview：${JSON.stringify(dmhy)}`);
   if (pageErrors.length) throw new Error(`渲染错误：${pageErrors.join('\n')}`);
 
   const evidence = {

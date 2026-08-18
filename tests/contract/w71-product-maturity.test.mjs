@@ -16,7 +16,7 @@ describe('W71 产品入口成熟度单源', () => {
       updater: MATURITY.HIDDEN,
       feed: MATURITY.HIDDEN,
       agent: MATURITY.HIDDEN,
-      dmhy: MATURITY.PREVIEW,
+      dmhy: MATURITY.FORMAL,
       recorder: MATURITY.PREVIEW,
       plugins: MATURITY.PREVIEW,
       ocr: MATURITY.PREVIEW,
@@ -55,13 +55,14 @@ describe('W71 产品入口成熟度单源', () => {
     assert.ok(!help.includes('## 检查更新'));
   });
 
-  test('Preview 在原生面板、帮助与 DMHY 数据源均不可误认成 Formal', () => {
+  test('保留 Preview 的工具继续明示；已过门禁的四站数据源转为 Formal', () => {
     for (const file of ['renderer/panels/archive.html', 'renderer/panels/plugins.html', 'renderer/panels/recorder.html']) {
       assert.match(read(file), /预览/);
     }
     assert.match(read('renderer/help/content.js'), /插件系统（预览/);
-    assert.match(read('main/torrent-sites.js'), /DMHY（预览）/);
-    assert.match(read('renderer/modules/viewer/player.js'), /DMHY（预览）/);
+    assert.doesNotMatch(read('main/torrent-sites.js'), /（预览）/);
+    assert.doesNotMatch(read('renderer/modules/viewer/player.js'), /DMHY（预览）/);
+    assert.match(read('renderer/modules/viewer/player.js'), /sites:searchMany/);
   });
 
   test('FFmpeg core 未闭环时转码子能力 Hidden 且发行物双重排除', () => {
