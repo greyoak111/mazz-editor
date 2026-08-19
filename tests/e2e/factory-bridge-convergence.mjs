@@ -8,6 +8,7 @@ const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-factory-bridge-user
 const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-factory-bridge-ws-'));
 const sourcePath = path.join(workspace, '跨模块材料.md');
 const evidencePath = path.join(root, 'docs', 'engineering', 'evidence', 'FACTORY_BRIDGE_RUNTIME.json');
+const screenshotPath = path.join(root, 'docs', 'engineering', 'evidence', 'FACTORY_BRIDGE_RUNTIME.png');
 fs.writeFileSync(sourcePath, '# 跨模块材料\n\n这是由全局命令送入智能创作的事实材料。\n', 'utf8');
 let app;
 
@@ -16,6 +17,10 @@ try {
     args: [root], timeout: 120000,
     env: { ...process.env, NODE_ENV: 'test', MAZZ_E2E_USER_DATA: userData, MAZZ_E2E_WORKSPACE: workspace, MAZZ_GPU_MODE: 'safe' },
   });
+  const mainLogs = [];
+  const mainProcess = app.process();
+  mainProcess.stdout?.on('data', chunk => mainLogs.push({ stream: 'stdout', text: String(chunk) }));
+  mainProcess.stderr?.on('data', chunk => mainLogs.push({ stream: 'stderr', text: String(chunk) }));
   const page = await app.firstWindow({ timeout: 120000 });
   const errors = [];
   page.on('pageerror', error => errors.push(String(error?.stack || error)));
@@ -103,11 +108,16 @@ try {
     document.querySelector('.factory-desk [data-a=economics]').click();
     return { metrics: metrics.length, preview: document.querySelector('.factory-desk .fd-preview')?.textContent || '', economics: [...document.querySelectorAll('.modal-title,.mz-modal-title')].some(node => /成本对账/.test(node.textContent || '')) || document.body.textContent.includes('Factory 成本对账') };
   }, seeded);
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+
+  const mainFatalLogs = mainLogs.filter(row => /uncaught|unhandled|typeerror|referenceerror|fatal error/i.test(row.text));
 
   const result = {
     schema: 'mazz.factory-bridge-runtime-evidence/v0', ok: true, feed, revision, conflict,
     mobile: { schema: mobile.schema, kind: mobile.kind, clientGate: mobile.clientGate, fieldClientAvailable: mobile.fieldClientAvailable, executionAuthorized: mobile.executionAuthorized },
     dragged: { inserted: dragged.text.includes(dragged.syntax), syntax: dragged.syntax }, dashboard, pageErrors: errors,
+    mainProcess: { stdoutChunks: mainLogs.filter(row => row.stream === 'stdout').length, stderrChunks: mainLogs.filter(row => row.stream === 'stderr').length, fatalLogs: mainFatalLogs.map(row => row.text.trim()).filter(Boolean) },
+    screenshot: path.relative(root, screenshotPath).replace(/\\/g, '/'),
   };
   if (!feed.found || feed.automaticStart !== false || feed.executionAuthorized !== false) throw new Error(`随处投喂越权或未接线: ${JSON.stringify(feed)}`);
   if (!revision.saved || revision.records !== 1 || revision.reviewStatus !== 'RE_REVIEW_REQUIRED' || !revision.flowHasDiff) throw new Error(`工件双态/重审未落盘: ${JSON.stringify(revision)}`);
@@ -116,6 +126,7 @@ try {
   if (!result.dragged.inserted) throw new Error(`活引用拖拽未插入: ${JSON.stringify(result.dragged)}`);
   if (dashboard.metrics < 9 || !dashboard.preview || !dashboard.economics) throw new Error(`看板钻取/对账入口未接线: ${JSON.stringify(dashboard)}`);
   if (errors.length) throw new Error(`renderer pageerror: ${errors.join('\n')}`);
+  if (mainFatalLogs.length) throw new Error(`main process fatal log: ${mainFatalLogs.map(row => row.text).join('\n')}`);
   fs.writeFileSync(evidencePath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
   console.log(JSON.stringify({ ok: true, feed: true, revision: true, conflict: true, mobileGate: mobile.clientGate, liveReference: true, dashboardMetrics: dashboard.metrics, pageErrors: errors.length }));
 } finally {

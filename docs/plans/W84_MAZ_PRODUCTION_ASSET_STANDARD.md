@@ -1,7 +1,7 @@
 # W84 `.maz` Production Asset Standard
 ## Portable / Inspectable / Versioned Production Definition
 
-> 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
+> 状态：`W84a–W84f LOCAL PRODUCTION ASSET CONTRACT LANDED / MARKETPLACE EXCLUDED`
 > 版本：v0.2
 > 登记日期：2026-08-16
 > 来源：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》

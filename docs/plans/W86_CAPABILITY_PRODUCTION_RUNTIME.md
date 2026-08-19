@@ -1,7 +1,7 @@
 # W86 Capability Production Runtime
 ## Physical Production Extension / 物理生产能力扩展
 
-> 状态：`RESEARCH ARCHITECTURE REGISTERED / FAR POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
+> 状态：`W86a–W86d SIMULATION/READ-ONLY LANDED / W86e EXTERNAL SAFETY REVIEW CONDITIONAL`
 > 版本：v0.1
 > 登记日期：2026-08-16
 > 来源：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》

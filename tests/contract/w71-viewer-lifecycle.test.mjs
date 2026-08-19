@@ -82,9 +82,12 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
     const originalPlay = mediaProto.play;
     const originalPause = mediaProto.pause;
     const originalLoad = mediaProto.load;
+    const canvasProto = window.HTMLCanvasElement.prototype;
+    const originalGetContext = canvasProto.getContext;
     mediaProto.play = () => Promise.resolve();
     mediaProto.pause = () => {};
     mediaProto.load = () => {};
+    canvasProto.getContext = () => null;
 
     const originalSetInterval = globalThis.setInterval;
     const originalClearInterval = globalThis.clearInterval;
@@ -137,7 +140,7 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
       assert.equal(listeners.get('w:mouseup').size, 1);
       assert.equal(listeners.get('d:fullscreenchange').size, 1);
       assert.equal(listeners.get('d:keydown').size, 1);
-      assert.equal(activeIntervals.size, 1, '进度记忆 interval 应被纳入生命周期');
+      assert.equal(activeIntervals.size, 2, '进度记忆与 P2P 状态轮询 interval 都应纳入生命周期');
 
       const media = root.querySelector('.mz-media');
       media.setAttribute('src', 'mazz-res://media/test.mp4');
@@ -158,6 +161,7 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
       mediaProto.play = originalPlay;
       mediaProto.pause = originalPause;
       mediaProto.load = originalLoad;
+      canvasProto.getContext = originalGetContext;
       for (const id of activeIntervals) originalClearInterval(id);
     }
   });

@@ -8,24 +8,24 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 603,
-    "filesWithFindings": 61,
+    "totalFindings": 619,
+    "filesWithFindings": 63,
     "byRule": {
       "fixed-width-px": 183,
-      "white-space-nowrap": 113,
-      "position-absolute": 142,
-      "fixed-min-width": 78,
+      "white-space-nowrap": 120,
+      "position-absolute": 146,
+      "fixed-min-width": 80,
       "sidebar-pixel-coupling": 10,
-      "fixed-left-right": 29,
+      "fixed-left-right": 30,
       "width-100vw": 8,
-      "resize-js-layout": 21,
-      "calc-viewport-or-container": 8,
+      "resize-js-layout": 22,
+      "calc-viewport-or-container": 9,
       "flex-shrink-zero": 11
     },
     "topFiles": [
       {
         "file": "renderer/styles/base.css",
-        "count": 319
+        "count": 332
       },
       {
         "file": "renderer/base.css",
@@ -145,11 +145,11 @@
       }
     ],
     "byProvisionalClass": {
-      "D": 284,
-      "A": 173,
-      "B": 78,
-      "E": 39,
-      "C": 29
+      "D": 290,
+      "A": 178,
+      "B": 80,
+      "E": 41,
+      "C": 30
     }
   },
   "findings": [
@@ -815,70 +815,70 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 243,
+      "line": 252,
       "sample": "try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 244,
+      "line": 253,
       "sample": "window.addEventListener('resize', syncBounds);"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 292,
+      "line": 301,
       "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 300,
+      "line": 309,
       "sample": ".htop{position:fixed;top:14px;right:16px;display:flex;gap:6px;align-items:center;z-index:9}"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/browser/index.js",
-      "line": 304,
+      "line": 313,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 304,
+      "line": 313,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 1173,
+      "line": 1187,
       "sample": "<div style=\"font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1175,
+      "line": 1189,
       "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 1313,
+      "line": 1327,
       "sample": "// 幽灵三钩①（页签一切一炸一片实锤）：切回必显——显隐不再靠 ResizeObserver/偶发事件赏饭"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1481,
+      "line": 1496,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
     },
     {
@@ -910,164 +910,171 @@
       "sample": "if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(wrap);"
     },
     {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/modules/factory/desk.js",
+      "line": 381,
+      "sample": "m.body.innerHTML = `<div style=\"min-width:420px;display:grid;gap:10px\">"
+    },
+    {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/factory/desk.js",
-      "line": 494,
+      "line": 603,
       "sample": "ctl.resizeObserver = new ResizeObserver(entries => {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 346,
+      "line": 356,
       "sample": "<label class=\"fc-check\" title=\"每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停\">预算 <input type=\"number\" class=\"fc-review-budget\" min=\"8000\" step=\"1000\" value=\"32000\" style=\"width:72px\"> token</label>"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 349,
+      "line": 359,
       "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 790,
+      "line": 806,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-height:60vh;overflow:auto\">${ids.map(id => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 846,
+      "line": 862,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;max-height:55vh;overflow:auto\">${this.styles.length ? this.styles.map(s => `"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 3280,
+      "line": 3402,
       "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 3390,
+      "line": 3512,
       "sample": "<div style=\"min-width:420px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 3461,
+      "line": 3583,
       "sample": "<div style=\"min-width:460px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 207,
+      "line": 208,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 248,
+      "line": 249,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 949,
+      "line": 950,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 951,
+      "line": 952,
       "sample": "ctl._flowRO = new ResizeObserver(() => layOut());"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 1031,
+      "line": 1032,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:320px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 1140,
+      "line": 1141,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 1190,
+      "line": 1191,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\"><b>${ctl.batchSel.size} 本移到分类</b>"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/library/index.js",
-      "line": 1297,
+      "line": 1298,
       "sample": "<span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"${(r.pattern || '').replace(/\"/g, '&quot;')}\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 1317,
+      "line": 1318,
       "sample": "<div style=\"min-width:480px;max-width:620px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1320,
+      "line": 1321,
       "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 1321,
+      "line": 1322,
       "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1324,
+      "line": 1325,
       "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/markdown/index.js",
-      "line": 412,
+      "line": 421,
       "sample": "<td><input class=\"rb-input sm-size\" type=\"number\" min=\"6\" max=\"72\" value=\"${(sm[k].size || 21) / 2}\" style=\"width:56px\"></td>"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/markdown/index.js",
-      "line": 415,
+      "line": 424,
       "sample": "<td><input class=\"rb-input sm-color\" value=\"${sm[k].color || ''}\" placeholder=\"2E74B5\" style=\"width:76px\"></td>"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/markdown/index.js",
-      "line": 416,
+      "line": 425,
       "sample": "<td><input class=\"rb-input sm-font\" value=\"${sm[k].font || ''}\" placeholder=\"默认\" style=\"width:110px\"></td>"
     },
     {
@@ -1111,6 +1118,13 @@
       "file": "renderer/modules/notes/index.js",
       "line": 31,
       "sample": "<button class=\"rb-btn\" data-a=\"refresh\" title=\"重建笔记索引\" style=\"min-width:30px\">↻</button>"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/modules/organization/index.js",
+      "line": 29,
+      "sample": ".org-root{height:100%;overflow:auto;padding:22px;background:var(--bg,#171a21);color:var(--fg,#e5e7eb);font:14px/1.5 system-ui}.org-shell{max-width:1180px;margin:auto}.org-head{display:flex;gap:14px;align-items:end;flex-wrap:wrap;padding:18px;border:1px solid #394052;border-radius:12px;background:#20242e}.org-field{disp"
     },
     {
       "rule": "fixed-min-width",
@@ -1213,6 +1227,13 @@
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
+      "file": "renderer/modules/viewer/danmaku.js",
+      "line": 282,
+      "sample": "window.addEventListener('resize', resize);"
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
       "file": "renderer/modules/viewer/imgedit.js",
       "line": 99,
       "sample": "this._ro = new ResizeObserver(() => { this._repaint(); this._crop && this._cropRender({ x: this._crop.x0, y: this._crop.y0 }, { x: this._crop.x1, y: this._crop.y1 }); }); // 59e：a 也要 {x,y} 形——直传 _crop 是 NaNpx 死信（W66 潜伏期实锤）"
@@ -1221,28 +1242,28 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/viewer/index.js",
-      "line": 136,
+      "line": 166,
       "sample": "<div class=\"vf-progress\" style=\"display:none;width:260px\"></div>"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/viewer/player.js",
-      "line": 99,
+      "line": 103,
       "sample": "empty.style.cssText = 'position:absolute;left:0;top:0;bottom:0;right:var(--mz-side-w,0px);display:grid;place-items:center;background:#101014;z-index:3'; // 黑画面中央：侧栏推挤同步收窄（列表开不在列表下居中——真机点名校正）"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/viewer/player.js",
-      "line": 227,
+      "line": 231,
       "sample": "<div style=\"min-width:420px;font-size:12.5px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1241,
+      "line": 1284,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {
@@ -1998,42 +2019,42 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 330,
+      "line": 333,
       "sample": "<div style=\"min-width:560px;max-width:720px\">"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/shell/shell.js",
-      "line": 336,
+      "line": 339,
       "sample": "<div style=\"font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${s.name}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3379,
+      "line": 3400,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3394,
+      "line": 3415,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3416,
+      "line": 3437,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/sidebar-panels.js",
-      "line": 137,
+      "line": 147,
       "sample": "<div style=\"min-width:420px\">"
     },
     {
@@ -2131,2142 +2152,2233 @@
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 94,
+      "line": 99,
       "sample": ".fd-health-metric i { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--fg-dim); font-style:normal; font-size:9px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 110,
+      "line": 115,
       "sample": ".fd-dir-event { min-width:0; font-size:10px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 111,
+      "line": 116,
       "sample": ".fd-dir-event i { flex:none; min-width:28px; font-style:normal; color:var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 115,
+      "line": 120,
       "sample": ".fd-empty { position:absolute; inset:0; display:grid; place-items:center; color:var(--fg-dim); font-size:12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 119,
+      "line": 124,
       "sample": ".fd-card.collapsed > b, .fd-card header > b { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 121,
+      "line": 126,
       "sample": ".fd-fold { flex:none; width:23px; height:23px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:16px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 148,
+      "line": 153,
       "sample": ".fd-table-wrap table { border-collapse:collapse; min-width:100%; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 148,
+      "line": 153,
       "sample": ".fd-table-wrap table { border-collapse:collapse; min-width:100%; white-space:nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 152,
+      "line": 157,
       "sample": ".fd-progress span { position:absolute; right:4px; top:-14px; color:var(--fg-dim); font-size:8px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 165,
+      "line": 172,
       "sample": ".fd-files button { width:100%; display:flex; align-items:center; gap:6px; border:0; border-radius:5px; padding:5px 7px 5px calc(7px + var(--depth, 0) * 9px); background:transparent; color:var(--fg); text-align:left; cursor:pointer; font:inherit; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowra"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 169,
+      "line": 176,
       "sample": ".fd-preview > header b { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 181,
+      "line": 188,
       "sample": ".fd-directory,.fd-compare { position:absolute; z-index:5; top:0; bottom:0; width:min(80%,280px); box-shadow:0 8px 30px #0004; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 183,
+      "line": 190,
       "sample": ".fd-compare { right:0; transform:translateX(calc(100% - 34px)); transition:transform .18s; }.fd-compare:hover,.fd-compare:focus-within { transform:none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 184,
+      "line": 191,
       "sample": ".fd-center { height:100%; padding:0 34px; }.fd-pins { min-height:52px; }.fd-pin,.fd-stat { min-width:102px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 191,
+      "line": 198,
       "sample": ".factory-desk.narrow .fd-directory,.factory-desk.narrow .fd-compare { position:absolute; z-index:5; top:0; bottom:0; width:min(80%,280px); box-shadow:0 8px 30px #0004; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 194,
+      "line": 201,
       "sample": ".factory-desk.narrow .fd-compare { right:0; transform:translateX(calc(100% - 34px)); transition:transform .18s; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 198,
+      "line": 205,
       "sample": ".factory-desk.narrow .fd-pin,.factory-desk.narrow .fd-stat { min-width:102px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 204,
+      "line": 211,
       "sample": "width: 232px; max-width: 32vw; flex: none; background: var(--bg-elev); border-right: 1px solid var(--border);"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 207,
+      "line": 214,
       "sample": ".sidebar.hidden { margin-left: -232px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 208,
+      "line": 215,
       "sample": ".sidebar-head { padding: 8px 10px; font-size: 11px; color: var(--fg-dim); display: flex; justify-content: space-between; align-items: center; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 212,
+      "line": 219,
       "sample": ".ft-node { display: flex; align-items: center; gap: 5px; padding: 3px 6px; border-radius: 5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 215,
+      "line": 222,
       "sample": ".ft-node .ft-ico { width: 15px; text-align: center; flex: none; font-size: 11px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 228,
+      "line": 235,
       "sample": ".tab .t-name { display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 230,
+      "line": 237,
       "sample": ".tab .t-icon .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 231,
+      "line": 238,
       "sample": ".tab .t-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 233,
+      "line": 240,
       "sample": ".tab .t-close { border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 4px; width: 17px; height: 17px; font-size: 11px; line-height: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 236,
+      "line": 243,
       "sample": ".module-view { position: absolute; inset: 0; display: none; overflow: auto; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 260,
+      "line": 267,
       "sample": ".statusbar .st { padding: 1px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 269,
+      "line": 276,
       "sample": "position: fixed; z-index: 9000; min-width: 210px; padding: 5px;"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 277,
+      "line": 284,
       "sample": ".mazz-menu-icon { width: 17px; text-align: center; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 295,
+      "line": 302,
       "sample": ".pi-icon { width: 16px; text-align: center; flex: none; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 296,
+      "line": 303,
       "sample": ".pi-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 297,
+      "line": 304,
       "sample": ".pi-detail { color: var(--fg-dim); font-size: 11px; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 305,
+      "line": 312,
       "sample": "position: fixed; bottom: 40px; left: 12px; z-index: 9200; /* W52③ toast 挪位：状态栏上方左侧（永不盖浏览器视图区——浮层遣散之一） */"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 318,
+      "line": 325,
       "sample": "position: absolute; top: 0; left: 0; right: 0; z-index: 500; display: flex; gap: 10px; align-items: center;"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 356,
+      "line": 363,
       "sample": "position: absolute; top: 10px; right: 16px; z-index: 400;"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 356,
+      "line": 363,
       "sample": "position: absolute; top: 10px; right: 16px; z-index: 400;"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 359,
+      "line": 366,
       "sample": ".findbar input { background: var(--bg); border: 1px solid var(--border); color: var(--fg); border-radius: 6px; padding: 5px 9px; font-size: 12.5px; width: 168px; outline: none; font-family: var(--font-ui); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 361,
+      "line": 368,
       "sample": ".findbar .f-count { font-size: 11px; color: var(--fg-dim); min-width: 48px; text-align: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 370,
+      "line": 377,
       "sample": "position: absolute; z-index: 600; display: flex; gap: 4px; align-items: center;"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 373,
+      "line": 380,
       "sample": ".link-bubble a { color: var(--accent); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 400,
+      "line": 407,
       "sample": ".sg-root { position: absolute; inset: 0; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 401,
+      "line": 408,
       "sample": ".sg-scroll { position: absolute; left: 46px; top: 26px; right: 0; bottom: 0; overflow: scroll; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 401,
+      "line": 408,
       "sample": ".sg-scroll { position: absolute; left: 46px; top: 26px; right: 0; bottom: 0; overflow: scroll; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 404,
+      "line": 411,
       "sample": "position: absolute; padding: 3px 6px; font-size: 12.5px; overflow: hidden; white-space: nowrap;"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 404,
+      "line": 411,
       "sample": "position: absolute; padding: 3px 6px; font-size: 12.5px; overflow: hidden; white-space: nowrap;"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 410,
+      "line": 417,
       "sample": ".sg-corner { position: absolute; left: 0; top: 0; width: 46px; height: 26px; background: var(--bg-elev); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 30; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 410,
+      "line": 417,
       "sample": ".sg-corner { position: absolute; left: 0; top: 0; width: 46px; height: 26px; background: var(--bg-elev); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 30; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 411,
+      "line": 418,
       "sample": ".sg-colhead { position: absolute; left: 46px; top: 0; right: 0; height: 26px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-bottom: 1px solid var(--border); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 411,
+      "line": 418,
       "sample": ".sg-colhead { position: absolute; left: 46px; top: 0; right: 0; height: 26px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-bottom: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 413,
+      "line": 420,
       "sample": ".sg-rowhead { position: absolute; left: 0; top: 26px; bottom: 0; width: 46px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-right: 1px solid var(--border); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 413,
+      "line": 420,
       "sample": ".sg-rowhead { position: absolute; left: 0; top: 26px; bottom: 0; width: 46px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-right: 1px solid var(--border); }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 416,
-      "sample": "position: absolute; display: flex; align-items: center; justify-content: center;"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 421,
-      "sample": ".sg-rowhead .sg-hcell { left: 0; width: 46px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 423,
-      "sample": ".sg-sel { position: absolute; display: none; background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); z-index: 10; pointer-events: none; }"
+      "sample": "position: absolute; display: flex; align-items: center; justify-content: center;"
     },
     {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 424,
-      "sample": ".sg-active { position: absolute; display: none; border: 2px solid var(--accent); z-index: 11; pointer-events: none; box-shadow: 0 0 0 1px var(--bg); }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 425,
-      "sample": ".sg-fillhandle { position: absolute; display: none; width: 8px; height: 8px; background: var(--accent); border: 1px solid var(--bg); z-index: 12; cursor: crosshair; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 426,
-      "sample": ".sg-fzrow { position: absolute; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-bottom: 2px solid var(--accent); }"
-    },
-    {
-      "rule": "fixed-left-right",
-      "provisionalClass": "C",
-      "file": "renderer/styles/base.css",
-      "line": 428,
-      "sample": ".sg-fzcol { position: absolute; left: 46px; bottom: 0; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-right: 2px solid var(--accent); }"
-    },
-    {
-      "rule": "position-absolute",
+      "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 428,
-      "sample": ".sg-fzcol { position: absolute; left: 46px; bottom: 0; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-right: 2px solid var(--accent); }"
+      "sample": ".sg-rowhead .sg-hcell { left: 0; width: 46px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 430,
+      "sample": ".sg-sel { position: absolute; display: none; background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); z-index: 10; pointer-events: none; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 431,
+      "sample": ".sg-active { position: absolute; display: none; border: 2px solid var(--accent); z-index: 11; pointer-events: none; box-shadow: 0 0 0 1px var(--bg); }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 432,
+      "sample": ".sg-fillhandle { position: absolute; display: none; width: 8px; height: 8px; background: var(--accent); border: 1px solid var(--bg); z-index: 12; cursor: crosshair; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 433,
+      "sample": ".sg-fzrow { position: absolute; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-bottom: 2px solid var(--accent); }"
+    },
+    {
+      "rule": "fixed-left-right",
+      "provisionalClass": "C",
+      "file": "renderer/styles/base.css",
+      "line": 435,
+      "sample": ".sg-fzcol { position: absolute; left: 46px; bottom: 0; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-right: 2px solid var(--accent); }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 435,
+      "sample": ".sg-fzcol { position: absolute; left: 46px; bottom: 0; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-right: 2px solid var(--accent); }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 437,
       "sample": ".sg-fzcorner { position: absolute; display: none; overflow: hidden; z-index: 25; background: var(--bg); border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 432,
+      "line": 439,
       "sample": "position: absolute; z-index: 40; border: 2px solid var(--accent); outline: none;"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 437,
+      "line": 444,
       "sample": ".sg-tab { padding: 4px 14px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; color: var(--fg-dim); border: 1px solid transparent; border-bottom: 0; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 442,
+      "line": 449,
       "sample": ".sg-chart { position: absolute; left: 60px; top: 50px; width: 480px; height: 340px; z-index: 50; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 442,
+      "line": 449,
       "sample": ".sg-chart { position: absolute; left: 60px; top: 50px; width: 480px; height: 340px; z-index: 50; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }"
     },
     {
       "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 442,
-      "sample": ".sg-chart { position: absolute; left: 60px; top: 50px; width: 480px; height: 340px; z-index: 50; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 445,
-      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 445,
-      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
-    },
-    {
-      "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 449,
+      "sample": ".sg-chart { position: absolute; left: 60px; top: 50px; width: 480px; height: 340px; z-index: 50; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 452,
+      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 452,
+      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 456,
       "sample": ".sl-editor { width: 340px; flex: none; border-right: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 454,
+      "line": 461,
       "sample": ".sl-v2-side { width: 220px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--bg-elev); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 460,
+      "line": 467,
       "sample": ".sl-v2-page .no { flex: none; width: 18px; text-align: center; font-size: 10.5px; opacity: .6; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 461,
+      "line": 468,
       "sample": ".sl-v2-page .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 480,
+      "line": 487,
       "sample": ".sl-v2-props input[type=number] { width: 58px; background: var(--bg); border: 1px solid var(--border); color: var(--fg); border-radius: 6px; padding: 2px 6px; font-size: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 499,
+      "line": 506,
       "sample": ".sl-thumb { width: 148px; flex: none; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; position: relative; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 500,
+      "line": 507,
       "sample": ".sl-thumb .sl-slide { width: 800px; transform: scale(.185) !important; transform-origin: top left !important; pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 502,
+      "line": 509,
       "sample": ".sl-elements .sl-el { position: absolute; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 506,
+      "line": 513,
       "sample": ".sl-handle { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: var(--accent); border-radius: 2px; cursor: nwse-resize; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 506,
+      "line": 513,
       "sample": ".sl-handle { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: var(--accent); border-radius: 2px; cursor: nwse-resize; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 507,
+      "line": 514,
       "sample": ".sl-ghost { position: absolute; border: 2px dashed var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); z-index: 5; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 511,
+      "line": 518,
       "sample": ".sl-stage { width: 100vw; height: 100vh; display: grid; place-items: center; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 512,
+      "line": 519,
       "sample": ".sl-stage .sl-slide { width: 100vw; height: 100vh; border-radius: 0; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 513,
+      "line": 520,
       "sample": ".sl-pageno { position: fixed; right: 18px; bottom: 14px; color: #94a3b8; font-size: 12px; z-index: 9600; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 514,
+      "line": 521,
       "sample": ".sl-pv-bar { position: fixed; left: 14px; bottom: 12px; display: flex; gap: 8px; z-index: 9600; opacity: .25; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 517,
+      "line": 524,
       "sample": ".sl-pv { display: flex; width: 100vw; height: 100vh; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 526,
+      "line": 533,
       "sample": ".sl-pv2-wrap { display: flex; width: 100vw; height: 100vh; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 530,
+      "line": 537,
       "sample": ".sl-pv2-layer { position: absolute; inset: 0; will-change: transform, opacity; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 534,
+      "line": 541,
       "sample": ".sl-remote-card { position: fixed; right: 18px; bottom: 18px; z-index: 8800; width: 220px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--fg-dim); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 534,
+      "line": 541,
       "sample": ".sl-remote-card { position: fixed; right: 18px; bottom: 18px; z-index: 8800; width: 220px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--fg-dim); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 563,
+      "line": 570,
       "sample": ".toc-panel { width: 210px; flex: none; overflow-y: auto; background: var(--bg-elev); border-left: 1px solid var(--border); padding: 10px 8px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 565,
+      "line": 572,
       "sample": ".toc-item { padding: 3px 8px; font-size: 12.5px; cursor: pointer; border-radius: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 575,
+      "line": 582,
       "sample": ".pm-page td, .pm-page th { min-width: 60px; vertical-align: top; position: relative; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 576,
+      "line": 583,
       "sample": ".pm-page .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: var(--accent); cursor: col-resize; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 603,
+      "line": 610,
       "sample": ".pane-empty { position: absolute; inset: 0; top: 34px; display: none; place-items: center; color: var(--fg-dim); font-size: 12.5px; z-index: 5; pointer-events: none; text-align: center; padding: 20px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 604,
+      "line": 611,
       "sample": ".pane-close { margin-left: auto; align-self: center; border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 4px; width: 22px; height: 22px; font-size: 11px; line-height: 1; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 610,
+      "line": 617,
       "sample": ".br-nav { border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 5px; width: 28px; height: 26px; font-size: 13px; flex: none; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 623,
+      "line": 630,
       "sample": ".br-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 624,
+      "line": 631,
       "sample": ".br-tab-close { border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 3px; font-size: 10px; width: 15px; height: 15px; line-height: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 628,
+      "line": 635,
       "sample": ".br-view-wrap { position: absolute; inset: 0; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 633,
+      "line": 640,
       "sample": ".browser-root.panel-open .br-panel { width: 360px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 657,
+      "line": 664,
       "sample": ".code-term-grip::before { content:\"\"; position:absolute; left:calc(50% - 28px); top:2px; width:56px; height:3px; border-radius:3px; background:var(--border); transition:background .12s,width .12s,left .12s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 657,
+      "line": 664,
       "sample": ".code-term-grip::before { content:\"\"; position:absolute; left:calc(50% - 28px); top:2px; width:56px; height:3px; border-radius:3px; background:var(--border); transition:background .12s,width .12s,left .12s; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 658,
+      "line": 665,
       "sample": ".code-term-grip:hover::before, .code-root.term-resizing .code-term-grip::before { left:calc(50% - 42px); width:84px; background:var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 674,
+      "line": 681,
       "sample": ".term-view { position: absolute; inset: 0; padding: 4px 8px; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 683,
+      "line": 690,
       "sample": ".math-role { flex: none; width: 20px; text-align: right; color: var(--accent); font-weight: 700; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 699,
+      "line": 706,
       "sample": ".debug-bp { width: 10px; height: 10px; border-radius: 50%; background: #f87171; margin-left: 5px; margin-top: 4px; cursor: pointer; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 702,
+      "line": 709,
       "sample": ".debug-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 0; overflow: hidden; background: var(--bg-elev); border-left: 1px solid var(--border); display: flex; flex-direction: column; transition: width .15s; z-index: 20; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 703,
+      "line": 710,
       "sample": ".debug-panel.on { width: 320px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 705,
+      "line": 712,
       "sample": ".debug-controls button { border: 0; background: var(--bg-active); color: var(--fg); border-radius: 6px; width: 34px; height: 26px; cursor: pointer; font-size: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 731,
+      "line": 738,
       "sample": ".pk-size-input { width: 52px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 732,
+      "line": 739,
       "sample": ".pk-drop { display: none; position: absolute; top: 28px; left: 0; z-index: 8000; min-width: 180px; max-height: 280px; overflow-y: auto; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); padding: 4px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 732,
+      "line": 739,
       "sample": ".pk-drop { display: none; position: absolute; top: 28px; left: 0; z-index: 8000; min-width: 180px; max-height: 280px; overflow-y: auto; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); padding: 4px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 733,
+      "line": 740,
       "sample": ".pk-item { padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12.5px; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 737,
+      "line": 744,
       "sample": ".pk-swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--border); border-radius: 2px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 738,
+      "line": 745,
       "sample": ".pk-palette { min-width: 230px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 740,
+      "line": 747,
       "sample": ".pk-cell { width: 20px; height: 20px; border-radius: 3px; cursor: pointer; border: 1px solid rgba(0,0,0,.1); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 743,
+      "line": 750,
       "sample": ".pk-native { width: 40px; height: 24px; border: 0; background: none; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 754,
+      "line": 761,
       "sample": ".bm-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 772,
+      "line": 779,
       "sample": ".notes-side { width: 240px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; overflow: hidden; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 772,
+      "line": 779,
       "sample": ".notes-side { width: 240px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; overflow: hidden; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 779,
+      "line": 786,
       "sample": ".notes-item .n-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 780,
+      "line": 787,
       "sample": ".notes-item .n-date { font-size: 10.5px; color: var(--fg-dim, #a3a19a); flex-shrink: 0; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 784,
+      "line": 791,
       "sample": ".notes-backlinks { border-top: 1px solid var(--bd, #e0ded8); max-height: 180px; overflow-y: auto; padding: 8px 12px; flex-shrink: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 788,
+      "line": 795,
       "sample": ".notes-bl-ctx { font-size: 11px; color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 14px; }"
-    },
-    {
-      "rule": "fixed-left-right",
-      "provisionalClass": "C",
-      "file": "renderer/styles/base.css",
-      "line": 791,
-      "sample": ".notes-graph-legend { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 791,
-      "sample": ".notes-graph-legend { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 796,
-      "sample": ".gs-input { flex: 1; min-width: 220px; border: 1.5px solid var(--bd, #e0ded8); background: var(--bg, #fff); color: var(--fg, #2c2c2a); border-radius: 8px; padding: 9px 14px; font-size: 14px; outline: none; }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 802,
-      "sample": ".gs-research-topic { min-width: 180px; flex: 1; border: 1px solid var(--bd, #e0ded8); border-radius: 7px; padding: 7px 9px; color: var(--fg, #2c2c2a); background: var(--bg, #fff); outline: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 808,
-      "sample": ".gs-research-source b, .gs-research-source small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+      "line": 799,
+      "sample": ".sb-context-item .sb-item-t b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 800,
+      "sample": ".sb-context-item .sb-item-t small { color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 804,
+      "sample": ".sb-relation-row > div { padding-right: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 806,
+      "sample": ".sb-relation-actions { position: absolute; right: 5px; top: 5px; display: flex; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 807,
+      "sample": ".sb-history-toggle { flex: 1; font-size: 11px; color: var(--fg-dim, #a3a19a); white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 817,
+      "sample": ".sb-history-event em { font-style: normal; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 824,
+      "sample": ".sb-cognition-row small, .sb-cognition-row em { font-size: 10px; color: var(--fg-dim, #a3a19a); font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "fixed-left-right",
+      "provisionalClass": "C",
+      "file": "renderer/styles/base.css",
+      "line": 832,
+      "sample": ".notes-graph-legend { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 832,
+      "sample": ".notes-graph-legend { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 837,
+      "sample": ".gs-input { flex: 1; min-width: 220px; border: 1.5px solid var(--bd, #e0ded8); background: var(--bg, #fff); color: var(--fg, #2c2c2a); border-radius: 8px; padding: 9px 14px; font-size: 14px; outline: none; }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 843,
+      "sample": ".gs-research-topic { min-width: 180px; flex: 1; border: 1px solid var(--bd, #e0ded8); border-radius: 7px; padding: 7px 9px; color: var(--fg, #2c2c2a); background: var(--bg, #fff); outline: 0; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 849,
+      "sample": ".gs-research-source b, .gs-research-source small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 858,
       "sample": ".gs-file-path { font-size: 11px; color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 818,
+      "line": 859,
       "sample": ".gs-hit { padding: 3px 6px 3px 18px; font-size: 12.5px; color: var(--fg, #2c2c2a); cursor: pointer; border-radius: 5px; font-family: var(--font-mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 827,
+      "line": 868,
       "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 827,
+      "line": 868,
       "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 827,
+      "line": 868,
       "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 829,
+      "line": 870,
       "sample": ".mm-source-hook-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 831,
+      "line": 872,
       "sample": ".distill-preview-modal .mazz-palette { width: min(760px, calc(100vw - 40px)); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 839,
+      "line": 880,
       "sample": ".distill-action { min-width: 84px; height: 34px; padding: 0 13px; border: 1px solid var(--bd, #d8d6cf); border-radius: 7px; background: var(--bg, #fff); color: var(--fg, #2d2b29); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 845,
+      "line": 886,
       "sample": ".mm-editor { position: absolute; z-index: 10; border: 1.5px solid var(--acc, #4f46e5); border-radius: 8px; padding: 3px 8px; font-size: 13px; outline: none; box-shadow: 0 4px 16px rgba(0,0,0,.12); background: var(--card, #fff); color: var(--fg, #2c2c2a); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 846,
+      "line": 887,
       "sample": ".mm-hint { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 846,
+      "line": 887,
       "sample": ".mm-hint { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 852,
+      "line": 893,
       "sample": ".draw-canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 853,
+      "line": 894,
       "sample": ".draw-tool-strip { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; gap: 5px; background: var(--card, #fff); border: 1px solid var(--bd, #e0ded8); border-radius: 10px; padding: 7px 10px; box-shadow: 0 4px 16px rgba(0,0,0,.10); z-index"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 857,
+      "line": 898,
       "sample": ".draw-tool-strip input[type=color] { width: 28px; height: 28px; border: 1px solid var(--bd, #e0ded8); border-radius: 6px; padding: 1px; background: none; cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 858,
+      "line": 899,
       "sample": ".draw-tool-strip input[type=range] { width: 90px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 859,
+      "line": 900,
       "sample": ".draw-size-v { font-size: 11.5px; color: var(--fg-dim, #a3a19a); min-width: 18px; text-align: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 861,
+      "line": 902,
       "sample": ".draw-palette i { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.15); cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 863,
+      "line": 904,
       "sample": ".draw-side { width: 190px; flex-shrink: 0; border-left: 1px solid var(--bd, #e0ded8); overflow-y: auto; background: var(--bg, #fff); }"
-    },
-    {
-      "rule": "flex-shrink-zero",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 863,
-      "sample": ".draw-side { width: 190px; flex-shrink: 0; border-left: 1px solid var(--bd, #e0ded8); overflow-y: auto; background: var(--bg, #fff); }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 871,
-      "sample": ".draw-layer .lv-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
-    },
-    {
-      "rule": "flex-shrink-zero",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 879,
-      "sample": ".draw-frames { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-top: 1px solid var(--bd, #e0ded8); background: var(--bg, #fff); flex-shrink: 0; }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 882,
-      "sample": ".draw-frame { min-width: 34px; height: 28px; border: 1px solid var(--bd, #e0ded8); background: var(--card, #fff); border-radius: 6px; cursor: pointer; font-size: 12px; }"
-    },
-    {
-      "rule": "flex-shrink-zero",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 891,
-      "sample": ".lib-shelf-head > * { flex-shrink: 0; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 894,
-      "sample": ".lib-card { width: 128px; cursor: pointer; border-radius: 10px; padding: 10px; transition: background .15s; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 896,
-      "sample": ".lib-cover { width: 108px; height: 150px; border-radius: 8px; overflow: hidden; background: color-mix(in srgb, var(--acc, #4f46e5) 10%, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,.12); }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 899,
-      "sample": ".lib-card-title { margin-top: 8px; font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 900,
-      "sample": ".lib-card-author { font-size: 11px; color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
-    },
-    {
-      "rule": "flex-shrink-zero",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 903,
-      "sample": ".lib-reader-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--bd, #e0ded8); flex-shrink: 0; overflow-x: auto; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 904,
-      "sample": ".lib-reader-bar > :not(.lib-book-title) { flex-shrink: 0; }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 905,
-      "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
+      "sample": ".draw-side { width: 190px; flex-shrink: 0; border-left: 1px solid var(--bd, #e0ded8); overflow-y: auto; background: var(--bg, #fff); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 905,
-      "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 906,
-      "sample": ".lib-pos { font-size: 12px; color: var(--fg-dim, #a3a19a); min-width: 52px; text-align: center; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 908,
-      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
+      "line": 912,
+      "sample": ".draw-layer .lv-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 908,
-      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
+      "line": 920,
+      "sample": ".draw-frames { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-top: 1px solid var(--bd, #e0ded8); background: var(--bg, #fff); flex-shrink: 0; }"
     },
     {
-      "rule": "white-space-nowrap",
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 923,
+      "sample": ".draw-frame { min-width: 34px; height: 28px; border: 1px solid var(--bd, #e0ded8); background: var(--card, #fff); border-radius: 6px; cursor: pointer; font-size: 12px; }"
+    },
+    {
+      "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 909,
-      "sample": ".lib-toc-item { padding: 6px 10px; border-radius: 6px; font-size: 12.5px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+      "line": 932,
+      "sample": ".lib-shelf-head > * { flex-shrink: 0; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 935,
+      "sample": ".lib-card { width: 128px; cursor: pointer; border-radius: 10px; padding: 10px; transition: background .15s; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 937,
-      "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
-    },
-    {
-      "rule": "flex-shrink-zero",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 937,
-      "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
+      "sample": ".lib-cover { width: 108px; height: 150px; border-radius: 8px; overflow: hidden; background: color-mix(in srgb, var(--acc, #4f46e5) 10%, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,.12); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 940,
-      "sample": ".cm-item .cm-quote { color: var(--fg-dim, #a3a19a); font-size: 11.5px; border-left: 3px solid #eab308; padding-left: 6px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+      "sample": ".lib-card-title { margin-top: 8px; font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 941,
+      "sample": ".lib-card-author { font-size: 11px; color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "flex-shrink-zero",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 944,
+      "sample": ".lib-reader-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--bd, #e0ded8); flex-shrink: 0; overflow-x: auto; }"
+    },
+    {
+      "rule": "flex-shrink-zero",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 945,
+      "sample": ".lib-reader-bar > :not(.lib-book-title) { flex-shrink: 0; }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 946,
+      "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 946,
+      "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 947,
+      "sample": ".lib-pos { font-size: 12px; color: var(--fg-dim, #a3a19a); min-width: 52px; text-align: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 949,
-      "sample": ".help-side { width: 250px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; }"
+      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 949,
+      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 950,
+      "sample": ".lib-toc-item { padding: 6px 10px; border-radius: 6px; font-size: 12.5px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 978,
+      "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
+    },
+    {
+      "rule": "flex-shrink-zero",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 978,
+      "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 981,
+      "sample": ".cm-item .cm-quote { color: var(--fg-dim, #a3a19a); font-size: 11.5px; border-left: 3px solid #eab308; padding-left: 6px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 990,
+      "sample": ".help-side { width: 250px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; }"
+    },
+    {
+      "rule": "flex-shrink-zero",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 990,
       "sample": ".help-side { width: 250px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 955,
+      "line": 996,
       "sample": ".help-toc-item { padding: 7px 10px; border-radius: 7px; font-size: 12.5px; cursor: pointer; color: var(--fg, #2c2c2a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 960,
+      "line": 1001,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 960,
+      "line": 1001,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 960,
+      "line": 1001,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 980,
+      "line": 1021,
       "sample": ".sidebar.floating { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: 10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 980,
+      "line": 1021,
       "sample": ".sidebar.floating { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: 10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 981,
+      "line": 1022,
       "sample": ".sidebar-grip { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 6; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 983,
+      "line": 1024,
       "sample": ".sidebar-rail { width: 30px; flex: none; border: 0; border-right: 1px solid var(--border, #e0ded8); background: var(--bg-elev, #f7f6f3); color: var(--fg-dim, #a3a19a); font-size: 15px; padding-top: 12px; cursor: pointer; align-items: flex-start; justify-content: center; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 983,
+      "line": 1024,
       "sample": ".sidebar-rail { width: 30px; flex: none; border: 0; border-right: 1px solid var(--border, #e0ded8); background: var(--bg-elev, #f7f6f3); color: var(--fg-dim, #a3a19a); font-size: 15px; padding-top: 12px; cursor: pointer; align-items: flex-start; justify-content: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 989,
+      "line": 1030,
       "sample": ".ribbon-grip { position: absolute; left: 0; right: 0; bottom: -3px; height: 7px; cursor: row-resize; z-index: 6; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 995,
+      "line": 1036,
       "sample": "[dir=\"rtl\"] .sidebar.floating { box-shadow: -10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 999,
+      "line": 1040,
       "sample": "[dir=\"rtl\"] .help-close { right: auto; left: 12px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1004,
+      "line": 1045,
       "sample": "[dir=\"rtl\"] .mm-hint { left: auto; right: 12px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1005,
+      "line": 1046,
       "sample": "[dir=\"rtl\"] .notes-graph-legend { left: auto; right: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1016,
+      "line": 1057,
       "sample": ".ft-more { display: block; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--fg-dim, #a3a19a); font-size: 14px; width: 22px; height: 22px; border-radius: 5px; cursor: pointer; padding: 0; opacity: .45; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1016,
+      "line": 1057,
       "sample": ".ft-more { display: block; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--fg-dim, #a3a19a); font-size: 14px; width: 22px; height: 22px; border-radius: 5px; cursor: pointer; padding: 0; opacity: .45; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1028,
+      "line": 1069,
       "sample": ".ft-rename-input { flex: 1; min-width: 40px; border: 1px solid var(--accent, #4f46e5); border-radius: 4px; padding: 2px 6px; font-size: 12.5px; font-family: inherit; background: var(--bg, #fff); color: var(--fg, #2c2c2a); outline: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1045,
+      "line": 1086,
       "sample": ".sg-hcell .sg-rz { position: absolute; z-index: 5; opacity: 0; transition: opacity .1s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1050,
+      "line": 1091,
       "sample": ".sg-hcell { position: absolute; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1053,
+      "line": 1094,
       "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: #fff; border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1053,
+      "line": 1094,
       "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: #fff; border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1058,
+      "line": 1099,
       "sample": ".rb-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 84px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1062,
+      "line": 1103,
       "sample": ".sidebar .ft-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1073,
+      "line": 1114,
       "sample": ".mm-sb-color { width: 26px; height: 24px; padding: 0; border: 1px solid var(--bd, #e0ded8); border-radius: 5px; background: none; cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1081,
+      "line": 1122,
       "sample": ".draw-tool-row2 input[type=range] { width: 76px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1086,
+      "line": 1127,
       "sample": ".draw-collapse-ts { position: absolute; top: 8px; right: 8px; z-index: 12; border: 1px solid var(--bd,#e0ded8); background: var(--bg-elev,#fff); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; color: var(--fg-dim); padding: 0; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1086,
+      "line": 1127,
       "sample": ".draw-collapse-ts { position: absolute; top: 8px; right: 8px; z-index: 12; border: 1px solid var(--bd,#e0ded8); background: var(--bg-elev,#fff); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; color: var(--fg-dim); padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1090,
+      "line": 1131,
       "sample": ".draw-side.collapsed { width: 22px !important; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1100,
+      "line": 1141,
       "sample": ".viewer-pct { min-width: 44px; text-align: center; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1101,
+      "line": 1142,
       "sample": ".viewer-name { margin-left: auto; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1109,
+      "line": 1150,
       "sample": "body.tab-dragging .editor-area::after { content: ''; position: absolute; inset: 0; z-index: 40; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1112,
+      "line": 1153,
       "sample": ".sl-zoomctl { position: absolute; right: 14px; bottom: 12px; z-index: 30; display: flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1112,
+      "line": 1153,
       "sample": ".sl-zoomctl { position: absolute; right: 14px; bottom: 12px; z-index: 30; display: flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1115,
+      "line": 1156,
       "sample": ".sl-zoomctl span { min-width: 38px; text-align: center; color: var(--fg-dim); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1119,
+      "line": 1160,
       "sample": ".appwin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 18px 60px rgba(0, 0, 0, .28); overflow: hidden; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1120,
+      "line": 1161,
       "sample": ".appwin.max { left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; transform: none; border-radius: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1123,
+      "line": 1164,
       "sample": ".appwin-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1125,
+      "line": 1166,
       "sample": ".appwin-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; width: 28px; height: 24px; cursor: pointer; font-size: 12px; line-height: 1; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1128,
+      "line": 1169,
       "sample": ".appwin-resize { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; z-index: 5; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 65%, transparent 65%, transparent 72%, var(--fg-dim, #a3a19a) 72%, var(--fg-dim, #a3a19a) 82%, tra"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1128,
+      "line": 1169,
       "sample": ".appwin-resize { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; z-index: 5; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 65%, transparent 65%, transparent 72%, var(--fg-dim, #a3a19a) 72%, var(--fg-dim, #a3a19a) 82%, tra"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1133,
+      "line": 1174,
       "sample": ".viewer-audio-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 30px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; min-width: 340px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1143,
+      "line": 1184,
       "sample": ".w-openwith { flex: none; width: 300px; background: color-mix(in srgb, var(--accent) 6%, var(--bg-elev)); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border)); border-radius: 14px; padding: 16px 16px 14px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1170,
+      "line": 1211,
       "sample": ".fc-daily-hint { color: var(--fg-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1173,
+      "line": 1214,
       "sample": ".fc-role-pickers .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1186,
+      "line": 1227,
       "sample": ".fc-agent-role .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1201,
+      "line": 1242,
       "sample": ".fc-agent-inputrow .fc-btn { flex: none; width: 58px; padding: 5px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1203,
+      "line": 1244,
       "sample": ".fc-agent-chip { border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg-dim); padding: 2px 7px; font: 10.5px var(--font-ui); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1241,
+      "line": 1282,
       "sample": ".fc-task-label, .fc-his-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1264,
+      "line": 1305,
       "sample": ".side-dock.collapsed { width: 36px !important; min-width: 36px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1264,
+      "line": 1305,
       "sample": ".side-dock.collapsed { width: 36px !important; min-width: 36px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1266,
+      "line": 1307,
       "sample": ".sd-rail { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 36px; border: 0; background: var(--bg-elev); color: var(--fg-dim); cursor: pointer; border-radius: 12px 0 0 12px; align-items: center; justify-content: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1266,
+      "line": 1307,
       "sample": ".sd-rail { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 36px; border: 0; background: var(--bg-elev); color: var(--fg-dim); cursor: pointer; border-radius: 12px 0 0 12px; align-items: center; justify-content: center; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1279,
-      "sample": ".sd-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg-dim); border-radius: 5px; width: 22px; height: 20px; cursor: pointer; font-size: 11px; line-height: 1; }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 1281,
-      "sample": ".sd-zoom { font-size: 11px; color: var(--fg-dim); min-width: 32px; text-align: center; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1283,
-      "sample": ".sd-grip { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1301,
-      "sample": ".sd-tool-text b { font-size: 12px; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1302,
-      "sample": ".sd-tool-text i { font-size: 10.5px; color: var(--fg-dim); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1310,
-      "sample": ".annotate-canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; pointer-events: auto; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1315,
-      "sample": ".an-fold { border: 0; background: none; color: var(--fg-dim); cursor: pointer; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1317,
-      "sample": ".an-c { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1320,
-      "sample": ".an-size { width: 80px; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1329,
-      "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; background: color-mix(in srgb, var(--accent) 80%, #000 10%); color: #fff; font-size: 10px; border-radius: 4px; padding: 1px 6px; opacity: .92; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1333,
-      "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1333,
-      "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
+      "sample": ".sd-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg-dim); border-radius: 5px; width: 22px; height: 20px; cursor: pointer; font-size: 11px; line-height: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1339,
-      "sample": ".lib-pos { flex: none; font-size: 12px; color: var(--fg-dim); min-width: 130px; text-align: right; }"
+      "line": 1322,
+      "sample": ".sd-zoom { font-size: 11px; color: var(--fg-dim); min-width: 32px; text-align: center; }"
     },
     {
       "rule": "position-absolute",
-      "provisionalClass": "D",
+      "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1346,
-      "sample": ".lib-search-bar { position: absolute; right: 8px; top: 100%; z-index: 30; display: flex; gap: 6px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; box-shadow: var(--shadow); }"
+      "line": 1324,
+      "sample": ".sd-grip { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1342,
+      "sample": ".sd-tool-text b { font-size: 12px; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1343,
+      "sample": ".sd-tool-text i { font-size: 10.5px; color: var(--fg-dim); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "position-absolute",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1351,
+      "sample": ".annotate-canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; pointer-events: auto; }"
+    },
+    {
+      "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1357,
-      "sample": ".mz-spectrum { position: absolute; inset: auto 0 0 0; bottom: 0; width: 100%; height: 42%; opacity: .85; }"
+      "line": 1356,
+      "sample": ".an-fold { border: 0; background: none; color: var(--fg-dim); cursor: pointer; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1358,
-      "sample": ".mz-audio-disc { position: relative; z-index: 1; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; background: conic-gradient(var(--bg-active), var(--bg), var(--bg-active), var(--bg), var(--bg-active)); border: 2px solid var(--border); box-shadow: var(--shadow), inset"
+      "sample": ".an-c { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }"
     },
     {
-      "rule": "position-absolute",
+      "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1361,
-      "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: transparent; transition: opacity .3s; }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1364,
-      "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--fg); }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1365,
-      "sample": ".mz-meta { font-size: 11px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
+      "sample": ".an-size { width: 80px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1368,
-      "sample": ".mz-controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; padding: 6px 14px 10px; background: transparent; transition: opacity .3s; } /* W58c：z-index 压过 .mz-side(8)——底部栏向右延伸到全屏钮不被播放列表盖 */"
+      "line": 1370,
+      "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; background: color-mix(in srgb, var(--accent) 80%, #000 10%); color: #fff; font-size: 10px; border-radius: 4px; padding: 1px 6px; opacity: .92; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1374,
+      "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1374,
-      "sample": ".mz-seek-track::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1377,
-      "sample": ".mz-seek-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000 10%)); border-radius: 3px; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1378,
-      "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1378,
-      "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1380,
-      "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1391,
-      "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1392,
-      "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
+      "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1393,
-      "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
+      "line": 1380,
+      "sample": ".lib-pos { flex: none; font-size: 12px; color: var(--fg-dim); min-width: 130px; text-align: right; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1387,
+      "sample": ".lib-search-bar { position: absolute; right: 8px; top: 100%; z-index: 30; display: flex; gap: 6px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1398,
+      "sample": ".mz-spectrum { position: absolute; inset: auto 0 0 0; bottom: 0; width: 100%; height: 42%; opacity: .85; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1399,
+      "sample": ".mz-audio-disc { position: relative; z-index: 1; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; background: conic-gradient(var(--bg-active), var(--bg), var(--bg-active), var(--bg), var(--bg-active)); border: 2px solid var(--border); box-shadow: var(--shadow), inset"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1402,
+      "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: transparent; transition: opacity .3s; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1405,
+      "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--fg); }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1406,
+      "sample": ".mz-meta { font-size: 11px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1409,
+      "sample": ".mz-controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; padding: 6px 14px 10px; background: transparent; transition: opacity .3s; } /* W58c：z-index 压过 .mz-side(8)——底部栏向右延伸到全屏钮不被播放列表盖 */"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1415,
+      "sample": ".mz-seek-track::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1418,
+      "sample": ".mz-seek-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000 10%)); border-radius: 3px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1419,
+      "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1419,
+      "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1421,
+      "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1432,
+      "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1433,
+      "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 1434,
+      "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1439,
       "sample": ".ie-crop { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; z-index: 4; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1399,
+      "line": 1440,
       "sample": ".ie-crop .ie-ch { position: absolute; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1408,
+      "line": 1449,
       "sample": ".mz-play { font-size: 18px; width: 34px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1410,
+      "line": 1451,
       "sample": ".mz-vol { width: 74px; accent-color: var(--accent); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1412,
+      "line": 1453,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1412,
+      "line": 1453,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1415,
+      "line": 1456,
       "sample": ".mz-stage.side-open .mz-media, .mz-stage.side-open .mz-audio-wrap, .mz-stage.side-open .mz-sub-host { width: calc(100% - var(--mz-side-w)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1417,
+      "line": 1458,
       "sample": ".mz-side-grip { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 9; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1420,
+      "line": 1461,
       "sample": ".mz-stream-err { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 12%; text-align: center; background: color-mix(in srgb, #000 72%, transparent); color: #eee; pointer-events: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1425,
+      "line": 1466,
       "sample": ".mz-decode-actions .rb-btn { min-width: 112px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1435,
+      "line": 1476,
       "sample": ".mz-ml-caret { flex: none; width: 14px; text-align: center; opacity: .7; font-size: 10px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1436,
+      "line": 1477,
       "sample": ".mz-ml-dname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1441,
+      "line": 1482,
       "sample": ".mz-li { padding: 6px 9px; font-size: 12px; color: var(--fg-dim); border-radius: 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1470,
+      "line": 1511,
       "sample": ".fc-feed-cluster-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1476,
+      "line": 1517,
       "sample": ".fc-hit-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1492,
+      "line": 1533,
       "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1492,
+      "line": 1533,
       "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1515,
+      "line": 1556,
       "sample": ".sd-grip-b { position: absolute; left: 0; right: 0; bottom: -4px; height: 8px; cursor: ns-resize; z-index: 5; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1516,
+      "line": 1557,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1516,
+      "line": 1557,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1535,
+      "line": 1576,
       "sample": ".mz-ico { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1536,
+      "line": 1577,
       "sample": ".rb-btn .mz-ico { width: 17px; height: 17px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1537,
+      "line": 1578,
       "sample": ".mazz-menu-icon .mz-ico { width: 15px; height: 15px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1541,
+      "line": 1582,
       "sample": ".w-card .mz-ico { width: 20px; height: 20px; color: var(--accent); vertical-align: -4px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1545,
+      "line": 1586,
       "sample": ".ribbon-tab-ico .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1547,
+      "line": 1588,
       "sample": ".tab-pin .mz-ico { width: 12px; height: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1550,
+      "line": 1591,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1550,
+      "line": 1591,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1561,
+      "line": 1602,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1566,
+      "line": 1607,
       "sample": ".sb-tbtn .mz-ico { width: 13px; height: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1573,
+      "line": 1614,
       "sample": ".sb-item .mz-ico { width: 14px; height: 14px; flex: none; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1574,
+      "line": 1615,
       "sample": ".sb-item-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1580,
+      "line": 1621,
       "sample": ".sb-ol-arrow { font-style: normal; color: var(--fg-dim); width: 14px; text-align: center; cursor: pointer; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1587,
+      "line": 1628,
       "sample": ".sb-tag-head .mz-ico { width: 14px; height: 14px; color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1601,
+      "line": 1642,
       "sample": ".ft-dir { margin-left: auto; padding-left: 6px; padding-right: 26px; font-size: 10px; color: var(--fg-dim); opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; direction: rtl; text-align: right; flex: none; pointer-events: none; position: relative; z-index: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1610,
+      "line": 1651,
       "sample": ".mz-bright { width: 56px; accent-color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1629,
+      "line": 1670,
       "sample": ".selmenu-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1633,
+      "line": 1674,
       "sample": ".sb-ws-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1648,
+      "line": 1689,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1648,
+      "line": 1689,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1653,
+      "line": 1694,
       "sample": ".fs-exit { position: fixed; right: 18px; bottom: 18px; z-index: 9999; border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); color: var(--fg); border-radius: 999px; padding: 8px 18px; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,"
+    },
+    {
+      "rule": "fixed-left-right",
+      "provisionalClass": "C",
+      "file": "renderer/styles/base.css",
+      "line": 1700,
+      "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
+    },
+    {
+      "rule": "calc-viewport-or-container",
+      "provisionalClass": "E",
+      "file": "renderer/styles/base.css",
+      "line": 1700,
+      "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1700,
+      "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1716,
+      "sample": ".mz-danmaku-canvas { position:absolute; inset:0; z-index:6; pointer-events:none; width:100%; height:100%; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1717,
+      "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1717,
+      "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1661,
+      "line": 1720,
       "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1662,
+      "line": 1721,
       "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1663,
+      "line": 1722,
       "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1664,
+      "line": 1723,
       "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1665,
+      "line": 1724,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1667,
+      "line": 1726,
       "sample": ".ft-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1669,
+      "line": 1728,
       "sample": ".sd-tool-ico { display: inline-flex; align-items: center; justify-content: center; width: 18px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1678,
+      "line": 1737,
       "sample": ".mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: #b8b6ae; font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1684,
+      "line": 1743,
       "sample": ".mz-ml-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1701,
+      "line": 1760,
       "sample": ".mz-mikan-season { min-width: 116px; max-width: 170px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1707,
+      "line": 1766,
       "sample": ".mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1708,
+      "line": 1767,
       "sample": ".mz-wr-size, .mz-wr-up { color: #83817a; font-size: 11px; white-space: nowrap; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1712,
+      "line": 1771,
       "sample": ".mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1716,
+      "line": 1775,
       "sample": ".mz-catalog-cover { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 16px; font-weight: 650; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1717,
+      "line": 1776,
       "sample": ".mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1723,
+      "line": 1782,
       "sample": ".mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1729,
+      "line": 1788,
       "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {

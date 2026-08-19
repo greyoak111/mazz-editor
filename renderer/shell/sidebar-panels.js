@@ -452,9 +452,12 @@ export class SidebarPanels {
     const row = (p) => `<div class="sb-item" data-path="${p}">${iconHtml('📄')}<span class="sb-item-t">${p.split(/[\\/]/).pop()}</span></div>`;
     this.backLinksEl.innerHTML = links.length ? links.map(row).join('') : '<div class="sb-empty">未找到相关内容</div>';
     this.backMentionsEl.innerHTML = mentions.length ? mentions.map(row).join('') : '<div class="sb-empty">（无提及）</div>';
-    const relations = self
+    const relationsRaw = self
       ? await window.mazz.invoke('evidence:fileRelations', { path: self, force }).catch(error => ({ error: error.message, outgoing: [], incoming: [] }))
       : { outgoing: [], incoming: [] };
+    const relations = relationsRaw && typeof relationsRaw === 'object'
+      ? { ...relationsRaw, outgoing: Array.isArray(relationsRaw.outgoing) ? relationsRaw.outgoing : [], incoming: Array.isArray(relationsRaw.incoming) ? relationsRaw.incoming : [] }
+      : { error: '活引用索引未返回有效结果', outgoing: [], incoming: [] };
     const liveRow = (item, direction) => {
       const path = direction === 'out' ? item.targetPath : item.sourcePath;
       const label = direction === 'out'

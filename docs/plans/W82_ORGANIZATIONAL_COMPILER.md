@@ -1,7 +1,7 @@
 # W82 Organizational Compiler
 ## Production Organization Compiler / 生产组织编译器
 
-> 状态：`W82a FOUNDATION + W82b SOFTWARE + W82c RESEARCH + W82d ANIMATION SLICES LANDED / W82e–W82h NOT STARTED`
+> 状态：`W82a–W82h LOCAL ORGANIZATIONAL COMPILER LANDED / W69 PUBLICATION EXCLUDED`
 > 版本：v0.9
 > 登记日期：2026-08-18
 > W82a 落地日期：2026-08-19
@@ -18,7 +18,7 @@
 
 ## 0. 升格结论
 
-W82a 已按维护者独立批准落地纯 Foundation：严格 Workflow Package / Compile Request / Execution Plan、组织考古、Staffing/Delegation 硬边界、Artifact DAG、显式人工 Routing、Authority Separation、Evidence-backed Transition 与 Expert Capability Composition。W82b、W82c 与 W82d 已分别落下软件发布、研究证据和动画短片的本地受控切片，统一复用同一 Kernel、严格 receipt/decision 与 W73 Production Run Ledger。三者均不执行任意外部进程、不推送生产发布，也不把本地 fixture 冒充真实交付；W82d 只形成 local master manifest，不生成视频二进制。实现与证据见 `docs/engineering/W82A_*`、`W82B_*`、`W82C_*` 与 `W82D_*` 文档。
+W82a–W82h 已按维护者授权完成本地组织编译器：严格 Workflow Package / Compile Request / Execution Plan、组织考古、Staffing/Delegation 硬边界、Artifact DAG、显式人工 Routing、Authority Separation、Evidence-backed Transition、Expert Capability Composition，以及 Publication/World/Game/Definition Library/多行业预览等本地受控切片。所有切片统一复用同一 Kernel、严格 receipt/decision 与 W73 Production Run Ledger；不执行任意外部进程、不推送生产发布，也不把本地 fixture 冒充真实交付。W82d 只形成 local master manifest，不生成视频二进制；公共发布继续归本轮排除的 W69。实现与证据见 `docs/engineering/W82A_*` 至 `W82E_H_*` 文档。
 
 媒体只是最容易看懂 Factory 威力的 acceptance domain；“从灵感做到动画、游戏”仍是重要样本，但不再定义 W82 的上限。W82 的真实对象升格为：
 

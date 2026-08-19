@@ -1,4 +1,4 @@
-// Post-W71 architecture increment contract: preserve W83-W86 boundaries without implying implementation.
+// Post-W71 architecture convergence contract: preserve boundaries while tracking landed local slices.
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import fs from 'node:fs';
@@ -16,21 +16,23 @@ const w71 = read('docs/engineering/W71_FINAL_CONVERGENCE_EXECUTION_SPEC.md');
 const SOURCE_HASH = '79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408';
 
 describe('Post-W71 architecture increment intake', () => {
-  test('new capsules are indexed, source-bound and explicitly not implementation', () => {
+  test('architecture capsules are indexed, source-bound and report their current landed boundary', () => {
     for (const [wave, doc] of [['W83', w83], ['W84', w84], ['W85', w85], ['W86', w86]]) {
       assert.ok(index.includes(wave), `missing plan index: ${wave}`);
       assert.ok(doc.includes(SOURCE_HASH), `missing source hash: ${wave}`);
-      assert.ok(doc.includes('NOT APPROVED FOR IMPLEMENTATION'), `missing stop status: ${wave}`);
     }
-    assert.ok(index.includes('W83a–W83e 未施工'));
-    assert.ok(index.includes('W84a–W84f 未施工'));
-    assert.ok(index.includes('W85a–W85e 未施工'));
-    assert.ok(index.includes('W86a–W86e 未施工'));
+    assert.ok(w83.includes('LOCAL RUNTIME LANDED / W83d PUBLIC PROJECTION EXCLUDED'));
+    assert.ok(w84.includes('W84a–W84f LOCAL PRODUCTION ASSET CONTRACT LANDED / MARKETPLACE EXCLUDED'));
+    assert.ok(w85.includes('W85a–W85e LOCAL CONTEXT COMPILER + COVERAGE LANDED'));
+    assert.ok(w86.includes('W86a–W86d SIMULATION/READ-ONLY LANDED / W86e EXTERNAL SAFETY REVIEW CONDITIONAL'));
+    assert.ok(index.includes('W83d 公共投影随 W69 排除'));
+    assert.ok(index.includes('Marketplace 排除'));
+    assert.ok(index.includes('W86e 外部独立安全审查 CONDITIONAL'));
   });
 
   test('W82 requires evidence-backed transitions and separates seats from machines', () => {
     assert.ok(w82.includes('版本：v0.9'));
-    assert.ok(w82.includes('W82a FOUNDATION + W82b SOFTWARE + W82c RESEARCH + W82d ANIMATION SLICES LANDED / W82e–W82h NOT STARTED'));
+    assert.ok(w82.includes('W82a–W82h LOCAL ORGANIZATIONAL COMPILER LANDED / W69 PUBLICATION EXCLUDED'));
     for (const layer of ['Verification', 'Review', 'Evaluation', 'Authority']) {
       assert.ok(w82.includes(layer), `missing transition layer: ${layer}`);
     }

@@ -1,7 +1,7 @@
 # W85 Context Compiler & Coverage Accounting
 ## Addressable Context + Prospective Memory / 可寻址上下文与前瞻记忆
 
-> 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
+> 状态：`W85a–W85e LOCAL CONTEXT COMPILER + COVERAGE LANDED`
 > 版本：v0.2
 > 登记日期：2026-08-16
 > 来源：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》

@@ -185,13 +185,38 @@ export function mountDanmaku({ root, media }) {
   accessibility.className = 'mz-danmaku-a11y';
   accessibility.setAttribute('aria-live', 'polite');
   root.querySelector('.mz-stage')?.append(canvas, accessibility);
-  const context = canvas.getContext('2d');
   const scheduler = new DanmakuScheduler();
+  const context = canvas.getContext?.('2d') || null;
   const glyphCache = new Map();
   let enabled = false;
   let destroyed = false;
   let raf = null;
   let maskRegions = [];
+
+  // Canvas 2D can be unavailable in test/remote/disabled-GPU environments.
+  // Keep Player usable and expose an honest disabled surface instead of
+  // dereferencing a null context and taking the whole media pane down.
+  if (!context) {
+    canvas.hidden = true;
+    return {
+      scheduler,
+      load(events) { scheduler.timeline.replace(events); scheduler.seek((media.currentTime || 0) * 1000); },
+      addAiTrack(events, trackId = 'local-ai-track') {
+        scheduler.timeline.insert(events.map((event, index) => normalizeDanmakuEvent(event, { sourceRef: { kind: 'ai-comment-local', id: trackId }, index })));
+      },
+      setMaskRegions() { return 0; },
+      withdraw(eventId) { scheduler.withdraw(eventId); },
+      toggle() { enabled = false; return false; },
+      snapshot() { return { ...scheduler.snapshot(), enabled: false, renderingAvailable: false, glyphCacheSize: 0, maskRegionCount: 0, surfaceCount: canvas.isConnected ? 1 : 0 }; },
+      destroy() {
+        if (destroyed) return;
+        destroyed = true;
+        scheduler.clear();
+        accessibility.remove();
+        canvas.remove();
+      },
+    };
+  }
 
   const resize = () => {
     const rect = root.getBoundingClientRect();

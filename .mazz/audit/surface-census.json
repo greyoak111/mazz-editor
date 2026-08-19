@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 57,
-    "scannedLines": 13966
+    "scannedFiles": 88,
+    "scannedLines": 21023
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -97,43 +97,43 @@
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 275,
+      "line": 313,
       "sample": "sender.on('render-process-gone', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 881,
+      "line": 990,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 922,
+      "line": 1031,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 939,
+      "line": 1048,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1212,
+      "line": 1321,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1552,
+      "line": 1663,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1629,
+      "line": 1751,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -286,12 +286,12 @@
         },
         {
           "file": "renderer/lib/recorder.js",
-          "line": 300,
+          "line": 359,
           "sample": "// —— 画布合成路径（多源平铺/变速/自录虚拟源）：反节流三开关+backgroundThrottling:false 护体 ——"
         },
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 245,
+          "line": 254,
           "sample": "// 兜底遮挡隐身（W52 过渡：只认全屏遮罩两件套（modal/帮助），backgroundThrottling:false 加持下关罩即活不再白死——②③波逐类遣散后此闸退役）"
         }
       ]
@@ -305,17 +305,17 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 557,
+          "line": 566,
           "sample": "reloadTab(tab);"
         },
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 920,
+          "line": 934,
           "sample": "function reloadTab(t) {"
         },
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 926,
+          "line": 940,
           "sample": "root.querySelector('[data-a=reload]').addEventListener('click', () => reloadTab(activeTab()));"
         }
       ]
@@ -329,12 +329,12 @@
       "evidence": [
         {
           "file": "renderer/shell/shell.js",
-          "line": 453,
+          "line": 456,
           "sample": "const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 457,
+          "line": 460,
           "sample": "if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）"
         }
       ]
@@ -348,7 +348,7 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 1304,
+          "line": 1318,
           "sample": "// pane:tabMoved 监听器拿 { container } 空调 __sync/reloadTab=分屏自动刷新全静默失效）"
         },
         {
@@ -358,7 +358,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2236,
+          "line": 2257,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]
@@ -377,17 +377,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1400,
+          "line": 1509,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1493,
+          "line": 1602,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1522,
+          "line": 1631,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -425,7 +425,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 1554,
+          "line": 1665,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
@@ -439,17 +439,17 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 51,
-          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
-        },
-        {
-          "file": "main/main.js",
-          "line": 55,
+          "line": 52,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
         },
         {
           "file": "main/main.js",
           "line": 56,
+          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
+        },
+        {
+          "file": "main/main.js",
+          "line": 57,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition-video-overlays');"
         }
       ]

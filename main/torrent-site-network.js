@@ -79,7 +79,12 @@ class PoliteSiteTransport {
     if (blocked) throw new SiteRequestError('W65_CHALLENGE_REQUIRED', `站点 ${siteId} 需要人工验证，自动访问已停止`, blocked);
     const spec = typeof request === 'string' ? { url: request, method: 'GET' } : { method: 'GET', ...request };
     const cacheKey = `${siteId}\0${spec.method}\0${spec.url}\0${spec.body || ''}`;
-    for (const [key, entry] of this.cache) if (entry.expiresAt <= this.now()) this.cache.delete(key);
+    // Keep the requested expired entry until this attempt settles: it is the
+    // only eligible stale-if-error fallback. Other expired entries can be
+    // reclaimed immediately.
+    for (const [key, entry] of this.cache) {
+      if (key !== cacheKey && entry.expiresAt <= this.now()) this.cache.delete(key);
+    }
     const cached = this.cache.get(cacheKey);
     if (cache && !bypassCache && cached && cached.expiresAt > this.now()) {
       this.#record(siteId, { status: 'healthy', sourceMode: 'cache', lastSuccessAt: new Date(this.now()).toISOString(), lastError: '' });

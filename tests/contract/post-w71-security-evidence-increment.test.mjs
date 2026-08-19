@@ -19,8 +19,8 @@ describe('Post-W71 strict architecture increment II', () => {
     for (const doc of [w69, w82, w84, w85]) assert.ok(doc.includes(SOURCE_HASH));
     assert.ok(!index.includes('W87'));
     assert.ok(index.includes('v1.5 Design Capsule'));
-    assert.ok(index.includes('W82a Foundation + W82b Software + W82c Research + W82d Animation Slices LANDED；W82e–W82h 未施工'));
-    assert.ok(index.includes('v0.2 Design Capsule'));
+    assert.ok(index.includes('W82a–W82h 本地受控切片全部 LANDED；W69 发布除外'));
+    assert.ok(index.includes('W84a–W84f 本地合同与只读产品入口 LANDED；Marketplace 排除'));
   });
 
   test('W84 separates integrity, signature, encryption, entitlement and runtime permission', () => {
@@ -38,7 +38,7 @@ describe('Post-W71 strict architecture increment II', () => {
     assert.ok(w84.includes('不可审计部分必须显式标识'));
     assert.ok(w84.includes('原始 W73 Production Ledger 不进包'));
     assert.ok(w84.includes('Hard Validation Sample J'));
-    assert.ok(index.includes('W84a–W84f 未施工'));
+    assert.ok(index.includes('W84a–W84f 本地合同与只读产品入口 LANDED；Marketplace 排除'));
   });
 
   test('W69 decouples ciphertext distribution from usage rights', () => {
