@@ -34,6 +34,11 @@ function fakeAdapter({ id = 'fake', failSend = false } = {}) {
   };
 }
 
+const activationGate = async () => ({
+  receipt: { attemptId: 'attempt-test', rulePackId: 'rule-pack:test', rulePackHash: 'a'.repeat(64), compiledRulePackHash: 'b'.repeat(64), permissionProfileRef: 'permission:test' },
+  injection: { rawSource: Buffer.from('rules'), rawSourceText: 'rules', compiledView: {}, manifest: {} },
+});
+
 describe('W66 HarnessAdapter v1 契约', () => {
   test('缺少生命周期方法的 Adapter 在登记前被拒绝', () => {
     assert.throws(() => validateAdapter({ id: 'bad' }), /detect/);
@@ -66,7 +71,7 @@ describe('W66 Session lifecycle 与资源收敛', () => {
     const ledger = new ResourceLedger({ now: () => ++seq });
     const registry = new AgentHarnessRegistry({
       onEvent: event => events.push(event), resourceLedger: ledger,
-      now: () => ++seq, idFactory: () => 'session-1',
+      now: () => ++seq, idFactory: () => 'session-1', activationGate,
     });
     registry.register(fakeAdapter());
     const created = await registry.createSession({ adapterId: 'fake', workspace: 'D:/workspace', instruction: 'do it' });
@@ -74,8 +79,8 @@ describe('W66 Session lifecycle 与资源收敛', () => {
     assert.equal(ledger.snapshot().activeCount, 1);
     await registry.send(created.id, 'hello');
     assert.equal(registry.listSessions()[0].state, 'waiting');
-    assert.deepEqual(events.map(x => x.type), ['started', 'stdout', 'state']);
-    assert.equal(events[1].raw.vendor, 'fake', '厂商原始事件只保留在 raw');
+    assert.deepEqual(events.map(x => x.type), ['rule-pack-loaded', 'started', 'stdout', 'state']);
+    assert.equal(events[2].raw.vendor, 'fake', '厂商原始事件只保留在 raw');
     await registry.interrupt(created.id);
     assert.equal(registry.listSessions()[0].state, 'cancelled');
     await registry.dispose(created.id, 'test-finished');
@@ -87,7 +92,7 @@ describe('W66 Session lifecycle 与资源收敛', () => {
 
   test('send 错误归一进入 failed，仍可 dispose 收尸', async () => {
     const events = [];
-    const registry = new AgentHarnessRegistry({ onEvent: event => events.push(event), idFactory: () => 'session-fail' });
+    const registry = new AgentHarnessRegistry({ onEvent: event => events.push(event), idFactory: () => 'session-fail', activationGate });
     registry.register(fakeAdapter({ failSend: true }));
     await registry.createSession({ adapterId: 'fake' });
     await assert.rejects(() => registry.send('session-fail', 'bad'), /boom/);
@@ -103,7 +108,7 @@ describe('W66 Session lifecycle 与资源收敛', () => {
     let disposed = false;
     adapter.events = async () => { throw new Error('subscribe failed'); };
     adapter.dispose = async handle => { handle.disposed = true; disposed = true; };
-    const registry = new AgentHarnessRegistry({ resourceLedger: ledger, idFactory: () => 'session-start-fail' });
+    const registry = new AgentHarnessRegistry({ resourceLedger: ledger, idFactory: () => 'session-start-fail', activationGate });
     registry.register(adapter);
     await assert.rejects(() => registry.createSession({ adapterId: adapter.id }), /subscribe failed/);
     assert.equal(disposed, true);

@@ -1,11 +1,11 @@
 # W66 Real Agent Adapter Activation
 
-> 状态：`PARTIAL / R0a-R0d COMPLETE / R0e AND R1-R6 NOT STARTED`
+> 状态：`PARTIAL / R0 COMPLETE / R1-R6 NOT STARTED`
 > 版本：v0.2 Doctrine correction
 > 冻结日期：2026-08-17
 > 适用对象：Kimi Code、Claude Code、Codex 三种真实 Agent 执行器，以及它们之间的模型/执行器热切。
 > 2026-08-18 修正输入：`W66-AgentRulePack-Doctrine-Compiler-规格-v0.1.md`，SHA-256 `EEB706F8845EC9E13223E8C28BEDE1EE4CE3D35B95F8DA73BD35E64B00934770`；`Codex-施工执行规则包-v0.1.md`，SHA-256 `42436619BA340FC0F184610D2DAE7C64F1600BF4543D99DBAE2CEA4BAD1ABF4C`。
-> 2026-08-19 实现水位：R0a Canonical Raw/Registry/Incident、R0b Host/Profile/SSoT/Capability、R0c Compiled View/Manifest/Rule Drift、R0d Typed Handle/Result/Retry/CAS/Output Receipt 已按冻结范围落地；Spawn/Completion/Secret/Incident Gate、真实 Adapter 与 UI 仍未落地。检查点见 `docs/engineering/W66_R0A_*` 至 `W66_R0D_*`。
+> 2026-08-19 实现水位：W66-R0a—e 已按冻结范围落地，包含完整 Raw/Compiled Doctrine、Typed Handle/Result/Retry/CAS/Output Receipt、Spawn/Completion/Secret/Incident Gate 与首批 Gate/Regression Registry；真实 Adapter 与 UI 仍未落地。检查点见 `docs/engineering/W66_R0A_*` 至 `W66_R0E_*`。
 
 ## 1. 决议
 
@@ -205,7 +205,7 @@ W66-R0  AgentRulePack + Doctrine Compiler + Adapter Contract v2
   R0b   Host Facts / Profiles / Current SSoT / Tool Capability Snapshot        COMPLETE · 8cb8964
   R0c   Compiled View / Manifest / hash drift → new Attempt                    COMPLETE · 2026-08-19 checkpoint
   R0d   Typed Handle / Result Envelope / Retry / CAS / Output Receipt          COMPLETE · checkpoint
-  R0e   Spawn / Completion / Secret / Incident Gate + Regression Pack          NOT STARTED
+  R0e   Spawn / Completion / Secret / Incident Gate + Regression Pack          COMPLETE · checkpoint
 
 W66-R1  CLI Supervisor / detect / probe / version / auth / golden event corpus
 

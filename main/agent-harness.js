@@ -2,6 +2,7 @@
 'use strict';
 
 const { randomUUID } = require('crypto');
+const { createSpawnGate } = require('./agent-activation-gates');
 
 const SESSION_STATES = Object.freeze([
   'idle', 'starting', 'running', 'waiting', 'completed', 'failed', 'cancelled', 'disposed',
@@ -9,7 +10,7 @@ const SESSION_STATES = Object.freeze([
 const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled', 'disposed']);
 const EVENT_TYPES = new Set([
   'started', 'stdout', 'stderr', 'message', 'progress', 'tool',
-  'warning', 'error', 'completed', 'state',
+  'warning', 'error', 'completed', 'state', 'rule-pack-loaded',
 ]);
 const CAPABILITY_KEYS = Object.freeze([
   'workspace', 'fileEdit', 'terminal', 'toolUse', 'imageInput',
@@ -51,13 +52,14 @@ function validateAdapter(adapter) {
 }
 
 class AgentHarnessRegistry {
-  constructor({ onEvent = () => {}, resourceLedger = null, now = () => Date.now(), idFactory = randomUUID } = {}) {
+  constructor({ onEvent = () => {}, resourceLedger = null, now = () => Date.now(), idFactory = randomUUID, activationGate = createSpawnGate() } = {}) {
     this.adapters = new Map();
     this.sessions = new Map();
     this.onEvent = onEvent;
     this.resourceLedger = resourceLedger;
     this.now = now;
     this.idFactory = idFactory;
+    this.activationGate = activationGate;
   }
 
   register(adapter) {
@@ -119,6 +121,9 @@ class AgentHarnessRegistry {
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
       sequence: session.sequence,
+      attemptId: session.attemptId,
+      rulePackHash: session.rulePackHash,
+      permissionProfileRef: session.permissionProfileRef,
     };
   }
 
@@ -161,14 +166,17 @@ class AgentHarnessRegistry {
     return event;
   }
 
-  async createSession({ adapterId, workspace = '', instruction = '', context = {} } = {}) {
+  async createSession({ adapterId, workspace = '', instruction = '', context = {}, activation = {}, modelTarget = {}, runRef = '', taskRef = '', attemptNo = 1, handoffRef = '' } = {}) {
     const adapter = this.adapter(adapterId);
+    const gated = await this.activationGate(activation);
     const id = String(this.idFactory());
     const at = this.now();
     const session = {
       id, adapterId: adapter.id, adapter, handle: null, unsubscribe: null,
       state: 'idle', capabilities: normalizeCapabilities(await adapter.capabilities()),
       workspace: String(workspace || ''), createdAt: at, updatedAt: at, sequence: 0, resourceKey: null,
+      attemptId: gated.receipt.attemptId, rulePackHash: gated.receipt.rulePackHash,
+      permissionProfileRef: gated.receipt.permissionProfileRef,
     };
     this.sessions.set(id, session);
     this.transition(session, 'starting');
@@ -177,9 +185,17 @@ class AgentHarnessRegistry {
       meta: { workspace: session.workspace, capabilities: session.capabilities },
     }) || null;
     try {
-      session.handle = await adapter.createSession({ workspace: session.workspace, instruction: String(instruction || ''), context });
+      session.handle = await adapter.createSession({
+        workspace: session.workspace, instruction: String(instruction || ''), context,
+        modelTarget, runRef: String(runRef || ''), taskRef: String(taskRef || ''),
+        attemptNo: Number(attemptNo) || 1, handoffRef: String(handoffRef || ''),
+        permissionProfileRef: gated.receipt.permissionProfileRef,
+        rulePackRefs: [{ rulePackId: gated.receipt.rulePackId, rulePackHash: gated.receipt.rulePackHash, compiledRulePackHash: gated.receipt.compiledRulePackHash }],
+        rulePackInjection: gated.injection,
+      });
       session.unsubscribe = await adapter.events(session.handle, (type, payload, raw) => this.emit(session, type, payload, raw));
       this.transition(session, 'running');
+      this.emit(session, 'rule-pack-loaded', { attemptId: session.attemptId, rulePackHash: session.rulePackHash, compiledRulePackHash: gated.receipt.compiledRulePackHash });
       this.emit(session, 'started', { workspace: session.workspace });
       return this.publicSession(session);
     } catch (error) {

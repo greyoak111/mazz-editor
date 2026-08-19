@@ -80,6 +80,7 @@ const files = [
   'tests/contract/w66-r0b-doctrine-context.test.mjs',
   'tests/contract/w66-r0c-compiled-doctrine.test.mjs',
   'tests/contract/w66-r0d-execution-contracts.test.mjs',
+  'tests/contract/w66-r0e-activation-gates.test.mjs',
   'tests/contract/w71-release-foundation.test.mjs',
   'tests/contract/w71-reproducible-samples.test.mjs',
   'tests/contract/w71-native-surface-ledger.test.mjs',

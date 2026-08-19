@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "mazz.regression-registry/v0",
+  "registryId": "mazz-agent-execution-regressions",
+  "version": "0.1.0",
+  "authorityRef": "human:mazz-maintainer",
+  "regressions": [
+    { "id": "REG-TYPED-HANDLE", "incidentId": "MAZZ-TOOL-HANDLE-MISMATCH", "domain": "agent-execution", "applicableProfiles": ["universal-core"], "redFixture": "w66-r0d:wrong-handle", "expectedFailure": "HANDLE_KIND_MISMATCH", "greenCondition": "tool invocation count remains zero", "owner": "W66", "introducedAt": "2026-08-19" },
+    { "id": "REG-OUTER-SUCCESS-INNER-NONZERO", "incidentId": "MAZZ-REMOTE-RESULT-CHANNEL", "domain": "agent-execution", "applicableProfiles": ["universal-core", "remote-vps"], "redFixture": "w66-r0d:inner-exit-7", "expectedFailure": "INNER_EXIT_NONZERO", "greenCondition": "Result Envelope ok=false", "owner": "W66", "introducedAt": "2026-08-19" },
+    { "id": "REG-OUTPUT-TRUNCATION", "incidentId": "MAZZ-SOURCE-COMPLETENESS-GAP", "domain": "agent-execution", "applicableProfiles": ["universal-core"], "redFixture": "w66-r0d:truncated-output", "expectedFailure": "OUTPUT_INCOMPLETE", "greenCondition": "completion gate remains closed", "owner": "W66", "introducedAt": "2026-08-19" },
+    { "id": "REG-RULE-PACK-ZERO-SPAWN", "incidentId": "MAZZ-AGENT-RULE-PACK-GAP", "domain": "agent-harness", "applicableProfiles": ["mazz-project"], "redFixture": "w66-r0e:missing-rule-pack", "expectedFailure": "RULE_PACK_REQUIRED", "greenCondition": "adapter createSession count remains zero", "owner": "W66", "introducedAt": "2026-08-19" },
+    { "id": "REG-SECRET-CANARY", "incidentId": "MAZZ-SECRET-HYGIENE", "domain": "outbound-evidence", "applicableProfiles": ["universal-core"], "redFixture": "w66-r0e:password-canary", "expectedFailure": "SECRET_HYGIENE_BLOCKED", "greenCondition": "secret value absent from receipt", "owner": "W66", "introducedAt": "2026-08-19" },
+    { "id": "REG-INCIDENT-PROMOTION", "incidentId": "MAZZ-C4-EVIDENCE-STATUS", "domain": "engineering-governance", "applicableProfiles": ["mazz-project"], "redFixture": "w66-r0e:incomplete-incident", "expectedFailure": "INCIDENT_PROMOTION_INCOMPLETE", "greenCondition": "RED/Fix/GREEN/Regression/Doctrine/Gate complete", "owner": "W66", "introducedAt": "2026-08-19" }
+  ]
+}

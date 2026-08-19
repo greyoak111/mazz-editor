@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "mazz.gate-registry/v0",
+  "registryId": "mazz-agent-execution-gates",
+  "version": "0.1.0",
+  "authorityRef": "human:mazz-maintainer",
+  "gates": [
+    { "id": "G-R0-01", "title": "Canonical source readable", "evidenceRequired": ["sourceReceipt"], "failureCode": "RULE_PACK_REQUIRED" },
+    { "id": "G-R0-02", "title": "Raw snapshot byte/hash verified", "evidenceRequired": ["rulePackHash", "byteLength"], "failureCode": "RULE_PACK_HASH_MISMATCH" },
+    { "id": "G-R0-03", "title": "Rule registry valid", "evidenceRequired": ["ruleRegistryHash"], "failureCode": "RULE_REGISTRY_INVALID" },
+    { "id": "G-R0-04", "title": "Compiled manifest valid", "evidenceRequired": ["compiledRulePackHash"], "failureCode": "COMPILED_MANIFEST_INVALID" },
+    { "id": "G-R0-05", "title": "Current SSoT present", "evidenceRequired": ["currentPolicyHash"], "failureCode": "CURRENT_POLICY_MISSING" },
+    { "id": "G-R0-06", "title": "Host Facts present", "evidenceRequired": ["hostFactsHash"], "failureCode": "HOST_FACTS_MISSING" },
+    { "id": "G-R0-07", "title": "Tool Capability present", "evidenceRequired": ["toolCapabilityHash"], "failureCode": "TOOL_CAPABILITY_MISSING" },
+    { "id": "G-R0-08", "title": "Profiles resolved", "evidenceRequired": ["profileIndexHash"], "failureCode": "PROFILE_RESOLUTION_FAILED" },
+    { "id": "G-R0-09", "title": "Runtime permission preview", "evidenceRequired": ["permissionProfileRef", "permissionStatus"], "failureCode": "PERMISSION_PREVIEW_REQUIRED" },
+    { "id": "G-02", "title": "Completion evidence", "evidenceRequired": ["completionReceipt", "acceptancePaths"], "failureCode": "COMPLETION_EVIDENCE_INCOMPLETE" },
+    { "id": "G-04", "title": "Source completeness", "evidenceRequired": ["sourceManifest"], "failureCode": "SOURCE_MANIFEST_INCOMPLETE" },
+    { "id": "G-11", "title": "Secret hygiene", "evidenceRequired": ["secretScanReceipt"], "failureCode": "SECRET_HYGIENE_BLOCKED" },
+    { "id": "G-12", "title": "Incident promotion", "evidenceRequired": ["redFixture", "greenEvidence", "regressionId"], "failureCode": "INCIDENT_PROMOTION_INCOMPLETE" },
+    { "id": "G-14", "title": "Typed handle", "evidenceRequired": ["handleKind", "ownerTool", "continuation"], "failureCode": "HANDLE_KIND_MISMATCH" },
+    { "id": "G-15", "title": "Result envelope", "evidenceRequired": ["resultEnvelope"], "failureCode": "RESULT_ENVELOPE_REQUIRED" },
+    { "id": "G-16", "title": "Retry budget", "evidenceRequired": ["failureSignature", "changedPrecondition"], "failureCode": "UNCHANGED_RETRY_FORBIDDEN" },
+    { "id": "G-18", "title": "Patch CAS", "evidenceRequired": ["patchBase"], "failureCode": "STALE_PATCH" },
+    { "id": "G-20", "title": "Output completeness", "evidenceRequired": ["outputReceipt"], "failureCode": "OUTPUT_INCOMPLETE" }
+  ]
+}

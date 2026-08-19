@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "mazz.w66-r0e-implementation-evidence/v0",
+  "status": "COMPLETE_TO_FROZEN_SCOPE",
+  "date": "2026-08-19",
+  "predecessor": { "wave": "W66-R0d", "commit": "9e1a8a7", "regression": "5/5" },
+  "gates": [
+    "Spawn Gate",
+    "Completion Evidence Gate",
+    "Source Completeness Gate",
+    "Secret Hygiene Gate",
+    "Incident Promotion Gate"
+  ],
+  "registries": [
+    "docs/engineering/doctrine/MAZZ_GATE_REGISTRY.v0.json",
+    "docs/engineering/doctrine/MAZZ_REGRESSION_REGISTRY.v0.json"
+  ],
+  "tests": {
+    "w66R0e": "6/6",
+    "affectedTotal": "46/46",
+    "build": "PASS",
+    "fullSuite": "NOT_RUN_UNAFFECTED",
+    "electronE2e": "NOT_RUN_NO_UI",
+    "packaged": "NOT_RUN_DEFERRED_TO_R6",
+    "realCli": "NOT_RUN_DEFERRED_TO_R1_R4"
+  },
+  "negativeAssertions": {
+    "failedGateAdapterCreateSessionCalls": 0,
+    "secretValueEchoed": false,
+    "missingSourceCanComplete": false,
+    "incompleteIncidentCanClose": false
+  },
+  "w66R0Status": "COMPLETE",
+  "w66OverallStatus": "PARTIAL",
+  "nextWave": "W66-R1"
+}
