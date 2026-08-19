@@ -143,6 +143,7 @@ const { WorkspaceEventService } = require('./workspace-event-service');
 const { ContextCompilerService } = require('./context-compiler-service');
 const { CognitionService } = require('./cognition-service');
 const { CivilizationModelService } = require('./civilization-model-service');
+const { AccompanyService } = require('./accompany-service');
 
 const PROTOCOL = 'mazz';
 
@@ -179,6 +180,7 @@ const workspaceEvents = new WorkspaceEventService({ rootProvider: () => store.ge
 const contextCompiler = new ContextCompilerService({ rootProvider: () => store.get('workspace'), eventService: workspaceEvents });
 const cognitionService = new CognitionService({ rootProvider: () => store.get('workspace'), evidenceService: addressableEvidence, eventService: workspaceEvents });
 const civilizationModel = new CivilizationModelService();
+const accompanyService = new AccompanyService({ rootProvider: () => store.get('workspace') });
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
@@ -335,6 +337,8 @@ function registerChannels() {
   bus.handle('civilization:simulate', async payload => civilizationModel.simulate(payload));
   bus.handle('civilization:filter', async payload => civilizationModel.filter(payload));
   bus.handle('civilization:reconcile', async payload => civilizationModel.reconcile(payload));
+  bus.handle('companion:archive', async payload => accompanyService.archive(payload));
+  bus.handle('companion:memory', async payload => accompanyService.memory(payload));
   // Windows 原子写：rename 遇 EPERM/EACCES/EBUSY（目标被外部程序占用/杀软扫描）退化为覆盖拷贝，重试两轮后仍败则报人话
   const writeAtomic = (p, data, encoding) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });

@@ -5,6 +5,7 @@ import { attachSubtitle, detachSubtitle, probeSubtitles, setSubtitleVisible, sub
 import { nextEpisodePath } from '../../lib/episode-detect.js';
 import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
 import { classifyVideoFrameHealth, ZERO_VIDEO_FRAMES } from '../../lib/video-frame-health.js';
+import { mountCompanion } from './companion.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
@@ -74,6 +75,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           ${canExportGif ? `<button class="mz-btn" data-a="gif" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>` : ''}
           <button class="mz-btn" data-a="progmem" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
           <button class="mz-btn" data-a="sub" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
+          <button class="mz-btn" data-a="companion" title="陪看：防剧透的人格对话与本地观剧档">${iconHtml('✨')}</button>
           <button class="mz-btn" data-a="pset" title="播放设置（字幕/连播/片源）">${iconHtml('⚙')}</button>
           <button class="mz-btn" data-a="list" title="播放列表">${iconHtml('☰')}</button>
           <button class="mz-btn" data-a="zoom-reset" title="画面复位（缩放/亮度一键还原）">1:1</button>
@@ -323,6 +325,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   let decodeWatchSeq = 0;
   let decodedFrameSignals = 0;
   let decodeFrameRequest = null;
+  const companion = mountCompanion({ root, media, mediaName: curName, mediaPath: curPath, sampleRms: () => sampleCompanionRms() });
+  root.querySelector('[data-a=companion]')?.addEventListener('click', () => companion.toggle());
 
   const clearDecodeWatch = () => {
     decodeWatchSeq += 1;
@@ -928,6 +932,21 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     }
     return ctl._chain;
   }
+  function sampleCompanionRms() {
+    try {
+      const chain = mediaChain();
+      if (!ctl._companionAnalyser) {
+        ctl._companionAnalyser = chain.ctx.createAnalyser();
+        ctl._companionAnalyser.fftSize = 256;
+        chain.gain.connect(ctl._companionAnalyser);
+        ctl._companionRmsData = new Uint8Array(ctl._companionAnalyser.fftSize);
+      }
+      ctl._companionAnalyser.getByteTimeDomainData(ctl._companionRmsData);
+      let sum = 0;
+      for (const value of ctl._companionRmsData) { const centered = (value - 128) / 128; sum += centered * centered; }
+      return Math.min(1, Math.sqrt(sum / ctl._companionRmsData.length) * 4);
+    } catch { return 0; }
+  }
   function setGain(x) {
     if (x > 1.0001) mediaChain().gain.gain.value = x;
     else if (ctl._chain) ctl._chain.gain.gain.value = 1;
@@ -1396,6 +1415,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const pathChanged = newPath !== curPath;
     curUrl = newUrl; curName = newName; curPath = newPath;
     curSize = newSize;
+    companion.setSource(curName, curPath);
     root.querySelector('.mz-empty')?.remove(); // 空起手占位退场（首次上源）
     media.pause();
     if (pathChanged) { detachSubtitle(); subFor = null; detachAuxAudio(); audioTracks = []; probeAudioTracks(); }
@@ -1440,6 +1460,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      companion.destroy().catch(() => {});
       subLoadSeq++; // 令所有在途字幕探测/挂载失效。
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('fullscreenchange', onFullscreenChange);

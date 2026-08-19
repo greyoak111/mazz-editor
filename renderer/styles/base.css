@@ -1690,6 +1690,22 @@ i.ico { display: inline-flex; align-items: center; justify-content: center; }
 .mz-side-x { margin-left: auto; border: 0; background: none; color: var(--fg-dim); cursor: pointer; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
 .mz-side-x:hover { color: var(--fg); background: var(--bg-hover); }
 .mz-side-head { display: flex; align-items: center; gap: 6px; }
+.mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev) 94%,transparent); box-shadow:0 18px 50px #0008; backdrop-filter:blur(16px); }
+.mz-companion[hidden] { display:none; }
+.mz-companion header { display:flex; align-items:center; gap:8px; padding:9px 10px; border-bottom:1px solid var(--border); }
+.mz-companion header b { color:var(--fg); }
+.mz-companion header span { flex:1; color:var(--fg-dim); font-size:11px; }
+.mz-companion header button { border:0; background:none; color:var(--fg-dim); cursor:pointer; font-size:18px; }
+.mz-companion[data-gate="silence"] { opacity:.72; }
+.mz-companion-log { min-height:120px; overflow:auto; padding:8px 10px; display:flex; flex-direction:column; gap:8px; }
+.mz-companion-msg { display:flex; flex-direction:column; gap:3px; padding:7px 9px; border-radius:9px; background:var(--bg-soft); font-size:12px; line-height:1.55; }
+.mz-companion-msg.is-user { margin-left:28px; background:color-mix(in srgb,var(--accent) 16%,var(--bg-soft)); }
+.mz-companion-msg.is-system { color:var(--fg-dim); }
+.mz-companion-msg b { font-size:10.5px; color:var(--fg-dim); }
+.mz-companion-status { padding:4px 10px 7px; color:var(--fg-dim); font-size:10.5px; }
+.mz-companion-compose { display:flex; gap:6px; padding:8px 10px 10px; border-top:1px solid var(--border); }
+.mz-companion-compose input { flex:1; min-width:0; padding:7px 9px; border:1px solid var(--border); border-radius:7px; background:var(--bg); color:var(--fg); }
+.mz-companion-compose button { padding:0 12px; border:0; border-radius:7px; background:var(--accent); color:var(--accent-fg); cursor:pointer; }
 
 /* v45 图标等高体系：同栏图标统一尺寸与基线 */
 .mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }

@@ -1,0 +1,19 @@
+{
+  "schema": "mazz.engineering-evidence/v0",
+  "wave": "W64",
+  "capturedAt": "2026-08-19T00:00:00.000Z",
+  "status": "LOCAL_PRODUCT_SLICE_LANDED",
+  "validation": {
+    "build": "PASS",
+    "w64": "7/7 PASS",
+    "playerW22": "6/6 PASS",
+    "playerW23": "5/5 PASS",
+    "frameHealth": "3/3 PASS"
+  },
+  "conditional": [
+    "real external video model",
+    "automatic commentary long-play quality",
+    "sound assets and license",
+    "packaged/RDP/device soak"
+  ]
+}

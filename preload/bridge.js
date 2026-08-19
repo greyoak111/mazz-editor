@@ -15,6 +15,7 @@ const INVOKE_CHANNELS = new Set([
   'contextPackage:compile', 'contextPackage:list',
   'cognition:list', 'cognition:create', 'cognition:approve', 'cognition:supersede', 'cognition:summary',
   'civilization:simulate', 'civilization:filter', 'civilization:reconcile',
+  'companion:archive', 'companion:memory',
   'fs:watch', 'fs:unwatch',
   'dialog:openFile', 'dialog:saveFile', 'dialog:openFolder', 'dialog:confirm',
   'recent:list', 'recent:add', 'recent:clear',
