@@ -14,7 +14,7 @@ describe('W71 产品入口成熟度单源', () => {
     const expected = {
       mobile: MATURITY.HIDDEN,
       updater: MATURITY.HIDDEN,
-      feed: MATURITY.HIDDEN,
+      feed: MATURITY.FORMAL,
       agent: MATURITY.HIDDEN,
       dmhy: MATURITY.FORMAL,
       recorder: MATURITY.PREVIEW,

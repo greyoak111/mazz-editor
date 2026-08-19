@@ -123,33 +123,7 @@ class TorrentSites {
       if (!keyword) return { rows: [], kw: keyword, page: 1, totalPages: 1, hasMore: false, nextPage: null };
       return this.#searchPage(this.#site(site), keyword, page);
     });
-    bus.handle('sites:searchMany', async ({ sites, kw, pageMap = {}, maxPages = 2 } = {}) => {
-      const keyword = String(kw || '').trim();
-      const cursorMode = pageMap && Object.keys(pageMap).length > 0;
-      const selected = [...new Set((Array.isArray(sites) ? sites : []).filter((id) => SITES[id] && (!cursorMode || Object.hasOwn(pageMap, id))))].slice(0, 4);
-      const boundedPages = Math.max(1, Math.min(3, Number.parseInt(maxPages, 10) || 1));
-      if (!keyword || !selected.length) return { rows: [], aggregates: [], perSite: {}, nextPages: {}, kw: keyword };
-      const entries = await Promise.all(selected.map(async (siteId) => {
-        const adapter = this.#site(siteId);
-        const startPage = Math.max(1, Number.parseInt(pageMap?.[siteId], 10) || 1);
-        const rows = [];
-        let current = null;
-        try {
-          for (let offset = 0; offset < boundedPages; offset += 1) {
-            current = await this.#searchPage(adapter, keyword, startPage + offset);
-            rows.push(...current.rows);
-            if (!current.hasMore) break;
-          }
-          return [siteId, { ...current, rows, error: '' }];
-        } catch (error) {
-          return [siteId, { rows, page: startPage, totalPages: startPage, hasMore: false, nextPage: null, sourceSite: siteId, sourceMode: 'failed', error: error.message || String(error) }];
-        }
-      }));
-      const perSite = Object.fromEntries(entries);
-      const rows = entries.flatMap(([, result]) => result.rows || []);
-      const nextPages = Object.fromEntries(entries.filter(([, result]) => result.nextPage).map(([siteId, result]) => [siteId, result.nextPage]));
-      return { rows, aggregates: aggregateResourceRows(rows), perSite, nextPages, kw: keyword };
-    });
+    bus.handle('sites:searchMany', async payload => this.searchMany(payload));
     bus.handle('sites:home', async ({ site } = {}) => {
       const adapter = this.#site(site);
       try {
@@ -192,6 +166,34 @@ class TorrentSites {
       if (!result) throw Object.assign(new Error('详情页未取到 magnet（站点结构可能已变）'), { code: 'W65_MAGNET_NOT_FOUND' });
       return result;
     });
+  }
+
+  async searchMany({ sites, kw, pageMap = {}, maxPages = 2 } = {}) {
+    const keyword = String(kw || '').trim();
+    const cursorMode = pageMap && Object.keys(pageMap).length > 0;
+    const selected = [...new Set((Array.isArray(sites) ? sites : []).filter((id) => SITES[id] && (!cursorMode || Object.hasOwn(pageMap, id))))].slice(0, 4);
+    const boundedPages = Math.max(1, Math.min(3, Number.parseInt(maxPages, 10) || 1));
+    if (!keyword || !selected.length) return { rows: [], aggregates: [], perSite: {}, nextPages: {}, kw: keyword };
+    const entries = await Promise.all(selected.map(async (siteId) => {
+      const adapter = this.#site(siteId);
+      const startPage = Math.max(1, Number.parseInt(pageMap?.[siteId], 10) || 1);
+      const rows = [];
+      let current = null;
+      try {
+        for (let offset = 0; offset < boundedPages; offset += 1) {
+          current = await this.#searchPage(adapter, keyword, startPage + offset);
+          rows.push(...current.rows);
+          if (!current.hasMore) break;
+        }
+        return [siteId, { ...current, rows, error: '' }];
+      } catch (error) {
+        return [siteId, { rows, page: startPage, totalPages: startPage, hasMore: false, nextPage: null, sourceSite: siteId, sourceMode: 'failed', error: error.message || String(error) }];
+      }
+    }));
+    const perSite = Object.fromEntries(entries);
+    const rows = entries.flatMap(([, result]) => result.rows || []);
+    const nextPages = Object.fromEntries(entries.filter(([, result]) => result.nextPage).map(([siteId, result]) => [siteId, result.nextPage]));
+    return { rows, aggregates: aggregateResourceRows(rows), perSite, nextPages, kw: keyword };
   }
 
   #site(siteId) {

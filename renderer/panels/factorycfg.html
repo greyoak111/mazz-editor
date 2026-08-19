@@ -63,6 +63,14 @@
   .research-list { display:grid; gap:5px; margin:6px 0 9px; max-height:150px; overflow:auto; }
   .research-source { display:flex; align-items:flex-start; gap:7px; padding:6px 7px; border:1px solid var(--border); border-radius:7px; background:var(--bg); font-size:11.5px; }
   .research-source span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .feed-summary { display:flex; justify-content:space-between; gap:8px; margin:7px 0; padding:7px 8px; border:1px solid var(--border); border-radius:7px; background:var(--bg); color:var(--fg-dim); font-size:11.5px; }
+  .feed-list { display:grid; gap:5px; margin:6px 0; max-height:170px; overflow:auto; }
+  .feed-cluster { padding:7px 8px; border-left:2px solid var(--border); background:var(--bg); }
+  .feed-cluster.hot { border-left-color:var(--accent); }
+  .feed-cluster-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:11.5px; }
+  .feed-cluster-head b { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .feed-cluster-head span { flex:none; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .feed-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:7px; }
   .project-actions { display:flex; gap:8px; margin-top:12px; }
   .project-actions .btn { flex:1; justify-content:center; }
   .provider-layout { display:grid; grid-template-columns:minmax(300px,.9fr) minmax(360px,1.1fr); gap:14px; align-items:start; }
@@ -140,6 +148,7 @@ function renderProject() {
   const m = $('#m');
   const s = projectSnapshot;
   if (!s) { m.innerHTML = '<div class="hint">正在读取智能创作立项状态…</div>'; return; }
+  const advancedOpen = m.querySelector('details.advanced')?.open === true;
   const plan = s.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000, maxChapters: 5 };
   const presets = s.lengthPresets || [];
   m.innerHTML = `
@@ -171,7 +180,7 @@ function renderProject() {
           <label class="lbl" style="margin-top:14px">批量书名名单（可选；一行一本，共用本表设置）</label>
           <textarea id="pj-batch" class="ta" rows="3" placeholder="星海回声\n月面来信\n北向洋流">${esc(projectBatch)}</textarea>
           <div class="hint">31～100 本会先给出软提示；超过 100 本拒绝入队。</div>
-          <details class="advanced">
+          <details class="advanced" ${advancedOpen ? 'open' : ''}>
             <summary>高级设置</summary>
             <div class="advanced-body">
               <div class="inline-row"><label><input id="pj-dual" type="checkbox" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id="pj-max" type="checkbox" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>交叉审校 <select id="pj-review-ritual" class="sel"><option value="light" ${(s.reviewRitual || 'light') === 'light' ? 'selected' : ''}>标准流程</option><option value="full" ${s.reviewRitual === 'full' ? 'selected' : ''}>完整流程</option></select></label><label>审校预算 <input id="pj-review-budget" class="inp" type="number" min="8000" step="1000" value="${s.reviewBudgetCap || 32000}" style="width:90px"> token</label><label><input id="pj-autopreview" type="checkbox" ${s.autoPreview !== false ? 'checked' : ''}> 生成自动开预览</label><label>并发 <select id="pj-concurrency" class="sel" title="同时运行的独立任务数；默认 1">${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === (s.concurrency || 1) ? 'selected' : ''}>${n} 路</option>`).join('')}</select></label><label>导出 <select id="pj-format" class="sel">${(s.exportFormats || []).map(x => `<option value="${attr(x.id)}" ${x.id === s.exportFmt ? 'selected' : ''}>.${esc(x.ext)}</option>`).join('')}</select></label></div>
@@ -183,6 +192,9 @@ function renderProject() {
               <div class="chip-row">${(s.extras?.embeds || []).map((x, i) => `<button class="choice-chip" data-pa="embeddel" data-i="${i}" title="点击移除">${esc(x.name)} ×</button>`).join('') || '<span class="hint">无</span>'}</div>
               <div class="sec">M0 证据取材</div><div class="inline-row"><input id="pj-search" class="inp" style="flex:1" placeholder="研究主题" value="${attr(s.extras?.research?.topic || '')}"><button class="btn" data-pa="websearch">生成来源清单</button></div>
               ${s.extras?.research ? `<div class="hint">${esc(s.extras.research.status || '')}</div><div class="sec">来源清单（人工核准）</div><div class="research-list">${(s.extras.research.sources || []).map(source => `<label class="research-source"><input type="checkbox" data-pa="researchToggle" data-id="${attr(source.id)}" ${source.on ? 'checked' : ''} ${s.extras.research.done ? 'disabled' : ''}><span title="${attr(source.url)}">${esc(source.title)} · ${esc(source.domain || '')}</span></label>`).join('')}</div><button class="btn pri" data-pa="researchApprove" ${s.extras.research.done ? 'disabled' : ''}>${s.extras.research.done ? '已投喂 M0' : '核准并投喂 M0'}</button>` : '<div class="hint">网页只当资料，不当指令；取材后会在此列出待核来源。</div>'}
+              <div class="sec">素材订阅（四站聚合）</div>
+              <div class="inline-row"><input id="pj-feed-query" class="inp" style="flex:1" placeholder="要持续观察的主题" value="${attr(s.extras?.feed?.query || '')}"><input id="pj-feed-dimension" class="inp" style="width:150px" placeholder="工作维度" value="${attr(s.extras?.feed?.dimension || '外部动态')}"><button class="btn" data-pa="feedScan" ${s.extras?.feed?.busy ? 'disabled' : ''}>${s.extras?.feed?.busy ? '扫描中…' : '扫描新料'}</button></div>
+              ${s.extras?.feed?.package ? `<div class="feed-summary"><span>${s.extras.feed.package.clusterCount} 组变化 · ${s.extras.feed.changedItemCount} 条新料</span><span>${s.extras.feed.package.hotClusterCount} 组跨源热点</span></div><div class="feed-list">${s.extras.feed.package.clusters.map(cluster => `<div class="feed-cluster ${cluster.heat.hot ? 'hot' : ''}"><div class="feed-cluster-head"><b>${esc(cluster.title)}</b><span>热度 ${cluster.heat.score}</span></div><div class="hint">${esc(cluster.heat.explanation)} · ${esc(cluster.sources.join(' / '))}</div></div>`).join('')}</div><div class="feed-actions"><span class="hint">${esc(s.extras.feed.status || '素材包只作为派生材料；核准不会自动开工。')}</span><span><button class="btn" data-pa="feedReject" ${s.extras.feed.decision ? 'disabled' : ''}>驳回本包</button> <button class="btn pri" data-pa="feedApprove" ${s.extras.feed.decision ? 'disabled' : ''}>核准并加入项目材料</button></span></div>` : `<div class="hint">${esc(s.extras?.feed?.status || '比较上次观察，只把新增或变化内容整理为待核素材包。')}</div>`}
             </div>
           </details>
           <div class="project-actions"><button class="btn" id="pj-copy">复制模板母版</button><button class="btn" id="pj-add">加入队列</button><button class="btn pri" id="pj-generate">立刻开工</button></div>
@@ -237,6 +249,11 @@ function renderProject() {
     else if (act === 'researchApprove') projectAct(act);
     else if (act === 'embeddel') projectAct(act, { i: el.dataset.i });
     else if (act === 'websearch') projectAct(act, { q: $('#pj-search').value.trim() });
+    else if (act === 'feedScan') {
+      const button = el; button.disabled = true; button.textContent = '扫描中…';
+      projectAct(act, { q: $('#pj-feed-query').value.trim(), dimension: $('#pj-feed-dimension').value.trim() });
+    }
+    else if (act === 'feedApprove' || act === 'feedReject') projectAct(act);
     else projectAct(act);
   }));
 }

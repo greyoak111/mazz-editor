@@ -11,7 +11,9 @@ export const MATURITY = Object.freeze({
 export const PRODUCT_CAPABILITIES = Object.freeze({
   mobile: Object.freeze({ maturity: MATURITY.HIDDEN, label: '移动壳' }),
   updater: Object.freeze({ maturity: MATURITY.HIDDEN, label: '自动更新' }),
-  feed: Object.freeze({ maturity: MATURITY.HIDDEN, label: 'W62e 投喂管线' }),
+  // W74b 已开放 W65 -> Feed -> W74a -> Factory 的人工核准薄竖切；
+  // W62e 的通用来源、后台调度和全自动预算治理仍是独立历史欠账。
+  feed: Object.freeze({ maturity: MATURITY.FORMAL, label: '素材订阅' }),
   agent: Object.freeze({ maturity: MATURITY.HIDDEN, label: 'Agent 执行器整合', foundation: 'internal' }),
   dmhy: Object.freeze({ maturity: MATURITY.FORMAL, label: '四站聚合检索与下载' }),
   recorder: Object.freeze({ maturity: MATURITY.PREVIEW, label: '全局内录' }),

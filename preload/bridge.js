@@ -39,6 +39,7 @@ const INVOKE_CHANNELS = new Set([
   'factory:aiChat', 'factory:aiChatStream', 'factory:aiCancel', 'factory:aiModels',
   'factory:runAcquire', 'factory:runRelease',
   'ingestion:registerText',
+  'feed:scan', 'feed:scanW65', 'feed:decide', 'feed:list',
   'promotion:promoteConversation', 'promotion:reviewConversationCandidate',
   'promotion:listManagement', 'promotion:revoke', 'promotion:manageEvidenceProjection',
   'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut', 'app:graphicsMode',

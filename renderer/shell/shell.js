@@ -2797,6 +2797,19 @@ export class Shell {
               fp.renderResearchSources();
             } else if (pl.act === 'researchApprove') {
               await fp.approveResearch();
+            } else if (pl.act === 'feedScan') {
+              const query = fp.el.querySelector('.fc-feed-query');
+              const dimension = fp.el.querySelector('.fc-feed-dimension');
+              if (query) query.value = String(pl.q || '');
+              if (dimension) dimension.value = String(pl.dimension || '外部动态');
+              await fp.scanFeed();
+              fp.pushSnapshot();
+            } else if (pl.act === 'feedApprove') {
+              await fp.decideFeed('approve');
+              fp.pushSnapshot();
+            } else if (pl.act === 'feedReject') {
+              await fp.decideFeed('reject');
+              fp.pushSnapshot();
             }
           } catch (e) { toast('创作面板动作失败：' + e.message); }
           return;

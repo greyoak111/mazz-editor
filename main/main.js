@@ -126,6 +126,7 @@ const { AgentHarnessService } = require('./agent-harness');
 const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
 const { FactoryRunOwnerRegistry } = require('./factory-run-owners');
 const { IngestionPipeline } = require('./ingestion-pipeline');
+const { FeedPipeline, normalizeW65FeedRequest } = require('./feed-pipeline');
 const { PromotionLedger } = require('./promotion-ledger');
 const { FactorySseDecoder } = require('./factory-sse');
 
@@ -150,11 +151,13 @@ const resourceLedger = new ResourceLedger();
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
 const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
 const ingestionPipeline = new IngestionPipeline();
+const feedPipeline = new FeedPipeline({ ingestionPipeline });
 const promotionLedger = new PromotionLedger();
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
   globalThis.__MAZZ_E2E_INGESTION_PIPELINE__ = ingestionPipeline;
+  globalThis.__MAZZ_E2E_FEED_PIPELINE__ = feedPipeline;
   globalThis.__MAZZ_E2E_PROMOTION_LEDGER__ = promotionLedger;
   globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
 }
@@ -178,6 +181,7 @@ const toSlashDeep = (v) => Array.isArray(v) ? v.map(toSlashDeep)
 
 // 文件监听器实例（whenReady 时创建；删除/改名前需先解锁，否则 Windows 下目录被 ReadDirectoryChangesW 句柄锁死）
 let watcher = null;
+let torrentSites = null;
 /** 删除/移动前解锁监视句柄（Windows 下被监视的目录无法改名/删除） */
 async function unlockWatch(paths) {
   const list = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
@@ -612,6 +616,69 @@ function registerChannels() {
     runId, leaseId, reason, ownerId: String(event?.sender?.id || ''),
   }));
   bus.handle('ingestion:registerText', async payload => ingestionPipeline.register(payload));
+  bus.handle('feed:scan', async payload => feedPipeline.scan(payload));
+  bus.handle('feed:scanW65', async payload => {
+    const request = normalizeW65FeedRequest(payload);
+    if (!torrentSites && process.env.MAZZ_E2E_W74B_FEED_FIXTURE !== '1') throw new Error('W65 Adapter 尚未就绪');
+    const fixtureHash = '0123456789abcdef0123456789abcdef01234567';
+    const search = process.env.MAZZ_E2E_W74B_FEED_FIXTURE === '1'
+      ? {
+        perSite: Object.fromEntries(request.sites.map((siteId, index) => [siteId, {
+          rows: [{
+            title: index ? '[字幕组] 发布工程跨源样本 1080p' : '发布工程跨源样本',
+            sourceSite: siteId,
+            sourceUrl: `https://example.test/${siteId}/${fixtureHash}`,
+            infoHash: fixtureHash,
+            date: '2026-08-19 09:00',
+            size: '1.2 GB',
+            subgroup: index ? '样本站二' : '样本站一',
+            seeders: 12 + index,
+          }], error: '', sourceMode: 'e2e-fixture',
+        }])),
+      }
+      : await torrentSites.searchMany({ sites: request.sites, kw: request.query, maxPages: request.maxPages });
+    const sourceBatches = request.sites.map(sourceId => ({
+      sourceId,
+      sourceType: 'subscription',
+      items: (search.perSite?.[sourceId]?.rows || []).map((row, index) => {
+        const publishedMs = Date.parse(String(row.date || ''));
+        return {
+          itemId: String(row.infoHash || row.sourceUrl || `${sourceId}:${index}`),
+          title: String(row.title || '未命名外部条目'),
+          url: String(row.sourceUrl || ''),
+          publishedAt: Number.isFinite(publishedMs) ? new Date(publishedMs).toISOString() : request.observedAt,
+          summary: [row.subgroup, row.size, Number.isInteger(row.seeders) ? `做种 ${row.seeders}` : ''].filter(Boolean).join(' · '),
+          canonicalKey: row.infoHash ? `infohash:${String(row.infoHash).toLowerCase()}` : String(row.sourceUrl || ''),
+        };
+      }),
+    }));
+    const sourceStatus = request.sites.map(sourceId => ({
+      sourceId,
+      ok: !search.perSite?.[sourceId]?.error,
+      mode: String(search.perSite?.[sourceId]?.sourceMode || ''),
+      itemCount: sourceBatches.find(batch => batch.sourceId === sourceId)?.items.length || 0,
+      error: String(search.perSite?.[sourceId]?.error || '').slice(0, 240),
+    }));
+    if (sourceStatus.every(status => !status.ok)) {
+      const error = new Error(`W65 四站本轮均不可用：${sourceStatus.map(status => `${status.sourceId}=${status.error || 'unknown'}`).join('；')}`);
+      error.code = 'W74B_ALL_SOURCES_UNAVAILABLE';
+      throw error;
+    }
+    const result = await feedPipeline.scan({
+      schema: 'mazz.feed-scan-request/v0',
+      projectId: request.projectId,
+      projectPath: request.projectPath,
+      query: request.query,
+      dimension: request.dimension,
+      mode: request.mode,
+      windowHours: request.windowHours,
+      observedAt: request.observedAt,
+      sourceBatches,
+    });
+    return { ...result, sourceStatus };
+  });
+  bus.handle('feed:decide', async payload => feedPipeline.decide(payload));
+  bus.handle('feed:list', async ({ projectPath } = {}) => feedPipeline.list(projectPath));
   bus.handle('promotion:promoteConversation', async payload => promotionLedger.promoteConversation(payload, ingestionPipeline));
   bus.handle('promotion:reviewConversationCandidate', async payload => promotionLedger.reviewStructuredConversationCandidate(payload, ingestionPipeline));
   bus.handle('promotion:listManagement', async payload => promotionLedger.listManagement(payload));
@@ -1508,7 +1575,7 @@ app.whenReady().then(() => {
   app.on('before-quit', () => factoryAiRequests.destroy('app-quit').catch(e => console.warn('[factory-ai] quit cleanup:', e.message)));
   app.on('before-quit', () => factoryRunOwners.destroy('app-quit'));
   const TorrentSites = require('./torrent-sites');
-  new TorrentSites({ bus });
+  torrentSites = new TorrentSites({ bus });
 
   // —— MKV 轻量解复用（自研 EBML-lite：多音轨枚举与全编码轨抽帧封装，输出缓存到 媒体库/.audcache） ——
   const { listTracks, extractFlacTrack, extractTrack } = require('./mkv-demux');

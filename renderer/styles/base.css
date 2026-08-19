@@ -1451,6 +1451,21 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .fc-searchrow { display: flex; gap: 6px; }
 .fc-search { flex: 1; font-size: 12px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
 .fc-searchres { margin-top: 4px; }
+.fc-feed-controls { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(96px, .45fr) auto; gap: 6px; }
+.fc-feed-query, .fc-feed-dimension { min-width: 0; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); outline: none; }
+.fc-feed-query:focus, .fc-feed-dimension:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent); }
+.fc-feedres { margin-top: 6px; }
+.fc-feed-summary, .fc-feed-decision { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px; }
+.fc-feed-summary { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-soft); color: var(--fg-dim); }
+.fc-feed-clusters { display: grid; gap: 4px; margin: 5px 0; max-height: 190px; overflow: auto; scrollbar-width: thin; }
+.fc-feed-cluster { padding: 6px 8px; border-left: 2px solid var(--border); background: color-mix(in srgb, var(--bg-soft) 75%, transparent); }
+.fc-feed-cluster.is-hot { border-left-color: var(--accent); }
+.fc-feed-cluster-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 11.5px; }
+.fc-feed-cluster-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-feed-cluster-head span { flex: none; color: var(--accent); font-variant-numeric: tabular-nums; }
+.fc-feed-decision { margin-top: 6px; }
+.fc-feed-decision > span:last-child { display: flex; gap: 5px; flex: none; }
+.fc-feed-approve { border-color: var(--accent); color: var(--accent); }
 .fc-hit { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 2px 0; }
 .fc-hit-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-resume { margin: 6px 0; }

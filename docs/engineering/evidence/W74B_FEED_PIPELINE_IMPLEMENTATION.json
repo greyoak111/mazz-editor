@@ -1,0 +1,55 @@
+{
+  "schema": "mazz.w74b-feed-pipeline-evidence/v0",
+  "capturedAt": "2026-08-19",
+  "baseline": "main@482bc2d",
+  "status": "W74B_COMPLETE_FORMAL_TO_FROZEN_THIN_SLICE_SPEC",
+  "parentWave": "W74_COMPLETE_TO_FROZEN_SCOPE",
+  "flow": [
+    "W65 four-site adapters",
+    "change detection",
+    "canonical and SimHash clustering",
+    "explainable heat",
+    "immutable feed package",
+    "human decision",
+    "W74a derived material",
+    "Factory project materials"
+  ],
+  "verification": {
+    "w74bContract": "8/8 PASS",
+    "affectedContracts": "84/84 PASS",
+    "rendererBuild": "PASS",
+    "electronRun88": "4/4 PASS",
+    "rendererErrors": 0,
+    "mainErrors": 0,
+    "visualReview": "PASS",
+    "unrelatedFullSuiteRun": false,
+    "packagedInstallerRebuilt": false
+  },
+  "recovery": {
+    "packageBeforeCursor": true,
+    "stableContentPackageIdentity": true,
+    "stateRebuildFromPackages": true,
+    "corruptStatePreserved": true,
+    "allSourcesUnavailableIsError": true
+  },
+  "authority": {
+    "formalMode": "approval",
+    "decisionAuthority": "human:*",
+    "automaticFactoryStart": false,
+    "publicationGranted": false
+  },
+  "deferred": [
+    "W62e generalized RSS/web/SearXNG/official-API scheduler",
+    "semi/full automatic budget runner",
+    "W66-R0a-R6",
+    "W79",
+    "W82",
+    "W69",
+    "W64",
+    "W63 and complete-ism expansions"
+  ],
+  "screenshots": [
+    "docs/engineering/evidence/W74B_FEED_REVIEW.png",
+    "docs/engineering/evidence/W74B_FEED_APPROVED_MATERIAL.png"
+  ]
+}

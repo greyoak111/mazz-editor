@@ -108,6 +108,9 @@ export class FactoryPanel {
     this.researchSelected = new Set();
     this.researchStatus = '';
     this.researchResultPath = '';
+    this.feedPrepared = null;     // W74b 外界新料；正式入口固定人工核准模式
+    this.feedStatus = '';
+    this.feedBusy = false;
     this.resumables = [];         // 启动扫描到的可恢复任务
     this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
     this.agentLedger = normalizeLedger(this.loadJSON(AGENT_LEDGER_KEY, null));
@@ -234,6 +237,26 @@ export class FactoryPanel {
             on: this.researchSelected.has(source.id),
           })),
         } : null,
+        feed: {
+          query: this.el.querySelector('.fc-feed-query')?.value || '',
+          dimension: this.el.querySelector('.fc-feed-dimension')?.value || '外部动态',
+          status: this.feedStatus,
+          busy: this.feedBusy,
+          changedItemCount: this.feedPrepared?.changedItemCount || 0,
+          decision: this.feedPrepared?.decision || '',
+          package: this.feedPrepared?.package ? {
+            packageId: this.feedPrepared.package.packageId,
+            dimension: this.feedPrepared.package.dimension,
+            clusterCount: this.feedPrepared.package.clusters.length,
+            hotClusterCount: this.feedPrepared.package.clusters.filter(cluster => cluster.heat.hot).length,
+            clusters: this.feedPrepared.package.clusters.slice(0, 6).map(cluster => ({
+              clusterId: cluster.clusterId,
+              title: cluster.title,
+              sources: [...cluster.sources],
+              heat: { ...cluster.heat },
+            })),
+          } : null,
+        },
       },
       tasks: this.tasksSnapshot(),
     };
@@ -347,6 +370,15 @@ export class FactoryPanel {
               <button class="fc-mini" data-a="websearch">生成来源清单</button>
             </div>
             <div class="fc-searchres"></div>
+          </div>
+          <div class="fc-sec" data-sec="feed">
+            <div class="fc-label">素材订阅（四站聚合） <span>变化检测、跨源聚类、人工核准</span></div>
+            <div class="fc-feed-controls">
+              <input class="fc-feed-query" placeholder="要持续观察的主题" spellcheck="false">
+              <input class="fc-feed-dimension" value="外部动态" placeholder="工作维度" spellcheck="false">
+              <button class="fc-mini" data-a="feedscan">扫描新料</button>
+            </div>
+            <div class="fc-feedres" aria-live="polite"></div>
           </div>
         </details>
         <div class="fc-actions">
@@ -484,6 +516,8 @@ export class FactoryPanel {
     this.el.querySelector('[data-a=embedadd]').addEventListener('click', () => this.addEmbed());
     this.el.querySelector('[data-a=websearch]').addEventListener('click', () => this.webSearch());
     this.el.querySelector('.fc-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.webSearch(); });
+    this.el.querySelector('[data-a=feedscan]').addEventListener('click', () => this.scanFeed());
+    this.el.querySelector('.fc-feed-query').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.scanFeed(); });
     this.el.querySelector('[data-a=mazimport]').addEventListener('click', () => this.importMazPack());
     this.el.querySelector('[data-a=mazexport]').addEventListener('click', () => this.exportMazPack());
     this.agentSubmitEl.addEventListener('click', () => this.submitAgent());
@@ -621,6 +655,7 @@ export class FactoryPanel {
     }));
     sb.querySelector('[data-smgr]')?.addEventListener('click', () => this.openStyleManager());
     this.renderEmbeds();
+    this.renderFeed();
     this.updateExtraBadge();
   }
 
@@ -834,6 +869,140 @@ export class FactoryPanel {
       this.renderResearchSources();
       this.pushSnapshot();
       toast(this.researchStatus);
+      return null;
+    }
+  }
+
+  renderFeed() {
+    const box = this.el.querySelector('.fc-feedres');
+    if (!box) return;
+    const prepared = this.feedPrepared;
+    if (!prepared?.package) {
+      box.innerHTML = this.feedStatus ? `<div class="fc-dim">${escapeHtml(this.feedStatus)}</div>` : '';
+      return;
+    }
+    const packageValue = prepared.package;
+    const decision = prepared.decision || '';
+    const clusters = packageValue.clusters.slice(0, 6);
+    box.innerHTML = `
+      <div class="fc-feed-summary">
+        <span>${packageValue.clusters.length} 组变化 · ${prepared.changedItemCount} 条新料</span>
+        <span>${packageValue.clusters.filter(cluster => cluster.heat.hot).length} 组跨源热点</span>
+      </div>
+      <div class="fc-feed-clusters">
+        ${clusters.map(cluster => `<div class="fc-feed-cluster ${cluster.heat.hot ? 'is-hot' : ''}">
+          <div class="fc-feed-cluster-head"><b>${escapeHtml(cluster.title)}</b><span>热度 ${cluster.heat.score}</span></div>
+          <div class="fc-dim">${escapeHtml(cluster.heat.explanation)} · ${escapeHtml(cluster.sources.join(' / '))}</div>
+        </div>`).join('')}
+      </div>
+      ${packageValue.clusters.length > clusters.length ? `<div class="fc-dim">另有 ${packageValue.clusters.length - clusters.length} 组已完整写入素材包。</div>` : ''}
+      <div class="fc-feed-decision">
+        <span class="fc-dim">${escapeHtml(this.feedStatus || '素材包只作为派生材料；核准不会自动启动智能创作。')}</span>
+        <span>
+          <button class="fc-mini" data-feed-decision="reject" ${decision ? 'disabled' : ''}>驳回本包</button>
+          <button class="fc-mini fc-feed-approve" data-feed-decision="approve" ${decision ? 'disabled' : ''}>核准并加入项目材料</button>
+        </span>
+      </div>`;
+    box.querySelectorAll('[data-feed-decision]').forEach(button => button.addEventListener('click', () => this.decideFeed(button.dataset.feedDecision)));
+  }
+
+  async scanFeed() {
+    if (this.feedBusy) return;
+    const query = this.el.querySelector('.fc-feed-query')?.value.trim() || '';
+    const dimension = this.el.querySelector('.fc-feed-dimension')?.value.trim() || '';
+    if (!query) { toast('先填写要持续观察的主题'); return; }
+    if (!dimension) { toast('先填写工作维度'); return; }
+    this.feedBusy = true;
+    this.feedPrepared = null;
+    this.feedStatus = '正在调用四站聚合并比较上次观察…';
+    this.renderFeed();
+    const button = this.el.querySelector('[data-a=feedscan]');
+    if (button) button.disabled = true;
+    try {
+      const projectPath = String(await window.mazz.invoke('workspace:get') || '').trim();
+      if (!projectPath) throw new Error('当前没有可用工作区');
+      const result = await window.mazz.invoke('feed:scanW65', {
+        schema: 'mazz.feed-w65-request/v0',
+        projectId: 'project:workspace-feed:v0',
+        projectPath,
+        query,
+        dimension,
+        mode: 'approval',
+        windowHours: 24,
+        observedAt: new Date().toISOString(),
+        sites: ['dmhy', 'mikan', 'kisssub', 'comicat'],
+        maxPages: 1,
+      });
+      const failedSources = (result.sourceStatus || []).filter(source => !source.ok);
+      const sourceNote = failedSources.length ? `；${failedSources.length}/${result.sourceStatus.length} 个来源本轮失败，未把缺失冒充无变化` : '';
+      if (result.code === 'NO_CHANGES') {
+        this.feedStatus = `本轮可用来源没有检测到新增或内容变化；没有制造空素材包${sourceNote}。`;
+      } else {
+        this.feedPrepared = { ...result, projectPath, decision: '' };
+        this.feedStatus = `素材包已落盘，等待人工核准或驳回${sourceNote}。`;
+      }
+      this.renderFeed();
+      this.pushSnapshot();
+      return result;
+    } catch (error) {
+      this.feedStatus = `素材订阅扫描失败：${error.message || error}`;
+      this.renderFeed();
+      toast(this.feedStatus);
+      return null;
+    } finally {
+      this.feedBusy = false;
+      if (button) button.disabled = false;
+    }
+  }
+
+  async decideFeed(action) {
+    const prepared = this.feedPrepared;
+    if (!prepared?.package || prepared.decision) return null;
+    if (!['approve', 'reject'].includes(action)) return null;
+    this.feedStatus = action === 'approve' ? '正在核准并登记派生材料…' : '正在登记驳回裁决…';
+    this.renderFeed();
+    try {
+      const result = await window.mazz.invoke('feed:decide', {
+        schema: 'mazz.feed-decision-request/v0',
+        projectPath: prepared.projectPath,
+        packageId: prepared.package.packageId,
+        action,
+        authority: 'human:interactive-local-user',
+        reason: action === 'approve' ? '用户在智能创作执行台明确核准投喂' : '用户在智能创作执行台明确驳回投喂',
+        decidedAt: new Date().toISOString(),
+      });
+      prepared.decision = action;
+      if (action === 'approve' && result.materialRef) {
+        if (!this.embeds.some(embed => embed.materialRef?.id === result.materialRef.id)) {
+          this.embeds.push({
+            assetId: result.materialRef.id,
+            name: `素材订阅：${prepared.package.dimension}`,
+            text: String(result.report || '').slice(0, 20_000),
+            note: prepared.reportPath,
+            sourcePath: '',
+            sourceKind: 'feed-package',
+            provenanceSource: 'factory.feed',
+            layer: 'derived',
+            importedAt: result.decision?.decidedAt || new Date().toISOString(),
+            materialRef: result.materialRef,
+          });
+        }
+        this.feedStatus = '已核准为派生材料并加入项目材料；智能创作仍须由用户手动立项或启动。';
+        this.renderEmbeds();
+        this.updateExtraBadge();
+        this.log(`W74b 投喂包已核准：${prepared.package.dimension}`);
+      } else {
+        this.feedStatus = '本素材包已驳回；来源 KPI 已从裁决账派生更新。';
+        this.log(`W74b 投喂包已驳回：${prepared.package.dimension}`);
+      }
+      this.renderFeed();
+      this.pushSnapshot();
+      toast(action === 'approve' ? '素材包已加入项目材料' : '素材包已驳回');
+      return result;
+    } catch (error) {
+      this.feedStatus = `投喂裁决失败：${error.message || error}`;
+      this.renderFeed();
+      toast(this.feedStatus);
       return null;
     }
   }
