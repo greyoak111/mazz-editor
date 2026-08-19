@@ -243,6 +243,8 @@ export class FactoryPanel {
         feed: {
           query: this.el.querySelector('.fc-feed-query')?.value || '',
           dimension: this.el.querySelector('.fc-feed-dimension')?.value || '外部动态',
+          sourceKind: this.el.querySelector('.fc-feed-kind')?.value || 'search',
+          automation: this.el.querySelector('.fc-feed-automation')?.value || 'approval',
           status: this.feedStatus,
           busy: this.feedBusy,
           changedItemCount: this.feedPrepared?.changedItemCount || 0,
@@ -375,11 +377,16 @@ export class FactoryPanel {
             <div class="fc-searchres"></div>
           </div>
           <div class="fc-sec" data-sec="feed">
-            <div class="fc-label">素材订阅（四站聚合） <span>变化检测、跨源聚类、人工核准</span></div>
+            <div class="fc-label">持续素材投喂 <span>订阅 / 搜索 / 本地 · 兼容素材订阅（四站聚合）· 分级授权</span></div>
             <div class="fc-feed-controls">
+              <select class="fc-feed-kind" title="来源类型"><option value="search">联网检索</option><option value="subscription">RSS / Atom</option><option value="local">项目内文件或目录</option></select>
               <input class="fc-feed-query" placeholder="要持续观察的主题" spellcheck="false">
+              <input class="fc-feed-location" placeholder="订阅 URL 或项目内路径；检索可留空" spellcheck="false">
               <input class="fc-feed-dimension" value="外部动态" placeholder="工作维度" spellcheck="false">
-              <button class="fc-mini" data-a="feedscan">扫描新料</button>
+              <select class="fc-feed-automation" title="投喂自动化"><option value="approval">M0 人工核准</option><option value="ingest">M1 自动入料</option><option value="queue">M2 加入待启动队列</option></select>
+              <label class="fc-dim"><input type="checkbox" class="fc-feed-queueauth"> 授权加入 Factory 待启动队列</label>
+              <button class="fc-mini" data-a="feedscan">保存来源并扫描</button>
+              <button class="fc-mini" data-a="feedw65">四站聚合扫描</button>
             </div>
             <div class="fc-feedres" aria-live="polite"></div>
           </div>
@@ -539,8 +546,9 @@ export class FactoryPanel {
     this.el.querySelector('[data-a=embedadd]').addEventListener('click', () => this.addEmbed());
     this.el.querySelector('[data-a=websearch]').addEventListener('click', () => this.webSearch());
     this.el.querySelector('.fc-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.webSearch(); });
-    this.el.querySelector('[data-a=feedscan]').addEventListener('click', () => this.scanFeed());
-    this.el.querySelector('.fc-feed-query').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.scanFeed(); });
+    this.el.querySelector('[data-a=feedscan]').addEventListener('click', () => this.scanContinuousFeed());
+    this.el.querySelector('[data-a=feedw65]').addEventListener('click', () => this.scanFeed());
+    this.el.querySelector('.fc-feed-query').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.scanContinuousFeed(); });
     this.el.querySelector('[data-a=mazimport]').addEventListener('click', () => this.importMazPack());
     this.el.querySelector('[data-a=mazexport]').addEventListener('click', () => this.exportMazPack());
     this.agentSubmitEl.addEventListener('click', () => this.submitAgent());
@@ -1011,7 +1019,7 @@ export class FactoryPanel {
     box.querySelectorAll('[data-feed-decision]').forEach(button => button.addEventListener('click', () => this.decideFeed(button.dataset.feedDecision)));
   }
 
-  async scanFeed() {
+  async scanContinuousFeed() {
     if (this.feedBusy) return;
     const query = this.el.querySelector('.fc-feed-query')?.value.trim() || '';
     const dimension = this.el.querySelector('.fc-feed-dimension')?.value.trim() || '';
@@ -1019,32 +1027,33 @@ export class FactoryPanel {
     if (!dimension) { toast('先填写工作维度'); return; }
     this.feedBusy = true;
     this.feedPrepared = null;
-    this.feedStatus = '正在调用四站聚合并比较上次观察…';
+    const kind = this.el.querySelector('.fc-feed-kind')?.value || 'search';
+    const location = this.el.querySelector('.fc-feed-location')?.value.trim() || '';
+    const automation = this.el.querySelector('.fc-feed-automation')?.value || 'approval';
+    const factoryQueueAuthorized = !!this.el.querySelector('.fc-feed-queueauth')?.checked;
+    if (kind !== 'search' && !location) { toast('订阅或本地来源必须填写 URL / 项目内路径'); this.feedBusy = false; return; }
+    if (automation === 'queue' && !factoryQueueAuthorized) { toast('M2 必须明确勾选 Factory 待启动队列授权'); this.feedBusy = false; return; }
+    this.feedStatus = '正在保存来源、执行扫描并比较上次观察…';
     this.renderFeed();
     const button = this.el.querySelector('[data-a=feedscan]');
     if (button) button.disabled = true;
     try {
       const projectPath = String(await window.mazz.invoke('workspace:get') || '').trim();
       if (!projectPath) throw new Error('当前没有可用工作区');
-      const result = await window.mazz.invoke('feed:scanW65', {
-        schema: 'mazz.feed-w65-request/v0',
+      const source = await window.mazz.invoke('feedSource:register', {
+        schema: 'mazz.continuous-feed-source/v0',
         projectId: 'project:workspace-feed:v0',
         projectPath,
-        query,
-        dimension,
-        mode: 'approval',
-        windowHours: 24,
-        observedAt: new Date().toISOString(),
-        sites: ['dmhy', 'mikan', 'kisssub', 'comicat'],
-        maxPages: 1,
+        kind, label: query || location, location, query, dimension, automation,
+        intervalMinutes: 60, enabled: true, factoryQueueAuthorized,
       });
-      const failedSources = (result.sourceStatus || []).filter(source => !source.ok);
-      const sourceNote = failedSources.length ? `；${failedSources.length}/${result.sourceStatus.length} 个来源本轮失败，未把缺失冒充无变化` : '';
+      const result = await window.mazz.invoke('feedSource:run', { projectPath, sourceId: source.sourceId, trigger: 'factory-ui' });
+      const sourceNote = result.queueReceipt ? '；已生成待启动请求，尚未自动调用 AI' : '';
       if (result.code === 'NO_CHANGES') {
-        this.feedStatus = `本轮可用来源没有检测到新增或内容变化；没有制造空素材包${sourceNote}。`;
+        this.feedStatus = `本轮没有检测到新增或内容变化；没有制造空素材包${sourceNote}。`;
       } else {
         this.feedPrepared = { ...result, projectPath, decision: '' };
-        this.feedStatus = `素材包已落盘，等待人工核准或驳回${sourceNote}。`;
+        this.feedStatus = `素材包已落盘${automation === 'approval' ? '，等待人工核准或驳回' : '；自动化权限已按来源记录'}${sourceNote}。`;
       }
       this.renderFeed();
       this.pushSnapshot();
@@ -1058,6 +1067,37 @@ export class FactoryPanel {
       this.feedBusy = false;
       if (button) button.disabled = false;
     }
+  }
+
+  async scanFeed() {
+    if (this.feedBusy) return;
+    const query = this.el.querySelector('.fc-feed-query')?.value.trim() || '';
+    const dimension = this.el.querySelector('.fc-feed-dimension')?.value.trim() || '';
+    if (!query || !dimension) { toast('先填写观察主题和工作维度'); return; }
+    this.feedBusy = true;
+    this.feedPrepared = null;
+    this.feedStatus = '正在调用 W65 四站适配器并比较上次观察…';
+    this.renderFeed();
+    try {
+      const projectPath = String(await window.mazz.invoke('workspace:get') || '').trim();
+      const result = await window.mazz.invoke('feed:scanW65', {
+        schema: 'mazz.feed-w65-request/v0', projectId: 'project:workspace-feed:v0', projectPath,
+        query, dimension, mode: 'approval', windowHours: 24, observedAt: new Date().toISOString(),
+        sites: ['dmhy', 'mikan', 'kisssub', 'comicat'], maxPages: 1,
+      });
+      const failedSources = (result.sourceStatus || []).filter(source => !source.ok);
+      const note = failedSources.length ? `；${failedSources.length}/${result.sourceStatus.length} 个来源失败，未把缺失冒充无变化` : '';
+      if (result.code === 'NO_CHANGES') this.feedStatus = `四站本轮无变化${note}。`;
+      else { this.feedPrepared = { ...result, projectPath, decision: '' }; this.feedStatus = `四站素材包已落盘，等待人工裁决${note}。`; }
+      this.renderFeed();
+      this.pushSnapshot();
+      return result;
+    } catch (error) {
+      this.feedStatus = `四站扫描失败：${error.message || error}`;
+      this.renderFeed();
+      toast(this.feedStatus);
+      return null;
+    } finally { this.feedBusy = false; }
   }
 
   async decideFeed(action) {

@@ -139,6 +139,7 @@ const files = [
   'tests/contract/w73h-runtime-convergence.test.mjs',
   'tests/contract/w74a-ingestion-pipeline.test.mjs',
   'tests/contract/w74b-feed-pipeline.test.mjs',
+  'tests/contract/w62e-continuous-feed.test.mjs',
   'tests/contract/w74c-conversation-promotion.test.mjs',
   'tests/contract/w74c2-structured-promotion-review.test.mjs',
   'tests/contract/w74c3-promotion-management.test.mjs',

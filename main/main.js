@@ -134,6 +134,7 @@ const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
 const { FactoryRunOwnerRegistry } = require('./factory-run-owners');
 const { IngestionPipeline } = require('./ingestion-pipeline');
 const { FeedPipeline, normalizeW65FeedRequest } = require('./feed-pipeline');
+const { ContinuousFeedService } = require('./continuous-feed-service');
 const { PromotionLedger } = require('./promotion-ledger');
 const { FactorySseDecoder } = require('./factory-sse');
 const { AddressableEvidenceService } = require('./addressable-evidence-service');
@@ -165,6 +166,7 @@ const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
 const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
 const ingestionPipeline = new IngestionPipeline();
 const feedPipeline = new FeedPipeline({ ingestionPipeline });
+let continuousFeed = null;
 const promotionLedger = new PromotionLedger();
 const addressableEvidence = new AddressableEvidenceService({
   rootProvider: () => store.get('workspace'),
@@ -733,6 +735,27 @@ function registerChannels() {
   });
   bus.handle('feed:decide', async payload => feedPipeline.decide(payload));
   bus.handle('feed:list', async ({ projectPath } = {}) => feedPipeline.list(projectPath));
+  bus.handle('feedSource:register', async payload => {
+    if (!continuousFeed) throw new Error('W62e 持续投喂服务尚未就绪');
+    return continuousFeed.register(payload);
+  });
+  bus.handle('feedSource:remove', async payload => {
+    if (!continuousFeed) throw new Error('W62e 持续投喂服务尚未就绪');
+    return continuousFeed.remove(payload);
+  });
+  bus.handle('feedSource:list', async ({ projectPath } = {}) => {
+    if (!continuousFeed) throw new Error('W62e 持续投喂服务尚未就绪');
+    return continuousFeed.list(projectPath);
+  });
+  bus.handle('feedSource:run', async payload => {
+    if (!continuousFeed) throw new Error('W62e 持续投喂服务尚未就绪');
+    return continuousFeed.run(payload);
+  });
+  bus.handle('feedSource:startAll', async ({ projectPath } = {}) => {
+    if (!continuousFeed) throw new Error('W62e 持续投喂服务尚未就绪');
+    return continuousFeed.startAll(projectPath);
+  });
+  bus.handle('feedSource:health', async () => continuousFeed?.health() || { schema: 'mazz.continuous-feed-health/v0', scheduledSources: [], watchedSources: [], runningSources: [] });
   bus.handle('promotion:promoteConversation', async payload => promotionLedger.promoteConversation(payload, ingestionPipeline));
   bus.handle('promotion:reviewConversationCandidate', async payload => promotionLedger.reviewStructuredConversationCandidate(payload, ingestionPipeline));
   bus.handle('promotion:listManagement', async payload => promotionLedger.listManagement(payload));
@@ -1600,7 +1623,10 @@ app.whenReady().then(() => {
   const browserSess = session.fromPartition('persist:mazz-browser');
   // W58 预览档根治：浏览器独立会话同注册 mazz-res——html 运行预览/媒体页全走此源，默认会话独享=视图会话 about:blank（实锤）
   if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);
-  new SearxService({ bus, store, session: browserSess, encryptSecret: __pwEncrypt, decryptSecret: __pwDecrypt });
+  const searxService = new SearxService({ bus, store, session: browserSess, encryptSecret: __pwEncrypt, decryptSecret: __pwDecrypt });
+  continuousFeed = new ContinuousFeedService({ feedPipeline, searxService, resourceLedger });
+  try { continuousFeed.startAll(store.get('workspace')); } catch (error) { console.warn('[continuous-feed] restore failed:', error.message); }
+  app.on('before-quit', () => continuousFeed?.dispose('app-quit'));
   new TranslateService({ bus, store });
   // —— 局域网同步 + 自动更新入口 ——
   const lanSync = new LanSync({

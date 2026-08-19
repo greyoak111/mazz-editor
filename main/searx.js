@@ -237,6 +237,41 @@ async function fetchArticle(raw, redirects = 0) {
   });
 }
 
+async function fetchSyndication(raw, redirects = 0) {
+  if (redirects > 4) throw new Error('订阅重定向过多');
+  const checked = await assertPublicUrl(raw);
+  const { url, address } = checked;
+  return new Promise((resolve, reject) => {
+    const transport = url.protocol === 'http:' ? http : https;
+    const req = transport.request({
+      protocol: url.protocol, hostname: url.hostname, port: url.port || undefined,
+      path: url.pathname + url.search, method: 'GET',
+      headers: { 'User-Agent': SEARCH_UA, Accept: 'application/rss+xml,application/atom+xml,application/xml,text/xml;q=0.9', 'Accept-Encoding': 'identity' },
+      rejectUnauthorized: true, timeout: 15_000, agent: false,
+      lookup: address ? (_hostname, _options, callback) => callback(null, address.address, address.family) : undefined,
+    }, res => {
+      const status = res.statusCode || 0;
+      if (status >= 300 && status < 400 && res.headers.location) {
+        res.resume();
+        fetchSyndication(new URL(res.headers.location, url).toString(), redirects + 1).then(resolve, reject);
+        return;
+      }
+      if (status < 200 || status >= 300) { res.resume(); reject(new Error(`订阅 HTTP ${status}`)); return; }
+      const chunks = [];
+      let size = 0;
+      res.on('data', chunk => {
+        size += chunk.length;
+        if (size > 2_000_000) req.destroy(new Error('订阅正文超过 2MB 上限'));
+        else chunks.push(chunk);
+      });
+      res.on('end', () => resolve({ url: url.toString(), body: Buffer.concat(chunks).toString('utf8') }));
+    });
+    req.on('timeout', () => req.destroy(new Error('订阅抓取超时')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 const IMAGE_MIME_EXT = Object.freeze({
   'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif',
   'image/avif': 'avif', 'image/bmp': 'bmp', 'image/x-icon': 'ico',
@@ -443,4 +478,5 @@ SearxService.isPrivateAddress = isPrivateAddress;
 SearxService.normalizeTlsPin = normalizeTlsPin;
 SearxService.nodeFetch = nodeFetch;
 SearxService.assertSecureEndpoint = assertSecureEndpoint;
+SearxService.fetchSyndication = fetchSyndication;
 module.exports = SearxService;

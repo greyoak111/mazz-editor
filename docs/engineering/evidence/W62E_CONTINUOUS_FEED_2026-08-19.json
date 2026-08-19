@@ -1,0 +1,24 @@
+{
+  "schema": "mazz.engineering-evidence/v0",
+  "wave": "W62e",
+  "capturedAt": "2026-08-19T00:00:00.000Z",
+  "status": "LANDED",
+  "capabilities": [
+    "subscription/search/local source registry",
+    "bounded scheduling and local watcher lifecycle",
+    "dimension routing and source health",
+    "M0 approval / M1 ingest / M2 queue authorization",
+    "W74b and W65 compatibility"
+  ],
+  "validation": {
+    "build": "PASS",
+    "w62e": "6/6 PASS",
+    "w74b": "8/8 PASS",
+    "w65bc": "8/8 PASS"
+  },
+  "notClaimed": [
+    "real public RSS soak",
+    "automatic AI invocation",
+    "W69 public website"
+  ]
+}

@@ -1491,9 +1491,9 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .fc-searchrow { display: flex; gap: 6px; }
 .fc-search { flex: 1; font-size: 12px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
 .fc-searchres { margin-top: 4px; }
-.fc-feed-controls { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(96px, .45fr) auto; gap: 6px; }
-.fc-feed-query, .fc-feed-dimension { min-width: 0; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); outline: none; }
-.fc-feed-query:focus, .fc-feed-dimension:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent); }
+.fc-feed-controls { display: grid; grid-template-columns: minmax(110px, .45fr) minmax(150px, 1fr) minmax(180px, 1fr) minmax(96px, .5fr); gap: 6px; }
+.fc-feed-query, .fc-feed-location, .fc-feed-dimension, .fc-feed-kind, .fc-feed-automation { min-width: 0; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); outline: none; }
+.fc-feed-query:focus, .fc-feed-location:focus, .fc-feed-dimension:focus, .fc-feed-kind:focus, .fc-feed-automation:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent); }
 .fc-feedres { margin-top: 6px; }
 .fc-feed-summary, .fc-feed-decision { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px; }
 .fc-feed-summary { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-soft); color: var(--fg-dim); }

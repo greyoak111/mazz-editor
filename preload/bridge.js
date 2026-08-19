@@ -50,6 +50,7 @@ const INVOKE_CHANNELS = new Set([
   'factory:runAcquire', 'factory:runRelease',
   'ingestion:registerText',
   'feed:scan', 'feed:scanW65', 'feed:decide', 'feed:list',
+  'feedSource:register', 'feedSource:remove', 'feedSource:list', 'feedSource:run', 'feedSource:startAll', 'feedSource:health',
   'promotion:promoteConversation', 'promotion:reviewConversationCandidate',
   'promotion:listManagement', 'promotion:revoke', 'promotion:manageEvidenceProjection',
   'app:getAutoLaunch', 'app:setAutoLaunch', 'app:createDesktopShortcut', 'app:graphicsMode',
