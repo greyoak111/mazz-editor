@@ -2,6 +2,7 @@
 
 const DB_NAME = 'mazz-search';
 const STORE = 'files';
+const MAX_INDEX_FILES = 10_000;
 
 // ==================== IndexedDB 适配器 ====================
 function openDb() {
@@ -82,19 +83,21 @@ export async function listTextFiles() {
   const ws = await window.mazz.invoke('workspace:get');
   const out = [];
   async function walk(dir, depth) {
-    if (depth > 7) return;
+    if (depth > 7 || out.length >= MAX_INDEX_FILES) return;
     let entries = [];
     try { entries = (await window.mazz.invoke('fs:listDir', { path: dir })) || []; } catch { return; }
     for (const e of entries) {
+      if (out.length >= MAX_INDEX_FILES) break;
       if (e.isDir) {
         if (!e.name.startsWith('.') && e.name !== 'node_modules') await walk(e.path, depth + 1);
       } else if (INDEXABLE.has(extOf(e.name))) {
         out.push({ path: e.path, name: e.name, ext: extOf(e.name) });
+        if (out.length >= MAX_INDEX_FILES) return;
       }
     }
   }
   await walk(ws, 0);
-  return out;
+  return out.slice(0, MAX_INDEX_FILES);
 }
 
 // ==================== 索引器 ====================

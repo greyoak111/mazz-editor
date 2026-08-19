@@ -10,6 +10,7 @@ export class StatusBar {
       <span class="st plain" id="st-count"></span>
       <span class="st plain" id="st-pos"></span>
       <span class="spacer"></span>
+      <span class="st" id="st-memory" title="进程工作集 / 资源账本；点击重置观测基线" hidden>内存 —</span>
       <span class="st" id="st-notif" title="通知中心（被动入账，不抢焦点）">通知</span>
       <span class="st" id="st-spell" title="拼写检查">拼写</span>
       <span class="st" id="st-theme" title="轮换主题（Ctrl+Alt+T）">主题</span>
@@ -19,6 +20,9 @@ export class StatusBar {
     this.el.querySelector('#st-notif').addEventListener('click', () => commands.execute('app.notifications'));
     this.el.querySelector('#st-spell').addEventListener('click', () => commands.execute('app.toggleSpellcheck'));
     this.el.querySelector('#st-zoom').addEventListener('click', () => commands.execute('view.zoomReset'));
+    this.el.querySelector('#st-memory').addEventListener('click', () => window.mazz?.invoke('memory:resetBaseline').then(() => this.refreshMemory()).catch(() => {}));
+    this.memoryTimer = null;
+    window.mazz?.invoke('settings:get', { key: 'memory.monitor.enabled' }).then(enabled => this.setMemoryMonitor(!!enabled)).catch(() => {});
   }
   set(module, count, pos) {
     if (module != null) {
@@ -38,5 +42,23 @@ export class StatusBar {
     const n = Math.max(0, Number(count) || 0);
     el.textContent = n ? `通知 ${n > 99 ? '99+' : n}` : '通知';
     el.classList.toggle('unread', n > 0);
+  }
+  async refreshMemory() {
+    const slot = this.el.querySelector('#st-memory');
+    if (slot.hidden) return;
+    const summary = await window.mazz?.invoke('memory:summary').catch(() => null);
+    if (!summary?.current) { slot.textContent = '内存 —'; return; }
+    const mib = Math.round(summary.current.totalWorkingSetBytes / 1024 / 1024);
+    slot.textContent = `内存 ${mib}M · ${summary.current.resources.activeCount}`;
+    slot.dataset.state = summary.current.state;
+    slot.title = `总工作集 ${mib} MiB；主进程 RSS ${Math.round(summary.current.main.rssBytes / 1024 / 1024)} MiB；活动资源 ${summary.current.resources.activeCount}；趋势 ${Math.round(summary.trend.workingSetBytesPerMinute / 1024 / 1024)} MiB/min。点击重置基线。`;
+  }
+  setMemoryMonitor(enabled) {
+    const slot = this.el.querySelector('#st-memory');
+    slot.hidden = !enabled;
+    clearInterval(this.memoryTimer);
+    this.memoryTimer = enabled ? setInterval(() => this.refreshMemory(), 5000) : null;
+    if (enabled) this.refreshMemory();
+    window.mazz?.invoke('settings:set', { key: 'memory.monitor.enabled', value: !!enabled }).catch(() => {});
   }
 }

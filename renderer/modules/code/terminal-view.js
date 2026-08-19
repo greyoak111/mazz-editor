@@ -65,6 +65,7 @@ export class TerminalPanel {
     const xterm = new Terminal({
       fontFamily: 'var(--font-mono)',
       fontSize: 13,
+      scrollback: 5000,
       cursorBlink: true,
       allowProposedApi: true,
       theme: themeByBody(),

@@ -1,0 +1,31 @@
+{
+  "schema": "mazz.w67-memory-runtime/v0",
+  "generatedAt": "2026-08-19T09:28:26.526Z",
+  "platform": "win32",
+  "electron": "33.4.11",
+  "lifecycle": {
+    "browserViews": 20,
+    "nativePanels": 20,
+    "baselineActiveResources": 3,
+    "finalActiveResources": 2,
+    "resourceConverged": true
+  },
+  "workingSetMiB": {
+    "baseline": 358.2,
+    "browserPeak": 2030.3,
+    "browserAfter": 353.7,
+    "panelPeak": 3039.7,
+    "panelAfter": 424.7
+  },
+  "recovery": {
+    "browserViews": 1,
+    "nativePanels": 0.9735781609713603,
+    "threshold": 0.9
+  },
+  "eventLoopMaxLagMs": 15,
+  "pressureStates": [
+    "NORMAL",
+    "CRITICAL"
+  ],
+  "samples": 10
+}

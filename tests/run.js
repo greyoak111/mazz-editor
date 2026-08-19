@@ -6,6 +6,8 @@ const path = require('path');
 const files = [
   'tests/unit/core.test.mjs',
   'tests/unit/resource-ledger.test.mjs',
+  'tests/unit/memory-governor.test.mjs',
+  'tests/unit/w67-accumulator-budgets.test.mjs',
   'tests/unit/factory-ai-requests.test.mjs',
   'tests/unit/factory-sse.test.mjs',
   'tests/unit/file-probe.test.mjs',

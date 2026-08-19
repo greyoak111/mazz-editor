@@ -196,6 +196,7 @@ function createMath(container) {
     if (/[^=!<>+\-*/%&|^~\s]=$/.test(code)) code = code.slice(0, -1);
     append('»', code, 'in');
     ctl.history.unshift(code);
+    if (ctl.history.length > 50) ctl.history.length = 50;
     ctl.hIdx = -1;
     ctl.inputEl.value = '';
     if (ctl.backend === 'js') {

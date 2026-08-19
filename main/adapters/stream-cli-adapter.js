@@ -8,10 +8,18 @@ const {
   eventHub, resultFromRun, redactedRawMetadata,
 } = require('../agent-adapter-common');
 
+const MAX_JSONL_LINE_CHARS = 4 * 1024 * 1024;
+
 class JsonLineDecoder {
   constructor(onValue) { this.buffer = ''; this.onValue = onValue; }
   feed(chunk) {
     this.buffer += String(chunk || '');
+    if (this.buffer.length > MAX_JSONL_LINE_CHARS && !this.buffer.includes('\n')) {
+      const bytes = Buffer.byteLength(this.buffer);
+      this.buffer = '';
+      this.onValue({ type: 'transport.line_limit', byteLength: bytes, limit: MAX_JSONL_LINE_CHARS });
+      return;
+    }
     let at;
     while ((at = this.buffer.indexOf('\n')) >= 0) {
       const row = this.buffer.slice(0, at).trim();
@@ -147,4 +155,4 @@ class StreamCliAdapter {
   async events(handle, listener) { return this.session(handle, 'events').hub.subscribe(listener); }
 }
 
-module.exports = { JsonLineDecoder, StreamCliAdapter };
+module.exports = { JsonLineDecoder, MAX_JSONL_LINE_CHARS, StreamCliAdapter };

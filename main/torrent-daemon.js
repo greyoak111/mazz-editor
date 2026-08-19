@@ -18,6 +18,8 @@ const path = require('path');
 const fs = require('fs');
 const { normalizeInfoHash } = require('./torrent-site-core');
 
+const MAX_INLINE_FILE_BYTES = 32 * 1024 * 1024;
+
 // 公共 tracker 兜底表（实证过可达）：dmhy 系 magnet 全系裸 btih（详情页 grep tr= 为 0 实锤）——
 // 纯 DHT 发现在受限网络 60s 拿不到元数据（奈叶新种实锤），注入后同种 70s 内元数据+下载全通
 const PUBLIC_TRACKERS = [
@@ -320,8 +322,14 @@ class TorrentDaemon {
       if (!rec) return null;
       const f = rec.t.files.find(x => x.path === filePath);
       if (!f) return null;
+      if (Number(f.length || 0) > MAX_INLINE_FILE_BYTES) throw new Error('种子内文件超过 32 MiB 内联读取上限，请改用流式播放或落盘路径');
       const chunks = [];
-      for await (const chunk of f) chunks.push(Buffer.from(chunk));
+      let total = 0;
+      for await (const chunk of f) {
+        total += chunk.length;
+        if (total > MAX_INLINE_FILE_BYTES) throw new Error('种子内文件超过 32 MiB 内联读取上限');
+        chunks.push(Buffer.from(chunk));
+      }
       return Buffer.concat(chunks);
     });
     bus.handle('tor:remove', async ({ infoHash, deleteFiles }) => {
@@ -386,3 +394,4 @@ class TorrentDaemon {
 }
 
 module.exports = TorrentDaemon;
+module.exports.MAX_INLINE_FILE_BYTES = MAX_INLINE_FILE_BYTES;

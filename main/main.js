@@ -19,6 +19,7 @@ if (process.env.MAZZ_E2E_USER_DATA) app.setPath('userData', process.env.MAZZ_E2E
 app.commandLine.appendSwitch('noerrdialogs');
 app.commandLine.appendSwitch('disable-breakpad');
 app.commandLine.appendSwitch('disable-crash-reporter');
+app.commandLine.appendSwitch('enable-precise-memory-info');
 
 function detectGraphicsMode() {
   if (process.env.MAZZ_GPU_MODE === 'hardware') return { mode: 'hardware', safe: false, reason: '用户强制硬件模式' };
@@ -122,6 +123,8 @@ const Updater = require('./updater');
 const BrowserSession = require('./browser-session');
 const TerminalService = require('./terminal');
 const { ResourceLedger } = require('./resource-ledger');
+const { MemoryGovernor } = require('./memory-governor');
+const { AUDCACHE_POLICY, pruneDerivedCache } = require('./derived-cache-budget');
 const { AgentHarnessService } = require('./agent-harness');
 const { CliSupervisor } = require('./agent-cli-supervisor');
 const { AgentDoctrineRuntime } = require('./agent-doctrine-runtime');
@@ -191,6 +194,14 @@ if (process.env.NODE_ENV === 'test') {
 }
 const factoryRuntimeOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
+const memoryGovernor = new MemoryGovernor({
+  resourceLedger,
+  appMetrics: () => app.getAppMetrics(),
+  onPressure: snapshot => wm.broadcast('memory:pressure', { state: snapshot.state, violations: snapshot.violations }),
+});
+bus.handle('memory:summary', async ({ includeHistory = false } = {}) => memoryGovernor.summary({ includeHistory }));
+bus.handle('memory:capture', async () => memoryGovernor.sample());
+bus.handle('memory:resetBaseline', async () => memoryGovernor.resetBaseline());
 const tray = new TrayService({
   windowManager: wm, store,
   onCommand: (id, payload) => wm.broadcast('command:invoke', { id, payload }),
@@ -1618,6 +1629,8 @@ app.whenReady().then(() => {
   watcher = new FileWatcher({ bus, windowManager: wm, resourceLedger });
 
   wm.createMain();
+  memoryGovernor.start();
+  app.on('before-quit', () => memoryGovernor.stop());
   hookDisplayMedia(); // getDisplayMedia 许可（全局内录）
   hookCertificateErrors();
   tray.create();
@@ -1675,11 +1688,13 @@ app.whenReady().then(() => {
     const key = require('crypto').createHash('sha1').update(p + '#' + trackNumber).digest('hex').slice(0, 12);
     const dir = path.join(store.get('workspace'), '媒体库', '.audcache');
     fs.mkdirSync(dir, { recursive: true });
+    pruneDerivedCache(dir, AUDCACHE_POLICY);
     const dest = path.join(dir, `${key}-t${trackNumber}.flac`);
     if (fs.existsSync(dest)) return { path: dest, cached: true };
     const buf = extractFlacTrack(p, trackNumber);
     if (!buf) throw new Error('该音轨不可抽（非 FLAC 或抽帧失败）');
     fs.writeFileSync(dest, buf);
+    pruneDerivedCache(dir, { ...AUDCACHE_POLICY, preserve: dest });
     return { path: dest, cached: false };
   });
   // 全编码版：FLAC/Vorbis/AAC/Opus 各自封装（.flac/.ogg/.aac）——后缀探测缓存（同轨落过盘即直用）
@@ -1687,6 +1702,7 @@ app.whenReady().then(() => {
     const key = require('crypto').createHash('sha1').update(p + '#' + trackNumber).digest('hex').slice(0, 12);
     const dir = path.join(store.get('workspace'), '媒体库', '.audcache');
     fs.mkdirSync(dir, { recursive: true });
+    pruneDerivedCache(dir, AUDCACHE_POLICY);
     for (const ext of ['flac', 'ogg', 'aac']) {
       const c = path.join(dir, `${key}-t${trackNumber}.${ext}`);
       if (fs.existsSync(c)) return { path: c, cached: true, ext };
@@ -1697,6 +1713,7 @@ app.whenReady().then(() => {
     if (!r) throw new Error('该音轨不可抽（编码不在支持表 FLAC/Vorbis/AAC/Opus 或抽帧失败）');
     const dest = path.join(dir, `${key}-t${trackNumber}.${r.ext}`);
     fs.writeFileSync(dest, r.buf);
+    pruneDerivedCache(dir, { ...AUDCACHE_POLICY, preserve: dest });
     return { path: dest, cached: false, ext: r.ext };
   });
   // 浏览器视图注册表（WebContentsView 主进程持有——webview 标签结构性病根终结）

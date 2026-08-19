@@ -1657,6 +1657,11 @@ export class Shell {
       resetAllPaneZooms(); // 全局与窗格缩放一起回 100%
       this.setZoom(1);
     } });
+    R('view.toggleMemoryMonitor', { title: '切换内存与资源监控', icon: '◫', group: '视图', run: () => {
+      const slot = this.statusbar.el.querySelector('#st-memory');
+      this.statusbar.setMemoryMonitor(slot.hidden);
+      toast(slot.hidden ? '内存监控已关闭' : '内存监控已开启');
+    } });
     R('annotate.toggle', {
       title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {
         // W52④ 分路：浏览器页（WebContentsView 原生层压 DOM）走透明墨迹子窗；其余模块保 DOM 老层（久经考验）

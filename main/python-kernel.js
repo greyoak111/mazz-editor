@@ -7,6 +7,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const MAX_OUTPUT_CHARS = 16 * 1024 * 1024;
+const MAX_QUEUE = 64;
+
 const PYTHON_CANDIDATES = process.platform === 'win32'
   ? ['python', 'py', 'python3'] : ['python3', 'python'];
 
@@ -131,8 +134,13 @@ class PythonKernel {
       throw error;
     }
     this.buffer = '';
-    proc.stdout.on('data', (d) => { if (this.proc === proc) this.buffer += d.toString('utf8'); });
-    proc.stderr.on('data', (d) => { if (this.proc === proc) this.buffer += d.toString('utf8'); });
+    const append = (data) => {
+      if (this.proc !== proc) return;
+      this.buffer += data.toString('utf8');
+      if (this.buffer.length > MAX_OUTPUT_CHARS) this.kill('output-limit');
+    };
+    proc.stdout.on('data', append);
+    proc.stderr.on('data', append);
     proc.once('exit', (code, signal) => this._handleProcessExit(proc, code, signal));
     proc.once('error', (error) => this._handleProcessExit(proc, null, null, error));
     return true;
@@ -141,6 +149,10 @@ class PythonKernel {
   async exec(code, timeout = 30000) {
     await this.ensure();
     return new Promise((resolve, reject) => {
+      if (this.queue.length >= MAX_QUEUE) {
+        reject(new Error(`Python 执行队列已达 ${MAX_QUEUE} 项上限`));
+        return;
+      }
       this.queue.push({ code, resolve, reject, timeout });
       this.pump();
     });
@@ -232,3 +244,5 @@ class PythonKernel {
   }
 }
 module.exports = PythonKernel;
+module.exports.MAX_OUTPUT_CHARS = MAX_OUTPUT_CHARS;
+module.exports.MAX_QUEUE = MAX_QUEUE;

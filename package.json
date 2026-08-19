@@ -38,6 +38,7 @@
     "test:w71:core-module-crash": "node tests/e2e/w71-core-module-crash-recovery.mjs",
     "test:w71:file-open": "node tests/e2e/w71-file-open-safety.mjs",
     "test:w71:product-maturity": "node tests/e2e/w71-product-maturity.mjs",
+    "test:w67:memory-runtime": "node tests/e2e/w67-memory-runtime.mjs",
     "test:w71:formal-main-paths": "node tests/e2e/w71-formal-main-paths.mjs",
     "test:e2e": "node tests/e2e/run.mjs",
     "postinstall": "patch-package"

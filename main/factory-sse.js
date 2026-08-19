@@ -1,6 +1,8 @@
 // main/factory-sse.js —— Factory OpenAI-compatible SSE 增量解码与完整性判定
 'use strict';
 
+const MAX_SSE_LINE_CHARS = 2 * 1024 * 1024;
+
 const extractText = (message) => {
   if (!message) return '';
   const content = message.content;
@@ -26,6 +28,10 @@ class FactorySseDecoder {
     this.buffer += typeof chunk === 'string'
       ? chunk
       : this.decoder.decode(chunk, { stream: true });
+    if (this.buffer.length > MAX_SSE_LINE_CHARS && !/[\r\n]/.test(this.buffer)) {
+      this.buffer = '';
+      throw new Error('AI 流式响应单行超过 2 MiB 上限');
+    }
     this._drainLines();
     return this.snapshot();
   }
@@ -93,4 +99,4 @@ class FactorySseDecoder {
   }
 }
 
-module.exports = { FactorySseDecoder, extractText };
+module.exports = { FactorySseDecoder, MAX_SSE_LINE_CHARS, extractText };

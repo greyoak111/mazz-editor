@@ -6,6 +6,8 @@ export const calcKey = new PluginKey('mazz-calc');
 
 // 结果缓存：按代码文本哈希，重渲染不丢输出
 const resultCache = new Map();
+const RESULT_CACHE_LIMIT = 128;
+const RESULT_TEXT_LIMIT = 256 * 1024;
 function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return 'h' + (h >>> 0).toString(36); }
 
 export function calcBlockPlugin() {
@@ -59,9 +61,11 @@ function buildWidget(view, code, id) {
     runBtn.disabled = true;
     try {
       const r = await window.mazz.invoke('py:exec', { code });
-      const text = r.output || '（无输出）';
+      const raw = r.output || '（无输出）';
+      const text = raw.length > RESULT_TEXT_LIMIT ? raw.slice(0, RESULT_TEXT_LIMIT) + '\n[输出已截断]' : raw;
       out.textContent = text;
       resultCache.set(id, text);
+      if (resultCache.size > RESULT_CACHE_LIMIT) resultCache.delete(resultCache.keys().next().value);
     } catch (err) {
       out.textContent = err.message;
     }
