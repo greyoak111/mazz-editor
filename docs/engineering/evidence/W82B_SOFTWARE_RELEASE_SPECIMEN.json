@@ -1,0 +1,67 @@
+{
+  "schema": "mazz.w82b-implementation-evidence/v0",
+  "capturedAt": "2026-08-19T07:38:22.719Z",
+  "preWaveHead": "c5e9a8c578b901882e65f889a7004f40fab6d0ac",
+  "scope": "W82b local non-production software release organization slice",
+  "toolchain": {
+    "node": "v24.17.0",
+    "npm": "12.0.2",
+    "git": "2.55.0.windows.2"
+  },
+  "actualChecks": [
+    {
+      "operationRef": "npm:build",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": "renderer/dist build and sample plugin build completed",
+      "inputDigest": "sha256:35db3b448ea11f48ea5caaef561b18c3fad7748e58b84961a11d2c72a37a55bb",
+      "outputDigest": "sha256:67302d3496f709a28b39345cce603c17b840755a19dad51b240438be5e522b27"
+    },
+    {
+      "operationRef": "node:targeted-contracts",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": "10/10 related test files passed; W82b contract 8/8",
+      "outputDigest": "sha256:50c964e6e106c564f49620ee0275f3061206ecb51b38cd9cde349b17f0b7e265"
+    },
+    {
+      "operationRef": "npm:audit-provenance",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": ".mazz/audit/oss-provenance-ledger.json CURRENT",
+      "outputDigest": "sha256:eaf13f42bed5b60b0da8d39fcd56bb74863bb6afb9a6a686c2930f31b3bddbdf"
+    },
+    {
+      "operationRef": "git:diff-check",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": "git diff --check passed; only line-ending notices were emitted",
+      "outputDigest": "sha256:b83d7d0c949c9cc75143c5af599d1f06b0c550f9dcaf7152f0d87d1dab9712c2"
+    }
+  ],
+  "contractCoverage": {
+    "strictToolReceipt": true,
+    "secretAndUnknownFieldRejection": true,
+    "developerReviewReleaseAuthoritySeparation": true,
+    "unknownEvidencePauses": true,
+    "failedSecurityEntersRecovery": true,
+    "localArtifactInvalidation": true,
+    "w73SingleRuntimeTruth": true,
+    "w73TwentyCycleConvergenceRegression": true
+  },
+  "fullSuite": {
+    "rerunThisWave": false,
+    "latestKnownAtPredecessorCheckpoint": "194/194",
+    "claim": "This wave records only the scoped 10/10 validation and does not relabel the prior full-suite result as newly rerun."
+  },
+  "boundary": {
+    "nonProduction": true,
+    "pushed": false,
+    "published": false,
+    "externalMutation": false,
+    "productionReleaseAuthorized": false,
+    "installerBuilt": false,
+    "runtimeTruthOwner": "W73"
+  },
+  "stopLine": "W82b is landed. W82c-W82h, Research vertical slice, Sample E, production packaging, release publication, and the full Organizational Compiler DoD remain open."
+}

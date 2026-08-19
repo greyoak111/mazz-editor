@@ -1,10 +1,11 @@
 # W82 Organizational Compiler
 ## Production Organization Compiler / 生产组织编译器
 
-> 状态：`W82a FOUNDATION LANDED / W82b–W82h NOT STARTED`
-> 版本：v0.6
+> 状态：`W82a FOUNDATION + W82b SOFTWARE RELEASE SLICE LANDED / W82c–W82h NOT STARTED`
+> 版本：v0.7
 > 登记日期：2026-08-18
 > W82a 落地日期：2026-08-19
+> W82b 落地日期：2026-08-19
 > 基础材料：维护者《Media Production Workflows / Industry Workflow Compiler 增量》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 升格材料：维护者《Production Organization Compiler / Organizational Compiler 增量》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 技术补遗：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
@@ -15,7 +16,7 @@
 
 ## 0. 升格结论
 
-W82a 已按维护者独立批准落地纯 Foundation：严格 Workflow Package / Compile Request / Execution Plan、组织考古、Staffing/Delegation 硬边界、Artifact DAG、显式人工 Routing、Authority Separation、Evidence-backed Transition 与 Expert Capability Composition。软件发布和实证研究只作为同一内核的纸面 fixture，不执行进程、不发布产品，也不等于 W82b/W82c vertical slice 已施工。实现与证据见 [`W82A_ORGANIZATIONAL_KERNEL_SPEC.md`](../engineering/W82A_ORGANIZATIONAL_KERNEL_SPEC.md) 和 [`W82A_ORGANIZATIONAL_KERNEL_CHECKPOINT_2026-08-19.md`](../engineering/W82A_ORGANIZATIONAL_KERNEL_CHECKPOINT_2026-08-19.md)。
+W82a 已按维护者独立批准落地纯 Foundation：严格 Workflow Package / Compile Request / Execution Plan、组织考古、Staffing/Delegation 硬边界、Artifact DAG、显式人工 Routing、Authority Separation、Evidence-backed Transition 与 Expert Capability Composition。实证研究仍只是同一内核的纸面 fixture；软件发布则已由 W82b 推进为本地非生产 vertical slice：Requirement → Build → Review → Test → Security → Release，类型化回执与人工决定经三道 Gate 后投影进 W73 Production Run Ledger，失败进入可重开 Recovery State。W82b 不执行任意进程、不推送、不发布，也不授予生产发布权。实现与证据见 [`W82A_ORGANIZATIONAL_KERNEL_SPEC.md`](../engineering/W82A_ORGANIZATIONAL_KERNEL_SPEC.md)、[`W82B_SOFTWARE_RELEASE_SLICE_SPEC.md`](../engineering/W82B_SOFTWARE_RELEASE_SLICE_SPEC.md) 和 [`W82B_SOFTWARE_RELEASE_CHECKPOINT_2026-08-19.md`](../engineering/W82B_SOFTWARE_RELEASE_CHECKPOINT_2026-08-19.md)。
 
 媒体只是最容易看懂 Factory 威力的 acceptance domain；“从灵感做到动画、游戏”仍是重要样本，但不再定义 W82 的上限。W82 的真实对象升格为：
 
@@ -489,10 +490,14 @@ Workflow 排名属于 W69k/l 市场视图：比较“完成某类交付物的生
 
 ### W82b — Software Release Organization Slice
 
-- 用 Mazz 自身一个非生产性 specimen 验证 Requirement → Build → Review → Test → Security → Release；
-- 开发、复核、发布授权分离，失败进入 Recovery State；
-- 复用 Git、测试、builder 和审计工具，不建设 IDE/CI/运维平台；
-- 先通过本地 fixture，绝不自动推送、发布或触碰外部生产环境。
+状态：`LOCAL NON-PRODUCTION SLICE LANDED`。
+
+- 已用 Mazz 自身一个非生产性 specimen 验证 Requirement → Build → Review → Test → Security → Release；
+- 已冻结开发、独立复核、安全复核、发布授权分离；失败进入 W73 Recovery State；
+- 已通过严格 Tool Receipt 复用 Git、测试、builder 和审计证据，不建设 IDE/CI/运维平台，也不携带任意命令执行能力；
+- 已通过本地 fixture；结果永久固定 `nonProduction=true / pushed=false / published=false / externalMutation=false / productionReleaseAuthorized=false`；
+- W73 持有唯一运行真相，W82b 只编译、评估和生成事件草案；
+- W82b 的完成不等于正式 Windows 发布验收，也不等于 Sample E 或完整 Organizational Compiler 已通过。
 
 ### W82c — Research / Evidence Organization Slice
 
@@ -642,6 +647,6 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 
 ## 16. 当前停止线
 
-本文件已完成 W82 v0.6 Design Capsule 与 W82a 纯 Foundation。W82a 只编译组织计划并评估证据跃迁，不执行模型、外部工具、后台服务、Workflow Runtime、嵌套 Delegation Runtime、专家资产市场、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
+本文件已完成 W82 v0.7 Design Capsule、W82a 纯 Foundation 与 W82b 本地非生产软件发布切片。W82a 只编译组织计划并评估证据跃迁；W82b 只接收受控工具回执、绑定人工决定并投影 W73 事件，不执行模型、外部工具、后台服务、任意命令、嵌套 Delegation Runtime、专家资产市场、生产发布或公共市场。
 
-W82b–W82h 仍未施工，必须继续服从跨波次真源和维护者独立批准。不得把双领域纸面 fixture 反写为真实软件发布/研究生产线，更不得直接从“做成动画”“发布 repo”或“生成研究报告”按钮开工。
+W82c–W82h 仍未施工，必须继续服从跨波次真源和维护者独立批准。不得把 W82b 本地 specimen 反写为生产软件发布，更不得把研究纸面 fixture 冒充 Research vertical slice；Sample E 仍未通过。
