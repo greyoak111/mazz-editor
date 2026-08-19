@@ -106,22 +106,33 @@ class KimiCodeAdapter {
     const workspace = path.resolve(String(input.workspace || process.cwd()));
     const hub = eventHub();
     const opened = await this.openProcess({ cwd: workspace, eventHub: hub });
-    const vendorResumeId = String(input.context?.vendorSessionId || input.modelTarget?.resumeSessionId || '');
-    const sessionResult = vendorResumeId
-      ? await opened.peer.request('session/load', { sessionId: vendorResumeId, cwd: workspace, mcpServers: [] })
-      : await opened.peer.request('session/new', { cwd: workspace, mcpServers: [] });
-    const vendorSessionId = String(sessionResult?.sessionId || vendorResumeId || '');
-    if (!vendorSessionId) throw adapterError('ACP_SESSION_ID_MISSING', 'Kimi ACP 未返回 sessionId');
-    const requestedModel = String(input.modelTarget?.requestedModel || input.modelTarget?.resolvedModel || '').trim();
-    const configOptions = Array.isArray(sessionResult?.configOptions) ? sessionResult.configOptions : [];
-    const modelOption = configOptions.find(option => /model/i.test(String(option.id || option.configId || option.name || '')));
-    if (requestedModel && modelOption) {
-      await opened.peer.request('session/set_config_option', { sessionId: vendorSessionId, configId: String(modelOption.id || modelOption.configId), value: requestedModel });
+    try {
+      const vendorResumeId = String(input.context?.vendorSessionId || input.modelTarget?.resumeSessionId || '');
+      const sessionResult = vendorResumeId
+        ? await opened.peer.request('session/load', { sessionId: vendorResumeId, cwd: workspace, mcpServers: [] })
+        : await opened.peer.request('session/new', { cwd: workspace, mcpServers: [] });
+      const vendorSessionId = String(sessionResult?.sessionId || vendorResumeId || '');
+      if (!vendorSessionId) throw adapterError('ACP_SESSION_ID_MISSING', 'Kimi ACP 未返回 sessionId');
+      const requestedModel = String(input.modelTarget?.requestedModel || input.modelTarget?.resolvedModel || '').trim();
+      const configOptions = Array.isArray(sessionResult?.configOptions) ? sessionResult.configOptions : [];
+      const modelOption = configOptions.find(option => /model/i.test(String(option.id || option.configId || option.name || '')));
+      if (requestedModel && modelOption) {
+        await opened.peer.request('session/set_config_option', { sessionId: vendorSessionId, configId: String(modelOption.id || modelOption.configId), value: requestedModel });
+      }
+      const id = String(this.idFactory());
+      const handle = sessionHandle(id, this.id, { vendorSessionId, transport: 'acp' });
+      this.sessions.set(id, {
+        handle, hub, ...opened, input, vendorSessionId,
+        activePrompt: false, cancelRequested: false,
+        resolvedModel: requestedModel || String(modelOption?.currentValue || ''),
+      });
+      return handle;
+    } catch (error) {
+      opened.peer.close();
+      await this.supervisor.terminate(opened.processHandle, 'session-create-failed').catch(() => {});
+      await this.supervisor.wait(opened.processHandle).catch(() => {});
+      throw error;
     }
-    const id = String(this.idFactory());
-    const handle = sessionHandle(id, this.id, { vendorSessionId, transport: 'acp' });
-    this.sessions.set(id, { handle, hub, ...opened, input, vendorSessionId, activePrompt: false, resolvedModel: requestedModel || String(modelOption?.currentValue || '') });
-    return handle;
   }
 
   session(handle, action) {
@@ -135,10 +146,14 @@ class KimiCodeAdapter {
     const row = this.session(handle, 'send');
     if (row.activePrompt) throw adapterError('ADAPTER_TURN_IN_FLIGHT', 'Kimi 当前仍有 turn 在执行');
     row.activePrompt = true;
+    row.cancelRequested = false;
     row.hub.emit('state', { state: 'running' });
     try {
       const text = composeInstruction(row.input, typeof input === 'string' ? input : input?.text || '');
       const result = await row.peer.request('session/prompt', { sessionId: row.vendorSessionId, prompt: [{ type: 'text', text }] }, 0x7fffffff);
+      if (row.cancelRequested || /cancel/i.test(String(result?.stopReason || ''))) {
+        throw adapterError('CLI_CANCELLED', 'Kimi turn 已取消');
+      }
       row.hub.emit('result', { stopReason: String(result?.stopReason || 'end_turn'), complete: true });
       row.hub.emit('state', { state: 'waiting' });
       return { accepted: true, stopReason: String(result?.stopReason || 'end_turn') };
@@ -147,6 +162,7 @@ class KimiCodeAdapter {
 
   async interrupt(handle) {
     const row = this.session(handle, 'interrupt');
+    row.cancelRequested = true;
     await row.peer.notify('session/cancel', { sessionId: row.vendorSessionId });
     row.hub.emit('completed', { status: 'cancelled' });
     return true;

@@ -162,8 +162,9 @@ describe('W73d Factory 单路径集成', () => {
     const main = fs.readFileSync(new URL('../../main/main.js', import.meta.url), 'utf8');
     assert.match(main, /new AgentHarnessService\(\{[\s\S]*bus, windowManager: wm, resourceLedger, cliSupervisor, adapters,[\s\S]*activationProvider:/);
     assert.match(main, /new CliSupervisor\(\{ resourceLedger \}\)/);
-    assert.match(main, /new KimiCodeAdapter\(\{ supervisor: cliSupervisor \}\)/);
-    assert.match(main, /new ClaudeCodeAdapter\(\{ supervisor: cliSupervisor \}\)/);
-    assert.match(main, /new CodexAdapter\(\{ supervisor: cliSupervisor \}\)/);
+    assert.match(main, /const agentFixtureNode = process\.env\.NODE_ENV === 'test'/);
+    assert.match(main, /new KimiCodeAdapter\(\{[\s\S]{0,300}supervisor: cliSupervisor,[\s\S]{0,300}agentFixtureNode && kimiFixture/);
+    assert.match(main, /new ClaudeCodeAdapter\(\{[\s\S]{0,300}supervisor: cliSupervisor,[\s\S]{0,300}agentFixtureNode && streamFixture/);
+    assert.match(main, /new CodexAdapter\(\{[\s\S]{0,300}supervisor: cliSupervisor,[\s\S]{0,300}agentFixtureNode && streamFixture/);
   });
 });

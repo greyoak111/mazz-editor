@@ -36,6 +36,32 @@ describe('W66-R2 Kimi Code ACP Adapter', () => {
     assert.equal(supervisor.activeCount(), 0);
   });
 
+  test('建会中途失败会收尸 ACP 子进程', async () => {
+    const supervisor = new CliSupervisor();
+    const adapter = new KimiCodeAdapter({ supervisor, executablePath: process.execPath, launchArgs: ['tests/fixtures/fake-acp-agent.cjs'] });
+    await assert.rejects(
+      () => adapter.createSession({ ...activationInput(), modelTarget: { requestedModel: 'reject-model' } }),
+      /fixture model rejected/,
+    );
+    assert.equal(adapter.sessions.size, 0);
+    assert.equal(supervisor.activeCount(), 0);
+  });
+
+  test('取消返回正常 stopReason 时不产生迟到 waiting', async () => {
+    const supervisor = new CliSupervisor();
+    const adapter = new KimiCodeAdapter({ supervisor, executablePath: process.execPath, launchArgs: ['tests/fixtures/fake-acp-agent.cjs'], idFactory: () => 'kimi-cancel' });
+    const handle = await adapter.createSession(activationInput());
+    const events = [];
+    await adapter.events(handle, (type, payload) => events.push({ type, payload }));
+    const turn = adapter.send(handle, 'WAIT_FOR_CANCEL');
+    await new Promise(resolve => setTimeout(resolve, 50));
+    await adapter.interrupt(handle);
+    await assert.rejects(() => turn, error => error.code === 'CLI_CANCELLED');
+    assert.equal(events.some(row => row.type === 'state' && row.payload.state === 'waiting'), false);
+    await adapter.dispose(handle);
+    assert.equal(supervisor.activeCount(), 0);
+  });
+
   test('ACP event 保留统一语义而不外泄 vendor 原文', () => {
     assert.equal(acpEvent({ sessionUpdate: 'tool_call', title: 'Read' })[0], 'tool');
     assert.equal(acpEvent({ sessionUpdate: 'agent_message_chunk', content: { text: 'ok' } })[0], 'message');
