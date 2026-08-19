@@ -94,7 +94,7 @@ export async function scenes51({ app, win, human, WS, scenario }) {
       // W57 用户定版路线修正：DOM overlay 转正（罩页独立窗方案已退役——链路长收效差实锤）；
       // 「不抢渲染」由拖拽 cloak 保证（scenes55 0×0 专项钉）——本场景钉 overlay 开合+反钉罩页回魂
       const ov = await evaluate(() => {
-        const el = [...document.body.children].find(e => e.style?.position === 'fixed' && (e.style.background || '').includes('linear-gradient'));
+        const el = document.querySelector('.mazz-split-drag-overlay');
         if (!el) return null;
         const r = el.getBoundingClientRect();
         return { w: Math.round(r.width), h: Math.round(r.height), bg: (el.style.background || '').slice(0, 42), border: el.style.borderRight || el.style.borderLeft };
@@ -107,7 +107,7 @@ export async function scenes51({ app, win, human, WS, scenario }) {
       // 清理（pointerup=拖拽死亡→罩必收——三路兜底链）
       await evaluate(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })));
       await wait(800);
-      const gone = await evaluate(() => ![...document.body.children].some(e => e.style?.position === 'fixed' && (e.style.background || '').includes('linear-gradient')));
+      const gone = await evaluate(() => !document.querySelector('.mazz-split-drag-overlay'));
       // 看门狗 1.5s 兜底：pointerup 清理即收
       await human.assert(gone, '拖拽结束 overlay 必须自收（三路兜底）');
     });

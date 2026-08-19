@@ -89,6 +89,7 @@ class VisualCompositionClient {
     const record = {
       token, element, kind: options.kind || rule.kind,
       onDismiss: options.onDismiss || null,
+      focusPolicy: options.focusPolicy === 'none' ? 'none' : 'auto',
       previousFocus: isElement(document.activeElement) ? document.activeElement : null,
       resizeObserver: null, released: false,
     };
@@ -108,7 +109,7 @@ class VisualCompositionClient {
         if (!record.released && element.isConnected) {
           element.dataset.visualReady = '1';
           element.dataset.visualState = 'active';
-          queueMicrotask(() => {
+          if (record.focusPolicy !== 'none') queueMicrotask(() => {
             if (!element.contains(document.activeElement)) focusable(element)[0]?.focus?.({ preventScroll: true });
           });
         }
@@ -168,6 +169,7 @@ class VisualCompositionClient {
   arbitrateKey(event) {
     const top = this.topRecord();
     if (!top || !top.element.isConnected) return;
+    if (top.focusPolicy === 'none') return;
     if (event.key === 'Escape' && top.onDismiss) {
       event.preventDefault(); event.stopImmediatePropagation(); top.onDismiss(); return;
     }
@@ -190,7 +192,7 @@ class VisualCompositionClient {
       overlayCount: this.records.size,
       stack: this.stack.map(token => {
         const record = this.records.get(token);
-        return { token, kind: record?.kind, state: record?.element.dataset.visualState, bounds: finiteBounds(record?.element) };
+        return { token, kind: record?.kind, state: record?.element.dataset.visualState, focusPolicy: record?.focusPolicy, bounds: finiteBounds(record?.element) };
       }),
       uiSize: document.documentElement.dataset.uiSize,
       planeConnected: !!this.plane?.isConnected,

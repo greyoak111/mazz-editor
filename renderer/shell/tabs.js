@@ -147,7 +147,7 @@ export class Tabs {
       el.draggable = true;
       el.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('mazz/tab', t.id);
-        // 杀掉 Chromium 默认 dragImage（跟手的半透明标签幻影）——分屏预览已统一为渐隐+单边锚线，
+        // 杀掉 Chromium 默认 dragImage（跟手的半透明标签幻影）——分屏预览已统一为无框纯渐隐，
         // 幻影带完整边框被用户误认为"没砍掉的虚线框"，且松手瞬间会被截图定格成"漂浮标签"
         if (!Tabs._dragGhost) {
           // Windows 怪癖：opacity 透明技巧会被 Chromium 回退默认 tab 幻影（顽固实体框线实锤）——

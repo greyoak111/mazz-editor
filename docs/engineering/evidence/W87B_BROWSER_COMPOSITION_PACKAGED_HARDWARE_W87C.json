@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-19T12:27:12.861Z",
-  "runtimeMode": "source",
+  "generatedAt": "2026-08-19T12:41:14.808Z",
+  "runtimeMode": "packaged",
   "gpuMode": "hardware",
-  "runTag": null,
+  "runTag": "W87C",
   "hostIds": [
     {
       "id": 3,
@@ -14,34 +14,34 @@
     }
   ],
   "ids": {
-    "mainA": "bt-b2e23eaf-64f7-419c-9d2e-207a8aa4c984",
-    "mainC": "bt-8b2f8b38-b58d-4e23-b9f0-19fe7e2fa7a9",
-    "childB": "bt-8aeb7be2-0036-4f85-9be8-70abdce6ead6"
+    "mainA": "bt-ddcd8049-b9f5-4bf2-b8dc-025d90f3a040",
+    "mainC": "bt-cbe11802-d687-4e17-8bde-a2f5d99e38af",
+    "childB": "bt-c9f0e978-de6a-4558-9869-06e687670da0"
   },
   "focusCycles": [
     {
       "cycle": 1,
-      "mainCompositionGen": 4,
+      "mainCompositionGen": 3,
       "childCompositionGen": 3
     },
     {
       "cycle": 2,
-      "mainCompositionGen": 4,
+      "mainCompositionGen": 3,
       "childCompositionGen": 3
     },
     {
       "cycle": 3,
-      "mainCompositionGen": 4,
+      "mainCompositionGen": 3,
       "childCompositionGen": 3
     },
     {
       "cycle": 4,
-      "mainCompositionGen": 4,
+      "mainCompositionGen": 3,
       "childCompositionGen": 3
     },
     {
       "cycle": 5,
-      "mainCompositionGen": 4,
+      "mainCompositionGen": 3,
       "childCompositionGen": 3
     }
   ],
@@ -59,8 +59,8 @@
         "occluded": true,
         "hostWindowId": 1,
         "reviveGen": 3,
-        "compositionGen": 7,
-        "recomposeCount": 4,
+        "compositionGen": 6,
+        "recomposeCount": 3,
         "bounds": {
           "x": 0,
           "y": 0,
@@ -68,8 +68,8 @@
           "height": 0
         },
         "lastCtxMenuAt": 0,
-        "invalidateCount": 4,
-        "lastRecomposeReason": "panel-ready:agreement"
+        "invalidateCount": 3,
+        "lastRecomposeReason": null
       },
       {
         "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-C%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-C%22%3C%2Fscript%3E%3C%2Fbody%3E",
@@ -83,8 +83,8 @@
         "occluded": true,
         "hostWindowId": 1,
         "reviveGen": 1,
-        "compositionGen": 4,
-        "recomposeCount": 3,
+        "compositionGen": 3,
+        "recomposeCount": 2,
         "bounds": {
           "x": 0,
           "y": 0,
@@ -92,22 +92,22 @@
           "height": 0
         },
         "lastCtxMenuAt": 0,
-        "invalidateCount": 3,
-        "lastRecomposeReason": "pane-tab-moved"
+        "invalidateCount": 2,
+        "lastRecomposeReason": null
       }
     ],
     "visual": {
       "protocol": "mazz.visual-composition/v1",
-      "generation": 122,
+      "generation": 119,
       "surfaceCount": 7,
       "overlayCount": 1,
       "occludedHostCount": 1,
       "surfaces": [
         {
-          "id": "view:bt-8aeb7be2-0036-4f85-9be8-70abdce6ead6",
+          "id": "view:bt-c9f0e978-de6a-4558-9869-06e687670da0",
           "kind": "web-contents-view",
           "layer": "native-content",
-          "owner": "browser-tab:bt-8aeb7be2-0036-4f85-9be8-70abdce6ead6",
+          "owner": "browser-tab:bt-c9f0e978-de6a-4558-9869-06e687670da0",
           "hostWindowId": 3,
           "sourceWebContentsId": 6,
           "visible": true,
@@ -120,21 +120,21 @@
             "width": 867,
             "height": 451
           },
-          "createdAt": 1787142428236,
-          "updatedAt": 1787142428551,
-          "generation": 41,
+          "createdAt": 1787143271266,
+          "updatedAt": 1787143271468,
+          "generation": 40,
           "metadata": {
-            "tabId": "bt-8aeb7be2-0036-4f85-9be8-70abdce6ead6",
+            "tabId": "bt-c9f0e978-de6a-4558-9869-06e687670da0",
             "partition": "persist:mazz-browser",
             "reviveGeneration": 1,
             "invalidateCount": 3
           }
         },
         {
-          "id": "view:bt-8b2f8b38-b58d-4e23-b9f0-19fe7e2fa7a9",
+          "id": "view:bt-cbe11802-d687-4e17-8bde-a2f5d99e38af",
           "kind": "web-contents-view",
           "layer": "native-content",
-          "owner": "browser-tab:bt-8b2f8b38-b58d-4e23-b9f0-19fe7e2fa7a9",
+          "owner": "browser-tab:bt-cbe11802-d687-4e17-8bde-a2f5d99e38af",
           "hostWindowId": 1,
           "sourceWebContentsId": 7,
           "visible": false,
@@ -147,21 +147,21 @@
             "width": 562,
             "height": 555
           },
-          "createdAt": 1787142429929,
-          "updatedAt": 1787142430511,
-          "generation": 90,
+          "createdAt": 1787143272383,
+          "updatedAt": 1787143272688,
+          "generation": 93,
           "metadata": {
-            "tabId": "bt-8b2f8b38-b58d-4e23-b9f0-19fe7e2fa7a9",
+            "tabId": "bt-cbe11802-d687-4e17-8bde-a2f5d99e38af",
             "partition": "persist:mazz-browser",
             "reviveGeneration": 1,
-            "invalidateCount": 3
+            "invalidateCount": 2
           }
         },
         {
-          "id": "view:bt-b2e23eaf-64f7-419c-9d2e-207a8aa4c984",
+          "id": "view:bt-ddcd8049-b9f5-4bf2-b8dc-025d90f3a040",
           "kind": "web-contents-view",
           "layer": "native-content",
-          "owner": "browser-tab:bt-b2e23eaf-64f7-419c-9d2e-207a8aa4c984",
+          "owner": "browser-tab:bt-ddcd8049-b9f5-4bf2-b8dc-025d90f3a040",
           "hostWindowId": 1,
           "sourceWebContentsId": 3,
           "visible": false,
@@ -174,14 +174,14 @@
             "width": 562,
             "height": 555
           },
-          "createdAt": 1787142426370,
-          "updatedAt": 1787142430511,
-          "generation": 89,
+          "createdAt": 1787143269611,
+          "updatedAt": 1787143272638,
+          "generation": 85,
           "metadata": {
-            "tabId": "bt-b2e23eaf-64f7-419c-9d2e-207a8aa4c984",
+            "tabId": "bt-ddcd8049-b9f5-4bf2-b8dc-025d90f3a040",
             "partition": "persist:mazz-browser",
             "reviveGeneration": 3,
-            "invalidateCount": 4
+            "invalidateCount": 3
           }
         },
         {
@@ -201,15 +201,15 @@
             "width": 701,
             "height": 600
           },
-          "createdAt": 1787142426206,
-          "updatedAt": 1787142426749,
-          "generation": 25,
+          "createdAt": 1787143269494,
+          "updatedAt": 1787143271124,
+          "generation": 27,
           "metadata": {
             "nativeWindowId": 2
           }
         },
         {
-          "id": "overlay:renderer-mt02gkrr-1",
+          "id": "overlay:renderer-mt02ymka-1",
           "kind": "dom-overlay",
           "layer": "transient",
           "owner": "split-drag",
@@ -225,11 +225,11 @@
             "width": 188,
             "height": 653
           },
-          "createdAt": 1787142430511,
-          "updatedAt": 1787142431091,
-          "generation": 122,
+          "createdAt": 1787143272638,
+          "updatedAt": 1787143273195,
+          "generation": 119,
           "metadata": {
-            "token": "renderer-mt02gkrr-1",
+            "token": "renderer-mt02ymka-1",
             "dismissible": false
           }
         },
@@ -250,9 +250,9 @@
             "width": 1360,
             "height": 824
           },
-          "createdAt": 1787142424824,
-          "updatedAt": 1787142430511,
-          "generation": 91,
+          "createdAt": 1787143268421,
+          "updatedAt": 1787143272638,
+          "generation": 87,
           "metadata": {
             "nativeWindowId": 1,
             "transientOcclusion": true
@@ -275,9 +275,9 @@
             "width": 1101,
             "height": 720
           },
-          "createdAt": 1787142427097,
-          "updatedAt": 1787142429952,
-          "generation": 77,
+          "createdAt": 1787143270144,
+          "updatedAt": 1787143272397,
+          "generation": 75,
           "metadata": {
             "nativeWindowId": 3
           }
@@ -288,7 +288,7 @@
           "hostWindowId": 1,
           "occluded": true,
           "tokens": [
-            "renderer-mt02gkrr-1"
+            "renderer-mt02ymka-1"
           ]
         }
       ],
@@ -304,7 +304,7 @@
       "overlayCount": 1,
       "stack": [
         {
-          "token": "renderer-mt02gkrr-1",
+          "token": "renderer-mt02ymka-1",
           "kind": "split-drag",
           "state": "active",
           "focusPolicy": "none",
@@ -388,13 +388,13 @@
   },
   "geometry": {
     "expected": {
-      "bt-b2e23eaf-64f7-419c-9d2e-207a8aa4c984": {
+      "bt-ddcd8049-b9f5-4bf2-b8dc-025d90f3a040": {
         "x": 232,
         "y": 245,
         "width": 280,
         "height": 545
       },
-      "bt-8b2f8b38-b58d-4e23-b9f0-19fe7e2fa7a9": {
+      "bt-cbe11802-d687-4e17-8bde-a2f5d99e38af": {
         "x": 515,
         "y": 245,
         "width": 280,
@@ -402,13 +402,13 @@
       }
     },
     "actual": {
-      "bt-b2e23eaf-64f7-419c-9d2e-207a8aa4c984": {
+      "bt-ddcd8049-b9f5-4bf2-b8dc-025d90f3a040": {
         "x": 232,
         "y": 245,
         "width": 280,
         "height": 545
       },
-      "bt-8b2f8b38-b58d-4e23-b9f0-19fe7e2fa7a9": {
+      "bt-cbe11802-d687-4e17-8bde-a2f5d99e38af": {
         "x": 515,
         "y": 245,
         "width": 280,
@@ -458,23 +458,23 @@
     "mainA": {
       "width": 350,
       "height": 682,
-      "whiteRatio": 0.026459991621281945,
+      "whiteRatio": 0.026543778801843318,
       "darkRatio": 0,
-      "colorfulRatio": 0.9712777545035609
+      "colorfulRatio": 0.971160452450775
     },
     "mainC": {
       "width": 350,
       "height": 682,
-      "whiteRatio": 0.026007540846250524,
+      "whiteRatio": 0.026024298282362798,
       "darkRatio": 0,
-      "colorfulRatio": 0.9718642647674905
+      "colorfulRatio": 0.9717302052785923
     },
     "childB": {
       "width": 1084,
       "height": 564,
-      "whiteRatio": 0.010579414304781347,
+      "whiteRatio": 0.010599042160634372,
       "darkRatio": 0,
-      "colorfulRatio": 0.9882887126743608
+      "colorfulRatio": 0.9882625421998901
     }
   },
   "fatalMainLogs": 0,

@@ -103,6 +103,7 @@ const files = [
   'tests/contract/w71-plugin-trust.test.mjs',
   'tests/contract/w71-overlay-zorder.test.mjs',
   'tests/contract/w87-ui-convergence.test.mjs',
+  'tests/contract/w87c-split-preview-frame.test.mjs',
   'tests/contract/w71-native-binary-audit.test.mjs',
   'tests/contract/w71-census.test.mjs',
   'tests/contract/hotfix-w59c.test.mjs',

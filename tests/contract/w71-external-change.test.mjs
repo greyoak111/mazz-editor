@@ -76,6 +76,9 @@ describe('W71 外部文件变化状态机', () => {
     assert.equal((source.match(/window\.mazz\.on\('file:changed'/g) || []).length, 1, 'Shell 不得同时自动重载和另弹重载提示');
     assert.ok(source.includes('this.handleExternalFileChanged(payload)'), '外部变化必须进入单一处理器');
     assert.ok(source.includes("externalChangeDecision({ event, dirty: current.dirty })"), '脏/净状态必须统一判定');
+    const ghostStart = source.indexOf('closeGhostTabs(path)');
+    const ghostBody = source.slice(ghostStart, source.indexOf('async closeTabFlow', ghostStart));
+    assert.ok(ghostBody.includes('const norm = normalizeChangePath(path)') && ghostBody.includes('const fp = normalizeChangePath(tab.filePath)'), '删除广播与标签路径必须共同 canonicalize，不能因 Windows 斜杠/大小写差异留下虚空标签');
     const saveStart = source.indexOf('async saveTab(tab');
     const saveEnd = source.indexOf('/** 关闭指定路径', saveStart);
     const saveBody = source.slice(saveStart, saveEnd);

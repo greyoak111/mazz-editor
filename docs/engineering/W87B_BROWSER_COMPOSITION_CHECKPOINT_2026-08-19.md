@@ -5,6 +5,8 @@
 > 结论：**SUPPORTED COMPOSITE MATRIX RESEALED；该矩阵已知 P0/P1 = 0**  
 > 协议：`mazz.visual-composition/v1`
 
+> 2026-08-19 修订：本检查点后的分屏渐变彩色锚线已由 W87c 根除；W87b 的复合 Surface 结论继续有效，但拖拽预览视觉终态以 [`W87C_SPLIT_PREVIEW_BORDERLESS_CHECKPOINT_2026-08-19.md`](./W87C_SPLIT_PREVIEW_BORDERLESS_CHECKPOINT_2026-08-19.md) 为准。
+
 ## 1. 为什么必须重开 W87
 
 原 W87 证明了模块、主题、Panel、单个 WebContentsView、Overlay 和最低窗口等单轴矩阵，但没有把以下状态同时压在一条运行链上：
@@ -85,4 +87,3 @@ fatal / renderer errors = 0 / 0
 ## 5. 封板边界
 
 本检查点只重新封住已执行的 Windows 10 / Electron 33、hardware/compatibility、主窗多 Browser、工作台 child、Panel child 与拖拽分屏组合。RDP hard-safe、多显示器跨 DPI 拖窗、睡眠恢复、第三方网页自身崩溃和异机驱动仍是条件矩阵；出现新证据必须重开，不得再用“W87 已封板”拒绝复现。
-

@@ -46,10 +46,7 @@ const paneRect = () => win.evaluate(() => {
   return { left: r.left, top: r.top, width: r.width, height: r.height };
 });
 const overlayState = () => win.evaluate(() => {
-  const els = [...document.body.children].filter(el => {
-    const cs = getComputedStyle(el);
-    return cs.position === 'fixed' && cs.pointerEvents === 'none' && el.getBoundingClientRect().width > 0 && !el.id && !el.className;
-  }).map(el => {
+  const els = [...document.querySelectorAll('.mazz-split-drag-overlay')].filter(el => el.getBoundingClientRect().width > 0).map(el => {
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
     return { left: Math.round(r.left), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height), bg: cs.backgroundImage.slice(0, 60), borderL: cs.borderLeftWidth, borderR: cs.borderRightWidth, z: cs.zIndex };

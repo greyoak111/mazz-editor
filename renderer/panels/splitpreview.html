@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="../styles/themes.css">
 <style>
   html, body { background: transparent; margin: 0; overflow: hidden; }
-  #pv { position: fixed; pointer-events: none; transition: all .08s ease; }
+  #pv { position: fixed; pointer-events: none; transition: all .08s ease; border: 0; outline: 0; box-shadow: none; }
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div id="pv"></div>
 <script>
@@ -13,7 +13,7 @@ const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.them
 window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
 window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
 window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
-// W56 救火：计算全挪罩页（用户明路——主窗只当邮差转 leaf 矩形+鼠标点；zone/rect/渐变/锚线罩页自算，零高频 IPC 零主窗算力）
+// W56 救火：计算全挪罩页（用户明路——主窗只当邮差转 leaf 矩形+鼠标点；zone/rect/无框渐变罩页自算，零高频 IPC 零主窗算力）
 const zoneIn = (r, x, y) => {
   const fx = (x - r.left) / r.width, fy = (y - r.top) / r.height;
   if (fx < 0 || fx > 1 || fy < 0 || fy > 1) return null;
@@ -23,11 +23,11 @@ const zoneIn = (r, x, y) => {
   if (fy > 2 / 3) return 'down';
   return null;
 };
-const zoneColors = () => {
+const zoneColor = () => {
   const c = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4f46e5';
   const m = /^#([0-9a-f]{6})$/i.exec(c);
   const rgb = m ? (() => { const n = parseInt(m[1], 16); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; })() : '79, 70, 229';
-  return { rgb, border: `rgba(${rgb}, 0.55)` };
+  return rgb;
 };
 const zoneGradient = (z, rgb) => {
   const stops = `rgba(${rgb}, 0.40) 0%, rgba(${rgb}, 0.24) 16%, rgba(${rgb}, 0.10) 42%, rgba(${rgb}, 0.03) 72%, rgba(${rgb}, 0) 100%`;
@@ -37,24 +37,24 @@ const zoneGradient = (z, rgb) => {
 window.mazz.on('panel:push', (p) => {
   const pv = document.getElementById('pv');
   if (p?.type !== 'splitpreview') return;
-  if (p.hide) { pv.style.width = '0px'; pv.style.height = '0px'; pv.style.border = 'none'; return; }
+  if (p.hide) { pv.style.width = '0px'; pv.style.height = '0px'; pv.style.background = 'none'; return; }
   const r = p.leaf || {}, mx = p.x || 0, my = p.y || 0;
   const z = p.zone || zoneIn(r, mx, my);
-  if (!z) { pv.style.width = '0px'; pv.style.border = 'none'; return; }
-  const zc = zoneColors();
+  if (!z) { pv.style.width = '0px'; pv.style.background = 'none'; return; }
+  const rgb = zoneColor();
   const rect = { left: r.left, top: r.top, width: r.width / 3, height: r.height / 3 };
   if (z === 'left') Object.assign(rect, { width: r.width / 3, height: r.height });
   else if (z === 'right') Object.assign(rect, { left: r.left + r.width * 2 / 3, width: r.width / 3, height: r.height });
   else if (z === 'up') Object.assign(rect, { width: r.width, height: r.height / 3 });
   else Object.assign(rect, { top: r.top + r.height * 2 / 3, width: r.width, height: r.height / 3 });
-  const borderSide = ({ left: 'borderRight', right: 'borderLeft', up: 'borderBottom', down: 'borderTop' })[z] || 'borderRight';
   pv.style.left = rect.left + 'px';
   pv.style.top = rect.top + 'px';
   pv.style.width = rect.width + 'px';
   pv.style.height = rect.height + 'px';
-  pv.style.background = zoneGradient(z, zc.rgb);
-  pv.style.border = 'none';
-  pv.style[borderSide] = '1.5px solid ' + zc.border;
+  pv.style.background = zoneGradient(z, rgb);
+  pv.style.border = '0';
+  pv.style.outline = '0';
+  pv.style.boxShadow = 'none';
 });
 </script>
 </body></html>

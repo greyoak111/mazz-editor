@@ -62,7 +62,7 @@ console.log('悬停截图已存');
 
 // 检查 overlay 样式
 const ov = await win.evaluate(() => {
-  const els = [...document.querySelectorAll('body > div')].filter(d => d.style.position === 'fixed' && d.style.pointerEvents === 'none');
+  const els = [...document.querySelectorAll('.mazz-split-drag-overlay')];
   return els.map(d => ({ border: d.style.border, borderRight: d.style.borderRight, bg: d.style.background.slice(0, 80), w: d.style.width, h: d.style.height }));
 });
 console.log('overlay 元素:', JSON.stringify(ov, null, 1));
@@ -74,7 +74,7 @@ await win.screenshot({ path: 'tests/e2e/shots/probe-分屏后.png' });
 
 // 查残留：漂浮 tab 幻影 / 多余 overlay
 const residue = await win.evaluate(() => {
-  const fixed = [...document.querySelectorAll('body > div')].filter(d => d.style.position === 'fixed' && d.style.pointerEvents === 'none');
+  const fixed = [...document.querySelectorAll('.mazz-split-drag-overlay')];
   const panes = document.querySelectorAll('.pane').length;
   const tabs = [...document.querySelectorAll('.tab')].map(t => t.textContent.trim().slice(0, 20));
   const stray = [...document.querySelectorAll('.tab')].filter(t => !t.closest('.tabbar')).map(t => t.outerHTML.slice(0, 100));

@@ -376,7 +376,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2297,
+          "line": 2299,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]

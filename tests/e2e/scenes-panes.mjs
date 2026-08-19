@@ -176,17 +176,26 @@ export async function scenesPanes({ win, human, WS, scenario }) {
     });
     await win.waitForTimeout(300);
     const st = await evaluate(() => {
-      const ov = [...document.querySelectorAll('body > div')].find(d => d.style.position === 'fixed' && d.style.zIndex === '60');
+      const ov = document.querySelector('.mazz-split-drag-overlay');
       if (!ov) return null;
       const r = ov.getBoundingClientRect();
       const pane = document.querySelector('.pane').getBoundingClientRect();
-      return { bg: ov.style.background, w: r.width, paneW: pane.width, border: ov.style.border, borderStyle: ov.style.borderStyle || '' };
+      const style = getComputedStyle(ov);
+      const active = document.querySelector('.pane.active');
+      return {
+        bg: style.backgroundImage, w: r.width, paneW: pane.width,
+        borders: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth],
+        outline: `${style.outlineStyle} ${style.outlineWidth}`,
+        shadow: style.boxShadow,
+        activePaneShadow: active ? getComputedStyle(active).boxShadow : null,
+      };
     });
     await human.assert(!!st, '分屏预览浮层应出现');
     await human.assert(st.bg.includes('linear-gradient'), '必须是渐变（渐隐再就业）');
     await human.assert(st.bg.includes('to left'), '右区必须从右边沿向左渐隐（边沿→中心）');
-    // 中心侧零边界：整圈边框已取缔，只剩锚边单线
-    await human.assert(st.borderStyle !== 'dashed' && !st.borderStyle.includes('dashed'), '整圈虚线框必须消灭（中心侧线的元凶）');
+    await human.assert(st.borders.every(v => v === '0px'), `渐变四边必须为 0（实际 ${st.borders.join('/')})`);
+    await human.assert(st.outline === 'none 0px' && st.shadow === 'none', `渐变不得有 outline/shadow（实际 ${st.outline} / ${st.shadow}）`);
+    await human.assert(st.activePaneShadow === 'none', `拖拽态活动窗格描边必须让位给渐变（实际 ${st.activePaneShadow}）`);
     await human.assert(/rgba\([^)]+,\s*0\.4\)/.test(st.bg) && /rgba\([^)]+,\s*0\.1\)/.test(st.bg), `曲线须先强后弱（实际：${st.bg.slice(0, 90)}）`);
     // 覆盖比例不变：仍占窗格 1/3 宽
     const ratio = st.w / st.paneW;
@@ -194,6 +203,12 @@ export async function scenesPanes({ win, human, WS, scenario }) {
     await human.shot('分屏渐隐预览'); // 悬停态截图（渐隐可见）
     // 结束悬停
     await evaluate(() => { document.dispatchEvent(new DragEvent('dragend', { bubbles: true })); });
+    await win.waitForTimeout(100);
+    const restored = await evaluate(() => ({
+      dragging: document.body.classList.contains('tab-dragging'),
+      activePaneShadow: getComputedStyle(document.querySelector('.pane.active')).boxShadow,
+    }));
+    await human.assert(!restored.dragging && restored.activePaneShadow !== 'none', '拖拽结束后活动窗格提示必须恢复');
   });
 
   // ============ P5：不回归——空格关闭收缩 + 单右分仍正确 ============

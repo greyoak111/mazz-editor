@@ -372,6 +372,8 @@ body.focus-mode .pm-page { max-width: 720px; }
 .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); position: relative; }
 .pane:last-child { border-right: 0; }
 .pane.active { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
+/* 分屏拖拽时预览渐变是唯一高亮；WCV cloak 后不得让活动窗格内描边暴露成第二圈彩框。 */
+body.tab-dragging .pane.active { box-shadow: none; }
 .pane .tabbar, .pane .editor-area { flex: none; }
 .pane .editor-area { flex: 1; position: relative; overflow: hidden; }
 

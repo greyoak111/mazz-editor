@@ -194,7 +194,7 @@ try {
     await window.mazz.invoke('bv:js', { tabId: ids[1], code: 'window.__splitKeep="C"' });
   }, [mainA.viewId, mainC.viewId]);
 
-  await main.evaluate(({ shellId }) => {
+  await main.evaluate(async ({ shellId }) => {
     const leaf = window.MazzShell.paneTree.leaves()[0];
     const target = leaf.el.querySelector('.editor-area');
     const rect = target.getBoundingClientRect();
@@ -202,20 +202,61 @@ try {
     if (!tab) throw new Error('drag source tab missing');
     const dt = new DataTransfer(); dt.setData('mazz/tab', shellId);
     tab.dispatchEvent(new DragEvent('dragstart', { dataTransfer: dt, bubbles: true, cancelable: true }));
-    target.dispatchEvent(new DragEvent('dragover', {
-      dataTransfer: dt, clientX: rect.left + rect.width * 0.84, clientY: rect.top + rect.height * 0.5,
-      bubbles: true, cancelable: true,
-    }));
-    window.__w87bDrag = { dt, target, x: rect.left + rect.width * 0.84, y: rect.top + rect.height * 0.5 };
+    const points = [
+      ['right', 0.84, 0.5], ['down', 0.5, 0.84], ['left', 0.16, 0.5], ['up', 0.5, 0.16],
+    ];
+    const samples = [];
+    for (const [zone, fx, fy] of points) {
+      const x = rect.left + rect.width * fx, y = rect.top + rect.height * fy;
+      target.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: x, clientY: y, bubbles: true, cancelable: true }));
+      await new Promise(resolve => setTimeout(resolve, 110));
+      const overlay = document.querySelector('.mazz-split-drag-overlay');
+      const style = overlay ? getComputedStyle(overlay) : null;
+      samples.push({
+        zone,
+        borders: style ? [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth] : null,
+        outlineStyle: style?.outlineStyle || null,
+        outlineWidth: style?.outlineWidth || null,
+        boxShadow: style?.boxShadow || null,
+      });
+    }
+    const x = rect.left + rect.width * 0.84, y = rect.top + rect.height * 0.5;
+    target.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    window.__w87bPreviewDirections = samples;
+    window.__w87bDrag = { dt, target, x, y };
   }, { shellId: mainC.shellId });
   await main.waitForTimeout(250);
-  const duringDrag = await main.evaluate(async ids => ({
-    states: await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id }))),
-    visual: await window.mazz.invoke('visual:snapshot'),
-    renderer: window.MazzVisualComposition.snapshot(),
-  }), [mainA.viewId, mainC.viewId]);
+  const duringDrag = await main.evaluate(async ids => {
+    const overlay = document.querySelector('.mazz-split-drag-overlay');
+    const style = overlay ? getComputedStyle(overlay) : null;
+    const activePane = document.querySelector('.pane.active');
+    return {
+      states: await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id }))),
+      visual: await window.mazz.invoke('visual:snapshot'),
+      renderer: window.MazzVisualComposition.snapshot(),
+      directions: window.__w87bPreviewDirections || [],
+      preview: style ? {
+        borders: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth],
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        boxShadow: style.boxShadow,
+        activePaneShadow: activePane ? getComputedStyle(activePane).boxShadow : null,
+      } : null,
+    };
+  }, [mainA.viewId, mainC.viewId]);
   if (!duringDrag.states.every(state => state?.hidden)) throw new Error(`drag did not cloak every browser in host: ${JSON.stringify(duringDrag)}`);
   if (!duringDrag.visual.hosts.some(host => host.hostWindowId === mainHost && host.occluded)) throw new Error(`split drag missing host occlusion token: ${JSON.stringify(duringDrag.visual)}`);
+  if (!duringDrag.preview || duringDrag.preview.borders.some(value => value !== '0px')
+      || duringDrag.preview.outlineStyle !== 'none' || duringDrag.preview.outlineWidth !== '0px'
+      || duringDrag.preview.boxShadow !== 'none' || duringDrag.preview.activePaneShadow !== 'none') {
+    throw new Error(`split gradient still has a colored frame: ${JSON.stringify(duringDrag.preview)}`);
+  }
+  if (duringDrag.directions.length !== 4 || duringDrag.directions.some(sample => !sample.borders
+      || sample.borders.some(value => value !== '0px') || sample.outlineStyle !== 'none'
+      || sample.outlineWidth !== '0px' || sample.boxShadow !== 'none')) {
+    throw new Error(`split gradient frame returned while changing direction: ${JSON.stringify(duringDrag.directions)}`);
+  }
+  if (duringDrag.renderer.stack.at(-1)?.focusPolicy !== 'none') throw new Error(`split drag entered focus arbitration: ${JSON.stringify(duringDrag.renderer)}`);
   await main.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_DRAG_${EVIDENCE_VARIANT}.png`) });
 
   await main.evaluate(() => {
@@ -225,8 +266,17 @@ try {
   await main.waitForFunction(async ids => {
     const states = await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id })));
     const visual = await window.mazz.invoke('visual:snapshot');
-    return states.every(state => state && !state.hidden && !state.occluded && state.bounds.width > 100) && visual.overlayCount === 0;
+    const activePane = document.querySelector('.pane.active');
+    return states.every(state => state && !state.hidden && !state.occluded && state.bounds.width > 100)
+      && visual.overlayCount === 0
+      && !document.body.classList.contains('tab-dragging')
+      && activePane && getComputedStyle(activePane).boxShadow !== 'none';
   }, [mainA.viewId, mainC.viewId], { timeout: 15000 });
+  const afterDropDecoration = await main.evaluate(() => ({
+    dragging: document.body.classList.contains('tab-dragging'),
+    activePaneShadow: getComputedStyle(document.querySelector('.pane.active')).boxShadow,
+  }));
+  if (afterDropDecoration.dragging || afterDropDecoration.activePaneShadow === 'none') throw new Error(`active pane cue did not restore after drag: ${JSON.stringify(afterDropDecoration)}`);
   await assertMarkers(main, [[mainA.viewId, 'W87B-MAIN-A'], [mainC.viewId, 'W87B-MAIN-C']], 'after-drag-split');
   const keep = await main.evaluate(async ids => Promise.all(ids.map(id => window.mazz.invoke('bv:js', { tabId: id, code: 'window.__splitKeep' }))), [mainA.viewId, mainC.viewId]);
   if (keep[0] !== 'A' || keep[1] !== 'C') throw new Error(`split migration reloaded page state: ${JSON.stringify(keep)}`);
@@ -286,7 +336,7 @@ try {
   await child.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_CHILD_${EVIDENCE_VARIANT}.png`) });
   const fatal = logs.filter(line => /uncaught|unhandled|TypeError|ReferenceError|SyntaxError|FATAL|\bError\b/i.test(line) && !/ERR_ABORTED|favicon/i.test(line));
   if (fatal.length || rendererErrors.length) throw new Error(`runtime errors: ${JSON.stringify({ fatal, rendererErrors }).slice(0, 4000)}`);
-  const report = { generatedAt: new Date().toISOString(), runtimeMode: EXECUTABLE ? 'packaged' : 'source', gpuMode: GPU_MODE, runTag: RUN_TAG || null, hostIds, ids: { mainA: mainA.viewId, mainC: mainC.viewId, childB: childB.viewId }, focusCycles, duringDrag, geometry, topology, childUnderPanel, panelReady, focusedAfterPanelClose: focused, captures, fatalMainLogs: 0, rendererErrors: 0 };
+  const report = { generatedAt: new Date().toISOString(), runtimeMode: EXECUTABLE ? 'packaged' : 'source', gpuMode: GPU_MODE, runTag: RUN_TAG || null, hostIds, ids: { mainA: mainA.viewId, mainC: mainC.viewId, childB: childB.viewId }, focusCycles, duringDrag, afterDropDecoration, geometry, topology, childUnderPanel, panelReady, focusedAfterPanelClose: focused, captures, fatalMainLogs: 0, rendererErrors: 0 };
   fs.writeFileSync(path.join(EVIDENCE, `W87B_BROWSER_COMPOSITION_${report.runtimeMode.toUpperCase()}_${EVIDENCE_VARIANT}.json`), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ ok: true, runtimeMode: report.runtimeMode, gpuMode: GPU_MODE, runTag: report.runTag, ids: report.ids, captures }));
 } finally {

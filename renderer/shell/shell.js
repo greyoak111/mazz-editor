@@ -389,11 +389,11 @@ export class Shell {
     let overlay = null, overlayHandle = null, zone = null, zoneLeaf = null, finishingDrop = false;
     // 提示色跟随当前 UI 主题（不再死紫）：showOverlay 时实时取主题 accent 转 rgba
     // v45 再就业：平面填色 → 边沿→中心渐隐（先急剧后舒缓），覆盖比例不变
-    const zoneColors = () => {
+    const zoneColor = () => {
       const c = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4f46e5';
       const m = /^#([0-9a-f]{6})$/i.exec(c);
       const rgb = m ? (() => { const n = parseInt(m[1], 16); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; })() : '79, 70, 229';
-      return { rgb, border: `rgba(${rgb}, 0.55)` };
+      return rgb;
     };
     // 渐隐曲线：0% 强 → 16% 陡降 → 42% 缓释 → 100% 全隐（先急剧后舒缓）
     const zoneGradient = (z, rgb) => {
@@ -437,27 +437,27 @@ export class Shell {
       if (overlay?.isConnected) return overlay;
       overlay = document.createElement('div');
       overlay.className = 'mazz-split-drag-overlay';
-      overlay.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60;border-radius:0;transition:all .08s ease';
+      overlay.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60;border:0;outline:0;box-shadow:none;border-radius:0;transition:all .08s ease';
       document.body.appendChild(overlay);
       // renderer 即时 cloak 负责首个拖拽事件；统一 token 负责按 host 遮住全部 WCV，并与其他 Overlay 正确引用计数。
-      overlayHandle = window.MazzVisualComposition?.mountOverlay?.(overlay, { kind: 'split-drag', moveToPlane: true }) || null;
+      overlayHandle = window.MazzVisualComposition?.mountOverlay?.(overlay, { kind: 'split-drag', moveToPlane: true, focusPolicy: 'none' }) || null;
       return overlay;
     };
     const showOverlay = (leaf, z) => {
       const r = leaf.el.getBoundingClientRect();
-      const zc = zoneColors();
+      const rgb = zoneColor();
       const rect = { left: r.left, top: r.top, width: r.width / 3, height: r.height / 3 };
       if (z === 'left') Object.assign(rect, { width: r.width / 3, height: r.height });
       else if (z === 'right') Object.assign(rect, { left: r.left + r.width * 2 / 3, width: r.width / 3, height: r.height });
       else if (z === 'up') Object.assign(rect, { width: r.width, height: r.height / 3 });
       else Object.assign(rect, { top: r.top + r.height * 2 / 3, width: r.width, height: r.height / 3 });
-      const borderSide = ({ left: 'borderRight', right: 'borderLeft', up: 'borderBottom', down: 'borderTop' })[z] || 'borderRight';
       ensureOverlay();
-      overlay.style.background = zoneGradient(z, zc.rgb); // 每次换区都重算（方向随区变）
-      // 边框只留画面边沿那一条锚线；中心侧零边界（用户实锤：整圈虚线框让渐隐尽头挂了一条线）
-      overlay.style.border = 'none';
+      overlay.style.background = zoneGradient(z, rgb); // 每次换区都重算（方向随区变）
+      // 预览只允许渐变本体；禁止锚线、focus outline 或 shadow 与活动窗格描边拼成“神秘彩框”。
+      overlay.style.border = '0';
+      overlay.style.outline = '0';
+      overlay.style.boxShadow = 'none';
       overlay.style.borderRadius = '0';
-      overlay.style[borderSide] = `1.5px solid ${zc.border}`;
       overlay.style.left = rect.left + 'px';
       overlay.style.top = rect.top + 'px';
       overlay.style.width = rect.width + 'px';
@@ -1273,12 +1273,14 @@ export class Shell {
 
   /** 关闭指定路径（或其父路径）已删除的全部标签（虚空标签清扫；含目录级联） */
   closeGhostTabs(path) {
-    const norm = String(path || '').replace(/\\/g, '/');
+    // Windows IPC 路径可能是 `C:\\...`、`C:/...` 或混合分隔符；标签保存路径也未必与删除广播同形。
+    // 必须复用外部变化协议的 canonical path，否则真实文件已删而标签会因字符串形态不同继续悬空。
+    const norm = normalizeChangePath(path);
     if (!norm) return;
     let closed = 0;
     for (const leaf of this.paneTree.leaves()) {
       for (const tab of [...leaf.tabs.tabs]) {
-        const fp = String(tab.filePath || '');
+        const fp = normalizeChangePath(tab.filePath);
         if (fp && (fp === norm || fp.startsWith(norm + '/'))) {
           tab.forceClose = true;
           modules.detach(tab.id);
