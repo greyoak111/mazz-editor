@@ -9,12 +9,27 @@ const { TextDecoder } = require('util');
 const RAW_SOURCE_SCHEMA = 'mazz.canonical-rule-source/v0';
 const RULE_REGISTRY_SCHEMA = 'mazz.stable-rule-registry/v0';
 const INCIDENT_LINEAGE_SCHEMA = 'mazz.incident-lineage/v0';
+const HOST_FACTS_SCHEMA = 'mazz.host-facts/v0';
+const PROFILE_INDEX_SCHEMA = 'mazz.doctrine-profile-index/v0';
+const CURRENT_SSOT_SCHEMA = 'mazz.current-ssot/v0';
+const TOOL_CAPABILITY_SCHEMA = 'mazz.tool-capability-snapshot/v0';
+const DOCTRINE_CONTEXT_SCHEMA = 'mazz.doctrine-context/v0';
 const RULE_STATUSES = new Set(['CURRENT', 'SUPERSEDED', 'HISTORICAL', 'PROPOSED', 'REJECTED']);
 const RULE_SCOPES = new Set(['universal', 'host', 'domain', 'project', 'current-policy']);
 const ENFORCEMENT_LEVELS = new Set(['ADVICE', 'POLICY', 'GATE', 'INVARIANT']);
 const SEVERITIES = new Set(['P0', 'P1', 'P2', 'P3']);
 const RULE_ID = /^(CORE|STATE|SOURCE|TOOL|GIT|RELEASE|SECRET|SANDBOX|WINDOWS|ELECTRON|REMOTE|MAZZ)-[A-Z0-9-]+-\d{3}$/;
 const INCIDENT_ID = /^[A-Z0-9][A-Z0-9-]{2,127}$/;
+const SHA256 = /^[a-f0-9]{64}$/;
+const HOST_OS = new Set(['windows', 'linux', 'darwin']);
+const HOST_SHELLS = new Set(['powershell', 'cmd', 'bash', 'zsh', 'sh']);
+const EXECUTION_MODES = new Set(['local', 'cloud', 'remote', 'ci']);
+const WORKSPACE_PERSISTENCE = new Set(['durable', 'ephemeral']);
+const PACKAGED_RUNTIMES = new Set(['electron', 'node', 'browser', 'none']);
+const PROFILE_IDS = Object.freeze([
+  'universal-core', 'cloud-sandbox', 'windows-local', 'linux-local',
+  'remote-vps', 'electron-desktop', 'mazz-project',
+]);
 
 class DoctrineError extends Error {
   constructor(code, message, cause = null) {
@@ -235,10 +250,180 @@ function snapshotR0aFoundation({ sourcePath, doctrineRoot, authorityRef, ruleReg
   });
 }
 
+function validateHostFacts(hostFacts) {
+  exactKeys(hostFacts, [
+    'schemaVersion', 'factId', 'capturedAt', 'os', 'shell', 'executionMode',
+    'workspacePersistence', 'sandbox', 'packagedRuntime', 'electron', 'network', 'remoteTarget',
+  ], 'Host Facts');
+  if (hostFacts.schemaVersion !== HOST_FACTS_SCHEMA) fail('HOST_FACTS_INVALID', `Host Facts schema 必须是 ${HOST_FACTS_SCHEMA}`);
+  requiredString(hostFacts.factId, 'hostFacts.factId');
+  requiredString(hostFacts.capturedAt, 'hostFacts.capturedAt');
+  if (!HOST_OS.has(hostFacts.os)) fail('HOST_FACTS_INVALID', 'hostFacts.os 非法');
+  if (!HOST_SHELLS.has(hostFacts.shell)) fail('HOST_FACTS_INVALID', 'hostFacts.shell 非法');
+  if (!EXECUTION_MODES.has(hostFacts.executionMode)) fail('HOST_FACTS_INVALID', 'hostFacts.executionMode 非法');
+  if (!WORKSPACE_PERSISTENCE.has(hostFacts.workspacePersistence)) fail('HOST_FACTS_INVALID', 'hostFacts.workspacePersistence 非法');
+  if (!PACKAGED_RUNTIMES.has(hostFacts.packagedRuntime)) fail('HOST_FACTS_INVALID', 'hostFacts.packagedRuntime 非法');
+  for (const key of ['sandbox', 'electron', 'network', 'remoteTarget']) {
+    if (typeof hostFacts[key] !== 'boolean') fail('HOST_FACTS_INVALID', `hostFacts.${key} 必须是 boolean`);
+  }
+  if (hostFacts.os === 'windows' && !['powershell', 'cmd'].includes(hostFacts.shell)) fail('HOST_FACTS_INVALID', 'Windows Host 必须声明 powershell/cmd');
+  if (hostFacts.remoteTarget && hostFacts.executionMode !== 'remote') fail('HOST_FACTS_INVALID', 'remoteTarget=true 时 executionMode 必须是 remote');
+  return hostFacts;
+}
+
+function resolveDoctrineProfiles(hostFacts, { projectId = '', domainProfiles = [] } = {}) {
+  validateHostFacts(hostFacts);
+  if (!Array.isArray(domainProfiles)) fail('PROFILE_RESOLUTION_FAILED', 'domainProfiles 必须是数组');
+  const active = [{ id: 'universal-core', layer: 'L0', reason: 'all-hosts' }];
+  if (hostFacts.executionMode === 'cloud' && hostFacts.sandbox && hostFacts.workspacePersistence === 'ephemeral') {
+    active.push({ id: 'cloud-sandbox', layer: 'L1', reason: 'cloud+sandbox+ephemeral' });
+  }
+  if (hostFacts.executionMode === 'local' && hostFacts.os === 'windows') {
+    active.push({ id: 'windows-local', layer: 'L1', reason: 'windows+local' });
+  }
+  if (hostFacts.executionMode === 'local' && hostFacts.os === 'linux') {
+    active.push({ id: 'linux-local', layer: 'L1', reason: 'linux+local' });
+  }
+  if (hostFacts.executionMode === 'remote' && hostFacts.remoteTarget) {
+    active.push({ id: 'remote-vps', layer: 'L1', reason: 'remote-target' });
+  }
+  if (hostFacts.electron && hostFacts.packagedRuntime === 'electron') {
+    active.push({ id: 'electron-desktop', layer: 'L2', reason: 'electron-runtime' });
+  }
+  for (const profile of [...new Set(domainProfiles.map(value => requiredString(value, 'domainProfile')))].sort()) {
+    active.push({ id: profile, layer: 'L2', reason: 'declared-domain-profile' });
+  }
+  if (String(projectId || '').trim() === 'mazz-editor') active.push({ id: 'mazz-project', layer: 'L3', reason: 'project-id' });
+  const activeIds = new Set(active.map(item => item.id));
+  const inactiveRetainedInRawSource = PROFILE_IDS.filter(id => !activeIds.has(id));
+  const value = {
+    schemaVersion: PROFILE_INDEX_SCHEMA,
+    hostFactsHash: sha256(Buffer.from(canonicalJson(hostFacts), 'utf8')),
+    active,
+    inactiveRetainedInRawSource,
+  };
+  value.profileIndexHash = sha256(Buffer.from(canonicalJson(value), 'utf8'));
+  return Object.freeze(value);
+}
+
+function validateCurrentSsot(ssot) {
+  exactKeys(ssot, [
+    'schemaVersion', 'taskId', 'wave', 'status', 'branch', 'head', 'remoteHead',
+    'openItems', 'stopLine', 'authorityRef', 'capturedAt', 'sourceRefs',
+  ], 'Current SSoT');
+  if (ssot.schemaVersion !== CURRENT_SSOT_SCHEMA) fail('CURRENT_POLICY_INVALID', `Current SSoT schema 必须是 ${CURRENT_SSOT_SCHEMA}`);
+  for (const key of ['taskId', 'wave', 'status', 'branch', 'head', 'stopLine', 'authorityRef', 'capturedAt']) requiredString(ssot[key], `ssot.${key}`);
+  if (!/^[a-f0-9]{7,40}$/.test(ssot.head)) fail('CURRENT_POLICY_INVALID', 'ssot.head 必须是 Git commit hash');
+  if (ssot.remoteHead && !/^[a-f0-9]{7,40}$/.test(ssot.remoteHead)) fail('CURRENT_POLICY_INVALID', 'ssot.remoteHead 必须是 Git commit hash');
+  if (!Array.isArray(ssot.openItems)) fail('CURRENT_POLICY_INVALID', 'ssot.openItems 必须是数组');
+  if (!Array.isArray(ssot.sourceRefs) || ssot.sourceRefs.length === 0) fail('CURRENT_POLICY_INVALID', 'ssot.sourceRefs 必须是非空数组');
+  return ssot;
+}
+
+function createToolCapabilitySnapshot({ adapterId, adapterVersion = 'UNKNOWN', capturedAt, tools = [] } = {}) {
+  const normalizedTools = tools.map((tool, index) => {
+    exactKeys(tool, ['name', 'argsSchemaHash', 'limits', 'resultEnvelope', 'handleKinds', 'continuationApis'], `tools[${index}]`);
+    const name = requiredString(tool.name, `tools[${index}].name`);
+    if (!SHA256.test(String(tool.argsSchemaHash || ''))) fail('TOOL_CAPABILITY_INVALID', `${name}.argsSchemaHash 必须是 SHA-256`);
+    if (!tool.limits || typeof tool.limits !== 'object' || Array.isArray(tool.limits)) fail('TOOL_CAPABILITY_INVALID', `${name}.limits 必须是对象`);
+    requiredString(tool.resultEnvelope, `${name}.resultEnvelope`);
+    if (!Array.isArray(tool.handleKinds) || !Array.isArray(tool.continuationApis)) fail('TOOL_CAPABILITY_INVALID', `${name} handleKinds/continuationApis 必须是数组`);
+    return {
+      name,
+      argsSchemaHash: tool.argsSchemaHash,
+      limits: stableValue(tool.limits),
+      resultEnvelope: tool.resultEnvelope,
+      handleKinds: [...new Set(tool.handleKinds.map(value => requiredString(value, `${name}.handleKind`)))].sort(),
+      continuationApis: [...new Set(tool.continuationApis.map(value => requiredString(value, `${name}.continuationApi`)))].sort(),
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name));
+  if (new Set(normalizedTools.map(tool => tool.name)).size !== normalizedTools.length) fail('TOOL_CAPABILITY_INVALID', 'Tool name 重复');
+  const base = {
+    schemaVersion: TOOL_CAPABILITY_SCHEMA,
+    adapterId: requiredString(adapterId, 'adapterId'),
+    adapterVersion: requiredString(adapterVersion, 'adapterVersion'),
+    capturedAt: requiredString(capturedAt, 'capturedAt'),
+    tools: normalizedTools,
+  };
+  return Object.freeze({ ...base, toolsetHash: sha256(Buffer.from(canonicalJson(base), 'utf8')) });
+}
+
+function validateToolCapabilitySnapshot(snapshot) {
+  exactKeys(snapshot, ['schemaVersion', 'adapterId', 'adapterVersion', 'capturedAt', 'tools', 'toolsetHash'], 'Tool Capability Snapshot');
+  if (snapshot.schemaVersion !== TOOL_CAPABILITY_SCHEMA) fail('TOOL_CAPABILITY_INVALID', `Tool Capability schema 必须是 ${TOOL_CAPABILITY_SCHEMA}`);
+  const rebuilt = createToolCapabilitySnapshot(snapshot);
+  if (rebuilt.toolsetHash !== snapshot.toolsetHash) fail('TOOL_CAPABILITY_INVALID', 'Tool Capability hash 不匹配');
+  return snapshot;
+}
+
+function contextRecords(doctrineRoot, fsImpl = fs) {
+  const root = path.join(path.resolve(doctrineRoot), 'contexts');
+  if (!fsImpl.existsSync(root)) return [];
+  return fsImpl.readdirSync(root, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => path.join(root, entry.name, 'context.json'))
+    .filter(file => fsImpl.existsSync(file))
+    .map(file => {
+      try { return JSON.parse(fsImpl.readFileSync(file, 'utf8')); } catch { return null; }
+    })
+    .filter(Boolean)
+    .sort((a, b) => String(a.recordedAt).localeCompare(String(b.recordedAt)) || String(a.contextHash).localeCompare(String(b.contextHash)));
+}
+
+function readCurrentDoctrineContext(doctrineRoot, fsImpl = fs) {
+  const records = contextRecords(doctrineRoot, fsImpl);
+  const superseded = new Set(records.map(record => record.supersedesContextHash).filter(Boolean));
+  return records.filter(record => !superseded.has(record.contextHash)).at(-1) || null;
+}
+
+function snapshotR0bContext({ doctrineRoot, hostFacts, projectId = '', domainProfiles = [], currentSsot, toolCapability, clock = () => new Date(), fsImpl = fs } = {}) {
+  const root = path.resolve(requiredString(doctrineRoot, 'doctrineRoot'));
+  validateHostFacts(hostFacts);
+  validateCurrentSsot(currentSsot);
+  validateToolCapabilitySnapshot(toolCapability);
+  const profileIndex = resolveDoctrineProfiles(hostFacts, { projectId, domainProfiles });
+  const artifacts = [
+    ['host-facts', hostFacts],
+    ['profile-index', profileIndex],
+    ['current-ssot', currentSsot],
+    ['tool-capability', toolCapability],
+  ].map(([kind, value]) => {
+    const bytes = Buffer.from(canonicalJson(value), 'utf8');
+    const hash = sha256(bytes);
+    const target = path.join(root, 'context-assets', kind, `${hash}.json`);
+    atomicWrite(target, bytes, fsImpl);
+    return { kind, hash, ref: path.relative(root, target).replaceAll('\\', '/') };
+  });
+  const previous = readCurrentDoctrineContext(root, fsImpl);
+  const base = {
+    schemaVersion: DOCTRINE_CONTEXT_SCHEMA,
+    recordedAt: clock().toISOString(),
+    hostFactsHash: artifacts[0].hash,
+    hostFactsRef: artifacts[0].ref,
+    profileIndexHash: artifacts[1].hash,
+    profileIndexRef: artifacts[1].ref,
+    currentSsotHash: artifacts[2].hash,
+    currentSsotRef: artifacts[2].ref,
+    toolCapabilityHash: artifacts[3].hash,
+    toolCapabilityRef: artifacts[3].ref,
+    supersedesContextHash: previous?.contextHash || null,
+  };
+  const contextHash = sha256(Buffer.from(canonicalJson(base), 'utf8'));
+  const context = { ...base, contextHash };
+  const contextPath = path.join(root, 'contexts', contextHash, 'context.json');
+  atomicWrite(contextPath, Buffer.from(canonicalJson(context), 'utf8'), fsImpl);
+  return Object.freeze({ ...context, contextRef: path.relative(root, contextPath).replaceAll('\\', '/') });
+}
+
 module.exports = {
   RAW_SOURCE_SCHEMA,
   RULE_REGISTRY_SCHEMA,
   INCIDENT_LINEAGE_SCHEMA,
+  HOST_FACTS_SCHEMA,
+  PROFILE_INDEX_SCHEMA,
+  CURRENT_SSOT_SCHEMA,
+  TOOL_CAPABILITY_SCHEMA,
+  DOCTRINE_CONTEXT_SCHEMA,
   RULE_STATUSES,
   RULE_SCOPES,
   ENFORCEMENT_LEVELS,
@@ -251,4 +436,11 @@ module.exports = {
   validateCatalogLinkage,
   snapshotCanonicalRuleSource,
   snapshotR0aFoundation,
+  validateHostFacts,
+  resolveDoctrineProfiles,
+  validateCurrentSsot,
+  createToolCapabilitySnapshot,
+  validateToolCapabilitySnapshot,
+  snapshotR0bContext,
+  readCurrentDoctrineContext,
 };

@@ -77,6 +77,7 @@ const files = [
   'tests/contract/w66-real-adapter-plan.test.mjs',
   'tests/contract/w66-doctrine-three-engineering-intake.test.mjs',
   'tests/contract/w66-r0a-doctrine-foundation.test.mjs',
+  'tests/contract/w66-r0b-doctrine-context.test.mjs',
   'tests/contract/w71-release-foundation.test.mjs',
   'tests/contract/w71-reproducible-samples.test.mjs',
   'tests/contract/w71-native-surface-ledger.test.mjs',
