@@ -1,0 +1,23 @@
+{
+  "schema": "mazz.engineering-evidence/v1",
+  "wave": "W80",
+  "recordedAt": "2026-08-19T00:00:00.000+08:00",
+  "status": "LANDED_MINIMAL_DETERMINISTIC_KERNEL",
+  "checks": [
+    { "name": "renderer-build", "command": "npm run build", "result": "PASS" },
+    { "name": "w80-contract", "command": "node tests/contract/w80-civilization-model.test.mjs", "result": "PASS", "passed": 8, "failed": 0 }
+  ],
+  "hardSample": {
+    "change": "port capacity 100 -> 40",
+    "derivedDepths": [1, 2, 3, 4],
+    "eventPoolCount": 4,
+    "modelMutated": false,
+    "missingMaterialReturnsUnknown": true
+  },
+  "boundaries": {
+    "automaticCanon": false,
+    "narrativeMayMutateFacts": false,
+    "databaseCreated": false,
+    "rendererCreated": false
+  }
+}
