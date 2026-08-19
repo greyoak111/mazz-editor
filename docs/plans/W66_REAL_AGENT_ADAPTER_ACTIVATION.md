@@ -1,11 +1,12 @@
 # W66 Real Agent Adapter Activation
 
-> 状态：`PARTIAL / IMPLEMENTATION R0-R6 LANDED / ACTIVATION 1 OF 3 REAL-TURN PASS`
+> 状态：`PARTIAL / R0-R6 + PACKAGED HARNESS LANDED / REAL ACTIVATION 1 OF 3`
 > 版本：v0.2 Doctrine correction
 > 冻结日期：2026-08-17
 > 适用对象：Kimi Code、Claude Code、Codex 三种真实 Agent 执行器，以及它们之间的模型/执行器热切。
 > 2026-08-18 修正输入：`W66-AgentRulePack-Doctrine-Compiler-规格-v0.1.md`，SHA-256 `EEB706F8845EC9E13223E8C28BEDE1EE4CE3D35B95F8DA73BD35E64B00934770`；`Codex-施工执行规则包-v0.1.md`，SHA-256 `42436619BA340FC0F184610D2DAE7C64F1600BF4543D99DBAE2CEA4BAD1ABF4C`。
 > 2026-08-19 第一阶段水位：W66-R0a—R6 的代码与合同已经落地。Kimi/Claude/Codex 三个真实 Adapter、Attempt/Handoff、安全回合边界热切、规则包激活与 Factory 三选一 UI 均已进入产品代码；三家 fixture 各完成 20 轮 child create/send/dispose 且资源账归零，全量 `193/193` 与构建通过。激活证据不得与实现混写：Codex CLI `0.148.0` 已登录并完成一次真实受限回合；Kimi Code `0.37.2` 已安装且 ACP initialize 通过但登录态未知；Claude Code `2.1.235` 已安装但 `loggedIn=false`。三家 packaged Electron Gate 尚未完成，因此 W66 总体仍为 `PARTIAL`。检查点见 `docs/engineering/W66_REAL_AGENT_FIRST_STAGE_CHECKPOINT_2026-08-19.md`。
+> 2026-08-19 第二阶段水位：`main@55bd3ed` 已关闭 packaged Harness 可施工 Gate。打包态三家 fixture 各完成 20 轮 create/send/dispose，4 个 Attempt / 3 次跨 Adapter Handoff，资源 `2→2`；真实 CLI 三家完成 20 轮 detect/probe/auth，Codex 在 packaged 程序中完成真实回合与真实 interrupt/dispose，Claude 未认证失败链正确收尸，目标 Adapter 缺失留下 `recovery-required`。Kimi/Claude 仍需用户登录，真实跨厂商模型回合因此保持条件阻塞。检查点见 `docs/engineering/W66_REAL_AGENT_SECOND_STAGE_CHECKPOINT_2026-08-19.md`。
 
 ## 1. 决议
 
@@ -215,14 +216,14 @@ W66-R2  Kimi Code Adapter                                                IMPLEME
 W66-R3  Claude Code Adapter                                              IMPLEMENTED · 6400507
          Stream/SDK、模型目标、权限桥、hooks/MCP 安全边界；CLI PASS，AUTH BLOCKED
 
-W66-R4  Codex Adapter                                                    ACTIVATED · 6400507
-         独立 CLI、exec JSONL、模型目标、resume、sandbox；CLI/AUTH/REAL TURN PASS，PACKAGED GATE PENDING
+W66-R4  Codex Adapter                                                    PACKAGED ACTIVATED · 55bd3ed
+         独立 CLI、exec JSONL、模型目标、resume、sandbox；CLI/AUTH/REAL TURN/CANCEL/PACKAGED PASS
 
-W66-R5  W73 Attempt / Handoff / safe hot switch                          IMPLEMENTED · 6400507
-         同 Run 身份、顺序切换、失败回退、usage/结果引用；CONTRACT PASS
+W66-R5  W73 Attempt / Handoff / safe hot switch                          PARTIAL ACTIVATED · 55bd3ed
+         packaged fixture 跨 Adapter PASS；真实 Codex 来源失败恢复 PASS；真实跨厂商模型回合待目标登录
 
-W66-R6  Agent UI + packaged Activation Gate                              PARTIAL · 6400507
-         三执行器/模型选择、健康/安装/认证态与 fixture 20 轮已落；三家真实认证/packaged 循环未闭
+W66-R6  Agent UI + packaged Activation Gate                              PARTIAL · 55bd3ed
+         三家 packaged Harness/健康/生命周期 PASS；Kimi/Claude 真实认证与模型回合未闭
 ```
 
 Foundation 扶正仍至少需要两个真实 Adapter 共用协议；若产品对外承诺 Kimi Code、Claude Code、Codex 三选一，则三者必须各自通过 Gate。任何一个未安装或未过 Gate，只影响自己的状态，不得拖垮另外两个。

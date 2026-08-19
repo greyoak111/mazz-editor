@@ -1,6 +1,7 @@
 {
   "schemaVersion": "mazz.w66-packaged-activation/v1",
   "generatedAt": "2026-08-19T05:14:36.186Z",
+  "implementationCommit": "55bd3ed",
   "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
   "rulePackPath": "C:\\Users\\Administrator\\Downloads\\交付区\\Mazz Editor 开发军规.md",
   "artifacts": {
