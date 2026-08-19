@@ -1,0 +1,20 @@
+{
+  "schema": "mazz.engineering-evidence/v0",
+  "wave": "W83",
+  "capturedAt": "2026-08-19T00:00:00.000Z",
+  "status": "LOCAL_RUNTIME_LANDED",
+  "implemented": ["W83a", "W83b", "W83c", "W83e-local"],
+  "excluded": ["W83d W69 public event projection"],
+  "validation": {
+    "build": "PASS",
+    "w83": "7/7 PASS",
+    "playerW22": "6/6 PASS",
+    "playerW23": "5/5 PASS",
+    "w64": "7/7 PASS"
+  },
+  "limits": {
+    "events": 10000,
+    "active": 220,
+    "glyphCache": 512
+  }
+}

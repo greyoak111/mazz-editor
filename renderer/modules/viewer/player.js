@@ -6,6 +6,7 @@ import { nextEpisodePath } from '../../lib/episode-detect.js';
 import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
 import { classifyVideoFrameHealth, ZERO_VIDEO_FRAMES } from '../../lib/video-frame-health.js';
 import { mountCompanion } from './companion.js';
+import { mountDanmaku, parseAssDanmaku, parseBilibiliXml, parseJsonTrack } from './danmaku.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
@@ -76,6 +77,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           <button class="mz-btn" data-a="progmem" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
           <button class="mz-btn" data-a="sub" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
           <button class="mz-btn" data-a="companion" title="陪看：防剧透的人格对话与本地观剧档">${iconHtml('✨')}</button>
+          <button class="mz-btn" data-a="danmaku" title="弹幕：导入本地 XML / ASS / JSON 时间轨">弹</button>
           <button class="mz-btn" data-a="pset" title="播放设置（字幕/连播/片源）">${iconHtml('⚙')}</button>
           <button class="mz-btn" data-a="list" title="播放列表">${iconHtml('☰')}</button>
           <button class="mz-btn" data-a="zoom-reset" title="画面复位（缩放/亮度一键还原）">1:1</button>
@@ -327,6 +329,28 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   let decodeFrameRequest = null;
   const companion = mountCompanion({ root, media, mediaName: curName, mediaPath: curPath, sampleRms: () => sampleCompanionRms() });
   root.querySelector('[data-a=companion]')?.addEventListener('click', () => companion.toggle());
+  const danmaku = mountDanmaku({ root, media });
+  root.querySelector('[data-a=danmaku]')?.addEventListener('click', async () => {
+    if (danmaku.scheduler.timeline.events.length) {
+      const enabled = danmaku.toggle();
+      root.querySelector('[data-a=danmaku]')?.classList.toggle('on', enabled);
+      return;
+    }
+    try {
+      const selected = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '本地弹幕轨', extensions: ['xml', 'ass', 'ssa', 'json'] }], multi: false });
+      const filePath = Array.isArray(selected) ? selected[0] : selected;
+      if (!filePath) return;
+      const text = await window.mazz.invoke('fs:readFile', { path: filePath });
+      const extension = filePath.split('.').pop().toLowerCase();
+      const events = extension === 'xml' ? parseBilibiliXml(text, filePath)
+        : ['ass', 'ssa'].includes(extension) ? parseAssDanmaku(text, filePath)
+          : parseJsonTrack(text, filePath);
+      danmaku.load(events);
+      danmaku.toggle(true);
+      root.querySelector('[data-a=danmaku]')?.classList.add('on');
+      import('../../shell/shell.js').then(({ toast }) => toast(`已载入 ${events.length} 条本地弹幕`));
+    } catch (error) { import('../../shell/shell.js').then(({ toast }) => toast(`弹幕轨载入失败：${error.message || error}`)); }
+  });
 
   const clearDecodeWatch = () => {
     decodeWatchSeq += 1;
@@ -1416,6 +1440,9 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     curUrl = newUrl; curName = newName; curPath = newPath;
     curSize = newSize;
     companion.setSource(curName, curPath);
+    danmaku.load([]);
+    danmaku.toggle(false);
+    root.querySelector('[data-a=danmaku]')?.classList.remove('on');
     root.querySelector('.mz-empty')?.remove(); // 空起手占位退场（首次上源）
     media.pause();
     if (pathChanged) { detachSubtitle(); subFor = null; detachAuxAudio(); audioTracks = []; probeAudioTracks(); }
@@ -1461,6 +1488,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       if (destroyed) return;
       destroyed = true;
       companion.destroy().catch(() => {});
+      danmaku.destroy();
       subLoadSeq++; // 令所有在途字幕探测/挂载失效。
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('fullscreenchange', onFullscreenChange);

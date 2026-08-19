@@ -141,6 +141,7 @@ const files = [
   'tests/contract/w74b-feed-pipeline.test.mjs',
   'tests/contract/w62e-continuous-feed.test.mjs',
   'tests/contract/w64-companion-runtime.test.mjs',
+  'tests/contract/w83-danmaku-runtime.test.mjs',
   'tests/contract/w74c-conversation-promotion.test.mjs',
   'tests/contract/w74c2-structured-promotion-review.test.mjs',
   'tests/contract/w74c3-promotion-management.test.mjs',

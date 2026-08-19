@@ -1,7 +1,7 @@
 # W83 Danmaku Runtime
 ## Media-clock-native Scheduling / 基于媒体时钟的弹幕运行时
 
-> 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
+> 状态：`LOCAL RUNTIME LANDED / W83d PUBLIC PROJECTION EXCLUDED`
 > 版本：v0.1
 > 登记日期：2026-08-16
 > 来源：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》
@@ -151,4 +151,4 @@ replyTo? / regionHint? / provenance
 
 ## 10. 当前停止线
 
-本文件只登记 W83 契约、拆波和 Sample F。W71 内不得据此增加弹幕入口、GPU 依赖、公共事件服务、AI 防挡模型或播放器行为。
+W83a–c 与 W83e 本地部分已于 2026-08-19 获维护者总表清账授权并落地；检查点见 `docs/engineering/W83_DANMAKU_RUNTIME_CHECKPOINT_2026-08-19.md`。W83d 公共事件投影继续随本轮明确排除的 W69 网站边界冻结；不得用本地 AI track 冒充公共用户事件。
