@@ -41,8 +41,11 @@ Mobile approval is terminally classified as `LOCAL_ENVELOPE_COMPLETE / CONDITION
   - live reference inserted into Markdown;
   - 18 drill-down metrics/actions visible;
   - renderer page errors: 0.
+  - main-process stdout/stderr captured; fatal/uncaught/type/reference errors: 0;
+  - screenshot visually inspected: accounting modal, conflict/review cards and the honest `CONDITIONAL_MOBILE_CLIENT` card are readable and unobstructed.
+- Final repository suite after convergence fixes: `217/217` test files PASS.
 
-Machine evidence: [`evidence/FACTORY_BRIDGE_RUNTIME.json`](./evidence/FACTORY_BRIDGE_RUNTIME.json).
+Machine evidence: [`evidence/FACTORY_BRIDGE_RUNTIME.json`](./evidence/FACTORY_BRIDGE_RUNTIME.json) and [`evidence/FACTORY_BRIDGE_RUNTIME.png`](./evidence/FACTORY_BRIDGE_RUNTIME.png).
 
 ## Remaining external gates
 

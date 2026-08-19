@@ -18,14 +18,16 @@ Mobile 与 Updater 已从模糊 `PARTIAL` 收束为可判定的 `HIDDEN / CONDIT
 
 ## Windows 发布实证
 
+- 最终产品冻结坐标：`main@dba9f61`；以下 specimen 已在该干净 HEAD 重新构建并复验，不沿用早期 `c6b3022` 产物。
 - 安装包：`release/Mazz Editor Setup 0.2.0.exe`
-- 大小：133,936,848 bytes
-- SHA-256：`64EF1455CB899F65E072C16DE497B1CFB6C3375027020409002550DFA9951CE0`
-- `app.asar`：259,390,017 bytes / 9,556 entries；source map `0`，PDB `0`
+- 大小：133,944,620 bytes
+- SHA-256：`D9C6F2652A7C9E82EBF2C4C4FB1675C5EDF790A6F57A3F0AD72653F9C9B5F277`
+- `app.asar`：259,562,374 bytes / 9,567 entries；SHA-256 `00797A7C48290253F3D1FD02B18AC61FFACE0BFB752F40B5AD9B38DC31B8A5B5`；source map `0`，PDB `0`
 - 原生二进制：37 个 `.node` 文件纳入发布审计
 - OSS provenance：`PASS_REPOSITORY_PROVENANCE_BASELINE / CURRENT`
-- 打包态烟测：20 轮 PTY、PanelWindow、WebContentsView、Torrent、Python、Viewer、Factory、Monaco 生命周期均回到 `browser-window + file-watcher = 2` 的稳定长期基线
+- 打包态烟测：20 轮 PTY、PanelWindow、WebContentsView、Torrent、Python、Viewer、Factory、Monaco 生命周期均回到 `browser-window + file-watcher = 2` 的稳定长期基线；协议与关联文件冷启动通过
 - 隔离安装：首次静默安装、同版本覆盖安装、协议和文件关联冷启动、打包态烟测、静默卸载均 exit `0`；可执行文件、卸载注册、快捷方式和产品注册表残留为 `0`
+- 最终代码/合同/roundtrip 基线：`217/217` 个测试文件通过。
 
 打包烟测同时修正了一个测试基线竞态：Agreement 面板关闭与 workspace watcher 装配是异步的，旧测试可能在长期资源尚未稳定时采样。新门必须先精确等到主窗与 watcher 两个长期资源，再开始短生命周期循环；错误信息保留末次完整账本用于定位。
 
