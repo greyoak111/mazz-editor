@@ -137,6 +137,7 @@ class AgentHarnessRegistry {
       attemptId: session.attemptId,
       rulePackHash: session.rulePackHash,
       permissionProfileRef: session.permissionProfileRef,
+      contextPackageId: session.contextPackageId,
     };
   }
 
@@ -190,6 +191,7 @@ class AgentHarnessRegistry {
       workspace: String(workspace || ''), createdAt: at, updatedAt: at, sequence: 0, resourceKey: null,
       attemptId: gated.receipt.attemptId, rulePackHash: gated.receipt.rulePackHash,
       permissionProfileRef: gated.receipt.permissionProfileRef,
+      contextPackageId: String(context?.contextPackage?.contextPackageId || ''),
     };
     this.sessions.set(id, session);
     this.transition(session, 'starting');
@@ -282,7 +284,7 @@ class AgentHarnessRegistry {
 }
 
 class AgentHarnessService {
-  constructor({ bus, windowManager, resourceLedger, adapters = [], cliSupervisor = null, activationProvider = null }) {
+  constructor({ bus, windowManager, resourceLedger, adapters = [], cliSupervisor = null, activationProvider = null, contextProvider = null }) {
     this.cliSupervisor = cliSupervisor;
     this.registry = new AgentHarnessRegistry({
       resourceLedger,
@@ -294,6 +296,10 @@ class AgentHarnessService {
       const input = { ...payload };
       if (!input.activation?.doctrineRoot && activationProvider) {
         input.activation = await activationProvider(input.permissionProfileRef || 'restricted');
+      }
+      if (contextProvider) {
+        const contextPackage = await contextProvider(input);
+        input.context = { ...(input.context || {}), contextPackage };
       }
       return input;
     };

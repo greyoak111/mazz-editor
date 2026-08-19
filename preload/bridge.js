@@ -12,6 +12,7 @@ const INVOKE_CHANNELS = new Set([
   'context:addShadowEdge', 'context:dismissShadowEdge', 'context:promoteEdge',
   'context:importBookmarks',
   'events:capture', 'events:snapshot', 'events:search', 'events:lifecycle', 'events:export', 'events:setEnabled', 'events:applyRetention', 'events:clear',
+  'contextPackage:compile', 'contextPackage:list',
   'fs:watch', 'fs:unwatch',
   'dialog:openFile', 'dialog:saveFile', 'dialog:openFolder', 'dialog:confirm',
   'recent:list', 'recent:add', 'recent:clear',

@@ -114,6 +114,7 @@ const files = [
   'tests/contract/w63-w75-addressable-retrieval.test.mjs',
   'tests/contract/w76-w78-context-multimodal.test.mjs',
   'tests/contract/w81-workspace-event-ledger.test.mjs',
+  'tests/contract/w85-context-compiler-coverage.test.mjs',
   'tests/contract/w79-blender-headless.test.mjs',
   'tests/contract/w82a-organizational-kernel.test.mjs',
   'tests/contract/w82b-software-release-slice.test.mjs',

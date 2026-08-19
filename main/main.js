@@ -139,6 +139,7 @@ const { FactorySseDecoder } = require('./factory-sse');
 const { AddressableEvidenceService } = require('./addressable-evidence-service');
 const { ContextRelationService } = require('./context-relation-service');
 const { WorkspaceEventService } = require('./workspace-event-service');
+const { ContextCompilerService } = require('./context-compiler-service');
 
 const PROTOCOL = 'mazz';
 
@@ -171,6 +172,7 @@ const contextRelations = new ContextRelationService({
   rootProvider: () => store.get('workspace'), store, evidenceService: addressableEvidence,
 });
 const workspaceEvents = new WorkspaceEventService({ rootProvider: () => store.get('workspace'), store });
+const contextCompiler = new ContextCompilerService({ rootProvider: () => store.get('workspace'), eventService: workspaceEvents });
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
@@ -317,6 +319,8 @@ function registerChannels() {
   bus.handle('events:setEnabled', async ({ enabled } = {}) => workspaceEvents.setEnabled(enabled));
   bus.handle('events:applyRetention', async payload => workspaceEvents.applyRetention(payload));
   bus.handle('events:clear', async payload => workspaceEvents.clear(payload));
+  bus.handle('contextPackage:compile', async payload => contextCompiler.compile(payload));
+  bus.handle('contextPackage:list', async () => contextCompiler.list());
   // Windows 原子写：rename 遇 EPERM/EACCES/EBUSY（目标被外部程序占用/杀软扫描）退化为覆盖拷贝，重试两轮后仍败则报人话
   const writeAtomic = (p, data, encoding) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -1719,6 +1723,7 @@ app.whenReady().then(() => {
   const harness = new AgentHarnessService({
     bus, windowManager: wm, resourceLedger, cliSupervisor, adapters,
     activationProvider: permissionProfileRef => doctrineRuntime.provide(permissionProfileRef),
+    contextProvider: payload => contextCompiler.compileForHarness(payload),
   });
   const blenderFixtureNode = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_NODE || '') : '';
   const blenderFixture = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_FIXTURE || '') : '';

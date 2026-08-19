@@ -1,0 +1,25 @@
+{
+  "schema": "mazz.engineering-evidence/v1",
+  "wave": "W85",
+  "recordedAt": "2026-08-19T00:00:00.000+08:00",
+  "status": "LANDED_LOCAL_FOUNDATION_AND_HARNESS_INTEGRATION",
+  "checks": [
+    { "name": "renderer-build", "command": "npm run build", "result": "PASS" },
+    { "name": "w85-contract", "command": "node tests/contract/w85-context-compiler-coverage.test.mjs", "result": "PASS", "passed": 11, "failed": 0 },
+    { "name": "w81-adjacency", "command": "node tests/contract/w81-workspace-event-ledger.test.mjs", "result": "PASS", "passed": 8, "failed": 0 },
+    { "name": "w66-adjacency", "command": "all tests/contract/w66-*.test.mjs", "result": "PASS", "testFiles": 13 }
+  ],
+  "hardSampleH": {
+    "obligations": 47,
+    "recentDelta": 3,
+    "supersededObligations": 2,
+    "currentConflictDetected": true,
+    "silentlyDropped": 0
+  },
+  "authorityBoundary": {
+    "retrievalCandidateAuthorityGranted": false,
+    "workspaceEventAuthorityGranted": false,
+    "shadowRelationAuthorityGranted": false,
+    "compilerMayExpandAuthorization": false
+  }
+}

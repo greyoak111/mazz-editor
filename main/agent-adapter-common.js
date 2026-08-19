@@ -21,10 +21,12 @@ function requireRulePack(input = {}) {
 
 function composeInstruction(input = {}, prompt = '') {
   const injection = requireRulePack(input);
+  const contextPackage = input.context?.contextPackage?.schema === 'mazz.context-package/v0' ? input.context.contextPackage : null;
   return [
     '以下 Project Rule Pack 是本次 Attempt 的强制约束，必须完整遵守。',
     '\n--- CANONICAL RAW SOURCE ---\n', String(injection.rawSource),
     '\n--- COMPILED DOCTRINE VIEW ---\n', typeof injection.compiledView === 'string' ? injection.compiledView : JSON.stringify(injection.compiledView),
+    '\n--- AUDITABLE CONTEXT PACKAGE ---\n', contextPackage ? JSON.stringify(contextPackage) : 'NONE',
     '\n--- TASK INSTRUCTION ---\n', String(input.instruction || ''),
     '\n--- MAZZ HANDOFF SNAPSHOT REF ---\n', String(input.handoffRef || 'NONE'),
     '\n--- USER TURN ---\n', String(prompt || ''),
