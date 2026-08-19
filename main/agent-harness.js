@@ -233,7 +233,10 @@ class AgentHarnessRegistry {
     if (session.state === 'waiting') this.transition(session, 'running');
     try { return await session.adapter.send(session.handle, input); }
     catch (error) {
-      this.emit(session, 'error', { ...harnessError(error, 'SEND_FAILED'), terminal: true });
+      const normalized = harnessError(error, 'SEND_FAILED');
+      if (session.state !== 'cancelled' && normalized.code !== 'CLI_CANCELLED') {
+        this.emit(session, 'error', { ...normalized, terminal: true });
+      }
       throw error;
     }
   }
@@ -287,22 +290,25 @@ class AgentHarnessService {
     });
     for (const adapter of adapters) this.registry.register(adapter);
     this.handoffs = new AgentHandoffCoordinator({ registry: this.registry });
+    const withActivation = async (payload = {}) => {
+      const input = { ...payload };
+      if (!input.activation?.doctrineRoot && activationProvider) {
+        input.activation = await activationProvider(input.permissionProfileRef || 'restricted');
+      }
+      return input;
+    };
     bus.handle('harness:adapters', async () => this.registry.listAdapters());
     bus.handle('harness:health', async () => this.registry.health());
     bus.handle('harness:detect', async ({ adapterId } = {}) => this.registry.detect(adapterId));
     bus.handle('harness:probe', async ({ adapterId } = {}) => this.registry.probe(adapterId));
-    bus.handle('harness:createSession', async (payload = {}) => {
-      const input = { ...payload };
-      if (!input.activation?.doctrineRoot && activationProvider) input.activation = await activationProvider(input.permissionProfileRef || 'restricted');
-      return this.registry.createSession(input);
-    });
+    bus.handle('harness:createSession', async (payload = {}) => this.registry.createSession(await withActivation(payload)));
     bus.handle('harness:send', async ({ sessionId, input } = {}) => this.registry.send(sessionId, input));
     bus.handle('harness:interrupt', async ({ sessionId } = {}) => this.registry.interrupt(sessionId));
     bus.handle('harness:dispose', async ({ sessionId, reason } = {}) => this.registry.dispose(sessionId, reason));
     bus.handle('harness:sessions', async () => this.registry.listSessions());
     bus.handle('harness:createRun', async payload => this.handoffs.createRun(payload));
-    bus.handle('harness:startRun', async ({ runId, ...payload } = {}) => this.handoffs.start(runId, payload));
-    bus.handle('harness:switchRun', async ({ runId, ...payload } = {}) => this.handoffs.switch(runId, payload));
+    bus.handle('harness:startRun', async ({ runId, ...payload } = {}) => this.handoffs.start(runId, await withActivation(payload)));
+    bus.handle('harness:switchRun', async ({ runId, ...payload } = {}) => this.handoffs.switch(runId, await withActivation(payload)));
     bus.handle('harness:stopRun', async ({ runId, reason } = {}) => this.handoffs.stop(runId, reason));
     bus.handle('harness:runs', async () => this.handoffs.listRuns());
     bus.handle('resources:snapshot', async ({ includeReleased = false } = {}) => resourceLedger.snapshot({ includeReleased }));

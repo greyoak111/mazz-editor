@@ -102,6 +102,27 @@ describe('W66 Session lifecycle 与资源收敛', () => {
     assert.equal(registry.listSessions().length, 0);
   });
 
+  test('在飞 send 被 interrupt 后保持 cancelled，不被迟到 CLI_CANCELLED 改写成 failed', async () => {
+    let rejectSend;
+    const adapter = fakeAdapter({ id: 'cancel-race' });
+    adapter.send = async () => new Promise((_resolve, reject) => { rejectSend = reject; });
+    adapter.interrupt = async handle => {
+      handle.emit('completed', { status: 'cancelled' });
+      const error = Object.assign(new Error('cancelled'), { code: 'CLI_CANCELLED' });
+      rejectSend(error);
+    };
+    const registry = new AgentHarnessRegistry({ idFactory: () => 'session-cancel-race', activationGate });
+    registry.register(adapter);
+    await registry.createSession({ adapterId: adapter.id });
+    const pending = registry.send('session-cancel-race', 'slow turn');
+    await Promise.resolve();
+    await registry.interrupt('session-cancel-race');
+    await assert.rejects(() => pending, error => error.code === 'CLI_CANCELLED');
+    assert.equal(registry.listSessions()[0].state, 'cancelled');
+    await registry.dispose('session-cancel-race');
+    assert.equal(registry.listSessions().length, 0);
+  });
+
   test('createSession 半途失败会释放已建 handle 与资源，不留幽灵 Session', async () => {
     const ledger = new ResourceLedger();
     const adapter = fakeAdapter({ id: 'broken-events' });

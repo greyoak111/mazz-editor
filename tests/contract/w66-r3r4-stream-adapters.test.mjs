@@ -52,6 +52,7 @@ describe('W66-R4 Codex Adapter', () => {
     const adapter = fixture(CodexAdapter, 'codex');
     const args = adapter.buildArgs({ input: activation(adapter), vendorSessionId: '', handle: { id: 'x' } });
     assert.ok(args.includes('read-only'));
+    assert.ok(args.includes('--skip-git-repo-check'));
     assert.equal(args.some(value => /bypass|approve-for-me|ask-for-approval/i.test(value)), false);
   });
 });

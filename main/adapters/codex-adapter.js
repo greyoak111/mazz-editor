@@ -16,7 +16,7 @@ class CodexAdapter extends StreamCliAdapter {
   buildArgs(row) {
     const model = String(row.input.modelTarget?.requestedModel || row.input.modelTarget?.resolvedModel || '').trim();
     const sandbox = /read-only|restricted/i.test(String(row.input.permissionProfileRef || '')) ? 'read-only' : 'workspace-write';
-    const common = ['--json', '--ignore-user-config', '--ignore-rules'];
+    const common = ['--json', '--ignore-user-config', '--ignore-rules', '--skip-git-repo-check'];
     if (model) common.push('--model', model);
     if (row.vendorSessionId) return ['exec', 'resume', ...common, row.vendorSessionId, '-'];
     return ['exec', ...common, '--sandbox', sandbox, '-'];

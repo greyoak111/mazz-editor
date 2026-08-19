@@ -6,6 +6,7 @@ import { describe, test, assert } from '../harness.mjs';
 
 const require = createRequire(import.meta.url);
 const { AgentHandoffCoordinator, HANDOFF_SCHEMA } = require('../../main/agent-handoff.js');
+const { AgentHarnessService } = require('../../main/agent-harness.js');
 
 function registryFixture({ failTarget = false } = {}) {
   const sessions = new Map(); const calls = []; let sequence = 0;
@@ -26,6 +27,28 @@ function registryFixture({ failTarget = false } = {}) {
 }
 
 describe('W66-R5 Attempt / Handoff / safe hot switch', () => {
+  test('Run start/switch 与普通 Session 共用 Doctrine Activation Provider', async () => {
+    const handlers = new Map();
+    const bus = { handle(channel, fn) { handlers.set(channel, fn); } };
+    const activationCalls = [];
+    const service = new AgentHarnessService({
+      bus,
+      windowManager: { broadcast() {} },
+      resourceLedger: { snapshot() { return { activeCount: 0 }; } },
+      activationProvider: async profile => {
+        activationCalls.push(profile);
+        return { doctrineRoot: 'compiled-doctrine', attemptId: 'attempt-1', permissionPreview: { status: 'restricted', profileRef: profile } };
+      },
+    });
+    service.handoffs.start = async (_runId, payload) => payload;
+    service.handoffs.switch = async (_runId, payload) => payload;
+    const started = await handlers.get('harness:startRun')({ runId: 'run-activation', permissionProfileRef: 'restricted' });
+    const switched = await handlers.get('harness:switchRun')({ runId: 'run-activation', toAdapterId: 'codex', permissionProfileRef: 'restricted' });
+    assert.equal(started.activation.doctrineRoot, 'compiled-doctrine');
+    assert.equal(switched.activation.doctrineRoot, 'compiled-doctrine');
+    assert.deepEqual(activationCalls, ['restricted', 'restricted']);
+  });
+
   test('同 Run 顺序切换，来源释放和 Handoff 落盘先于目标 spawn', async () => {
     const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-handoff-'));
     try {

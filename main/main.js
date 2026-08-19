@@ -1658,10 +1658,23 @@ app.whenReady().then(() => {
     const doctrineState = doctrineRuntime.status();
     if (doctrineState.configured && doctrineState.reason === 'DOCTRINE_NOT_COMPILED') doctrineRuntime.prepare();
   } catch (error) { console.warn('[harness] doctrine preparation:', error.code || error.message); }
+  const agentFixtureNode = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_AGENT_NODE || '') : '';
+  const agentFixture = name => process.env.NODE_ENV === 'test' ? String(process.env[`MAZZ_E2E_AGENT_${name}_FIXTURE`] || '') : '';
+  const kimiFixture = agentFixture('KIMI');
+  const streamFixture = agentFixture('STREAM');
   const adapters = [
-    new KimiCodeAdapter({ supervisor: cliSupervisor }),
-    new ClaudeCodeAdapter({ supervisor: cliSupervisor }),
-    new CodexAdapter({ supervisor: cliSupervisor }),
+    new KimiCodeAdapter({
+      supervisor: cliSupervisor,
+      ...(agentFixtureNode && kimiFixture ? { executablePath: agentFixtureNode, launchArgs: [kimiFixture] } : {}),
+    }),
+    new ClaudeCodeAdapter({
+      supervisor: cliSupervisor,
+      ...(agentFixtureNode && streamFixture ? { executablePath: agentFixtureNode, commandPrefix: [streamFixture, 'claude-fixture'] } : {}),
+    }),
+    new CodexAdapter({
+      supervisor: cliSupervisor,
+      ...(agentFixtureNode && streamFixture ? { executablePath: agentFixtureNode, commandPrefix: [streamFixture, 'codex-fixture'] } : {}),
+    }),
   ];
   const harness = new AgentHarnessService({
     bus, windowManager: wm, resourceLedger, cliSupervisor, adapters,

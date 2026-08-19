@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "mazz.w66-packaged-activation/v1",
+  "generatedAt": "2026-08-19T05:14:36.186Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "rulePackPath": "C:\\Users\\Administrator\\Downloads\\交付区\\Mazz Editor 开发军规.md",
+  "artifacts": {
+    "executable": {
+      "path": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+      "byteLength": 188784128,
+      "sha256": "b1e0c36c3c2cca6a79e653ebf42f7800f913854c49edc8081cb0525662d6421c"
+    },
+    "appAsar": {
+      "path": "D:\\output\\Mazz Editor\\release\\win-unpacked\\resources\\app.asar",
+      "byteLength": 258833384,
+      "sha256": "e789b2a47f82dc59b3c23f2dd5ab249a495232af515bbb9831f4e51ba20b00c7"
+    }
+  },
+  "fixturePhase": {
+    "activationReady": true,
+    "health": [
+      {
+        "adapterId": "kimi-code",
+        "status": "ready"
+      },
+      {
+        "adapterId": "claude-code",
+        "status": "ready"
+      },
+      {
+        "adapterId": "codex",
+        "status": "ready"
+      }
+    ],
+    "cycles": {
+      "kimi-code": 20,
+      "claude-code": 20,
+      "codex": 20
+    },
+    "handoff": {
+      "runRef": "w66-packaged-fixture-handoff",
+      "attempts": 4,
+      "uniqueSessions": 4,
+      "handoffs": 3
+    },
+    "baselineResources": 2,
+    "finalResources": 2,
+    "mainErrors": [],
+    "rendererErrors": []
+  },
+  "realPhase": {
+    "healthProbeCycles": 20,
+    "latestHealth": [
+      {
+        "adapterId": "kimi-code",
+        "status": "degraded",
+        "version": "0.37.2",
+        "auth": "unknown"
+      },
+      {
+        "adapterId": "claude-code",
+        "status": "authentication-required",
+        "version": "2.1.235 (Claude Code)",
+        "auth": "unauthenticated"
+      },
+      {
+        "adapterId": "codex",
+        "status": "ready",
+        "version": "codex-cli 0.148.0",
+        "auth": "authenticated"
+      }
+    ],
+    "codexTurn": {
+      "accepted": true,
+      "complete": true,
+      "outputHash": "7ce7382d859c206bd90294cc43c0b151bda580046d61f1a8074efca4a135cb31",
+      "outputByteLength": 924,
+      "expectedMessageObserved": true
+    },
+    "claudeUnauthenticatedFailure": {
+      "errorObserved": true
+    },
+    "codexCancel": {
+      "state": "cancelled",
+      "sendRejected": true
+    },
+    "handoffRecovery": {
+      "status": "recovery-required",
+      "handoffs": 1,
+      "errorObserved": true
+    },
+    "baselineResources": 2,
+    "finalResources": 2,
+    "mainErrors": [],
+    "rendererErrors": []
+  },
+  "gates": {
+    "packagedFixtureLifecycle": "PASS",
+    "packagedCodexRealTurn": "PASS",
+    "kimiRealLogin": "BLOCKED_USER_AUTH",
+    "claudeRealLogin": "BLOCKED_USER_AUTH",
+    "realCrossVendorHandoff": "BLOCKED_TARGET_AUTH"
+  }
+}
