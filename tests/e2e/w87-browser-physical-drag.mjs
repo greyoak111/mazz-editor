@@ -11,6 +11,7 @@ const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w87d-physical-user
 const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w87d-physical-ws-'));
 const EVIDENCE = path.join(ROOT, 'docs', 'engineering', 'evidence');
 const INPUT_MODE = String(process.env.MAZZ_W87D_INPUT || 'physical').toLowerCase();
+const SAMPLE_PREFIX = INPUT_MODE === 'cdp' ? 'W87D-CDP' : 'W87D-PHYSICAL';
 const logs = [];
 const errors = [];
 let app = null;
@@ -71,14 +72,14 @@ try {
     win.setSize(1360, 840); win.center(); win.show(); win.focus();
   });
 
-  const left = await openBrowser(main, 'W87D-PHYSICAL-A', pageUrl('W87D-PHYSICAL-A', '#1d4ed8', '#0f766e'));
-  const right = await openBrowser(main, 'W87D-PHYSICAL-C', pageUrl('W87D-PHYSICAL-C', '#b45309', '#9f1239'));
+  const left = await openBrowser(main, `${SAMPLE_PREFIX}-A`, pageUrl(`${SAMPLE_PREFIX}-A`, '#1d4ed8', '#0f766e'));
+  const right = await openBrowser(main, `${SAMPLE_PREFIX}-C`, pageUrl(`${SAMPLE_PREFIX}-C`, '#b45309', '#9f1239'));
   await main.evaluate(id => window.MazzShell.splitWithTab(id, 'right'), right.shellId);
   await main.waitForFunction(() => window.MazzShell.paneTree.leaves().length === 2);
   await main.waitForTimeout(300);
 
-  const ready = await main.evaluate(() => {
-    const source = [...document.querySelectorAll('.tab')].find(node => node.querySelector('.t-label')?.textContent === 'W87D-PHYSICAL-C');
+  const ready = await main.evaluate(sourceLabel => {
+    const source = [...document.querySelectorAll('.tab')].find(node => node.querySelector('.t-label')?.textContent === sourceLabel);
     const target = window.MazzShell.paneTree.leaves()[0]?.el.querySelector('.editor-area');
     if (!source || !target) throw new Error('physical drag source/target not found');
     const s = source.getBoundingClientRect(), t = target.getBoundingClientRect();
@@ -87,7 +88,7 @@ try {
       target: { x: Math.round(t.left + t.width * 0.84), y: Math.round(t.top + t.height / 2) },
       paneCount: window.MazzShell.paneTree.leaves().length,
     };
-  });
+  }, `${SAMPLE_PREFIX}-C`);
   const inputLabel = INPUT_MODE === 'cdp' ? 'CDP_POINTER' : 'PHYSICAL';
   console.log(`W87D_${inputLabel}_READY ${JSON.stringify(ready)}`);
 
