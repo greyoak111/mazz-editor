@@ -19,9 +19,12 @@
       "packageDigest": "a3bec981276d30d9aa57bfe8d9e18d28745c67761cdfd878d0b24d0b4a5ce58c",
       "status": "ACTIVE",
       "path": "5cec2378aabf8380017fc37c06da879fa7d713815ae36c622f91d4e82c181c56/92521fc3cbd964bdc9f584a991b89fddaa5754ed1cc96d6d42445338669c1305.json",
-      "createdAt": "2026-08-19T09:47:10.095Z"
+      "createdAt": "2026-08-19T09:55:13.695Z"
     }
   ],
+  "physicalSimulation": {
+    "text": "物理生产 Capability 模拟\n        SIMULATION ONLYSIMULATION_ALLOWEDSIMULATION_DENIEDCONDITIONAL_EXTERNAL_SAFETY_REVIEW\n        Machine A 故障；兼容性查询选择 machine:B + Human inspection。危险 Machine C 因校准/认证/安全级缺失被拒绝。\n        安全提议：允许；越界提议：OUT_OF_ENVELOPE:speed。\n        controllerCommandsProduced=0；realDeviceWrites=0；Factory override=false。\n        现场激活不获授权；必须另经独立安全工程、责任主体、法规分析、认证设备、隔离网络和人工最终签发。"
+  },
   "pageErrors": [],
   "resources": {
     "activeCount": 4,

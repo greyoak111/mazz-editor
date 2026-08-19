@@ -34,7 +34,7 @@ function create(container) {
         <label class="org-field">工作流<select data-f="template"></select></label>
         <label class="org-field">执行者<select data-f="executor"><option value="">按工作流默认路由</option></select></label>
         <label class="org-field">预算（CNY）<input data-f="budget" type="number" min="0" value="500"></label>
-        <div class="org-actions"><button data-a="preview">编译预览</button><button class="secondary" data-a="save">存入本地工作流库</button><button class="secondary" data-a="inspect-maz">检查 .maz</button></div>
+        <div class="org-actions"><button data-a="preview">编译预览</button><button class="secondary" data-a="save">存入本地工作流库</button><button class="secondary" data-a="inspect-maz">检查 .maz</button><button class="secondary" data-a="simulate-physical">物理生产模拟</button></div>
       </div><div class="org-preview"></div>
     </div>`;
   container.appendChild(root);
@@ -84,6 +84,20 @@ function create(container) {
         `<p>阻断：${esc((result.blockers || []).join('；') || '无')}。本次 codeExecuted=false，不授予信任或执行权。</p></section>`,
       ];
       root.querySelector('.org-preview').innerHTML = lines.join('');
+    } catch (error) { toast(error.message || String(error)); }
+  });
+  root.querySelector('[data-a=simulate-physical]').addEventListener('click', async () => {
+    try {
+      const [result, gate] = await Promise.all([
+        window.mazz.invoke('physicalSimulation:sampleI'),
+        window.mazz.invoke('physicalSimulation:safetyReviewGate'),
+      ]);
+      root.querySelector('.org-preview').innerHTML = `<section><h3>物理生产 Capability 模拟</h3>
+        <div class="org-badges"><span>SIMULATION ONLY</span><span>${esc(result.safeDecision.state)}</span><span>${esc(result.unsafeDecision.state)}</span><span>${esc(gate.state)}</span></div>
+        <p>Machine A 故障；兼容性查询选择 ${esc(result.selectedExecutor)} + Human inspection。危险 Machine C 因校准/认证/安全级缺失被拒绝。</p>
+        <p>安全提议：${esc(result.safeDecision.reasons.join('、') || '允许')}；越界提议：${esc(result.unsafeDecision.reasons.join('、'))}。</p>
+        <p>controllerCommandsProduced=${result.controllerCommandsProduced}；realDeviceWrites=${result.realDeviceWrites}；Factory override=${result.factoryOverrideAllowed}。</p>
+        <p>现场激活不获授权；必须另经独立安全工程、责任主体、法规分析、认证设备、隔离网络和人工最终签发。</p></section>`;
     } catch (error) { toast(error.message || String(error)); }
   });
   return state;

@@ -17,6 +17,7 @@ const INVOKE_CHANNELS = new Set([
   'civilization:simulate', 'civilization:filter', 'civilization:reconcile',
   'organization:templates', 'organization:preview', 'organization:save', 'organization:list', 'organization:compatibility',
   'mazAsset:inspect', 'mazAsset:migrateStyle',
+  'physicalSimulation:threatModel', 'physicalSimulation:sampleI', 'physicalSimulation:normalizeRecording', 'physicalSimulation:shadowPlan', 'physicalSimulation:safetyReviewGate',
   'companion:archive', 'companion:memory',
   'fs:watch', 'fs:unwatch',
   'dialog:openFile', 'dialog:saveFile', 'dialog:openFolder', 'dialog:confirm',

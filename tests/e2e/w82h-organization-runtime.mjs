@@ -40,17 +40,23 @@ try {
   await page.locator('[data-a=save]').click();
   await page.waitForFunction(() => window.mazz.invoke('organization:list').then(rows => rows.length === 1));
   const library = await page.evaluate(() => window.mazz.invoke('organization:list'));
+  await page.locator('[data-a=simulate-physical]').click();
+  await page.waitForFunction(() => document.querySelector('.org-preview')?.textContent.includes('SIMULATION ONLY'));
+  const physicalSimulation = await page.evaluate(() => ({
+    text: document.querySelector('.org-preview')?.textContent || '',
+  }));
   const resources = await page.evaluate(() => window.mazz.invoke('resources:snapshot'));
   const evidence = {
-    schema: 'mazz.w82h-runtime-evidence/v0', ok: true, preview, library,
+    schema: 'mazz.w82h-runtime-evidence/v0', ok: true, preview, library, physicalSimulation,
     pageErrors: errors, resources: { activeCount: resources.activeCount, byType: resources.byType },
     boundaries: { executionStarted: false, publicationAuthorized: false, workflowRuntimeOwnedBy: 'W73' },
   };
   if (!preview.title || preview.seats !== 7 || preview.gates.length !== 4) throw new Error(`组织预览不完整: ${JSON.stringify(preview)}`);
   if (!preview.boundary.includes('运行真相归 W73') || !preview.boundary.includes('未启动执行')) throw new Error('组织预览没有明示运行边界');
+  if (!physicalSimulation.text.includes('realDeviceWrites=0') || !physicalSimulation.text.includes('CONDITIONAL_EXTERNAL_SAFETY_REVIEW')) throw new Error('W86 模拟入口没有明示零写入/外部安全门');
   if (library[0]?.status !== 'ACTIVE' || errors.length) throw new Error(`本地库或 renderer 异常: ${JSON.stringify(evidence)}`);
   fs.writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
-  console.log(JSON.stringify({ ok: true, seats: preview.seats, gates: preview.gates.length, library: library.length, pageErrors: errors.length }));
+  console.log(JSON.stringify({ ok: true, seats: preview.seats, gates: preview.gates.length, library: library.length, physicalSimulation: true, pageErrors: errors.length }));
 } finally {
   if (app) await app.close().catch(() => {});
   fs.rmSync(userData, { recursive: true, force: true });

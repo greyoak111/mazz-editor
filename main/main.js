@@ -149,6 +149,7 @@ const { CivilizationModelService } = require('./civilization-model-service');
 const { AccompanyService } = require('./accompany-service');
 const { OrganizationalWorkspaceService } = require('./organizational-workspace-service');
 const { MazAssetService } = require('./maz-asset-service');
+const { PhysicalSimulationService } = require('./physical-simulation-service');
 
 const PROTOCOL = 'mazz';
 
@@ -188,6 +189,7 @@ const civilizationModel = new CivilizationModelService();
 const accompanyService = new AccompanyService({ rootProvider: () => store.get('workspace') });
 const organizationalWorkspace = new OrganizationalWorkspaceService({ bus, rootProvider: () => store.get('workspace') });
 new MazAssetService({ bus });
+new PhysicalSimulationService({ bus });
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
