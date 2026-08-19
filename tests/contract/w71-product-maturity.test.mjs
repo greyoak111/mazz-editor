@@ -19,7 +19,7 @@ describe('W71 产品入口成熟度单源', () => {
       dmhy: MATURITY.FORMAL,
       recorder: MATURITY.PREVIEW,
       plugins: MATURITY.PREVIEW,
-      ocr: MATURITY.PREVIEW,
+      ocr: MATURITY.FORMAL,
       archive: MATURITY.FORMAL,
       ffmpegRuntime: MATURITY.HIDDEN,
     };
@@ -33,11 +33,16 @@ describe('W71 产品入口成熟度单源', () => {
     assert.equal(commands.has('update.check'), false);
     assert.equal(hiddenRan, false);
 
-    commands.register('ocr.image', { title: '图片文字识别（OCR）', source: 'w71-maturity-test', run: () => {} });
-    const preview = commands.get('ocr.image');
+    commands.register('rec.screen', { title: '全局内录', source: 'w71-maturity-test', run: () => {} });
+    const preview = commands.get('rec.screen');
     assert.equal(preview.maturity, MATURITY.PREVIEW);
     assert.match(preview.title, /（预览）$/);
-    assert.equal(commands.toolCards().find(card => card.id === 'ocr.image')?.maturity, MATURITY.PREVIEW);
+    assert.equal(commands.toolCards().find(card => card.id === 'rec.screen')?.maturity, MATURITY.PREVIEW);
+
+    commands.register('ocr.image', { title: '图片文字识别（OCR）', source: 'w71-maturity-test', run: () => {} });
+    const formal = commands.get('ocr.image');
+    assert.equal(formal.maturity, MATURITY.FORMAL);
+    assert.doesNotMatch(formal.title, /（预览）$/);
     commands.unregisterBySource('w71-maturity-test');
   });
 
@@ -60,6 +65,7 @@ describe('W71 产品入口成熟度单源', () => {
       assert.match(read(file), /预览/);
     }
     assert.doesNotMatch(read('renderer/panels/archive.html'), /压缩包（预览）/);
+    assert.doesNotMatch(read('renderer/ocr.js'), /OCR · 预览/);
     assert.match(read('renderer/help/content.js'), /插件系统（预览/);
     assert.doesNotMatch(read('main/torrent-sites.js'), /（预览）/);
     assert.doesNotMatch(read('renderer/modules/viewer/player.js'), /DMHY（预览）/);

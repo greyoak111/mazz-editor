@@ -70,10 +70,16 @@ try {
     }));
   });
   if (commandState['update.check'] !== null) throw new Error('Updater Hidden 入口仍被注册');
-  for (const id of ['ocr.image', 'rec.screen', 'plugin.manage', 'plugin.reload', 'archive.openPanel']) {
+  for (const id of ['rec.screen', 'plugin.manage', 'plugin.reload']) {
     const item = commandState[id];
     if (item?.maturity !== 'preview' || !item.title.includes('（预览）')) {
       throw new Error(`Preview 命令未显式标识：${id} ${JSON.stringify(item)}`);
+    }
+  }
+  for (const id of ['ocr.image', 'archive.openPanel']) {
+    const item = commandState[id];
+    if (item?.maturity !== 'formal' || item.title.includes('（预览）')) {
+      throw new Error(`Formal 命令成熟度错误：${id} ${JSON.stringify(item)}`);
     }
   }
 
@@ -84,8 +90,8 @@ try {
     return { text, hasUpdateCommand: !!window.MazzShell.sideDock.toolsEl.querySelector('[data-cmd="update.check"]') };
   });
   if (dock.hasUpdateCommand || dock.text.includes('检查更新')) throw new Error('Updater 仍暴露在工具坞');
-  for (const label of ['压缩包', '图片文字识别（预览）', '全局内录（预览）']) {
-    if (!dock.text.includes(label)) throw new Error(`工具坞缺少诚实的 Preview 标识：${label}`);
+  for (const label of ['压缩包', '图片文字识别', '全局内录（预览）']) {
+    if (!dock.text.includes(label)) throw new Error(`工具坞缺少正确成熟度标签：${label}`);
   }
   await main.screenshot({ path: path.join(evidenceDir, dockScreenshotName) });
 
@@ -110,8 +116,9 @@ try {
     await main.evaluate(id => window.MazzCommands.execute(id), command);
     const panel = await waitPanel(fragment);
     panelTitles[command] = await panel.title();
-    if (!panelTitles[command].includes('（预览）')) {
-      throw new Error(`原生面板标题未标识 Preview：${command} ${panelTitles[command]}`);
+    const shouldPreview = command !== 'archive.openPanel';
+    if (panelTitles[command].includes('（预览）') !== shouldPreview) {
+      throw new Error(`原生面板成熟度标题错误：${command} ${panelTitles[command]}`);
     }
     if (command === 'rec.screen') {
       recorderFormats = await panel.locator('#rec-fmt option').evaluateAll(items => items.map(item => item.value));

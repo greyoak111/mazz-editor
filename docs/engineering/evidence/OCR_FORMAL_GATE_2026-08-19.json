@@ -1,0 +1,21 @@
+{
+  "schema": "mazz.engineering-evidence/v0",
+  "capability": "ocr-vision",
+  "status": "FORMAL_CODE_GATE",
+  "capturedAt": "2026-08-19T00:00:00.000Z",
+  "validation": {
+    "build": "PASS",
+    "contract": "3/3 PASS",
+    "productMaturity": "5/5 PASS",
+    "realEngine": {
+      "engine": "tesseract.js@7",
+      "language": "eng",
+      "source": "docs/engineering/evidence/W71_PRODUCT_MATURITY_DOCK.png",
+      "recognizedCharacters": 1043,
+      "confidence": 40,
+      "workerTerminated": true
+    }
+  },
+  "limits": { "imageBytes": 33554432, "timeoutMs": 180000 },
+  "conditional": ["packaged first-download", "offline browser-cache reuse", "multilingual corpus accuracy"]
+}

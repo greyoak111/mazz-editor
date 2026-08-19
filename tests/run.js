@@ -17,6 +17,7 @@ const files = [
   'tests/contract/w71-core-module-recovery.test.mjs',
   'tests/contract/w71-file-open-safety.test.mjs',
   'tests/contract/w71-product-maturity.test.mjs',
+  'tests/contract/ocr-formal-gate.test.mjs',
   'tests/contract/w71-formal-main-paths.test.mjs',
   'tests/contract/w71-release-policy.test.mjs',
   'tests/contract/module-contract.test.mjs',

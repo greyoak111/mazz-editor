@@ -504,7 +504,7 @@ async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxToken
 }
 
 /** 多模态识别（vision）：图片 + 提示词 → 文本（OpenAI 兼容 vision 消息格式） */
-export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, temperature = 0.2, maxTokens = 4096 }) {
+export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, temperature = 0.2, maxTokens = 4096, signal }) {
   cfg = await routedConfig(cfg, role);
   const messages = [{
     role: 'user',
@@ -514,23 +514,29 @@ export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, t
     ],
   }];
   if (window.mazz?.isElectron) {
-    return await window.mazz.invoke('factory:aiChat', {
+    const requestId = aiRequestId('vision');
+    return await invokeCancelable('factory:aiChat', {
+      requestId,
       baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
       messages, temperature, maxTokens,
-    });
+    }, signal);
   }
   // 网页桥直连
   const url = cfg.baseURL.replace(/\/+$/, '') + '/v1/chat/completions';
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + cfg.apiKey },
-    body: JSON.stringify({ model: cfg.model, messages, temperature, max_tokens: maxTokens, stream: false }),
-  });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}：${(await resp.text().catch(() => '')).slice(0, 300)}`);
-  const data = await resp.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('AI 返回为空');
-  return content.trim();
+  const scope = createAbortScope({ signal, timeoutMs: 180000 });
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + cfg.apiKey },
+      body: JSON.stringify({ model: cfg.model, messages, temperature, max_tokens: maxTokens, stream: false }),
+      signal: scope.signal,
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}：${(await resp.text().catch(() => '')).slice(0, 300)}`);
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error('AI 返回为空');
+    return content.trim();
+  } finally { scope.cleanup(); }
 }
 
 /** 竹筒倒豆子 → 字段智能填充（无 Provider 时退回基础启发式） */
