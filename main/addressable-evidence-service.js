@@ -12,9 +12,10 @@ const {
 } = require('./foundation/addressable-evidence');
 
 const TEXT_EXT = /\.(?:md|markdown|mazz|txt)$/i;
+const EVIDENCE_EXT = /\.(?:md|markdown|mazz|txt|pdf|epub|cbz|cbr|png|jpe?g|gif|webp|bmp|avif|mp4|webm|ogv|mov|m4v|mkv|avi|wmv|flv|ts|mts|m2ts|mpg|mpeg|3gp|mp3|wav|oga|m4a|aac|flac|opus|ogg)$/i;
 const IGNORED_DIRS = new Set(['.git', '.svn', '.hg', 'node_modules', 'renderer/dist']);
 const MAX_FILES = 10000;
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_TEXT_BYTES = 5 * 1024 * 1024;
 
 function slash(value) { return String(value || '').replace(/\\/g, '/'); }
 function digest(value) { return crypto.createHash('sha256').update(String(value), 'utf8').digest('hex'); }
@@ -68,10 +69,10 @@ class AddressableEvidenceService {
         const target = path.join(dir, entry.name);
         if (entry.isDirectory()) {
           if (!entry.name.startsWith('.') && !IGNORED_DIRS.has(entry.name)) walk(target, depth + 1);
-        } else if (entry.isFile() && TEXT_EXT.test(entry.name)) {
+        } else if (entry.isFile() && EVIDENCE_EXT.test(entry.name)) {
           try {
             const stat = this.fs.statSync(target);
-            if (stat.size <= MAX_FILE_BYTES) files.push({ path: target, size: stat.size, mtimeMs: stat.mtimeMs });
+            if (!TEXT_EXT.test(entry.name) || stat.size <= MAX_TEXT_BYTES) files.push({ path: target, size: stat.size, mtimeMs: stat.mtimeMs, text: TEXT_EXT.test(entry.name) });
           } catch {}
         }
       }
@@ -95,7 +96,7 @@ class AddressableEvidenceService {
     const next = {};
     for (const doc of documents) {
       const rel = relativeRef(root, doc.path);
-      const fingerprint = digest(doc.content);
+      const fingerprint = doc.fingerprint;
       let assetId = previous[rel]?.assetId || '';
       if (!assetId) assetId = (byFingerprint.get(fingerprint) || []).find(id => !used.has(id)) || '';
       if (!assetId) assetId = `asset:workspace-file:${crypto.randomUUID()}`;
@@ -111,10 +112,23 @@ class AddressableEvidenceService {
   scan({ force = false } = {}) {
     const root = this.root();
     if (!force && this.cache.has(root)) return this.cache.get(root);
-    const documents = this.listFiles(root).map(file => ({
-      ...file,
-      content: this.fs.readFileSync(file.path, 'utf8'),
-    }));
+    const documents = this.listFiles(root).map(file => {
+      if (file.text) {
+        const content = this.fs.readFileSync(file.path, 'utf8');
+        return { ...file, content, fingerprint: digest(content) };
+      }
+      let head = Buffer.alloc(0), tail = Buffer.alloc(0);
+      try {
+        const fd = this.fs.openSync(file.path, 'r');
+        try {
+          const headSize = Math.min(file.size, 64 * 1024);
+          head = Buffer.alloc(headSize); this.fs.readSync(fd, head, 0, headSize, 0);
+          const tailSize = Math.min(file.size, 64 * 1024);
+          tail = Buffer.alloc(tailSize); this.fs.readSync(fd, tail, 0, tailSize, Math.max(0, file.size - tailSize));
+        } finally { this.fs.closeSync(fd); }
+      } catch {}
+      return { ...file, content: '', fingerprint: digest(Buffer.concat([Buffer.from(String(file.size)), head, tail]).toString('base64')) };
+    });
     this.identities(root, documents);
     const exact = new Map();
     const loose = new Map();
@@ -135,7 +149,7 @@ class AddressableEvidenceService {
     const references = [];
     const details = [];
     for (const doc of documents) {
-      const parsed = parseLiveReferences(doc.content, doc.assetId);
+      const parsed = doc.text ? parseLiveReferences(doc.content, doc.assetId) : [];
       for (const raw of parsed) {
         const key = raw.targetAssetRef.replace(/^\.\//, '').replace(/\\/g, '/').toLocaleLowerCase('en-US');
         const candidates = exact.has(key) ? [exact.get(key)] : (loose.get(key) || []);
@@ -217,6 +231,26 @@ class AddressableEvidenceService {
       scannedAt: scan.scannedAt,
       truncated: scan.truncated,
     };
+  }
+
+  createAnchorForPath({ path: filePath, mediaType, logicalLocation, quote = '', context = null } = {}) {
+    const root = this.root();
+    const resolved = path.resolve(String(filePath || ''));
+    if (!inside(root, resolved)) throw new Error('文件必须位于当前工作区');
+    const scan = this.scan();
+    const document = scan.documents.find(item => path.resolve(item.path) === resolved);
+    if (!document) throw new Error('文件不在当前工作区可寻址清单中');
+    return createContentAnchor({
+      assetId: document.assetId,
+      mediaType,
+      logicalLocation,
+      physicalLocation: { path: slash(resolved) },
+      quote,
+      context,
+      provenance: { source: 'w78-product-entry', filePath: slash(resolved), fingerprint: document.fingerprint },
+      resolver: { strategy: 'logical-selector-then-evidence-fallback' },
+      status: 'active',
+    });
   }
 }
 

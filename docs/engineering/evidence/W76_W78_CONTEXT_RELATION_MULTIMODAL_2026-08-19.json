@@ -1,0 +1,23 @@
+{
+  "schema": "mazz.w76-w78-implementation-evidence/v0",
+  "capturedAt": "2026-08-19T13:00:00.000+08:00",
+  "preWaveHead": "29f0fc7",
+  "checks": [
+    { "operation": "npm run build", "status": "passed", "exitCode": 0 },
+    { "operation": "node tests/contract/w76-w78-context-multimodal.test.mjs", "status": "passed", "tests": "11/11", "exitCode": 0 }
+  ],
+  "coverage": {
+    "nodePlacementSeparation": true,
+    "navigationDag": true,
+    "relationCyclesAllowed": true,
+    "bookmarkInteropNonDestructive": true,
+    "shadowConfidenceEvidence": true,
+    "humanOnlyPromotion": true,
+    "epubReflowRelocation": true,
+    "visualSearchWithoutOcr": true,
+    "viewerLibraryProductEntries": true,
+    "chunkIsNotAsset": true
+  },
+  "fullSuite": { "rerunThisWave": false, "latestKnownCommitted": "194/194" },
+  "boundary": { "website": false, "publication": false, "networkMutation": false, "crossDeviceSync": false }
+}

@@ -1,7 +1,7 @@
 // renderer/shell/sidebar-panels.js —— 侧栏多页签面板（思源工作区思路）
 // 页签：文件 / 大纲 / 书签 / 标签 / 反链；文件页 = 既有 FileTree，其余为新增面板
 import { iconHtml } from '../lib/svg-icons.js';
-import { toast, modal } from './shell.js';
+import { toast, modal, inputModal } from './shell.js';
 
 const MARKS_KEY = 'mazz.sidebar.marks';
 const CLOSED_DIRS_KEY = 'mazz.sidebar.closedDirs';
@@ -77,6 +77,7 @@ export class SidebarPanels {
       ['marks', '🔖', '书签'],
       ['tags', '🏷', '标签'],
       ['backlinks', '🔗', '反链'],
+      ['contexts', '◫', '上下文'],
     ];
     this.tabbar.innerHTML = TABS.map(([id, ico, t]) =>
       `<button class="sb-tab" data-t="${id}" title="${t}">${iconHtml(ico)}<span>${t}</span></button>`).join('');
@@ -89,7 +90,7 @@ export class SidebarPanels {
   buildPanels() {
     const tree = this.sidebar.querySelector('.filetree');
     this.panels = {};
-    for (const id of ['outline', 'marks', 'tags', 'backlinks']) {
+    for (const id of ['outline', 'marks', 'tags', 'backlinks', 'contexts']) {
       const el = document.createElement('div');
       el.className = 'sb-panel sb-panel-' + id;
       el.style.display = 'none';
@@ -101,6 +102,7 @@ export class SidebarPanels {
     this.buildMarks();
     this.buildTags();
     this.buildBacklinks();
+    this.buildContexts();
   }
 
   async refreshWsList() {
@@ -168,11 +170,13 @@ export class SidebarPanels {
     if (id === 'marks') this.refreshMarks();
     if (id === 'tags') this.refreshTags();
     if (id === 'backlinks') this.refreshBacklinks();
+    if (id === 'contexts') this.refreshContexts();
   }
 
   refreshActive() {
     if (this.tab === 'outline') this.refreshOutline();
     if (this.tab === 'backlinks') this.refreshBacklinks();
+    if (this.tab === 'contexts') this.refreshContexts();
   }
 
   /** 当前 markdown 文档标题树（PM 节点级提取——textBetween 会丢 # 前缀） */
@@ -460,5 +464,134 @@ export class SidebarPanels {
       : relations.outgoing.length ? relations.outgoing.map(item => liveRow(item, 'out')).join('') : '<div class="sb-empty">（未引用其他内容）</div>';
     this.liveIncomingEl.innerHTML = relations.incoming.length
       ? relations.incoming.map(item => liveRow(item, 'in')).join('') : '<div class="sb-empty">（没有其他文件引用这里）</div>';
+  }
+
+  // ==================== 多父上下文（W76） ====================
+  buildContexts() {
+    const el = this.panels.contexts;
+    el.innerHTML = `
+      <div class="sb-tool">
+        <button class="sb-tbtn sb-wide" data-a="context-add">${iconHtml('＋')} 将当前内容加入上下文</button>
+        <button class="sb-tbtn" data-a="context-refresh" title="刷新">${iconHtml('⟳')}</button>
+      </div>
+      <div class="sb-list sb-context-list"></div>
+      <div class="sb-sec-title">关系建议</div>
+      <div class="sb-list sb-relation-suggestions"></div>
+      <div class="sb-sec-title">已确认关系</div>
+      <div class="sb-list sb-relation-promoted"></div>`;
+    this.contextListEl = el.querySelector('.sb-context-list');
+    this.relationSuggestionsEl = el.querySelector('.sb-relation-suggestions');
+    this.relationPromotedEl = el.querySelector('.sb-relation-promoted');
+    el.querySelector('[data-a=context-add]').addEventListener('click', () => this.addCurrentToContext());
+    el.querySelector('[data-a=context-refresh]').addEventListener('click', () => this.refreshContexts());
+    this.contextListEl.addEventListener('click', async event => {
+      const remove = event.target.closest('[data-context-remove]');
+      if (remove) {
+        await window.mazz.invoke('context:removePlacement', { placementId: decodeURIComponent(remove.dataset.contextRemove) });
+        await this.refreshContexts();
+        toast('已从这个上下文移除；原资产仍保留');
+        return;
+      }
+      const promote = event.target.closest('[data-relation-promote]');
+      if (promote) {
+        const edgeId = decodeURIComponent(promote.dataset.relationPromote);
+        const reason = await inputModal('确认这条关系的依据', '人工核对上下文与证据');
+        if (!reason?.trim()) return;
+        await window.mazz.invoke('context:promoteEdge', { edgeId, shadowEdgeId: edgeId, authorityRef: 'human:local-maintainer', reason: reason.trim(), decidedAt: new Date().toISOString() });
+        await this.refreshContexts();
+        toast('关系已由人工确认');
+        return;
+      }
+      const dismiss = event.target.closest('[data-relation-dismiss]');
+      if (dismiss) {
+        await window.mazz.invoke('context:dismissShadowEdge', { edgeId: decodeURIComponent(dismiss.dataset.relationDismiss) });
+        await this.refreshContexts();
+        toast('已忽略这条可重建关系建议');
+        return;
+      }
+      const edit = event.target.closest('[data-context-edit]');
+      if (edit) {
+        const placementId = decodeURIComponent(edit.dataset.contextEdit);
+        const alias = await inputModal('此处显示名称（留空沿用资产名）', decodeURIComponent(edit.dataset.alias || ''));
+        if (alias == null) return;
+        const note = await inputModal('此处备注（只属于这个上下文）', decodeURIComponent(edit.dataset.note || ''));
+        if (note == null) return;
+        await window.mazz.invoke('context:updatePlacement', { placementId, patch: { alias, note } });
+        await this.refreshContexts();
+        return;
+      }
+      const item = event.target.closest('[data-context-node]');
+      if (!item) return;
+      const kind = item.dataset.kind;
+      const target = decodeURIComponent(item.dataset.target || '');
+      if (kind === 'file' && target) this.shell.openFile(target);
+      if (kind === 'url' && target) window.MazzCommands?.execute('browser.openUrl', { url: target });
+    });
+  }
+
+  currentContextSubject() {
+    const tab = this.shell.tabs?.active;
+    if (tab?.moduleId === 'browser') return window.MazzBrowserContextSubject?.() || null;
+    if (tab?.filePath) return { kind: 'file', filePath: tab.filePath, label: tab.title || tab.filePath.split(/[\\/]/).pop() };
+    return null;
+  }
+
+  async addCurrentToContext() {
+    const subject = this.currentContextSubject();
+    if (!subject) { toast('当前内容还不能加入上下文——请打开工作区文件或网页'); return; }
+    const contextLabel = await inputModal('加入哪个上下文？', '收集箱');
+    if (!contextLabel?.trim()) return;
+    const alias = await inputModal('此处显示名称（可留空）', '');
+    if (alias == null) return;
+    try {
+      await window.mazz.invoke('context:addSubject', { ...subject, contextLabel: contextLabel.trim(), alias, note: '' });
+      await this.refreshContexts();
+      toast(`已加入「${contextLabel.trim()}」`);
+    } catch (error) { toast('加入失败：' + (error?.message || error)); }
+  }
+
+  async refreshContexts() {
+    const graph = await window.mazz.invoke('context:snapshot').catch(() => null);
+    if (!graph) { this.contextListEl.innerHTML = '<div class="sb-empty">上下文暂不可用</div>'; return; }
+    const nodes = new Map(graph.nodes.map(item => [item.nodeId, item]));
+    const placementsByContext = new Map();
+    for (const placement of graph.placements) {
+      const rows = placementsByContext.get(placement.contextId) || [];
+      rows.push(placement); placementsByContext.set(placement.contextId, rows);
+    }
+    if (!graph.contexts.length) {
+      this.contextListEl.innerHTML = '<div class="sb-empty">把同一文件或网页放进多个工作上下文；这里不会复制原件</div>';
+      this.relationSuggestionsEl.innerHTML = '<div class="sb-empty">（暂无建议）</div>';
+      this.relationPromotedEl.innerHTML = '<div class="sb-empty">（暂无确认关系）</div>';
+      return;
+    }
+    const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    this.contextListEl.innerHTML = graph.contexts.map(context => {
+      const rows = placementsByContext.get(context.contextId) || [];
+      return `<div class="sb-context-group">
+        <div class="sb-tag-head">${iconHtml('◫')} ${esc(context.label)} <span class="sb-ol-count">${rows.length}</span></div>
+        ${rows.length ? rows.map(placement => {
+          const node = nodes.get(placement.nodeId);
+          if (!node) return '';
+          const target = node.kind === 'file' ? node.provenance?.filePath : node.canonicalRef;
+          return `<div class="sb-item sb-context-item" data-context-node="${encodeURIComponent(node.nodeId)}" data-kind="${node.kind}" data-target="${encodeURIComponent(target || '')}">
+            ${iconHtml(node.kind === 'url' ? '🌐' : '📄')}<span class="sb-item-t"><b>${esc(placement.alias || node.label)}</b>${placement.note ? `<small>${esc(placement.note)}</small>` : ''}</span>
+            <button class="sb-item-act" data-context-edit="${encodeURIComponent(placement.placementId)}" data-alias="${encodeURIComponent(placement.alias || '')}" data-note="${encodeURIComponent(placement.note || '')}" title="编辑此处名称与备注">✎</button>
+            <button class="sb-item-act" data-context-remove="${encodeURIComponent(placement.placementId)}" title="仅从此上下文移除">✕</button>
+          </div>`;
+        }).join('') : '<div class="sb-empty">（空上下文）</div>'}
+      </div>`;
+    }).join('');
+    const edgeRow = (edge, promoted = false) => {
+      const from = nodes.get(edge.fromRef), to = nodes.get(edge.toRef);
+      const evidence = (edge.evidenceRefs || []).join(' · ');
+      return `<div class="sb-relation-row">
+        <div><b>${esc(from?.label || edge.fromRef)}</b> ↔ <b>${esc(to?.label || edge.toRef)}</b></div>
+        <small>${esc(edge.relationType)} · 置信度 ${Math.round(edge.confidence * 100)}% · 证据 ${esc(evidence || '无')}</small>
+        ${promoted ? '<span class="sb-live-status">人工确认</span>' : `<span class="sb-relation-actions"><button class="sb-item-act" data-relation-promote="${encodeURIComponent(edge.edgeId)}">确认</button><button class="sb-item-act" data-relation-dismiss="${encodeURIComponent(edge.edgeId)}">忽略</button></span>`}
+      </div>`;
+    };
+    this.relationSuggestionsEl.innerHTML = graph.shadowEdges.length ? graph.shadowEdges.map(edge => edgeRow(edge)).join('') : '<div class="sb-empty">（暂无建议）</div>';
+    this.relationPromotedEl.innerHTML = graph.promotedEdges.length ? graph.promotedEdges.map(edge => edgeRow(edge, true)).join('') : '<div class="sb-empty">（暂无确认关系）</div>';
   }
 }

@@ -77,6 +77,7 @@ function createLibrary(container) {
         <button class="rb-btn" data-a="mark" title="添加书签">${iconHtml('🔖')}</button>
         <button class="rb-btn" data-a="marks" title="书签列表">${iconHtml('☰')}</button>
         <button class="rb-btn" data-a="clip" title="选中文字摘录到书摘笔记">${iconHtml('✍')} 摘录</button>
+        <button class="rb-btn" data-a="evidence" title="复制可重新定位的证据引用">${iconHtml('⌖')} 证据定位</button>
         <button class="rb-btn" data-a="export-md" title="整书导出为 Markdown 笔记">${iconHtml('⇪')}</button>
         <button class="rb-btn" data-a="direction" title="翻页方向：左到右 / 右到左（日漫习惯）">${iconHtml('⇄')}</button>
         <select class="lib-mode rb-select" title="阅读模式">
@@ -1416,6 +1417,39 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
 
   // 阅读页右键：摘录/复制/字号/返回（壳页与沙箱帧内共用——帧内坐标系需换算到壳）
   const readSelection = () => (ctl._frame?.contentWindow?.getSelection?.()?.toString() || '').trim() || (window.getSelection()?.toString() || '').trim();
+  root.querySelector('[data-a=evidence]').addEventListener('click', async () => {
+    const book = ctl.book;
+    if (!book?.meta?.path) { toast('请先打开一本书'); return; }
+    try {
+      let mediaType = '', logicalLocation = null, quote = readSelection();
+      if (book.meta.format === 'epub') {
+        const item = book.epub.spine[ctl.chapterIdx];
+        if (!quote) { toast('请先选中一句文字；EPUB 证据会绑定逻辑章节与短句，不绑定字号后的屏位'); return; }
+        mediaType = 'epub';
+        logicalLocation = { kind: 'epub-quote', spineItemId: item.id, href: item.href, textQuote: quote.slice(0, 500) };
+      } else if (book.meta.format === 'cbz' || book.meta.format === 'manga-folder') {
+        if (book.meta.format === 'manga-folder') { toast('漫画文件夹尚不是单一可寻址资产；请导入 CBZ 后建立证据定位'); return; }
+        mediaType = 'comic';
+        logicalLocation = { kind: 'comic-panel', page: ctl.pageIdx + 1, panelId: `page-${ctl.pageIdx + 1}` };
+        quote = '';
+      } else if (book.meta.format === 'pdf') {
+        const pageText = await inputModal('PDF 页码', '1');
+        if (pageText == null) return;
+        const page = Number(pageText);
+        quote = await inputModal('这一页的定位短句', quote || '');
+        if (!Number.isInteger(page) || page < 1 || !quote?.trim()) { toast('PDF 证据需要有效页码与定位短句'); return; }
+        mediaType = 'pdf'; logicalLocation = { kind: 'pdf-quote', page, textQuote: quote.trim() };
+      } else {
+        toast('当前书籍格式尚未提供稳定证据定位'); return;
+      }
+      const anchor = await window.mazz.invoke('evidence:createAnchorForPath', {
+        path: book.meta.path, mediaType, logicalLocation, quote,
+        context: { title: book.meta.title || '', createdBy: 'library-evidence-action' },
+      });
+      await window.mazz.invoke('clipboard:write', { text: JSON.stringify(anchor, null, 2) });
+      toast('证据定位已复制');
+    } catch (error) { toast('复制证据定位失败：' + (error?.message || error)); }
+  });
   async function onReaderContext(e, ox = 0, oy = 0) {
     e.preventDefault();
     const { showDomMenu } = await import('../../lib/dom-menu.js');

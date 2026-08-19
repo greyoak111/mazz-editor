@@ -17,6 +17,14 @@ let tabSeq = 1;
 const HOME = 'mazz://home';
 const isElectron = () => !!window.mazz?.isElectron;
 
+// W76：Context Collection 只读取当前 URL/标题，不复制 WebContents 或页面正文。
+// 同一 canonical URL 在 Context Graph 中仍是同一 Node，各 Placement 可有自己的别名/备注。
+window.MazzBrowserContextSubject = () => {
+  const tab = current?.activeTab?.();
+  if (!tab || !/^https?:\/\//i.test(tab.url || '')) return null;
+  return { kind: 'url', url: tab.url, label: tab.title || tab.url };
+};
+
 function createBrowser(container) {
   const root = document.createElement('div');
   root.className = 'browser-root';
@@ -1383,6 +1391,7 @@ export default {
       <button class="rb-btn" data-command="browser.shareLocal"><i class="ico">⌁</i><span>局域网分享</span></button>
       <button class="rb-btn" data-command="browser.manageBookmarks"><i class="ico">${iconHtml('📁')}</i><span>收藏管理</span></button>
       <button class="rb-btn" data-command="browser.exportBookmarks"><i class="ico">${iconHtml('📑')}</i><span>导出收藏</span></button>
+      <button class="rb-btn" data-command="browser.bookmarksToContexts"><i class="ico">◫</i><span>转为上下文</span></button>
     </div>
     <div class="rb-group" data-label="搜索">
       <button class="rb-btn" data-command="browser.selfcheck"><i class="ico">${iconHtml('⚡')}</i><span>实例自检</span></button>
@@ -1490,6 +1499,14 @@ export default {
           if (!current?.bookmarks.length) { toast('暂无收藏'); return; }
           const md = '# 浏览器收藏\n\n' + current.bookmarks.map(b => `- [${b.title}](${b.url})`).join('\n') + '\n';
           window.MazzHost?.openTab('markdown', { title: '浏览器收藏.md', content: md });
+        } },
+      { id: 'browser.bookmarksToContexts', title: '把收藏夹投影为多父上下文', group: '浏览器',
+        when: "module=='browser'", run: async () => {
+          if (!current?.bookmarks?.length) { toast('暂无收藏可投影'); return; }
+          try {
+            const result = await window.mazz.invoke('context:importBookmarks', { folders: current.folders || [], bookmarks: current.bookmarks });
+            toast(`已投影 ${result.imported} 条收藏；原收藏未改变${result.failed ? `，${result.failed} 条无效记录已跳过` : ''}`);
+          } catch (error) { toast('收藏投影失败：' + (error?.message || error)); }
         } },
       { id: 'browser.navBack', title: '后退', group: '浏览器', when: "module=='browser'",
         run: () => current && historyNav(current.activeTab(), 'back') },

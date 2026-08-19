@@ -137,6 +137,7 @@ const { FeedPipeline, normalizeW65FeedRequest } = require('./feed-pipeline');
 const { PromotionLedger } = require('./promotion-ledger');
 const { FactorySseDecoder } = require('./factory-sse');
 const { AddressableEvidenceService } = require('./addressable-evidence-service');
+const { ContextRelationService } = require('./context-relation-service');
 
 const PROTOCOL = 'mazz';
 
@@ -164,6 +165,9 @@ const promotionLedger = new PromotionLedger();
 const addressableEvidence = new AddressableEvidenceService({
   rootProvider: () => store.get('workspace'),
   identityStore: { get: key => store.get(key, {}), set: (key, value) => store.set(key, value) },
+});
+const contextRelations = new ContextRelationService({
+  rootProvider: () => store.get('workspace'), store, evidenceService: addressableEvidence,
 });
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
@@ -293,7 +297,16 @@ function registerChannels() {
   bus.handle('fs:probeFile', async ({ path: p }) => require('./file-probe').probeFileSync(p));
   bus.handle('evidence:scanWorkspace', async ({ force = false } = {}) => addressableEvidence.scan({ force: force === true }));
   bus.handle('evidence:fileRelations', async ({ path: p, force = false } = {}) => addressableEvidence.fileRelations({ path: p, force: force === true }));
+  bus.handle('evidence:createAnchorForPath', async payload => addressableEvidence.createAnchorForPath(payload));
   bus.handle('evidence:invalidate', async ({ path: p = '' } = {}) => addressableEvidence.invalidate(p));
+  bus.handle('context:snapshot', async () => contextRelations.read());
+  bus.handle('context:addSubject', async payload => contextRelations.addSubject(payload));
+  bus.handle('context:removePlacement', async ({ placementId } = {}) => contextRelations.removePlacement(placementId));
+  bus.handle('context:updatePlacement', async ({ placementId, patch } = {}) => contextRelations.updatePlacement(placementId, patch));
+  bus.handle('context:addShadowEdge', async ({ edge } = {}) => contextRelations.addShadowEdge(edge));
+  bus.handle('context:dismissShadowEdge', async ({ edgeId } = {}) => contextRelations.dismissShadowEdge(edgeId));
+  bus.handle('context:promoteEdge', async payload => contextRelations.promoteEdge(payload));
+  bus.handle('context:importBookmarks', async payload => contextRelations.importBookmarks(payload));
   // Windows 原子写：rename 遇 EPERM/EACCES/EBUSY（目标被外部程序占用/杀软扫描）退化为覆盖拷贝，重试两轮后仍败则报人话
   const writeAtomic = (p, data, encoding) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });

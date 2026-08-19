@@ -1,7 +1,7 @@
 // renderer/modules/viewer/index.js —— 通用查看器：图片 / PDF / 视频 / 音频（只读）
 // Chromium 内核原生能放的走 HTML5 播放器；啃不动的格式优雅降级「外部打开」
 import { contextKeys } from '../../core/contextkey-service.js';
-import { toast } from '../../shell/shell.js';
+import { toast, inputModal } from '../../shell/shell.js';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
 
@@ -33,6 +33,7 @@ function createViewer(container) {
       <button data-a="fit" title="适应窗口">适应</button>
       <button data-a="actual" title="实际大小">1:1</button>
       <span class="viewer-name"></span>
+      <button data-a="evidence" title="复制可重新定位的证据引用">复制证据定位</button>
       <button data-a="external" title="用系统默认程序打开" style="display:none">外部打开</button>
     </div>
     <div class="viewer-body"></div>`;
@@ -47,10 +48,39 @@ function createViewer(container) {
     zoom: 1, fitMode: true, path: null, kind: null, objUrl: null, natW: 0, natH: 0,
   };
   const extBtn = root.querySelector('[data-a=external]');
+  const evidenceBtn = root.querySelector('[data-a=evidence]');
   extBtn.addEventListener('click', async () => {
     if (!ctl.path) return;
     const r = await window.mazz.invoke('shell:openPath', { path: ctl.path }).catch(e => e.message || e);
     if (r !== true) toast('外部打开失败：' + r);
+  });
+  evidenceBtn.addEventListener('click', async () => {
+    if (!ctl.path || !['image', 'pdf', 'video', 'audio'].includes(ctl.kind)) return;
+    try {
+      let logicalLocation = null;
+      let quote = '';
+      if (ctl.kind === 'image') {
+        logicalLocation = { kind: 'image-region', bbox: [0, 0, Math.max(1, ctl.natW || 1), Math.max(1, ctl.natH || 1)] };
+      } else if (ctl.kind === 'pdf') {
+        const pageText = await inputModal('PDF 页码', '1');
+        if (pageText == null) return;
+        const page = Number(pageText);
+        if (!Number.isInteger(page) || page < 1) { toast('页码必须是正整数'); return; }
+        quote = await inputModal('这一页的定位短句', '');
+        if (!quote?.trim()) { toast('PDF 证据需要定位短句，避免只靠易漂移页码'); return; }
+        logicalLocation = { kind: 'pdf-quote', page, textQuote: quote.trim() };
+      } else {
+        const progress = ctl._player?.captureProgress?.();
+        if (!progress) { toast('媒体时间轴尚未就绪'); return; }
+        logicalLocation = { kind: `${ctl.kind}-time`, startMs: progress.seconds * 1000 };
+      }
+      const anchor = await window.mazz.invoke('evidence:createAnchorForPath', {
+        path: ctl.path, mediaType: ctl.kind, logicalLocation, quote,
+        context: { title: ctl.nameEl.textContent || '', createdBy: 'viewer-evidence-action' },
+      });
+      await window.mazz.invoke('clipboard:write', { text: JSON.stringify(anchor, null, 2) });
+      toast('证据定位已复制；移动布局不会改变逻辑身份');
+    } catch (error) { toast('复制证据定位失败：' + (error?.message || error)); }
   });
 
   const applyZoom = () => {
@@ -258,6 +288,7 @@ async function enterImageEdit(ctl, img, path, ext) {
     ctl.pctEl.parentElement.querySelectorAll('[data-a=in],[data-a=out],[data-a=fit],[data-a=actual],[data-a=imgedit]').forEach(b => b.style.display = ctl.kind === 'image' ? '' : 'none');
     ctl.pctEl.style.display = ctl.kind === 'image' ? '' : 'none';
     extBtn.style.display = 'none';
+    evidenceBtn.style.display = ['image', 'pdf', 'video', 'audio'].includes(ctl.kind) ? '' : 'none';
 
     try {
       // W59：换片即收编辑器（防键位泄漏+旧画布占尸——load 统一入口收尸）
