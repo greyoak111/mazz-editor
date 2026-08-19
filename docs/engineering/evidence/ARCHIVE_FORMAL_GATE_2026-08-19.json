@@ -1,0 +1,20 @@
+{
+  "schema": "mazz.engineering-evidence/v0",
+  "capability": "archive",
+  "capturedAt": "2026-08-19T00:00:00.000Z",
+  "status": "FORMAL_CODE_GATE",
+  "validation": {
+    "build": "PASS",
+    "formalContract": "4/4 PASS",
+    "legacyContract": "4/4 PASS",
+    "productMaturityContract": "5/5 PASS"
+  },
+  "limits": {
+    "entries": 20000,
+    "archiveBytes": 536870912,
+    "singleFileBytes": 536870912,
+    "totalBytes": 2147483648,
+    "compressionRatio": 500
+  },
+  "conditional": ["real malicious rar/7z", "ENOSPC packaged injection", "Windows long-path packaged E2E"]
+}

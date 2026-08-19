@@ -84,7 +84,7 @@ try {
     return { text, hasUpdateCommand: !!window.MazzShell.sideDock.toolsEl.querySelector('[data-cmd="update.check"]') };
   });
   if (dock.hasUpdateCommand || dock.text.includes('检查更新')) throw new Error('Updater 仍暴露在工具坞');
-  for (const label of ['压缩包（预览）', '图片文字识别（预览）', '全局内录（预览）']) {
+  for (const label of ['压缩包', '图片文字识别（预览）', '全局内录（预览）']) {
     if (!dock.text.includes(label)) throw new Error(`工具坞缺少诚实的 Preview 标识：${label}`);
   }
   await main.screenshot({ path: path.join(evidenceDir, dockScreenshotName) });

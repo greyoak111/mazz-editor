@@ -20,7 +20,7 @@ describe('W71 产品入口成熟度单源', () => {
       recorder: MATURITY.PREVIEW,
       plugins: MATURITY.PREVIEW,
       ocr: MATURITY.PREVIEW,
-      archive: MATURITY.PREVIEW,
+      archive: MATURITY.FORMAL,
       ffmpegRuntime: MATURITY.HIDDEN,
     };
     assert.deepEqual(Object.fromEntries(Object.entries(PRODUCT_CAPABILITIES).map(([id, item]) => [id, item.maturity])), expected);
@@ -56,9 +56,10 @@ describe('W71 产品入口成熟度单源', () => {
   });
 
   test('保留 Preview 的工具继续明示；已过门禁的四站数据源转为 Formal', () => {
-    for (const file of ['renderer/panels/archive.html', 'renderer/panels/plugins.html', 'renderer/panels/recorder.html']) {
+    for (const file of ['renderer/panels/plugins.html', 'renderer/panels/recorder.html']) {
       assert.match(read(file), /预览/);
     }
+    assert.doesNotMatch(read('renderer/panels/archive.html'), /压缩包（预览）/);
     assert.match(read('renderer/help/content.js'), /插件系统（预览/);
     assert.doesNotMatch(read('main/torrent-sites.js'), /（预览）/);
     assert.doesNotMatch(read('renderer/modules/viewer/player.js'), /DMHY（预览）/);

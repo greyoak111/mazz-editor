@@ -24,8 +24,8 @@ describe('解压缩服务（main/archive.js）', () => {
     const pw = readSrc('main/panel-windows.js');
     assert.ok(pw.includes('|archive)'), 'kind 白名单必须有 archive');
 assert.ok(
-  pw.includes("archive: '压缩包（预览）'"),
-  '标题必须保留能力名并明确预览状态',
+  pw.includes("archive: '压缩包'"),
+  '通过正式安全门后标题必须使用正式能力名',
 );
     const html = readSrc('renderer/panels/archive.html');
     for (const pin of ['archiveQuery', 'archiveExtract', 'archiveCancel', 'archiveProgress', 'archiveDone', 'themeSnapshot']) assert.ok(html.includes(pin), pin + ' 必须在');
