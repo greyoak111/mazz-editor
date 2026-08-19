@@ -24,7 +24,6 @@ const copies = [
   ['renderer/dist', 'dist'],
   ['renderer/styles', 'styles'],
   ['renderer/lib/mobile-env.js', 'lib/mobile-env.js'],
-  ['renderer/vendor', 'vendor'], // ffmpeg.wasm 本地包（媒体转码；31MB，按需懒加载）
 ];
 for (const [src, dst] of copies) {
   const from = path.join(root, src);

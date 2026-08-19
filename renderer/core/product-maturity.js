@@ -9,8 +9,8 @@ export const MATURITY = Object.freeze({
 
 // C1 产品级状态表：三态必须覆盖所有历史 PARTIAL 与低水位正式候选。
 export const PRODUCT_CAPABILITIES = Object.freeze({
-  mobile: Object.freeze({ maturity: MATURITY.HIDDEN, label: '移动壳' }),
-  updater: Object.freeze({ maturity: MATURITY.HIDDEN, label: '自动更新' }),
+  mobile: Object.freeze({ maturity: MATURITY.HIDDEN, label: '移动壳', gate: 'CONDITIONAL_PLATFORM_BUILD', boundary: 'android-ios-signing-and-device-matrix' }),
+  updater: Object.freeze({ maturity: MATURITY.HIDDEN, label: '自动更新', gate: 'CONDITIONAL_RELEASE_INFRASTRUCTURE', boundary: 'signed-old-new-artifacts-and-rollback' }),
   // W74b 已开放 W65 -> Feed -> W74a -> Factory 的人工核准薄竖切；
   // W62e 的通用来源、后台调度和全自动预算治理仍是独立历史欠账。
   feed: Object.freeze({ maturity: MATURITY.FORMAL, label: '素材订阅' }),

@@ -19,6 +19,7 @@ const files = [
   'tests/contract/w71-core-module-recovery.test.mjs',
   'tests/contract/w71-file-open-safety.test.mjs',
   'tests/contract/w71-product-maturity.test.mjs',
+  'tests/contract/mobile-updater-release-settlement.test.mjs',
   'tests/contract/ocr-formal-gate.test.mjs',
   'tests/contract/recorder-preview-gate.test.mjs',
   'tests/contract/w71-formal-main-paths.test.mjs',

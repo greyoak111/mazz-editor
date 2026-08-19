@@ -5,10 +5,20 @@ const http = require('http');
 
 const UA = 'MazzEditor-Updater/0.1';
 
+function normalizeUpdateUrl(value, { allowEmpty = true } = {}) {
+  const text = String(value || '').trim();
+  if (!text && allowEmpty) return '';
+  if (text.length > 2048) throw new Error('更新源地址过长');
+  const url = new URL(text);
+  if (url.protocol !== 'https:') throw new Error('更新源必须使用 HTTPS');
+  if (url.username || url.password) throw new Error('更新源地址不得包含凭据');
+  if (url.hash) throw new Error('更新源地址不得包含片段');
+  return url.toString();
+}
+
 function getJson(url, { timeout = 12000 } = {}) {
   return new Promise((resolve, reject) => {
-    const u = new URL(url);
-    if (u.protocol !== 'https:') throw new Error('更新源必须使用 HTTPS');
+    const u = new URL(normalizeUpdateUrl(url, { allowEmpty: false }));
     const lib = https;
     const req = lib.request({
       protocol: u.protocol, hostname: u.hostname,
@@ -47,9 +57,13 @@ class Updater {
     this.store = store;
     this.version = version || '0.1.0';
     bus.handle('update:check', async () => this.check());
-    bus.handle('update:getConfig', async () => ({ url: this.store.get('update', {}).url || '' }));
+    bus.handle('update:getConfig', async () => ({
+      url: this.store.get('update', {}).url || '',
+      maturity: 'hidden', gate: 'CONDITIONAL_RELEASE_INFRASTRUCTURE',
+      supportsAutomaticInstall: false,
+    }));
     bus.handle('update:setConfig', async ({ url }) => {
-      this.store.set('update', { url: String(url || '').trim() });
+      this.store.set('update', { url: normalizeUpdateUrl(url) });
       return true;
     });
   }
@@ -70,8 +84,8 @@ class Updater {
         current: this.version,
         latest,
         hasUpdate,
-        notes: json.notes || json.body || '',
-        files: json.files || json.assets || [],
+        notes: String(json.notes || json.body || '').slice(0, 50_000),
+        files: (Array.isArray(json.files) ? json.files : Array.isArray(json.assets) ? json.assets : []).slice(0, 20),
         message: hasUpdate ? `发现新版本 ${latest}` : `已是最新（${this.version}）`,
       };
     } catch (e) {
@@ -83,3 +97,4 @@ class Updater {
 module.exports = Updater;
 module.exports.semverCompare = semverCompare;
 module.exports.getJson = getJson;
+module.exports.normalizeUpdateUrl = normalizeUpdateUrl;

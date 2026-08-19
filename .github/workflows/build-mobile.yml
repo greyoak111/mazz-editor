@@ -26,6 +26,7 @@ jobs:
       - name: 生成 Android 工程并同步
         run: |
           cd mobile
+          npm run prepare
           npx cap add android
           npx cap sync android
       - name: 编译 APK
@@ -50,6 +51,7 @@ jobs:
       - name: 生成 iOS 工程并同步
         run: |
           cd mobile
+          npm run prepare
           npx cap add ios
           npx cap sync ios
       - name: 编译（真机架构 · 不签名）

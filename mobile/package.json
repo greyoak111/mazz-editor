@@ -18,8 +18,7 @@
     "@capacitor/filesystem": "^6.0.2",
     "@capacitor/ios": "^6.1.2",
     "@capacitor/share": "^6.0.3",
-    "@capacitor/status-bar": "^6.0.2",
-    "mazz-tcp-server": "file:./plugins/tcp-server"
+    "@capacitor/status-bar": "^6.0.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.1.2"
