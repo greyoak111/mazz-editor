@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "mazz.agent-cli-golden-event-corpus/v0",
+  "version": "0.1.0",
+  "fixtures": [
+    { "adapterId": "kimi-code", "transport": "acp-jsonrpc-stdio", "input": { "jsonrpc": "2.0", "id": 1, "result": { "sessionId": "kimi-session" } }, "expected": { "type": "state", "sessionId": "kimi-session" } },
+    { "adapterId": "kimi-code", "transport": "acp-jsonrpc-stdio", "input": { "jsonrpc": "2.0", "method": "session/update", "params": { "sessionId": "kimi-session", "update": { "sessionUpdate": "agent_message_chunk", "content": { "type": "text", "text": "hello" } } } }, "expected": { "type": "message", "text": "hello" } },
+    { "adapterId": "claude-code", "transport": "stream-json", "input": { "type": "system", "subtype": "init", "session_id": "claude-session" }, "expected": { "type": "state", "sessionId": "claude-session" } },
+    { "adapterId": "claude-code", "transport": "stream-json", "input": { "type": "assistant", "message": { "content": [{ "type": "text", "text": "hello" }] } }, "expected": { "type": "message", "text": "hello" } },
+    { "adapterId": "codex", "transport": "exec-jsonl", "input": { "type": "thread.started", "thread_id": "codex-thread" }, "expected": { "type": "state", "sessionId": "codex-thread" } },
+    { "adapterId": "codex", "transport": "exec-jsonl", "input": { "type": "item.completed", "item": { "type": "agent_message", "text": "hello" } }, "expected": { "type": "message", "text": "hello" } },
+    { "adapterId": "common", "transport": "stderr", "input": { "exitCode": 1, "stderr": "authentication required" }, "expected": { "type": "error", "code": "AUTH_REQUIRED" } },
+    { "adapterId": "common", "transport": "lifecycle", "input": { "signal": "cancel", "exitCode": null }, "expected": { "type": "completed", "status": "cancelled" } }
+  ]
+}

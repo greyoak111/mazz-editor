@@ -160,7 +160,8 @@ describe('W73d Factory 单路径集成', () => {
     assert.doesNotMatch(source, /candidateSet|backpressure|overallScore|marketplace|Promotion|Publication|Canon/);
     assert.doesNotMatch(source, /providerBoundary|resolveProviderRoute|chatStream|fetch\s*\(|WebSocket|localStorage/);
     const main = fs.readFileSync(new URL('../../main/main.js', import.meta.url), 'utf8');
-    assert.match(main, /new AgentHarnessService\(\{ bus, windowManager: wm, resourceLedger \}\)/);
+    assert.match(main, /new AgentHarnessService\(\{ bus, windowManager: wm, resourceLedger, cliSupervisor \}\)/);
+    assert.match(main, /new CliSupervisor\(\{ resourceLedger \}\)/);
     assert.doesNotMatch(main, /new AgentHarnessService\(\{[^}]*adapters:/s);
   });
 });

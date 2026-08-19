@@ -1,6 +1,6 @@
 # W66 Real Agent Adapter Activation
 
-> 状态：`PARTIAL / R0 COMPLETE / R1-R6 NOT STARTED`
+> 状态：`PARTIAL / R0-R1 COMPLETE / R2-R6 NOT STARTED`
 > 版本：v0.2 Doctrine correction
 > 冻结日期：2026-08-17
 > 适用对象：Kimi Code、Claude Code、Codex 三种真实 Agent 执行器，以及它们之间的模型/执行器热切。
@@ -207,7 +207,7 @@ W66-R0  AgentRulePack + Doctrine Compiler + Adapter Contract v2
   R0d   Typed Handle / Result Envelope / Retry / CAS / Output Receipt          COMPLETE · checkpoint
   R0e   Spawn / Completion / Secret / Incident Gate + Regression Pack          COMPLETE · checkpoint
 
-W66-R1  CLI Supervisor / detect / probe / version / auth / golden event corpus
+W66-R1  CLI Supervisor / detect / probe / version / auth / golden event corpus       COMPLETE · checkpoint
 
 W66-R2  Kimi Code Adapter
          ACP/Server 会话、模型目标、权限、resume、interrupt/dispose

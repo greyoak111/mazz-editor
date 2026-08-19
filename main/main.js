@@ -123,6 +123,7 @@ const BrowserSession = require('./browser-session');
 const TerminalService = require('./terminal');
 const { ResourceLedger } = require('./resource-ledger');
 const { AgentHarnessService } = require('./agent-harness');
+const { CliSupervisor } = require('./agent-cli-supervisor');
 const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
 const { FactoryRunOwnerRegistry } = require('./factory-run-owners');
 const { IngestionPipeline } = require('./ingestion-pipeline');
@@ -1639,7 +1640,8 @@ app.whenReady().then(() => {
   } catch (e) { console.warn('[author-sess]', e.message); }
 
   // —— W71 资源账本 + W66 Agent Harness Foundation ——
-  const harness = new AgentHarnessService({ bus, windowManager: wm, resourceLedger });
+  const cliSupervisor = new CliSupervisor({ resourceLedger });
+  const harness = new AgentHarnessService({ bus, windowManager: wm, resourceLedger, cliSupervisor });
   let harnessQuitReady = false;
   app.on('before-quit', (event) => {
     if (harnessQuitReady) return;

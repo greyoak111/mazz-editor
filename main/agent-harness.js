@@ -266,7 +266,8 @@ class AgentHarnessRegistry {
 }
 
 class AgentHarnessService {
-  constructor({ bus, windowManager, resourceLedger, adapters = [] }) {
+  constructor({ bus, windowManager, resourceLedger, adapters = [], cliSupervisor = null }) {
+    this.cliSupervisor = cliSupervisor;
     this.registry = new AgentHarnessRegistry({
       resourceLedger,
       onEvent: event => windowManager.broadcast('harness:event', event),
@@ -284,7 +285,10 @@ class AgentHarnessService {
   }
 
   register(adapter) { return this.registry.register(adapter); }
-  killAll() { return this.registry.disposeAll('app-quit'); }
+  async killAll() {
+    await this.registry.disposeAll('app-quit');
+    if (this.cliSupervisor) await this.cliSupervisor.disposeAll('app-quit');
+  }
 }
 
 module.exports = {

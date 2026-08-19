@@ -133,6 +133,7 @@ describe('主进程 IPC 与 Preload 白名单', () => {
     const main = fs.readFileSync(path.resolve('main/main.js'), 'utf8');
     assert.ok(preload.includes("'harness:event'"));
     assert.ok(main.includes('new AgentHarnessService'));
+    assert.ok(main.includes('new CliSupervisor'));
     assert.ok(main.includes('harness.killAll()'));
     assert.ok(main.includes('event.preventDefault()'), '应用退出必须等待 Harness 异步收尸');
   });
