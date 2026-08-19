@@ -257,12 +257,15 @@ class PanelWindows {
     const exist = this.panels.get(panelKey);
     const parent = hostWin && !hostWin.isDestroyed() ? hostWin : this.win?.();
     if (exist && !exist.isDestroyed()) {
+      const previousHost = exist.__panelHost;
       if (parent && exist.__panelHost !== parent) {
         try { exist.setParentWindow(parent); } catch {}
         exist.__panelHost = parent;
         this.visualComposition?.updatePanelHost?.(exist, parent);
       }
       exist.show(); exist.focus();
+      if (previousHost && previousHost !== parent) this.visualComposition?.refreshHost?.(previousHost, 'panel-rehost-away');
+      this.visualComposition?.refreshHost?.(parent, 'panel-show-existing');
       return { already: true, hostWindowId: exist.__panelHost?.id || null };
     }
     if (kind === 'annotate') return this.openAnnotate(parent);
@@ -325,7 +328,8 @@ class PanelWindows {
       backgroundColor: '#00000000',
       // 瞬时菜单必须等首帧就绪后再显现并获取焦点；若创建即显示，前一面板的收尾
       // focus() 可能在加载期制造一次假 blur，导致菜单尚未绘制就自闭。
-      show: !transientPanel,
+      // 所有透明自绘 Panel 都等首帧后再显示；普通面板若 create 即裸显，会先盖一块未绘制的透明/白 Surface。
+      show: false,
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: false,
@@ -335,14 +339,15 @@ class PanelWindows {
     win.__stairIndex = stairIndex;
     win.__stairSide = stairSide;
     this.panels.set(panelKey, win);
+    win.__dismissOnBlurArmed = false;
+    win.once('ready-to-show', () => {
+      if (win.isDestroyed()) return;
+      win.show();
+      win.focus();
+      this.visualComposition?.refreshHost?.(win.__panelHost, `panel-ready:${kind}`);
+      if (transientPanel) setImmediate(() => { if (!win.isDestroyed()) win.__dismissOnBlurArmed = true; });
+    });
     if (transientPanel) {
-      win.__dismissOnBlurArmed = false;
-      win.once('ready-to-show', () => {
-        if (win.isDestroyed()) return;
-        win.show();
-        win.focus();
-        setImmediate(() => { if (!win.isDestroyed()) win.__dismissOnBlurArmed = true; });
-      });
       win.on('blur', () => {
         if (!win.__dismissOnBlurArmed) return;
         try { win.close(); } catch {}
@@ -352,8 +357,16 @@ class PanelWindows {
       this.panels.delete(panelKey);
       // 坞浮动子窗格关闭 → 主窗联动坞回停靠（W53 纯原生浮动——关窗即收队；open() 系真钩，15 行那个是 annotate 系）
       if (kind === 'dockfloat') this.forward('panel:changed', { kind: 'dockfloat', closed: true }, win);
-      // 焦点抢回：子窗一关焦点归主窗（防流浪到 cmd 等 Z 序下一位）
-      try { const m = typeof this.win === 'function' ? this.win() : this.win; if (m && !m.isDestroyed()) { m.show(); m.focus(); } } catch {}
+      // 焦点与 compositor 回真实宿主；Panel 从工作台分窗打开时，禁止无条件把焦点抢回主窗。
+      try {
+        const host = win.__panelHost && !win.__panelHost.isDestroyed()
+          ? win.__panelHost
+          : (typeof this.win === 'function' ? this.win() : this.win);
+        if (host && !host.isDestroyed()) {
+          host.show(); host.focus();
+          this.visualComposition?.refreshHost?.(host, `panel-closed:${kind}`);
+        }
+      } catch {}
     });
     PanelWindows.register(panelKey, win); // 主题广播面；多实例按 kind:instanceId 注册
     win.loadURL(`mazz-res://app/panels/${kind}.html`);

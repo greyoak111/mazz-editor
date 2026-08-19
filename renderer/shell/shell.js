@@ -386,7 +386,7 @@ export class Shell {
    *  2) 标签栏区域不产生分屏区（拖标签进别的窗格标签栏 = 直接移签，不被分屏吞掉）
    *  3) webview（浏览器窗格）会吞掉 HTML5 拖拽事件：拖签期间给每个 .editor-area 盖透明盾牌保证事件可达 */
   installSplitPreview() {
-    let overlay = null, zone = null, zoneLeaf = null;
+    let overlay = null, overlayHandle = null, zone = null, zoneLeaf = null, finishingDrop = false;
     // 提示色跟随当前 UI 主题（不再死紫）：showOverlay 时实时取主题 accent 转 rgba
     // v45 再就业：平面填色 → 边沿→中心渐隐（先急剧后舒缓），覆盖比例不变
     const zoneColors = () => {
@@ -420,11 +420,28 @@ export class Shell {
     };
     // W57 分屏路线修正（用户定版）：老 DOM overlay 转正——罩页方案停用（独立窗链路长收效差实锤）；
     // Min 思路=DOM 直接简单零延迟，「不抢渲染」=拖拽 cloak：拖起页签→浏览器视图全隐让位，DOM 预览随便画，落下即恢复
+    const browserControllers = () => {
+      const found = new Set();
+      for (const inst of modules.instances.values()) if (inst?.name === 'browser' && inst.state) found.add(inst.state);
+      if (window.__activeBrowserCtl) found.add(window.__activeBrowserCtl);
+      return [...found];
+    };
     const dragCloak = (on) => {
-      const bctl = window.__activeBrowserCtl;
-      if (!bctl) return;
-      bctl._dragCloak = !!on; // 拖拽独立即时闸；全局弹层遮挡归 VisualCompositionRuntime
-      bctl.__sync?.();
+      // 同一宿主的复杂分屏可同时显示多个 Browser；只 cloak __activeBrowserCtl 会让其余 WCV 继续盖住 DOM 分屏预览。
+      for (const bctl of browserControllers()) {
+        bctl._dragCloak = !!on;
+        bctl.__sync?.();
+      }
+    };
+    const ensureOverlay = () => {
+      if (overlay?.isConnected) return overlay;
+      overlay = document.createElement('div');
+      overlay.className = 'mazz-split-drag-overlay';
+      overlay.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60;border-radius:0;transition:all .08s ease';
+      document.body.appendChild(overlay);
+      // renderer 即时 cloak 负责首个拖拽事件；统一 token 负责按 host 遮住全部 WCV，并与其他 Overlay 正确引用计数。
+      overlayHandle = window.MazzVisualComposition?.mountOverlay?.(overlay, { kind: 'split-drag', moveToPlane: true }) || null;
+      return overlay;
     };
     const showOverlay = (leaf, z) => {
       const r = leaf.el.getBoundingClientRect();
@@ -435,11 +452,7 @@ export class Shell {
       else if (z === 'up') Object.assign(rect, { width: r.width, height: r.height / 3 });
       else Object.assign(rect, { top: r.top + r.height * 2 / 3, width: r.width, height: r.height / 3 });
       const borderSide = ({ left: 'borderRight', right: 'borderLeft', up: 'borderBottom', down: 'borderTop' })[z] || 'borderRight';
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.style.cssText = `position:fixed;pointer-events:none;z-index:60;border-radius:6px;transition:all .08s ease`;
-        document.body.appendChild(overlay);
-      }
+      ensureOverlay();
       overlay.style.background = zoneGradient(z, zc.rgb); // 每次换区都重算（方向随区变）
       // 边框只留画面边沿那一条锚线；中心侧零边界（用户实锤：整圈虚线框让渐隐尽头挂了一条线）
       overlay.style.border = 'none';
@@ -449,43 +462,65 @@ export class Shell {
       overlay.style.top = rect.top + 'px';
       overlay.style.width = rect.width + 'px';
       overlay.style.height = rect.height + 'px';
+      overlayHandle?.update?.();
     };
-    const hideOverlay = () => { overlay?.remove(); overlay = null; zone = null; zoneLeaf = null; };
+    const clearPreview = () => {
+      zone = null; zoneLeaf = null;
+      if (!overlay) return;
+      overlay.style.width = '0px'; overlay.style.height = '0px'; overlay.style.background = 'none'; overlay.style.border = 'none';
+      overlayHandle?.update?.();
+    };
+    const endOverlay = () => {
+      overlayHandle?.release?.('split-drag-end');
+      overlayHandle = null;
+      overlay?.remove(); overlay = null; zone = null; zoneLeaf = null;
+    };
     const shields = (on) => document.body.classList.toggle('tab-dragging', on);
     // 清理唯一真源（三路兜底，不再单押 dragend）：拖签中途源元素被重渲染销毁→dragend 永失，
     // 33% 框+盾牌钉死屏幕（「神秘框」粘连复现实锤）——看门狗/pointerup/blur 三路必达
     let dog = null;
-    const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图
+    const cleanup = () => {
+      finishingDrop = false;
+      shields(false); clearTimeout(dog); dog = null;
+      // 先把所有 ctl 的目标几何写回；host token 尚在时主进程只记 desiredRect 不显。随后释放 token，一次性在新矩形复活。
+      dragCloak(false);
+      endOverlay();
+    };
     const armDog = () => { clearTimeout(dog); dog = setTimeout(cleanup, 1500); }; // 1.5s 无 dragover 即判拖拽死亡
 
     document.addEventListener('dragstart', (e) => {
-      if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）
+      if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) {
+        shields(true); dragCloak(true); ensureOverlay(); armDog();
+      } // 拖起即隐当前宿主全部 Browser，让 DOM 接管命中与预览
     }, true);
     // 捕获相：模块内部（如编辑器拖拽插图区）stopPropagation 也截不到这里——
     // 此前 dragover 走冒泡相，多窗格下被模块内层截停，分区永 null=拖不了分屏（灾难现场病根）
     document.addEventListener('dragover', (e) => {
       if (!e.dataTransfer?.types?.includes('mazz/tab')) return;
       // 标签栏：放行（交给窗格的移签 drop），不做分屏
-      if (e.target.closest?.('.tabbar')) { if (zone) hideOverlay(); return; }
+      if (e.target.closest?.('.tabbar')) { if (zone) clearPreview(); return; }
       const leaf = leafAt(e.clientX, e.clientY);
       const z = leaf && zoneIn(leaf, e.clientX, e.clientY);
       if (leaf && z) { zone = z; zoneLeaf = leaf; showOverlay(leaf, z); armDog(); e.preventDefault(); }
-      else if (zone) hideOverlay();
+      else if (zone) clearPreview();
     }, true);
     document.addEventListener('drop', (e) => {
       const tabId = e.dataTransfer?.getData('mazz/tab');
       const z = zone, leaf = zoneLeaf;
-      cleanup();
-      if (!tabId || !z || !leaf) return;
+      if (!tabId || !z || !leaf) { cleanup(); return; }
       e.preventDefault();
       e.stopPropagation();
+      finishingDrop = true;
+      clearPreview();
       this.splitWithTab(tabId, z, leaf);
+      // split/render/moveTabToPane 全部完成且连续两帧布局稳定后，才允许 Surface 在新矩形复活。
+      requestAnimationFrame(() => requestAnimationFrame(() => cleanup()));
     }, true);
-    document.addEventListener('dragend', cleanup);
+    document.addEventListener('dragend', () => { if (!finishingDrop) cleanup(); });
     // 兜底一：真实鼠标拖拽必以 pointerup 收场（dragend 被源毁灭吞掉时的唯一活口）
-    document.addEventListener('pointerup', () => { if (overlay || document.body.classList.contains('tab-dragging')) cleanup(); }, true);
+    document.addEventListener('pointerup', () => { if (!finishingDrop && (overlay || document.body.classList.contains('tab-dragging'))) cleanup(); }, true);
     // 兜底二：切窗/失焦即清（alt-tab 中断拖拽的残渣）
-    window.addEventListener('blur', cleanup);
+    window.addEventListener('blur', () => { if (!finishingDrop) cleanup(); });
   }
 
   /** 外部文件拖入：主界面/外部窗格自动打开（支持格式走 EXT_MODULE 路由） */
@@ -2257,16 +2292,15 @@ export class Shell {
       this.restoreProgressFor(tab, modules.instances.get(tab.id));
     });
     bus.on('tab:deactivate', (id) => { this.captureProgressFor(id, { immediate: true }); modules.deactivateTab(id); });
-    // W58c 分屏穿帮根治：移签跨窗格后——①等布局落稳重同步视图边界（activate 时可能拿到旧几何）
-    // ②浏览器页自动刷新（用户定版药方：挪窝的 GPU 表面不重绘=渲染穿帮，reload 强制重画）
+    // W87b 分屏穿帮根治：移签后等布局落稳，按新矩形做本地 compositor recompose。
+    // 禁止网络 reload：它会清页面状态、制造白闪，并在离线/登录页上把“重绘药方”变成真加载失败。
     bus.on('pane:tabMoved', ({ tabId }) => {
       const inst = modules.instances.get(tabId);
       if (!inst || inst.name !== 'browser') return;
       setTimeout(() => {
         const ctl = inst.state;
         ctl?.__sync?.();
-        const t = ctl?.tabs?.find(x => x.id === ctl.activeId) || ctl?.tabs?.[0];
-        if (t && !ctl?._dragCloak) ctl.reloadTab?.(t);
+        if (!ctl?._dragCloak) ctl?.recompose?.('pane-tab-moved');
       }, 80);
     });
     // 资源管理器右键「导入到 Mazz 工作区」（--import 参数经主进程转发）

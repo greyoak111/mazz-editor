@@ -2,14 +2,16 @@
 
 > 日期：2026-08-19
 > 起始坐标：`main@c125454`
-> 结论：**SUPPORTED-SCOPE SEALED；已知 P0/P1 = 0**
+> 结论：**SUPPORTED-SCOPE RESEALED AFTER W87b；已执行矩阵内已知 P0/P1 = 0**
 > 协议：`mazz.visual-composition/v1`
+
+> 2026-08-19 修订：原封板遗漏“主窗多 Browser + 工作台 child + 主/子窗盖顶 + 已有分屏再次拖拽 + child Panel 盖顶”的复合矩阵，后被 W87b RED 证伪。该组合根因已关闭，并完成 source/packaged × hardware/compatibility 复验；详见 [`W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md`](./W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md)。原报告的单轴证据保留，但不再单独承担复合场景封板结论。
 
 ## 1. 结果
 
 本轮没有继续叠加 Browser 局部 cloak。Main Window、PanelWindow、WebContentsView 和 DOM Overlay 已进入同一视觉注册与仲裁面；local owner 继续持有真实资源，统一运行时持有 host、geometry、focus、occlusion 和视觉生命周期。
 
-同时对主应用、24 个独立 Panel HTML、QuickNote、主题、图标、焦点、禁用态、最小窗口和瞬时菜单执行了全量收敛。支持矩阵中没有已知未关闭 P0/P1；外部硬件与第三方内容边界单列，不冒充已验。
+同时对主应用、24 个独立 Panel HTML、QuickNote、主题、图标、焦点、禁用态、最小窗口和瞬时菜单执行了全量收敛。原单轴支持矩阵与 W87b Browser 复合矩阵中没有已知未关闭 P0/P1；外部硬件与第三方内容边界单列，不冒充已验。
 
 ## 2. 落地件
 
@@ -33,6 +35,11 @@
 5. **Panel host 漂移**：事件与 native context menu 曾默认回主窗；现在按实际 host 路由，已有单例跨窗调用时显式 rehost。
 6. **首帧/空态视觉债**：Context Menu 的透明黑闪、Organization 暗色孤岛、Browser host 白底、QuickNote 只跟 OS 主题均已收口。
 7. **死 Surface kind**：`quickopen` 已被 palette 吸收却仍留在主进程白名单，且没有 HTML。现删除死 kind 并加反复活合同。
+8. **跨工作台 Browser ID 冲突**：主窗和 child renderer 都从 `bt-1` 起号，子窗恢复会误销毁主窗 WCV。现改为跨 renderer UUID，并把恢复限定在目标 Browser controller。
+9. **复杂拖拽只遮一个 Browser**：旧逻辑只 cloak active Browser，其他 WCV 仍会盖住分屏预览。现对当前宿主全部 Browser 加 cloak，并用 host 级 `split-drag` token 维持单一遮挡真相直到新布局稳定。
+10. **迁移靠网络 reload 收敛**：`pane:tabMoved` 曾以 reload 掩盖合成失配，带来白帧和页面状态丢失。现改为本地 `bv:recompose`，并以 generation 使旧几何 timer 失效。
+11. **child / Panel 首帧与焦点错宿主**：Browser handoff 未完成时 child 已显示，普通 Panel 也会裸壳先显；child Panel 关闭后还会抢回 main。现统一延迟到 handoff ACK / `ready-to-show`，并向实际 host 归还焦点。
+12. **迟到 HOME 假绿**：异步 `document.write` 可在真网页加载后覆盖画面，而 Window JS 标记仍存活。现将 HOME 写入串进导航队列，并用 WCV 原生像素抓取而非只看状态探针验收。
 
 ## 4. 机器与视觉证据
 
@@ -47,6 +54,9 @@
 | [`W87_UI_MINIMUM_WINDOW_INK.png`](./evidence/W87_UI_MINIMUM_WINDOW_INK.png) | `960×600`、`uiSize=md`，无 document horizontal overflow |
 | [`W67_MEMORY_RUNTIME.json`](./evidence/W67_MEMORY_RUNTIME.json) | 20 WCV + 20 Panel；Resource converged；工作集回落 99.71% / 97.40% |
 | [`W71_RELEASE_BASELINE.json`](./evidence/W71_RELEASE_BASELINE.json) | Windows unpacked 发布边界审计通过 |
+| [`W87B_BROWSER_COMPOSITION_SOURCE_HARDWARE.json`](./evidence/W87B_BROWSER_COMPOSITION_SOURCE_HARDWARE.json) | source/hardware：主窗多 Browser、child、五轮盖顶、拖拽分屏、child Panel 复合链通过 |
+| [`W87B_BROWSER_COMPOSITION_PACKAGED_HARDWARE_R3.json`](./evidence/W87B_BROWSER_COMPOSITION_PACKAGED_HARDWARE_R3.json) | packaged/hardware：复合链连续复跑，WCV 原生像素与几何门通过 |
+| [`W87B_BROWSER_COMPOSITION_PACKAGED_COMPATIBILITY.json`](./evidence/W87B_BROWSER_COMPOSITION_PACKAGED_COMPATIBILITY.json) | packaged/compatibility：相同复合链通过，fatal/error 为 0/0 |
 
 截图已逐张回看：Paper/Ink 确实分化；Organization、Browser host、Panel 空态已同盘；最低窗口没有横向裁切；Overlay 下方 native 页面不穿透；面板矩阵没有新的黑闪或未主题化孤岛。
 
@@ -56,6 +66,10 @@
 W87 kernel/contracts                     PASS
 source Electron UI matrix                PASS
 packaged Electron UI matrix              PASS × 2 consecutive
+Browser composite source HW/compat       PASS / PASS
+Browser composite packaged HW/compat     PASS × repeated / PASS
+main/child alternating focus cycles       PASS × 5
+post-drop JS state + geometry ≤ 2px       PASS
 14 modules × Paper/Ink                    PASS
 24 PanelWindow kinds                      PASS
 nested overlay reference counting         PASS
@@ -80,4 +94,4 @@ W67 本轮数据：baseline `351.2 MiB`；WCV peak/after `2039.6/356.0 MiB`；Pa
 
 ## 7. 封板边界
 
-“已知 P0/P1 = 0”只针对计划文件的支持矩阵。多显示器与多 DPI 全排列、真实屏幕阅读器/触摸设备、第三方插件 UI、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 和任意外部网页仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。
+“已知 P0/P1 = 0”只针对计划文件中的原单轴矩阵与 W87b 已执行复合矩阵。多显示器与多 DPI 全排列、真实屏幕阅读器/触摸设备、第三方插件 UI、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 和任意外部网页仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。

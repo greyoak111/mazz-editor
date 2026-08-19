@@ -836,70 +836,70 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 252,
+      "line": 268,
       "sample": "try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 253,
+      "line": 269,
       "sample": "window.addEventListener('resize', syncBounds);"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 295,
+      "line": 311,
       "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 303,
+      "line": 319,
       "sample": ".htop{position:fixed;top:14px;right:16px;display:flex;gap:6px;align-items:center;z-index:9}"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/browser/index.js",
-      "line": 307,
+      "line": 323,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 307,
+      "line": 323,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 1181,
+      "line": 1197,
       "sample": "<div style=\"font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1183,
+      "line": 1199,
       "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 1321,
+      "line": 1342,
       "sample": "// 幽灵三钩①（页签一切一炸一片实锤）：切回必显——显隐不再靠 ResizeObserver/偶发事件赏饭"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1490,
+      "line": 1529,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
     },
     {
@@ -2061,21 +2061,21 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3405,
+      "line": 3439,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3421,
+      "line": 3455,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3443,
+      "line": 3477,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {

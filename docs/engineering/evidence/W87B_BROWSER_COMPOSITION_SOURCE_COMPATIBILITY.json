@@ -1,0 +1,355 @@
+{
+  "generatedAt": "2026-08-19T11:59:38.971Z",
+  "runtimeMode": "source",
+  "gpuMode": "compatibility",
+  "hostIds": [
+    {
+      "id": 3,
+      "role": "child"
+    },
+    {
+      "id": 1,
+      "role": "main"
+    }
+  ],
+  "ids": {
+    "mainA": "bt-fcec8ca3-87eb-4837-8acf-4f830f7d1a68",
+    "mainC": "bt-7ee638d6-c322-46dd-ac9c-29bd4488c1d7",
+    "childB": "bt-cb9c9f3d-42c1-4cd5-b244-ea8eeddeaf25"
+  },
+  "duringDrag": {
+    "states": [
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-A%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-A%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-A<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-A\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": true,
+        "desiredVisible": false,
+        "occluded": true,
+        "hostWindowId": 1,
+        "reviveGen": 3,
+        "compositionGen": 8,
+        "recomposeCount": 5,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 5,
+        "lastRecomposeReason": "panel-ready:agreement:settled"
+      },
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-C%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-C%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-C<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-C\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": true,
+        "desiredVisible": false,
+        "occluded": true,
+        "hostWindowId": 1,
+        "reviveGen": 1,
+        "compositionGen": 4,
+        "recomposeCount": 3,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 3,
+        "lastRecomposeReason": "pane-tab-moved"
+      }
+    ],
+    "visual": {
+      "protocol": "mazz.visual-composition/v1",
+      "generation": 69,
+      "surfaceCount": 7,
+      "overlayCount": 1,
+      "occludedHostCount": 1,
+      "surfaces": [
+        {
+          "id": "view:bt-7ee638d6-c322-46dd-ac9c-29bd4488c1d7",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-7ee638d6-c322-46dd-ac9c-29bd4488c1d7",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 7,
+          "visible": false,
+          "desiredVisible": false,
+          "occluded": true,
+          "focused": false,
+          "bounds": {
+            "x": 797,
+            "y": 245,
+            "width": 562,
+            "height": 555
+          },
+          "createdAt": 1787140776575,
+          "updatedAt": 1787140777014,
+          "generation": 61,
+          "metadata": {
+            "tabId": "bt-7ee638d6-c322-46dd-ac9c-29bd4488c1d7",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 1,
+            "invalidateCount": 3
+          }
+        },
+        {
+          "id": "view:bt-cb9c9f3d-42c1-4cd5-b244-ea8eeddeaf25",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-cb9c9f3d-42c1-4cd5-b244-ea8eeddeaf25",
+          "hostWindowId": 3,
+          "sourceWebContentsId": 6,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 232,
+            "y": 245,
+            "width": 867,
+            "height": 451
+          },
+          "createdAt": 1787140776273,
+          "updatedAt": 1787140776507,
+          "generation": 42,
+          "metadata": {
+            "tabId": "bt-cb9c9f3d-42c1-4cd5-b244-ea8eeddeaf25",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 1,
+            "invalidateCount": 3
+          }
+        },
+        {
+          "id": "view:bt-fcec8ca3-87eb-4837-8acf-4f830f7d1a68",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-fcec8ca3-87eb-4837-8acf-4f830f7d1a68",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 3,
+          "visible": false,
+          "desiredVisible": false,
+          "occluded": true,
+          "focused": false,
+          "bounds": {
+            "x": 232,
+            "y": 245,
+            "width": 562,
+            "height": 555
+          },
+          "createdAt": 1787140774394,
+          "updatedAt": 1787140777014,
+          "generation": 60,
+          "metadata": {
+            "tabId": "bt-fcec8ca3-87eb-4837-8acf-4f830f7d1a68",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 3,
+            "invalidateCount": 5
+          }
+        },
+        {
+          "id": "window:2",
+          "kind": "panel-window",
+          "layer": "system",
+          "owner": "panel:agreement",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 2,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 417,
+            "y": 112,
+            "width": 701,
+            "height": 600
+          },
+          "createdAt": 1787140774152,
+          "updatedAt": 1787140774892,
+          "generation": 26,
+          "metadata": {
+            "nativeWindowId": 2
+          }
+        },
+        {
+          "id": "overlay:renderer-mt01h4x9-1",
+          "kind": "dom-overlay",
+          "layer": "transient",
+          "owner": "split-drag",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 1,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 608,
+            "y": 147,
+            "width": 188,
+            "height": 653
+          },
+          "createdAt": 1787140777014,
+          "updatedAt": 1787140777095,
+          "generation": 69,
+          "metadata": {
+            "token": "renderer-mt01h4x9-1",
+            "dismissible": false
+          }
+        },
+        {
+          "id": "window:1",
+          "kind": "window",
+          "layer": "workspace",
+          "owner": "window-manager:main",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 1,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": true,
+          "bounds": {
+            "x": 88,
+            "y": 0,
+            "width": 1360,
+            "height": 824
+          },
+          "createdAt": 1787140773217,
+          "updatedAt": 1787140777014,
+          "generation": 62,
+          "metadata": {
+            "nativeWindowId": 1,
+            "transientOcclusion": true
+          }
+        },
+        {
+          "id": "window:3",
+          "kind": "window",
+          "layer": "workspace",
+          "owner": "window-manager:child",
+          "hostWindowId": 3,
+          "sourceWebContentsId": 5,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 217,
+            "y": 52,
+            "width": 1101,
+            "height": 720
+          },
+          "createdAt": 1787140775143,
+          "updatedAt": 1787140776592,
+          "generation": 47,
+          "metadata": {
+            "nativeWindowId": 3
+          }
+        }
+      ],
+      "hosts": [
+        {
+          "hostWindowId": 1,
+          "occluded": true,
+          "tokens": [
+            "renderer-mt01h4x9-1"
+          ]
+        }
+      ],
+      "invariants": {
+        "registeredVisualSovereignty": true,
+        "hostOwnedOcclusion": true,
+        "rendererGeometrySanitized": true,
+        "workaroundRemovalAuthorized": false
+      }
+    },
+    "renderer": {
+      "protocol": "mazz.visual-composition/renderer-v1",
+      "overlayCount": 1,
+      "stack": [
+        {
+          "token": "renderer-mt01h4x9-1",
+          "kind": "split-drag",
+          "state": "active",
+          "bounds": {
+            "x": 608,
+            "y": 147,
+            "width": 188,
+            "height": 653
+          }
+        }
+      ],
+      "uiSize": "lg",
+      "planeConnected": true
+    }
+  },
+  "geometry": {
+    "expected": {
+      "bt-fcec8ca3-87eb-4837-8acf-4f830f7d1a68": {
+        "x": 232,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      },
+      "bt-7ee638d6-c322-46dd-ac9c-29bd4488c1d7": {
+        "x": 515,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      }
+    },
+    "actual": {
+      "bt-fcec8ca3-87eb-4837-8acf-4f830f7d1a68": {
+        "x": 232,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      },
+      "bt-7ee638d6-c322-46dd-ac9c-29bd4488c1d7": {
+        "x": 515,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      }
+    }
+  },
+  "topology": {
+    "parentId": 3,
+    "hostId": 3,
+    "visible": true
+  },
+  "focusedAfterPanelClose": 3,
+  "captures": {
+    "mainA": {
+      "width": 350,
+      "height": 682,
+      "whiteRatio": 0.026459991621281945,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9712777545035609
+    },
+    "mainC": {
+      "width": 350,
+      "height": 682,
+      "whiteRatio": 0.026007540846250524,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9718642647674905
+    },
+    "childB": {
+      "width": 1084,
+      "height": 564,
+      "whiteRatio": 0.010579414304781347,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9882887126743608
+    }
+  },
+  "fatalMainLogs": 0,
+  "rendererErrors": 0
+}

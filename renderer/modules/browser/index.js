@@ -17,6 +17,12 @@ let tabSeq = 1;
 
 const HOME = 'mazz://home';
 const isElectron = () => !!window.mazz?.isElectron;
+const nextViewId = () => {
+  // BrowserViews 由主进程跨所有工作台窗口统一持有；renderer 内自增序号会让主窗/分窗都从 bt-1 起步，
+  // 后创建的分窗因此把主窗同名 View 当 replaced 销毁。UUID 是协议身份，不再把进程内序号冒充全局 ID。
+  const uuid = globalThis.crypto?.randomUUID?.();
+  return `bt-${uuid || `${Date.now().toString(36)}-${tabSeq++}-${Math.random().toString(36).slice(2, 10)}`}`;
+};
 
 // W76：Context Collection 只读取当前 URL/标题，不复制 WebContents 或页面正文。
 // 同一 canonical URL 在 Context Graph 中仍是同一 Node，各 Placement 可有自己的别名/备注。
@@ -85,7 +91,7 @@ function createBrowser(container) {
 
   // ==================== 标签管理 ====================
   function openTab(url = HOME, { background = false, partition = 'persist:mazz-browser' } = {}) {
-    const id = 'bt-' + tabSeq++;
+    const id = nextViewId();
     const viewWrap = document.createElement('div');
     viewWrap.className = 'br-view-wrap';
     viewWrap.dataset.tabId = id;
@@ -112,7 +118,7 @@ function createBrowser(container) {
     ctl.tabs.push(tab);
     renderTabs();
     if (!background) activate(id);
-    navigate(tab, url);
+    tab.navigationReady = navigate(tab, url);
     return tab;
   }
 
@@ -179,7 +185,7 @@ function createBrowser(container) {
   async function navigate(tab, url) {
     if (!tab || !url) return;
     tab.url = url;
-    queueNav(tab, url);
+    return queueNav(tab, url);
   }
 
   /** 导航统一入口：串行化队列（消灭竞跑）
@@ -204,7 +210,10 @@ function createBrowser(container) {
           else tab.view.src = custom;
           return;
         }
-        renderHome(tab);
+        // document.write 也是一次真实文档提交，必须并入导航队列等待完成。
+        // 旧实现只发 IPC 不 await：下一条真网址先加载完，迟到的主页写入又把它覆盖，
+        // JS Window 属性却仍残留，形成“状态探针正常、画面是主页/白屏”的假象。
+        await renderHome(tab);
         return;
       }
       try {
@@ -247,6 +256,13 @@ function createBrowser(container) {
     }
   }
   ctl.__sync = syncBounds; // 生命周期三钩发令口（activate 必显/deactivate 全场景隐统一走此）
+  ctl.recompose = async (reason = 'renderer-layout') => {
+    syncBounds();
+    if (!isElectron()) return true;
+    const active = activeTab();
+    if (!active?.viewId) return false;
+    return window.mazz.invoke('bv:recompose', { tabId: active.viewId, reason }).catch(() => false);
+  };
   if (isElectron()) {
     // 布局跟随：容器尺寸/窗体尺寸变化即重摆
     try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}
@@ -373,7 +389,7 @@ function createBrowser(container) {
     ctl._themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   }
 
-  function renderHome(tab) {
+  async function renderHome(tab) {
     const html = buildHomeHtml();
     if (!isElectron()) {
       tab.view.srcdoc = html; // iframe 预览路径（视图时代 tab.view 为 null——裸赋必炸，主页渲染全灭的总根）
@@ -404,7 +420,7 @@ function createBrowser(container) {
     if (isElectron() && tab.viewId) {
       // 视图时代：原地重写文档恒成立（about:blank 随时可写，零导航零 data: 历史污染）
       tab.homeLoaded = true;
-      window.mazz.invoke('bv:js', {
+      return window.mazz.invoke('bv:js', {
         tabId: tab.viewId,
         code: `document.open();document.write(${JSON.stringify(html)});document.close();`,
       }).catch(() => {});
@@ -1277,6 +1293,7 @@ function createBrowser(container) {
   ctl.closeFind = closeFind;
   ctl.closeTabFn = closeTab;
   ctl.openTabRaw = openTab;
+  ctl.activateTabRaw = activate;
   ctl.handleHomeAction = handleHomeAction;
   ctl.bookmarkCurrent = bookmarkCurrent;
   ctl.openBookmarkManager = openBookmarkManager;
@@ -1286,8 +1303,12 @@ function createBrowser(container) {
   ctl.clipper = createClipRuntime({ ctl, toast });
   ctl.harvester = createHarvestRuntime({ ctl, toast });
 
-  // 初始
-  loadStore().then(() => openTab(HOME));
+  // 初始：恢复内容会在 create() 返回后的同一任务里设置 _restoreRequested；Store 完成前不得擅开 HOME，
+  // 否则分窗交接会先画一个临时主页，再拆掉重建，形成白闪并与真实恢复竞跑。
+  ctl._storeReady = loadStore().then(() => {
+    if (!ctl._restoreRequested && !ctl.tabs.length) return openTab(HOME);
+    return null;
+  });
   return ctl;
 }
 
@@ -1309,7 +1330,7 @@ export default {
     const ctl = createBrowser(container);
     instances.set(container, ctl);
     // W58c 根治：create 必须返回 ctl 本体（code 模块 W58 同款病——返回 { container } 让 inst.state 与真 ctl 分家，
-    // pane:tabMoved 监听器拿 { container } 空调 __sync/reloadTab=分屏自动刷新全静默失效）
+    // pane:tabMoved 监听器拿 { container } 会令 __sync/recompose 成为空调，分屏后的原生 Surface 无法按新矩形重组）
     return ctl;
   },
   activate(container) {
@@ -1343,25 +1364,43 @@ export default {
   getContent(state) {
     const ctl = instances.get(state.container);
     if (!ctl) return '';
-    return JSON.stringify({ mark: 'mazz-browser-v1', tabs: ctl.tabs.map(t => ({ url: t.url, title: t.title })) });
+    return JSON.stringify({
+      mark: 'mazz-browser-v1',
+      activeIndex: Math.max(0, ctl.tabs.findIndex(t => t.id === ctl.activeId)),
+      tabs: ctl.tabs.map(t => ({ url: t.url, title: t.title, partition: t.partition })),
+    });
   },
-  setContent(data, state) {
+  async setContent(data, state) {
     const ctl = instances.get(state.container);
     if (!ctl) return;
+    let obj;
     try {
-      const obj = JSON.parse(data);
-      if (obj.mark === 'mazz-browser-v1' && obj.tabs?.length) {
-        for (let i = ctl.tabs.length - 1; i >= 0; i--) {
-          // 视图时代拆签：先毁主进程视图再摘宿主（tab.view 只对 iframe 路径存在——视图时代它是 null）
-          if (isElectron() && ctl.tabs[i].viewId) window.mazz.invoke('bv:destroy', { tabId: ctl.tabs[i].viewId }).catch(() => {});
-          ctl.tabs[i].host?.remove(); ctl.tabs[i].el?.remove();
-        }
-        ctl.tabs.length = 0;
-        obj.tabs.forEach(t => ctl.openTabWith ? null : null);
-        // 逐个打开（复用 openTab）
-        for (const t of obj.tabs) window.MazzCommands?.execute('browser.openUrl', { url: t.url });
-      }
-    } catch {}
+      obj = JSON.parse(data);
+    } catch { return; }
+    if (obj?.mark !== 'mazz-browser-v1' || !Array.isArray(obj.tabs) || !obj.tabs.length) return;
+    ctl._restoreRequested = true;
+    await ctl._storeReady;
+    const destroy = [];
+    for (let i = ctl.tabs.length - 1; i >= 0; i--) {
+      // 恢复只操作 state.container 对应 ctl，禁止经全局 current/MazzCommands 把内容开进另一窗的 Browser。
+      if (isElectron() && ctl.tabs[i].viewId) destroy.push(window.mazz.invoke('bv:destroy', { tabId: ctl.tabs[i].viewId }).catch(() => false));
+      ctl.tabs[i].host?.remove(); ctl.tabs[i].el?.remove();
+    }
+    await Promise.all(destroy);
+    ctl.tabs.length = 0;
+    ctl.activeId = null;
+    const activeIndex = Math.min(obj.tabs.length - 1, Math.max(0, Number(obj.activeIndex) || 0));
+    const restored = obj.tabs.map((saved, index) => {
+      const tab = ctl.openTabRaw(saved.url || HOME, {
+        background: true,
+        partition: saved.partition || 'persist:mazz-browser',
+      });
+      if (saved.title) tab.title = String(saved.title);
+      return tab;
+    });
+    ctl.activateTabRaw?.(restored[activeIndex]?.id);
+    await Promise.all(restored.map(tab => Promise.resolve(tab.viewReady).then(() => tab.navQueue).catch(() => {})));
+    ctl.__sync?.();
   },
   newDocument(state) {
     const ctl = instances.get(state.container);

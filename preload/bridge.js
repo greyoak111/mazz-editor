@@ -79,7 +79,7 @@ const INVOKE_CHANNELS = new Set([
   'sites:list', 'sites:search', 'sites:searchPage', 'sites:searchMany', 'sites:magnet', 'sites:home',
   'sites:catalog', 'sites:health', 'sites:reset',
   'mkv:tracks', 'mkv:extractFlac', 'mkv:extractTrack',
-  'bv:create', 'bv:destroy', 'bv:bounds', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state', 'bv:emitTest', 'bv:ctxMenu', 'bv:devtools', 'bv:dtProbe', 'bv:capture',
+  'bv:create', 'bv:destroy', 'bv:bounds', 'bv:recompose', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state', 'bv:emitTest', 'bv:ctxMenu', 'bv:devtools', 'bv:dtProbe', 'bv:capture',
   'window:childAt', 'window:toChild', 'window:listChildren', 'theme:broadcast',
   'workspace:list', 'workspace:add', 'workspace:remove', 'workspace:rename', 'workspace:setCurrent',
 ]);

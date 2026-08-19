@@ -75,6 +75,16 @@ class VisualCompositionRuntime {
     this.kernel.updateSurface(`window:${host.id}`, { metadata: { transientOcclusion: !!occluded } });
   }
 
+  refreshHost(host, reason = 'native-window-transition') {
+    if (!host || host.isDestroyed()) return 0;
+    const changed = this.browserViews?.recomposeHost?.(host, reason) || 0;
+    // Win10 合成器在子窗 show/close 的后一帧才完成 Z 序提交；第二次只做本地 invalidate/bounds 振荡，绝不 reload 网络页面。
+    setTimeout(() => {
+      if (!host.isDestroyed()) this.browserViews?.recomposeHost?.(host, `${reason}:settled`);
+    }, 90);
+    return changed;
+  }
+
   registerWindow(win, { kind = 'window', owner = 'window-manager', layer = 'workspace' } = {}) {
     if (!win || win.isDestroyed()) return null;
     const id = `window:${win.id}`;

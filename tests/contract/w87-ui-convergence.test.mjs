@@ -62,7 +62,7 @@ test('启动完成承诺与主题代际阻止迟到设置覆盖用户选择', ()
   test('瞬时原生菜单首帧就绪后才显现，初始假 blur 不得自闭', () => {
     const panels = read('main/panel-windows.js');
     assert.match(panels, /const transientPanel = kind === 'ctxmenu' \|\| kind === 'picklist'/);
-    assert.match(panels, /show: !transientPanel/);
+    assert.match(panels, /show:\s*false/);
     assert.match(panels, /once\('ready-to-show'/);
     assert.match(panels, /__dismissOnBlurArmed/);
   });

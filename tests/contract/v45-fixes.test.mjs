@@ -113,7 +113,7 @@ describe('v45 实机回归', () => {
     assert.ok(src.includes('cleanup'), '清理必须收拢唯一真源');
     assert.ok(src.includes('armDog') && src.includes('1500'), '看门狗必须有（无 dragover 判死）');
     assert.ok(src.includes("addEventListener('pointerup'"), 'pointerup 兜底必须有（dragend 被源毁灭吞掉的活口）');
-    assert.ok(src.includes("addEventListener('blur', cleanup)"), 'blur 兜底必须有');
+    assert.ok(src.includes("addEventListener('blur'") && src.includes('if (!finishingDrop) cleanup()'), 'blur 兜底必须有，且有效 drop 提交期间不得抢先解 cloak');
     assert.ok(src.includes('armDog(); e.preventDefault()') || src.includes('armDog()'), '活跃拖拽必须喂狗');
   });
 

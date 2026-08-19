@@ -1067,14 +1067,20 @@ function registerChannels() {
   // 分窗：开新窗口并交接标签快照
   bus.handle('window:openChild', async ({ handoff }) => {
     // W53：lean 路线退役（七面板+坞浮动全走 panel-windows 全原生子窗格）——openChild 只服务模块分窗
-    const child = wm.createChild();
+    const child = wm.createChild({ deferShow: !!handoff?.moduleId });
     child.webContents.once('did-finish-load', () => {
       child.webContents.send('mazz:event', { channel: 'window:role', payload: { role: 'child' } });
     });
     // 兼容“只创建空工作台分窗”的既有调用；没有数据要提交时无需 ACK。
     if (!handoff?.moduleId) return true;
     const ok = await deliverHandoff(child, handoff, { afterLoad: true });
-    if (!ok && !child.isDestroyed()) child.close();
+    if (ok && !child.isDestroyed()) {
+      // ACK 表示目标 renderer 已恢复标签，并完成 Browser Surface 的宿主迁移。
+      // ACK 与 ready-to-show 两边都满足后才允许显示，消灭“先裸壳、后原生视图”的白帧。
+      child.once('show', () => visualComposition.refreshHost?.(child, 'child-handoff-ready'));
+      if (typeof child.__showAfterHandoff === 'function') child.__showAfterHandoff();
+      else { child.show(); child.focus(); }
+    } else if (!child.isDestroyed()) child.close();
     return ok;
   });
   // 已存在子窗口清单（「移到已有外部窗格」选单用）

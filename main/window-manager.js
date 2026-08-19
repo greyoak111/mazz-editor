@@ -134,6 +134,10 @@ class WindowManager {
 
   /** 分窗（多窗口）：标签拖拽出屏 / 移到新窗口 用，与主窗同壳 */
   createChild(opts = {}) {
+    // 带模块交接的子窗必须等 renderer 恢复完成并回 ACK 后才显现。
+    // 否则 ready-to-show 只能证明空壳首帧可画，不能证明原生 Surface 已归宿主，
+    // 用户会先看到空白工作台，再看到 WebContentsView 盖上来。
+    const deferShow = opts.deferShow === true;
     const state = { width: opts.width || 1100, height: opts.height || 720 };
     const win = new BrowserWindow({
       width: state.width, height: state.height,
@@ -148,12 +152,26 @@ class WindowManager {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false,
         spellcheck: true, webviewTag: true, plugins: true,
+        backgroundThrottling: false,
       },
     });
+    win.__deferShow = deferShow;
+    win.__readyToShow = false;
+    win.__handoffReady = !deferShow;
+    win.__showAfterHandoff = () => {
+      win.__handoffReady = true;
+      if (!win.__readyToShow || win.isDestroyed()) return false;
+      win.show();
+      win.focus();
+      return true;
+    };
     this.children.add(win);
     this.trackWindow(win, 'child');
     this.wireShellWindow(win);
-    win.once('ready-to-show', () => { win.show(); win.focus(); });
+    win.once('ready-to-show', () => {
+      win.__readyToShow = true;
+      if (win.__handoffReady) { win.show(); win.focus(); }
+    });
     win.loadURL('mazz-res://app/index.html?role=child'); // 角色随 URL 落（启动首帧可知身份——协议自动弹等首启流程在子窗必须缄默，零竞态）
     // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
     win.on('closed', () => {

@@ -29,8 +29,9 @@ describe('坞浮动记忆迁移', () => {
 });
 
 describe('焦点抢回', () => {
-  test('panel/children 关闭主窗 focus', () => {
-    assert.ok(readSrc('main/panel-windows.js').includes('m.focus()'), 'panel 关闭必须抢焦点');
+  test('panel 关闭回真实宿主，最后一个 child 关闭才回主窗', () => {
+    const panels = readSrc('main/panel-windows.js');
+    assert.ok(panels.includes('win.__panelHost') && panels.includes('host.focus()'), 'panel 关闭必须把焦点交还实际打开它的工作台宿主');
     assert.ok(readSrc('main/window-manager.js').includes('this.main.focus()'), 'children 关闭必须抢焦点');
   });
 });

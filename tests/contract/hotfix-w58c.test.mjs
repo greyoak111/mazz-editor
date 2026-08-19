@@ -6,14 +6,16 @@ import path from 'node:path';
 
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
-describe('① 分屏后自动刷新（视图穿帮根治）', () => {
-  test('移签跨窗格广播+浏览器自动重同步重载', () => {
+describe('① 分屏后本地重组（视图穿帮根治）', () => {
+  test('移签跨窗格广播+浏览器 compositor 重组，不得网络重载', () => {
     const pz = readSrc('renderer/shell/panes.js');
     assert.ok(pz.includes("bus.emit('pane:tabMoved'"), 'moveTabToPane 必须广播 pane:tabMoved（唯一闸）');
     const sh = readSrc('renderer/shell/shell.js');
     assert.ok(sh.includes("bus.on('pane:tabMoved'"), 'shell 必须订阅');
     assert.ok(sh.includes('ctl?.__sync?.()'), '布局落稳重同步必须有');
-    assert.ok(sh.includes('ctl.reloadTab?.(t)'), '浏览器自动刷新必须有（用户定版药方）');
+    assert.ok(sh.includes("ctl?.recompose?.('pane-tab-moved')"), '浏览器必须走本地 compositor 重组');
+    const moved = sh.slice(sh.indexOf("bus.on('pane:tabMoved'"), sh.indexOf("bus.on('filetree:renamed'"));
+    assert.ok(!moved.includes('reloadTab'), '分屏迁移不得网络重载，否则页面状态丢失并产生白帧');
     assert.ok(sh.includes('!ctl?._dragCloak') && !sh.includes('!ctl?._cloaked'), '只保留拖拽即时 cloak；弹层遮挡归统一调度');
     const br = readSrc('renderer/modules/browser/index.js');
     assert.ok(br.includes('W58c 根治：create 必须返回 ctl 本体'), '浏览器 create 返 ctl 根治钉必须在（code W58 同族病）');

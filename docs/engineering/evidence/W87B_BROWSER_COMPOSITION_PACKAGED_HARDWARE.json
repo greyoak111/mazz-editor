@@ -1,0 +1,331 @@
+{
+  "generatedAt": "2026-08-19T12:03:30.574Z",
+  "runtimeMode": "packaged",
+  "gpuMode": "hardware",
+  "hostIds": [
+    {
+      "id": 3,
+      "role": "child"
+    },
+    {
+      "id": 1,
+      "role": "main"
+    }
+  ],
+  "ids": {
+    "mainA": "bt-5252d92f-afae-4fe2-bd27-f1486b70cb47",
+    "mainC": "bt-910240fc-ab42-44db-a0ea-dd36f89616f0",
+    "childB": "bt-825fd923-1a02-4f3a-afea-f0bac9a9a4ee"
+  },
+  "duringDrag": {
+    "states": [
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-A%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-A%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-A<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-A\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": true,
+        "desiredVisible": false,
+        "occluded": true,
+        "hostWindowId": 1,
+        "reviveGen": 3,
+        "compositionGen": 6,
+        "recomposeCount": 3,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 3,
+        "lastRecomposeReason": null
+      },
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-C%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-C%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-C<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-C\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": true,
+        "desiredVisible": false,
+        "occluded": true,
+        "hostWindowId": 1,
+        "reviveGen": 1,
+        "compositionGen": 3,
+        "recomposeCount": 2,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 2,
+        "lastRecomposeReason": null
+      }
+    ],
+    "visual": {
+      "protocol": "mazz.visual-composition/v1",
+      "generation": 63,
+      "surfaceCount": 6,
+      "overlayCount": 1,
+      "occludedHostCount": 1,
+      "surfaces": [
+        {
+          "id": "view:bt-5252d92f-afae-4fe2-bd27-f1486b70cb47",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-5252d92f-afae-4fe2-bd27-f1486b70cb47",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 3,
+          "visible": false,
+          "desiredVisible": false,
+          "occluded": true,
+          "focused": false,
+          "bounds": {
+            "x": 232,
+            "y": 245,
+            "width": 562,
+            "height": 555
+          },
+          "createdAt": 1787141006225,
+          "updatedAt": 1787141008690,
+          "generation": 54,
+          "metadata": {
+            "tabId": "bt-5252d92f-afae-4fe2-bd27-f1486b70cb47",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 3,
+            "invalidateCount": 3
+          }
+        },
+        {
+          "id": "view:bt-825fd923-1a02-4f3a-afea-f0bac9a9a4ee",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-825fd923-1a02-4f3a-afea-f0bac9a9a4ee",
+          "hostWindowId": 3,
+          "sourceWebContentsId": 6,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 232,
+            "y": 245,
+            "width": 867,
+            "height": 451
+          },
+          "createdAt": 1787141007904,
+          "updatedAt": 1787141008135,
+          "generation": 39,
+          "metadata": {
+            "tabId": "bt-825fd923-1a02-4f3a-afea-f0bac9a9a4ee",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 1,
+            "invalidateCount": 3
+          }
+        },
+        {
+          "id": "view:bt-910240fc-ab42-44db-a0ea-dd36f89616f0",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-910240fc-ab42-44db-a0ea-dd36f89616f0",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 7,
+          "visible": false,
+          "desiredVisible": false,
+          "occluded": true,
+          "focused": false,
+          "bounds": {
+            "x": 797,
+            "y": 245,
+            "width": 562,
+            "height": 555
+          },
+          "createdAt": 1787141008247,
+          "updatedAt": 1787141008707,
+          "generation": 60,
+          "metadata": {
+            "tabId": "bt-910240fc-ab42-44db-a0ea-dd36f89616f0",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 1,
+            "invalidateCount": 2
+          }
+        },
+        {
+          "id": "overlay:renderer-mt01m3oo-1",
+          "kind": "dom-overlay",
+          "layer": "transient",
+          "owner": "split-drag",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 1,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 608,
+            "y": 147,
+            "width": 188,
+            "height": 653
+          },
+          "createdAt": 1787141008690,
+          "updatedAt": 1787141008774,
+          "generation": 63,
+          "metadata": {
+            "token": "renderer-mt01m3oo-1",
+            "dismissible": false
+          }
+        },
+        {
+          "id": "window:1",
+          "kind": "window",
+          "layer": "workspace",
+          "owner": "window-manager:main",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 1,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": true,
+          "bounds": {
+            "x": 88,
+            "y": 0,
+            "width": 1360,
+            "height": 824
+          },
+          "createdAt": 1787141001718,
+          "updatedAt": 1787141008690,
+          "generation": 56,
+          "metadata": {
+            "nativeWindowId": 1,
+            "transientOcclusion": true
+          }
+        },
+        {
+          "id": "window:3",
+          "kind": "window",
+          "layer": "workspace",
+          "owner": "window-manager:child",
+          "hostWindowId": 3,
+          "sourceWebContentsId": 5,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 217,
+            "y": 52,
+            "width": 1101,
+            "height": 720
+          },
+          "createdAt": 1787141006750,
+          "updatedAt": 1787141008288,
+          "generation": 44,
+          "metadata": {
+            "nativeWindowId": 3
+          }
+        }
+      ],
+      "hosts": [
+        {
+          "hostWindowId": 1,
+          "occluded": true,
+          "tokens": [
+            "renderer-mt01m3oo-1"
+          ]
+        }
+      ],
+      "invariants": {
+        "registeredVisualSovereignty": true,
+        "hostOwnedOcclusion": true,
+        "rendererGeometrySanitized": true,
+        "workaroundRemovalAuthorized": false
+      }
+    },
+    "renderer": {
+      "protocol": "mazz.visual-composition/renderer-v1",
+      "overlayCount": 1,
+      "stack": [
+        {
+          "token": "renderer-mt01m3oo-1",
+          "kind": "split-drag",
+          "state": "active",
+          "bounds": {
+            "x": 608,
+            "y": 147,
+            "width": 188,
+            "height": 653
+          }
+        }
+      ],
+      "uiSize": "lg",
+      "planeConnected": true
+    }
+  },
+  "geometry": {
+    "expected": {
+      "bt-5252d92f-afae-4fe2-bd27-f1486b70cb47": {
+        "x": 232,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      },
+      "bt-910240fc-ab42-44db-a0ea-dd36f89616f0": {
+        "x": 515,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      }
+    },
+    "actual": {
+      "bt-5252d92f-afae-4fe2-bd27-f1486b70cb47": {
+        "x": 232,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      },
+      "bt-910240fc-ab42-44db-a0ea-dd36f89616f0": {
+        "x": 515,
+        "y": 245,
+        "width": 280,
+        "height": 545
+      }
+    }
+  },
+  "topology": {
+    "parentId": 3,
+    "hostId": 3,
+    "visible": true
+  },
+  "focusedAfterPanelClose": 3,
+  "captures": {
+    "mainA": {
+      "width": 350,
+      "height": 682,
+      "whiteRatio": 0.026543778801843318,
+      "darkRatio": 0,
+      "colorfulRatio": 0.971160452450775
+    },
+    "mainC": {
+      "width": 350,
+      "height": 682,
+      "whiteRatio": 0.026024298282362798,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9717302052785923
+    },
+    "childB": {
+      "width": 1084,
+      "height": 564,
+      "whiteRatio": 0.010599042160634372,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9882625421998901
+    }
+  },
+  "fatalMainLogs": 0,
+  "rendererErrors": 0
+}

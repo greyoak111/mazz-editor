@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 231,
-    "scannedLines": 64850
+    "scannedLines": 64923
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -699,589 +699,589 @@
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 34,
+        "line": 40,
         "sample": "<button class=\"br-nav\" data-a=\"back\" title=\"后退（Alt+←）\">←</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 35,
+        "line": 41,
         "sample": "<button class=\"br-nav\" data-a=\"forward\" title=\"前进（Alt+→）\">→</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 36,
+        "line": 42,
         "sample": "<button class=\"br-nav\" data-a=\"reload\" title=\"刷新（Ctrl+R）\">⟳</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 37,
+        "line": 43,
         "sample": "<button class=\"br-nav\" data-a=\"home\" title=\"主页\">⌂</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 38,
+        "line": 44,
         "sample": "<input class=\"br-addr\" placeholder=\"输入网址，或关键词搜索（Enter 直达 / 搜索）\" spellcheck=\"false\" />"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 39,
+        "line": 45,
         "sample": "<button class=\"br-nav\" data-a=\"find\" title=\"页内查找（Ctrl+F）\">${iconHtml('🔍')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 40,
+        "line": 46,
         "sample": "<button class=\"br-nav\" data-a=\"bookmark\" title=\"收藏当前页（Ctrl+Shift+B）\">${iconHtml('⭐')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 41,
+        "line": 47,
         "sample": "<button class=\"br-nav\" data-a=\"newtab\" title=\"新标签（Ctrl+T）\">＋</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 44,
+        "line": 50,
         "sample": "<input class=\"br-find-input\" placeholder=\"页内查找…\" spellcheck=\"false\" />"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 46,
+        "line": 52,
         "sample": "<button class=\"br-nav\" data-f=\"prev\">↑</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 47,
+        "line": 53,
         "sample": "<button class=\"br-nav\" data-f=\"next\">↓</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 48,
+        "line": 54,
         "sample": "<button class=\"br-nav\" data-f=\"close\">✕</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 58,
+        "line": 64,
         "sample": "<button data-p=\"insert\" title=\"结果插入文档\">插入文档</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 59,
+        "line": 65,
         "sample": "<button data-p=\"selfcheck\" title=\"实例连通性自检\">自检</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 60,
+        "line": 66,
         "sample": "<button data-p=\"close\">✕</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 153,
+        "line": 159,
         "sample": "el.innerHTML = `<span class=\"br-tab-title\"></span><button class=\"br-tab-close\">✕</button>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 277,
+        "line": 293,
         "sample": "const tBtn = (v, label) => `<button class=\"tbtn${theme === v ? ' on' : ''}\" data-act=\"theme\" data-url=\"${v}\">${label}</button>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 319,
+        "line": 335,
         "sample": "<button class=\"tbtn\" data-act=\"gear\" title=\"主页设置\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 323,
+        "line": 339,
         "sample": "<input id=\"home-url\" placeholder=\"留空则使用内置主页\" value=\"${escapeAttr(ctl.customHome || '')}\" spellcheck=\"false\" />"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 325,
+        "line": 341,
         "sample": "<button data-act=\"set-home\">设为主页</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 326,
+        "line": 342,
         "sample": "<button class=\"ghost\" data-act=\"reset-home\">恢复内置</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 328,
+        "line": 344,
         "sample": "<div class=\"lbl\" style=\"margin-top:12px\">账号密码</div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 329,
+        "line": 345,
         "sample": "<div class=\"row\"><button data-act=\"pw\">${iconHtml('🔑')} 打开密码管理器</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 337,
+        "line": 353,
         "sample": "<input id=\"q\" autocomplete=\"off\" autofocus placeholder=\"输入关键词回车搜索，或输入网址直达…\" />"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 338,
+        "line": 354,
         "sample": "<button type=\"submit\">搜索</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 341,
+        "line": 357,
         "sample": "<h2>最近访问</h2><div class=\"grid\">${recent.length ? recent.map(h => `<span class=\"card-wrap\"><a class=\"card\" href=\"${escapeAttr(h.url)}\" title=\"${escapeAttr(h.url)}\">${escapeHtml(h.name || h.title)}</a><span class=\"card-acts\"><i data-act=\"rename-his\" data-url=\"${escapeAttr(h.url)}\">✎</i><i data-act=\"del-his\" data-url=\"${e"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 430,
+        "line": 446,
         "sample": "<button onclick=\"console.log('MAZZ_RETRY:1')\">重试</button>"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/browser/index.js",
-        "line": 556,
+        "line": 572,
         "sample": "case 'did-stop-loading':"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 679,
+        "line": 695,
         "sample": "<div class=\"set-row\"><label>名称</label><input id=\"bm-name\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(t.title)}\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 679,
+        "line": 695,
         "sample": "<div class=\"set-row\"><label>名称</label><input id=\"bm-name\" class=\"rb-input\" style=\"width:70%\" value=\"${escapeAttr(t.title)}\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 680,
+        "line": 696,
         "sample": "<div class=\"set-row\"><label>网址</label><span style=\"font-size:11.5px;color:var(--fg-dim);max-width:70%;overflow:hidden;text-overflow:ellipsis\">${escapeHtml(t.url)}</span></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 681,
+        "line": 697,
         "sample": "<div class=\"set-row\"><label>收藏夹</label><select id=\"bm-folder\" class=\"rb-select\">${folderOpts('default')}<option value=\"__new\">＋ 新建收藏夹…</option></select></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 682,
+        "line": 698,
         "sample": "<div class=\"set-row\" id=\"bm-newfold-row\" style=\"display:none\"><label>新收藏夹名</label><input id=\"bm-newfold\" class=\"rb-input\" style=\"width:70%\" placeholder=\"输入名称\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 682,
+        "line": 698,
         "sample": "<div class=\"set-row\" id=\"bm-newfold-row\" style=\"display:none\"><label>新收藏夹名</label><input id=\"bm-newfold\" class=\"rb-input\" style=\"width:70%\" placeholder=\"输入名称\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 683,
+        "line": 699,
         "sample": "<div class=\"set-row\"><label></label><button id=\"bm-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">收藏</button></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 683,
+        "line": 699,
         "sample": "<div class=\"set-row\"><label></label><button id=\"bm-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">收藏</button></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 719,
+        "line": 735,
         "sample": "<button data-a=\"rename\" title=\"重命名收藏夹\">✎</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 720,
+        "line": 736,
         "sample": "${f.id !== 'default' ? `<button data-a=\"delfolder\" title=\"删除收藏夹（条目移到默认）\">✕</button>` : ''}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 728,
+        "line": 744,
         "sample": "<button data-a=\"rename-item\" title=\"重命名\">✎</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 729,
+        "line": 745,
         "sample": "<button data-a=\"move\" title=\"移动到…\">⇢</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 730,
+        "line": 746,
         "sample": "<button data-a=\"del\" title=\"删除\">✕</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 737,
+        "line": 753,
         "sample": "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:8px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 738,
+        "line": 754,
         "sample": "<button id=\"bm-add-folder\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 新建收藏夹</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 738,
+        "line": 754,
         "sample": "<button id=\"bm-add-folder\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 新建收藏夹</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 739,
+        "line": 755,
         "sample": "<button id=\"bm-clear-history\" class=\"rb-btn\" style=\"flex-direction:row\">清空最近访问</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 739,
+        "line": 755,
         "sample": "<button id=\"bm-clear-history\" class=\"rb-btn\" style=\"flex-direction:row\">清空最近访问</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 741,
+        "line": 757,
         "sample": "<div style=\"max-height:55vh;overflow-y:auto\">${foldersHtml}</div>`;"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/browser/index.js",
-        "line": 812,
+        "line": 828,
         "sample": "ctl.panelBody.innerHTML = `<div class=\"br-loading\">正在搜索「${escapeHtml(query)}」…</div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 818,
+        "line": 834,
         "sample": "${res.selfcheck ? renderSelfcheck(res.selfcheck) : '<button class=\"rb-btn\" style=\"flex-direction:row\" id=\"br-selfcheck\">实例自检</button>'}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 818,
+        "line": 834,
         "sample": "${res.selfcheck ? renderSelfcheck(res.selfcheck) : '<button class=\"rb-btn\" style=\"flex-direction:row\" id=\"br-selfcheck\">实例自检</button>'}"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/browser/index.js",
-        "line": 824,
+        "line": 840,
         "sample": "ctl.panelBody.innerHTML = `<div class=\"br-loading\">「${escapeHtml(query)}」无结果</div>`;"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/browser/index.js",
-        "line": 874,
+        "line": 890,
         "sample": "ctl.panelBody.innerHTML = `<div class=\"br-loading\">${escapeHtml(msg)}</div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1159,
+        "line": 1175,
         "sample": "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1160,
+        "line": 1176,
         "sample": "<button id=\"pw-add\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 添加账号</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1160,
+        "line": 1176,
         "sample": "<button id=\"pw-add\" class=\"rb-btn\" style=\"flex-direction:row\">＋ 添加账号</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1161,
+        "line": 1177,
         "sample": "<span style=\"font-size:11.5px;color:#83817a\">${encAvail ? '🔒 系统级加密存储（safeStorage）' : '⚠ 系统加密不可用，密码以编码形式保存'}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1163,
+        "line": 1179,
         "sample": "<div id=\"pw-form\" style=\"display:none;border:1px solid var(--bd,#e0ded8);border-radius:8px;padding:10px 12px;margin-bottom:10px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1164,
+        "line": 1180,
         "sample": "<input id=\"pwf-id\" type=\"hidden\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1165,
+        "line": 1181,
         "sample": "<div style=\"display:grid;grid-template-columns:64px 1fr;gap:6px;align-items:center;font-size:12.5px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1166,
+        "line": 1182,
         "sample": "<label>站点</label><input id=\"pwf-site\" class=\"rb-input\" placeholder=\"如 zhihu.com\" spellcheck=\"false\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1167,
+        "line": 1183,
         "sample": "<label>用户名</label><input id=\"pwf-user\" class=\"rb-input\" spellcheck=\"false\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1168,
+        "line": 1184,
         "sample": "<label>密码</label><input id=\"pwf-pass\" class=\"rb-input\" type=\"password\" spellcheck=\"false\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1169,
+        "line": 1185,
         "sample": "<label>备注</label><input id=\"pwf-note\" class=\"rb-input\" spellcheck=\"false\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1171,
+        "line": 1187,
         "sample": "<div style=\"display:flex;gap:8px;margin-top:10px;justify-content:flex-end\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1172,
+        "line": 1188,
         "sample": "<button id=\"pwf-cancel\" class=\"rb-btn\" style=\"flex-direction:row\">取消</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1172,
+        "line": 1188,
         "sample": "<button id=\"pwf-cancel\" class=\"rb-btn\" style=\"flex-direction:row\">取消</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1173,
-        "sample": "<button id=\"pwf-save\" class=\"rb-btn\" style=\"flex-direction:row\">保存</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1173,
-        "sample": "<button id=\"pwf-save\" class=\"rb-btn\" style=\"flex-direction:row\">保存</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1176,
-        "sample": "<div style=\"max-height:46vh;overflow-y:auto\">"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1178,
-        "sample": "<div class=\"pw-item\" data-id=\"${escapeAttr(e.id)}\" style=\"${rowStyle}\">"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1179,
-        "sample": "<div style=\"flex:1;min-width:0\">"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1180,
-        "sample": "<div style=\"font-weight:600;font-size:13px\">${escapeHtml(e.site || '（未命名站点）')}</div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1181,
-        "sample": "<div style=\"font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1183,
-        "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1184,
-        "sample": "<button data-a=\"show\" style=\"${btnStyle}\" title=\"显示/隐藏\">👁</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1184,
-        "sample": "<button data-a=\"show\" style=\"${btnStyle}\" title=\"显示/隐藏\">👁</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1185,
-        "sample": "<button data-a=\"copy\" style=\"${btnStyle}\" title=\"复制密码\">📋</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1185,
-        "sample": "<button data-a=\"copy\" style=\"${btnStyle}\" title=\"复制密码\">📋</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1186,
-        "sample": "<button data-a=\"edit\" style=\"${btnStyle}\" title=\"编辑\">✎</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1186,
-        "sample": "<button data-a=\"edit\" style=\"${btnStyle}\" title=\"编辑\">✎</button>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1187,
-        "sample": "<button data-a=\"del\" style=\"${btnStyle}\" title=\"删除\">✕</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1187,
-        "sample": "<button data-a=\"del\" style=\"${btnStyle}\" title=\"删除\">✕</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
         "line": 1189,
+        "sample": "<button id=\"pwf-save\" class=\"rb-btn\" style=\"flex-direction:row\">保存</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1189,
+        "sample": "<button id=\"pwf-save\" class=\"rb-btn\" style=\"flex-direction:row\">保存</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1192,
+        "sample": "<div style=\"max-height:46vh;overflow-y:auto\">"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1194,
+        "sample": "<div class=\"pw-item\" data-id=\"${escapeAttr(e.id)}\" style=\"${rowStyle}\">"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1195,
+        "sample": "<div style=\"flex:1;min-width:0\">"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1196,
+        "sample": "<div style=\"font-weight:600;font-size:13px\">${escapeHtml(e.site || '（未命名站点）')}</div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1197,
+        "sample": "<div style=\"font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1199,
+        "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1200,
+        "sample": "<button data-a=\"show\" style=\"${btnStyle}\" title=\"显示/隐藏\">👁</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1200,
+        "sample": "<button data-a=\"show\" style=\"${btnStyle}\" title=\"显示/隐藏\">👁</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1201,
+        "sample": "<button data-a=\"copy\" style=\"${btnStyle}\" title=\"复制密码\">📋</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1201,
+        "sample": "<button data-a=\"copy\" style=\"${btnStyle}\" title=\"复制密码\">📋</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1202,
+        "sample": "<button data-a=\"edit\" style=\"${btnStyle}\" title=\"编辑\">✎</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1202,
+        "sample": "<button data-a=\"edit\" style=\"${btnStyle}\" title=\"编辑\">✎</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1203,
+        "sample": "<button data-a=\"del\" style=\"${btnStyle}\" title=\"删除\">✕</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1203,
+        "sample": "<button data-a=\"del\" style=\"${btnStyle}\" title=\"删除\">✕</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1205,
         "sample": ": '<div style=\"color:#83817a;font-size:12.5px;padding:18px 0;text-align:center\">还没有保存的账号——点「添加账号」开始</div>'}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1381,
+        "line": 1420,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.newTab\"><i class=\"ico\">＋</i><span>新标签</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1382,
+        "line": 1421,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.home\"><i class=\"ico\">⌂</i><span>主页</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1383,
+        "line": 1422,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.bookmark\"><i class=\"ico\">${iconHtml('☆')}</i><span>收藏</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1384,
+        "line": 1423,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.find\"><i class=\"ico\">${iconHtml('🔍')}</i><span>页内查找</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1387,
+        "line": 1426,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.clipToNote\"><i class=\"ico\">${iconHtml('✂')}</i><span>摘录到笔记</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1388,
+        "line": 1427,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.pageToLibrary\"><i class=\"ico\">${iconHtml('📥')}</i><span>网页剪藏</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1389,
+        "line": 1428,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.harvestAiChat\"><i class=\"ico\">☷</i><span>AI 对话整理</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1390,
+        "line": 1429,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.clipBookmarks\"><i class=\"ico\">⇊</i><span>批量剪藏</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1391,
+        "line": 1430,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.shareLocal\"><i class=\"ico\">⌁</i><span>局域网分享</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1392,
+        "line": 1431,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.manageBookmarks\"><i class=\"ico\">${iconHtml('📁')}</i><span>收藏管理</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1393,
+        "line": 1432,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.exportBookmarks\"><i class=\"ico\">${iconHtml('📑')}</i><span>导出收藏</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1394,
+        "line": 1433,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.bookmarksToContexts\"><i class=\"ico\">◫</i><span>转为上下文</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1397,
+        "line": 1436,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.selfcheck\"><i class=\"ico\">${iconHtml('⚡')}</i><span>实例自检</span></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/browser/index.js",
-        "line": 1490,
+        "line": 1529,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/browser/index.js",
-        "line": 1490,
+        "line": 1529,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
@@ -9274,504 +9274,504 @@
         "rule": "inline-css-text",
         "file": "renderer/shell/shell.js",
         "line": 440,
-        "sample": "overlay.style.cssText = `position:fixed;pointer-events:none;z-index:60;border-radius:6px;transition:all .08s ease`;"
+        "sample": "overlay.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60;border-radius:0;transition:all .08s ease';"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 820,
+        "line": 855,
         "sample": "<button class=\"w-card\" data-cmd=\"file.new\"><div class=\"t\">${iconHtml('＋')} ${t('新建文档')}</div><div class=\"d\">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 821,
+        "line": 856,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSheet\"><div class=\"t\">${iconHtml('📊')} ${t('新建表格')}</div><div class=\"d\">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 822,
+        "line": 857,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSlide\"><div class=\"t\">${iconHtml('📽')} ${t('新建演示')}</div><div class=\"d\">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 823,
+        "line": 858,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newBrowser\"><div class=\"t\">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class=\"d\">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 824,
+        "line": 859,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newCode\"><div class=\"t\">${iconHtml('💻')} ${t('新建代码')}</div><div class=\"d\">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 825,
+        "line": 860,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMath\"><div class=\"t\">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class=\"d\">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 826,
+        "line": 861,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newNotes\"><div class=\"t\">${iconHtml('📓')} ${t('笔记库')}</div><div class=\"d\">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 827,
+        "line": 862,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSearch\"><div class=\"t\">${iconHtml('🔎')} ${t('全局搜索')}</div><div class=\"d\">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 828,
+        "line": 863,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMindmap\"><div class=\"t\">${iconHtml('🧠')} ${t('思维导图')}</div><div class=\"d\">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 829,
+        "line": 864,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newDraw\"><div class=\"t\">${iconHtml('🎨')} ${t('画板')}</div><div class=\"d\">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 830,
+        "line": 865,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newLibrary\"><div class=\"t\">${iconHtml('📚')} ${t('书库')}</div><div class=\"d\">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 831,
+        "line": 866,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newText\"><div class=\"t\">${iconHtml('🄣')} ${t('新建纯文本')}</div><div class=\"d\">${t('即开即用')}<br>${t('TXT 读写')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 832,
+        "line": 867,
         "sample": "<button class=\"w-card\" data-cmd=\"file.open\"><div class=\"t\">${iconHtml('📂')} ${t('打开文件')}</div><div class=\"d\">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 833,
+        "line": 868,
         "sample": "<button class=\"w-card\" data-cmd=\"help.open\"><div class=\"t\">${iconHtml('❓')} ${t('使用指南')}</div><div class=\"d\">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 834,
+        "line": 869,
         "sample": "<button class=\"w-card\" data-cmd=\"app.openSettings\"><div class=\"t\">${iconHtml('⚙')} ${t('设置')}</div><div class=\"d\">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 836,
+        "line": 871,
         "sample": "<div style=\"margin-top:6px;font-size:11.5px\">${t('托盘常驻 Ctrl+Alt+M 唤起 · Ctrl+Alt+N 快速笔记')}</div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 957,
+        "line": 992,
         "sample": "btn.innerHTML = `<i class=\"ico\">${appIconHtml(app)}</i><span style=\"max-width:none\">${app.name}</span>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 988,
+        "line": 1023,
         "sample": "addBtn.innerHTML = `<i class=\"ico\">${iconHtml('✚')}</i><span style=\"max-width:none\">添加应用…</span>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 1539,
+        "line": 1574,
         "sample": "let inner = pm ? pm.innerHTML : `<pre style=\"white-space:pre-wrap\">${String(ctl?.getContent?.() || '').replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}</pre>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 1550,
+        "line": 1585,
         "sample": "pages = [`<div class=\"md-body\" style=\"font-size:12pt;line-height:1.8\">${inner}</div>`];"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3060,
+        "line": 3094,
         "sample": "<button>全部恢复</button><button class=\"ghost\">忽略</button>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3112,
+        "line": 3146,
         "sample": "<select id=\"s-lang\" class=\"rb-select\">${LANGUAGES.map(l => `<option value=\"${l.id}\">${l.name}</option>`).join('')}</select></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3114,
+        "line": 3148,
         "sample": "<select id=\"s-close\" class=\"rb-select\"><option value=\"ask\">每次询问</option><option value=\"tray\">最小化到托盘</option><option value=\"quit\">直接退出</option></select></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3116,
+        "line": 3150,
         "sample": "<select id=\"s-tsource\" class=\"rb-select\"><option value=\"system\">跟随系统</option><option value=\"light\">浅色</option><option value=\"dark\">深色</option></select></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3118,
+        "line": 3152,
         "sample": "<select id=\"s-theme\" class=\"rb-select\" style=\"max-width:56%\"></select>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3118,
+        "line": 3152,
         "sample": "<select id=\"s-theme\" class=\"rb-select\" style=\"max-width:56%\"></select>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3119,
+        "line": 3153,
         "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3119,
+        "line": 3153,
         "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3121,
+        "line": 3155,
         "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3121,
+        "line": 3155,
         "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3122,
+        "line": 3156,
         "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3122,
+        "line": 3156,
         "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3123,
+        "line": 3157,
         "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3123,
+        "line": 3157,
         "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3125,
+        "line": 3159,
         "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3125,
+        "line": 3159,
         "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3126,
+        "line": 3160,
         "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3128,
+        "line": 3162,
         "sample": "<select id=\"s-qn\" class=\"rb-select\"><option value=\"daily\">每日笔记</option><option value=\"inbox\">inbox.md</option></select></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3130,
+        "line": 3164,
         "sample": "<select id=\"s-spell\" class=\"rb-select\"><option value=\"on\">开启</option><option value=\"off\">关闭</option></select></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3132,
+        "line": 3166,
         "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3132,
+        "line": 3166,
         "sample": "<button id=\"s-clearRecent\" class=\"rb-btn\" style=\"flex-direction:row\">清空</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3134,
+        "line": 3168,
         "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3134,
+        "line": 3168,
         "sample": "<label style=\"font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" id=\"s-autolaunch\"> 开机自启动（默认关闭）</label>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3135,
+        "line": 3169,
         "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3135,
+        "line": 3169,
         "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3136,
+        "line": 3170,
         "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3138,
+        "line": 3172,
         "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3138,
+        "line": 3172,
         "sample": "<button id=\"s-explorer-reg\" class=\"rb-btn\" style=\"flex-direction:row\">注册右键「导入到 Mazz 工作区」</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3139,
+        "line": 3173,
         "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3139,
+        "line": 3173,
         "sample": "<button id=\"s-explorer-unreg\" class=\"rb-btn\" style=\"flex-direction:row\">取消注册</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3140,
+        "line": 3174,
         "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3141,
+        "line": 3175,
         "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3142,
+        "line": 3176,
         "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3142,
+        "line": 3176,
         "sample": "<div class=\"set-row\"><label>实例地址</label><input id=\"s-searx-url\" class=\"rb-input\" style=\"width:62%\" placeholder=\"https://你的实例\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3143,
+        "line": 3177,
         "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3143,
+        "line": 3177,
         "sample": "<div class=\"set-row\"><label>用户名</label><input id=\"s-searx-user\" class=\"rb-input\" style=\"width:62%\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3144,
+        "line": 3178,
         "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3144,
+        "line": 3178,
         "sample": "<div class=\"set-row\"><label>密码</label><input id=\"s-searx-pass\" class=\"rb-input\" style=\"width:62%\" type=\"password\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3145,
+        "line": 3179,
         "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3145,
+        "line": 3179,
         "sample": "<div class=\"set-row\"><label>TLS 指纹</label><input id=\"s-searx-pin\" class=\"rb-input\" style=\"width:62%\" placeholder=\"自签证书才填写 SHA-256\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3147,
+        "line": 3181,
         "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3147,
+        "line": 3181,
         "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3148,
+        "line": 3182,
         "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3149,
+        "line": 3183,
         "sample": "<div style=\"margin-top:14px;color:var(--fg-dim);font-size:11.5px;line-height:1.7\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3314,
+        "line": 3348,
         "sample": "<div style=\"margin-bottom:12px\"><div style=\"font-weight:600;margin-bottom:6px\">${g}</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3315,
+        "line": 3349,
         "sample": "${rows.map(r => `<div style=\"display:flex;justify-content:space-between;padding:2px 0;font-size:12.5px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3316,
+        "line": 3350,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3402,
+        "line": 3436,
         "sample": "mask.innerHTML = `<div class=\"mazz-palette\" style=\"padding:18px 20px;max-height:76vh;overflow:auto\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3403,
+        "line": 3437,
         "sample": "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:12px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3404,
+        "line": 3438,
         "sample": "<b style=\"font-size:15px\">${title}</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3405,
+        "line": 3439,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3405,
+        "line": 3439,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3421,
+        "line": 3455,
         "sample": "<div style=\"min-width:430px;max-width:600px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3423,
+        "line": 3457,
         "sample": "<div style=\"font-size:11.5px;color:var(--fg-dim);margin:10px 0 6px\">${g}</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3424,
+        "line": 3458,
         "sample": "<div style=\"display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:7px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3426,
+        "line": 3460,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3426,
+        "line": 3460,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3427,
+        "line": 3461,
         "sample": "<span style=\"color:var(--accent);font-weight:700\">.${t.ext}</span><span>${t.label.replace(/ *\\([^)]*\\)/g, '')}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3443,
+        "line": 3477,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3444,
+        "line": 3478,
         "sample": "<input id=\"im-input\" class=\"rb-input\" style=\"flex:1;padding:6px 8px\" value=\"${String(initial).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3444,
+        "line": 3478,
         "sample": "<input id=\"im-input\" class=\"rb-input\" style=\"flex:1;padding:6px 8px\" value=\"${String(initial).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]))}\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/shell/shell.js",
-        "line": 3445,
+        "line": 3479,
         "sample": "<button id=\"im-ok\" class=\"rb-btn\" style=\"flex-direction:row\">确定</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/shell/shell.js",
-        "line": 3445,
+        "line": 3479,
         "sample": "<button id=\"im-ok\" class=\"rb-btn\" style=\"flex-direction:row\">确定</button>"
       },
       {
@@ -13174,355 +13174,355 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 39,
+        "line": 45,
         "sample": "<button class=\"br-nav\" data-a=\"find\" title=\"页内查找（Ctrl+F）\">${iconHtml('🔍')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 39,
+        "line": 45,
         "sample": "<button class=\"br-nav\" data-a=\"find\" title=\"页内查找（Ctrl+F）\">${iconHtml('🔍')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 40,
+        "line": 46,
         "sample": "<button class=\"br-nav\" data-a=\"bookmark\" title=\"收藏当前页（Ctrl+Shift+B）\">${iconHtml('⭐')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 48,
+        "line": 54,
         "sample": "<button class=\"br-nav\" data-f=\"close\">✕</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 60,
+        "line": 66,
         "sample": "<button data-p=\"close\">✕</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 153,
+        "line": 159,
         "sample": "el.innerHTML = `<span class=\"br-tab-title\"></span><button class=\"br-tab-close\">✕</button>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 256,
+        "line": 272,
         "sample": "/** 主页 HTML（主题变量化：明亮/黑暗/跟随系统 + ⚙ 设置面板） */"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 264,
+        "line": 280,
         "sample": "return `<h2>${iconHtml('📁')} ${escapeHtml(f.name)}${items.length ? '' : ' <small>（空）</small>'}</h2><div class=\"grid\">${"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 264,
+        "line": 280,
         "sample": "return `<h2>${iconHtml('📁')} ${escapeHtml(f.name)}${items.length ? '' : ' <small>（空）</small>'}</h2><div class=\"grid\">${"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 265,
+        "line": 281,
         "sample": "items.map(b => `<span class=\"card-wrap\"><a class=\"card\" href=\"${escapeAttr(b.url)}\" title=\"${escapeAttr(b.url)}\">${escapeHtml(b.name || b.title)}</a><span class=\"card-acts\"><i data-act=\"rename\" data-url=\"${escapeAttr(b.url)}\">✎</i><i data-act=\"del-bm\" data-url=\"${escapeAttr(b.url)}\">✕</i></span></span>`).join('')"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 318,
+        "line": 334,
         "sample": "${tBtn('light', iconHtml('☀') + ' 明亮')}${tBtn('dark', iconHtml('🌙') + ' 黑暗')}${tBtn('system', iconHtml('◐') + ' 跟随系统')}"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 318,
+        "line": 334,
         "sample": "${tBtn('light', iconHtml('☀') + ' 明亮')}${tBtn('dark', iconHtml('🌙') + ' 黑暗')}${tBtn('system', iconHtml('◐') + ' 跟随系统')}"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 319,
+        "line": 335,
         "sample": "<button class=\"tbtn\" data-act=\"gear\" title=\"主页设置\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 319,
+        "line": 335,
         "sample": "<button class=\"tbtn\" data-act=\"gear\" title=\"主页设置\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 329,
+        "line": 345,
         "sample": "<div class=\"row\"><button data-act=\"pw\">${iconHtml('🔑')} 打开密码管理器</button></div>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 329,
+        "line": 345,
         "sample": "<div class=\"row\"><button data-act=\"pw\">${iconHtml('🔑')} 打开密码管理器</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 341,
+        "line": 357,
         "sample": "<h2>最近访问</h2><div class=\"grid\">${recent.length ? recent.map(h => `<span class=\"card-wrap\"><a class=\"card\" href=\"${escapeAttr(h.url)}\" title=\"${escapeAttr(h.url)}\">${escapeHtml(h.name || h.title)}</a><span class=\"card-acts\"><i data-act=\"rename-his\" data-url=\"${escapeAttr(h.url)}\">✎</i><i data-act=\"del-his\" data-url=\"${e"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 426,
+        "line": 442,
         "sample": "<h2>😕 页面加载失败</h2>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 717,
+        "line": 733,
         "sample": "<span class=\"bm-fold-name\">📁 ${escapeHtml(f.name)} <small>(${items.length})</small></span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 719,
+        "line": 735,
         "sample": "<button data-a=\"rename\" title=\"重命名收藏夹\">✎</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 720,
+        "line": 736,
         "sample": "${f.id !== 'default' ? `<button data-a=\"delfolder\" title=\"删除收藏夹（条目移到默认）\">✕</button>` : ''}"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 728,
+        "line": 744,
         "sample": "<button data-a=\"rename-item\" title=\"重命名\">✎</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 730,
+        "line": 746,
         "sample": "<button data-a=\"del\" title=\"删除\">✕</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 855,
+        "line": 871,
         "sample": "`<div class=\"${c.pass ? 'pass' : 'fail'}\">${c.pass ? '✓' : '✗'} ${escapeHtml(c.name)}：${escapeHtml(c.detail)}</div>`).join('')}</div>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1161,
+        "line": 1177,
         "sample": "<span style=\"font-size:11.5px;color:#83817a\">${encAvail ? '🔒 系统级加密存储（safeStorage）' : '⚠ 系统加密不可用，密码以编码形式保存'}</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1184,
+        "line": 1200,
         "sample": "<button data-a=\"show\" style=\"${btnStyle}\" title=\"显示/隐藏\">👁</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1185,
+        "line": 1201,
         "sample": "<button data-a=\"copy\" style=\"${btnStyle}\" title=\"复制密码\">📋</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1186,
+        "line": 1202,
         "sample": "<button data-a=\"edit\" style=\"${btnStyle}\" title=\"编辑\">✎</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1187,
+        "line": 1203,
         "sample": "<button data-a=\"del\" style=\"${btnStyle}\" title=\"删除\">✕</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1304,
+        "line": 1325,
         "sample": "icon: '🌐',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
-        "line": 1304,
+        "line": 1325,
         "sample": "icon: '🌐',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1383,
+        "line": 1422,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.bookmark\"><i class=\"ico\">${iconHtml('☆')}</i><span>收藏</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 1383,
+        "line": 1422,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.bookmark\"><i class=\"ico\">${iconHtml('☆')}</i><span>收藏</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1384,
+        "line": 1423,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.find\"><i class=\"ico\">${iconHtml('🔍')}</i><span>页内查找</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 1384,
+        "line": 1423,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.find\"><i class=\"ico\">${iconHtml('🔍')}</i><span>页内查找</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1387,
+        "line": 1426,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.clipToNote\"><i class=\"ico\">${iconHtml('✂')}</i><span>摘录到笔记</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 1387,
+        "line": 1426,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.clipToNote\"><i class=\"ico\">${iconHtml('✂')}</i><span>摘录到笔记</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1388,
+        "line": 1427,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.pageToLibrary\"><i class=\"ico\">${iconHtml('📥')}</i><span>网页剪藏</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 1388,
+        "line": 1427,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.pageToLibrary\"><i class=\"ico\">${iconHtml('📥')}</i><span>网页剪藏</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1389,
+        "line": 1428,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.harvestAiChat\"><i class=\"ico\">☷</i><span>AI 对话整理</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1392,
+        "line": 1431,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.manageBookmarks\"><i class=\"ico\">${iconHtml('📁')}</i><span>收藏管理</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 1392,
+        "line": 1431,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.manageBookmarks\"><i class=\"ico\">${iconHtml('📁')}</i><span>收藏管理</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1393,
+        "line": 1432,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.exportBookmarks\"><i class=\"ico\">${iconHtml('📑')}</i><span>导出收藏</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 1393,
+        "line": 1432,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.exportBookmarks\"><i class=\"ico\">${iconHtml('📑')}</i><span>导出收藏</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1397,
+        "line": 1436,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.selfcheck\"><i class=\"ico\">${iconHtml('⚡')}</i><span>实例自检</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/browser/index.js",
-        "line": 1397,
+        "line": 1436,
         "sample": "<button class=\"rb-btn\" data-command=\"browser.selfcheck\"><i class=\"ico\">${iconHtml('⚡')}</i><span>实例自检</span></button>"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
-        "line": 1407,
+        "line": 1446,
         "sample": "{ id: 'browser.newTab', title: '新建浏览器标签', icon: '＋', group: '浏览器',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1423,
+        "line": 1462,
         "sample": "{ id: 'browser.clipToNote', title: '选中内容摘录到笔记（含 URL/标题/时间戳）', icon: '✂', group: '桥接',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
-        "line": 1423,
+        "line": 1462,
         "sample": "{ id: 'browser.clipToNote', title: '选中内容摘录到笔记（含 URL/标题/时间戳）', icon: '✂', group: '桥接',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1435,
+        "line": 1474,
         "sample": "{ id: 'browser.pageToLibrary', title: '网页剪藏（正文 → 书库/网页剪藏）', icon: '📥', group: '桥接',"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1435,
-        "sample": "{ id: 'browser.pageToLibrary', title: '网页剪藏（正文 → 书库/网页剪藏）', icon: '📥', group: '桥接',"
-      },
-      {
-        "rule": "emoji-or-symbol-literal",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1445,
-        "sample": "{ id: 'browser.harvestAiChat', title: 'AI 对话整理（全量采集、导出与回喂）', icon: '☷', group: '桥接',"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1445,
-        "sample": "{ id: 'browser.harvestAiChat', title: 'AI 对话整理（全量采集、导出与回喂）', icon: '☷', group: '桥接',"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/modules/browser/index.js",
-        "line": 1458,
-        "sample": "{ id: 'browser.clipBookmarks', title: '批量剪藏全部收藏（严格 2 并发）', icon: '⇊', group: '桥接',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
         "line": 1474,
+        "sample": "{ id: 'browser.pageToLibrary', title: '网页剪藏（正文 → 书库/网页剪藏）', icon: '📥', group: '桥接',"
+      },
+      {
+        "rule": "emoji-or-symbol-literal",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1484,
+        "sample": "{ id: 'browser.harvestAiChat', title: 'AI 对话整理（全量采集、导出与回喂）', icon: '☷', group: '桥接',"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1484,
+        "sample": "{ id: 'browser.harvestAiChat', title: 'AI 对话整理（全量采集、导出与回喂）', icon: '☷', group: '桥接',"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1497,
+        "sample": "{ id: 'browser.clipBookmarks', title: '批量剪藏全部收藏（严格 2 并发）', icon: '⇊', group: '桥接',"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/modules/browser/index.js",
+        "line": 1513,
         "sample": "{ id: 'browser.shareLocal', title: '当前网页生成 10 分钟局域网链接', icon: '⌁', group: '桥接',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1495,
+        "line": 1534,
         "sample": "{ id: 'browser.manageBookmarks', title: '收藏管理', icon: '📁', group: '浏览器',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
-        "line": 1495,
+        "line": 1534,
         "sample": "{ id: 'browser.manageBookmarks', title: '收藏管理', icon: '📁', group: '浏览器',"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/browser/index.js",
-        "line": 1527,
+        "line": 1566,
         "sample": "{ id: 'browser.devtools', title: '开发者工具（F12）', icon: '🔧', group: '浏览器', when: \"module=='browser'\","
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/browser/index.js",
-        "line": 1527,
+        "line": 1566,
         "sample": "{ id: 'browser.devtools', title: '开发者工具（F12）', icon: '🔧', group: '浏览器', when: \"module=='browser'\","
       },
       {
@@ -17638,919 +17638,919 @@
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 820,
+        "line": 855,
         "sample": "<button class=\"w-card\" data-cmd=\"file.new\"><div class=\"t\">${iconHtml('＋')} ${t('新建文档')}</div><div class=\"d\">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 821,
+        "line": 856,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSheet\"><div class=\"t\">${iconHtml('📊')} ${t('新建表格')}</div><div class=\"d\">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 821,
+        "line": 856,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSheet\"><div class=\"t\">${iconHtml('📊')} ${t('新建表格')}</div><div class=\"d\">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 822,
+        "line": 857,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSlide\"><div class=\"t\">${iconHtml('📽')} ${t('新建演示')}</div><div class=\"d\">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 822,
+        "line": 857,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSlide\"><div class=\"t\">${iconHtml('📽')} ${t('新建演示')}</div><div class=\"d\">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 823,
+        "line": 858,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newBrowser\"><div class=\"t\">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class=\"d\">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 823,
+        "line": 858,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newBrowser\"><div class=\"t\">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class=\"d\">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 824,
+        "line": 859,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newCode\"><div class=\"t\">${iconHtml('💻')} ${t('新建代码')}</div><div class=\"d\">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 824,
+        "line": 859,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newCode\"><div class=\"t\">${iconHtml('💻')} ${t('新建代码')}</div><div class=\"d\">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 825,
+        "line": 860,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMath\"><div class=\"t\">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class=\"d\">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 825,
+        "line": 860,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMath\"><div class=\"t\">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class=\"d\">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 826,
+        "line": 861,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newNotes\"><div class=\"t\">${iconHtml('📓')} ${t('笔记库')}</div><div class=\"d\">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 826,
+        "line": 861,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newNotes\"><div class=\"t\">${iconHtml('📓')} ${t('笔记库')}</div><div class=\"d\">${t('[[双链]] · 反向链接')}<br>${t('图谱 · 每日笔记')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 827,
+        "line": 862,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSearch\"><div class=\"t\">${iconHtml('🔎')} ${t('全局搜索')}</div><div class=\"d\">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 827,
+        "line": 862,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newSearch\"><div class=\"t\">${iconHtml('🔎')} ${t('全局搜索')}</div><div class=\"d\">${t('全文索引 · 正则')}<br>${t('类型过滤 · 直达命中')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 828,
+        "line": 863,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMindmap\"><div class=\"t\">${iconHtml('🧠')} ${t('思维导图')}</div><div class=\"d\">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 828,
+        "line": 863,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newMindmap\"><div class=\"t\">${iconHtml('🧠')} ${t('思维导图')}</div><div class=\"d\">${t('Tab 快建节点')}<br>${t('拖拽重排 · PNG/大纲导出')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 829,
+        "line": 864,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newDraw\"><div class=\"t\">${iconHtml('🎨')} ${t('画板')}</div><div class=\"d\">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 829,
+        "line": 864,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newDraw\"><div class=\"t\">${iconHtml('🎨')} ${t('画板')}</div><div class=\"d\">${t('压感矢量笔 · 图层')}<br>${t('帧/洋葱皮 · PNG 序列')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 830,
+        "line": 865,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newLibrary\"><div class=\"t\">${iconHtml('📚')} ${t('书库')}</div><div class=\"d\">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 830,
+        "line": 865,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newLibrary\"><div class=\"t\">${iconHtml('📚')} ${t('书库')}</div><div class=\"d\">${t('epub 电子书 · cbz 漫画')}<br>${t('进度记忆 · 导出笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 831,
+        "line": 866,
         "sample": "<button class=\"w-card\" data-cmd=\"file.newText\"><div class=\"t\">${iconHtml('🄣')} ${t('新建纯文本')}</div><div class=\"d\">${t('即开即用')}<br>${t('TXT 读写')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 832,
+        "line": 867,
         "sample": "<button class=\"w-card\" data-cmd=\"file.open\"><div class=\"t\">${iconHtml('📂')} ${t('打开文件')}</div><div class=\"d\">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 832,
+        "line": 867,
         "sample": "<button class=\"w-card\" data-cmd=\"file.open\"><div class=\"t\">${iconHtml('📂')} ${t('打开文件')}</div><div class=\"d\">.md / .txt / .csv / .xlsx<br>${t('双击关联直达')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 833,
+        "line": 868,
         "sample": "<button class=\"w-card\" data-cmd=\"help.open\"><div class=\"t\">${iconHtml('❓')} ${t('使用指南')}</div><div class=\"d\">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 833,
+        "line": 868,
         "sample": "<button class=\"w-card\" data-cmd=\"help.open\"><div class=\"t\">${iconHtml('❓')} ${t('使用指南')}</div><div class=\"d\">${t('喂饭级帮助文档')}<br>${t('功能全解 · F1 直达')}</div></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 834,
+        "line": 869,
         "sample": "<button class=\"w-card\" data-cmd=\"app.openSettings\"><div class=\"t\">${iconHtml('⚙')} ${t('设置')}</div><div class=\"d\">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 834,
+        "line": 869,
         "sample": "<button class=\"w-card\" data-cmd=\"app.openSettings\"><div class=\"t\">${iconHtml('⚙')} ${t('设置')}</div><div class=\"d\">${t('主题 / 关闭行为')}<br>${t('拼写 / 快捷笔记')}</div></button>"
       },
       {
         "rule": "icon-registry",
         "file": "renderer/shell/shell.js",
-        "line": 855,
+        "line": 890,
         "sample": "iconId: tab?.iconId || inst?.def?.iconId || moduleIconId(inst?.name || tab?.moduleId),"
       },
       {
         "rule": "icon-registry",
         "file": "renderer/shell/shell.js",
-        "line": 867,
+        "line": 902,
         "sample": "const iconId = modules.get(moduleId)?.iconId || moduleIconId(moduleId);"
       },
       {
         "rule": "icon-registry",
         "file": "renderer/shell/shell.js",
-        "line": 868,
+        "line": 903,
         "sample": "const tab = this.tabs.add({ title, moduleId, iconId, filePath });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 931,
+        "line": 966,
         "sample": "btn.innerHTML = `<i class=\"ico\">${iconHtml(cmd.icon || '⚡')}</i><span>${cmd.title}</span>`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 931,
+        "line": 966,
         "sample": "btn.innerHTML = `<i class=\"ico\">${iconHtml(cmd.icon || '⚡')}</i><span>${cmd.title}</span>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 988,
+        "line": 1023,
         "sample": "addBtn.innerHTML = `<i class=\"ico\">${iconHtml('✚')}</i><span style=\"max-width:none\">添加应用…</span>`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 988,
+        "line": 1023,
         "sample": "addBtn.innerHTML = `<i class=\"ico\">${iconHtml('✚')}</i><span style=\"max-width:none\">添加应用…</span>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1261,
+        "line": 1296,
         "sample": "// 先定位所属窗格（非激活窗格的 ✕ 也能正常关闭并触发收缩）"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 1301,
+        "line": 1336,
         "sample": "this.statusbar.set(`${inst.def.icon ? iconHtml(inst.def.icon) + ' ' : ''}${inst.def.displayName}`,"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1401,
+        "line": 1436,
         "sample": "R('file.new', { title: '新建文档', icon: '＋', group: '文件', agent: { undo: { command: 'file.closeTab', args: {} } }, run: () => this.openTab('markdown', { title: '未命名.md', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1402,
+        "line": 1437,
         "sample": "R('file.newText', { title: '新建纯文本', icon: '🄣', group: '文件', agent: { undo: { command: 'file.closeTab', args: {} } }, run: () => this.openTab('text', { title: '未命名.txt', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1403,
+        "line": 1438,
         "sample": "R('file.newSheet', { title: '新建表格', icon: '📊', group: '文件', run: () => this.openTab('sheet', { title: '未命名.mazzsheet', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1403,
+        "line": 1438,
         "sample": "R('file.newSheet', { title: '新建表格', icon: '📊', group: '文件', run: () => this.openTab('sheet', { title: '未命名.mazzsheet', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1404,
+        "line": 1439,
         "sample": "R('file.newSlide', { title: '新建演示', icon: '📽', group: '文件', run: () => this.openTab('slide', { title: '未命名.mazzslide', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1404,
+        "line": 1439,
         "sample": "R('file.newSlide', { title: '新建演示', icon: '📽', group: '文件', run: () => this.openTab('slide', { title: '未命名.mazzslide', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1414,
+        "line": 1449,
         "sample": "R('archive.view', { title: '查看压缩包内容', icon: '📦', group: '压缩包', when: 'treeArchive', run: ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1414,
+        "line": 1449,
         "sample": "R('archive.view', { title: '查看压缩包内容', icon: '📦', group: '压缩包', when: 'treeArchive', run: ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1420,
+        "line": 1455,
         "sample": "R('archive.openPanel', { title: '压缩包面板', icon: '📦', group: '压缩包', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1420,
+        "line": 1455,
         "sample": "R('archive.openPanel', { title: '压缩包面板', icon: '📦', group: '压缩包', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1426,
+        "line": 1461,
         "sample": "R('archive.extractHere', { title: '解压缩到此处', icon: '📂', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1426,
+        "line": 1461,
         "sample": "R('archive.extractHere', { title: '解压缩到此处', icon: '📂', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1434,
+        "line": 1469,
         "sample": "R('archive.extractSub', { title: '解压缩到「包名」子文件夹', icon: '🗀', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1434,
+        "line": 1469,
         "sample": "R('archive.extractSub', { title: '解压缩到「包名」子文件夹', icon: '🗀', group: '压缩包', when: 'treeArchive', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1443,
+        "line": 1478,
         "sample": "R('archive.pack', { title: '压缩为 zip…', icon: '🗜', group: '压缩包', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1443,
+        "line": 1478,
         "sample": "R('archive.pack', { title: '压缩为 zip…', icon: '🗜', group: '压缩包', run: async ({ path: p } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1458,
+        "line": 1493,
         "sample": "R('file.newBrowser', { title: '打开浏览器', icon: '🌐', group: '文件', run: () => this.openTab('browser', { title: '隐私浏览器', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1458,
+        "line": 1493,
         "sample": "R('file.newBrowser', { title: '打开浏览器', icon: '🌐', group: '文件', run: () => this.openTab('browser', { title: '隐私浏览器', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1459,
+        "line": 1494,
         "sample": "R('file.newCode', { title: '新建代码文件', icon: '💻', group: '文件', run: () => this.openTab('code', { title: '未命名.js', content: CODE_SAMPLE }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1459,
+        "line": 1494,
         "sample": "R('file.newCode', { title: '新建代码文件', icon: '💻', group: '文件', run: () => this.openTab('code', { title: '未命名.js', content: CODE_SAMPLE }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1460,
+        "line": 1495,
         "sample": "R('file.newMath', { title: '打开计算器', icon: '🧮', group: '文件', run: () => this.openTab('math', { title: '计算 REPL', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1460,
+        "line": 1495,
         "sample": "R('file.newMath', { title: '打开计算器', icon: '🧮', group: '文件', run: () => this.openTab('math', { title: '计算 REPL', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1461,
+        "line": 1496,
         "sample": "R('file.newNotes', { title: '打开笔记库', icon: '📓', group: '文件', run: () => this.openTab('notes', { title: '笔记', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1461,
+        "line": 1496,
         "sample": "R('file.newNotes', { title: '打开笔记库', icon: '📓', group: '文件', run: () => this.openTab('notes', { title: '笔记', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1462,
+        "line": 1497,
         "sample": "R('file.newSearch', { title: '全局搜索', icon: '🔎', group: '文件', run: () => this.openTab('search', { title: '全局搜索', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1462,
+        "line": 1497,
         "sample": "R('file.newSearch', { title: '全局搜索', icon: '🔎', group: '文件', run: () => this.openTab('search', { title: '全局搜索', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1463,
+        "line": 1498,
         "sample": "R('file.newMindmap', { title: '新建思维导图', icon: '🧠', group: '文件', run: () => this.openTab('mindmap', { title: '未命名.mindmap', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1463,
+        "line": 1498,
         "sample": "R('file.newMindmap', { title: '新建思维导图', icon: '🧠', group: '文件', run: () => this.openTab('mindmap', { title: '未命名.mindmap', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1464,
+        "line": 1499,
         "sample": "R('file.newViewer', { title: '新建播放器（无视频启动）', icon: '🎬', group: '文件', run: () => this.openTab('viewer', { title: '播放器', content: '' }) }); // W44：裸播放器起手——侧栏三源选源即播"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1464,
+        "line": 1499,
         "sample": "R('file.newViewer', { title: '新建播放器（无视频启动）', icon: '🎬', group: '文件', run: () => this.openTab('viewer', { title: '播放器', content: '' }) }); // W44：裸播放器起手——侧栏三源选源即播"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1465,
+        "line": 1500,
         "sample": "R('file.newDraw', { title: '新建画板', icon: '🎨', group: '文件', run: () => this.openTab('draw', { title: '未命名.mazzdraw', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1465,
+        "line": 1500,
         "sample": "R('file.newDraw', { title: '新建画板', icon: '🎨', group: '文件', run: () => this.openTab('draw', { title: '未命名.mazzdraw', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1466,
+        "line": 1501,
         "sample": "R('file.newLibrary', { title: '打开书库', icon: '📚', group: '文件', run: () => this.openTab('library', { title: '书库', content: '' }) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1466,
+        "line": 1501,
         "sample": "R('file.newLibrary', { title: '打开书库', icon: '📚', group: '文件', run: () => this.openTab('library', { title: '书库', content: '' }) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1468,
+        "line": 1503,
         "sample": "title: '打开文件…', icon: '📂', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1468,
+        "line": 1503,
         "sample": "title: '打开文件…', icon: '📂', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1475,
+        "line": 1510,
         "sample": "title: '查看器预览…（图片/PDF/音视频）', icon: '🖼', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1475,
+        "line": 1510,
         "sample": "title: '查看器预览…（图片/PDF/音视频）', icon: '🖼', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1486,
+        "line": 1521,
         "sample": "title: '打开播放器…（音视频）', icon: '🎬', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1486,
+        "line": 1521,
         "sample": "title: '打开播放器…（音视频）', icon: '🎬', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1494,
+        "line": 1529,
         "sample": "title: '用系统默认程序打开…', icon: '🚀', group: '文件', when: 'hasWorkspace || electron', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1494,
+        "line": 1529,
         "sample": "title: '用系统默认程序打开…', icon: '🚀', group: '文件', when: 'hasWorkspace || electron', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1502,
+        "line": 1537,
         "sample": "R('file.save', { title: '保存', icon: '💾', group: '文件', when: 'hasTabs', run: () => this.tabs.active && this.saveTab(this.tabs.active) });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1502,
+        "line": 1537,
         "sample": "R('file.save', { title: '保存', icon: '💾', group: '文件', when: 'hasTabs', run: () => this.tabs.active && this.saveTab(this.tabs.active) });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1505,
+        "line": 1540,
         "sample": "R('file.print', { title: '打印…', icon: '🖨', group: '文件', when: 'hasTabs', run: () => window.mazz.invoke('print:print') });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1505,
+        "line": 1540,
         "sample": "R('file.print', { title: '打印…', icon: '🖨', group: '文件', when: 'hasTabs', run: () => window.mazz.invoke('print:print') });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1567,
+        "line": 1602,
         "sample": "title: '发送到工作软件…', icon: '📤', group: '文件', when: 'hasTabs', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1567,
+        "line": 1602,
         "sample": "title: '发送到工作软件…', icon: '📤', group: '文件', when: 'hasTabs', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1573,
+        "line": 1608,
         "sample": "title: '导入到工作区…', icon: '📥', group: '文件', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1573,
+        "line": 1608,
         "sample": "title: '导入到工作区…', icon: '📥', group: '文件', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1579,
+        "line": 1614,
         "sample": "title: '打印预览…（表格）', icon: '🖨', group: '输出', when: \"module=='sheet'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1579,
+        "line": 1614,
         "sample": "title: '打印预览…（表格）', icon: '🖨', group: '输出', when: \"module=='sheet'\", run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1588,
+        "line": 1623,
         "sample": "title: '打印预览…（演示）', icon: '🖨', group: '输出', when: \"module=='slide'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1588,
+        "line": 1623,
         "sample": "title: '打印预览…（演示）', icon: '🖨', group: '输出', when: \"module=='slide'\", run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1597,
+        "line": 1632,
         "sample": "title: '提取标题结构为思维导图', icon: '🧠', group: '桥接', when: \"module=='markdown'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1597,
+        "line": 1632,
         "sample": "title: '提取标题结构为思维导图', icon: '🧠', group: '桥接', when: \"module=='markdown'\", run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1622,
+        "line": 1657,
         "sample": "title: '全局内录（窗口/混音/变速）…', icon: '⏺', group: '工具', run: () => this.openScreenRecorderDialog(),"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1625,
+        "line": 1660,
         "sample": "title: '重新扫描已安装软件（外部打开列表）', icon: '🔄', group: '工具', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1625,
+        "line": 1660,
         "sample": "title: '重新扫描已安装软件（外部打开列表）', icon: '🔄', group: '工具', run: async () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1630,
+        "line": 1665,
         "sample": "R('file.quickOpen', { title: 'Quick Switcher（文件/命令/最近/全文）', icon: '⚡', group: '文件', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1630,
+        "line": 1665,
         "sample": "R('file.quickOpen', { title: 'Quick Switcher（文件/命令/最近/全文）', icon: '⚡', group: '文件', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1639,
+        "line": 1674,
         "sample": "R('factory.feedActiveAsset', { title: '喂给智能创作（仅加入材料）', icon: '↥', group: '智能创作', run: async ({ path: suppliedPath } = {}) => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1645,
+        "line": 1680,
         "sample": "R('factory.copyMantra', { title: '新建立项并复制模板母版', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1645,
+        "line": 1680,
         "sample": "R('factory.copyMantra', { title: '新建立项并复制模板母版', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1646,
+        "line": 1681,
         "sample": "R('factory.generate', { title: '新建立项并开始创作', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1646,
+        "line": 1681,
         "sample": "R('factory.generate', { title: '新建立项并开始创作', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1647,
+        "line": 1682,
         "sample": "R('factory.runAll', { title: '全部启动创作任务', icon: '▶', group: '智能创作', run: () => this.sideDock?.factoryPanel?.runAllTasks() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1648,
+        "line": 1683,
         "sample": "R('factory.newGenre', { title: '新建创作模板', icon: '✚', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openGenreEditor() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1648,
+        "line": 1683,
         "sample": "R('factory.newGenre', { title: '新建创作模板', icon: '✚', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openGenreEditor() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1649,
+        "line": 1684,
         "sample": "R('factory.provider', { title: 'AI 服务设置（智能创作）', icon: '⚙', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProviderDialog() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1649,
+        "line": 1684,
         "sample": "R('factory.provider', { title: 'AI 服务设置（智能创作）', icon: '⚙', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProviderDialog() });"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/shell/shell.js",
-        "line": 1673,
-        "sample": "R('view.toggleMemoryMonitor', { title: '切换内存与资源监控', icon: '◫', group: '视图', run: () => {"
-      },
-      {
-        "rule": "emoji-or-symbol-literal",
-        "file": "renderer/shell/shell.js",
-        "line": 1679,
-        "sample": "title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/shell/shell.js",
-        "line": 1679,
-        "sample": "title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/shell/shell.js",
-        "line": 1692,
-        "sample": "title: '批注清屏', icon: '⌫', group: '工具', run: async () => {"
-      },
-      {
-        "rule": "emoji-or-symbol-literal",
-        "file": "renderer/shell/shell.js",
-        "line": 1699,
-        "sample": "title: '轮换主题', icon: '🎨', group: '视图', run: async () => {"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/shell/shell.js",
-        "line": 1699,
-        "sample": "title: '轮换主题', icon: '🎨', group: '视图', run: async () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
         "line": 1708,
+        "sample": "R('view.toggleMemoryMonitor', { title: '切换内存与资源监控', icon: '◫', group: '视图', run: () => {"
+      },
+      {
+        "rule": "emoji-or-symbol-literal",
+        "file": "renderer/shell/shell.js",
+        "line": 1714,
+        "sample": "title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/shell/shell.js",
+        "line": 1714,
+        "sample": "title: '全局批注（悬浮手写外套）', icon: '✍', group: '工具', run: async () => {"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/shell/shell.js",
+        "line": 1727,
+        "sample": "title: '批注清屏', icon: '⌫', group: '工具', run: async () => {"
+      },
+      {
+        "rule": "emoji-or-symbol-literal",
+        "file": "renderer/shell/shell.js",
+        "line": 1734,
+        "sample": "title: '轮换主题', icon: '🎨', group: '视图', run: async () => {"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/shell/shell.js",
+        "line": 1734,
+        "sample": "title: '轮换主题', icon: '🎨', group: '视图', run: async () => {"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/shell/shell.js",
+        "line": 1743,
         "sample": "R('view.splitRight', { title: '向右分屏', icon: '◫', group: '视图', run: () => this.splitRight() });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1709,
+        "line": 1744,
         "sample": "R('view.splitDown', { title: '向下分屏', icon: '⬒', group: '视图', run: () => this.splitDown() });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1735,
+        "line": 1770,
         "sample": "title: '移到已有外部窗格…', icon: '🪟', group: '标签', when: \"hasTabs && windowRole!='child'\", run: async () => {"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/shell/shell.js",
-        "line": 1735,
-        "sample": "title: '移到已有外部窗格…', icon: '🪟', group: '标签', when: \"hasTabs && windowRole!='child'\", run: async () => {"
-      },
-      {
-        "rule": "emoji-or-symbol-literal",
-        "file": "renderer/shell/shell.js",
-        "line": 1749,
-        "sample": "R('tab.moveToNewWindow', { title: '移到新窗口', icon: '🗔', group: '标签', when: 'hasTabs',"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/shell/shell.js",
-        "line": 1749,
-        "sample": "R('tab.moveToNewWindow', { title: '移到新窗口', icon: '🗔', group: '标签', when: 'hasTabs',"
-      },
-      {
-        "rule": "icon-metadata",
-        "file": "renderer/shell/shell.js",
-        "line": 1752,
-        "sample": "R('tab.moveToMainWindow', { title: '移回主窗口', icon: '⬅', group: '标签', when: \"windowRole=='child' && hasTabs\","
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
         "line": 1770,
+        "sample": "title: '移到已有外部窗格…', icon: '🪟', group: '标签', when: \"hasTabs && windowRole!='child'\", run: async () => {"
+      },
+      {
+        "rule": "emoji-or-symbol-literal",
+        "file": "renderer/shell/shell.js",
+        "line": 1784,
+        "sample": "R('tab.moveToNewWindow', { title: '移到新窗口', icon: '🗔', group: '标签', when: 'hasTabs',"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/shell/shell.js",
+        "line": 1784,
+        "sample": "R('tab.moveToNewWindow', { title: '移到新窗口', icon: '🗔', group: '标签', when: 'hasTabs',"
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/shell/shell.js",
+        "line": 1787,
+        "sample": "R('tab.moveToMainWindow', { title: '移回主窗口', icon: '⬅', group: '标签', when: \"windowRole=='child' && hasTabs\","
+      },
+      {
+        "rule": "icon-metadata",
+        "file": "renderer/shell/shell.js",
+        "line": 1805,
         "sample": "R('app.commandPalette', { title: 'Quick Switcher', icon: '⌘', group: '应用', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1775,
+        "line": 1810,
         "sample": "R('app.openSettings', { title: '设置…', icon: '⚙', group: '应用', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1775,
+        "line": 1810,
         "sample": "R('app.openSettings', { title: '设置…', icon: '⚙', group: '应用', run: () => {"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 1780,
+        "line": 1815,
         "sample": "R('app.language', { title: '界面语言设置 (Language)', icon: '🌐', group: '应用', run: () => {"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 1780,
+        "line": 1815,
         "sample": "R('app.language', { title: '界面语言设置 (Language)', icon: '🌐', group: '应用', run: () => {"
       },
       {
         "rule": "icon-registry",
         "file": "renderer/shell/shell.js",
-        "line": 1933,
+        "line": 1968,
         "sample": "iconId: tab.iconId || inst.def.iconId || moduleIconId(tab.moduleId),"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2154,
+        "line": 2189,
         "sample": "recentItems.push({ label: p.split(/[\\\\/]/).pop(), detail: p, path: p, icon: '🕘', recentOrder });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 2154,
+        "line": 2189,
         "sample": "recentItems.push({ label: p.split(/[\\\\/]/).pop(), detail: p, path: p, icon: '🕘', recentOrder });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2166,
+        "line": 2201,
         "sample": "items.push({ label: e.name, detail: e.path, path: e.path, icon: '📄' });"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 2166,
+        "line": 2201,
         "sample": "items.push({ label: e.name, detail: e.path, path: e.path, icon: '📄' });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2180,
+        "line": 2215,
         "sample": "label: path.split(/[\\\\/]/).pop(), detail: path, path, icon: '🕘', recentOrder,"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/shell/shell.js",
-        "line": 2180,
+        "line": 2215,
         "sample": "label: path.split(/[\\\\/]/).pop(), detail: path, path, icon: '🕘', recentOrder,"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2320,
+        "line": 2354,
         "sample": "if (pl?.ok) { toast('✓ ' + (pl.info || '解压缩完成')); this.fileTree?.refresh?.(); }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2321,
+        "line": 2355,
         "sample": "else if (pl && pl.info !== '已取消') toast('✗ ' + (pl.info || '解压缩失败'), [], 4000);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2336,
+        "line": 2370,
         "sample": "// W53 坞浮动联动：dockfloat 子窗格 ✕ 关闭 → 坞回停靠上岗"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2523,
+        "line": 2557,
         "sample": "back('shortcut', ok ? '✓ 已发送到桌面' : '创建失败', false);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2533,
+        "line": 2567,
         "sample": "back('searxSave', sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；'), false);"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 2534,
+        "line": 2568,
         "sample": "} catch (e) { back('searxSave', '✗ ' + e.message, false); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 2717,
+        "line": 2751,
         "sample": "const svgGroups = groups.map(([g, items]) => [g, items.map(it => ({ ...it, ico: it.ico ? iconHtml(it.ico) : '' }))]);"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 2849,
+        "line": 2883,
         "sample": "const items = (menus._ctxItems || []).map(it => ({ ...it, svg: it.icon ? iconHtml(it.icon) : '' }));"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3059,
+        "line": 3093,
         "sample": "bar.innerHTML = `<span>⚠ 检测到 ${snaps.length} 份未正常关闭的快照（自动保存/崩溃恢复）</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3119,
+        "line": 3153,
         "sample": "<button id=\"s-theme-del\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"删除选中的自定义主题（自带主题不可删）\">🗑 删除</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3121,
+        "line": 3155,
         "sample": "<button id=\"s-theme-blank\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"在工作区 themes/ 生成空白主题包模板\">📄 获取空白主题包</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3122,
+        "line": 3156,
         "sample": "<button id=\"s-theme-import\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"从 JSON 文件导入主题包\">📥 导入</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3123,
+        "line": 3157,
         "sample": "<button id=\"s-theme-folder\" class=\"rb-btn\" style=\"flex-direction:row\" title=\"打开主题文件夹（可给自定义主题改名）\">📂 主题文件夹</button></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3125,
+        "line": 3159,
         "sample": "<button id=\"s-imgtheme\" class=\"rb-btn\" style=\"flex-direction:row\">🖼 从图片生成主题</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3135,
+        "line": 3169,
         "sample": "<button id=\"s-shortcut\" class=\"rb-btn\" style=\"flex-direction:row\">🖥 发送桌面快捷方式</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3268,
+        "line": 3302,
         "sample": "st.textContent = ok ? '✓ 已发送到桌面' : '创建失败';"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3300,
+        "line": 3334,
         "sample": "status.textContent = sc.ok ? '✓ 实例连通正常' : '✗ ' + (sc.checks || []).map(c => `${c.name}:${c.detail}`).join('；');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3301,
+        "line": 3335,
         "sample": "} catch (e) { status.textContent = '✗ ' + e.message; }"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/shell/shell.js",
-        "line": 3405,
+        "line": 3439,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/shell/shell.js",
-        "line": 3405,
+        "line": 3439,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
@@ -21893,385 +21893,385 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 271,
+        "line": 287,
         "sample": "const mazzVars = `--bg:${v('--bg', '#f7f6f3')};--fg:${v('--fg', '#2c2c2a')};--mut:${v('--fg-dim', '#83817a')};--faint:${v('--fg-dim', '#a3a19a')};--card:${v('--bg-soft', '#fff')};--bd:${v('--border', '#e0ded8')};--bd2:${v('--bg-hover', '#ecebe6')};--acc:${v('--accent', '#4f46e5')};--sh:rgba(0,0,0,.08)`;"
       },
       {
         "rule": "hardcoded-rgb-hsl",
         "file": "renderer/modules/browser/index.js",
-        "line": 271,
+        "line": 287,
         "sample": "const mazzVars = `--bg:${v('--bg', '#f7f6f3')};--fg:${v('--fg', '#2c2c2a')};--mut:${v('--fg-dim', '#83817a')};--faint:${v('--fg-dim', '#a3a19a')};--card:${v('--bg-soft', '#fff')};--bd:${v('--border', '#e0ded8')};--bd2:${v('--bg-hover', '#ecebe6')};--acc:${v('--accent', '#4f46e5')};--sh:rgba(0,0,0,.08)`;"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 272,
+        "line": 288,
         "sample": "const lightVars = `--bg:#f7f6f3;--fg:#2c2c2a;--mut:#83817a;--faint:#a3a19a;--card:#fff;--bd:#e0ded8;--bd2:#ecebe6;--acc:#4f46e5;--sh:rgba(0,0,0,.05)`;"
       },
       {
         "rule": "hardcoded-rgb-hsl",
         "file": "renderer/modules/browser/index.js",
-        "line": 272,
+        "line": 288,
         "sample": "const lightVars = `--bg:#f7f6f3;--fg:#2c2c2a;--mut:#83817a;--faint:#a3a19a;--card:#fff;--bd:#e0ded8;--bd2:#ecebe6;--acc:#4f46e5;--sh:rgba(0,0,0,.05)`;"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 273,
+        "line": 289,
         "sample": "const darkVars = `--bg:#1b1b1a;--fg:#e8e6e1;--mut:#9b9890;--faint:#7d7b74;--card:#262625;--bd:#3d3c39;--bd2:#333231;--acc:#818cf8;--sh:rgba(0,0,0,.4)`;"
       },
       {
         "rule": "hardcoded-rgb-hsl",
         "file": "renderer/modules/browser/index.js",
-        "line": 273,
+        "line": 289,
         "sample": "const darkVars = `--bg:#1b1b1a;--fg:#e8e6e1;--mut:#9b9890;--faint:#7d7b74;--card:#262625;--bd:#3d3c39;--bd2:#333231;--acc:#818cf8;--sh:rgba(0,0,0,.4)`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 283,
+        "line": 299,
         "sample": "body{font-family:-apple-system,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:40px 40px 30px}"
       },
       {
         "rule": "font-family",
         "file": "renderer/modules/browser/index.js",
-        "line": 283,
+        "line": 299,
         "sample": "body{font-family:-apple-system,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:40px 40px 30px}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 285,
-        "sample": "h1{font-size:30px;margin:0 0 4px}h1 b{color:var(--acc)}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 286,
-        "sample": ".sub{color:var(--mut);font-size:13px}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 288,
-        "sample": ".searchbox{display:flex;width:min(560px,90%);background:var(--card);border:1.5px solid var(--bd);border-radius:999px;overflow:hidden;box-shadow:0 2px 12px var(--sh)}"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/modules/browser/index.js",
-        "line": 288,
-        "sample": ".searchbox{display:flex;width:min(560px,90%);background:var(--card);border:1.5px solid var(--bd);border-radius:999px;overflow:hidden;box-shadow:0 2px 12px var(--sh)}"
-      },
-      {
-        "rule": "box-shadow",
-        "file": "renderer/modules/browser/index.js",
-        "line": 288,
-        "sample": ".searchbox{display:flex;width:min(560px,90%);background:var(--card);border:1.5px solid var(--bd);border-radius:999px;overflow:hidden;box-shadow:0 2px 12px var(--sh)}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 289,
-        "sample": ".searchbox:focus-within{border-color:var(--acc)}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 290,
-        "sample": "#q{flex:1;border:0;outline:0;padding:13px 20px;font-size:15px;background:transparent;color:var(--fg)}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 291,
-        "sample": "button{border:0;background:var(--acc);color:#fff;padding:0 26px;font-size:14px;cursor:pointer}"
-      },
-      {
-        "rule": "hardcoded-hex-color",
-        "file": "renderer/modules/browser/index.js",
-        "line": 291,
-        "sample": "button{border:0;background:var(--acc);color:#fff;padding:0 26px;font-size:14px;cursor:pointer}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 293,
-        "sample": "h2{font-size:13px;color:var(--mut);margin:24px 0 8px;font-weight:600}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 295,
-        "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/modules/browser/index.js",
-        "line": 295,
-        "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 296,
-        "sample": "a.card:hover{border-color:var(--acc)}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 300,
-        "sample": ".card-acts i{font-style:normal;cursor:pointer;color:var(--faint);font-size:12px;padding:1px 4px;border-radius:3px}"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/modules/browser/index.js",
-        "line": 300,
-        "sample": ".card-acts i{font-style:normal;cursor:pointer;color:var(--faint);font-size:12px;padding:1px 4px;border-radius:3px}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 301,
-        "sample": ".card-acts i:hover{color:var(--acc);background:var(--bd2)}"
+        "sample": "h1{font-size:30px;margin:0 0 4px}h1 b{color:var(--acc)}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 302,
-        "sample": ".privacy{position:fixed;left:0;right:0;bottom:0;padding:12px 40px;font-size:11.5px;color:var(--faint);line-height:1.8;border-top:1px solid var(--bd2);background:var(--bg)}"
+        "sample": ".sub{color:var(--mut);font-size:13px}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 304,
-        "sample": ".tbtn{border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}"
+        "sample": ".searchbox{display:flex;width:min(560px,90%);background:var(--card);border:1.5px solid var(--bd);border-radius:999px;overflow:hidden;box-shadow:0 2px 12px var(--sh)}"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/browser/index.js",
         "line": 304,
-        "sample": ".tbtn{border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}"
+        "sample": ".searchbox{display:flex;width:min(560px,90%);background:var(--card);border:1.5px solid var(--bd);border-radius:999px;overflow:hidden;box-shadow:0 2px 12px var(--sh)}"
+      },
+      {
+        "rule": "box-shadow",
+        "file": "renderer/modules/browser/index.js",
+        "line": 304,
+        "sample": ".searchbox{display:flex;width:min(560px,90%);background:var(--card);border:1.5px solid var(--bd);border-radius:999px;overflow:hidden;box-shadow:0 2px 12px var(--sh)}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 305,
-        "sample": ".tbtn.on{border-color:var(--acc);color:var(--acc)}"
+        "sample": ".searchbox:focus-within{border-color:var(--acc)}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 306,
-        "sample": ".tbtn:hover{border-color:var(--acc)}"
+        "sample": "#q{flex:1;border:0;outline:0;padding:13px 20px;font-size:15px;background:transparent;color:var(--fg)}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 307,
-        "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
+        "sample": "button{border:0;background:var(--acc);color:#fff;padding:0 26px;font-size:14px;cursor:pointer}"
       },
       {
-        "rule": "border-radius",
+        "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
         "line": 307,
-        "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
-      },
-      {
-        "rule": "box-shadow",
-        "file": "renderer/modules/browser/index.js",
-        "line": 307,
-        "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
+        "sample": "button{border:0;background:var(--acc);color:#fff;padding:0 26px;font-size:14px;cursor:pointer}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 309,
-        "sample": ".hset .lbl{font-size:12px;color:var(--mut);margin:4px 0 6px;font-weight:600}"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/modules/browser/index.js",
-        "line": 310,
-        "sample": ".hset input{width:100%;box-sizing:border-box;border:1px solid var(--bd);background:var(--bg);color:var(--fg);border-radius:6px;padding:7px 9px;font-size:12.5px;outline:none}"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/modules/browser/index.js",
-        "line": 310,
-        "sample": ".hset input{width:100%;box-sizing:border-box;border:1px solid var(--bd);background:var(--bg);color:var(--fg);border-radius:6px;padding:7px 9px;font-size:12.5px;outline:none}"
+        "sample": "h2{font-size:13px;color:var(--mut);margin:24px 0 8px;font-weight:600}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
         "line": 311,
+        "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/modules/browser/index.js",
+        "line": 311,
+        "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 312,
+        "sample": "a.card:hover{border-color:var(--acc)}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 316,
+        "sample": ".card-acts i{font-style:normal;cursor:pointer;color:var(--faint);font-size:12px;padding:1px 4px;border-radius:3px}"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/modules/browser/index.js",
+        "line": 316,
+        "sample": ".card-acts i{font-style:normal;cursor:pointer;color:var(--faint);font-size:12px;padding:1px 4px;border-radius:3px}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 317,
+        "sample": ".card-acts i:hover{color:var(--acc);background:var(--bd2)}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 318,
+        "sample": ".privacy{position:fixed;left:0;right:0;bottom:0;padding:12px 40px;font-size:11.5px;color:var(--faint);line-height:1.8;border-top:1px solid var(--bd2);background:var(--bg)}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 320,
+        "sample": ".tbtn{border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/modules/browser/index.js",
+        "line": 320,
+        "sample": ".tbtn{border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 321,
+        "sample": ".tbtn.on{border-color:var(--acc);color:var(--acc)}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 322,
+        "sample": ".tbtn:hover{border-color:var(--acc)}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 323,
+        "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/modules/browser/index.js",
+        "line": 323,
+        "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
+      },
+      {
+        "rule": "box-shadow",
+        "file": "renderer/modules/browser/index.js",
+        "line": 323,
+        "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 325,
+        "sample": ".hset .lbl{font-size:12px;color:var(--mut);margin:4px 0 6px;font-weight:600}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 326,
+        "sample": ".hset input{width:100%;box-sizing:border-box;border:1px solid var(--bd);background:var(--bg);color:var(--fg);border-radius:6px;padding:7px 9px;font-size:12.5px;outline:none}"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/modules/browser/index.js",
+        "line": 326,
+        "sample": ".hset input{width:100%;box-sizing:border-box;border:1px solid var(--bd);background:var(--bg);color:var(--fg);border-radius:6px;padding:7px 9px;font-size:12.5px;outline:none}"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/modules/browser/index.js",
+        "line": 327,
         "sample": ".hset input:focus{border-color:var(--acc)}"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/browser/index.js",
-        "line": 313,
+        "line": 329,
         "sample": ".hset .row button{flex:1;padding:7px 0;border-radius:6px;font-size:12.5px}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 314,
+        "line": 330,
         "sample": ".hset .row .ghost{background:transparent;color:var(--mut);border:1px solid var(--bd)}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 315,
+        "line": 331,
         "sample": ".hset .hint{font-size:11px;color:var(--faint);margin-top:8px;line-height:1.6}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 341,
+        "line": 357,
         "sample": "<h2>最近访问</h2><div class=\"grid\">${recent.length ? recent.map(h => `<span class=\"card-wrap\"><a class=\"card\" href=\"${escapeAttr(h.url)}\" title=\"${escapeAttr(h.url)}\">${escapeHtml(h.name || h.title)}</a><span class=\"card-acts\"><i data-act=\"rename-his\" data-url=\"${escapeAttr(h.url)}\">✎</i><i data-act=\"del-his\" data-url=\"${e"
       },
       {
         "rule": "theme-selector",
         "file": "renderer/modules/browser/index.js",
-        "line": 373,
+        "line": 389,
         "sample": "ctl._themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 419,
+        "line": 435,
         "sample": "body{font-family:-apple-system,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;background:#f7f6f3;color:#2c2c2a;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}"
       },
       {
         "rule": "font-family",
         "file": "renderer/modules/browser/index.js",
-        "line": 419,
+        "line": 435,
         "sample": "body{font-family:-apple-system,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;background:#f7f6f3;color:#2c2c2a;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 421,
+        "line": 437,
         "sample": "h2{font-size:20px;margin:0 0 10px;color:#c2410c}"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 422,
+        "line": 438,
         "sample": "p{color:#83817a;font-size:13px;line-height:1.8;margin:6px 0}"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 423,
+        "line": 439,
         "sample": "code{background:#e3e1da;padding:2px 7px;border-radius:5px;font-size:12px}"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/browser/index.js",
-        "line": 423,
+        "line": 439,
         "sample": "code{background:#e3e1da;padding:2px 7px;border-radius:5px;font-size:12px}"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 424,
+        "line": 440,
         "sample": "button{margin-top:18px;border:0;background:#4f46e5;color:#fff;padding:9px 26px;border-radius:8px;font-size:14px;cursor:pointer}"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/browser/index.js",
-        "line": 424,
+        "line": 440,
         "sample": "button{margin-top:18px;border:0;background:#4f46e5;color:#fff;padding:9px 26px;border-radius:8px;font-size:14px;cursor:pointer}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 680,
+        "line": 696,
         "sample": "<div class=\"set-row\"><label>网址</label><span style=\"font-size:11.5px;color:var(--fg-dim);max-width:70%;overflow:hidden;text-overflow:ellipsis\">${escapeHtml(t.url)}</span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 683,
+        "line": 699,
         "sample": "<div class=\"set-row\"><label></label><button id=\"bm-go\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">收藏</button></div>`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 1154,
+        "line": 1170,
         "sample": "const rowStyle = 'display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid var(--bd2,#ecebe6)';"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1154,
+        "line": 1170,
         "sample": "const rowStyle = 'display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid var(--bd2,#ecebe6)';"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 1155,
+        "line": 1171,
         "sample": "const btnStyle = 'border:1px solid var(--bd,#e0ded8);background:transparent;border-radius:5px;cursor:pointer;padding:2px 7px;font-size:12px;color:inherit';"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1155,
+        "line": 1171,
         "sample": "const btnStyle = 'border:1px solid var(--bd,#e0ded8);background:transparent;border-radius:5px;cursor:pointer;padding:2px 7px;font-size:12px;color:inherit';"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/browser/index.js",
-        "line": 1155,
+        "line": 1171,
         "sample": "const btnStyle = 'border:1px solid var(--bd,#e0ded8);background:transparent;border-radius:5px;cursor:pointer;padding:2px 7px;font-size:12px;color:inherit';"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1161,
+        "line": 1177,
         "sample": "<span style=\"font-size:11.5px;color:#83817a\">${encAvail ? '🔒 系统级加密存储（safeStorage）' : '⚠ 系统加密不可用，密码以编码形式保存'}</span>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/browser/index.js",
-        "line": 1163,
+        "line": 1179,
         "sample": "<div id=\"pw-form\" style=\"display:none;border:1px solid var(--bd,#e0ded8);border-radius:8px;padding:10px 12px;margin-bottom:10px\">"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1163,
+        "line": 1179,
         "sample": "<div id=\"pw-form\" style=\"display:none;border:1px solid var(--bd,#e0ded8);border-radius:8px;padding:10px 12px;margin-bottom:10px\">"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/browser/index.js",
-        "line": 1163,
+        "line": 1179,
         "sample": "<div id=\"pw-form\" style=\"display:none;border:1px solid var(--bd,#e0ded8);border-radius:8px;padding:10px 12px;margin-bottom:10px\">"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1181,
+        "line": 1197,
         "sample": "<div style=\"font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
       },
       {
         "rule": "font-family",
         "file": "renderer/modules/browser/index.js",
-        "line": 1183,
+        "line": 1199,
         "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1189,
+        "line": 1205,
         "sample": ": '<div style=\"color:#83817a;font-size:12.5px;padding:18px 0;text-align:center\">还没有保存的账号——点「添加账号」开始</div>'}"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/browser/index.js",
-        "line": 1490,
+        "line": 1529,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
@@ -29496,102 +29496,102 @@
         "rule": "border-radius",
         "file": "renderer/shell/shell.js",
         "line": 440,
-        "sample": "overlay.style.cssText = `position:fixed;pointer-events:none;z-index:60;border-radius:6px;transition:all .08s ease`;"
+        "sample": "overlay.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60;border-radius:0;transition:all .08s ease';"
       },
       {
         "rule": "theme-selector",
         "file": "renderer/shell/shell.js",
-        "line": 761,
+        "line": 796,
         "sample": "// 自定义主题包/图片主题干脆只有 id 没有变量通道=面板无 [data-theme] 规则可匹配=透明裸奔（真机实锤）"
       },
       {
         "rule": "theme-selector",
         "file": "renderer/shell/shell.js",
-        "line": 2307,
+        "line": 2341,
         "sample": "window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3126,
+        "line": 3160,
         "sample": "<span style=\"font-size:11px;color:var(--fg-dim)\">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3136,
+        "line": 3170,
         "sample": "<span id=\"s-shortcut-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3140,
+        "line": 3174,
         "sample": "<span id=\"s-explorer-status\" style=\"font-size:11px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3141,
+        "line": 3175,
         "sample": "<div style=\"border-top:1px solid var(--border);margin:10px 0 4px;padding-top:10px;font-weight:600\">搜索实例（SearXNG）</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3147,
+        "line": 3181,
         "sample": "<button id=\"s-searx-save\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存并自检</button>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3148,
+        "line": 3182,
         "sample": "<span id=\"s-searx-status\" style=\"font-size:11.5px;color:var(--fg-dim)\"></span></div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3149,
+        "line": 3183,
         "sample": "<div style=\"margin-top:14px;color:var(--fg-dim);font-size:11.5px;line-height:1.7\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3316,
+        "line": 3350,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "border-radius",
         "file": "renderer/shell/shell.js",
-        "line": 3316,
+        "line": 3350,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "font-family",
         "file": "renderer/shell/shell.js",
-        "line": 3316,
+        "line": 3350,
         "sample": "<span>${r.title}</span><kbd style=\"background:var(--bg-active);border-radius:4px;padding:0 7px;font-family:var(--font-mono)\">${r.key}</kbd></div>`).join('')}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3423,
+        "line": 3457,
         "sample": "<div style=\"font-size:11.5px;color:var(--fg-dim);margin:10px 0 6px\">${g}</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3426,
+        "line": 3460,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "border-radius",
         "file": "renderer/shell/shell.js",
-        "line": 3426,
+        "line": 3460,
         "sample": "<button class=\"nft-btn\" data-ext=\"${t.ext}\" style=\"display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-elev);cursor:pointer;font-size:12.5px;color:var(--fg);text-align:left\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/shell/shell.js",
-        "line": 3427,
+        "line": 3461,
         "sample": "<span style=\"color:var(--accent);font-weight:700\">.${t.ext}</span><span>${t.label.replace(/ *\\([^)]*\\)/g, '')}</span>"
       },
       {
@@ -40158,70 +40158,70 @@
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/browser/index.js",
-        "line": 252,
+        "line": 268,
         "sample": "try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/browser/index.js",
-        "line": 253,
+        "line": 269,
         "sample": "window.addEventListener('resize', syncBounds);"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/modules/browser/index.js",
-        "line": 295,
+        "line": 311,
         "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
       },
       {
         "rule": "fixed-left-right",
         "provisionalClass": "C",
         "file": "renderer/modules/browser/index.js",
-        "line": 303,
+        "line": 319,
         "sample": ".htop{position:fixed;top:14px;right:16px;display:flex;gap:6px;align-items:center;z-index:9}"
       },
       {
         "rule": "fixed-width-px",
         "provisionalClass": "D",
         "file": "renderer/modules/browser/index.js",
-        "line": 307,
+        "line": 323,
         "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
       },
       {
         "rule": "fixed-left-right",
         "provisionalClass": "C",
         "file": "renderer/modules/browser/index.js",
-        "line": 307,
+        "line": 323,
         "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/modules/browser/index.js",
-        "line": 1181,
+        "line": 1197,
         "sample": "<div style=\"font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/browser/index.js",
-        "line": 1183,
+        "line": 1199,
         "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/browser/index.js",
-        "line": 1321,
+        "line": 1342,
         "sample": "// 幽灵三钩①（页签一切一炸一片实锤）：切回必显——显隐不再靠 ResizeObserver/偶发事件赏饭"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/browser/index.js",
-        "line": 1490,
+        "line": 1529,
         "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
       },
       {
@@ -41383,21 +41383,21 @@
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3405,
+        "line": 3439,
         "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3421,
+        "line": 3455,
         "sample": "<div style=\"min-width:430px;max-width:600px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/shell/shell.js",
-        "line": 3443,
+        "line": 3477,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {

@@ -4,6 +4,9 @@
 'use strict';
 const { WebContentsView, BrowserWindow, session, Menu } = require('electron');
 
+const sameBounds = (left, right) => !!left && !!right
+  && left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
+
 class BrowserViews {
   // 静态注册表（照 PanelWindows.all 模式）：实例跨函数作用域可达——
   // theme:broadcast 句柄与装配点不在同一函数体，局部 const 必 ReferenceError（真机实锤）
@@ -40,6 +43,7 @@ class BrowserViews {
     });
     bus.handle('bv:destroy', async ({ tabId }) => this.destroy(tabId));
     bus.handle('bv:bounds', async ({ tabId, rect, visible }) => this.setBounds(tabId, rect, visible));
+    bus.handle('bv:recompose', async ({ tabId, reason }) => this.recompose(tabId, reason));
     bus.handle('bv:focus', async ({ tabId }) => { const v = this.get(tabId); if (v) v.webContents.focus(); return !!v; });
     bus.handle('bv:nav', async ({ tabId, action, url }) => this.nav(tabId, action, url));
     bus.handle('bv:js', async ({ tabId, code, userGesture }) => {
@@ -107,7 +111,7 @@ class BrowserViews {
       if (!rec) return null;
       const wc = rec.view.webContents;
       // hidden/reviveGen/lastCtxMenuAt 入状态：白屏复活的 E2E 探针（隐→显振荡规程 + 原生菜单弹出时间戳）
-      return { url: wc.getURL(), title: wc.getTitle(), loading: wc.isLoading(), canBack: wc.navigationHistory.canGoBack(), canFwd: wc.navigationHistory.canGoForward(), dead: !wc.getOSProcessId(), hidden: !!rec.hidden, desiredVisible: !!rec.desiredVisible, occluded: !!rec.occluded, hostWindowId: rec.hostWin?.id || null, reviveGen: rec._reviveGen || 0, bounds: rec.view.getBounds(), lastCtxMenuAt: rec._lastCtxMenuAt || 0, invalidateCount: rec._invalidateCount || 0 };
+      return { url: wc.getURL(), title: wc.getTitle(), loading: wc.isLoading(), canBack: wc.navigationHistory.canGoBack(), canFwd: wc.navigationHistory.canGoForward(), dead: !wc.getOSProcessId(), hidden: !!rec.hidden, desiredVisible: !!rec.desiredVisible, occluded: !!rec.occluded, hostWindowId: rec.hostWin?.id || null, reviveGen: rec._reviveGen || 0, compositionGen: rec._compositionGen || 0, recomposeCount: rec._recomposeCount || 0, bounds: rec.view.getBounds(), lastCtxMenuAt: rec._lastCtxMenuAt || 0, invalidateCount: rec._invalidateCount || 0, lastRecomposeReason: rec._lastRecomposeReason || null };
     });
   }
 
@@ -131,7 +135,7 @@ class BrowserViews {
       view, partition, hostWin: host, resourceKey: null,
       desiredRect: null, desiredVisible: false,
       occluded: this.visualComposition?.isHostOccluded?.(host?.id) === true,
-      hidden: true,
+      hidden: true, appliedRect: null, _compositionGen: 0,
     };
     this.views.set(tabId, rec); // hostWin=视图宿主窗（跨窗迁/收尸凭据）
     if (this.resourceLedger) {
@@ -186,7 +190,7 @@ class BrowserViews {
   setBounds(tabId, rect, visible = true) {
     const rec = this.views.get(tabId);
     if (!rec) return false;
-    const normalized = rect && rect.width >= 2 && rect.height >= 2
+    const normalized = rect && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) && rect.width >= 2 && rect.height >= 2
       ? { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
       : null;
     rec.desiredVisible = !!visible && !!normalized;
@@ -205,38 +209,62 @@ class BrowserViews {
     return changed;
   }
 
+  recompose(tabId, reason = 'explicit') {
+    const rec = this.views.get(tabId);
+    if (!rec) return false;
+    rec._forceRecompose = true;
+    rec._lastRecomposeReason = String(reason || 'explicit').slice(0, 120);
+    return this._applyBounds(tabId, rec);
+  }
+
+  recomposeHost(hostWin, reason = 'host-transition') {
+    let changed = 0;
+    for (const [tabId, rec] of this.views) {
+      if (rec.hostWin !== hostWin || !rec.desiredVisible || !rec.desiredRect) continue;
+      if (this.recompose(tabId, reason)) changed += 1;
+    }
+    return changed;
+  }
+
   _applyBounds(tabId, rec) {
     const shouldHide = rec.occluded || !rec.desiredVisible || !rec.desiredRect;
     if (shouldHide) {
-      rec.view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+      if (!rec.hidden || rec.appliedRect) rec._compositionGen = (rec._compositionGen || 0) + 1;
       rec.view.setVisible(false);
+      rec.view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
       rec.hidden = true;
+      rec.appliedRect = null;
+      rec._forceRecompose = false;
       this.visualComposition?.updateView?.(tabId, {
         bounds: rec.desiredRect, visible: false, desiredVisible: !!rec.desiredVisible, occluded: !!rec.occluded,
       });
       return true;
     }
     const R = rec.desiredRect;
-    // 隐→显转换：Windows D3D 合成器下 WebContentsView 隐身再显示常丢 surface 不重绘（右键菜单/ribbon 弹层后白屏实锤）——
-    // 恢复显示走「正矩形 + 次帧 ±1px 双帧振荡」强制重新合成（Chromium 对同值 setBounds 会跳过）
+    const geometryChanged = !sameBounds(rec.appliedRect, R);
+    // 隐→显或几何重组：Windows D3D 合成器下 WebContentsView 隐身再显示、复杂分屏改矩形都可能丢 surface。
+    // 先在隐藏态落新矩形，再显现；每次真实重组换 generation，旧延迟帧不得把 Surface 写回迁移前矩形。
     const reviving = !!rec.hidden;
+    const recomposing = reviving || geometryChanged || !!rec._forceRecompose;
+    if (recomposing) rec._compositionGen = (rec._compositionGen || 0) + 1;
+    const generation = rec._compositionGen || 0;
+    rec.view.setBounds(R);
     rec.hidden = false;
     rec.view.setVisible(true);
-    rec.view.setBounds(R);
-    if (reviving) {
+    rec.appliedRect = { ...R };
+    rec._forceRecompose = false;
+    if (recomposing) {
       // 强制全量重绘（Electron 官方 invalidate API——deepseek 点醒：这才是恢复丢 surface 的正药，
       // 比 ±1px 振荡治本；振荡保留为双保险）
       try { rec.view.webContents.invalidate(); rec._invalidateCount = (rec._invalidateCount || 0) + 1; } catch {}
-    }
-    if (reviving) {
-      rec._reviveGen = (rec._reviveGen || 0) + 1;
-      const gen = rec._reviveGen;
+      rec._recomposeCount = (rec._recomposeCount || 0) + 1;
+      if (reviving) rec._reviveGen = (rec._reviveGen || 0) + 1;
       setTimeout(() => {
-        if (rec._reviveGen !== gen || rec.hidden) return; // 期间又隐身/又恢复：只认最新一趟
+        if (rec._compositionGen !== generation || rec.hidden || !sameBounds(rec.desiredRect, R)) return;
         try { rec.view.setBounds({ ...R, width: Math.max(1, R.width - 1) }); rec.view.setBounds(R); } catch {}
       }, 60);
       setTimeout(() => { // 第二帧兜底（个别 D3D 窗口一帧不吃）
-        if (rec._reviveGen !== gen || rec.hidden) return;
+        if (rec._compositionGen !== generation || rec.hidden || !sameBounds(rec.desiredRect, R)) return;
         try { rec.view.setBounds({ ...R, height: Math.max(1, R.height - 1) }); rec.view.setBounds(R); } catch {}
       }, 180);
     }

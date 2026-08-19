@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-19T11:29:49.922Z",
+  "generatedAt": "2026-08-19T12:04:56.830Z",
   "protocol": "mazz.visual-composition/v1",
   "runtimeMode": "source",
   "modules": {
@@ -41,6 +41,8 @@
       "occluded": false,
       "hostWindowId": 1,
       "reviveGen": 1,
+      "compositionGen": 1,
+      "recomposeCount": 1,
       "bounds": {
         "x": 232,
         "y": 245,
@@ -48,7 +50,8 @@
         "height": 531
       },
       "lastCtxMenuAt": 0,
-      "invalidateCount": 1
+      "invalidateCount": 1,
+      "lastRecomposeReason": null
     },
     "after": {
       "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23172554%2C%230f766e)%3Bcolor%3Awhite%3Bfont%3A600%2032px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%3Cbody%3EW87%20Native%20Surface%3C%2Fbody%3E",
@@ -62,6 +65,8 @@
       "occluded": false,
       "hostWindowId": 1,
       "reviveGen": 2,
+      "compositionGen": 3,
+      "recomposeCount": 2,
       "bounds": {
         "x": 232,
         "y": 245,
@@ -69,7 +74,8 @@
         "height": 531
       },
       "lastCtxMenuAt": 0,
-      "invalidateCount": 2
+      "invalidateCount": 2,
+      "lastRecomposeReason": null
     },
     "nestedOverlayReferenceCounting": true,
     "captureBytes": 35346
