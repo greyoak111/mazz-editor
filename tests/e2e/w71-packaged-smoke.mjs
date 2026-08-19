@@ -51,12 +51,14 @@ try {
   const runtimeResult = await win.evaluate(async ({ watchedFile, viewerFile }) => {
     const waitFor = async (predicate, message, timeout = 8000) => {
       const until = Date.now() + timeout;
+      let lastValue = null;
       while (Date.now() < until) {
         const value = await window.mazz.invoke('resources:snapshot');
+        lastValue = value;
         if (predicate(value)) return value;
         await new Promise(resolve => setTimeout(resolve, 50));
       }
-      throw new Error(message);
+      throw new Error(`${message}；末次账本=${JSON.stringify(lastValue)}`);
     };
     const waitForLocal = async (predicate, message, timeout = 8000) => {
       const until = Date.now() + timeout;
@@ -67,7 +69,12 @@ try {
       }
       throw new Error(message);
     };
-    const baseline = await window.mazz.invoke('resources:snapshot');
+    // 工作区 watcher 在首窗完成 DOM 装载后异步接管；先等长期资源稳定，避免把
+    // “启动尚未收敛”误判成首个短生命周期资源的泄漏。
+    const baseline = await waitFor(value => value.activeCount === 2
+      && value.byType['browser-window'] === 1
+      && value.byType['file-watcher'] === 1,
+    '长期资源基线未完成装配', 15000);
     await window.MazzCommands.execute('file.newCode');
     const fastCloseCtl = window.__activeCodeCtl;
     const fastCloseTabId = window.MazzShell.tabs.activeId;
