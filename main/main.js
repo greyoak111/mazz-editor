@@ -125,6 +125,8 @@ const { ResourceLedger } = require('./resource-ledger');
 const { AgentHarnessService } = require('./agent-harness');
 const { CliSupervisor } = require('./agent-cli-supervisor');
 const { AgentDoctrineRuntime } = require('./agent-doctrine-runtime');
+const { ExternalToolService } = require('./external-tool-service');
+const { createBlenderHeadlessAdapter } = require('./external-tools/blender-headless-adapter');
 const { KimiCodeAdapter } = require('./adapters/kimi-code-adapter');
 const { ClaudeCodeAdapter } = require('./adapters/claude-code-adapter');
 const { CodexAdapter } = require('./adapters/codex-adapter');
@@ -1645,6 +1647,12 @@ app.whenReady().then(() => {
 
   // —— W71 资源账本 + W66 Agent Harness Foundation ——
   const cliSupervisor = new CliSupervisor({ resourceLedger });
+  const externalToolSupervisor = new CliSupervisor({
+    resourceLedger,
+    resourceType: 'external-tool-process',
+    handleOwnerTool: 'external-tool-supervisor',
+    forceKillTreeOnTerminate: true,
+  });
   if (!store.get('agentRulePackPath', '') && !app.isPackaged) {
     const maintenanceRulePack = path.join(app.getPath('downloads'), '交付区', 'Mazz Editor 开发军规.md');
     if (fs.existsSync(maintenanceRulePack)) store.set('agentRulePackPath', maintenanceRulePack);
@@ -1680,6 +1688,20 @@ app.whenReady().then(() => {
     bus, windowManager: wm, resourceLedger, cliSupervisor, adapters,
     activationProvider: permissionProfileRef => doctrineRuntime.provide(permissionProfileRef),
   });
+  const blenderFixtureNode = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_NODE || '') : '';
+  const blenderFixture = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_FIXTURE || '') : '';
+  const blenderScriptPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'resources', 'tools', 'blender', 'mazz_render_frame.py')
+    : path.join(app.getAppPath(), 'resources', 'tools', 'blender', 'mazz_render_frame.py');
+  const externalTools = new ExternalToolService({
+    bus,
+    adapters: [createBlenderHeadlessAdapter({
+      supervisor: externalToolSupervisor,
+      scriptPath: blenderScriptPath,
+      allowedRootsProvider: () => [store.get('workspace', '')],
+      ...(blenderFixtureNode && blenderFixture ? { executablePath: blenderFixtureNode, commandPrefix: [blenderFixture] } : {}),
+    })],
+  });
   bus.handle('harness:activationStatus', async () => doctrineRuntime.status());
   bus.handle('harness:chooseRulePack', async () => {
     const picked = await dialog.showOpenDialog(wm.main, { title: '选择 Project Rule Pack', properties: ['openFile'], filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }] });
@@ -1694,7 +1716,7 @@ app.whenReady().then(() => {
     event.preventDefault();
     let timeoutId;
     const timeout = new Promise(resolve => { timeoutId = setTimeout(() => resolve('timeout'), 5000); });
-    Promise.race([harness.killAll().then(() => 'done'), timeout])
+    Promise.race([Promise.all([harness.killAll(), externalTools.disposeAll('app-quit')]).then(() => 'done'), timeout])
       .then(status => { if (status === 'timeout') console.warn('[harness] quit cleanup timed out'); })
       .catch(e => console.warn('[harness] quit cleanup:', e.message))
       .finally(() => { clearTimeout(timeoutId); harnessQuitReady = true; app.quit(); });

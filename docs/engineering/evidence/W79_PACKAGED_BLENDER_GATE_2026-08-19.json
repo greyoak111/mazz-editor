@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "mazz.w79-packaged-blender-gate/v0",
+  "generatedAt": "2026-08-19T07:01:09.635Z",
+  "artifacts": {
+    "executable": {
+      "path": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+      "byteLength": 188784128,
+      "sha256": "2f6ca4b6b90095b3eb41df500e6d5946c228de8e9445da2a646702ac99146ef1"
+    },
+    "appAsar": {
+      "path": "D:\\output\\Mazz Editor\\release\\win-unpacked\\resources\\app.asar",
+      "byteLength": 258853973,
+      "sha256": "7b55666003bde20de3e857be2c70bddb7a4ec3e76de58337f509d7ec57f9f8d1"
+    },
+    "adapterScript": {
+      "path": "D:\\output\\Mazz Editor\\release\\win-unpacked\\resources\\app.asar.unpacked\\resources\\tools\\blender\\mazz_render_frame.py",
+      "byteLength": 611,
+      "sha256": "145c1ec42a95cc8ec767dc68176e88287f38fc37b85f1150df43b815cfffa82f"
+    }
+  },
+  "hostToolActivation": {
+    "status": "ACTIVATION_BLOCKED_TOOL_NOT_INSTALLED",
+    "probe": {
+      "schema": "mazz.external-tool-probe/v0",
+      "adapterId": "blender.headless.v0",
+      "available": false,
+      "executablePath": "",
+      "version": "",
+      "reason": "BLENDER_NOT_INSTALLED",
+      "provenance": {
+        "kind": "external-capability-provider",
+        "project": "Blender",
+        "license": "GPL-3.0-or-later",
+        "distribution": "independent-user-installation",
+        "bundledWithMazz": false
+      }
+    },
+    "structuredFailure": {
+      "schema": "mazz.external-tool-run-result/v0",
+      "runId": "real-unavailable",
+      "status": "failed",
+      "stdout": "",
+      "stderr": "",
+      "exit": {
+        "code": null,
+        "signal": "",
+        "reason": "BLENDER_NOT_INSTALLED"
+      },
+      "durationMs": 0,
+      "outputs": [],
+      "provenance": {
+        "kind": "external-capability-provider",
+        "project": "Blender",
+        "license": "GPL-3.0-or-later",
+        "distribution": "independent-user-installation",
+        "bundledWithMazz": false,
+        "adapterId": "blender.headless.v0",
+        "operation": "scene.render.frame/v0",
+        "toolVersion": "",
+        "partialOutputPolicy": "retained-with-partial-suffix",
+        "partialOutputPath": ""
+      }
+    },
+    "resources": {
+      "externalBaseline": 0,
+      "externalFinal": 0,
+      "hostBaselineTotal": 4,
+      "hostFinalTotal": 4
+    }
+  },
+  "packagedFixtureGate": {
+    "probe": {
+      "schema": "mazz.external-tool-probe/v0",
+      "adapterId": "blender.headless.v0",
+      "available": true,
+      "executablePath": "C:\\Program Files\\nodejs\\node.exe",
+      "version": "Blender 4.3.0 Mazz W79 Fixture",
+      "reason": "",
+      "provenance": {
+        "kind": "external-capability-provider",
+        "project": "Blender",
+        "license": "GPL-3.0-or-later",
+        "distribution": "independent-user-installation",
+        "bundledWithMazz": false
+      }
+    },
+    "cycles": 20,
+    "firstOutput": {
+      "runId": "cycle-0",
+      "status": "succeeded",
+      "assetId": "asset:sha256:87d929956690a5d33ed3fc6310f64ce0419182f0d788016a44acc106e9fb0dcd"
+    },
+    "failure": {
+      "status": "failed",
+      "exitCode": 9,
+      "partialOutputPath": "outputs/failure.png.partial-failure"
+    },
+    "cancellation": {
+      "first": "accepted",
+      "terminal": "cancelled",
+      "repeated": "already-terminal"
+    },
+    "resources": {
+      "externalBaseline": 0,
+      "externalFinal": 0,
+      "hostBaselineTotal": 4,
+      "hostFinalTotal": 2
+    },
+    "mainErrors": [],
+    "rendererErrors": []
+  },
+  "gates": {
+    "protocolAndRuntime": "PASS",
+    "packagedSuccessFailureCancel": "PASS",
+    "packagedTwentyCycleCleanup": "PASS",
+    "realBlenderActivation": "BLOCKED_TOOL_NOT_INSTALLED"
+  }
+}

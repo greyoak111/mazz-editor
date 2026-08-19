@@ -25,6 +25,14 @@ Important direct runtime dependencies include:
 | Monaco Editor | MIT |
 | ECharts | Apache-2.0 |
 
+## Optional external capability providers
+
+Mazz can detect and invoke independently installed external tools through a bounded Adapter protocol. These tools are not included in the Mazz installer and remain governed by their own licenses and installation terms.
+
+| Provider | Boundary |
+|---|---|
+| Blender | GPL-3.0-or-later; optional independent installation; Mazz does not bundle, download, install or update Blender. The W79 Adapter uses Blender's headless command line and a Mazz-owned render script only after a local version probe succeeds. |
+
 Unresolved release evidence:
 
 - The former `buffers@0.1.1` blocker is closed by a scoped `exceljs > unzipper@0.12.3` override. The unlicensed `buffers` and legacy `binary` packages are absent from the locked runtime graph; XLSX roundtrip/export regression tests pass.

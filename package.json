@@ -72,7 +72,8 @@
       "KNOWN_LIMITATIONS.md"
     ],
     "asarUnpack": [
-      "node_modules/**/*.node"
+      "node_modules/**/*.node",
+      "resources/tools/blender/**"
     ],
     "protocols": [
       {

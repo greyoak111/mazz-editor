@@ -111,6 +111,7 @@ const files = [
   'tests/contract/w72b-existing-adapters.test.mjs',
   'tests/contract/w72c-oss-provenance.test.mjs',
   'tests/contract/w72d-external-tool-adapter.test.mjs',
+  'tests/contract/w79-blender-headless.test.mjs',
   'tests/contract/w73a-factory-gap-audit.test.mjs',
   'tests/contract/w73b-production-run-ledger.test.mjs',
   'tests/contract/w73b-factory-integration.test.mjs',

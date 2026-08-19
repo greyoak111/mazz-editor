@@ -82,12 +82,24 @@ function classifyAuthentication({ stdout = '', stderr = '', exitCode = null } = 
 }
 
 class CliSupervisor {
-  constructor({ resourceLedger = null, idFactory = randomUUID, clock = () => Date.now(), spawnImpl = spawn, maxOutputBytes = 4 * 1024 * 1024 } = {}) {
+  constructor({
+    resourceLedger = null,
+    idFactory = randomUUID,
+    clock = () => Date.now(),
+    spawnImpl = spawn,
+    maxOutputBytes = 4 * 1024 * 1024,
+    resourceType = 'agent-cli-process',
+    handleOwnerTool = 'agent-cli-supervisor',
+    forceKillTreeOnTerminate = false,
+  } = {}) {
     this.resourceLedger = resourceLedger;
     this.idFactory = idFactory;
     this.clock = clock;
     this.spawnImpl = spawnImpl;
     this.maxOutputBytes = Math.max(1024, Number(maxOutputBytes) || 0);
+    this.resourceType = requiredString(resourceType, 'resourceType');
+    this.handleOwnerTool = requiredString(handleOwnerTool, 'handleOwnerTool');
+    this.forceKillTreeOnTerminate = !!forceKillTreeOnTerminate;
     this.processes = new Map();
   }
 
@@ -110,7 +122,7 @@ class CliSupervisor {
     } catch (error) {
       fail(error?.code || 'CLI_SPAWN_FAILED', `CLI 无法创建进程: ${path.basename(executable)}`, { syscall: error?.syscall || '' });
     }
-    const handle = createTypedHandle({ kind: 'ProcessSessionHandle', id, ownerTool: 'agent-cli-supervisor', metadata: { owner, command: path.basename(executable) } });
+    const handle = createTypedHandle({ kind: 'ProcessSessionHandle', id, ownerTool: this.handleOwnerTool, metadata: { owner, command: path.basename(executable) } });
     const record = {
       id, handle, child, owner, command: executable, args: args.map(String), cwd: workdir,
       stdout: [], stderr: [], stdoutBytes: 0, stderrBytes: 0, truncated: false,
@@ -118,7 +130,7 @@ class CliSupervisor {
       resourceKey: null, onStdout, onStderr,
     };
     this.processes.set(id, record);
-    record.resourceKey = this.resourceLedger?.register({ type: 'agent-cli-process', id, owner, state: 'running', meta: { command: path.basename(executable), cwd: workdir } }) || null;
+    record.resourceKey = this.resourceLedger?.register({ type: this.resourceType, id, owner, state: 'running', meta: { command: path.basename(executable), cwd: workdir } }) || null;
     const append = (stream, chunk) => {
       const bytes = Buffer.from(chunk);
       const countKey = `${stream}Bytes`;
@@ -145,7 +157,8 @@ class CliSupervisor {
     record.resultPromise = new Promise(resolve => {
       let spawnError = null;
       child.once('error', error => { spawnError = error; });
-      child.once('close', (exitCode, signal) => {
+      const settle = (exitCode, signal) => {
+        if (record.settled) return;
         if (record.timer) clearTimeout(record.timer);
         record.settled = true;
         const stdout = Buffer.concat(record.stdout).toString('utf8');
@@ -172,13 +185,15 @@ class CliSupervisor {
         this.resourceLedger?.release(record.resourceKey, { reason: error?.code || 'process-exit', state: result.ok ? 'completed' : 'failed', meta: { exitCode, signal: signal || '' } });
         this.processes.delete(id);
         resolve(Object.freeze({ handle, result, outputReceipt, durationMs: Math.max(0, this.clock() - record.startedAt) }));
-      });
+      };
+      record.forceSettle = settle;
+      child.once('close', settle);
     });
     return handle;
   }
 
   record(handle, continuation) {
-    assertTypedContinuation(handle, { kind: 'ProcessSessionHandle', ownerTool: 'agent-cli-supervisor', continuation });
+    assertTypedContinuation(handle, { kind: 'ProcessSessionHandle', ownerTool: this.handleOwnerTool, continuation });
     const record = this.processes.get(handle.id);
     if (!record) fail('CLI_PROCESS_NOT_FOUND', `CLI Process 不存在: ${handle.id}`);
     return record;
@@ -198,6 +213,19 @@ class CliSupervisor {
     const record = this.record(handle, 'terminate');
     if (record.settled) return false;
     record.cancelled = reason !== 'timeout' && reason !== 'output-limit';
+    if (process.platform === 'win32' && record.child.pid && this.forceKillTreeOnTerminate) {
+      try {
+        execFileSync('taskkill.exe', ['/PID', String(record.child.pid), '/T', '/F'], {
+          windowsHide: true, timeout: 5000, stdio: 'ignore',
+        });
+      } catch {
+        try { record.child.kill('SIGKILL'); } catch {}
+      }
+      setTimeout(() => {
+        if (!record.settled) record.forceSettle?.(null, 'SIGKILL');
+      }, 1000).unref?.();
+      return true;
+    }
     try { record.child.kill('SIGTERM'); } catch {}
     if (process.platform === 'win32' && record.child.pid) {
       setTimeout(() => {
