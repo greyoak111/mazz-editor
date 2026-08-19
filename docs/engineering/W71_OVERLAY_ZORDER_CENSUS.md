@@ -2,6 +2,8 @@
 
 > **2026-08-19 supersession：** 本文保留 W71 当时的证据和判断，但“无需统一调度器”已被复发缺陷与维护者新授权推翻。W87 已落 `mazz.visual-composition/v1`，统一登记 Window、PanelWindow、WebContentsView 与 DOM Overlay；local resource owner 和既有 Windows workaround 仍保留。现行结论见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。
 
+> **2026-08-19 W87d 再修订：** 本文当时把“拖拽期 WCV hidden + DOM 预览可见”误当成通过，实际会把网页挖成空底。现行路径必须先预绘每个可见 WCV 的代理帧，才允许 cloak；恢复也必须先确认原生面在最终 bounds 可见再撤代理。见 [`W87D_BROWSER_DRAG_VISUAL_CONTINUITY_CHECKPOINT_2026-08-19.md`](./W87D_BROWSER_DRAG_VISUAL_CONTINUITY_CHECKPOINT_2026-08-19.md)。历史 JSON/截图仅说明 W71 当时状态，不再承担拖拽视觉连续性 Gate。
+
 > 日期：2026-08-16
 > 状态：代表性 Windows packaged 路径已产证；不是 Universal Overlay Manager 立项
 > 机器证据：[`evidence/W71_OVERLAY_ZORDER.json`](./evidence/W71_OVERLAY_ZORDER.json)
@@ -12,7 +14,7 @@ Mazz 当前不需要为了封板建立万能 Overlay Manager。现有三种机�
 
 1. 跨 `WebContentsView` 的正式全局浮层使用带主窗 `parent` 的原生 `PanelWindow`；
 2. 只在同一 DOM/Canvas Surface 内工作的局部浮层继续留在模块内部；
-3. 页签拖拽必须先临时 cloak `WebContentsView`，再绘制零延迟 DOM 分区预览，清理后恢复同一原生 Surface。
+3. 页签拖拽继续用 DOM 分区命中，但必须先完成可见 WCV 代理帧的 capture/decode/双帧预绘，随后才可临时 cloak，清理时先恢复同一原生 Surface 再撤代理。
 
 `z-index` 只在同一 DOM 合成域内有意义，不能作为跨 `WebContentsView` 修复。
 
@@ -37,7 +39,7 @@ Ribbon 手动入口已经使用 `agreement` PanelWindow，但 `maybeAutoShowAgre
 | Browser 客页右键 | BrowserViews / 客页 | Electron `Menu.popup` | OS/native menu surface | KEEP；既有路径不删除 |
 | Quick Switcher | Shell / 主窗 | `palette` PanelWindow | 原生 child window | **packaged PASS** |
 | Settings / Help / Plugins / Recorder 等正式全局面板 | PanelWindows / 主窗 | 独立 BrowserWindow | 原生 child window | 同协议；代表性路径已验证 |
-| 页签分屏预览 | Shell / Pane | DOM fixed overlay | 拖起先 `_dragCloak`，落下/pointerup/blur/watchdog 恢复 | **packaged PASS** |
+| 页签分屏预览 | Shell / Pane | WCV 最后帧代理 + DOM fixed overlay | 代理完整预绘后 `_dragCloak`；落下/pointerup/blur/watchdog 先恢复 WCV 再撤代理 | **W87d packaged PASS** |
 | Browser 临时分享确认 | Browser module / 主窗 | OS message box | 原生系统对话框 | **FIXED** |
 | 模块内 selection / handle / tooltip | 各模块本地 host | DOM/Canvas overlay | 只承诺模块 Surface 内部层级 | 保持局部 owner |
 | Annotate / Split Preview | PanelWindows / 主窗 | transparent always-on-top BrowserWindow | 独立 overlay window | KEEP |
@@ -55,7 +57,7 @@ node tests/e2e/w71-overlay-zorder.mjs
 
 - 首启协议、上下文菜单、Quick Switcher 都是 `parentId == main.id` 的可见原生子窗；
 - 四条路径均在活动 Browser `WebContentsView` 存在时运行；
-- 拖拽期客页 `hidden=true`、bounds 归零，DOM 分区预览可见；pointerup 后原 bounds 恢复；
+- 该历史 run 只证明拖拽期客页 `hidden=true` 与 DOM 分区预览存在，不能证明用户仍看见网页；视觉连续性由 W87d 新矩阵承担；
 - 操作前后 ResourceLedger active count 相等；
 - 测试没有使用公网网页，客页使用本地可重复 Surface；
 - Chromium `desktopCapturer` 会排除本进程窗口，因此截图由主窗、`WebContentsView.capturePage()` 与子窗按 Electron 实际 bounds 做无缩放合成；拓扑断言与像素证据分开保存，不把拼图当作 OS z-order API。
@@ -71,4 +73,4 @@ node tests/e2e/w71-overlay-zorder.mjs
 
 本轮关闭的是“代表性真实路径没有被 Native/WebContents Surface 遮挡”的子 Gate，不是全部浮层逐项验收。RDP、多显示器、多 DPI、Browser 原生 `Menu.popup` 的 OS 抓帧和更广模块组合仍属于后续矩阵。
 
-没有出现现有 owner 无法关闭的 P0/P1，也没有证据触发 SurfaceManager PoC。`drag cloak`、原生菜单、host-aware destroy、bounds convergence 等 workaround 继续 KEEP；不得因本轮通过而删除。
+原生菜单、host-aware destroy、bounds convergence 等 workaround 继续 KEEP。`drag cloak` 只允许在代理帧已绘制后使用；“直接 cloak”已由 W87d 判为复发缺陷，不得借历史 W71 证据恢复。

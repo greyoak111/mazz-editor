@@ -5,9 +5,11 @@
 > 结论：**用户指出的分屏渐变彩色框线已从真实主线、拖拽叠层、焦点仲裁和备用实现四处同时根除**  
 > 继承协议：`mazz.visual-composition/v1`
 
+> 2026-08-19 W87d 修订：W87c 只关闭彩色框线，未关闭 WCV 先被 cloak 后露出的空白网页区；当时的“复合 Surface 已封住白屏”表述范围过宽。现行视觉连续性以 [`W87D_BROWSER_DRAG_VISUAL_CONTINUITY_CHECKPOINT_2026-08-19.md`](./W87D_BROWSER_DRAG_VISUAL_CONTINUITY_CHECKPOINT_2026-08-19.md) 为准。
+
 ## 1. 现象与像素实证
 
-W87b 关闭复杂分屏、工作台子窗、盖顶和 WebContentsView 白屏后，分屏拖拽预览仍在渐变透明端出现一条主题色细线；快速跨方向时旧边和新边还可能因 `transition: all` 短暂叠成 L 形或近似整圈。
+W87b 关闭跨窗身份、宿主迁移、盖顶和几何重组问题后，分屏拖拽预览仍在渐变透明端出现一条主题色细线；快速跨方向时旧边和新边还可能因 `transition: all` 短暂叠成 L 形或近似整圈。拖拽白底是随后由 W87d 独立关闭的另一条跨渲染面缺陷。
 
 旧 packaged hardware R3 截图在 `y=500` 的分界位置留下单像素铁证：
 
@@ -69,6 +71,8 @@ drop 后 active pane cue != none
 
 矩阵会在一次拖拽中依次跨过 `right → down → left → up → right`，覆盖快速换区，而不是只验一个方向。DOM 定位也由过时的“body 直属无 id/class div”改为稳定的 `.mazz-split-drag-overlay`。
 
+W87d 又把合同推进到跨渲染面最终路径：渐变只允许 `transition:opacity`，left/top/width/height 一帧直达，禁止 `transition:all`；proxy、代理图片和渐变全部 `pointer-events:none`，四方向 `elementFromPoint` 必须继续命中 pane。这样“无框”不再只表示四边宽度为零，也包含没有几何插值扫带、没有代理挡输入。
+
 ## 4. 实证结果
 
 | Gate | 结果 |
@@ -81,9 +85,10 @@ drop 后 active pane cue != none
 | Source Electron / hardware 复合矩阵 | PASS |
 | `release/win-unpacked` / hardware / W87C | PASS |
 | `release/win-unpacked` / compatibility / W87C | PASS |
+| W87d source/packaged × hardware/compatibility/light 六组最终矩阵 | `6/6 PASS` |
 | OSS provenance | CURRENT |
 | release audit | PASS |
-| 全量测试 | `220/220` 个测试文件 PASS（W87c 专项已登记总入口） |
+| 全量测试 | `221/221` 个测试文件 PASS（W87c/W87d 专项均已登记总入口） |
 
 两条 packaged 结果都证明：四方向四边均为 `0px`，outline/shadow 均为 `none`；拖拽期间 active pane shadow 为 `none`；drop 后 `tab-dragging=false`，活动窗格 cue 恢复；三个独立 WCV 原生抓帧 healthy，main fatal / renderer error=`0/0`。
 
@@ -93,11 +98,13 @@ drop 后 active pane cue != none
 - [`W87B_BROWSER_COMPOSITION_PACKAGED_COMPATIBILITY_W87C.json`](./evidence/W87B_BROWSER_COMPOSITION_PACKAGED_COMPATIBILITY_W87C.json)
 - [`W87B_BROWSER_COMPOSITION_SOURCE_HARDWARE.json`](./evidence/W87B_BROWSER_COMPOSITION_SOURCE_HARDWARE.json)
 
+W87c 上述文件保留为“彩框消失”的历史证据；当前跨渲染面最终状态由 W87d 六组矩阵承担，包含 main sender-host `captureVisibleHost`、瞬时集合/身份/几何精确校验、代理 relayout、Overlay 激活身份集合复核、三块同时可见 Surface、实际 pane topology 与单一 owner，以及非活动 source 先激活。详见 [W87d 检查点](./W87D_BROWSER_DRAG_VISUAL_CONTINUITY_CHECKPOINT_2026-08-19.md)。
+
 兼容模式首轮曾在 Overlay/Surface 已恢复、双 `requestAnimationFrame` 清理尚未执行完的缝隙读取 `tab-dragging`，暴露的是探针采样过早。Gate 已改为等待 Overlay 归零、WCV 可见、拖拽 class 撤销和 active cue 恢复四条件同时成立；随后 compatibility GREEN。没有用无变化重跑掩盖失败。
 
 ## 5. 诚实边界
 
-本轮只关闭分屏拖拽预览的彩色框线及其可复活路径，不重写渐变设计、不取消正常活动窗格提示、不删除 drag cloak/双帧稳定/Windows compositor 药方，也不宣称多显示器/DPI/RDP 全排列已经因此完成。
+本轮只关闭分屏拖拽预览的彩色框线及其可复活路径，不重写渐变设计、不取消正常活动窗格提示、不删除 drag cloak/双帧稳定/Windows compositor 药方，也不宣称多显示器/DPI/RDP 全排列已经因此完成。W87d 的 Playwright CDP pointer 路径已通过 pointer-through，但 CDP 不是 Win32 `SendInput`；Computer Use 又因 `0x80004002` 无法捕获 frameless Electron 窗口，该工具失败既不能判产品失败，也不能反向充当产品通过证据。
 
 若后续再出现彩框，首先检查 computed 四边、outline、shadow、active pane drag state 与 Overlay focus policy；不得先归咎 GPU，也不得以只读 shorthand 的测试封 Gate。
 

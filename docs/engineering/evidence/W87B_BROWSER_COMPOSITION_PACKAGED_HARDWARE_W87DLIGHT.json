@@ -1,0 +1,978 @@
+{
+  "ok": true,
+  "verdict": "PASS",
+  "generatedAt": "2026-08-19T14:05:15.951Z",
+  "runtimeMode": "packaged",
+  "gpuMode": "hardware",
+  "uiTheme": "construct",
+  "runTag": "W87DLIGHT",
+  "hostIds": [
+    {
+      "id": 3,
+      "role": "child"
+    },
+    {
+      "id": 1,
+      "role": "main"
+    }
+  ],
+  "ids": {
+    "mainA": "bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+    "mainC": "bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+    "mainD": "bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d",
+    "childB": "bt-b5e8872b-047d-4420-b6e8-27329e25b151"
+  },
+  "focusCycles": [
+    {
+      "cycle": 1,
+      "mainCompositionGen": 4,
+      "childCompositionGen": 3
+    },
+    {
+      "cycle": 2,
+      "mainCompositionGen": 4,
+      "childCompositionGen": 3
+    },
+    {
+      "cycle": 3,
+      "mainCompositionGen": 4,
+      "childCompositionGen": 3
+    },
+    {
+      "cycle": 4,
+      "mainCompositionGen": 4,
+      "childCompositionGen": 3
+    },
+    {
+      "cycle": 5,
+      "mainCompositionGen": 4,
+      "childCompositionGen": 3
+    }
+  ],
+  "paneCountBeforeDrag": 2,
+  "dropTopology": {
+    "paneCount": 3,
+    "owners": 1,
+    "panes": [
+      [
+        "tab-1"
+      ],
+      [
+        "tab-3"
+      ],
+      []
+    ]
+  },
+  "duringDrag": {
+    "states": [
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-A%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-A%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-A<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-A\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": true,
+        "desiredVisible": false,
+        "occluded": true,
+        "hostWindowId": 1,
+        "reviveGen": 3,
+        "compositionGen": 7,
+        "recomposeCount": 4,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 4,
+        "lastRecomposeReason": null
+      },
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-C%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-C%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-C<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-C\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": true,
+        "desiredVisible": false,
+        "occluded": true,
+        "hostWindowId": 1,
+        "reviveGen": 1,
+        "compositionGen": 4,
+        "recomposeCount": 3,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 3,
+        "lastRecomposeReason": "pane-tab-moved"
+      }
+    ],
+    "visual": {
+      "protocol": "mazz.visual-composition/v1",
+      "generation": 102,
+      "surfaceCount": 7,
+      "overlayCount": 1,
+      "occludedHostCount": 1,
+      "surfaces": [
+        {
+          "id": "view:bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 3,
+          "visible": false,
+          "desiredVisible": false,
+          "occluded": true,
+          "focused": false,
+          "bounds": {
+            "x": 232,
+            "y": 248,
+            "width": 562,
+            "height": 552
+          },
+          "createdAt": 1787148303185,
+          "updatedAt": 1787148306739,
+          "generation": 91,
+          "metadata": {
+            "tabId": "bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 3,
+            "invalidateCount": 4
+          }
+        },
+        {
+          "id": "view:bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 7,
+          "visible": false,
+          "desiredVisible": false,
+          "occluded": true,
+          "focused": false,
+          "bounds": {
+            "x": 797,
+            "y": 248,
+            "width": 562,
+            "height": 552
+          },
+          "createdAt": 1787148306158,
+          "updatedAt": 1787148306739,
+          "generation": 92,
+          "metadata": {
+            "tabId": "bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 1,
+            "invalidateCount": 3
+          }
+        },
+        {
+          "id": "view:bt-b5e8872b-047d-4420-b6e8-27329e25b151",
+          "kind": "web-contents-view",
+          "layer": "native-content",
+          "owner": "browser-tab:bt-b5e8872b-047d-4420-b6e8-27329e25b151",
+          "hostWindowId": 3,
+          "sourceWebContentsId": 6,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 232,
+            "y": 248,
+            "width": 867,
+            "height": 448
+          },
+          "createdAt": 1787148304925,
+          "updatedAt": 1787148305158,
+          "generation": 41,
+          "metadata": {
+            "tabId": "bt-b5e8872b-047d-4420-b6e8-27329e25b151",
+            "partition": "persist:mazz-browser",
+            "reviveGeneration": 1,
+            "invalidateCount": 3
+          }
+        },
+        {
+          "id": "window:2",
+          "kind": "panel-window",
+          "layer": "system",
+          "owner": "panel:agreement",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 2,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 417,
+            "y": 112,
+            "width": 701,
+            "height": 600
+          },
+          "createdAt": 1787148302856,
+          "updatedAt": 1787148305058,
+          "generation": 34,
+          "metadata": {
+            "nativeWindowId": 2
+          }
+        },
+        {
+          "id": "overlay:renderer-mt05yiwb-1",
+          "kind": "dom-overlay",
+          "layer": "transient",
+          "owner": "split-drag",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 1,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 608,
+            "y": 150,
+            "width": 188,
+            "height": 650
+          },
+          "createdAt": 1787148306735,
+          "updatedAt": 1787148307242,
+          "generation": 102,
+          "metadata": {
+            "token": "renderer-mt05yiwb-1",
+            "dismissible": false
+          }
+        },
+        {
+          "id": "window:1",
+          "kind": "window",
+          "layer": "workspace",
+          "owner": "window-manager:main",
+          "hostWindowId": 1,
+          "sourceWebContentsId": 1,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": true,
+          "bounds": {
+            "x": 88,
+            "y": 0,
+            "width": 1360,
+            "height": 824
+          },
+          "createdAt": 1787148302027,
+          "updatedAt": 1787148306736,
+          "generation": 89,
+          "metadata": {
+            "nativeWindowId": 1,
+            "transientOcclusion": true
+          }
+        },
+        {
+          "id": "window:3",
+          "kind": "window",
+          "layer": "workspace",
+          "owner": "window-manager:child",
+          "hostWindowId": 3,
+          "sourceWebContentsId": 5,
+          "visible": true,
+          "desiredVisible": true,
+          "occluded": false,
+          "focused": false,
+          "bounds": {
+            "x": 217,
+            "y": 52,
+            "width": 1101,
+            "height": 720
+          },
+          "createdAt": 1787148303841,
+          "updatedAt": 1787148306177,
+          "generation": 77,
+          "metadata": {
+            "nativeWindowId": 3
+          }
+        }
+      ],
+      "hosts": [
+        {
+          "hostWindowId": 1,
+          "occluded": true,
+          "tokens": [
+            "renderer-mt05yiwb-1"
+          ]
+        }
+      ],
+      "invariants": {
+        "registeredVisualSovereignty": true,
+        "hostOwnedOcclusion": true,
+        "rendererGeometrySanitized": true,
+        "workaroundRemovalAuthorized": false
+      }
+    },
+    "renderer": {
+      "protocol": "mazz.visual-composition/renderer-v1",
+      "overlayCount": 1,
+      "stack": [
+        {
+          "token": "renderer-mt05yiwb-1",
+          "kind": "split-drag",
+          "state": "active",
+          "focusPolicy": "none",
+          "bounds": {
+            "x": 608,
+            "y": 150,
+            "width": 188,
+            "height": 650
+          }
+        }
+      ],
+      "uiSize": "lg",
+      "planeConnected": true
+    },
+    "proxyState": {
+      "phase": "active",
+      "viewIds": [
+        "bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+        "bt-abaab1c9-6243-4c6c-b686-c7173dea0623"
+      ],
+      "paintedAt": 4710.300000190735
+    },
+    "targetRect": {
+      "left": 232,
+      "top": 149.60000610351562,
+      "width": 563.9000244140625,
+      "height": 650.4000244140625
+    },
+    "proxies": [
+      {
+        "viewId": "bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+        "sourceBytes": 98246,
+        "rect": {
+          "x": 232,
+          "y": 247.60000610351562,
+          "width": 562.2999877929688,
+          "height": 552.4000244140625
+        }
+      },
+      {
+        "viewId": "bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+        "sourceBytes": 102862,
+        "rect": {
+          "x": 796.9000244140625,
+          "y": 247.60000610351562,
+          "width": 562.2999877929688,
+          "height": 552.4000244140625
+        }
+      }
+    ],
+    "directions": [
+      {
+        "zone": "right",
+        "borders": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "outlineStyle": "none",
+        "outlineWidth": "0px",
+        "boxShadow": "none",
+        "backgroundImage": "linear-gradient(to left, rgba(200, 33, 27, 0.4) 0%, rgba(200, 33, 27, 0.24) 16%, rgba(200, 33, 27, 0.1) 42%, rgba(200, 33, 27, 0.03) 72%, rgba(200, 33, 27, 0) 100%)",
+        "rect": {
+          "x": 607.9249877929688,
+          "y": 149.60000610351562,
+          "width": 187.96250915527344,
+          "height": 650.4000244140625
+        },
+        "proxyPointerEvents": "none",
+        "hitPaneBefore": true
+      },
+      {
+        "zone": "down",
+        "borders": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "outlineStyle": "none",
+        "outlineWidth": "0px",
+        "boxShadow": "none",
+        "backgroundImage": "linear-gradient(to top, rgba(200, 33, 27, 0.4) 0%, rgba(200, 33, 27, 0.24) 16%, rgba(200, 33, 27, 0.1) 42%, rgba(200, 33, 27, 0.03) 72%, rgba(200, 33, 27, 0) 100%)",
+        "rect": {
+          "x": 232,
+          "y": 583.2000122070312,
+          "width": 563.9000244140625,
+          "height": 216.8000030517578
+        },
+        "proxyPointerEvents": "none",
+        "hitPaneBefore": true
+      },
+      {
+        "zone": "left",
+        "borders": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "outlineStyle": "none",
+        "outlineWidth": "0px",
+        "boxShadow": "none",
+        "backgroundImage": "linear-gradient(to right, rgba(200, 33, 27, 0.4) 0%, rgba(200, 33, 27, 0.24) 16%, rgba(200, 33, 27, 0.1) 42%, rgba(200, 33, 27, 0.03) 72%, rgba(200, 33, 27, 0) 100%)",
+        "rect": {
+          "x": 232,
+          "y": 149.60000610351562,
+          "width": 187.96250915527344,
+          "height": 650.4000244140625
+        },
+        "proxyPointerEvents": "none",
+        "hitPaneBefore": true
+      },
+      {
+        "zone": "up",
+        "borders": [
+          "0px",
+          "0px",
+          "0px",
+          "0px"
+        ],
+        "outlineStyle": "none",
+        "outlineWidth": "0px",
+        "boxShadow": "none",
+        "backgroundImage": "linear-gradient(rgba(200, 33, 27, 0.4) 0%, rgba(200, 33, 27, 0.24) 16%, rgba(200, 33, 27, 0.1) 42%, rgba(200, 33, 27, 0.03) 72%, rgba(200, 33, 27, 0) 100%)",
+        "rect": {
+          "x": 232,
+          "y": 149.60000610351562,
+          "width": 563.9000244140625,
+          "height": 216.8000030517578
+        },
+        "proxyPointerEvents": "none",
+        "hitPaneBefore": true
+      }
+    ],
+    "preview": {
+      "borders": [
+        "0px",
+        "0px",
+        "0px",
+        "0px"
+      ],
+      "outlineStyle": "none",
+      "outlineWidth": "0px",
+      "boxShadow": "none",
+      "backgroundImage": "linear-gradient(to left, rgba(200, 33, 27, 0.4) 0%, rgba(200, 33, 27, 0.24) 16%, rgba(200, 33, 27, 0.1) 42%, rgba(200, 33, 27, 0.03) 72%, rgba(200, 33, 27, 0) 100%)",
+      "rect": {
+        "x": 607.9249877929688,
+        "y": 149.60000610351562,
+        "width": 187.96250915527344,
+        "height": 650.4000244140625
+      },
+      "proxyPointerEvents": "none",
+      "activePaneShadow": "none"
+    },
+    "proxyHashes": {
+      "bt-1570d8ae-f548-46e4-b920-96869ea941e4": "1e339710f66c946b91e67d511955af8f33b1340e78e8303d07d442883ed2e6c7",
+      "bt-abaab1c9-6243-4c6c-b686-c7173dea0623": "a5391a29e60cca4d59eee3e7e9ddc614947db8e4646ebd499ace01e12485345c"
+    }
+  },
+  "dragHealth": {
+    "width": 1700,
+    "height": 1030,
+    "whiteRatio": 0.0074974300399771555,
+    "darkRatio": 0.06866704740148487,
+    "colorfulRatio": 0.9100194174757281
+  },
+  "afterDropDecoration": {
+    "dragging": false,
+    "activePaneShadow": "color(srgb 0.784314 0.129412 0.105882 / 0.35) 0px 0px 0px 1px inset"
+  },
+  "failureGate": {
+    "phase": "degraded-visible",
+    "states": [
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-A%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-A%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-A<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-A\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": false,
+        "desiredVisible": true,
+        "occluded": false,
+        "hostWindowId": 1,
+        "reviveGen": 4,
+        "compositionGen": 9,
+        "recomposeCount": 6,
+        "bounds": {
+          "x": 232,
+          "y": 248,
+          "width": 280,
+          "height": 543
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 6,
+        "lastRecomposeReason": "split-drag-restore"
+      },
+      {
+        "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-C%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-C%22%3C%2Fscript%3E%3C%2Fbody%3E",
+        "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-C<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-C\"<%2Fscript><%2Fbody>",
+        "loading": false,
+        "canBack": true,
+        "canFwd": false,
+        "dead": false,
+        "hidden": false,
+        "desiredVisible": true,
+        "occluded": false,
+        "hostWindowId": 1,
+        "reviveGen": 2,
+        "compositionGen": 7,
+        "recomposeCount": 6,
+        "bounds": {
+          "x": 515,
+          "y": 248,
+          "width": 280,
+          "height": 543
+        },
+        "lastCtxMenuAt": 0,
+        "invalidateCount": 6,
+        "lastRecomposeReason": "pane-tab-moved"
+      }
+    ]
+  },
+  "soakCycles": 20,
+  "complexSplitGate": {
+    "surfaceCount": 3,
+    "hashes": {
+      "bt-1570d8ae-f548-46e4-b920-96869ea941e4": "2d8604b7d24a3fca59ab7923837efe294082817fc58e953f00849a2508b44490",
+      "bt-abaab1c9-6243-4c6c-b686-c7173dea0623": "845395307065ac3c32eb64c60ee3bac8335a44ec9d47fd8e935f621479fc799b",
+      "bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d": "07bc351ec27191f067ee19b22aad3bfa757a45a42a40b3fe39873f8790584339"
+    },
+    "active": {
+      "phase": "active",
+      "pointerEvents": "none",
+      "proxies": [
+        {
+          "tabId": "bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+          "bounds": {
+            "x": 232,
+            "y": 247.60000610351562,
+            "width": 280.0500183105469,
+            "height": 542.7999877929688
+          }
+        },
+        {
+          "tabId": "bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+          "bounds": {
+            "x": 514.6500244140625,
+            "y": 247.60000610351562,
+            "width": 279.25,
+            "height": 217.10000610351562
+          }
+        },
+        {
+          "tabId": "bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d",
+          "bounds": {
+            "x": 514.6500244140625,
+            "y": 573.2999877929688,
+            "width": 280.0500183105469,
+            "height": 217.10000610351562
+          }
+        }
+      ]
+    },
+    "restored": {
+      "states": [
+        {
+          "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-A%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-A%22%3C%2Fscript%3E%3C%2Fbody%3E",
+          "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%231d4ed8%2C%230f766e)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-A<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-A\"<%2Fscript><%2Fbody>",
+          "loading": false,
+          "canBack": true,
+          "canFwd": false,
+          "dead": false,
+          "hidden": false,
+          "desiredVisible": true,
+          "occluded": false,
+          "hostWindowId": 1,
+          "reviveGen": 25,
+          "compositionGen": 73,
+          "recomposeCount": 49,
+          "bounds": {
+            "x": 232,
+            "y": 248,
+            "width": 280,
+            "height": 543
+          },
+          "lastCtxMenuAt": 0,
+          "invalidateCount": 49,
+          "lastRecomposeReason": "split-drag-restore"
+        },
+        {
+          "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-C%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-C%22%3C%2Fscript%3E%3C%2Fbody%3E",
+          "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%23b45309%2C%239f1239)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-C<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-C\"<%2Fscript><%2Fbody>",
+          "loading": false,
+          "canBack": true,
+          "canFwd": false,
+          "dead": false,
+          "hidden": false,
+          "desiredVisible": true,
+          "occluded": false,
+          "hostWindowId": 1,
+          "reviveGen": 24,
+          "compositionGen": 73,
+          "recomposeCount": 50,
+          "bounds": {
+            "x": 515,
+            "y": 248,
+            "width": 279,
+            "height": 217
+          },
+          "lastCtxMenuAt": 0,
+          "invalidateCount": 50,
+          "lastRecomposeReason": "split-drag-restore"
+        },
+        {
+          "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%236d28d9%2C%230e7490)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-MAIN-D%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-MAIN-D%22%3C%2Fscript%3E%3C%2Fbody%3E",
+          "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%236d28d9%2C%230e7490)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-MAIN-D<%2Fmain><script>window.__pageMarker%3D\"W87B-MAIN-D\"<%2Fscript><%2Fbody>",
+          "loading": false,
+          "canBack": true,
+          "canFwd": false,
+          "dead": false,
+          "hidden": false,
+          "desiredVisible": true,
+          "occluded": false,
+          "hostWindowId": 1,
+          "reviveGen": 2,
+          "compositionGen": 6,
+          "recomposeCount": 5,
+          "bounds": {
+            "x": 515,
+            "y": 573,
+            "width": 280,
+            "height": 217
+          },
+          "lastCtxMenuAt": 0,
+          "invalidateCount": 5,
+          "lastRecomposeReason": "split-drag-restore"
+        }
+      ],
+      "visual": {
+        "protocol": "mazz.visual-composition/v1",
+        "generation": 544,
+        "surfaceCount": 7,
+        "overlayCount": 0,
+        "occludedHostCount": 0,
+        "surfaces": [
+          {
+            "id": "view:bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+            "kind": "web-contents-view",
+            "layer": "native-content",
+            "owner": "browser-tab:bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+            "hostWindowId": 1,
+            "sourceWebContentsId": 3,
+            "visible": true,
+            "desiredVisible": true,
+            "occluded": false,
+            "focused": false,
+            "bounds": {
+              "x": 232,
+              "y": 248,
+              "width": 280,
+              "height": 543
+            },
+            "createdAt": 1787148303185,
+            "updatedAt": 1787148314781,
+            "generation": 540,
+            "metadata": {
+              "tabId": "bt-1570d8ae-f548-46e4-b920-96869ea941e4",
+              "partition": "persist:mazz-browser",
+              "reviveGeneration": 25,
+              "invalidateCount": 49
+            }
+          },
+          {
+            "id": "view:bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+            "kind": "web-contents-view",
+            "layer": "native-content",
+            "owner": "browser-tab:bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+            "hostWindowId": 1,
+            "sourceWebContentsId": 7,
+            "visible": true,
+            "desiredVisible": true,
+            "occluded": false,
+            "focused": false,
+            "bounds": {
+              "x": 515,
+              "y": 248,
+              "width": 279,
+              "height": 217
+            },
+            "createdAt": 1787148306158,
+            "updatedAt": 1787148314781,
+            "generation": 542,
+            "metadata": {
+              "tabId": "bt-abaab1c9-6243-4c6c-b686-c7173dea0623",
+              "partition": "persist:mazz-browser",
+              "reviveGeneration": 24,
+              "invalidateCount": 50
+            }
+          },
+          {
+            "id": "view:bt-b5e8872b-047d-4420-b6e8-27329e25b151",
+            "kind": "web-contents-view",
+            "layer": "native-content",
+            "owner": "browser-tab:bt-b5e8872b-047d-4420-b6e8-27329e25b151",
+            "hostWindowId": 3,
+            "sourceWebContentsId": 6,
+            "visible": true,
+            "desiredVisible": true,
+            "occluded": false,
+            "focused": false,
+            "bounds": {
+              "x": 232,
+              "y": 248,
+              "width": 867,
+              "height": 448
+            },
+            "createdAt": 1787148304925,
+            "updatedAt": 1787148305158,
+            "generation": 41,
+            "metadata": {
+              "tabId": "bt-b5e8872b-047d-4420-b6e8-27329e25b151",
+              "partition": "persist:mazz-browser",
+              "reviveGeneration": 1,
+              "invalidateCount": 3
+            }
+          },
+          {
+            "id": "view:bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d",
+            "kind": "web-contents-view",
+            "layer": "native-content",
+            "owner": "browser-tab:bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d",
+            "hostWindowId": 1,
+            "sourceWebContentsId": 8,
+            "visible": true,
+            "desiredVisible": true,
+            "occluded": false,
+            "focused": false,
+            "bounds": {
+              "x": 515,
+              "y": 573,
+              "width": 280,
+              "height": 217
+            },
+            "createdAt": 1787148314289,
+            "updatedAt": 1787148314781,
+            "generation": 544,
+            "metadata": {
+              "tabId": "bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d",
+              "partition": "persist:mazz-browser",
+              "reviveGeneration": 2,
+              "invalidateCount": 5
+            }
+          },
+          {
+            "id": "window:2",
+            "kind": "panel-window",
+            "layer": "system",
+            "owner": "panel:agreement",
+            "hostWindowId": 1,
+            "sourceWebContentsId": 2,
+            "visible": true,
+            "desiredVisible": true,
+            "occluded": false,
+            "focused": false,
+            "bounds": {
+              "x": 417,
+              "y": 112,
+              "width": 701,
+              "height": 600
+            },
+            "createdAt": 1787148302856,
+            "updatedAt": 1787148305058,
+            "generation": 34,
+            "metadata": {
+              "nativeWindowId": 2
+            }
+          },
+          {
+            "id": "window:1",
+            "kind": "window",
+            "layer": "workspace",
+            "owner": "window-manager:main",
+            "hostWindowId": 1,
+            "sourceWebContentsId": 1,
+            "visible": true,
+            "desiredVisible": true,
+            "occluded": false,
+            "focused": true,
+            "bounds": {
+              "x": 88,
+              "y": 0,
+              "width": 1360,
+              "height": 824
+            },
+            "createdAt": 1787148302027,
+            "updatedAt": 1787148314780,
+            "generation": 535,
+            "metadata": {
+              "nativeWindowId": 1,
+              "transientOcclusion": false
+            }
+          },
+          {
+            "id": "window:3",
+            "kind": "window",
+            "layer": "workspace",
+            "owner": "window-manager:child",
+            "hostWindowId": 3,
+            "sourceWebContentsId": 5,
+            "visible": true,
+            "desiredVisible": true,
+            "occluded": false,
+            "focused": false,
+            "bounds": {
+              "x": 217,
+              "y": 52,
+              "width": 1101,
+              "height": 720
+            },
+            "createdAt": 1787148303841,
+            "updatedAt": 1787148306177,
+            "generation": 77,
+            "metadata": {
+              "nativeWindowId": 3
+            }
+          }
+        ],
+        "hosts": [],
+        "invariants": {
+          "registeredVisualSovereignty": true,
+          "hostOwnedOcclusion": true,
+          "rendererGeometrySanitized": true,
+          "workaroundRemovalAuthorized": false
+        }
+      }
+    }
+  },
+  "geometry": {
+    "expected": {
+      "bt-1570d8ae-f548-46e4-b920-96869ea941e4": {
+        "x": 232,
+        "y": 248,
+        "width": 280,
+        "height": 543
+      },
+      "bt-abaab1c9-6243-4c6c-b686-c7173dea0623": {
+        "x": 515,
+        "y": 248,
+        "width": 279,
+        "height": 217
+      },
+      "bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d": {
+        "x": 515,
+        "y": 573,
+        "width": 280,
+        "height": 217
+      }
+    },
+    "actual": {
+      "bt-1570d8ae-f548-46e4-b920-96869ea941e4": {
+        "x": 232,
+        "y": 248,
+        "width": 280,
+        "height": 543
+      },
+      "bt-abaab1c9-6243-4c6c-b686-c7173dea0623": {
+        "x": 515,
+        "y": 248,
+        "width": 279,
+        "height": 217
+      },
+      "bt-dcd79ad1-bd1c-4098-9df9-37de099a9c8d": {
+        "x": 515,
+        "y": 573,
+        "width": 280,
+        "height": 217
+      }
+    }
+  },
+  "topology": {
+    "parentId": 3,
+    "hostId": 3,
+    "visible": true
+  },
+  "childUnderPanel": {
+    "marker": "W87B-CHILD-B",
+    "state": {
+      "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%0A%3Cstyle%3Ehtml%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%237c3aed%2C%23be123c)%3Bcolor%3A%23fff%3Bfont%3A700%2042px%20system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D%3C%2Fstyle%3E%0A%3Cbody%3E%3Cmain%20id%3D%22marker%22%3EW87B-CHILD-B%3C%2Fmain%3E%3Cscript%3Ewindow.__pageMarker%3D%22W87B-CHILD-B%22%3C%2Fscript%3E%3C%2Fbody%3E",
+      "title": "data:text/html;charset=utf-8,<!doctype html>%0A<style>html%2Cbody%7Bheight%3A100%25%3Bmargin%3A0%3Bbackground%3Alinear-gradient(135deg%2C%237c3aed%2C%23be123c)%3Bcolor%3A%23fff%3Bfont%3A700 42px system-ui%7Dbody%7Bdisplay%3Agrid%3Bplace-items%3Acenter%7D<%2Fstyle>%0A<body><main id%3D\"marker\">W87B-CHILD-B<%2Fmain><script>window.__pageMarker%3D\"W87B-CHILD-B\"<%2Fscript><%2Fbody>",
+      "loading": false,
+      "canBack": false,
+      "canFwd": false,
+      "dead": false,
+      "hidden": false,
+      "desiredVisible": true,
+      "occluded": false,
+      "hostWindowId": 3,
+      "reviveGen": 1,
+      "compositionGen": 4,
+      "recomposeCount": 4,
+      "bounds": {
+        "x": 232,
+        "y": 248,
+        "width": 867,
+        "height": 448
+      },
+      "lastCtxMenuAt": 0,
+      "invalidateCount": 4,
+      "lastRecomposeReason": "panel-ready:settings"
+    }
+  },
+  "panelReady": {
+    "readyState": "complete",
+    "textLength": 332,
+    "background": "rgba(0, 0, 0, 0)"
+  },
+  "focusedAfterPanelClose": 3,
+  "captures": {
+    "mainA": {
+      "width": 350,
+      "height": 679,
+      "whiteRatio": 0.027553356224331783,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9701238806975022
+    },
+    "mainC": {
+      "width": 349,
+      "height": 272,
+      "whiteRatio": 0.06493342322602394,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9286617225686836
+    },
+    "mainD": {
+      "width": 350,
+      "height": 272,
+      "whiteRatio": 0.06836134453781513,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9260924369747899
+    },
+    "childB": {
+      "width": 1084,
+      "height": 560,
+      "whiteRatio": 0.010674749604638904,
+      "darkRatio": 0,
+      "colorfulRatio": 0.9881787032156036
+    }
+  },
+  "fatalMainLogs": 0,
+  "rendererErrors": 0
+}

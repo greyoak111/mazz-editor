@@ -1,4 +1,4 @@
-// tests/contract/hotfix-w57.test.mjs —— W57 契约（分屏 DOM 回归+拖拽 cloak/factorycfg 收编/toast 防压）
+// tests/contract/hotfix-w57.test.mjs —— W57 历史契约（分屏路径由 W87d 无白屏代理继承）
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import fs from 'node:fs';
@@ -6,14 +6,15 @@ import path from 'node:path';
 
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
-describe('分屏 DOM 回归+拖拽 cloak', () => {
-  test('老 DOM overlay 转正+拖起隐落下恢复', () => {
+describe('分屏 DOM 命中+W87d 可见帧代理', () => {
+  test('代理解码/预绘先于 cloak，落下后恢复同一 Surface', () => {
     const sh = readSrc('renderer/shell/shell.js');
     assert.ok(sh.includes('dragCloak'), 'dragCloak 必须有');
-    assert.ok(sh.includes('bctl._dragCloak = !!on'), '拖拽独立闸必须有（observer 不覆盖）');
+    assert.ok(sh.includes('ctl._dragCloak = !!on'), '拖拽独立闸必须有（observer 不覆盖）');
     assert.ok(sh.includes('dragCloak(true)') && sh.includes('dragCloak(false)'), '拖起隐/落下恢复必须挂');
     assert.ok(!sh.includes("kind: 'splitpreview'") || sh.includes('非 Electron'), '罩页调用必须退出分屏主线');
-    assert.ok(sh.includes('W57 分屏路线修正'), '路线修正注释必须在');
+    assert.ok(sh.includes('buildProxy') && sh.includes('await nextPaint()'), '代理必须完成解码与双帧预绘');
+    assert.ok(sh.indexOf('dragCloak(true)') > sh.indexOf('await overlayHandle?.ready'), '代理预绘和 host coverage 激活后才可启动遮挡');
     assert.ok(sh.includes('overlay.style.background = zoneGradient'), '老 DOM overlay 样式必须保留');
   });
 });

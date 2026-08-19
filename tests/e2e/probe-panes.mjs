@@ -34,7 +34,7 @@ for (const f of ['a.md', 'b.md', 'c.md', 'd.md']) {
 }
 await dump('初始:');
 
-// 合成拖拽：把活动签拖到目标窗格指定区（真实 DragEvent 序列）
+// 合成拖拽：把活动签拖到目标窗格指定区（renderer DragEvent 状态机；不冒充 Windows 物理输入）
 async function dragSplit(zone) {
   const r = await win.evaluate(([z]) => {
     const sh = window.MazzShell;

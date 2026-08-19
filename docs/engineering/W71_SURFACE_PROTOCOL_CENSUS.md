@@ -24,7 +24,7 @@
 
 - ownership：WindowManager、PanelWindows、BrowserViews 各有成熟局部 owner；不存在统一 SurfaceManager；
 - host：WebContentsView 通过 `BrowserWindow.fromWebContents(event.sender)` 确认宿主并记录 `hostWin`；
-- move：渲染层完成 Pane/Window handoff 后，原生视图通过 bounds/resync/reload convergence 收敛；
+- move：渲染层完成 Pane/Window handoff 后，原生视图通过 bounds/recompose/invalidate convergence 收敛；不得网络 reload；
 - destroy：局部 owner 的 `closed/destroy/destroyByHost` 是权威路径，ResourceLedger 只观察，不持有资源；
 - recovery：render gone、unresponsive 与隐显合成恢复已经存在多条平台专用路径。
 
@@ -53,7 +53,7 @@ ready / state / crashed / unresponsive / disposed
 | WKR-BV-BOUNDS-OSCILLATION | BrowserViews | KEEP | 去除后多轮 D3D/多 DPI 无白屏且可回滚 |
 | WKR-BACKGROUND-THROTTLING | WindowManager/BrowserViews | KEEP | Recorder 长录与遮挡 Surface 均不断帧 |
 | WKR-RELOAD-CONVERGENCE | Browser module | KEEP | Home/about:blank 与普通 URL 同时通过 |
-| WKR-DRAG-CLOAK | Shell/Browser | KEEP | 原生视图上方拖拽命中与 drop 全链通过 |
+| WKR-DRAG-CLOAK | Shell/BrowserViews/VisualComposition | KEEP | 同宿主全部可见 WCV 已 capture/decode/双 RAF 预绘；`tabId/webContentsId` 集合校验一致；代理 computed `pointer-events:none` 且 `elementFromPoint` 命中 pane；四方向预览、一次真实 drop、像素恢复及 20 次循环通过 |
 | WKR-PANE-MOVE-RESYNC | Shell/Browser | KEEP | Pane/Window 迁移后 bounds、像素、导航稳定 |
 | WKR-NATIVE-CONTEXT-MENU | BrowserViews | KEEP | 不引回 DOM/native layering 白屏 |
 | WKR-HOST-AWARE-DESTROY | WindowManager/BrowserViews | KEEP | 宿主关闭 20 次无幽灵 view/webContents |
@@ -61,6 +61,8 @@ ready / state / crashed / unresponsive / disposed
 | WKR-SAFE-GRAPHICS | Main startup | KEEP | 远程/虚拟显示驱动矩阵无 GPU 崩溃弹窗 |
 
 所有条目删除条件相同：等价 Windows packaged-runtime 探针先通过，修改影响面和回滚路径有记录。当前没有任何条目满足删除 Gate。
+
+`WKR-DRAG-CLOAK` 是“代理先行 → 身份校验 → 临时遮挡 → 像素恢复”的复合事务；`hidden/0×0` 本身永远不是 PASS，renderer 截图也不能单独证明 WebContentsView 像素存在。
 
 ## 决策
 

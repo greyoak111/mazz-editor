@@ -23,10 +23,12 @@ describe('W71 Overlay / Z-order guard', () => {
     assert.ok(block.includes('else {') && block.includes("modal('局域网临时分享')"), 'DOM modal 只保留网页预览 fallback');
   });
 
-  test('拖拽预览先 cloak WebContentsView，清理后恢复同一 Surface', () => {
+  test('拖拽预览先预绘 WCV 代理帧，再 cloak；清理确认复活后才撤代理', () => {
     const shell = read('renderer/shell/shell.js');
-    assert.ok(shell.includes('bctl._dragCloak = !!on') && shell.includes('bctl.__sync?.()'));
+    assert.ok(shell.includes('ctl._dragCloak = !!on') && shell.includes('ctl.__sync?.()'));
+    assert.ok(shell.includes("invoke('bv:captureVisibleHost'") && shell.includes('await nextPaint()'));
     assert.ok(shell.includes('dragCloak(true)') && shell.includes('dragCloak(false)'));
+    assert.ok(shell.includes('waitSurfacesVisible') && shell.includes('retiredProxy?.remove()'));
     assert.ok(shell.includes('pointerup') && shell.includes('armDog()'), 'pointerup 与 watchdog 必须共同兜底');
   });
 });

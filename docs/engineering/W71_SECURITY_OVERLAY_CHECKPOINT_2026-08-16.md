@@ -49,7 +49,7 @@ Packaged 真实路径依次验证：
 
 真实 packaged 检查发现首启协议绕过已有原生协议面板，落回主窗 DOM modal；默认 Browser `WebContentsView` 会在独立合成层压住它。现已把 Electron 的自动首启与手动入口统一到 `agreement` PanelWindow，并把 Browser 临时分享确认切到 OS 原生对话框。
 
-随后对首启协议、标签上下文菜单、Quick Switcher 与页签拖拽做活动 WebContentsView 同场验证：前三者使用带主窗 parent 的独立 BrowserWindow；拖拽使用临时 cloak + DOM 分区预览；资源账前后相等。
+随后对首启协议、标签上下文菜单、Quick Switcher 与页签拖拽做活动 WebContentsView 同场验证：前三者使用带主窗 parent 的独立 BrowserWindow；拖拽当时使用临时 cloak + DOM 分区预览，资源账前后相等。该历史拖拽门禁后来被 W87d 证伪：hidden 不等于用户仍看见网页；现行路径必须先预绘 WCV 代理帧再 cloak。
 
 完整 Census 与截图见 [`W71_OVERLAY_ZORDER_CENSUS.md`](./W71_OVERLAY_ZORDER_CENSUS.md)。现有局部 owner 足以关闭本轮根因，不触发 Universal Overlay Manager 或 SurfaceManager PoC。
 

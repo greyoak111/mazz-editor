@@ -107,6 +107,9 @@ export class Tabs {
     for (const t of this.tabs) {
       const el = document.createElement('div');
       el.className = 'tab' + (t.id === this.activeId ? ' on' : '');
+      // W87d：document capture 阶段必须在抓取原生 Surface 前识别并激活拖动源。
+      // dataTransfer 要到本节点的 dragstart 才会写入，来不及作为 capture 阶段的身份源。
+      el.dataset.tabId = t.id;
       const name = document.createElement('span');
       name.className = 't-name';
       name.innerHTML = '';

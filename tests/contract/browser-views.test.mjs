@@ -9,7 +9,7 @@ const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 describe('浏览器根治·主进程视图注册表', () => {
   test('BrowserViews 全套通道与新窗审批', () => {
     const src = readSrc('main/browser-views.js');
-    for (const ch of ["'bv:create'", "'bv:destroy'", "'bv:bounds'", "'bv:focus'", "'bv:nav'", "'bv:js'", "'bv:zoom'", "'bv:find'", "'bv:navHistory'", "'bv:state'"]) {
+    for (const ch of ["'bv:create'", "'bv:destroy'", "'bv:bounds'", "'bv:focus'", "'bv:nav'", "'bv:js'", "'bv:zoom'", "'bv:find'", "'bv:navHistory'", "'bv:state'", "'bv:captureVisibleHost'"]) {
       assert.ok(src.includes(ch), `缺通道 ${ch}`);
     }
     assert.ok(src.includes('WebContentsView'), '必须主进程持有 WebContentsView');
@@ -28,12 +28,12 @@ describe('浏览器根治·主进程视图注册表', () => {
   test('装配与桥白名单', () => {
     assert.ok(readSrc('main/main.js').includes("require('./browser-views')"), '主进程必须装配 BrowserViews');
     const bridge = readSrc('preload/bridge.js');
-    for (const ch of ["'bv:create'", "'bv:destroy'", "'bv:bounds'", "'bv:nav'", "'bv:js'", "'bv:event'"]) {
+    for (const ch of ["'bv:create'", "'bv:destroy'", "'bv:bounds'", "'bv:nav'", "'bv:js'", "'bv:captureVisibleHost'", "'bv:event'"]) {
       assert.ok(bridge.includes(ch), `桥白名单缺 ${ch}`);
     }
     // 主进程 handler 覆盖桥通道（双白名单同步绝育——主进程缺 handler=channel not allowed）
     const main = fs.readdirSync(path.resolve('main')).filter(f => f.endsWith('.js')).map(f => readSrc('main/' + f)).join('\n');
-    for (const ch of ['bv:create', 'bv:destroy', 'bv:bounds', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state']) {
+    for (const ch of ['bv:create', 'bv:destroy', 'bv:bounds', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state', 'bv:captureVisibleHost']) {
       assert.ok(main.includes(`'${ch}'`), `主进程缺 handler: ${ch}`);
     }
   });
@@ -49,7 +49,13 @@ describe('浏览器根治·渲染层双路径', () => {
     assert.ok(!src.includes("document.createElement('webview')"), '不得再创建 webview 标签');
     // 摆位与遮挡隐身
     assert.ok(src.includes('syncBounds'), '必须有摆位引擎');
-    assert.ok(!src.includes('_cloaked') && src.includes('_dragCloak'), 'W87 后只保留拖拽即时 cloak，弹层不得再由 Browser 私管');
+    assert.ok(!src.includes('_cloaked') && src.includes('_dragCloak'), 'Browser 只消费 W87d 代理先行临时闸，弹层不得再由 Browser 私管');
+    const shell = readSrc('renderer/shell/shell.js');
+    const views = readSrc('main/browser-views.js');
+    const split = shell.slice(shell.indexOf('installSplitPreview()'), shell.indexOf('/** 外部文件拖入'));
+    assert.ok(split.includes("invoke('bv:captureVisibleHost'") && split.includes('await overlayHandle?.ready'));
+    assert.ok(split.indexOf('dragCloak(true)') > split.indexOf('await overlayHandle?.ready'));
+    assert.ok(views.includes('validateHostCoverage') && views.includes('webContentsId'));
     const visual = readSrc('renderer/core/visual-composition.js');
     assert.ok(visual.includes('visual:overlayBegin') && visual.includes('visual:overlayEnd'), '弹层遮挡必须走统一视觉协议');
     assert.ok(!src.includes("mazz.on('bv:frame'"), '帧管线必须已退（离屏弯路清算实锤）');

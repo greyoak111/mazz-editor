@@ -193,21 +193,32 @@ try {
       }));
     }
   });
-  await new Promise(resolve => setTimeout(resolve, 250));
+  await win.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'active'
+    && document.querySelectorAll('.mazz-split-surface-frame').length > 0, null, { timeout: 15000 });
   const cloaked = await win.evaluate(viewId => window.mazz.invoke('bv:state', { tabId: viewId }), browser.viewId);
-  const overlay = await win.evaluate(() => [...document.querySelectorAll('body > div')].some(node => {
-    const style = getComputedStyle(node);
-    return style.position === 'fixed' && style.pointerEvents === 'none' && Number(style.zIndex) >= 60
-      && node.getBoundingClientRect().width > 50;
-  }));
-  if (!cloaked?.hidden || !overlay) throw new Error(`拖拽浮层没有先 cloak 原生 Surface：${JSON.stringify({ cloaked, overlay })}`);
+  const dragProxy = await win.evaluate(() => {
+    const overlay = document.querySelector('.mazz-split-drag-overlay');
+    const frames = [...document.querySelectorAll('.mazz-split-surface-frame')];
+    return {
+      phase: window.__mazzSplitProxyState?.phase,
+      overlayVisible: !!overlay && overlay.getBoundingClientRect().width > 50,
+      frameCount: frames.length,
+      sourceBytes: frames.map(frame => frame.src.length),
+    };
+  });
+  if (dragProxy.phase !== 'active' || !dragProxy.overlayVisible || dragProxy.frameCount < 1
+      || dragProxy.sourceBytes.some(bytes => bytes < 1000) || !cloaked?.hidden) {
+    throw new Error(`拖拽代理未完成预绘就 cloak 原生 Surface：${JSON.stringify({ cloaked, dragProxy })}`);
+  }
   const dragShotPath = path.join(evidenceDir, 'W71_OVERLAY_DRAG_CLOAK.png');
   await win.screenshot({ path: dragShotPath });
   const dragShot = { file: 'evidence/W71_OVERLAY_DRAG_CLOAK.png', bytes: fs.statSync(dragShotPath).size };
   await win.evaluate(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })));
   await win.waitForFunction(async viewId => {
     const state = await window.mazz.invoke('bv:state', { tabId: viewId });
-    return !state?.hidden && state?.bounds?.width > 300;
+    return !state?.hidden && state?.bounds?.width > 300
+      && window.__mazzSplitProxyState?.phase === 'idle'
+      && !document.querySelector('.mazz-split-surface-proxy');
   }, browser.viewId, { timeout: 10000 });
 
   await win.waitForFunction(async activeCount => (await window.mazz.invoke('resources:snapshot')).activeCount === activeCount, baseline.activeCount, { timeout: 15000 });
@@ -219,12 +230,12 @@ try {
     firstRunAgreement: { topology: agreementTopology, screenshot: agreementShot, persistedNoMore: true },
     contextMenu: { topology: ctxTopology, screenshot: ctxShot },
     commandPalette: { topology: paletteTopology, screenshot: paletteShot },
-    dragCloak: { hiddenDuringDrag: cloaked.hidden, domOverlayVisible: overlay, screenshot: dragShot },
+    dragProxy: { hiddenOnlyAfterProxyPaint: cloaked.hidden, ...dragProxy, screenshot: dragShot },
     resources: { baseline: baseline.activeCount, final: finalResources.activeCount },
     conclusions: {
       firstRunAgreementAboveWebContentsView: true,
       nativeChildWindowAboveWebContentsView: true,
-      dragOverlayUsesTemporarySurfaceCloak: true,
+      dragOverlayUsesPaintedProxyBeforeTemporarySurfaceCloak: true,
       universalOverlayManagerRequired: false,
     },
   };

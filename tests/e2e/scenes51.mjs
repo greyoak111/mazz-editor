@@ -91,15 +91,14 @@ export async function scenes51({ app, win, human, WS, scenario }) {
         });
         await wait(250);
       }
-      // W57 用户定版路线修正：DOM overlay 转正（罩页独立窗方案已退役——链路长收效差实锤）；
-      // 「不抢渲染」由拖拽 cloak 保证（scenes55 0×0 专项钉）——本场景钉 overlay 开合+反钉罩页回魂
+      // W87d：DOM overlay 继续负责命中与渐变；若宿主有 WCV，必须先由 scenes55 钉住代理帧再 cloak。
       const ov = await evaluate(() => {
         const el = document.querySelector('.mazz-split-drag-overlay');
         if (!el) return null;
         const r = el.getBoundingClientRect();
         return { w: Math.round(r.width), h: Math.round(r.height), bg: (el.style.background || '').slice(0, 42), border: el.style.borderRight || el.style.borderLeft };
       });
-      await human.assert(!!ov, '分屏预览 overlay 必须贴出（DOM 转正——W57 用户定版路线）');
+      await human.assert(!!ov, '分屏预览 overlay 必须贴出（W87d DOM 命中主线）');
       await human.assert(ov.w > 0 && ov.h > 0, `预览矩形必须有形（w=${ov.w} h=${ov.h} bg=${ov.bg}）`);
       // 反钉：罩页独立窗不许回魂
       const pw = app.windows().find(w => w.url().includes('/panels/splitpreview.html'));

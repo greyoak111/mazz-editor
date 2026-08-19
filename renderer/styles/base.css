@@ -1150,6 +1150,9 @@ html.m-touch .ft-node { min-height: 34px; display: flex; align-items: center; }
 
 /* —— 页签拖拽分屏盾牌：webview/iframe 会吞 HTML5 拖拽事件，拖签期间盖住保证事件可达 —— */
 body.tab-dragging .editor-area::after { content: ''; position: absolute; inset: 0; z-index: 40; }
+#mazz-overlay-plane > .mazz-split-surface-proxy,
+.mazz-split-surface-proxy { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 50; }
+.mazz-split-surface-frame { position: fixed; display: block; object-fit: fill; pointer-events: none; border: 0; outline: 0; box-shadow: none; }
 
 /* —— 演示单页缩放控件 —— */
 .sl-zoomctl { position: absolute; right: 14px; bottom: 12px; z-index: 30; display: flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; box-shadow: var(--shadow); }

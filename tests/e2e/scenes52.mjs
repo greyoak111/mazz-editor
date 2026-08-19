@@ -82,15 +82,17 @@ export async function scenes52({ app, win, human, WS, scenario }) {
       await wait(800);
     });
 
-    // ==================== 3：B4 cloak 专项验收 ====================
-    await scenario('B4·modal 开视图隐关恢复', async () => {
+    // ==================== 3：B4 统一 Overlay 专项验收 ====================
+    await scenario('B4·统一 modal token 开隐关恢复', async () => {
       await evaluate(() => window.MazzCommands?.execute('file.newBrowser'));
       await human.until(() => window.__activeBrowserCtl?.tabs?.length > 0, { timeout: 15000, msg: '浏览器就绪' });
       await wait(600);
-      const cloaked0 = await evaluate(() => !!window.__activeBrowserCtl?._cloaked);
-      await human.assert(cloaked0 === false, `初始不得 cloak（${cloaked0}）`);
-      // 开 DOM modal（P2b 收编后浏览器前台 DOM modal 绝迹——cloak 兜底保险验收改手工 mask 注入：
-      // MutationObserver 认 .mazz-palette-mask 类不认来源，注入即等效 modal 出现）
+      const occluded0 = await evaluate(async () => {
+        const ctl = window.__activeBrowserCtl, t = ctl?.tabs?.find(x => x.id === ctl.activeId) || ctl?.tabs?.[0];
+        return t ? (await window.mazz.invoke('bv:state', { tabId: t.viewId }))?.occluded : null;
+      });
+      await human.assert(occluded0 === false, `初始不得 occluded（${occluded0}）`);
+      // 支持的 mask 由 VisualComposition MutationObserver 登记并领取 host token。
       await evaluate(() => {
         const m = document.createElement('div');
         m.className = 'mazz-palette-mask';
@@ -98,7 +100,11 @@ export async function scenes52({ app, win, human, WS, scenario }) {
         m.innerHTML = '<div class="mazz-palette" style="padding:20px">cloak 探针</div>';
         document.body.appendChild(m);
       });
-      await human.until(() => window.__activeBrowserCtl?._cloaked === true, { timeout: 6000, msg: 'modal 开必须 cloak' });
+      await human.until(async () => {
+        const ctl = window.__activeBrowserCtl, t = ctl?.tabs?.find(x => x.id === ctl.activeId) || ctl?.tabs?.[0];
+        const st = t ? await window.mazz.invoke('bv:state', { tabId: t.viewId }) : null;
+        return st?.occluded && st?.hidden;
+      }, { timeout: 6000, msg: 'modal 开必须统一遮挡' });
       const bounds = await evaluate(async () => {
         const ctl = window.__activeBrowserCtl;
         const t = ctl?.tabs?.find(x => x.id === ctl.activeId) || ctl?.tabs?.[0];
@@ -108,8 +114,12 @@ export async function scenes52({ app, win, human, WS, scenario }) {
       await human.assert(!bounds || bounds.width <= 1 || bounds.height <= 1, `cloak 时视图必须收缩（${JSON.stringify(bounds)}）`);
       // 关 modal（摘探针） → 恢复
       await evaluate(() => document.getElementById('__cloakProbe')?.remove());
-      await human.until(() => window.__activeBrowserCtl?._cloaked === false, { timeout: 6000, msg: 'modal 关必须恢复' });
-      await human.assert(true, 'B4 cloak 验收：开隐关恢复全链');
+      await human.until(async () => {
+        const ctl = window.__activeBrowserCtl, t = ctl?.tabs?.find(x => x.id === ctl.activeId) || ctl?.tabs?.[0];
+        const st = t ? await window.mazz.invoke('bv:state', { tabId: t.viewId }) : null;
+        return st && !st.occluded && !st.hidden && st.bounds.width > 2;
+      }, { timeout: 10000, msg: 'modal 关必须恢复' });
+      await human.assert(true, 'B4 统一 Overlay 验收：开隐关恢复全链');
     });
 
     // ==================== 4：B6 全屏与子窗格层级 ====================

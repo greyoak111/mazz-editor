@@ -384,9 +384,11 @@ export class Shell {
    *  要点：
    *  1) 区域按目标窗格（elementFromPoint 命中的 .pane）计算，不是整个容器——多窗格下每个窗格都能各自分屏
    *  2) 标签栏区域不产生分屏区（拖标签进别的窗格标签栏 = 直接移签，不被分屏吞掉）
-   *  3) webview（浏览器窗格）会吞掉 HTML5 拖拽事件：拖签期间给每个 .editor-area 盖透明盾牌保证事件可达 */
+   *  3) WebContentsView 与 DOM 异平面：拖签时先铺最后可见帧代理，再隐藏原生面并由 .editor-area 盾牌接管命中 */
   installSplitPreview() {
-    let overlay = null, overlayHandle = null, zone = null, zoneLeaf = null, finishingDrop = false;
+    let overlay = null, overlayHandle = null, proxy = null, proxyViewIds = [], proxyCoverage = [], pendingPreview = null, proxyReady = false;
+    let proxyPhase = 'idle';
+    let zone = null, zoneLeaf = null, finishingDrop = false, dragSession = 0, cleanupTask = null;
     // 提示色跟随当前 UI 主题（不再死紫）：showOverlay 时实时取主题 accent 转 rgba
     // v45 再就业：平面填色 → 边沿→中心渐隐（先急剧后舒缓），覆盖比例不变
     const zoneColor = () => {
@@ -418,33 +420,125 @@ export class Shell {
       if (fy > 2 / 3) return 'down';
       return null;
     };
-    // W57 分屏路线修正（用户定版）：老 DOM overlay 转正——罩页方案停用（独立窗链路长收效差实锤）；
-    // Min 思路=DOM 直接简单零延迟，「不抢渲染」=拖拽 cloak：拖起页签→浏览器视图全隐让位，DOM 预览随便画，落下即恢复
+    // W87d：WCV 与 renderer DOM 不在同一合成平面。直接 cloak 会把网页挖成白洞；而透明原生子窗若鼠标穿透，
+    // 真实 dragover 会落进客页而不是 shell，旧 W55 合成事件测试因此是假绿。主线采用“最后可见帧代理”：
+    // capturePage → 图片解码并预绘 → 才 cloak WCV → DOM 继续掌握真实 DnD；恢复时先让 WCV 重新可见，再撤代理。
     const browserControllers = () => {
       const found = new Set();
       for (const inst of modules.instances.values()) if (inst?.name === 'browser' && inst.state) found.add(inst.state);
       if (window.__activeBrowserCtl) found.add(window.__activeBrowserCtl);
       return [...found];
     };
+    const visibleBrowserSurfaces = () => {
+      const seen = new Set(), surfaces = [];
+      for (const ctl of browserControllers()) {
+        const tab = ctl.tabs?.find(item => item.id === ctl.activeId);
+        if (!tab?.viewId || !tab.host?.isConnected || seen.has(tab.viewId)) continue;
+        const r = tab.host.getBoundingClientRect();
+        if (r.width <= 2 || r.height <= 2 || getComputedStyle(tab.host).visibility === 'hidden') continue;
+        seen.add(tab.viewId);
+        surfaces.push({ viewId: tab.viewId, rect: { left: r.left, top: r.top, width: r.width, height: r.height } });
+      }
+      return surfaces;
+    };
     const dragCloak = (on) => {
-      // 同一宿主的复杂分屏可同时显示多个 Browser；只 cloak __activeBrowserCtl 会让其余 WCV 继续盖住 DOM 分屏预览。
-      for (const bctl of browserControllers()) {
-        bctl._dragCloak = !!on;
-        bctl.__sync?.();
+      let firstError = null;
+      for (const ctl of browserControllers()) {
+        ctl._dragCloak = !!on;
+        try { ctl.__sync?.(); } catch (error) { firstError ||= error; }
+      }
+      if (firstError) throw firstError;
+    };
+    const nextPaint = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const withDeadline = (promise, timeout, label) => new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`${label} timeout`)), timeout);
+      Promise.resolve(promise).then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
+    });
+    const waitImage = (img) => typeof img.decode === 'function' ? img.decode() : new Promise((resolve, reject) => {
+      img.onload = resolve; img.onerror = reject;
+    });
+    const buildProxy = async (session) => {
+      if (!window.mazz?.isElectron) return { node: null, viewIds: [], coverage: [] };
+      // 非活动 Browser 外壳标签会在 document capture 阶段先激活；等两帧让模块 DOM
+      // 和同 sender 的 bv:bounds 写回稳定，再由主进程原子枚举真正应可见集合。
+      await nextPaint();
+      if (session !== dragSession) throw new Error('drag session ended before browser surface capture');
+      const packet = await withDeadline(window.mazz.invoke('bv:captureVisibleHost', {}), 1200, 'browser surface capture');
+      const captures = Array.isArray(packet?.frames) ? packet.frames : [];
+      if (!captures.length) return { node: null, viewIds: [], coverage: [] };
+      if (session !== dragSession || captures.some(item => !item.png || !item.tabId || !item.bounds)) throw new Error('browser surface capture incomplete');
+      const node = document.createElement('div');
+      node.className = 'mazz-split-surface-proxy';
+      node.setAttribute('aria-hidden', 'true');
+      node.style.pointerEvents = 'none';
+      const decodes = [];
+      for (const item of captures) {
+        const img = new Image();
+        img.className = 'mazz-split-surface-frame';
+        img.dataset.viewId = item.tabId;
+        img.alt = '';
+        img.draggable = false;
+        Object.assign(img.style, {
+          left: `${item.bounds.x}px`, top: `${item.bounds.y}px`,
+          width: `${item.bounds.width}px`, height: `${item.bounds.height}px`,
+        });
+        img.src = `data:image/png;base64,${item.png}`;
+        node.appendChild(img);
+        decodes.push(waitImage(img));
+      }
+      await Promise.all(decodes);
+      if (session !== dragSession) throw new Error('drag session ended before proxy paint');
+      (window.MazzVisualComposition?.ensurePlane?.() || document.body).appendChild(node);
+      await nextPaint();
+      return {
+        node,
+        viewIds: captures.map(item => item.tabId),
+        coverage: captures.map(item => ({ tabId: item.tabId, webContentsId: item.webContentsId, bounds: { ...item.bounds } })),
+      };
+    };
+    const waitSurfacesVisible = async (viewIds) => {
+      if (!window.mazz?.isElectron || !viewIds.length) return true;
+      let attempts = 0;
+      while (true) {
+        // 已关闭、换成非活动签或离开当前宿主的旧 Surface 不再需要代理；仍有可见 DOM host 的 Surface 必须真正在最终 bounds 复活。
+        const expected = new Set(visibleBrowserSurfaces().map(item => item.viewId));
+        const pending = viewIds.filter(viewId => expected.has(viewId));
+        if (!pending.length) return true;
+        const states = await Promise.all(pending.map(tabId => window.mazz.invoke('bv:state', { tabId }).catch(() => null)));
+        if (states.every(state => state && !state.hidden && !state.occluded && state.bounds?.width > 2 && state.bounds?.height > 2)) {
+          await nextPaint();
+          const pixels = await Promise.all(pending.map(tabId => window.mazz.invoke('bv:capture', { tabId }).catch(() => null)));
+          if (pixels.every(png => typeof png === 'string' && png.length > 1000)) return true;
+        }
+        // Windows 合成器迟迟不回帧时继续在代理下重组；绝不以超时为由撤图露白。
+        if (++attempts % 40 === 0) {
+          for (const ctl of browserControllers()) {
+            try { await ctl.recompose?.('split-drag-restore-retry'); } catch {}
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, 40));
       }
     };
     const ensureOverlay = () => {
       if (overlay?.isConnected) return overlay;
       overlay = document.createElement('div');
       overlay.className = 'mazz-split-drag-overlay';
-      overlay.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:60;border:0;outline:0;box-shadow:none;border-radius:0;transition:all .08s ease';
+      // 几何必须一帧直达目标区；transition:all 会让 0×0 元素从页面左上角扫过去，
+      // 真实指针早帧看成一条神秘色带。只淡入透明度，不对 left/top/width/height 插值。
+      overlay.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;opacity:0;pointer-events:none;z-index:60;border:0;outline:0;box-shadow:none;border-radius:0;transition:opacity .08s ease';
       document.body.appendChild(overlay);
-      // renderer 即时 cloak 负责首个拖拽事件；统一 token 负责按 host 遮住全部 WCV，并与其他 Overlay 正确引用计数。
-      overlayHandle = window.MazzVisualComposition?.mountOverlay?.(overlay, { kind: 'split-drag', moveToPlane: true, focusPolicy: 'none' }) || null;
+      // 代理帧已经在 renderer 平面预绘；此 token 只在切换后接管宿主 occlusion 与视觉栈记账。
+      overlayHandle = window.MazzVisualComposition?.mountOverlay?.(overlay, {
+        kind: 'split-drag', moveToPlane: true, focusPolicy: 'none', coveredViews: proxyCoverage,
+      }) || null;
       return overlay;
     };
     const showOverlay = (leaf, z) => {
       const r = leaf.el.getBoundingClientRect();
+      if (!proxyReady && window.mazz?.isElectron) {
+        if (proxyPhase === 'capturing') pendingPreview = { leaf, zone: z };
+        return;
+      }
       const rgb = zoneColor();
       const rect = { left: r.left, top: r.top, width: r.width / 3, height: r.height / 3 };
       if (z === 'left') Object.assign(rect, { width: r.width / 3, height: r.height });
@@ -458,6 +552,7 @@ export class Shell {
       overlay.style.outline = '0';
       overlay.style.boxShadow = 'none';
       overlay.style.borderRadius = '0';
+      overlay.style.opacity = '1';
       overlay.style.left = rect.left + 'px';
       overlay.style.top = rect.top + 'px';
       overlay.style.width = rect.width + 'px';
@@ -465,33 +560,133 @@ export class Shell {
       overlayHandle?.update?.();
     };
     const clearPreview = () => {
+      pendingPreview = null;
       zone = null; zoneLeaf = null;
       if (!overlay) return;
-      overlay.style.width = '0px'; overlay.style.height = '0px'; overlay.style.background = 'none'; overlay.style.border = 'none';
+      overlay.style.opacity = '0'; overlay.style.width = '0px'; overlay.style.height = '0px'; overlay.style.background = 'none'; overlay.style.border = 'none';
       overlayHandle?.update?.();
     };
-    const endOverlay = () => {
+    const releaseOverlay = () => {
       overlayHandle?.release?.('split-drag-end');
       overlayHandle = null;
       overlay?.remove(); overlay = null; zone = null; zoneLeaf = null;
     };
     const shields = (on) => document.body.classList.toggle('tab-dragging', on);
+    const relayoutProxy = async node => {
+      if (!node?.isConnected) return;
+      const current = new Map(visibleBrowserSurfaces().map(item => [item.viewId, item.rect]));
+      let changed = false;
+      for (const frame of node.querySelectorAll('.mazz-split-surface-frame')) {
+        const rect = current.get(frame.dataset.viewId);
+        if (!rect) continue;
+        Object.assign(frame.style, {
+          left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`,
+        });
+        changed = true;
+      }
+      if (changed) await nextPaint();
+    };
     // 清理唯一真源（三路兜底，不再单押 dragend）：拖签中途源元素被重渲染销毁→dragend 永失，
     // 33% 框+盾牌钉死屏幕（「神秘框」粘连复现实锤）——看门狗/pointerup/blur 三路必达
     let dog = null;
     const cleanup = () => {
+      if (cleanupTask) return cleanupTask;
+      const retiredProxy = proxy;
+      const retiredViewIds = proxyViewIds;
+      proxy = null; proxyViewIds = []; proxyCoverage = []; pendingPreview = null; proxyReady = false; proxyPhase = 'restoring';
+      ++dragSession; // 使仍在 capture/decode 的旧会话失效，禁止迟到 cloak。
       finishingDrop = false;
       shields(false); clearTimeout(dog); dog = null;
-      // 先把所有 ctl 的目标几何写回；host token 尚在时主进程只记 desiredRect 不显。随后释放 token，一次性在新矩形复活。
-      dragCloak(false);
-      endOverlay();
+      // 代理先贴到新布局，再释放 host token + 恢复 WCV；确认原生 Surface 已在最终 bounds 产出像素后才撤图。
+      cleanupTask = (async () => {
+        let restoreAttempt = 0;
+        while (true) {
+          try {
+            await relayoutProxy(retiredProxy);
+            releaseOverlay();
+            try { dragCloak(false); } catch (error) { console.warn('[split-preview] uncloak retry:', error?.message || error); }
+            await Promise.all(browserControllers().map(async ctl => {
+              try { return await ctl.recompose?.('split-drag-restore'); } catch { return false; }
+            }));
+            await waitSurfacesVisible(retiredViewIds);
+            retiredProxy?.remove();
+            proxyPhase = 'idle';
+            window.__mazzSplitProxyState = { phase: 'idle', viewIds: [] };
+            return;
+          } catch (error) {
+            proxyPhase = 'restore-failed';
+            window.__mazzSplitProxyState = { phase: 'restore-failed', viewIds: [...retiredViewIds], attempt: ++restoreAttempt };
+            console.warn('[split-preview] Surface 尚未复活，保留代理并重试:', error?.message || error);
+            await new Promise(resolve => setTimeout(resolve, 250));
+          }
+        }
+      })().finally(() => { cleanupTask = null; });
+      return cleanupTask;
     };
     const armDog = () => { clearTimeout(dog); dog = setTimeout(cleanup, 1500); }; // 1.5s 无 dragover 即判拖拽死亡
 
     document.addEventListener('dragstart', (e) => {
       if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) {
-        shields(true); dragCloak(true); ensureOverlay(); armDog();
-      } // 拖起即隐当前宿主全部 Browser，让 DOM 接管命中与预览
+        if (cleanupTask) { e.preventDefault(); return; }
+        // 捕获相早于 Tabs 自身 dragstart（此时 dataTransfer 还没有 mazz/tab）。若拖的是
+        // 非活动 Browser 外壳签，先让它成为可见 Surface，否则 capture 集合会漏掉落位后
+        // 真正需要显示的 WCV，恢复瞬间仍可能出现无代理空档。
+        const sourceId = e.target.closest?.('.tab')?.dataset?.tabId;
+        const sourceLeaf = sourceId && this.paneTree.leaves().find(leaf => leaf.tabs.get(sourceId));
+        if (sourceLeaf && sourceLeaf.tabs.activeId !== sourceId) {
+          this.paneTree.setActive(sourceLeaf);
+          sourceLeaf.tabs.activate(sourceId);
+        }
+        const session = ++dragSession;
+        proxyReady = false; pendingPreview = null; proxyPhase = 'capturing';
+        shields(true); armDog();
+        window.__mazzSplitProxyState = { phase: 'capturing', viewIds: [] };
+        buildProxy(session).then(async result => {
+          if (session !== dragSession || !document.body.classList.contains('tab-dragging')) { result.node?.remove(); return; }
+          try {
+            proxy = result.node; proxyViewIds = result.viewIds; proxyCoverage = result.coverage;
+            // capture 后的解码/双帧期间布局可发生合法的亚像素/1px 舍入；在申请 host-wide
+            // occlusion 前把代理贴回 renderer 当前几何。主进程仍严格核对 Surface 身份集合，
+            // 但不再用旧 bounds 把一次完整捕获误杀成白屏。
+            await relayoutProxy(proxy);
+            ensureOverlay();
+            const activation = await overlayHandle?.ready;
+            if (window.mazz?.isElectron && activation?.active !== true) throw new Error(activation?.error || 'split overlay activation failed');
+            if (session !== dragSession || !document.body.classList.contains('tab-dragging')) throw new Error('drag session ended before cloak');
+            dragCloak(true);
+            proxyReady = true; proxyPhase = 'active';
+            window.__mazzSplitProxyState = { phase: 'active', viewIds: [...proxyViewIds], paintedAt: performance.now() };
+            if (pendingPreview) {
+              const next = pendingPreview; pendingPreview = null;
+              showOverlay(next.leaf, next.zone);
+            }
+          } catch (error) {
+            if (session === dragSession) {
+              const failedNode = proxy || result.node;
+              const failedViewIds = [...proxyViewIds];
+              proxyPhase = 'restoring';
+              finishingDrop = true;
+              shields(false); clearTimeout(dog); dog = null;
+              releaseOverlay();
+              try { dragCloak(false); } catch {}
+              await Promise.all(browserControllers().map(async ctl => {
+                try { return await ctl.recompose?.('split-drag-activation-rollback'); } catch { return false; }
+              }));
+              await waitSurfacesVisible(failedViewIds);
+              failedNode?.remove();
+              proxy = null; proxyViewIds = []; proxyCoverage = []; proxyReady = false;
+              finishingDrop = false;
+            }
+            throw error;
+          }
+        }).catch(error => {
+          if (session !== dragSession) return;
+          // 安全失败：宁可本次不显示分屏命中，也绝不隐藏没有代理帧兜底的网页。
+          console.warn('[split-preview] 浏览器代理帧未就绪，保持原 Surface:', error?.message || error);
+          shields(false); pendingPreview = null; zone = null; zoneLeaf = null; proxyPhase = 'degraded-visible';
+          window.__mazzSplitProxyState = { phase: 'degraded-visible', viewIds: [] };
+        });
+      }
     }, true);
     // 捕获相：模块内部（如编辑器拖拽插图区）stopPropagation 也截不到这里——
     // 此前 dragover 走冒泡相，多窗格下被模块内层截停，分区永 null=拖不了分屏（灾难现场病根）
@@ -508,6 +703,7 @@ export class Shell {
       const tabId = e.dataTransfer?.getData('mazz/tab');
       const z = zone, leaf = zoneLeaf;
       if (!tabId || !z || !leaf) { cleanup(); return; }
+      if (window.mazz?.isElectron && proxyPhase !== 'active') { cleanup(); return; }
       e.preventDefault();
       e.stopPropagation();
       finishingDrop = true;
@@ -518,7 +714,7 @@ export class Shell {
     }, true);
     document.addEventListener('dragend', () => { if (!finishingDrop) cleanup(); });
     // 兜底一：真实鼠标拖拽必以 pointerup 收场（dragend 被源毁灭吞掉时的唯一活口）
-    document.addEventListener('pointerup', () => { if (!finishingDrop && (overlay || document.body.classList.contains('tab-dragging'))) cleanup(); }, true);
+    document.addEventListener('pointerup', () => { if (!finishingDrop && (overlay || proxyPhase !== 'idle' || document.body.classList.contains('tab-dragging'))) cleanup(); }, true);
     // 兜底二：切窗/失焦即清（alt-tab 中断拖拽的残渣）
     window.addEventListener('blur', () => { if (!finishingDrop) cleanup(); });
   }

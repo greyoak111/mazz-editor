@@ -1,6 +1,7 @@
 import { _electron as electron } from 'playwright';
 import fs from 'fs'; import os from 'os'; import path from 'path';
 import { seedFixtures } from './fixtures.mjs';
+throw new Error('RETIRED_W87: pre-VisualComposition private _cloaked probe; use w71-overlay-zorder.mjs and w87-browser-composition-matrix.mjs');
 const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-user-'));
 const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-e2e-ws-'));
 await seedFixtures(WS, WS);

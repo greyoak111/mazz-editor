@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 90,
-    "scannedLines": 21530
+    "scannedLines": 21591
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -46,7 +46,7 @@
   },
   "protocolReality": {
     "ownership": "WindowManager, PanelWindows and BrowserViews retain resource ownership; W87 VisualCompositionRuntime is the single registry and arbitration plane for visible, input-receiving or occluding surfaces.",
-    "host": "All managed windows, panel windows, WebContentsViews and registered DOM overlays carry an explicit host; overlay tokens occlude native surfaces per host with reference counting.",
+    "host": "All managed windows, panel windows, WebContentsViews and registered DOM overlays carry an explicit host; overlay tokens occlude native surfaces per host with reference counting, and split-drag may occlude only after exact per-host tabId/webContentsId coverage validation.",
     "move": "Local owners perform the move while VisualCompositionRuntime updates host/geometry/focus state; browser native bounds still use packaged-Windows convergence.",
     "destroy": "Local closed/destroy paths remain authoritative, VisualCompositionRuntime unregisters the visual record, and ResourceLedger independently verifies resource convergence.",
     "visualSovereignty": "Every supported visible/input/occluding entity must register with mazz.visual-composition/v1; module-local modal observers may not cloak native surfaces."
@@ -59,33 +59,39 @@
       "sample": "const hostWin = BrowserWindow.fromWebContents(event?.sender) || this.wm.main;"
     },
     {
+      "rule": "browser-window-registry",
+      "file": "main/browser-views.js",
+      "line": 112,
+      "sample": "const host = BrowserWindow.fromWebContents(event?.sender) || this.wm.main;"
+    },
+    {
       "rule": "session-partition",
       "file": "main/browser-views.js",
-      "line": 121,
+      "line": 179,
       "sample": "const ses = partition ? session.fromPartition(partition) : this.session;"
     },
     {
       "rule": "web-contents-view-construction",
       "file": "main/browser-views.js",
-      "line": 122,
+      "line": 180,
       "sample": "const view = new WebContentsView({"
     },
     {
       "rule": "native-content-view-ownership",
       "file": "main/browser-views.js",
-      "line": 151,
+      "line": 209,
       "sample": "host.contentView.addChildView(view);"
     },
     {
       "rule": "native-content-view-ownership",
       "file": "main/browser-views.js",
-      "line": 183,
+      "line": 241,
       "sample": "try { (rec.hostWin || this.wm.main).contentView.removeChildView(rec.view); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/browser-views.js",
-      "line": 461,
+      "line": 519,
       "sample": "wc.on('render-process-gone', (_e, details) => this.emit(tabId, 'render-process-gone', { reason: details?.reason }));"
     },
     {
@@ -199,7 +205,7 @@
     {
       "rule": "browser-window-registry",
       "file": "main/visual-composition.js",
-      "line": 69,
+      "line": 72,
       "sample": "return BrowserWindow.getAllWindows().find(win => win.id === Number(id)) || null;"
     },
     {
@@ -261,7 +267,7 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 259,
+          "line": 317,
           "sample": "try { rec.view.webContents.invalidate(); rec._invalidateCount = (rec._invalidateCount || 0) + 1; } catch {}"
         }
       ]
@@ -275,12 +281,12 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 264,
+          "line": 322,
           "sample": "try { rec.view.setBounds({ ...R, width: Math.max(1, R.width - 1) }); rec.view.setBounds(R); } catch {}"
         },
         {
           "file": "main/browser-views.js",
-          "line": 268,
+          "line": 326,
           "sample": "try { rec.view.setBounds({ ...R, height: Math.max(1, R.height - 1) }); rec.view.setBounds(R); } catch {}"
         }
       ]
@@ -294,7 +300,7 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 131,
+          "line": 189,
           "sample": "backgroundThrottling: false,"
         },
         {
@@ -340,20 +346,50 @@
     },
     {
       "id": "WKR-DRAG-CLOAK",
-      "owner": "Shell/Browser module",
+      "owner": "Shell/BrowserViews/VisualComposition",
       "status": "KEEP",
-      "reason": "Native WebContentsView consumes drag hit-testing above DOM drop targets.",
+      "reason": "Split drag captures, decodes and paints every visible WCV for the sender host, validates the exact tabId/webContentsId set, then applies temporary host-wide cloak; capture failure stays visible and proxy removal waits for native visibility plus fresh pixels.",
       "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
       "evidence": [
         {
-          "file": "renderer/shell/shell.js",
-          "line": 486,
-          "sample": "dragCloak(false);"
+          "file": "main/browser-views.js",
+          "line": 111,
+          "sample": "bus.handle('bv:captureVisibleHost', async (_payload = {}, event) => {"
+        },
+        {
+          "file": "main/browser-views.js",
+          "line": 113,
+          "sample": "return this.captureVisibleHost(host);"
+        },
+        {
+          "file": "main/browser-views.js",
+          "line": 147,
+          "sample": "// captureVisibleHost 已经在真正抓帧的前后钉死过几何。代理随后还要解码并等两个 RAF，"
+        },
+        {
+          "file": "main/browser-views.js",
+          "line": 156,
+          "sample": "async captureVisibleHost(hostWin) {"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 493,
-          "sample": "shields(true); dragCloak(true); ensureOverlay(); armDog();"
+          "line": 466,
+          "sample": "const packet = await withDeadline(window.mazz.invoke('bv:captureVisibleHost', {}), 1200, 'browser surface capture');"
+        },
+        {
+          "file": "renderer/shell/shell.js",
+          "line": 607,
+          "sample": "try { dragCloak(false); } catch (error) { console.warn('[split-preview] uncloak retry:', error?.message || error); }"
+        },
+        {
+          "file": "renderer/shell/shell.js",
+          "line": 656,
+          "sample": "dragCloak(true);"
+        },
+        {
+          "file": "renderer/shell/shell.js",
+          "line": 671,
+          "sample": "try { dragCloak(false); } catch {}"
         }
       ]
     },
@@ -361,7 +397,7 @@
       "id": "WKR-PANE-MOVE-RESYNC",
       "owner": "Shell/Browser module",
       "status": "KEEP",
-      "reason": "Native view host move requires post-layout bounds/reload convergence.",
+      "reason": "Native view host move requires post-layout bounds/recompose/invalidate convergence without network reload.",
       "removalGate": "Only after an equivalent Windows packaged-runtime probe passes without the mechanism and rollback is documented.",
       "evidence": [
         {
@@ -376,7 +412,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2299,
+          "line": 2495,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]
@@ -390,7 +426,7 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 325,
+          "line": 383,
           "sample": "Menu.buildFromTemplate(items).popup({ window: rec.hostWin || this.wm.main, x: Math.round((params.x || 0) + b.x), y: Math.round((params.y || 0) + b.y) });"
         },
         {
@@ -424,7 +460,7 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 167,
+          "line": 225,
           "sample": "destroyByHost(win) {"
         },
         {
@@ -495,6 +531,7 @@
       "One authoritative owner and one current host.",
       "Dispose is idempotent and returns the resource ledger to baseline.",
       "Move is observable, generation-guarded and rollback-capable.",
+      "Split-drag may occlude a host only after every captured WCV proxy is decoded, painted and identity-validated; proxy removal waits for native visibility and fresh pixels.",
       "Existing workarounds remain adapter-local until packaged Windows evidence permits removal."
     ]
   },

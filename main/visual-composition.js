@@ -24,6 +24,9 @@ class VisualCompositionRuntime {
       const source = event?.sender;
       const host = BrowserWindow.fromWebContents(source) || this.wm?.main;
       if (!host || host.isDestroyed()) throw new Error('visual overlay host unavailable');
+      if (payload.kind === 'split-drag' && !this.browserViews?.validateHostCoverage?.(host, payload.coveredViews)) {
+        throw new Error('split drag proxy coverage no longer matches visible host surfaces');
+      }
       this.watchSource(source);
       const state = this.kernel.beginOverlay({
         ...payload,

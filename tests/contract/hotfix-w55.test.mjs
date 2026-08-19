@@ -52,13 +52,13 @@ describe('③播放器改名', () => {
   });
 });
 
-describe('④分屏预览原生独立窗格化', () => {
-  test('splitpreview 罩注册在位（W57 路线修正：DOM overlay 转正，罩保留为备选通道）', () => {
+describe('④分屏预览跨 Surface 收敛', () => {
+  test('旧 splitpreview 罩只保留资产；W87d 主线先铺代理帧再启用 DOM overlay', () => {
     const pw = readSrc('main/panel-windows.js');
     assert.ok(pw.includes("kind === 'splitpreview'"), 'kind 认识必须有（备选通道保留）');
     const sh = readSrc('renderer/shell/shell.js');
-    // W57 路线修正：分屏主线=老 DOM overlay+拖拽 cloak（罩页停用但不拆）
-    assert.ok(sh.includes('dragCloak'), '拖拽 cloak 必须有（W57 路线修正）');
-    assert.ok(sh.includes('W57 分屏路线修正'), '路线修正注释必须在');
+    assert.ok(sh.includes('buildProxy') && sh.includes("invoke('bv:captureVisibleHost'"), 'WCV cloak 前必须按真实宿主建立全量可见帧代理');
+    assert.ok(sh.includes('dragCloak'), '代理就绪后的拖拽命中闸必须有');
+    assert.ok(sh.includes('W87d'), '当前路线修正注释必须在');
   });
 });

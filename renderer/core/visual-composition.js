@@ -90,6 +90,9 @@ class VisualCompositionClient {
       token, element, kind: options.kind || rule.kind,
       onDismiss: options.onDismiss || null,
       focusPolicy: options.focusPolicy === 'none' ? 'none' : 'auto',
+      coveredViews: Array.isArray(options.coveredViews)
+        ? options.coveredViews.map(item => ({ ...item, bounds: item?.bounds ? { ...item.bounds } : null }))
+        : null,
       previousFocus: isElement(document.activeElement) ? document.activeElement : null,
       resizeObserver: null, released: false,
     };
@@ -104,6 +107,7 @@ class VisualCompositionClient {
         if (window.mazz?.isElectron) {
           await window.mazz.invoke('visual:overlayBegin', {
             token, kind: record.kind, bounds: finiteBounds(element), dismissible: !!record.onDismiss,
+            coveredViews: record.coveredViews,
           });
         }
         if (!record.released && element.isConnected) {
@@ -113,13 +117,15 @@ class VisualCompositionClient {
             if (!element.contains(document.activeElement)) focusable(element)[0]?.focus?.({ preventScroll: true });
           });
         }
+        return { active: true, token };
       } catch (error) {
         element.dataset.visualReady = 'degraded';
         element.dataset.visualState = 'degraded';
         console.error('[visual-composition] overlay registration failed:', error);
+        return { active: false, token, error: String(error?.message || error) };
       }
     };
-    activate();
+    record.ready = activate();
     if (typeof ResizeObserver === 'function') {
       record.resizeObserver = new ResizeObserver(() => {
         if (!record.released && window.mazz?.isElectron) window.mazz.invoke('visual:overlayUpdate', { token, bounds: finiteBounds(element) }).catch(error => console.error('[visual-composition] geometry update failed:', error));
@@ -130,7 +136,13 @@ class VisualCompositionClient {
   }
 
   handleFor(token) {
-    return { token, release: reason => this.releaseOverlay(token, reason), update: () => this.updateOverlay(token) };
+    const record = this.records.get(token);
+    return {
+      token,
+      ready: record?.ready || Promise.resolve({ active: record?.element?.dataset.visualState === 'active', token }),
+      release: reason => this.releaseOverlay(token, reason),
+      update: () => this.updateOverlay(token),
+    };
   }
 
   updateOverlay(token) {

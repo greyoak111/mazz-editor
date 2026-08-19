@@ -28,6 +28,8 @@ button > .mz-ico:only-child, [role="button"] > .mz-ico:only-child { margin: auto
   width: 100%; height: 100%; overflow: visible;
 }
 #mazz-overlay-plane > * { pointer-events: auto; }
+/* W87d：Surface 代理只是像素桥，必须穿透到 pane；通用 overlay 可交互规则不得覆盖它。 */
+#mazz-overlay-plane > .mazz-split-surface-proxy { pointer-events: none; }
 .mazz-palette-mask:not([data-visual-ready]),
 .appwin-mask:not([data-visual-ready]),
 .page-preview-mask:not([data-visual-ready]),

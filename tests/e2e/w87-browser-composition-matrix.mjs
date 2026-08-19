@@ -1,5 +1,6 @@
 import { _electron as electron } from 'playwright';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -9,13 +10,17 @@ const { PNG } = require('pngjs');
 const ROOT = path.resolve('.');
 const EXECUTABLE = process.env.MAZZ_E2E_EXECUTABLE ? path.resolve(process.env.MAZZ_E2E_EXECUTABLE) : '';
 const GPU_MODE = process.env.MAZZ_BROWSER_MATRIX_GPU || 'hardware';
+const UI_THEME = String(process.env.MAZZ_BROWSER_MATRIX_THEME || '').trim();
 const RUN_TAG = String(process.env.MAZZ_BROWSER_MATRIX_RUN_TAG || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 24);
 const EVIDENCE_VARIANT = `${GPU_MODE.toUpperCase()}${RUN_TAG ? `_${RUN_TAG.toUpperCase()}` : ''}`;
+// Source 与 packaged 必须保留各自的复合截图；共用 GPU/tag 文件名会让后一轮静默覆盖前一轮证据。
+const IMAGE_VARIANT = `${EXECUTABLE ? 'PACKAGED' : 'SOURCE'}_${EVIDENCE_VARIANT}`;
 const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w87b-browser-user-'));
 const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w87b-browser-ws-'));
 const EVIDENCE = path.join(ROOT, 'docs', 'engineering', 'evidence');
 const logs = [];
 const rendererErrors = [];
+const rendererErrorProbes = [];
 const observedPages = new WeakSet();
 let app = null;
 
@@ -23,7 +28,16 @@ function observePage(page) {
   if (!page || observedPages.has(page)) return;
   observedPages.add(page);
   page.on('pageerror', error => rendererErrors.push(`${page.url()} pageerror: ${error.message}`));
-  page.on('console', message => { if (message.type() === 'error') rendererErrors.push(`${page.url()} console.error: ${message.text()}`); });
+  page.on('console', message => {
+    if (message.type() !== 'error') return;
+    const text = `${page.url()} console.error: ${message.text()}`;
+    rendererErrors.push(text);
+    rendererErrorProbes.push(page.evaluate(() => ({
+      stage: window.__w87bStage || null,
+      proxy: window.__mazzSplitProxyState || null,
+      frames: document.querySelectorAll('.mazz-split-surface-frame').length,
+    })).then(state => ({ text, state })).catch(error => ({ text, probeError: String(error?.message || error) })));
+  });
 }
 
 const pageUrl = (label, a, b) => 'data:text/html;charset=utf-8,' + encodeURIComponent(`<!doctype html>
@@ -136,6 +150,7 @@ try {
   await main.waitForFunction(() => document.documentElement.dataset.appReady === '1' && !!window.MazzShell, null, { timeout: 30000 });
   await main.evaluate(() => window.MazzBoot);
   await dismissAgreement(main);
+  if (UI_THEME) await main.evaluate(theme => window.MazzShell.setTheme(theme), UI_THEME);
   await app.evaluate(({ BrowserWindow }) => {
     const mainWin = BrowserWindow.getAllWindows().find(win => !win.getParentWindow() && !win.__panelKind);
     mainWin.setSize(1360, 840); mainWin.center(); mainWin.show(); mainWin.focus();
@@ -193,21 +208,63 @@ try {
     await window.mazz.invoke('bv:js', { tabId: ids[0], code: 'window.__splitKeep="A"' });
     await window.mazz.invoke('bv:js', { tabId: ids[1], code: 'window.__splitKeep="C"' });
   }, [mainA.viewId, mainC.viewId]);
+  const paneCountBeforeDrag = await main.evaluate(() => window.MazzShell.paneTree.leaves().length);
+  const beforeDragFrames = await main.evaluate(() => window.mazz.invoke('bv:captureVisibleHost', {}));
+  const beforeDragHashes = Object.fromEntries(beforeDragFrames.frames.map(frame => [frame.tabId,
+    crypto.createHash('sha256').update(Buffer.from(frame.png, 'base64')).digest('hex')]));
 
-  await main.evaluate(async ({ shellId }) => {
+  await main.evaluate(({ shellId }) => {
+    window.__w87bStage = 'initial-drag';
     const leaf = window.MazzShell.paneTree.leaves()[0];
     const target = leaf.el.querySelector('.editor-area');
     const rect = target.getBoundingClientRect();
+    const leafBox = leaf.el.getBoundingClientRect();
     const tab = [...document.querySelectorAll('.tab')].find(node => node.querySelector('.t-label')?.textContent === 'W87B-MAIN-C');
     if (!tab) throw new Error('drag source tab missing');
     const dt = new DataTransfer(); dt.setData('mazz/tab', shellId);
     tab.dispatchEvent(new DragEvent('dragstart', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    window.__w87bDrag = {
+      dt, target,
+      rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+      leafRect: { left: leafBox.left, top: leafBox.top, width: leafBox.width, height: leafBox.height },
+    };
+  }, { shellId: mainC.shellId });
+  try {
+    await main.waitForFunction(expected => {
+      const state = window.__mazzSplitProxyState;
+      return state?.phase === 'active'
+        && state.viewIds.length === expected
+        && document.querySelectorAll('.mazz-split-surface-frame').length === expected;
+    }, 2, { timeout: 15000 });
+  } catch (error) {
+    const diagnostic = await main.evaluate(async () => {
+      const packet = await window.mazz.invoke('bv:captureVisibleHost', {}).catch(failure => ({ error: String(failure?.message || failure) }));
+      return {
+        proxy: window.__mazzSplitProxyState,
+        frames: document.querySelectorAll('.mazz-split-surface-frame').length,
+        overlays: window.MazzVisualComposition?.snapshot?.(),
+        hostCapture: packet?.error ? packet : {
+          hostWindowId: packet?.hostWindowId,
+          frames: (packet?.frames || []).map(frame => ({
+            tabId: frame.tabId,
+            webContentsId: frame.webContentsId,
+            bounds: frame.bounds,
+            bytes: typeof frame.png === 'string' ? frame.png.length : 0,
+          })),
+        },
+      };
+    });
+    throw new Error(`split proxy activation timed out: ${JSON.stringify({ diagnostic, rendererErrors, logs: logs.slice(-12) })}; ${error.message}`);
+  }
+  await main.evaluate(async () => {
+    const { dt, target, rect } = window.__w87bDrag;
     const points = [
       ['right', 0.84, 0.5], ['down', 0.5, 0.84], ['left', 0.16, 0.5], ['up', 0.5, 0.16],
     ];
     const samples = [];
     for (const [zone, fx, fy] of points) {
       const x = rect.left + rect.width * fx, y = rect.top + rect.height * fy;
+      const hitBefore = document.elementFromPoint(x, y);
       target.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: x, clientY: y, bubbles: true, cancelable: true }));
       await new Promise(resolve => setTimeout(resolve, 110));
       const overlay = document.querySelector('.mazz-split-drag-overlay');
@@ -218,13 +275,17 @@ try {
         outlineStyle: style?.outlineStyle || null,
         outlineWidth: style?.outlineWidth || null,
         boxShadow: style?.boxShadow || null,
+        backgroundImage: style?.backgroundImage || null,
+        rect: overlay ? (() => { const r = overlay.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })() : null,
+        proxyPointerEvents: getComputedStyle(document.querySelector('.mazz-split-surface-proxy')).pointerEvents,
+        hitPaneBefore: !!hitBefore?.closest?.('.pane'),
       });
     }
     const x = rect.left + rect.width * 0.84, y = rect.top + rect.height * 0.5;
     target.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: x, clientY: y, bubbles: true, cancelable: true }));
     window.__w87bPreviewDirections = samples;
-    window.__w87bDrag = { dt, target, x, y };
-  }, { shellId: mainC.shellId });
+    Object.assign(window.__w87bDrag, { x, y });
+  });
   await main.waitForTimeout(250);
   const duringDrag = await main.evaluate(async ids => {
     const overlay = document.querySelector('.mazz-split-drag-overlay');
@@ -234,44 +295,92 @@ try {
       states: await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id }))),
       visual: await window.mazz.invoke('visual:snapshot'),
       renderer: window.MazzVisualComposition.snapshot(),
+      proxyState: window.__mazzSplitProxyState,
+      targetRect: window.__w87bDrag?.leafRect || null,
+      proxies: [...document.querySelectorAll('.mazz-split-surface-frame')].map(img => {
+        const r = img.getBoundingClientRect();
+        return { viewId: img.dataset.viewId, sourceBytes: img.src.length, png: img.src.split(',')[1] || '', rect: { x: r.x, y: r.y, width: r.width, height: r.height } };
+      }),
       directions: window.__w87bPreviewDirections || [],
       preview: style ? {
         borders: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth],
         outlineStyle: style.outlineStyle,
         outlineWidth: style.outlineWidth,
         boxShadow: style.boxShadow,
+        backgroundImage: style.backgroundImage,
+        rect: (() => { const r = overlay.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })(),
+        proxyPointerEvents: getComputedStyle(document.querySelector('.mazz-split-surface-proxy')).pointerEvents,
         activePaneShadow: activePane ? getComputedStyle(activePane).boxShadow : null,
       } : null,
     };
   }, [mainA.viewId, mainC.viewId]);
-  if (!duringDrag.states.every(state => state?.hidden)) throw new Error(`drag did not cloak every browser in host: ${JSON.stringify(duringDrag)}`);
+  if (duringDrag.proxyState?.phase !== 'active' || duringDrag.proxies.length !== 2
+      || duringDrag.proxies.some(frame => frame.sourceBytes < 1000 || frame.rect.width < 100 || frame.rect.height < 100)) {
+    throw new Error(`drag proxy was not painted before browser cloak: ${JSON.stringify(duringDrag)}`);
+  }
+  const proxyHashes = Object.fromEntries(duringDrag.proxies.map(frame => [frame.viewId,
+    crypto.createHash('sha256').update(Buffer.from(frame.png, 'base64')).digest('hex')]));
+  for (const frame of duringDrag.proxies) delete frame.png;
+  duringDrag.proxyHashes = proxyHashes;
+  if (Object.keys(beforeDragHashes).length !== 2 || Object.entries(beforeDragHashes).some(([id, hash]) => proxyHashes[id] !== hash)) {
+    throw new Error(`drag proxy pixels diverged from the corresponding visible WCV: ${JSON.stringify({ beforeDragHashes, proxyHashes })}`);
+  }
+  if (!duringDrag.states.every(state => state?.hidden)) throw new Error(`browser cloak did not follow painted proxy: ${JSON.stringify(duringDrag)}`);
   if (!duringDrag.visual.hosts.some(host => host.hostWindowId === mainHost && host.occluded)) throw new Error(`split drag missing host occlusion token: ${JSON.stringify(duringDrag.visual)}`);
-  if (!duringDrag.preview || duringDrag.preview.borders.some(value => value !== '0px')
+  if (!duringDrag.preview || duringDrag.preview.rect.width < 50 || duringDrag.preview.rect.height < 50
+      || !duringDrag.preview.backgroundImage.includes('linear-gradient') || duringDrag.preview.proxyPointerEvents !== 'none'
+      || duringDrag.preview.borders.some(value => value !== '0px')
       || duringDrag.preview.outlineStyle !== 'none' || duringDrag.preview.outlineWidth !== '0px'
       || duringDrag.preview.boxShadow !== 'none' || duringDrag.preview.activePaneShadow !== 'none') {
     throw new Error(`split gradient still has a colored frame: ${JSON.stringify(duringDrag.preview)}`);
   }
-  if (duringDrag.directions.length !== 4 || duringDrag.directions.some(sample => !sample.borders
+  if (duringDrag.directions.length !== 4 || duringDrag.directions.some(sample => !sample.borders || !sample.hitPaneBefore
+      || sample.proxyPointerEvents !== 'none' || !sample.backgroundImage?.includes('linear-gradient')
+      || sample.rect?.width < 50 || sample.rect?.height < 50
       || sample.borders.some(value => value !== '0px') || sample.outlineStyle !== 'none'
       || sample.outlineWidth !== '0px' || sample.boxShadow !== 'none')) {
     throw new Error(`split gradient frame returned while changing direction: ${JSON.stringify(duringDrag.directions)}`);
   }
+  for (const sample of duringDrag.directions) {
+    const horizontal = sample.zone === 'left' || sample.zone === 'right';
+    const expectedWidth = horizontal ? duringDrag.targetRect.width / 3 : duringDrag.targetRect.width;
+    const expectedHeight = horizontal ? duringDrag.targetRect.height : duringDrag.targetRect.height / 3;
+    if (Math.abs(sample.rect.width - expectedWidth) > 3 || Math.abs(sample.rect.height - expectedHeight) > 3) {
+      throw new Error(`split gradient did not occupy the expected third for ${sample.zone}: ${JSON.stringify({ sample, target: duringDrag.targetRect })}`);
+    }
+  }
   if (duringDrag.renderer.stack.at(-1)?.focusPolicy !== 'none') throw new Error(`split drag entered focus arbitration: ${JSON.stringify(duringDrag.renderer)}`);
-  await main.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_DRAG_${EVIDENCE_VARIANT}.png`) });
+  const dragShot = await main.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_DRAG_${IMAGE_VARIANT}.png`) });
+  const dragHealth = imageHealth(dragShot.toString('base64'), 'drag proxy composite');
 
   await main.evaluate(() => {
     const drag = window.__w87bDrag;
     drag.target.dispatchEvent(new DragEvent('drop', { dataTransfer: drag.dt, clientX: drag.x, clientY: drag.y, bubbles: true, cancelable: true }));
   });
-  await main.waitForFunction(async ids => {
-    const states = await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id })));
-    const visual = await window.mazz.invoke('visual:snapshot');
+  await main.waitForFunction(expectedPanes => {
     const activePane = document.querySelector('.pane.active');
-    return states.every(state => state && !state.hidden && !state.occluded && state.bounds.width > 100)
-      && visual.overlayCount === 0
+    return window.__mazzSplitProxyState?.phase === 'idle'
       && !document.body.classList.contains('tab-dragging')
+      && !document.querySelector('.mazz-split-surface-proxy')
+      && window.MazzShell.paneTree.leaves().length === expectedPanes
       && activePane && getComputedStyle(activePane).boxShadow !== 'none';
-  }, [mainA.viewId, mainC.viewId], { timeout: 15000 });
+  }, paneCountBeforeDrag + 1, { timeout: 15000 });
+  const restoredAfterDrop = await main.evaluate(async ids => ({
+    states: await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id }))),
+    visual: await window.mazz.invoke('visual:snapshot'),
+  }), [mainA.viewId, mainC.viewId]);
+  if (restoredAfterDrop.states.some(state => !state || state.hidden || state.occluded || state.bounds.width <= 100)
+      || restoredAfterDrop.visual.overlayCount !== 0) {
+    throw new Error(`native surfaces did not restore after split drop: ${JSON.stringify(restoredAfterDrop)}`);
+  }
+  const dropTopology = await main.evaluate(shellId => ({
+    paneCount: window.MazzShell.paneTree.leaves().length,
+    owners: window.MazzShell.paneTree.leaves().filter(leaf => !!leaf.tabs.get(shellId)).length,
+    panes: window.MazzShell.paneTree.leaves().map(leaf => leaf.tabs.tabs.map(tab => tab.id)),
+  }), mainC.shellId);
+  if (dropTopology.paneCount !== paneCountBeforeDrag + 1 || dropTopology.owners !== 1) {
+    throw new Error(`split drop did not create one new pane and one tab owner: ${JSON.stringify(dropTopology)}`);
+  }
   const afterDropDecoration = await main.evaluate(() => ({
     dragging: document.body.classList.contains('tab-dragging'),
     activePaneShadow: getComputedStyle(document.querySelector('.pane.active')).boxShadow,
@@ -280,6 +389,121 @@ try {
   await assertMarkers(main, [[mainA.viewId, 'W87B-MAIN-A'], [mainC.viewId, 'W87B-MAIN-C']], 'after-drag-split');
   const keep = await main.evaluate(async ids => Promise.all(ids.map(id => window.mazz.invoke('bv:js', { tabId: id, code: 'window.__splitKeep' }))), [mainA.viewId, mainC.viewId]);
   if (keep[0] !== 'A' || keep[1] !== 'C') throw new Error(`split migration reloaded page state: ${JSON.stringify(keep)}`);
+
+  // 图片解码失败注入：没有完整代理帧时必须 fail visible，不能再把 Browser cloak 成空底。
+  const decodeFailureInjected = await main.evaluate(shellId => {
+    window.__w87bStage = 'decode-failure';
+    window.__w87dDecodeDescriptor = Object.getOwnPropertyDescriptor(Image.prototype, 'decode');
+    const fail = () => Promise.reject(new Error('W87D_INJECT_DECODE_FAILURE'));
+    Object.defineProperty(Image.prototype, 'decode', { configurable: true, writable: true, value: fail });
+    const target = document.querySelector('.pane .editor-area');
+    const tab = document.querySelector('.tab');
+    const r = target.getBoundingClientRect();
+    const dt = new DataTransfer(); dt.setData('mazz/tab', shellId);
+    tab.dispatchEvent(new DragEvent('dragstart', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    target.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: r.left + r.width * 0.16, clientY: r.top + r.height * 0.5, bubbles: true, cancelable: true }));
+    return Image.prototype.decode === fail;
+  }, mainA.shellId);
+  if (!decodeFailureInjected) throw new Error('decode failure injection did not take effect');
+  await main.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'degraded-visible'
+    && !document.querySelector('.mazz-split-surface-proxy, .mazz-split-drag-overlay'), null, { timeout: 15000 });
+  const failureGate = await main.evaluate(async ids => ({
+    phase: window.__mazzSplitProxyState?.phase,
+    states: await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id }))),
+  }), [mainA.viewId, mainC.viewId]);
+  if (failureGate.phase !== 'degraded-visible' || failureGate.states.some(state => !state || state.hidden || state.occluded)) {
+    throw new Error(`decode failure did not fail visible: ${JSON.stringify(failureGate)}`);
+  }
+  await main.evaluate(() => {
+    Object.defineProperty(Image.prototype, 'decode', window.__w87dDecodeDescriptor);
+    delete window.__w87dDecodeDescriptor;
+    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+  });
+  await main.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'idle');
+
+  // 20 次取消循环：data URI、proxy、overlay token、cloak 与恢复任务必须每轮归零。
+  for (let cycle = 1; cycle <= 20; cycle++) {
+    await main.evaluate(({ shellId, cycle }) => {
+      window.__w87bStage = `soak-${cycle}`;
+      const target = document.querySelector('.pane .editor-area');
+      const tab = document.querySelector('.tab');
+      const r = target.getBoundingClientRect();
+      const dt = new DataTransfer(); dt.setData('mazz/tab', shellId);
+      tab.dispatchEvent(new DragEvent('dragstart', { dataTransfer: dt, bubbles: true, cancelable: true }));
+      target.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: r.left + r.width * 0.84, clientY: r.top + r.height * 0.5, bubbles: true, cancelable: true }));
+    }, { shellId: mainA.shellId, cycle });
+    await main.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'active', null, { timeout: 15000 });
+    await main.evaluate(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })));
+    await main.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'idle'
+      && !document.body.classList.contains('tab-dragging')
+      && !document.querySelector('.mazz-split-surface-proxy, .mazz-split-drag-overlay'), null, { timeout: 15000 });
+    const cycleState = await main.evaluate(async ids => ({
+      states: await Promise.all(ids.map(id => window.mazz.invoke('bv:state', { tabId: id }))),
+      visual: await window.mazz.invoke('visual:snapshot'),
+    }), [mainA.viewId, mainC.viewId]);
+    if (cycleState.states.some(state => !state || state.hidden || state.occluded) || cycleState.visual.overlayCount !== 0) {
+      throw new Error(`split cancel cycle ${cycle} leaked native or overlay state: ${JSON.stringify(cycleState)}`);
+    }
+  }
+  const soakCycles = 20;
+
+  // 复杂分屏 Gate：再引入第三个同时可见的 Browser Surface。host-wide occlusion 前必须
+  // 原子捕获三者，不能只代理 renderer 恰好枚举到的两块而把第三块挖成局部白洞。
+  await main.evaluate(() => { window.__w87bStage = 'complex-setup'; });
+  const mainD = await openBrowser(main, 'W87B-MAIN-D', pageUrl('W87B-MAIN-D', '#6d28d9', '#0e7490'));
+  await main.evaluate(id => window.MazzShell.splitWithTab(id, 'down'), mainD.shellId);
+  let complexBefore = null;
+  for (let attempt = 0; attempt < 100; attempt++) {
+    complexBefore = await main.evaluate(() => window.mazz.invoke('bv:captureVisibleHost', {}));
+    if (complexBefore?.frames?.length === 3) break;
+    await main.waitForTimeout(80);
+  }
+  if (complexBefore?.frames?.length !== 3) throw new Error(`three-surface host did not settle: ${JSON.stringify(complexBefore?.frames?.map(frame => ({ tabId: frame.tabId, bounds: frame.bounds })))}`);
+  const complexHashes = Object.fromEntries(complexBefore.frames.map(frame => [frame.tabId,
+    crypto.createHash('sha256').update(Buffer.from(frame.png, 'base64')).digest('hex')]));
+  await main.evaluate(shellId => {
+    window.__w87bStage = 'complex-drag';
+    const tab = [...document.querySelectorAll('.tab')].find(node => node.dataset.id === shellId
+      || node.querySelector('.t-label')?.textContent === 'W87B-MAIN-A');
+    const target = document.querySelector('.pane .editor-area');
+    if (!tab || !target) throw new Error('three-surface drag source/target missing');
+    const r = target.getBoundingClientRect();
+    const dt = new DataTransfer(); dt.setData('mazz/tab', shellId);
+    tab.dispatchEvent(new DragEvent('dragstart', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    target.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, clientX: r.left + r.width * 0.84, clientY: r.top + r.height * 0.5, bubbles: true, cancelable: true }));
+  }, mainA.shellId);
+  await main.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'active'
+    && document.querySelectorAll('.mazz-split-surface-frame').length === 3, null, { timeout: 15000 });
+  const complexActive = await main.evaluate(() => ({
+    phase: window.__mazzSplitProxyState?.phase,
+    pointerEvents: getComputedStyle(document.querySelector('.mazz-split-surface-proxy')).pointerEvents,
+    proxies: [...document.querySelectorAll('.mazz-split-surface-frame')].map(frame => ({
+      tabId: frame.dataset.viewId,
+      png: frame.src.split(',')[1] || '',
+      bounds: (() => { const r = frame.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })(),
+    })),
+  }));
+  const complexProxyHashes = Object.fromEntries(complexActive.proxies.map(frame => [frame.tabId,
+    crypto.createHash('sha256').update(Buffer.from(frame.png, 'base64')).digest('hex')]));
+  if (complexActive.pointerEvents !== 'none' || complexActive.proxies.length !== 3
+      || Object.entries(complexHashes).some(([id, hash]) => complexProxyHashes[id] !== hash)) {
+    throw new Error(`three-surface proxy set/pixels diverged: ${JSON.stringify({ complexHashes, complexProxyHashes, complexActive })}`);
+  }
+  for (const frame of complexActive.proxies) delete frame.png;
+  await main.evaluate(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })));
+  await main.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'idle'
+    && !document.querySelector('.mazz-split-surface-proxy, .mazz-split-drag-overlay'), null, { timeout: 15000 });
+  const complexRestored = await main.evaluate(async ids => ({
+    states: await Promise.all(ids.map(tabId => window.mazz.invoke('bv:state', { tabId }))),
+    visual: await window.mazz.invoke('visual:snapshot'),
+  }), [mainA.viewId, mainC.viewId, mainD.viewId]);
+  if (complexRestored.states.some(state => !state || state.hidden || state.occluded || state.bounds.width <= 2 || state.bounds.height <= 2)
+      || complexRestored.visual.overlayCount !== 0) {
+    throw new Error(`three-surface restore leaked native/overlay state: ${JSON.stringify(complexRestored)}`);
+  }
+  const complexSplitGate = { surfaceCount: 3, hashes: complexProxyHashes, active: complexActive, restored: complexRestored };
+  await main.evaluate(() => { window.__w87bStage = 'post-complex'; });
+
   const geometry = await main.evaluate(async ids => {
     const expected = {};
     for (const [, inst] of window.MazzModules.instances) {
@@ -290,8 +514,8 @@ try {
     }
     const actual = Object.fromEntries(await Promise.all(ids.map(async id => [id, (await window.mazz.invoke('bv:state', { tabId: id })).bounds])));
     return { expected, actual };
-  }, [mainA.viewId, mainC.viewId]);
-  for (const id of [mainA.viewId, mainC.viewId]) {
+  }, [mainA.viewId, mainC.viewId, mainD.viewId]);
+  for (const id of [mainA.viewId, mainC.viewId, mainD.viewId]) {
     const a = geometry.actual[id], e = geometry.expected[id];
     if (!a || !e || Math.max(...['x', 'y', 'width', 'height'].map(key => Math.abs(a[key] - e[key]))) > 2) throw new Error(`stale native bounds after split for ${id}: ${JSON.stringify({ a, e })}`);
   }
@@ -327,16 +551,17 @@ try {
   if (childKeep !== 'W87B-CHILD-B') throw new Error(`child browser blanked after panel cover: ${childKeep}`);
 
   const captures = {};
-  for (const [label, page, id] of [['mainA', main, mainA.viewId], ['mainC', main, mainC.viewId], ['childB', child, childB.viewId]]) {
+  for (const [label, page, id] of [['mainA', main, mainA.viewId], ['mainC', main, mainC.viewId], ['mainD', main, mainD.viewId], ['childB', child, childB.viewId]]) {
     const frame = await page.evaluate(viewId => window.mazz.invoke('bv:capture', { tabId: viewId }), id);
-    if (frame) fs.writeFileSync(path.join(EVIDENCE, `W87B_BROWSER_SURFACE_${label.toUpperCase()}_${EVIDENCE_VARIANT}.png`), Buffer.from(frame, 'base64'));
+    if (frame) fs.writeFileSync(path.join(EVIDENCE, `W87B_BROWSER_SURFACE_${label.toUpperCase()}_${IMAGE_VARIANT}.png`), Buffer.from(frame, 'base64'));
     captures[label] = imageHealth(frame, label);
   }
-  await main.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_MAIN_${EVIDENCE_VARIANT}.png`) });
-  await child.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_CHILD_${EVIDENCE_VARIANT}.png`) });
+  await main.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_MAIN_${IMAGE_VARIANT}.png`) });
+  await child.screenshot({ path: path.join(EVIDENCE, `W87B_BROWSER_CHILD_${IMAGE_VARIANT}.png`) });
+  const rendererErrorDetails = (await Promise.allSettled(rendererErrorProbes)).map(result => result.status === 'fulfilled' ? result.value : ({ probeError: String(result.reason) }));
   const fatal = logs.filter(line => /uncaught|unhandled|TypeError|ReferenceError|SyntaxError|FATAL|\bError\b/i.test(line) && !/ERR_ABORTED|favicon/i.test(line));
-  if (fatal.length || rendererErrors.length) throw new Error(`runtime errors: ${JSON.stringify({ fatal, rendererErrors }).slice(0, 4000)}`);
-  const report = { generatedAt: new Date().toISOString(), runtimeMode: EXECUTABLE ? 'packaged' : 'source', gpuMode: GPU_MODE, runTag: RUN_TAG || null, hostIds, ids: { mainA: mainA.viewId, mainC: mainC.viewId, childB: childB.viewId }, focusCycles, duringDrag, afterDropDecoration, geometry, topology, childUnderPanel, panelReady, focusedAfterPanelClose: focused, captures, fatalMainLogs: 0, rendererErrors: 0 };
+  if (fatal.length || rendererErrors.length) throw new Error(`runtime errors: ${JSON.stringify({ fatal, rendererErrors, rendererErrorDetails }).slice(0, 8000)}`);
+  const report = { ok: true, verdict: 'PASS', generatedAt: new Date().toISOString(), runtimeMode: EXECUTABLE ? 'packaged' : 'source', gpuMode: GPU_MODE, uiTheme: UI_THEME || null, runTag: RUN_TAG || null, hostIds, ids: { mainA: mainA.viewId, mainC: mainC.viewId, mainD: mainD.viewId, childB: childB.viewId }, focusCycles, paneCountBeforeDrag, dropTopology, duringDrag, dragHealth, afterDropDecoration, failureGate, soakCycles, complexSplitGate, geometry, topology, childUnderPanel, panelReady, focusedAfterPanelClose: focused, captures, fatalMainLogs: 0, rendererErrors: 0 };
   fs.writeFileSync(path.join(EVIDENCE, `W87B_BROWSER_COMPOSITION_${report.runtimeMode.toUpperCase()}_${EVIDENCE_VARIANT}.json`), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ ok: true, runtimeMode: report.runtimeMode, gpuMode: GPU_MODE, runTag: report.runTag, ids: report.ids, captures }));
 } finally {

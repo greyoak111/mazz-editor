@@ -106,6 +106,12 @@ class BrowserViews {
       try { const img = await v.webContents.capturePage(); return img.toPNG().toString('base64'); }
       catch { return null; }
     });
+    // W87d：renderer DOM 不能充当 host 下 WCV 的权威清单。按 IPC sender 锁定真实宿主，
+    // 原子快照全部应可见 Surface；捕获期间集合/原生 webContents 身份/几何有任一变化就整批拒绝，禁止部分代理后 host-wide cloak。
+    bus.handle('bv:captureVisibleHost', async (_payload = {}, event) => {
+      const host = BrowserWindow.fromWebContents(event?.sender) || this.wm.main;
+      return this.captureVisibleHost(host);
+    });
     bus.handle('bv:state', async ({ tabId }) => {
       const rec = this.views.get(tabId);
       if (!rec) return null;
@@ -113,6 +119,58 @@ class BrowserViews {
       // hidden/reviveGen/lastCtxMenuAt 入状态：白屏复活的 E2E 探针（隐→显振荡规程 + 原生菜单弹出时间戳）
       return { url: wc.getURL(), title: wc.getTitle(), loading: wc.isLoading(), canBack: wc.navigationHistory.canGoBack(), canFwd: wc.navigationHistory.canGoForward(), dead: !wc.getOSProcessId(), hidden: !!rec.hidden, desiredVisible: !!rec.desiredVisible, occluded: !!rec.occluded, hostWindowId: rec.hostWin?.id || null, reviveGen: rec._reviveGen || 0, compositionGen: rec._compositionGen || 0, recomposeCount: rec._recomposeCount || 0, bounds: rec.view.getBounds(), lastCtxMenuAt: rec._lastCtxMenuAt || 0, invalidateCount: rec._invalidateCount || 0, lastRecomposeReason: rec._lastRecomposeReason || null };
     });
+  }
+
+  visibleHostRecords(hostWin) {
+    return [...this.views.entries()]
+      .filter(([, rec]) => rec.hostWin === hostWin && rec.desiredVisible && rec.desiredRect && !rec.occluded)
+      .map(([tabId, rec]) => ({ tabId, rec }));
+  }
+
+  hostCoverage(hostWin) {
+    return this.visibleHostRecords(hostWin).map(({ tabId, rec }) => ({
+      tabId,
+      webContentsId: rec.view.webContents.id,
+      bounds: { ...(rec.desiredRect || rec.view.getBounds()) },
+    })).sort((a, b) => String(a.tabId).localeCompare(String(b.tabId)));
+  }
+
+  validateHostCoverage(hostWin, coveredViews) {
+    if (!Array.isArray(coveredViews)) return false;
+    const expected = this.hostCoverage(hostWin);
+    const supplied = coveredViews.map(item => ({
+      tabId: String(item?.tabId || ''),
+      webContentsId: Number(item?.webContentsId || 0),
+      bounds: item?.bounds,
+    })).sort((a, b) => a.tabId.localeCompare(b.tabId));
+    if (expected.length !== supplied.length) return false;
+    // captureVisibleHost 已经在真正抓帧的前后钉死过几何。代理随后还要解码并等两个 RAF，
+    // 这段时间 splitter/DPI 舍入允许同一 Surface 正常漂移 1px；若这里再次要求旧 bounds
+    // 字节级相等，会把完整代理误判成部分代理并回退成白洞。遮挡前真正不能变化的是
+    // host 下“谁会被遮挡”：集合和原生 webContents 身份必须完全一致。renderer 会在
+    // cloak 前把代理重排到当前 DOM 几何，因此此处只校验身份真源，不拿旧矩形当租约。
+    return expected.every((item, index) => String(item.tabId) === supplied[index].tabId
+      && item.webContentsId === supplied[index].webContentsId);
+  }
+
+  async captureVisibleHost(hostWin) {
+    if (!hostWin || hostWin.isDestroyed()) throw new Error('browser capture host unavailable');
+    const before = this.hostCoverage(hostWin);
+    const records = new Map(this.visibleHostRecords(hostWin).map(item => [String(item.tabId), item.rec]));
+    const frames = await Promise.all(before.map(async item => {
+      const rec = records.get(String(item.tabId));
+      if (!rec || rec.view.webContents.isDestroyed()) throw new Error(`browser surface unavailable: ${item.tabId}`);
+      const image = await rec.view.webContents.capturePage();
+      const png = image.toPNG();
+      if (!png.length) throw new Error(`browser surface capture empty: ${item.tabId}`);
+      return { ...item, png: png.toString('base64') };
+    }));
+    const after = this.hostCoverage(hostWin);
+    if (before.length !== after.length || before.some((item, index) => String(item.tabId) !== String(after[index]?.tabId)
+        || item.webContentsId !== after[index]?.webContentsId || !sameBounds(item.bounds, after[index]?.bounds))) {
+      throw new Error('visible browser surface set changed during capture');
+    }
+    return { hostWindowId: hostWin.id, frames };
   }
 
   create(tabId, partition, url, hostWin = null) {

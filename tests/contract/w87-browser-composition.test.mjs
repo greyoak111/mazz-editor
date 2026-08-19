@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const read = file => fs.readFileSync(path.resolve(file), 'utf8');
 
-describe('W87b Browser 复合 Surface 不变量', () => {
+describe('W87b Browser 复合 Surface 几何/生命周期子门（拖拽视觉连续性由 W87d）', () => {
   test('Browser View ID 必须跨 renderer 全局唯一，恢复只操作目标实例', () => {
     const browser = read('renderer/modules/browser/index.js');
     assert.match(browser, /crypto\?\.randomUUID|crypto\.randomUUID/);
@@ -24,10 +24,16 @@ describe('W87b Browser 复合 Surface 不变量', () => {
     assert.match(home, /return window\.mazz\.invoke\('bv:js'/);
   });
 
-  test('拖拽遮挡覆盖当前宿主全部 Browser，迁移完成前不得提前解 cloak', () => {
+  test('只有完整 host proxy coverage ACTIVE 后才可提交分屏；布局迁移完成前不得恢复 WCV', () => {
     const shell = read('renderer/shell/shell.js');
+    const views = read('main/browser-views.js');
     assert.match(shell, /browserControllers/);
     assert.match(shell, /MazzVisualComposition.*split-drag|split-drag.*MazzVisualComposition/s);
+    assert.match(shell, /bv:captureVisibleHost/);
+    assert.match(views, /validateHostCoverage/);
+    const split = shell.slice(shell.indexOf('installSplitPreview()'), shell.indexOf('/** 外部文件拖入'));
+    assert.ok(split.indexOf('await overlayHandle?.ready') < split.indexOf('dragCloak(true)'));
+    assert.match(split, /proxyPhase !== 'active'\) \{ cleanup\(\); return; \}/);
     const drop = shell.slice(shell.indexOf("document.addEventListener('drop'"), shell.indexOf("document.addEventListener('dragend'"));
     assert.match(drop, /finishingDrop = true[\s\S]*clearPreview\(\)[\s\S]*this\.splitWithTab[\s\S]*requestAnimationFrame\(\(\) => requestAnimationFrame\(\(\) => cleanup\(\)\)\)/);
     assert.doesNotMatch(drop, /cleanup\(\);\s*this\.splitWithTab/, '有效 drop 不得在迁移前释放遮挡');

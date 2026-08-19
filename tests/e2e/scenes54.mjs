@@ -106,8 +106,8 @@ export async function scenes54({ app, win, human, WS, scenario }) {
       await wait(400);
     });
 
-    // ==================== ④分屏主线：DOM overlay（W57 路线修正后主线） ====================
-    await scenario('分屏主线·DOM overlay 在位', async () => {
+    // ==================== ④分屏旧回归子门：只验证 renderer DOM 命中渐变 ====================
+    await scenario('分屏子门·DOM 命中渐变在位（非 W87d 视觉 Gate）', async () => {
       await evaluate(() => window.MazzCommands?.execute('file.new'));
       await wait(1000);
       await evaluate(() => {
@@ -127,13 +127,15 @@ export async function scenes54({ app, win, human, WS, scenario }) {
         await wait(250);
       }
       const ov = await evaluate(() => {
-        const els = [...document.querySelectorAll('body > div')].filter(d => {
-          const cs = getComputedStyle(d);
-          return cs.position === 'fixed' && (cs.background || '').includes('gradient') && d.getBoundingClientRect().width > 50;
-        });
-        return els.length ? { w: Math.round(els[0].getBoundingClientRect().width) } : null;
+        const el = document.querySelector('.mazz-split-drag-overlay');
+        return el ? {
+          w: Math.round(el.getBoundingClientRect().width),
+          background: getComputedStyle(el).background,
+          pointerEvents: getComputedStyle(el).pointerEvents,
+        } : null;
       });
-      await human.assert(!!ov, `DOM overlay 必须在位（W57 路线修正主线：${JSON.stringify(ov)}）`);
+      await human.assert(ov?.w > 50 && ov.background.includes('gradient') && ov.pointerEvents === 'none',
+        `DOM 命中渐变子门必须在位；Browser 跨渲染面由 W87d 矩阵验证（${JSON.stringify(ov)}）`);
       await evaluate(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })));
       await wait(800);
     });

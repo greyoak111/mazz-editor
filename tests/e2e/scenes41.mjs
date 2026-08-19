@@ -65,7 +65,7 @@ export async function scenes41({ win, human, WS, scenario }) {
       human.log('原生输入:', url0, '→', urlN, '| 转发层:', legacy);
     });
 
-    // ==================== 3：反节流遮罩关即活 ====================
+    // ==================== 3：统一遮挡关即活 ====================
     await scenario('地基·遮罩关即活', async () => {
       // 回页面 → 开全屏遮罩（协议/设置同款 palette-mask）→ 视图隐身 → 关罩 → backgroundThrottling:false 加持下立即复活不白死
       await evaluate((u) => {
@@ -80,17 +80,20 @@ export async function scenes41({ win, human, WS, scenario }) {
         mask.innerHTML = '<div class="mazz-palette" style="padding:30px">遮罩探针</div>';
         document.body.appendChild(mask);
         await new Promise(r2 => setTimeout(r2, 400));
-        const during = { cloaked: window.__activeBrowserCtl?._cloaked };
-        mask.remove();
-        await new Promise(r2 => setTimeout(r2, 600));
         const ctl = window.__activeBrowserCtl;
         const t = ctl?.tabs?.find(x => x.id === ctl.activeId);
+        const duringState = t ? await window.mazz.invoke('bv:state', { tabId: t.viewId }).catch(() => null) : null;
+        const during = { occluded: duringState?.occluded, hidden: duringState?.hidden };
+        mask.remove();
+        await new Promise(r2 => setTimeout(r2, 600));
         const st = await window.mazz.invoke('bv:state', { tabId: t.viewId }).catch(() => null);
-        return { during, after: ctl?._cloaked, alive: !st?.dead, w: st?.bounds?.width };
+        const pixels = await window.mazz.invoke('bv:capture', { tabId: t.viewId }).catch(() => null);
+        return { during, afterOccluded: st?.occluded, alive: !st?.dead, w: st?.bounds?.width, pixelBytes: pixels?.length || 0 };
       });
       human.log('遮罩:', JSON.stringify(r));
-      await human.assert(r.during.cloaked === true, '遮罩期必须隐身（兜底 cloak 过渡件在岗）');
-      await human.assert(r.after === false && r.alive && r.w > 2, `关罩必须立即复活（${JSON.stringify({ after: r.after, alive: r.alive, w: r.w })}——反节流不白死实锤）`);
+      await human.assert(r.during.occluded === true && r.during.hidden === true, '遮罩期必须由统一 host token 隐身');
+      await human.assert(r.afterOccluded === false && r.alive && r.w > 2 && r.pixelBytes > 1000,
+        `关罩必须立即复活并有新鲜像素（${JSON.stringify(r)}）`);
     });
 
     // ==================== 4：帧率闸全灭 ====================

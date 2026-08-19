@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-16T07:57:33.028Z",
+  "generatedAt": "2026-08-19T13:53:39.047Z",
   "executable": "release/win-unpacked/Mazz Editor.exe",
   "viewBefore": {
     "url": "data:text/html;charset=utf-8,%3C!doctype%20html%3E%3Cstyle%3Ehtml%2Cbody%7Bmargin%3A0%3Bheight%3A100%25%3Bbackground%3A%23172554%3Bcolor%3A%23dbeafe%3Bfont%3A600%2030px%2F1.4%20system-ui%7Dmain%7Bheight%3A100%25%3Bdisplay%3Agrid%3Bplace-items%3Acenter%3Bbackground%3Alinear-gradient(135deg%2C%23172554%2C%230f766e)%7Dsmall%7Bdisplay%3Ablock%3Bfont-size%3A15px%3Bcolor%3A%23bae6fd%7D%3C%2Fstyle%3E%3Cmain%3ENative%20Surface%3Csmall%3EW71%20WebContentsView%20z-order%20probe%3C%2Fsmall%3E%3C%2Fmain%3E",
@@ -9,15 +9,21 @@
     "canFwd": false,
     "dead": false,
     "hidden": false,
-    "reviveGen": 0,
+    "desiredVisible": true,
+    "occluded": false,
+    "hostWindowId": 1,
+    "reviveGen": 1,
+    "compositionGen": 1,
+    "recomposeCount": 1,
     "bounds": {
       "x": 232,
-      "y": 243,
+      "y": 245,
       "width": 1207,
-      "height": 557
+      "height": 555
     },
     "lastCtxMenuAt": 0,
-    "invalidateCount": 0
+    "invalidateCount": 1,
+    "lastRecomposeReason": null
   },
   "firstRunAgreement": {
     "topology": {
@@ -53,7 +59,7 @@
     },
     "screenshot": {
       "file": "evidence/W71_OVERLAY_FIRST_RUN_AGREEMENT.png",
-      "bytes": 276278,
+      "bytes": 260250,
       "size": {
         "width": 1800,
         "height": 1030
@@ -85,9 +91,9 @@
         "kind": "ctxmenu",
         "bounds": {
           "x": 944,
-          "y": 437,
+          "y": 438,
           "width": 223,
-          "height": 323
+          "height": 324
         },
         "focused": true,
         "visible": true,
@@ -96,7 +102,7 @@
     },
     "screenshot": {
       "file": "evidence/W71_OVERLAY_CONTEXT_MENU.png",
-      "bytes": 175266,
+      "bytes": 142775,
       "size": {
         "width": 1800,
         "height": 1030
@@ -138,7 +144,7 @@
     },
     "screenshot": {
       "file": "evidence/W71_OVERLAY_COMMAND_PALETTE.png",
-      "bytes": 170413,
+      "bytes": 160752,
       "size": {
         "width": 1800,
         "height": 1030
@@ -146,22 +152,27 @@
       "method": "main + WebContentsView + child BrowserWindow exact-bounds composite"
     }
   },
-  "dragCloak": {
-    "hiddenDuringDrag": true,
-    "domOverlayVisible": true,
+  "dragProxy": {
+    "hiddenOnlyAfterProxyPaint": true,
+    "phase": "active",
+    "overlayVisible": true,
+    "frameCount": 1,
+    "sourceBytes": [
+      53614
+    ],
     "screenshot": {
       "file": "evidence/W71_OVERLAY_DRAG_CLOAK.png",
-      "bytes": 241540
+      "bytes": 296735
     }
   },
   "resources": {
-    "baseline": 3,
-    "final": 3
+    "baseline": 4,
+    "final": 4
   },
   "conclusions": {
     "firstRunAgreementAboveWebContentsView": true,
     "nativeChildWindowAboveWebContentsView": true,
-    "dragOverlayUsesTemporarySurfaceCloak": true,
+    "dragOverlayUsesPaintedProxyBeforeTemporarySurfaceCloak": true,
     "universalOverlayManagerRequired": false
   }
 }

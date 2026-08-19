@@ -130,19 +130,30 @@ export async function scenes9({ win, human, WS, scenario }) {
     await evaluate(() => { const ts = window.__activeBrowserCtl.tabs; ts.length && window.__activeBrowserCtl; });
   });
 
-  // ==================== 6：遮挡隐身 ====================
-  await scenario('浏览器·遮挡隐身·弹层不吃菜单', async () => {
-    // 弹命令面板（mazz-palette-mask）→ 视图隐身；Esc 关闭 → 复显
+  // ==================== 6：统一视觉协议遮挡 ====================
+  await scenario('浏览器·统一 Overlay 遮挡·弹层不吃菜单', async () => {
+    // 弹命令面板 → VisualComposition host token 遮挡；Esc 关闭 → 新鲜像素复显
     const open = await evaluate(async () => {
       window.MazzCommands?.execute('app.commandPalette');
       await new Promise(r => setTimeout(r, 700));
-      return window.__activeBrowserCtl._cloaked === true;
+      const ctl = window.__activeBrowserCtl, tab = ctl?.tabs?.find(item => item.id === ctl.activeId) || ctl?.tabs?.[0];
+      const state = tab ? await window.mazz.invoke('bv:state', { tabId: tab.viewId }) : null;
+      const visual = await window.mazz.invoke('visual:snapshot');
+      return { state, overlayCount: visual.overlayCount };
     });
-    await human.assert(open, '弹层期间视图必须隐身（原生表面吃菜单的病根）');
+    await human.assert(open.state?.occluded && open.state?.hidden && open.overlayCount > 0, `弹层期间必须由统一 host token 遮挡（${JSON.stringify(open)}）`);
     await win.keyboard.press('Escape');
-    await wait(700);
-    const back = await evaluate(() => window.__activeBrowserCtl._cloaked === false);
-    await human.assert(back, '弹层关闭后视图应复显');
+    await human.until(async () => {
+      const ctl = window.__activeBrowserCtl, tab = ctl?.tabs?.find(item => item.id === ctl.activeId) || ctl?.tabs?.[0];
+      const state = tab ? await window.mazz.invoke('bv:state', { tabId: tab.viewId }) : null;
+      return state && !state.hidden && !state.occluded && state.bounds.width > 2;
+    }, { timeout: 10000, msg: '统一遮挡关闭后复显' });
+    const back = await evaluate(async () => {
+      const ctl = window.__activeBrowserCtl, tab = ctl?.tabs?.find(item => item.id === ctl.activeId) || ctl?.tabs?.[0];
+      const pixels = tab ? await window.mazz.invoke('bv:capture', { tabId: tab.viewId }) : null;
+      return pixels?.length || 0;
+    });
+    await human.assert(back > 1000, `弹层关闭后视图应复显新鲜像素（${back}）`);
   });
 
   srv.close();

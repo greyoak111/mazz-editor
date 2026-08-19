@@ -25,7 +25,7 @@ export async function scenesPanes({ win, human, WS, scenario }) {
 
   /** 真实拖拽序列：把 fromPaneIdx 格的活动签拖到 toPaneIdx 格的 zone 区（默认拖到最末格） */
   const drag = async (zone, { from = 0, to = -1 } = {}) => {
-    return await evaluate(([z, f, tIdx]) => {
+    const started = await evaluate(([z, f, tIdx]) => {
       const sh = window.MazzShell;
       const panes = sh.paneTree.leaves();
       const fromPane = panes[f] || panes[0];
@@ -39,9 +39,19 @@ export async function scenesPanes({ win, human, WS, scenario }) {
       dt.setData('mazz/tab', tid);
       document.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
       document.dispatchEvent(new DragEvent('dragover', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
-      document.dispatchEvent(new DragEvent('drop', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
+      window.__paneDrag = { dt, x, y };
       return 'ok';
     }, [zone, from, to]);
+    if (started !== 'ok') return started;
+    await win.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'active', null, { timeout: 15000 });
+    const dropped = await evaluate(() => {
+      const { dt, x, y } = window.__paneDrag;
+      document.dispatchEvent(new DragEvent('drop', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
+      delete window.__paneDrag;
+      return 'ok';
+    });
+    await win.waitForFunction(() => window.__mazzSplitProxyState?.phase === 'idle', null, { timeout: 15000 });
+    return dropped;
   };
 
   // ============ P1：连续右分三次 → 四竖条全 row 等宽 ============

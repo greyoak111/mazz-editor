@@ -13,7 +13,7 @@ export async function scenes38({ win, human, WS, scenario }) {
   }, { timeout: 15000, msg: '浏览器就绪' });
   await wait(800);
 
-  // ==================== 1：终局复证（W50：浮层压顶视图照常——无 _cloaked 机械） ====================
+  // ==================== 1：终局复证（任意 DOM 不遮挡；登记 Overlay 才持有 host token） ====================
   await scenario('浏览器·浮层压顶终局复证', async () => {
     const r = await evaluate(async () => {
       const mk = (cls) => {
@@ -26,7 +26,9 @@ export async function scenes38({ win, human, WS, scenario }) {
       const m1 = mk('ribbon-more-fake');
       await new Promise(res => setTimeout(res, 400));
       const top1 = document.elementsFromPoint(innerWidth / 2, innerHeight * 0.35)[0];
-      const during = { top: top1?.className, cloaked: window.__activeBrowserCtl?._cloaked };
+      const ctl = window.__activeBrowserCtl, tab = ctl?.tabs?.find(item => item.id === ctl.activeId) || ctl?.tabs?.[0];
+      const duringState = tab ? await window.mazz.invoke('bv:state', { tabId: tab.viewId }) : null;
+      const during = { top: top1?.className, occluded: duringState?.occluded };
       m1.remove();
       await new Promise(res => setTimeout(res, 300));
       const probeCloak = async () => {
@@ -35,17 +37,19 @@ export async function scenes38({ win, human, WS, scenario }) {
         m2.innerHTML = '<div style="width:100px;height:80px;background:#222"></div>';
         document.body.appendChild(m2);
         await new Promise(res => setTimeout(res, 400));
-        const on = window.__activeBrowserCtl?._cloaked;
+        const state = tab ? await window.mazz.invoke('bv:state', { tabId: tab.viewId }) : null;
         m2.remove();
         await new Promise(res => setTimeout(res, 300));
-        return on;
+        return state?.occluded === true;
       };
       const maskCloaked = await probeCloak();
-      return { during, after: window.__activeBrowserCtl?._cloaked, mechGone: maskCloaked !== true ? '兜底失灵' : true };
+      const after = tab ? await window.mazz.invoke('bv:state', { tabId: tab.viewId }) : null;
+      return { during, afterOccluded: after?.occluded, protocolRegistered: maskCloaked };
     });
     human.log('终局:', JSON.stringify(r));
     await human.assert(r.during.top === 'ribbon-more-fake', `浮层必须最上不被抢（${r.during.top}——canvas 是 DOM 实锤）`);
-    await human.assert(r.mechGone, '兜底 cloak 只认两件套（未登记浮层不隐身——②③波遣散后兜底退役）');
+    await human.assert(r.during.occluded === false && r.protocolRegistered === true && r.afterOccluded === false,
+      `任意 DOM 不得遮挡；支持的 Overlay 必须经统一协议开隐关复（${JSON.stringify(r)}）`);
   });
 
   // ==================== 2：工具坞回滚 ====================

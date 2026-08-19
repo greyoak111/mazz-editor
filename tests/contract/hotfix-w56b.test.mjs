@@ -50,12 +50,15 @@ describe('P1 emoji 零残留（军规⑪）', () => {
   });
 });
 
-describe('P1b 拖拽计算挪罩页（W57 已路线修正为 DOM 回归+cloak）', () => {
-  test('罩页自算资产保留+主线 DOM 回归', () => {
+describe('P1b 分屏罩资产保留；W87d 主线改为代理帧桥接 DOM/WCV', () => {
+  test('罩页自算资产保留+主线先代理预绘后 cloak', () => {
     const html = readSrc('renderer/panels/splitpreview.html');
     assert.ok(html.includes('zoneIn') && html.includes('zoneGradient'), '罩页自算资产保留（备选通道）');
     const sh = readSrc('renderer/shell/shell.js');
-    assert.ok(sh.includes('dragCloak(true)') && sh.includes('overlay.style.background = zoneGradient'), '主线必须 DOM overlay+拖拽 cloak（路线修正实锤）');
+    assert.ok(sh.includes('buildProxy(session)') && sh.includes('await nextPaint()'), '主线必须先捕获、解码并预绘代理帧');
+    assert.ok(sh.indexOf('await overlayHandle?.ready') > sh.indexOf('buildProxy(session).then'), '代理成功后仍须等待 host coverage/overlay 激活');
+    assert.ok(sh.indexOf('dragCloak(true)') > sh.indexOf('await overlayHandle?.ready'), '代理与覆盖集合确认前不得 cloak WCV');
+    assert.ok(sh.includes('overlay.style.background = zoneGradient'), 'DOM overlay 继续承担分区命中与纯渐隐');
   });
 });
 

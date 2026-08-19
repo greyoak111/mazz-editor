@@ -16,7 +16,10 @@ describe('① 分屏后本地重组（视图穿帮根治）', () => {
     assert.ok(sh.includes("ctl?.recompose?.('pane-tab-moved')"), '浏览器必须走本地 compositor 重组');
     const moved = sh.slice(sh.indexOf("bus.on('pane:tabMoved'"), sh.indexOf("bus.on('filetree:renamed'"));
     assert.ok(!moved.includes('reloadTab'), '分屏迁移不得网络重载，否则页面状态丢失并产生白帧');
-    assert.ok(sh.includes('!ctl?._dragCloak') && !sh.includes('!ctl?._cloaked'), '只保留拖拽即时 cloak；弹层遮挡归统一调度');
+    const split = sh.slice(sh.indexOf('installSplitPreview()'), sh.indexOf('/** 外部文件拖入'));
+    assert.ok(split.includes("invoke('bv:captureVisibleHost'") && split.includes('await overlayHandle?.ready'), '拖拽必须先完成 host 全量代理与 coverage 激活');
+    assert.ok(split.indexOf('dragCloak(true)') > split.indexOf('await overlayHandle?.ready'), 'cloak 不得先于代理/coverage');
+    assert.ok(sh.includes('!ctl?._dragCloak') && !sh.includes('!ctl?._cloaked'), '迁移重组避开 active drag cloak；旧私有 modal cloak 不得复活');
     const br = readSrc('renderer/modules/browser/index.js');
     assert.ok(br.includes('W58c 根治：create 必须返回 ctl 本体'), '浏览器 create 返 ctl 根治钉必须在（code W58 同族病）');
     assert.ok(!br.includes('return { container };'), '浏览器畸形态 { container } 返回必须绝迹');

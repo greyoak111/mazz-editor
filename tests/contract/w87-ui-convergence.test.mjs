@@ -22,11 +22,17 @@ describe('W87 统一视觉合成协议', () => {
     }
   });
 
-  test('Browser 不再私自观察 modal，拖拽即时 cloak 与 Windows revive 补丁保留', () => {
+  test('Browser 私有 modal observer 退役；split-drag 只允许代理先行事务，Windows revive 补丁保留', () => {
     const browser = read('renderer/modules/browser/index.js');
     const views = read('main/browser-views.js');
+    const shell = read('renderer/shell/shell.js');
+    const runtime = read('main/visual-composition.js');
     assert.ok(!browser.includes("querySelectorAll('.mazz-palette-mask, .help-mask')") && !browser.includes('ctl._cloaked'));
     assert.ok(browser.includes('ctl._dragCloak'));
+    const split = shell.slice(shell.indexOf('installSplitPreview()'), shell.indexOf('/** 外部文件拖入'));
+    assert.ok(split.includes("invoke('bv:captureVisibleHost'") && split.includes('await overlayHandle?.ready'));
+    assert.ok(split.indexOf('dragCloak(true)') > split.indexOf('await overlayHandle?.ready'));
+    assert.match(runtime, /split-drag[\s\S]*validateHostCoverage/);
     for (const marker of ['webContents.invalidate()', 'width: Math.max(1, R.width - 1)', 'height: Math.max(1, R.height - 1)', 'backgroundThrottling: false']) {
       assert.ok(views.includes(marker), `已实证 compositor workaround 不得误删：${marker}`);
     }
