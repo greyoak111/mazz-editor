@@ -6,8 +6,9 @@ const spec = fs.readFileSync('docs/plans/W66_REAL_AGENT_ADAPTER_ACTIVATION.md', 
 describe('W66 real Adapter activation plan', () => {
   test('三种执行器是独立 Adapter，不退化成 Kimi 专项', () => {
     for (const name of ['Kimi Code', 'Claude Code', 'Codex']) assert.ok(spec.includes(name), `${name} 必须入正式三选一范围`);
-    assert.match(spec, /0 个真实 Adapter/);
-    assert.match(spec, /不得用 fixture、Provider 路由、Terminal/);
+    assert.match(spec, /已登记 Kimi Code、Claude Code、Codex 三个真实 Adapter/);
+    assert.match(spec, /只有 Codex 通过真实认证与真实模型回合/);
+    assert.match(spec, /不得用 fixture、Provider 路由或 Terminal/);
   });
 
   test('装载 Agent 前必须完整刻入交付区军规，缺失时零 spawn', () => {

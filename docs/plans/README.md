@@ -3,7 +3,7 @@
 | 波次 | 文件 | 状态 | 来源校验 |
 |---|---|---|---|
 | W65 网络资源四站极致 | `四站爬取方案（移交版）.md` · [封波规格](../engineering/W65_FOUR_SITE_CONVERGENCE_SPEC.md) · [检查点](../engineering/W65_FOUR_SITE_CONVERGENCE_CHECKPOINT_2026-08-18.md) | **COMPLETE / FORMAL** | 原件 `C:\Users\Administrator\Downloads\四站爬取方案（移交版）.md`；SHA-256 `70F704A4745DD6BD6D6CD13140078E0460CA99BE59E9FFCBDC61736D33D6BCF8`；四站真实目录/聚合/健康/分页与主进程五态队列已通过定向合同、构建及 Electron `run11 5/5` |
-| W66 Agent Harness / Doctrine | [W66 Real Adapter](./W66_REAL_AGENT_ADAPTER_ACTIVATION.md) · [三工程与 Doctrine 入库](./MAZZ_THREE_ENGINEERING_DOCTRINE_INTAKE_2026-08-18.md) | **v0.2 规格已冻结；R0a–R0e 与 R1–R6 均未施工** | 完整 raw 军规不可裁剪；Compiled View/Spawn Gate 是共同前置；真实 Adapter 仍为 0 |
+| W66 Agent Harness / Doctrine | [W66 Real Adapter](./W66_REAL_AGENT_ADAPTER_ACTIVATION.md) · [三工程与 Doctrine 入库](./MAZZ_THREE_ENGINEERING_DOCTRINE_INTAKE_2026-08-18.md) | **PARTIAL；R0–R6 实现已落，激活 1/3** | 完整 raw 军规不可裁剪；三家 Adapter/热切/UI 已落。Codex 真实回合通过；Kimi/Claude 待登录，三家 packaged Gate 待闭，故不得写 FORMAL |
 
 W65 已按统一 13 字段行契约、infoHash 必填、多源合并、礼貌限速和真实验证码停机边界完成。访客登记闸只允许固定表单建会话；出现真实验证码或行为验证仍必须停止并报告，不得绕过。W65 完成只解除 W74b 的数据源前件，不自动授权或完成 W74b。
 

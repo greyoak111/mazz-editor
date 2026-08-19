@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "mazz.w66-real-agent-first-stage-evidence/v1",
+  "capturedAt": "2026-08-19T12:48:17+08:00",
+  "implementationCommit": "6400507",
+  "status": "PARTIAL",
+  "implementation": {
+    "r0ThroughR6Landed": true,
+    "registeredRealAdapters": 3,
+    "productSelectorLanded": true,
+    "safeHandoffLanded": true
+  },
+  "activation": {
+    "realTurnPassed": 1,
+    "promisedAdapters": 3,
+    "packagedActivationGatePassed": false
+  },
+  "adapters": {
+    "kimi-code": {
+      "version": "0.37.2",
+      "nativeCliInstalled": true,
+      "acpInitializePassed": true,
+      "auth": "unknown",
+      "realTurnPassed": false,
+      "blocker": "USER_LOGIN_REQUIRED"
+    },
+    "claude-code": {
+      "version": "2.1.235",
+      "nativeCliInstalled": true,
+      "probePassed": true,
+      "auth": "loggedIn=false",
+      "realTurnPassed": false,
+      "blocker": "USER_LOGIN_REQUIRED"
+    },
+    "codex": {
+      "version": "0.148.0",
+      "nativeCliInstalled": true,
+      "auth": "Logged in using ChatGPT",
+      "realTurnPassed": true,
+      "vendorSessionId": "01a0184e-5d44-7f52-b3ee-c72d5afb60e0",
+      "expectedMessage": "W66_CODEX_ACTIVATION_OK",
+      "outputReceipt": {
+        "complete": true,
+        "sha256": "92f59f0b21090bfc9a1203f0829139a502d057b5791dae04e3e8af8f2032c7cc",
+        "byteLength": 787
+      },
+      "activeProcessesAfterTurn": 0
+    }
+  },
+  "verification": {
+    "build": "PASS",
+    "testFiles": {
+      "passed": 193,
+      "failed": 0,
+      "total": 193
+    },
+    "fixtureLifecycle": {
+      "cyclesPerAdapter": 20,
+      "adapters": 3,
+      "activeProcessesAfter": 0,
+      "resourceLedgerAfter": 0
+    }
+  },
+  "remainingGates": [
+    "KIMI_REAL_AUTH_AND_TURN",
+    "CLAUDE_REAL_AUTH_AND_TURN",
+    "THREE_ADAPTER_PACKAGED_ELECTRON_20_CYCLE",
+    "REAL_CROSS_VENDOR_W73_HANDOFF"
+  ],
+  "formal": false
+}
