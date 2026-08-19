@@ -16,6 +16,7 @@ const INVOKE_CHANNELS = new Set([
   'cognition:list', 'cognition:create', 'cognition:approve', 'cognition:supersede', 'cognition:summary',
   'civilization:simulate', 'civilization:filter', 'civilization:reconcile',
   'organization:templates', 'organization:preview', 'organization:save', 'organization:list', 'organization:compatibility',
+  'mazAsset:inspect', 'mazAsset:migrateStyle',
   'companion:archive', 'companion:memory',
   'fs:watch', 'fs:unwatch',
   'dialog:openFile', 'dialog:saveFile', 'dialog:openFolder', 'dialog:confirm',

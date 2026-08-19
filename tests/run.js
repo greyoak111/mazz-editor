@@ -128,6 +128,7 @@ const files = [
   'tests/contract/w82c-research-evidence-slice.test.mjs',
   'tests/contract/w82d-animation-short-slice.test.mjs',
   'tests/contract/w82e-h-organizational-completion.test.mjs',
+  'tests/contract/w84-maz-production-asset.test.mjs',
   'tests/contract/w73a-factory-gap-audit.test.mjs',
   'tests/contract/w73b-production-run-ledger.test.mjs',
   'tests/contract/w73b-factory-integration.test.mjs',

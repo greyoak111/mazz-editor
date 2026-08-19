@@ -34,7 +34,7 @@ function create(container) {
         <label class="org-field">工作流<select data-f="template"></select></label>
         <label class="org-field">执行者<select data-f="executor"><option value="">按工作流默认路由</option></select></label>
         <label class="org-field">预算（CNY）<input data-f="budget" type="number" min="0" value="500"></label>
-        <div class="org-actions"><button data-a="preview">编译预览</button><button class="secondary" data-a="save">存入本地工作流库</button></div>
+        <div class="org-actions"><button data-a="preview">编译预览</button><button class="secondary" data-a="save">存入本地工作流库</button><button class="secondary" data-a="inspect-maz">检查 .maz</button></div>
       </div><div class="org-preview"></div>
     </div>`;
   container.appendChild(root);
@@ -69,6 +69,21 @@ function create(container) {
       const result = await window.mazz.invoke('organization:save', payload());
       state.preview = result.preview; renderPreview(root, state.preview);
       toast(`已存入本地工作流库：${result.record.workflowId}@${result.record.version}`);
+    } catch (error) { toast(error.message || String(error)); }
+  });
+  root.querySelector('[data-a=inspect-maz]').addEventListener('click', async () => {
+    try {
+      const picked = await window.mazz.invoke('dialog:openFile', { filters: [{ name: 'Mazz 生产资料', extensions: ['maz'] }] });
+      if (!picked) return;
+      const result = await window.mazz.invoke('mazAsset:inspect', { path: picked });
+      const profile = result.manifest?.profile || result.detected?.profile || 'unknown';
+      const lines = [
+        `<section><h3>.maz 只读检查</h3><div class="org-badges"><span>${esc(profile)}</span><span>${result.detected?.legacy ? 'legacy' : 'production asset'}</span><span>${result.blockers?.length ? '已阻断' : '完整性通过'}</span></div>`,
+        `<p>${esc(result.path)} · ${result.packageBytes} bytes · ${result.entries.length} entries</p>`,
+        `<p>package SHA-256：<code>${esc(result.packageDigest)}</code></p>`,
+        `<p>阻断：${esc((result.blockers || []).join('；') || '无')}。本次 codeExecuted=false，不授予信任或执行权。</p></section>`,
+      ];
+      root.querySelector('.org-preview').innerHTML = lines.join('');
     } catch (error) { toast(error.message || String(error)); }
   });
   return state;
