@@ -1,0 +1,57 @@
+{
+  "schema": "mazz.w82c-implementation-evidence/v0",
+  "capturedAt": "2026-08-19T07:48:55.551Z",
+  "preWaveHead": "8d2f8d1e1f47e788bc47e72e2891910fda851c47",
+  "scope": "W82c local non-published research evidence organization slice",
+  "actualChecks": [
+    {
+      "operationRef": "npm:build",
+      "status": "passed",
+      "exitCode": 0,
+      "inputDigest": "sha256:4e893e185a2d77a287a6ceb069d50891a6c2c7539459338f8ddd352503acc83c",
+      "outputDigest": "sha256:67302d3496f709a28b39345cce603c17b840755a19dad51b240438be5e522b27"
+    },
+    {
+      "operationRef": "node:w82c-and-adjacent-contracts",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": "W82c 10/10; 8/8 scoped test files",
+      "outputDigest": "sha256:8765ed0fc22d1008b5fb9b14bcba957a4ba976f869cb7db3a67324d99b9e3640"
+    },
+    {
+      "operationRef": "npm:audit-provenance",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": ".mazz/audit/oss-provenance-ledger.json CURRENT",
+      "outputDigest": "sha256:eaf13f42bed5b60b0da8d39fcd56bb74863bb6afb9a6a686c2930f31b3bddbdf"
+    },
+    {
+      "operationRef": "git:diff-check",
+      "status": "passed",
+      "exitCode": 0,
+      "outputDigest": "sha256:b83d7d0c949c9cc75143c5af599d1f06b0c550f9dcaf7152f0d87d1dab9712c2"
+    }
+  ],
+  "coverage": {
+    "evidenceCalculationJudgmentAuthoritySeparation": true,
+    "missingCitationUnknown": true,
+    "citationFailureRecovery": true,
+    "statisticsLocalRecovery": true,
+    "replicationLocalRecovery": true,
+    "methodChangeInvalidation": true,
+    "w73BlockedAndExplicitResume": true,
+    "publicationNotGranted": true
+  },
+  "fullSuite": {
+    "rerunThisWave": false,
+    "latestKnownAtPredecessorCheckpoint": "194/194"
+  },
+  "boundary": {
+    "localSpecimen": true,
+    "realResearchClaimValidated": false,
+    "published": false,
+    "externalMutation": false,
+    "runtimeTruthOwner": "W73"
+  },
+  "stopLine": "W82c is landed. W82d-W82h, Sample D/E, real external research execution, publication, and the full Organizational Compiler DoD remain open."
+}

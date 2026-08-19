@@ -1,11 +1,12 @@
 # W82 Organizational Compiler
 ## Production Organization Compiler / 生产组织编译器
 
-> 状态：`W82a FOUNDATION + W82b SOFTWARE RELEASE SLICE LANDED / W82c–W82h NOT STARTED`
-> 版本：v0.7
+> 状态：`W82a FOUNDATION + W82b SOFTWARE + W82c RESEARCH SLICES LANDED / W82d–W82h NOT STARTED`
+> 版本：v0.8
 > 登记日期：2026-08-18
 > W82a 落地日期：2026-08-19
 > W82b 落地日期：2026-08-19
+> W82c 落地日期：2026-08-19
 > 基础材料：维护者《Media Production Workflows / Industry Workflow Compiler 增量》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 升格材料：维护者《Production Organization Compiler / Organizational Compiler 增量》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 技术补遗：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
@@ -501,9 +502,14 @@ Workflow 排名属于 W69k/l 市场视图：比较“完成某类交付物的生
 
 ### W82c — Research / Evidence Organization Slice
 
-- Question → Literature → Method → Data → Analysis → Adversarial Review → Replication → Report；
-- Evidence、deterministic calculation、model judgment 与 Human Final 分离；
-- 缺引文、统计失败、复现失败和方法变更触发局部回退而非整项重做。
+状态：`LOCAL NON-PUBLISHED RESEARCH SLICE LANDED`。
+
+- 已完成 Question → Literature → Method → Data → deterministic Statistics → Analysis → Adversarial Review → Replication → Local Report；
+- Evidence、deterministic calculation、model judgment、independent review 与 Human Final 已在 Seat/Executor/Authority 层分离；
+- 缺引文保持 UNKNOWN；引文、统计、复现失败和方法变更均按 Artifact DAG 局部回退；
+- 严格 receipt/decision 禁止 arbitrary command、secret、伪 exit code、Publication 与外部 mutation；
+- 运行事实只在 W73 append 后成立；W82c 不创建第二研究 Runtime；
+- 与 W82b 共用同一 Kernel 仍不等于 Sample E 已通过，真实研究结论和 Publication 均未宣称。
 
 ### W82d — Animation Short Vertical Slice
 
@@ -647,6 +653,6 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 
 ## 16. 当前停止线
 
-本文件已完成 W82 v0.7 Design Capsule、W82a 纯 Foundation 与 W82b 本地非生产软件发布切片。W82a 只编译组织计划并评估证据跃迁；W82b 只接收受控工具回执、绑定人工决定并投影 W73 事件，不执行模型、外部工具、后台服务、任意命令、嵌套 Delegation Runtime、专家资产市场、生产发布或公共市场。
+本文件已完成 W82 v0.8 Design Capsule、W82a 纯 Foundation、W82b 本地非生产软件发布切片与 W82c 本地未发布研究切片。W82a 只编译组织计划并评估证据跃迁；W82b/c 只接收受控回执、绑定人工决定并投影 W73 事件，不执行模型、外部工具、后台服务、任意命令、生产发布或公共 Publication。
 
-W82c–W82h 仍未施工，必须继续服从跨波次真源和维护者独立批准。不得把 W82b 本地 specimen 反写为生产软件发布，更不得把研究纸面 fixture 冒充 Research vertical slice；Sample E 仍未通过。
+W82d–W82h 仍未施工，必须继续服从跨波次真源和维护者独立批准。不得把 W82b/c 本地 specimen 反写为真实发布/研究结论；Sample D/E 仍未通过。

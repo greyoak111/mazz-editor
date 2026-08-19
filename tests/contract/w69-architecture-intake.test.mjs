@@ -20,7 +20,7 @@ describe('W69 Local-first Content Network architecture intake', () => {
     assert.ok(capsule.includes('98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0'));
     assert.ok(capsule.includes('DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION'));
     assert.ok(planIndex.includes('W69a–W69m 已拆波，未施工'));
-    assert.ok(planIndex.includes('W82a Foundation + W82b Software Release Slice LANDED；W82c–W82h 未施工'));
+    assert.ok(planIndex.includes('W82a Foundation + W82b Software + W82c Research Slices LANDED；W82d–W82h 未施工'));
   });
 
   test('three-plane truth boundary and portable publication identity remain intact', () => {
