@@ -14,6 +14,8 @@ const PROFILE_INDEX_SCHEMA = 'mazz.doctrine-profile-index/v0';
 const CURRENT_SSOT_SCHEMA = 'mazz.current-ssot/v0';
 const TOOL_CAPABILITY_SCHEMA = 'mazz.tool-capability-snapshot/v0';
 const DOCTRINE_CONTEXT_SCHEMA = 'mazz.doctrine-context/v0';
+const COMPILED_VIEW_SCHEMA = 'mazz.compiled-doctrine-view/v0';
+const COMPILED_MANIFEST_SCHEMA = 'mazz.agent-rule-pack/v0';
 const RULE_STATUSES = new Set(['CURRENT', 'SUPERSEDED', 'HISTORICAL', 'PROPOSED', 'REJECTED']);
 const RULE_SCOPES = new Set(['universal', 'host', 'domain', 'project', 'current-policy']);
 const ENFORCEMENT_LEVELS = new Set(['ADVICE', 'POLICY', 'GATE', 'INVARIANT']);
@@ -30,6 +32,7 @@ const PROFILE_IDS = Object.freeze([
   'universal-core', 'cloud-sandbox', 'windows-local', 'linux-local',
   'remote-vps', 'electron-desktop', 'mazz-project',
 ]);
+const ATTEMPT_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$/;
 
 class DoctrineError extends Error {
   constructor(code, message, cause = null) {
@@ -415,6 +418,320 @@ function snapshotR0bContext({ doctrineRoot, hostFacts, projectId = '', domainPro
   return Object.freeze({ ...context, contextRef: path.relative(root, contextPath).replaceAll('\\', '/') });
 }
 
+function validateProfileIndex(profileIndex, hostFacts) {
+  exactKeys(profileIndex, ['schemaVersion', 'hostFactsHash', 'active', 'inactiveRetainedInRawSource', 'profileIndexHash'], 'Profile Index');
+  if (profileIndex.schemaVersion !== PROFILE_INDEX_SCHEMA) fail('PROFILE_RESOLUTION_FAILED', `Profile Index schema 必须是 ${PROFILE_INDEX_SCHEMA}`);
+  const expectedHostHash = sha256(Buffer.from(canonicalJson(hostFacts), 'utf8'));
+  if (profileIndex.hostFactsHash !== expectedHostHash) fail('PROFILE_RESOLUTION_FAILED', 'Profile Index 与 Host Facts 不匹配');
+  if (!Array.isArray(profileIndex.active) || !Array.isArray(profileIndex.inactiveRetainedInRawSource)) fail('PROFILE_RESOLUTION_FAILED', 'Profile Index active/inactive 必须是数组');
+  const base = { ...profileIndex };
+  delete base.profileIndexHash;
+  if (sha256(Buffer.from(canonicalJson(base), 'utf8')) !== profileIndex.profileIndexHash) fail('PROFILE_RESOLUTION_FAILED', 'Profile Index hash 不匹配');
+  return profileIndex;
+}
+
+function conditionMatches(condition = {}, { hostFacts, activeProfileIds, projectId }) {
+  if (!condition || typeof condition !== 'object' || Array.isArray(condition)) return false;
+  if (condition.projectId && condition.projectId !== projectId) return false;
+  if (condition.os && condition.os !== hostFacts.os) return false;
+  if (condition.shell && condition.shell !== hostFacts.shell) return false;
+  if (condition.profile && !activeProfileIds.has(condition.profile)) return false;
+  if (condition.domain && !activeProfileIds.has(condition.domain)) return false;
+  return true;
+}
+
+function compileApplicableRuleIndex({ ruleRegistry, hostFacts, profileIndex, projectId = '' } = {}) {
+  validateRuleRegistry(ruleRegistry);
+  validateHostFacts(hostFacts);
+  validateProfileIndex(profileIndex, hostFacts);
+  const activeProfileIds = new Set(profileIndex.active.map(profile => profile.id));
+  const active = [];
+  const inactive = [];
+  for (const rule of ruleRegistry.rules) {
+    if (rule.status !== 'CURRENT') {
+      inactive.push({ ruleId: rule.id, reason: `status:${rule.status}` });
+      continue;
+    }
+    const scopeEligible = rule.scope.includes('universal')
+      || rule.scope.includes('current-policy')
+      || (rule.scope.includes('project') && activeProfileIds.has('mazz-project'))
+      || rule.scope.includes('host')
+      || rule.scope.includes('domain');
+    if (!scopeEligible || !conditionMatches(rule.applicableWhen, { hostFacts, activeProfileIds, projectId })) {
+      inactive.push({ ruleId: rule.id, reason: 'profile-not-applicable' });
+      continue;
+    }
+    active.push({
+      ruleId: rule.id,
+      status: rule.status,
+      severity: rule.severity,
+      enforcement: rule.enforcement.level,
+      gateIds: [...rule.enforcement.gateIds],
+      evidenceRequired: [...rule.evidence.required],
+      failureCode: rule.failure.code,
+    });
+  }
+  const base = {
+    schemaVersion: 'mazz.applicable-rule-index/v0',
+    ruleRegistryId: ruleRegistry.registryId,
+    ruleRegistryVersion: ruleRegistry.version,
+    hostFactsHash: profileIndex.hostFactsHash,
+    profileIndexHash: profileIndex.profileIndexHash,
+    active,
+    inactive,
+  };
+  return Object.freeze({ ...base, applicableRuleIndexHash: sha256(Buffer.from(canonicalJson(base), 'utf8')) });
+}
+
+function derivedDoctrinePacks({ ruleRegistry, incidentLineage, applicableRuleIndex } = {}) {
+  validateCatalogLinkage(ruleRegistry, incidentLineage);
+  const activeIds = new Set(applicableRuleIndex.active.map(item => item.ruleId));
+  const activeRules = ruleRegistry.rules.filter(rule => activeIds.has(rule.id));
+  const projectDoctrine = {
+    schemaVersion: 'mazz.project-doctrine-view/v0',
+    rules: activeRules
+      .filter(rule => rule.scope.includes('project') || rule.scope.includes('current-policy'))
+      .map(rule => ({ ruleId: rule.id, title: rule.title, statement: rule.statement, enforcement: rule.enforcement.level })),
+  };
+  const gateMap = new Map();
+  for (const rule of activeRules) {
+    for (const gateId of rule.enforcement.gateIds) {
+      if (!gateMap.has(gateId)) gateMap.set(gateId, []);
+      gateMap.get(gateId).push(rule.id);
+    }
+  }
+  const gatePack = {
+    schemaVersion: 'mazz.doctrine-gate-pack/v0',
+    gates: [...gateMap].sort(([a], [b]) => a.localeCompare(b)).map(([gateId, ruleIds]) => ({ gateId, ruleIds: ruleIds.sort() })),
+  };
+  const incidentIds = new Set(activeRules.flatMap(rule => rule.origin.incidents));
+  const regressionPack = {
+    schemaVersion: 'mazz.doctrine-regression-pack/v0',
+    regressions: incidentLineage.incidents
+      .filter(incident => incidentIds.has(incident.id))
+      .flatMap(incident => incident.regressionIds.map(regressionId => ({ regressionId, incidentId: incident.id })))
+      .sort((a, b) => a.regressionId.localeCompare(b.regressionId) || a.incidentId.localeCompare(b.incidentId)),
+  };
+  return { projectDoctrine, gatePack, regressionPack };
+}
+
+function validateAttemptId(attemptId) {
+  const normalized = requiredString(attemptId, 'attemptId');
+  if (!ATTEMPT_ID.test(normalized)) fail('DOCTRINE_SCHEMA_INVALID', 'attemptId 必须是可移植的稳定标识');
+  return normalized;
+}
+
+function readAttemptManifest(doctrineRoot, attemptId, fsImpl = fs) {
+  const root = path.resolve(requiredString(doctrineRoot, 'doctrineRoot'));
+  const id = validateAttemptId(attemptId);
+  const manifestPath = path.join(root, 'attempts', id, 'manifest.json');
+  if (!fsImpl.existsSync(manifestPath)) return null;
+  try { return JSON.parse(fsImpl.readFileSync(manifestPath, 'utf8')); }
+  catch (error) { fail('COMPILED_MANIFEST_INVALID', `Attempt manifest 无法读取: ${id}`, error); }
+}
+
+function attemptManifests(doctrineRoot, fsImpl = fs) {
+  const root = path.join(path.resolve(doctrineRoot), 'attempts');
+  if (!fsImpl.existsSync(root)) return [];
+  return fsImpl.readdirSync(root, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => readAttemptManifest(doctrineRoot, entry.name, fsImpl))
+    .filter(Boolean);
+}
+
+function currentAttemptManifest(doctrineRoot, fsImpl = fs) {
+  const manifests = attemptManifests(doctrineRoot, fsImpl);
+  const previousIds = new Set(manifests.map(item => item.previousAttemptId).filter(Boolean));
+  return manifests.filter(item => !previousIds.has(item.attemptId))
+    .sort((a, b) => String(a.compiledAt).localeCompare(String(b.compiledAt)) || a.attemptId.localeCompare(b.attemptId))
+    .at(-1) || null;
+}
+
+function validateChangeAcceptance(acceptance, previousAttemptId) {
+  if (!acceptance) fail('RULE_PACK_CHANGED_WITHOUT_ACCEPTANCE', 'Rule Pack 已变化，必须由 human:* 显式接受并创建新 Attempt');
+  exactKeys(acceptance, ['authorityRef', 'reason', 'acceptedAt', 'supersedesAttemptId'], 'Rule Drift Acceptance');
+  const authorityRef = requiredString(acceptance.authorityRef, 'changeAcceptance.authorityRef');
+  if (!authorityRef.startsWith('human:')) fail('RULE_PACK_CHANGED_WITHOUT_ACCEPTANCE', 'Rule drift 只能由 human:* 接受');
+  requiredString(acceptance.reason, 'changeAcceptance.reason');
+  requiredString(acceptance.acceptedAt, 'changeAcceptance.acceptedAt');
+  if (acceptance.supersedesAttemptId !== previousAttemptId) fail('RULE_PACK_CHANGED_WITHOUT_ACCEPTANCE', 'Rule drift acceptance 未指向上一 Attempt');
+  return acceptance;
+}
+
+function verifySourceReceipt(doctrineRoot, sourceReceipt, fsImpl = fs) {
+  exactKeys(sourceReceipt, ['schemaVersion', 'rulePackId', 'title', 'sourcePath', 'sha256', 'byteLength', 'capturedAt', 'authorityRef', 'snapshotRef', 'receiptRef'], 'Source Receipt');
+  if (sourceReceipt.schemaVersion !== RAW_SOURCE_SCHEMA || !SHA256.test(sourceReceipt.sha256)) fail('RULE_PACK_HASH_MISMATCH', 'Source Receipt 非法');
+  const sourceSnapshot = path.join(path.resolve(doctrineRoot), sourceReceipt.snapshotRef);
+  let bytes;
+  try { bytes = fsImpl.readFileSync(sourceSnapshot); }
+  catch (error) { fail('RULE_PACK_REQUIRED', 'Source Receipt 指向的完整 Raw Snapshot 不存在', error); }
+  if (bytes.length !== sourceReceipt.byteLength || sha256(bytes) !== sourceReceipt.sha256) fail('RULE_PACK_HASH_MISMATCH', 'Raw Snapshot 与 Source Receipt 不一致');
+  decodeUtf8(bytes);
+  return bytes;
+}
+
+function compileDoctrineAttempt({
+  doctrineRoot, attemptId, authorityRef, sourceReceipt, ruleRegistry, incidentLineage,
+  hostFacts, profileIndex, currentSsot, toolCapability, projectId = '',
+  previousAttemptId = null, changeAcceptance = null, clock = () => new Date(), fsImpl = fs,
+} = {}) {
+  const root = path.resolve(requiredString(doctrineRoot, 'doctrineRoot'));
+  const id = validateAttemptId(attemptId);
+  const authority = requiredString(authorityRef, 'authorityRef');
+  validateCatalogLinkage(ruleRegistry, incidentLineage);
+  validateHostFacts(hostFacts);
+  validateProfileIndex(profileIndex, hostFacts);
+  validateCurrentSsot(currentSsot);
+  validateToolCapabilitySnapshot(toolCapability);
+  const rawBytes = verifySourceReceipt(root, sourceReceipt, fsImpl);
+  const existing = readAttemptManifest(root, id, fsImpl);
+  if (existing) {
+    const sameInputs = existing.canonicalSource.sha256 === sourceReceipt.sha256
+      && existing.hostFactsHash === sha256(Buffer.from(canonicalJson(hostFacts), 'utf8'))
+      && existing.currentPolicyHash === sha256(Buffer.from(canonicalJson(currentSsot), 'utf8'))
+      && existing.toolCapabilityHash === sha256(Buffer.from(canonicalJson(toolCapability), 'utf8'));
+    if (!sameInputs) fail('DOCTRINE_IMMUTABLE_CONFLICT', `Attempt ${id} 已冻结，禁止原地改写`);
+    return Object.freeze(existing);
+  }
+  const chainHead = currentAttemptManifest(root, fsImpl);
+  if (chainHead && !previousAttemptId) fail('PREVIOUS_ATTEMPT_REQUIRED', '已有 Doctrine Attempt；新 Attempt 必须显式连接上一 Attempt');
+  const previous = previousAttemptId ? readAttemptManifest(root, previousAttemptId, fsImpl) : null;
+  if (previousAttemptId && !previous) fail('PREVIOUS_ATTEMPT_REQUIRED', `上一 Attempt 不存在: ${previousAttemptId}`);
+  if (chainHead && previous?.attemptId !== chainHead.attemptId) fail('PREVIOUS_ATTEMPT_REQUIRED', 'previousAttemptId 不是当前 Doctrine 链头');
+  const ruleDrift = !!previous && previous.canonicalSource.sha256 !== sourceReceipt.sha256;
+  if (ruleDrift) validateChangeAcceptance(changeAcceptance, previous.attemptId);
+  if (!ruleDrift && changeAcceptance) fail('RULE_PACK_CHANGED_WITHOUT_ACCEPTANCE', '没有 Rule drift 时不得伪造 drift acceptance');
+
+  const applicableRuleIndex = compileApplicableRuleIndex({ ruleRegistry, hostFacts, profileIndex, projectId });
+  const { projectDoctrine, gatePack, regressionPack } = derivedDoctrinePacks({ ruleRegistry, incidentLineage, applicableRuleIndex });
+  const components = {
+    'host-facts.json': hostFacts,
+    'profile-index.json': profileIndex,
+    'current-ssot.json': currentSsot,
+    'tool-capability.json': toolCapability,
+    'applicable-rule-index.json': applicableRuleIndex,
+    'project-doctrine.json': projectDoctrine,
+    'gate-pack.json': gatePack,
+    'regression-pack.json': regressionPack,
+  };
+  const componentHashes = Object.fromEntries(Object.entries(components).map(([name, value]) => [name, sha256(Buffer.from(canonicalJson(value), 'utf8'))]));
+  const compiledView = {
+    schemaVersion: COMPILED_VIEW_SCHEMA,
+    attemptId: id,
+    rawSource: {
+      sha256: sourceReceipt.sha256,
+      byteLength: sourceReceipt.byteLength,
+      ref: 'raw-rule-pack.md',
+      injection: 'REQUIRED_FULL_BYTES',
+    },
+    activeProfiles: profileIndex.active,
+    inactiveRetainedInRawSource: profileIndex.inactiveRetainedInRawSource,
+    applicableRuleIndexRef: 'applicable-rule-index.json',
+    currentSsotRef: 'current-ssot.json',
+    toolCapabilityRef: 'tool-capability.json',
+    gatePackRef: 'gate-pack.json',
+    regressionPackRef: 'regression-pack.json',
+    stopFailureCodes: [...new Set(applicableRuleIndex.active.map(item => item.failureCode))].sort(),
+  };
+  const compiledViewHash = sha256(Buffer.from(canonicalJson(compiledView), 'utf8'));
+  const packIndex = {
+    rawSourceHash: sourceReceipt.sha256,
+    componentHashes,
+    compiledViewHash,
+  };
+  const compiledRulePackHash = sha256(Buffer.from(canonicalJson(packIndex), 'utf8'));
+  const manifest = {
+    schemaVersion: COMPILED_MANIFEST_SCHEMA,
+    rulePackId: sourceReceipt.rulePackId,
+    attemptId: id,
+    previousAttemptId: previous?.attemptId || null,
+    canonicalSource: {
+      path: sourceReceipt.sourcePath,
+      sha256: sourceReceipt.sha256,
+      byteLength: sourceReceipt.byteLength,
+      capturedAt: sourceReceipt.capturedAt,
+    },
+    hostFactsHash: componentHashes['host-facts.json'],
+    profileIndexHash: componentHashes['profile-index.json'],
+    ruleRegistryHash: sha256(Buffer.from(canonicalJson(ruleRegistry), 'utf8')),
+    incidentLineageHash: sha256(Buffer.from(canonicalJson(incidentLineage), 'utf8')),
+    projectDoctrineHash: componentHashes['project-doctrine.json'],
+    currentPolicyHash: componentHashes['current-ssot.json'],
+    toolCapabilityHash: componentHashes['tool-capability.json'],
+    gatePackHash: componentHashes['gate-pack.json'],
+    regressionPackHash: componentHashes['regression-pack.json'],
+    applicableRuleIndexHash: componentHashes['applicable-rule-index.json'],
+    compiledViewHash,
+    compiledRulePackHash,
+    authorityRef: authority,
+    snapshotRef: 'raw-rule-pack.md',
+    compiledAt: clock().toISOString(),
+    ruleDrift: ruleDrift ? {
+      fromRulePackHash: previous.canonicalSource.sha256,
+      toRulePackHash: sourceReceipt.sha256,
+      acceptance: changeAcceptance,
+    } : null,
+  };
+  const attemptRoot = path.join(root, 'attempts', id);
+  try {
+    atomicWrite(path.join(attemptRoot, 'raw-rule-pack.md'), rawBytes, fsImpl);
+    for (const [name, value] of Object.entries(components)) atomicWrite(path.join(attemptRoot, name), Buffer.from(canonicalJson(value), 'utf8'), fsImpl);
+    atomicWrite(path.join(attemptRoot, 'compiled-view.json'), Buffer.from(canonicalJson(compiledView), 'utf8'), fsImpl);
+    atomicWrite(path.join(attemptRoot, 'manifest.json'), Buffer.from(canonicalJson(manifest), 'utf8'), fsImpl);
+  } catch (error) {
+    if (error instanceof DoctrineError) throw error;
+    fail('RULE_PACK_SNAPSHOT_FAILED', `Compiled Rule Pack 写入失败: ${id}`, error);
+  }
+  return Object.freeze(manifest);
+}
+
+function loadDoctrineInjectionBundle({ doctrineRoot, attemptId, fsImpl = fs } = {}) {
+  const root = path.resolve(requiredString(doctrineRoot, 'doctrineRoot'));
+  const id = validateAttemptId(attemptId);
+  const attemptRoot = path.join(root, 'attempts', id);
+  const manifest = readAttemptManifest(root, id, fsImpl);
+  if (!manifest || manifest.schemaVersion !== COMPILED_MANIFEST_SCHEMA) fail('COMPILED_MANIFEST_INVALID', `Compiled manifest 不存在或 schema 非法: ${id}`);
+  let rawSource;
+  let compiledView;
+  try {
+    rawSource = fsImpl.readFileSync(path.join(attemptRoot, manifest.snapshotRef));
+    compiledView = JSON.parse(fsImpl.readFileSync(path.join(attemptRoot, 'compiled-view.json'), 'utf8'));
+  } catch (error) {
+    fail('COMPILED_MANIFEST_INVALID', `Compiled Rule Pack 缺少必需工件: ${id}`, error);
+  }
+  if (rawSource.length !== manifest.canonicalSource.byteLength || sha256(rawSource) !== manifest.canonicalSource.sha256) fail('RULE_PACK_HASH_MISMATCH', 'Attempt Raw Source 与 manifest 不一致');
+  const compiledViewHash = sha256(Buffer.from(canonicalJson(compiledView), 'utf8'));
+  if (compiledViewHash !== manifest.compiledViewHash || compiledView.rawSource.injection !== 'REQUIRED_FULL_BYTES') fail('COMPILED_MANIFEST_INVALID', 'Compiled View hash/完整原文注入要求不一致');
+  const expectedComponents = {
+    'host-facts.json': manifest.hostFactsHash,
+    'profile-index.json': manifest.profileIndexHash,
+    'current-ssot.json': manifest.currentPolicyHash,
+    'tool-capability.json': manifest.toolCapabilityHash,
+    'applicable-rule-index.json': manifest.applicableRuleIndexHash,
+    'project-doctrine.json': manifest.projectDoctrineHash,
+    'gate-pack.json': manifest.gatePackHash,
+    'regression-pack.json': manifest.regressionPackHash,
+  };
+  const componentHashes = {};
+  for (const [name, expectedHash] of Object.entries(expectedComponents)) {
+    let value;
+    try { value = JSON.parse(fsImpl.readFileSync(path.join(attemptRoot, name), 'utf8')); }
+    catch (error) { fail('COMPILED_MANIFEST_INVALID', `Compiled Rule Pack 缺少或损坏: ${name}`, error); }
+    const actualHash = sha256(Buffer.from(canonicalJson(value), 'utf8'));
+    if (actualHash !== expectedHash) fail('COMPILED_MANIFEST_INVALID', `${name} 与 manifest hash 不一致`);
+    componentHashes[name] = actualHash;
+  }
+  const packIndex = { rawSourceHash: manifest.canonicalSource.sha256, componentHashes, compiledViewHash };
+  if (sha256(Buffer.from(canonicalJson(packIndex), 'utf8')) !== manifest.compiledRulePackHash) fail('COMPILED_MANIFEST_INVALID', 'Compiled Rule Pack 总 hash 不一致');
+  return Object.freeze({
+    attemptId: id,
+    manifest,
+    rawSource,
+    rawSourceText: decodeUtf8(rawSource),
+    compiledView,
+  });
+}
+
 module.exports = {
   RAW_SOURCE_SCHEMA,
   RULE_REGISTRY_SCHEMA,
@@ -424,6 +741,8 @@ module.exports = {
   CURRENT_SSOT_SCHEMA,
   TOOL_CAPABILITY_SCHEMA,
   DOCTRINE_CONTEXT_SCHEMA,
+  COMPILED_VIEW_SCHEMA,
+  COMPILED_MANIFEST_SCHEMA,
   RULE_STATUSES,
   RULE_SCOPES,
   ENFORCEMENT_LEVELS,
@@ -443,4 +762,10 @@ module.exports = {
   validateToolCapabilitySnapshot,
   snapshotR0bContext,
   readCurrentDoctrineContext,
+  validateProfileIndex,
+  compileApplicableRuleIndex,
+  compileDoctrineAttempt,
+  readAttemptManifest,
+  currentAttemptManifest,
+  loadDoctrineInjectionBundle,
 };

@@ -3,6 +3,7 @@
 > 状态：`DESIGN INTAKE COMPLETE / RUNTIME NOT IMPLEMENTED`
 > 日期：2026-08-18
 > 作用：登记三份维护者修正文献、冻结其对 W66/W73/W82 与施工纪律的影响，不把文献中的设计句子冒充产品能力。
+> 后续覆盖状态（2026-08-19）：本文件的 `RUNTIME NOT IMPLEMENTED` 是入库当时状态；W66-R0a/R0b/R0c 已由后续三个独立检查点关闭，R0d/e 与 R1–R6 仍未施工。本行不反写 2026-08-18 的来源收讫事实。
 
 ## 1. Source Receipt
 
