@@ -136,6 +136,7 @@ const { IngestionPipeline } = require('./ingestion-pipeline');
 const { FeedPipeline, normalizeW65FeedRequest } = require('./feed-pipeline');
 const { PromotionLedger } = require('./promotion-ledger');
 const { FactorySseDecoder } = require('./factory-sse');
+const { AddressableEvidenceService } = require('./addressable-evidence-service');
 
 const PROTOCOL = 'mazz';
 
@@ -160,6 +161,10 @@ const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
 const ingestionPipeline = new IngestionPipeline();
 const feedPipeline = new FeedPipeline({ ingestionPipeline });
 const promotionLedger = new PromotionLedger();
+const addressableEvidence = new AddressableEvidenceService({
+  rootProvider: () => store.get('workspace'),
+  identityStore: { get: key => store.get(key, {}), set: (key, value) => store.set(key, value) },
+});
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
@@ -286,6 +291,9 @@ function registerChannels() {
   bus.handle('fs:readFile', async ({ path: p, encoding }) => fs.readFileSync(p, encoding || 'utf8'));
   bus.handle('fs:readFileBase64', async ({ path: p }) => fs.readFileSync(p).toString('base64'));
   bus.handle('fs:probeFile', async ({ path: p }) => require('./file-probe').probeFileSync(p));
+  bus.handle('evidence:scanWorkspace', async ({ force = false } = {}) => addressableEvidence.scan({ force: force === true }));
+  bus.handle('evidence:fileRelations', async ({ path: p, force = false } = {}) => addressableEvidence.fileRelations({ path: p, force: force === true }));
+  bus.handle('evidence:invalidate', async ({ path: p = '' } = {}) => addressableEvidence.invalidate(p));
   // Windows 原子写：rename 遇 EPERM/EACCES/EBUSY（目标被外部程序占用/杀软扫描）退化为覆盖拷贝，重试两轮后仍败则报人话
   const writeAtomic = (p, data, encoding) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -869,6 +877,7 @@ function registerChannels() {
   bus.handle('workspace:setCurrent', async ({ path: p }) => {
     if (!p || !fs.existsSync(p)) throw new Error('目录不存在');
     store.set('workspace', p);
+    addressableEvidence.invalidate();
     // watcher 跟随：重挂全部监听（旧目录文件变化不再打扰）
     try { watcher.watcher?.close(); watcher.watcher = null; watcher.watched?.clear?.(); } catch {}
     if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'workspace:changed', { path: toSlash(p) });

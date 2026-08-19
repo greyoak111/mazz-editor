@@ -7,6 +7,7 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const INVOKE_CHANNELS = new Set([
   'fs:readFile', 'fs:writeFile', 'fs:listDir', 'fs:stat', 'fs:mkdir', 'fs:rename', 'fs:delete',
   'fs:readFileBase64', 'fs:writeFileBase64', 'fs:probeFile',
+  'evidence:scanWorkspace', 'evidence:fileRelations', 'evidence:invalidate',
   'fs:watch', 'fs:unwatch',
   'dialog:openFile', 'dialog:saveFile', 'dialog:openFolder', 'dialog:confirm',
   'recent:list', 'recent:add', 'recent:clear',

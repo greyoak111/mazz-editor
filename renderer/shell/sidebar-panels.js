@@ -25,6 +25,10 @@ export class SidebarPanels {
         this.refreshWsList();
         window.MazzShell?.fileTree?.refresh?.();
       });
+      window.mazz.on('file:changed', ({ path = '' } = {}) => {
+        window.mazz.invoke('evidence:invalidate', { path }).catch(() => {});
+        if (this.tab === 'backlinks') this.refreshBacklinks({ force: true });
+      });
     }
     // 内容联动：标签切换/文档变化时刷新大纲与反链
     import('../core/events.js').then(({ bus }) => {
@@ -393,23 +397,31 @@ export class SidebarPanels {
       <div class="sb-sec-title">反向链接</div>
       <div class="sb-list sb-back-links"></div>
       <div class="sb-sec-title">提及</div>
-      <div class="sb-list sb-back-mentions"></div>`;
+      <div class="sb-list sb-back-mentions"></div>
+      <div class="sb-sec-title">活引用 · 我引用</div>
+      <div class="sb-list sb-live-outgoing"></div>
+      <div class="sb-sec-title">活引用 · 引用我</div>
+      <div class="sb-list sb-live-incoming"></div>`;
     this.backLinksEl = el.querySelector('.sb-back-links');
     this.backMentionsEl = el.querySelector('.sb-back-mentions');
     this.backTargetEl = el.querySelector('.sb-back-target');
+    this.liveOutgoingEl = el.querySelector('.sb-live-outgoing');
+    this.liveIncomingEl = el.querySelector('.sb-live-incoming');
     el.addEventListener('click', (e) => {
       const item = e.target.closest('.sb-item');
-      if (item?.dataset.path) this.shell.openFile(item.dataset.path);
+      if (item?.dataset.path) this.shell.openFile(item.dataset.encoded === '1' ? decodeURIComponent(item.dataset.path) : item.dataset.path);
     });
   }
 
-  async refreshBacklinks() {
+  async refreshBacklinks({ force = false } = {}) {
     const tab = this.shell.tabs?.active;
     const name = tab?.filePath ? tab.filePath.split(/[\\/]/).pop().replace(/\.(md|markdown|mazz|txt)$/i, '') : (tab?.title || '').replace(/\.(md|markdown|mazz|txt)$/i, '');
     this.backTargetEl.textContent = name ? `当前：${name}` : '（打开一个文档查看谁链接到它）';
     if (!name) {
       this.backLinksEl.innerHTML = '<div class="sb-empty">未找到相关内容</div>';
       this.backMentionsEl.innerHTML = '';
+      this.liveOutgoingEl.innerHTML = '<div class="sb-empty">保存为工作区文件后可建立活引用</div>';
+      this.liveIncomingEl.innerHTML = '';
       return;
     }
     const ws = await this.shell.workspace || await this.fileTree.getWorkspace();
@@ -430,5 +442,23 @@ export class SidebarPanels {
     const row = (p) => `<div class="sb-item" data-path="${p}">${iconHtml('📄')}<span class="sb-item-t">${p.split(/[\\/]/).pop()}</span></div>`;
     this.backLinksEl.innerHTML = links.length ? links.map(row).join('') : '<div class="sb-empty">未找到相关内容</div>';
     this.backMentionsEl.innerHTML = mentions.length ? mentions.map(row).join('') : '<div class="sb-empty">（无提及）</div>';
+    const relations = self
+      ? await window.mazz.invoke('evidence:fileRelations', { path: self, force }).catch(error => ({ error: error.message, outgoing: [], incoming: [] }))
+      : { outgoing: [], incoming: [] };
+    const liveRow = (item, direction) => {
+      const path = direction === 'out' ? item.targetPath : item.sourcePath;
+      const label = direction === 'out'
+        ? `${item.declaredTargetAssetRef}!${item.targetAnchorRef}`
+        : `${item.sourceTitle} → ${item.targetAnchorRef}`;
+      const state = item.status === 'RESOLVED' ? '已解析' : item.status === 'AMBIGUOUS' ? '有歧义' : '已失联';
+      return `<div class="sb-item sb-live-ref${item.status === 'RESOLVED' ? '' : ' is-stale'}" ${path ? `data-path="${encodeURIComponent(path)}" data-encoded="1"` : ''} title="${String(item.method || '').replace(/"/g, '&quot;')}">
+        ${iconHtml(item.status === 'RESOLVED' ? '🔗' : '⚠')}<span class="sb-item-t">${String(label).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span><span class="sb-live-status">${state}</span>
+      </div>`;
+    };
+    this.liveOutgoingEl.innerHTML = relations.error
+      ? `<div class="sb-empty">活引用索引失败：${String(relations.error).replace(/</g, '&lt;')}</div>`
+      : relations.outgoing.length ? relations.outgoing.map(item => liveRow(item, 'out')).join('') : '<div class="sb-empty">（未引用其他内容）</div>';
+    this.liveIncomingEl.innerHTML = relations.incoming.length
+      ? relations.incoming.map(item => liveRow(item, 'in')).join('') : '<div class="sb-empty">（没有其他文件引用这里）</div>';
   }
 }

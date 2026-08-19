@@ -1,0 +1,29 @@
+{
+  "schema": "mazz.w63-w75-implementation-evidence/v0",
+  "capturedAt": "2026-08-19T12:00:00.000+08:00",
+  "preWaveHead": "ebf2fce",
+  "scope": "W63 markdown live-reference product slice and W75 explainable retrieval foundation",
+  "checks": [
+    { "operation": "npm run build", "status": "passed", "exitCode": 0 },
+    { "operation": "node tests/contract/w63-w75-addressable-retrieval.test.mjs", "status": "passed", "exitCode": 0, "tests": "14/14" },
+    { "operation": "git diff --check", "status": "passed", "notes": "existing Windows line-ending notices only" }
+  ],
+  "coverage": {
+    "stableLogicalAnchorIdentity": true,
+    "multimodalSelectorContract": true,
+    "explicitAmbiguousAndMissingStates": true,
+    "workspaceReferenceIndex": true,
+    "incomingAndOutgoingSidebar": true,
+    "fileChangeInvalidation": true,
+    "humanOnlyRelationPromotion": true,
+    "explainableRecollectionRanking": true
+  },
+  "fullSuite": { "rerunThisWave": false, "latestKnownCommitted": "194/194" },
+  "boundary": {
+    "markdownProductSlice": true,
+    "allMediaAnchorCreationUi": false,
+    "eventLedgerUi": false,
+    "published": false,
+    "externalMutation": false
+  }
+}
