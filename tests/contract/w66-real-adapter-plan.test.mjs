@@ -7,8 +7,10 @@ describe('W66 real Adapter activation plan', () => {
   test('三种执行器是独立 Adapter，不退化成 Kimi 专项', () => {
     for (const name of ['Kimi Code', 'Claude Code', 'Codex']) assert.ok(spec.includes(name), `${name} 必须入正式三选一范围`);
     assert.match(spec, /已登记 Kimi Code、Claude Code、Codex 三个真实 Adapter/);
-    assert.match(spec, /只有 Codex 通过真实认证与真实模型回合/);
-    assert.match(spec, /不得用 fixture、Provider 路由或 Terminal/);
+    assert.match(spec, /REAL ACTIVATION 2 OF 3/);
+    assert.match(spec, /Kimi 与 Codex 已通过 packaged 真实认证\/回合、双向 Handoff、失败、取消和释放门/);
+    assert.match(spec, /Claude 保持 `CONDITIONAL_DEFERRED`/);
+    assert.match(spec, /不得用 fixture、Provider 路由、Terminal 或另两家的通过冒充 Claude 已激活/);
   });
 
   test('装载 Agent 前必须完整刻入交付区军规，缺失时零 spawn', () => {

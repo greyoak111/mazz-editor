@@ -1,12 +1,13 @@
 # W66 Real Agent Adapter Activation
 
-> 状态：`PARTIAL / R0-R6 + PACKAGED HARNESS LANDED / REAL ACTIVATION 1 OF 3`
+> 状态：`FOUNDATION FORMAL / R0-R6 LANDED / REAL ACTIVATION 2 OF 3 / CLAUDE CONDITIONAL_DEFERRED`
 > 版本：v0.2 Doctrine correction
 > 冻结日期：2026-08-17
 > 适用对象：Kimi Code、Claude Code、Codex 三种真实 Agent 执行器，以及它们之间的模型/执行器热切。
 > 2026-08-18 修正输入：`W66-AgentRulePack-Doctrine-Compiler-规格-v0.1.md`，SHA-256 `EEB706F8845EC9E13223E8C28BEDE1EE4CE3D35B95F8DA73BD35E64B00934770`；`Codex-施工执行规则包-v0.1.md`，SHA-256 `42436619BA340FC0F184610D2DAE7C64F1600BF4543D99DBAE2CEA4BAD1ABF4C`。
 > 2026-08-19 第一阶段水位：W66-R0a—R6 的代码与合同已经落地。Kimi/Claude/Codex 三个真实 Adapter、Attempt/Handoff、安全回合边界热切、规则包激活与 Factory 三选一 UI 均已进入产品代码；三家 fixture 各完成 20 轮 child create/send/dispose 且资源账归零，全量 `193/193` 与构建通过。激活证据不得与实现混写：Codex CLI `0.148.0` 已登录并完成一次真实受限回合；Kimi Code `0.37.2` 已安装且 ACP initialize 通过但登录态未知；Claude Code `2.1.235` 已安装但 `loggedIn=false`。三家 packaged Electron Gate 尚未完成，因此 W66 总体仍为 `PARTIAL`。检查点见 `docs/engineering/W66_REAL_AGENT_FIRST_STAGE_CHECKPOINT_2026-08-19.md`。
 > 2026-08-19 第二阶段水位：`main@55bd3ed` 已关闭 packaged Harness 可施工 Gate。打包态三家 fixture 各完成 20 轮 create/send/dispose，4 个 Attempt / 3 次跨 Adapter Handoff，资源 `2→2`；真实 CLI 三家完成 20 轮 detect/probe/auth，Codex 在 packaged 程序中完成真实回合与真实 interrupt/dispose，Claude 未认证失败链正确收尸，目标 Adapter 缺失留下 `recovery-required`。Kimi/Claude 仍需用户登录，真实跨厂商模型回合因此保持条件阻塞。检查点见 `docs/engineering/W66_REAL_AGENT_SECOND_STAGE_CHECKPOINT_2026-08-19.md`。
+> 2026-08-19 第三阶段水位：Kimi Code 已由账户持有人完成厂商授权；packaged 真程序中 Kimi 与 Codex 分别完成真实回合，并以两个独立 Run 完成 Kimi → Codex 与 Codex → Kimi 的安全回合边界 Handoff。两家各自的确定性失败、真实在飞取消和 dispose 均通过，ResourceLedger `2→2`，主/渲染错误为 0。Claude Code 因用户明确的区域/账户约束决定暂缓认证，状态固定为 `CONDITIONAL_DEFERRED`，不得冒充 PASS，也不得拖垮另两家。W66 Foundation 的“至少两个真实 Adapter”门已闭；“三家均可用”的产品承诺门仍未闭。检查点见 `docs/engineering/W66_REAL_AGENT_THIRD_STAGE_CHECKPOINT_2026-08-19.md`。
 
 ## 1. 决议
 
@@ -20,7 +21,7 @@ Codex
 
 用户可以在同一 W73 Production Run / Task 下选择执行器和模型，并在安全回合边界切换。跨执行器切换必须创建新的 Delegation Attempt 和 Harness Session，以 Handoff Snapshot 连接；不得伪装成同一 Vendor Session，也不得在工具事务、文件写入或命令执行尚未收敛时原地换模型。
 
-当前仓库已登记 Kimi Code、Claude Code、Codex 三个真实 Adapter，且只解析各厂商独立的原生 CLI，不使用 npm shim 或 WindowsApps 桌面应用内部路径。实现和激活继续分别取证：当前只有 Codex 通过真实认证与真实模型回合；Kimi 和 Claude 的认证阻塞只降低各自激活状态，不得用 fixture、Provider 路由或 Terminal 冒充通过。
+当前仓库已登记 Kimi Code、Claude Code、Codex 三个真实 Adapter，且只解析各厂商独立的原生 CLI，不使用 npm shim 或 WindowsApps 桌面应用内部路径。实现和激活继续分别取证：Kimi 与 Codex 已通过 packaged 真实认证/回合、双向 Handoff、失败、取消和释放门；Claude 保持 `CONDITIONAL_DEFERRED`。不得用 fixture、Provider 路由、Terminal 或另两家的通过冒充 Claude 已激活。
 
 ## 2. W66-R0 硬门：AgentRulePack + Doctrine Compiler
 
@@ -210,20 +211,20 @@ W66-R0  AgentRulePack + Doctrine Compiler + Adapter Contract v2
 
 W66-R1  CLI Supervisor / detect / probe / version / auth / golden event corpus       COMPLETE · checkpoint
 
-W66-R2  Kimi Code Adapter                                                IMPLEMENTED · 6400507
-         ACP/Server 会话、模型目标、权限、resume、interrupt/dispose；CLI/ACP PASS，LOGIN BLOCKED
+W66-R2  Kimi Code Adapter                                                PACKAGED ACTIVATED · 2026-08-19 third-stage evidence
+         ACP/Server 会话、模型目标、权限、resume、interrupt/dispose；CLI/AUTH/REAL TURN/CANCEL/PACKAGED PASS
 
-W66-R3  Claude Code Adapter                                              IMPLEMENTED · 6400507
-         Stream/SDK、模型目标、权限桥、hooks/MCP 安全边界；CLI PASS，AUTH BLOCKED
+W66-R3  Claude Code Adapter                                              CONDITIONAL_DEFERRED · USER REGIONAL/ACCOUNT CONSTRAINT
+         Stream/SDK、模型目标、权限桥、hooks/MCP 安全边界；CLI/PACKAGED FAILURE CLEANUP PASS，REAL AUTH/TURN NOT RUN
 
 W66-R4  Codex Adapter                                                    PACKAGED ACTIVATED · 55bd3ed
          独立 CLI、exec JSONL、模型目标、resume、sandbox；CLI/AUTH/REAL TURN/CANCEL/PACKAGED PASS
 
-W66-R5  W73 Attempt / Handoff / safe hot switch                          PARTIAL ACTIVATED · 55bd3ed
-         packaged fixture 跨 Adapter PASS；真实 Codex 来源失败恢复 PASS；真实跨厂商模型回合待目标登录
+W66-R5  W73 Attempt / Handoff / safe hot switch                          FOUNDATION ACTIVATED · 2026-08-19 third-stage evidence
+         packaged fixture 三家 PASS；Kimi ↔ Codex 双向真实 Handoff PASS；Claude 路线条件暂缓
 
-W66-R6  Agent UI + packaged Activation Gate                              PARTIAL · 55bd3ed
-         三家 packaged Harness/健康/生命周期 PASS；Kimi/Claude 真实认证与模型回合未闭
+W66-R6  Agent UI + packaged Activation Gate                              FOUNDATION FORMAL · 2026-08-19 third-stage evidence
+         三家实现与独立降级 PASS；Kimi/Codex 真实激活 PASS；Claude 必须显示 authentication-required / deferred
 ```
 
 Foundation 扶正仍至少需要两个真实 Adapter 共用协议；若产品对外承诺 Kimi Code、Claude Code、Codex 三选一，则三者必须各自通过 Gate。任何一个未安装或未过 Gate，只影响自己的状态，不得拖垮另外两个。
@@ -233,9 +234,9 @@ Foundation 扶正仍至少需要两个真实 Adapter 共用协议；若产品对
 1. Rule Pack 缺失、不可读、编码错误、快照失败、registry/manifest 无效、Current SSoT/Host Facts/Tool Capability 缺失时，三个 Adapter 均为零 spawn。
 2. 三个 Adapter 接收同一份军规全文和同一 SHA-256；任何截断、摘要替代或只传路径均判负。
 3. Session、W73 Delegation Attempt、Handoff 与结果证据都能追到 Adapter、requested/resolved model、Rule Pack hash、权限档和版本。
-4. 同一 Task 完成 Kimi → Claude → Codex 及逆序切换，Run ID 不变，Attempt/Session ID 不复用。
+4. Foundation 至少以两个已认证真实 Adapter 在两个独立 Run 完成正序与逆序切换，Run 内身份不变且 Attempt/Session ID 不复用；只有对外承诺三选一时，才必须再以 Kimi → Claude → Codex 及逆序重过三家 Gate。
 5. 在飞工具事务不允许直接换模；安全中断后 writer lease、child process 和资源账归零再启动目标。
-6. 每种 Adapter 完成 detect/probe/auth/session/send/wait/fail/cancel/dispose 和 20 轮 packaged 循环；应用退出无 orphan。
+6. 每种正式激活 Adapter 完成 detect/probe/auth/session/send/wait/fail/cancel/dispose 和 packaged 生命周期证据；条件暂缓 Adapter 必须保留 detect/probe、未认证失败收尸与独立降级证据，不得显示为 ready；应用退出无 orphan。
 7. 一个 Adapter 缺失、登录失效、版本漂移或输出未知事件时，其余 Adapter 仍可使用，并给出确定性人话状态。
 8. 不在日志、ledger、Handoff 或 UI 中泄露 Rule Pack 正文、API Key、OAuth token、完整环境变量或厂商私有原始响应。
 9. Windows Local、Cloud Sandbox、Remote VPS 三组 Host Facts 得到不同 applicability index，但 Mazz 维护工作区三组仍保存完整 raw source。

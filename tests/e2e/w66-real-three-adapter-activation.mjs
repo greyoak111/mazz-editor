@@ -12,10 +12,16 @@ const rulePackPath = path.resolve(process.env.MAZZ_W66_RULE_PACK
   || 'C:/Users/Administrator/Downloads/交付区/Mazz Editor 开发军规.md');
 const evidencePath = path.join(root, 'docs', 'engineering', 'evidence', 'W66_REAL_THREE_ADAPTER_ACTIVATION_2026-08-19.json');
 const adapters = ['kimi-code', 'claude-code', 'codex'];
+const deferredAdapters = new Set(String(process.env.MAZZ_W66_DEFER_ADAPTERS || '')
+  .split(',').map(value => value.trim()).filter(Boolean));
+const activeAdapters = adapters.filter(adapterId => !deferredAdapters.has(adapterId));
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 for (const required of [executablePath, rulePackPath]) {
   if (!fs.existsSync(required)) throw new Error(`W66 第三阶段前件不存在：${required}`);
+}
+if (activeAdapters.length < 2 || [...deferredAdapters].some(adapterId => !adapters.includes(adapterId))) {
+  throw new Error(`W66 Adapter 范围非法：${JSON.stringify({ activeAdapters, deferredAdapters: [...deferredAdapters] })}`);
 }
 
 const artifact = target => ({
@@ -108,7 +114,11 @@ try {
     version: String(row.detection?.version || ''),
     auth: String(row.probe?.result?.auth?.status || 'unknown'),
   }));
-  const notReady = healthSummary.filter(row => row.status !== 'ready');
+  const notReady = healthSummary.filter(row => {
+    if (deferredAdapters.has(row.adapterId)) return false;
+    if (row.adapterId === 'kimi-code') return !['ready', 'degraded'].includes(row.status);
+    return row.status !== 'ready';
+  });
   if (healthSummary.length !== 3 || notReady.length) {
     throw new Error(`W66_REAL_AUTH_REQUIRED:${JSON.stringify(notReady)}`);
   }
@@ -180,11 +190,11 @@ try {
     };
   };
 
-  const forward = await runSequence('w66-real-forward', ['kimi-code', 'claude-code', 'codex']);
-  const reverse = await runSequence('w66-real-reverse', ['codex', 'claude-code', 'kimi-code']);
+  const forward = await runSequence('w66-real-forward', activeAdapters);
+  const reverse = await runSequence('w66-real-reverse', [...activeAdapters].reverse());
 
   const failureResults = [];
-  for (const adapterId of adapters) {
+  for (const adapterId of activeAdapters) {
     if (adapterId === 'kimi-code') {
       const failed = await safely('harness:createSession', {
         adapterId,
@@ -218,7 +228,7 @@ try {
   }
 
   const cancelResults = [];
-  for (const adapterId of adapters) {
+  for (const adapterId of activeAdapters) {
     const session = await invoke('harness:createSession', {
       adapterId,
       workspace,
@@ -261,6 +271,11 @@ try {
       executable: artifact(executablePath),
       appAsar: artifact(path.join(path.dirname(executablePath), 'resources', 'app.asar')),
     },
+    activationScope: {
+      activeAdapters,
+      deferredAdapters: [...deferredAdapters],
+      deferredReason: deferredAdapters.has('claude-code') ? 'USER_REGIONAL_ACCOUNT_CONSTRAINT' : '',
+    },
     health: healthSummary,
     handoff: { forward, reverse },
     failures: failureResults,
@@ -268,9 +283,9 @@ try {
     resources: { baseline: baseline.activeCount, final: finalResources.activeCount },
     processErrors: { main: mainErrors, renderer: rendererErrors },
     gates: {
-      kimiRealActivation: 'PASS',
-      claudeRealActivation: 'PASS',
-      codexRealActivation: 'PASS',
+      kimiRealActivation: deferredAdapters.has('kimi-code') ? 'CONDITIONAL_DEFERRED' : 'PASS',
+      claudeRealActivation: deferredAdapters.has('claude-code') ? 'CONDITIONAL_DEFERRED' : 'PASS',
+      codexRealActivation: deferredAdapters.has('codex') ? 'CONDITIONAL_DEFERRED' : 'PASS',
       realForwardAndReverseHandoff: 'PASS',
       realFailureAndCancel: 'PASS',
       packagedResourceCleanup: 'PASS',

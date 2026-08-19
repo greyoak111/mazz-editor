@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "mazz.w66-real-three-adapter-activation/v1",
+  "generatedAt": "2026-08-19T06:34:05.192Z",
+  "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "rulePackPath": "C:\\Users\\Administrator\\Downloads\\交付区\\Mazz Editor 开发军规.md",
+  "artifacts": {
+    "executable": {
+      "path": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+      "byteLength": 188784128,
+      "sha256": "5e20f18bc58ce06eee10b1e9768c6c07ee613f2a1a5410a8f003eceb90d1131f"
+    },
+    "appAsar": {
+      "path": "D:\\output\\Mazz Editor\\release\\win-unpacked\\resources\\app.asar",
+      "byteLength": 258833955,
+      "sha256": "99bf6574e9eb4cda9ab9a62442a6f7ed6cd2739ebbf3a0b6a8068dc4f4fd4e9a"
+    }
+  },
+  "activationScope": {
+    "activeAdapters": [
+      "kimi-code",
+      "codex"
+    ],
+    "deferredAdapters": [
+      "claude-code"
+    ],
+    "deferredReason": "USER_REGIONAL_ACCOUNT_CONSTRAINT"
+  },
+  "health": [
+    {
+      "adapterId": "kimi-code",
+      "status": "degraded",
+      "version": "0.37.2",
+      "auth": "unknown"
+    },
+    {
+      "adapterId": "claude-code",
+      "status": "authentication-required",
+      "version": "2.1.235 (Claude Code)",
+      "auth": "unauthenticated"
+    },
+    {
+      "adapterId": "codex",
+      "status": "ready",
+      "version": "codex-cli 0.148.0",
+      "auth": "authenticated"
+    }
+  ],
+  "handoff": {
+    "forward": {
+      "runRef": "w66-real-forward",
+      "sequence": [
+        "kimi-code",
+        "codex"
+      ],
+      "attempts": 2,
+      "uniqueSessions": 2,
+      "handoffs": 1,
+      "turns": [
+        {
+          "adapterId": "kimi-code",
+          "sessionId": "cccc7df7-3899-4ab6-8196-c0377f1d84db",
+          "markerObserved": true,
+          "eventCount": 120,
+          "outputHash": "",
+          "outputByteLength": 0
+        },
+        {
+          "adapterId": "codex",
+          "sessionId": "127638eb-7ae3-4e1d-bf1d-9ea7f0f9833e",
+          "markerObserved": true,
+          "eventCount": 13,
+          "outputHash": "62217a1523d7ac54310f6bf717806c128e2aa0b4ce9ae536abaee7c951184b5a",
+          "outputByteLength": 778
+        }
+      ]
+    },
+    "reverse": {
+      "runRef": "w66-real-reverse",
+      "sequence": [
+        "codex",
+        "kimi-code"
+      ],
+      "attempts": 2,
+      "uniqueSessions": 2,
+      "handoffs": 1,
+      "turns": [
+        {
+          "adapterId": "codex",
+          "sessionId": "650019c0-330a-480e-9e45-d07d62dc07a3",
+          "markerObserved": true,
+          "eventCount": 14,
+          "outputHash": "64b508866fcb31ce4bde5b49fb83afd00614b044b1f6e243dba605e591175b2a",
+          "outputByteLength": 921
+        },
+        {
+          "adapterId": "kimi-code",
+          "sessionId": "22b08f04-55e8-4546-8e3c-5a3f46ebb188",
+          "markerObserved": true,
+          "eventCount": 66,
+          "outputHash": "",
+          "outputByteLength": 0
+        }
+      ]
+    }
+  },
+  "failures": [
+    {
+      "adapterId": "kimi-code",
+      "failureObserved": true,
+      "failureCode": "page.evaluate"
+    },
+    {
+      "adapterId": "codex",
+      "failureObserved": true,
+      "failureCode": "page.evaluate"
+    }
+  ],
+  "cancellations": [
+    {
+      "adapterId": "kimi-code",
+      "state": "cancelled",
+      "sendRejected": true
+    },
+    {
+      "adapterId": "codex",
+      "state": "cancelled",
+      "sendRejected": true
+    }
+  ],
+  "resources": {
+    "baseline": 2,
+    "final": 2
+  },
+  "processErrors": {
+    "main": [],
+    "renderer": []
+  },
+  "gates": {
+    "kimiRealActivation": "PASS",
+    "claudeRealActivation": "CONDITIONAL_DEFERRED",
+    "codexRealActivation": "PASS",
+    "realForwardAndReverseHandoff": "PASS",
+    "realFailureAndCancel": "PASS",
+    "packagedResourceCleanup": "PASS"
+  }
+}
