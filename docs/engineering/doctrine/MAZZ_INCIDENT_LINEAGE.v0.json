@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "mazz.incident-lineage/v0",
+  "lineageId": "mazz-maintenance-incidents",
+  "version": "0.1.0",
+  "authorityRef": "human:mazz-maintainer",
+  "generatedAt": "2026-08-19T00:00:00.000Z",
+  "incidents": [
+    {
+      "id": "MAZZ-AGENT-RULE-PACK-GAP",
+      "timestamp": "2026-08-17",
+      "symptom": "真实 Agent 能力若只依赖模型上下文，会遗漏长期军规或在热切时得到不同规则版本。",
+      "rootCause": "Harness Foundation 没有 Canonical Raw Source、快照、哈希和装载回执硬门。",
+      "regressionIds": ["REG-RULE-PACK-RAW-INTEGRITY"],
+      "postmortemRef": "Mazz Editor 开发军规.md#0f"
+    },
+    {
+      "id": "MAZZ-W74-WAVE-SKIP",
+      "timestamp": "2026-08-18",
+      "symptom": "W74c-3 尚未完成时曾因最新 W66 材料而错误选择新波。",
+      "rootCause": "开工选择依赖模型记忆和最新材料热度，没有从权威总表生成机械 Predecessor/Backlog Gate。",
+      "regressionIds": ["REG-BACKLOG-CURRENT-WAVE"],
+      "postmortemRef": "Mazz Editor 开发军规.md#七"
+    },
+    {
+      "id": "MAZZ-SOURCE-COMPLETENESS-GAP",
+      "timestamp": "2026-08-18",
+      "symptom": "长上下文和附件交接可能只保留文件存在的记忆，没有取得完整来源。",
+      "rootCause": "Context Handoff 曾被误当 Artifact Handoff，缺少 required/retrieved/missing 清单。",
+      "regressionIds": ["REG-SOURCE-MISSING"],
+      "postmortemRef": "Codex-施工执行规则包-v0.1.md#P0-03"
+    },
+    {
+      "id": "MAZZ-GIT-COMMIT-STATE",
+      "timestamp": "2026-08-15",
+      "symptom": "提交成功或差异为空后仍触发生成提交信息，形成错误状态和重复操作风险。",
+      "rootCause": "提交工作流没有以工作区/暂存区差异和 git log/status 作为唯一状态真相。",
+      "regressionIds": ["REG-GIT-EMPTY-DIFF"],
+      "postmortemRef": "Mazz Editor 开发军规.md#3b"
+    },
+    {
+      "id": "MAZZ-W65-RUNNER-FILTER",
+      "timestamp": "2026-08-18",
+      "symptom": "定向合同参数传给 tests/run.js 后，runner 忽略参数并启动全量。",
+      "rootCause": "凭常见 runner 习惯推断参数契约，没有先读实现或首屏核对涉及域。",
+      "regressionIds": ["REG-TEST-RUNNER-CONTRACT"],
+      "postmortemRef": "Mazz Editor 开发军规.md#七"
+    },
+    {
+      "id": "MAZZ-W65-POWERSHELL-HOME",
+      "timestamp": "2026-08-18",
+      "symptom": "PowerShell 探针给 HOME 赋值时因大小写不敏感覆盖自动变量而失败。",
+      "rootCause": "任务变量没有域前缀，也没有进行 Automatic/Preference 变量预检。",
+      "regressionIds": ["REG-POWERSHELL-SYSTEM-VARIABLE"],
+      "postmortemRef": "Mazz Editor 开发军规.md#七"
+    },
+    {
+      "id": "MAZZ-UNATTENDED-ELECTRON-MODAL",
+      "timestamp": "2026-08-17",
+      "symptom": "远程无人值守运行留下必须人工点击的 Electron 异常模态窗。",
+      "rootCause": "长任务缺少进程 owner、异常出口、超时、日志和精准收尸。",
+      "regressionIds": ["REG-UNATTENDED-MODAL"],
+      "postmortemRef": "Mazz Editor 开发军规.md#七"
+    },
+    {
+      "id": "MAZZ-ELECTRON-REMOTE-HEVC-ZERO-FRAME",
+      "timestamp": "2026-08-18",
+      "symptom": "spacedesk 环境 HEVC 时间推进但 videoWidth 和 decoded frames 为零，Player 无提示黑屏。",
+      "rootCause": "虚拟显示被错误归为完整无 GPU safe，且播放成功只看控制面状态而不看解码产物。",
+      "regressionIds": ["REG-REMOTE-HEVC-DECODED-FRAME"],
+      "postmortemRef": "PLAYER_REMOTE_VIDEO_BLACKSCREEN_CHECKPOINT_2026-08-18.md"
+    },
+    {
+      "id": "MAZZ-SANDBOX-WORKSPACE-LOSS",
+      "timestamp": "2026-07-29",
+      "symptom": "错误目录下的同步删除曾清空交付区、长期区和依赖现场。",
+      "rootCause": "易失沙箱与绝对目标身份未被验证，危险同步允许相对点号目标。",
+      "regressionIds": ["REG-WORKSPACE-ABSOLUTE-TARGET"],
+      "postmortemRef": "Mazz Editor 开发军规.md#一"
+    },
+    {
+      "id": "MAZZ-REMOTE-RESULT-CHANNEL",
+      "timestamp": "2026-08-18",
+      "symptom": "远端外层命令成功可能掩盖内层非零退出或错误结果。",
+      "rootCause": "Target、Credential、Session 和 Result Envelope 没有类型化，业务状态依赖混杂日志推断。",
+      "regressionIds": ["REG-REMOTE-RESULT-CHANNEL"],
+      "postmortemRef": "Codex-施工执行规则包-v0.1.md#13"
+    },
+    {
+      "id": "MAZZ-C4-EVIDENCE-STATUS",
+      "timestamp": "2026-08-17",
+      "symptom": "C4 尚缺三份独立证据时，范围写法曾让完成状态不明显。",
+      "rootCause": "状态汇报把多个 Gate 折叠成范围表达，没有逐项绑定独立证据。",
+      "regressionIds": ["REG-C4-INDEPENDENT-EVIDENCE"],
+      "postmortemRef": "Mazz Editor 开发军规.md#七"
+    },
+    {
+      "id": "MAZZ-W58D-ASYNC-RACE",
+      "timestamp": "2026-08-12",
+      "symptom": "播放器 async 初始化 await 期间状态变化，落锤时仍覆盖已装入内容。",
+      "rootCause": "守卫只在 await 前检查，没有在副作用前按当前实况重验。",
+      "regressionIds": ["REG-ASYNC-POST-AWAIT-GUARD"],
+      "postmortemRef": "Mazz Editor 开发军规.md#26"
+    }
+  ]
+}

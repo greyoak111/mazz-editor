@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "mazz.engineering-evidence/v0",
+  "wave": "W66-R0a",
+  "date": "2026-08-19",
+  "baseline": "86f1792",
+  "status": "COMPLETE_TO_FROZEN_SCOPE",
+  "canonicalSource": {
+    "configuredPath": "C:\\Users\\Administrator\\Downloads\\交付区\\Mazz Editor 开发军规.md",
+    "byteLength": 23540,
+    "sha256": "549602E38C2FC3FD8FF526EA317A51976615428D5879B15680807DF5F97BE1B0",
+    "committedCopy": false
+  },
+  "artifacts": [
+    "main/agent-doctrine.js",
+    "docs/engineering/doctrine/MAZZ_STABLE_RULE_REGISTRY.v0.json",
+    "docs/engineering/doctrine/MAZZ_INCIDENT_LINEAGE.v0.json",
+    "tests/contract/w66-r0a-doctrine-foundation.test.mjs"
+  ],
+  "tests": {
+    "build": "PASS",
+    "contract": { "passed": 5, "failed": 0 },
+    "fullSuite": "NOT_RUN",
+    "electronE2e": "NOT_APPLICABLE",
+    "packaged": "NOT_RUN"
+  },
+  "negativeAssertions": {
+    "realAdaptersRegistered": 0,
+    "childProcessSurfaceAdded": false,
+    "uiAdded": false,
+    "canonicalPathHardcodedInRuntime": false
+  },
+  "remaining": ["W66-R0b", "W66-R0c", "W66-R0d", "W66-R0e", "W66-R1-R6"]
+}
