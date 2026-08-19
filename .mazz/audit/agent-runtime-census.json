@@ -18,13 +18,15 @@
     {
       "id": "codex",
       "foundPaths": [
-        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.803.10989.0_x64__2p2nqsd0c76g0\\app\\resources\\codex",
-        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.803.10989.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe"
+        "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\codex",
+        "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\codex.cmd",
+        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex",
+        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe"
       ],
       "detection": "FOUND",
       "versionProbe": {
         "status": "FAILED",
-        "error": "spawnSync C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.803.10989.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe EPERM"
+        "error": "spawnSync C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe EPERM"
       },
       "authentication": {
         "status": "NOT_PROBED",
@@ -54,11 +56,14 @@
     },
     {
       "id": "claude",
-      "foundPaths": [],
-      "detection": "NOT_FOUND",
+      "foundPaths": [
+        "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\claude",
+        "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\claude.cmd"
+      ],
+      "detection": "FOUND",
       "versionProbe": {
         "status": "NOT_RUN",
-        "reason": "Executable not found."
+        "reason": "Only a shell wrapper was found."
       },
       "authentication": {
         "status": "NOT_PROBED",

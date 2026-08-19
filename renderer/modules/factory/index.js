@@ -170,6 +170,9 @@ export class FactoryPanel {
       };
       await Promise.allSettled(pendingTasks);
       if (this.agentRuntime?.cancel) await Promise.resolve(this.agentRuntime.cancel()).catch(() => {});
+      await attempt('external-harness-session', () => this.closeHarnessSession('factory-dispose'));
+      this.harnessEventOff?.();
+      this.harnessEventOff = null;
       // Harness Session 必须先 cancel/dispose，再关闭承接其终态记录的 Delegation Ledger。
       for (const service of this.qualificationDelegationServices.values()) await attempt('delegation-service', () => service.dispose());
       if (this.staffingCoordinator?.dispose) await attempt('staffing-coordinator', () => this.staffingCoordinator.dispose());
@@ -416,6 +419,18 @@ export class FactoryPanel {
             <div><b>指令台</b><span class="fc-agent-status">命令闭集待命</span></div>
             <span class="fc-agent-role"></span>
           </div>
+          <div class="fc-harness-bar" aria-label="外部执行器">
+            <label>执行器
+              <select class="fc-harness-adapter"><option value="internal">内置指令台</option></select>
+            </label>
+            <label>模型
+              <input class="fc-harness-model" placeholder="默认模型" spellcheck="false">
+            </label>
+            <button class="fc-mini" data-a="harness-refresh" type="button">检测</button>
+            <button class="fc-mini" data-a="harness-rules" type="button">规则包</button>
+            <span class="fc-harness-permission">受限权限</span>
+            <span class="fc-harness-health">等待检测</span>
+          </div>
           <div class="fc-agent-chips" aria-label="常用指令"></div>
           <div class="fc-agent-feed" aria-live="polite"></div>
           <div class="fc-agent-inputrow">
@@ -450,6 +465,14 @@ export class FactoryPanel {
     this.agentFeedEl = this.el.querySelector('.fc-agent-feed');
     this.agentStatusEl = this.el.querySelector('.fc-agent-status');
     this.agentSubmitEl = this.el.querySelector('[data-a=agent-submit]');
+    this.harnessAdapterEl = this.el.querySelector('.fc-harness-adapter');
+    this.harnessModelEl = this.el.querySelector('.fc-harness-model');
+    this.harnessHealthEl = this.el.querySelector('.fc-harness-health');
+    this.currentHarnessSession = null;
+    this.harnessTurnRunning = false;
+    this.harnessAdapterEl.value = localStorage.getItem('mazz.factory.harness.adapter') || 'internal';
+    this.harnessModelEl.value = localStorage.getItem('mazz.factory.harness.model') || '';
+    this.harnessEventOff = window.mazz?.on?.('harness:event', event => this.renderHarnessEvent(event));
     this.agentRuntime = new AgentRuntime({
       registry: commands, ledger: this.agentLedger,
       saveLedger: async ledger => this.persistAgentLedger(ledger),
@@ -524,6 +547,20 @@ export class FactoryPanel {
     this.agentInputEl.addEventListener('keydown', e => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.submitAgent(); }
     });
+    this.el.querySelector('[data-a=harness-refresh]').addEventListener('click', () => this.refreshHarnessHealth());
+    this.el.querySelector('[data-a=harness-rules]').addEventListener('click', async () => {
+      try { await window.mazz.invoke('harness:chooseRulePack'); await this.refreshHarnessHealth(); }
+      catch (error) { this.harnessHealthEl.textContent = `规则包：${error.message || error}`; }
+    });
+    this.harnessAdapterEl.addEventListener('change', () => {
+      localStorage.setItem('mazz.factory.harness.adapter', this.harnessAdapterEl.value);
+      if (this.currentHarnessSession?.adapterId !== this.harnessAdapterEl.value) {
+        if (this.harnessTurnRunning) this.harnessHealthEl.textContent = '当前回合结束后切换';
+        else this.closeHarnessSession('adapter-changed').catch(() => {});
+      }
+    });
+    this.harnessModelEl.addEventListener('change', () => localStorage.setItem('mazz.factory.harness.model', this.harnessModelEl.value.trim()));
+    this.refreshHarnessHealth().catch(() => {});
     this.syncLengthControls(false);
   }
 
@@ -619,12 +656,80 @@ export class FactoryPanel {
     if (!input) { this.agentInputEl.focus(); return; }
     this.agentSubmitEl.disabled = true;
     this.agentInputEl.value = '';
-    try { await this.agentRuntime.submit(input); }
+    try {
+      if (this.harnessAdapterEl?.value && this.harnessAdapterEl.value !== 'internal') await this.submitHarnessAgent(input);
+      else await this.agentRuntime.submit(input);
+    }
     catch (e) {
       // runtime 已发 error；同步入口错误（空白/并发）在此补卡。
       if (!/上一项交办尚未结束/.test(e.message || '')) this.log('指令台：' + (e.message || e));
       this.agentSubmitEl.disabled = !!(this.agentRuntime.session || this.agentRuntime.pending);
     }
+  }
+
+  async refreshHarnessHealth() {
+    if (!window.mazz?.isElectron || !this.harnessAdapterEl) return;
+    this.harnessHealthEl.textContent = '检测执行器与规则包…';
+    const [adapters, health, activation] = await Promise.all([
+      window.mazz.invoke('harness:adapters'), window.mazz.invoke('harness:health'), window.mazz.invoke('harness:activationStatus'),
+    ]);
+    const previous = this.harnessAdapterEl.value || localStorage.getItem('mazz.factory.harness.adapter') || 'internal';
+    const byId = new Map((health || []).map(row => [row.adapterId, row]));
+    this.harnessAdapterEl.innerHTML = '<option value="internal">内置指令台</option>' + (adapters || []).map(adapter => {
+      const state = byId.get(adapter.id)?.status || 'unavailable';
+      const label = state === 'ready' ? '可用' : state === 'authentication-required' ? '需登录' : state === 'degraded' ? '需检查' : '未安装';
+      return `<option value="${adapter.id}" ${state === 'unavailable' ? 'disabled' : ''}>${adapter.displayName} · ${label}</option>`;
+    }).join('');
+    this.harnessAdapterEl.value = [...this.harnessAdapterEl.options].some(option => option.value === previous && !option.disabled) ? previous : 'internal';
+    const ready = (health || []).filter(row => row.status === 'ready').length;
+    this.harnessHealthEl.textContent = activation?.ready ? `${ready}/3 执行器通过本机探测；规则包已装载` : `规则包未就绪：${activation?.reason || 'RULE_PACK_REQUIRED'}`;
+  }
+
+  renderHarnessEvent(event) {
+    if (!this.currentHarnessSession || event?.sessionId !== this.currentHarnessSession.id) return;
+    if (event.type === 'message' && event.payload?.text) this.addAgentCard('result', event.adapterId, event.payload.text);
+    else if (event.type === 'tool') this.addAgentCard('tool', event.adapterId, `${event.payload?.name || event.payload?.title || event.payload?.kind || '工具'} ${event.payload?.status || ''}`.trim());
+    else if (event.type === 'approval') this.addAgentCard('confirm', '权限请求', '外部执行器请求额外权限；当前受限档默认拒绝，需在授权桥中显式批准。');
+    else if (event.type === 'error') this.addAgentCard('error', event.payload?.code || '执行失败', event.payload?.message || '未知错误');
+    else if (event.type === 'usage') this.harnessHealthEl.textContent = `本回合 ${event.payload?.inputTokens || 0} 输入 / ${event.payload?.outputTokens || 0} 输出 token`;
+  }
+
+  async ensureHarnessSession() {
+    const adapterId = this.harnessAdapterEl.value;
+    const model = this.harnessModelEl.value.trim();
+    if (this.currentHarnessSession && (this.currentHarnessSession.adapterId !== adapterId || this.currentHarnessSession.model !== model)) await this.closeHarnessSession('target-changed');
+    if (this.currentHarnessSession) return this.currentHarnessSession;
+    const workspace = await window.mazz.invoke('workspace:get');
+    const session = await window.mazz.invoke('harness:createSession', {
+      adapterId, workspace, instruction: '在 Mazz Factory 指令台中执行用户任务；遵循完整 Project Rule Pack，并以可核验结果回报。',
+      modelTarget: { requestedModel: model }, permissionProfileRef: 'restricted',
+    });
+    this.currentHarnessSession = { ...session, model };
+    return this.currentHarnessSession;
+  }
+
+  async submitHarnessAgent(input) {
+    if (this.harnessTurnRunning) throw new Error('上一项外部执行仍未结束');
+    this.harnessTurnRunning = true;
+    this.addAgentCard('user', '交办', input);
+    this.agentStatusEl.textContent = `${this.harnessAdapterEl.selectedOptions[0]?.textContent || '外部执行器'} 执行中…`;
+    try {
+      const session = await this.ensureHarnessSession();
+      await window.mazz.invoke('harness:send', { sessionId: session.id, input });
+      this.agentStatusEl.textContent = '外部执行器已完成本回合';
+    } finally {
+      this.harnessTurnRunning = false;
+      this.agentSubmitEl.disabled = false;
+      if (this.currentHarnessSession?.adapterId !== this.harnessAdapterEl.value) await this.closeHarnessSession('deferred-switch');
+    }
+  }
+
+  async closeHarnessSession(reason = 'dispose') {
+    const session = this.currentHarnessSession;
+    if (!session) return;
+    this.currentHarnessSession = null;
+    if (this.harnessTurnRunning) await window.mazz.invoke('harness:interrupt', { sessionId: session.id }).catch(() => {});
+    await window.mazz.invoke('harness:dispose', { sessionId: session.id, reason }).catch(() => {});
   }
 
   // ==================== 创作增强：插件 / 文风 / 嵌入 / 检索 ====================

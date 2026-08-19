@@ -1176,6 +1176,12 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .fc-command-head > div { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .fc-command-head b { font-size: 13px; }
 .fc-agent-status { font-size: 10.5px; color: var(--fg-dim); }
+.fc-harness-bar { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(110px, .8fr) auto auto; align-items: end; gap: 6px; padding: 7px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+.fc-harness-bar label { display: flex; min-width: 0; flex-direction: column; gap: 2px; color: var(--fg-dim); font-size: 9.5px; }
+.fc-harness-bar select, .fc-harness-bar input { min-width: 0; height: 28px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-elev); color: var(--fg); padding: 3px 6px; font: 11px var(--font-ui); }
+.fc-harness-health { grid-column: 1 / -1; color: var(--fg-dim); font-size: 9.5px; overflow-wrap: anywhere; }
+.fc-harness-permission { align-self: center; color: var(--fg-dim); font-size: 9.5px; }
+@media (max-width: 720px) { .fc-harness-bar { grid-template-columns: 1fr 1fr; } }
 .fc-agent-role { flex: none; max-width: 60%; }
 .fc-agent-role .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-agent-feed { max-height: 260px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
@@ -1457,7 +1463,7 @@ html.m-phone .w-openwith { width: 100%; max-width: 420px; }
 .fc-feedres { margin-top: 6px; }
 .fc-feed-summary, .fc-feed-decision { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px; }
 .fc-feed-summary { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-soft); color: var(--fg-dim); }
-.fc-feed-clusters { display: grid; gap: 4px; margin: 5px 0; max-height: 190px; overflow: auto; scrollbar-width: thin; }
+.fc-feed-clusters { display: grid; gap: 4px; margin: 5px 0; max-height: 190px; overflow: auto; }
 .fc-feed-cluster { padding: 6px 8px; border-left: 2px solid var(--border); background: color-mix(in srgb, var(--bg-soft) 75%, transparent); }
 .fc-feed-cluster.is-hot { border-left-color: var(--accent); }
 .fc-feed-cluster-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 11.5px; }

@@ -124,6 +124,10 @@ const TerminalService = require('./terminal');
 const { ResourceLedger } = require('./resource-ledger');
 const { AgentHarnessService } = require('./agent-harness');
 const { CliSupervisor } = require('./agent-cli-supervisor');
+const { AgentDoctrineRuntime } = require('./agent-doctrine-runtime');
+const { KimiCodeAdapter } = require('./adapters/kimi-code-adapter');
+const { ClaudeCodeAdapter } = require('./adapters/claude-code-adapter');
+const { CodexAdapter } = require('./adapters/codex-adapter');
 const { FactoryAiRequestRegistry } = require('./factory-ai-requests');
 const { FactoryRunOwnerRegistry } = require('./factory-run-owners');
 const { IngestionPipeline } = require('./ingestion-pipeline');
@@ -1641,7 +1645,36 @@ app.whenReady().then(() => {
 
   // —— W71 资源账本 + W66 Agent Harness Foundation ——
   const cliSupervisor = new CliSupervisor({ resourceLedger });
-  const harness = new AgentHarnessService({ bus, windowManager: wm, resourceLedger, cliSupervisor });
+  if (!store.get('agentRulePackPath', '') && !app.isPackaged) {
+    const maintenanceRulePack = path.join(app.getPath('downloads'), '交付区', 'Mazz Editor 开发军规.md');
+    if (fs.existsSync(maintenanceRulePack)) store.set('agentRulePackPath', maintenanceRulePack);
+  }
+  const doctrineRuntime = new AgentDoctrineRuntime({
+    doctrineRoot: path.join(app.getPath('userData'), 'agent-doctrine'),
+    doctrineAssetsRoot: path.join(app.getAppPath(), 'docs', 'engineering', 'doctrine'),
+    sourcePathProvider: () => store.get('agentRulePackPath', ''),
+  });
+  try {
+    const doctrineState = doctrineRuntime.status();
+    if (doctrineState.configured && doctrineState.reason === 'DOCTRINE_NOT_COMPILED') doctrineRuntime.prepare();
+  } catch (error) { console.warn('[harness] doctrine preparation:', error.code || error.message); }
+  const adapters = [
+    new KimiCodeAdapter({ supervisor: cliSupervisor }),
+    new ClaudeCodeAdapter({ supervisor: cliSupervisor }),
+    new CodexAdapter({ supervisor: cliSupervisor }),
+  ];
+  const harness = new AgentHarnessService({
+    bus, windowManager: wm, resourceLedger, cliSupervisor, adapters,
+    activationProvider: permissionProfileRef => doctrineRuntime.provide(permissionProfileRef),
+  });
+  bus.handle('harness:activationStatus', async () => doctrineRuntime.status());
+  bus.handle('harness:chooseRulePack', async () => {
+    const picked = await dialog.showOpenDialog(wm.main, { title: '选择 Project Rule Pack', properties: ['openFile'], filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }] });
+    if (picked.canceled || !picked.filePaths[0]) return doctrineRuntime.status();
+    store.set('agentRulePackPath', picked.filePaths[0]);
+    doctrineRuntime.prepare({ acceptDrift: true, authorityRef: 'human:mazz-maintainer' });
+    return doctrineRuntime.status();
+  });
   let harnessQuitReady = false;
   app.on('before-quit', (event) => {
     if (harnessQuitReady) return;

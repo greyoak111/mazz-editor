@@ -15,8 +15,8 @@ describe('真机四瑕疵修复', () => {
   });
   test('三源列表有界滚动链', () => {
     const css = readSrc('renderer/styles/base.css');
-    assert.ok(css.includes('.mz-medialib, .mz-web { flex: 1; min-height: 0; flex-direction: column; }'), '父容器 flex 链必须有（无高度约束=溢出撑爆实锤）');
-    assert.ok(css.includes('.mz-ml-list, .mz-web-rows { flex: 1; min-height: 0; }'), '列表区必须有界');
+    assert.ok(css.includes('.mz-medialib, .mz-web, .mz-downloads { flex: 1; min-height: 0; flex-direction: column; }'), '三源与下载父容器 flex 链必须有（无高度约束=溢出撑爆实锤）');
+    assert.ok(css.includes('.mz-ml-list, .mz-web-rows, .mz-downloads { flex: 1; min-height: 0; }'), '列表区必须有界');
     assert.ok(css.includes('.mz-list::-webkit-scrollbar'), '播放器域滚动条样式必须有');
     const pl = readSrc('renderer/modules/viewer/player.js');
     assert.ok(pl.includes("mlEl.style.display = m === 'medialib' ? 'flex' : 'none'"), '媒体库切显必须给 flex（空串=CSS none 生效死局）');

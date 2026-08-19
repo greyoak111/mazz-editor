@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 39,
-    "scannedLines": 8602
+    "scannedFiles": 55,
+    "scannedLines": 13527
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -41,7 +41,8 @@
     "sessionPartitions": [
       "const ses = partition ? session.fromPartition(partition) : this.session;",
       "const browserSess = session.fromPartition('persist:mazz-browser');",
-      "const authorSess = session.fromPartition('persist:mazz-author');"
+      "const authorSess = session.fromPartition('persist:mazz-author');",
+      "const persistentSession = session.fromPartition('persist:mazz-torrent-sites');"
     ]
   },
   "protocolReality": {
@@ -96,43 +97,43 @@
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 254,
+      "line": 273,
       "sample": "sender.on('render-process-gone', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 791,
+      "line": 879,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 832,
+      "line": 920,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 849,
+      "line": 937,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1122,
+      "line": 1210,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1461,
+      "line": 1550,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1538,
+      "line": 1627,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -176,6 +177,12 @@
       "file": "main/panel-windows.js",
       "line": 314,
       "sample": "win.on('closed', () => {"
+    },
+    {
+      "rule": "session-partition",
+      "file": "main/torrent-sites.js",
+      "line": 66,
+      "sample": "const persistentSession = session.fromPartition('persist:mazz-torrent-sites');"
     },
     {
       "rule": "browser-window-construction",
@@ -341,7 +348,7 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 1267,
+          "line": 1304,
           "sample": "// pane:tabMoved 监听器拿 { container } 空调 __sync/reloadTab=分屏自动刷新全静默失效）"
         },
         {
@@ -370,17 +377,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1310,
+          "line": 1398,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1403,
+          "line": 1491,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1432,
+          "line": 1520,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -418,7 +425,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 1463,
+          "line": 1552,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
@@ -432,18 +439,18 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 23,
-          "sample": "function detectUnsafeGraphicsHost() {"
-        },
-        {
-          "file": "main/main.js",
-          "line": 42,
-          "sample": "const GRAPHICS_MODE = detectUnsafeGraphicsHost();"
-        },
-        {
-          "file": "main/main.js",
-          "line": 49,
+          "line": 51,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
+        },
+        {
+          "file": "main/main.js",
+          "line": 55,
+          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
+        },
+        {
+          "file": "main/main.js",
+          "line": 56,
+          "sample": "app.commandLine.appendSwitch('disable-direct-composition-video-overlays');"
         }
       ]
     }

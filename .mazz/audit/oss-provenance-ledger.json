@@ -25,8 +25,8 @@
       {
         "path": "KNOWN_LIMITATIONS.md",
         "present": true,
-        "bytes": 2195,
-        "sha256": "3E272C6FDFFACE3F4DEBF342AA2845F0F483521A660520DB7A2239D45E482287"
+        "bytes": 2890,
+        "sha256": "D931432AA4A984B636B06445522D586FA9BBFA3A56201CF87480B5E0A7C71E6B"
       },
       {
         "path": "LICENSE",
@@ -105,8 +105,8 @@
       {
         "path": "package.json",
         "present": true,
-        "bytes": 6560,
-        "sha256": "5999F1657507B08A18B99C20497C9F9D7BECE641C417E59094DAFC864F955B10"
+        "bytes": 6595,
+        "sha256": "AE759BBCC2ADB25460322B40EA6612FADFD62FADA5478FDC677D43C96E3E73F1"
       },
       {
         "path": "patches/webtorrent+2.8.5.patch",
@@ -20347,8 +20347,8 @@
     {
       "path": "KNOWN_LIMITATIONS.md",
       "present": true,
-      "bytes": 2195,
-      "sha256": "3E272C6FDFFACE3F4DEBF342AA2845F0F483521A660520DB7A2239D45E482287"
+      "bytes": 2890,
+      "sha256": "D931432AA4A984B636B06445522D586FA9BBFA3A56201CF87480B5E0A7C71E6B"
     }
   ],
   "vendoredComponents": [

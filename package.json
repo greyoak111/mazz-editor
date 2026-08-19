@@ -50,6 +50,7 @@
     },
     "files": [
       "main/",
+      "docs/engineering/doctrine/",
       "preload/",
       "renderer/",
       "!renderer/vendor/ffmpeg/ffmpeg-core.js",

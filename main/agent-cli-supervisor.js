@@ -73,6 +73,8 @@ function resolveExecutable(candidates, { platform = process.platform, fsImpl = f
 
 function classifyAuthentication({ stdout = '', stderr = '', exitCode = null } = {}) {
   const text = `${stdout}\n${stderr}`.toLowerCase();
+  if (/"loggedin"\s*:\s*false/.test(text)) return Object.freeze({ status: 'unauthenticated', reason: 'AUTH_REQUIRED' });
+  if (/"loggedin"\s*:\s*true/.test(text)) return Object.freeze({ status: 'authenticated', reason: '' });
   if (/not logged in|login required|authentication required|unauthenticated|please (?:run )?login|auth required/.test(text)) return Object.freeze({ status: 'unauthenticated', reason: 'AUTH_REQUIRED' });
   if (/logged in|authenticated|authentication.+valid|credentials.+valid/.test(text)) return Object.freeze({ status: 'authenticated', reason: '' });
   if (Number.isInteger(exitCode) && exitCode !== 0) return Object.freeze({ status: 'error', reason: 'AUTH_PROBE_FAILED' });
@@ -91,7 +93,7 @@ class CliSupervisor {
 
   activeCount() { return this.processes.size; }
 
-  async start({ command, args = [], cwd = '', stdin = '', env = {}, timeoutMs = 120000, owner = 'agent-cli', onStdout = () => {}, onStderr = () => {} } = {}) {
+  async start({ command, args = [], cwd = '', stdin = '', keepStdinOpen = false, env = {}, timeoutMs = 120000, owner = 'agent-cli', onStdout = () => {}, onStderr = () => {} } = {}) {
     const executable = requiredString(command, 'command');
     if (!Array.isArray(args)) fail('CLI_SPEC_INVALID', 'args 必须是数组');
     const workdir = path.resolve(requiredString(cwd || process.cwd(), 'cwd'));
@@ -136,8 +138,10 @@ class CliSupervisor {
       record.timedOut = true;
       this.terminate(handle, 'timeout').catch(() => {});
     }, Math.max(100, Number(timeoutMs) || 0));
-    if (stdin != null && String(stdin).length) child.stdin?.end(String(stdin));
-    else child.stdin?.end();
+    if (stdin != null && String(stdin).length) {
+      if (keepStdinOpen) child.stdin?.write(String(stdin));
+      else child.stdin?.end(String(stdin));
+    } else if (!keepStdinOpen) child.stdin?.end();
     record.resultPromise = new Promise(resolve => {
       let spawnError = null;
       child.once('error', error => { spawnError = error; });
@@ -220,8 +224,8 @@ class CliSupervisor {
   async detect({ id, names = [], explicitPaths = [], versionArgs = ['--version'], rejectPatterns = [] } = {}) {
     const adapterId = requiredString(id, 'detect.id');
     const candidates = [...new Set([
-      ...names.flatMap(name => executableCandidates(name)),
       ...explicitPaths.flatMap(item => executableCandidates(item)),
+      ...names.flatMap(name => executableCandidates(name)),
     ])];
     const command = resolveExecutable(candidates);
     if (!command) return { adapterId, available: false, command: '', version: '', auth: { status: 'unknown' }, reason: 'CLI_NOT_INSTALLED' };

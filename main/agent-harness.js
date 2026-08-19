@@ -3,6 +3,7 @@
 
 const { randomUUID } = require('crypto');
 const { createSpawnGate } = require('./agent-activation-gates');
+const { AgentHandoffCoordinator } = require('./agent-handoff');
 
 const SESSION_STATES = Object.freeze([
   'idle', 'starting', 'running', 'waiting', 'completed', 'failed', 'cancelled', 'disposed',
@@ -11,6 +12,7 @@ const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled', 'disposed']
 const EVENT_TYPES = new Set([
   'started', 'stdout', 'stderr', 'message', 'progress', 'tool',
   'warning', 'error', 'completed', 'state', 'rule-pack-loaded',
+  'approval', 'checkpoint', 'usage', 'result', 'handoff',
 ]);
 const CAPABILITY_KEYS = Object.freeze([
   'workspace', 'fileEdit', 'terminal', 'toolUse', 'imageInput',
@@ -80,11 +82,22 @@ class AgentHarnessRegistry {
 
   async describe(adapter) {
     const capabilities = normalizeCapabilities(await adapter.capabilities());
-    return { id: adapter.id, displayName: String(adapter.displayName || adapter.id), capabilities };
+    const descriptor = typeof adapter.descriptor === 'function' ? await adapter.descriptor() : {};
+    return { id: adapter.id, displayName: String(adapter.displayName || adapter.id), capabilities, descriptor };
   }
 
   async listAdapters() {
     return Promise.all([...this.adapters.values()].map(adapter => this.describe(adapter)));
+  }
+
+  async health() {
+    return Promise.all([...this.adapters.values()].map(async adapter => {
+      const detection = await this.detect(adapter.id);
+      if (!detection.available) return { adapterId: adapter.id, displayName: String(adapter.displayName || adapter.id), detection, probe: null, status: 'unavailable' };
+      const probe = await this.probe(adapter.id);
+      const auth = probe.result?.auth?.status || 'unknown';
+      return { adapterId: adapter.id, displayName: String(adapter.displayName || adapter.id), detection, probe, status: probe.ok && auth === 'authenticated' ? 'ready' : auth === 'unauthenticated' ? 'authentication-required' : 'degraded' };
+    }));
   }
 
   adapter(id) {
@@ -266,21 +279,32 @@ class AgentHarnessRegistry {
 }
 
 class AgentHarnessService {
-  constructor({ bus, windowManager, resourceLedger, adapters = [], cliSupervisor = null }) {
+  constructor({ bus, windowManager, resourceLedger, adapters = [], cliSupervisor = null, activationProvider = null }) {
     this.cliSupervisor = cliSupervisor;
     this.registry = new AgentHarnessRegistry({
       resourceLedger,
       onEvent: event => windowManager.broadcast('harness:event', event),
     });
     for (const adapter of adapters) this.registry.register(adapter);
+    this.handoffs = new AgentHandoffCoordinator({ registry: this.registry });
     bus.handle('harness:adapters', async () => this.registry.listAdapters());
+    bus.handle('harness:health', async () => this.registry.health());
     bus.handle('harness:detect', async ({ adapterId } = {}) => this.registry.detect(adapterId));
     bus.handle('harness:probe', async ({ adapterId } = {}) => this.registry.probe(adapterId));
-    bus.handle('harness:createSession', async payload => this.registry.createSession(payload));
+    bus.handle('harness:createSession', async (payload = {}) => {
+      const input = { ...payload };
+      if (!input.activation?.doctrineRoot && activationProvider) input.activation = await activationProvider(input.permissionProfileRef || 'restricted');
+      return this.registry.createSession(input);
+    });
     bus.handle('harness:send', async ({ sessionId, input } = {}) => this.registry.send(sessionId, input));
     bus.handle('harness:interrupt', async ({ sessionId } = {}) => this.registry.interrupt(sessionId));
     bus.handle('harness:dispose', async ({ sessionId, reason } = {}) => this.registry.dispose(sessionId, reason));
     bus.handle('harness:sessions', async () => this.registry.listSessions());
+    bus.handle('harness:createRun', async payload => this.handoffs.createRun(payload));
+    bus.handle('harness:startRun', async ({ runId, ...payload } = {}) => this.handoffs.start(runId, payload));
+    bus.handle('harness:switchRun', async ({ runId, ...payload } = {}) => this.handoffs.switch(runId, payload));
+    bus.handle('harness:stopRun', async ({ runId, reason } = {}) => this.handoffs.stop(runId, reason));
+    bus.handle('harness:runs', async () => this.handoffs.listRuns());
     bus.handle('resources:snapshot', async ({ includeReleased = false } = {}) => resourceLedger.snapshot({ includeReleased }));
   }
 

@@ -1,4 +1,4 @@
-// W65 方案入库契约：本波只登记施工蓝图，不误报为功能落地。
+// W65 历史方案来源契约：方案字段与停机边界保留，状态以后续正式施工事实为准。
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import fs from 'node:fs';
@@ -21,6 +21,7 @@ describe('W65 四站方案入库', () => {
     assert.ok(plan.includes('单站默认 1 并发、间隔 ≥2s'));
     assert.ok(plan.includes('列表页缓存 5 分钟，详情页缓存 30 分钟'));
     assert.ok(plan.includes('真验证码/行为验证出现即停并报告'));
-    assert.ok(index.includes('方案已入库，功能未施工'), '索引不得把方案入库误写成功能落地');
+    assert.ok(index.includes('**COMPLETE / FORMAL**'), 'W65 后续正式施工完成后，历史方案合同不得把现状降回未施工');
+    assert.ok(index.includes('出现真实验证码或行为验证仍必须停止并报告'), '正式化不得删除验证码停机边界');
   });
 });
