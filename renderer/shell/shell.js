@@ -267,6 +267,7 @@ export class Shell {
       this.ribbon.group('创作', [
         { command: 'factory.toggleDock', icon: '🔥', label: '智能创作' },
         { command: 'factory.openDesk', icon: '🏭', label: '智能创作台' },
+        { command: 'factory.openOrganization', icon: '⌘', label: '组织编译台' },
         { command: 'factory.copyMantra', icon: '📋', label: '复制模板' },
         { command: 'factory.generate', icon: '⚡', label: '直接生成' },
       ]);

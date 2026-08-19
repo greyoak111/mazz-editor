@@ -147,6 +147,7 @@ const { ContextCompilerService } = require('./context-compiler-service');
 const { CognitionService } = require('./cognition-service');
 const { CivilizationModelService } = require('./civilization-model-service');
 const { AccompanyService } = require('./accompany-service');
+const { OrganizationalWorkspaceService } = require('./organizational-workspace-service');
 
 const PROTOCOL = 'mazz';
 
@@ -184,6 +185,7 @@ const contextCompiler = new ContextCompilerService({ rootProvider: () => store.g
 const cognitionService = new CognitionService({ rootProvider: () => store.get('workspace'), evidenceService: addressableEvidence, eventService: workspaceEvents });
 const civilizationModel = new CivilizationModelService();
 const accompanyService = new AccompanyService({ rootProvider: () => store.get('workspace') });
+const organizationalWorkspace = new OrganizationalWorkspaceService({ bus, rootProvider: () => store.get('workspace') });
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;

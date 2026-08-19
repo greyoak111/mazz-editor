@@ -1,0 +1,39 @@
+{
+  "schema": "mazz.w82h-runtime-evidence/v0",
+  "ok": true,
+  "preview": {
+    "title": "Mazz Local 30-180 Second Animation Short Specimen",
+    "seats": 7,
+    "gates": [
+      "Visual and Audio Assetsauthority:creative-director · 不可绕过",
+      "Local Master Manifestauthority:master-owner · 不可绕过",
+      "Script and Storyboardauthority:creative-director · 不可绕过",
+      "Timeline and QCauthority:qc-owner · 不可绕过"
+    ],
+    "boundary": "\n    Mazz Local 30-180 Second Animation Short Specimen制作一个可审计的九十秒动画本地主清单\n      animation-shortanimation.local-master-manifest可编译仅预览\n    组织与责任Audio Producerteam:asset-productionProduce a duration-matched local audio track independent of visual shots.artifact:audio-trackTimeline Editorteam:finishingAssemble accepted visual and audio assets deterministically.artifact:timelineLocal Master Ownerteam:masterApprove a local master manifest without granting publication.artifact:masterIndependent QC Reviewerteam:finishingReview duration, continuity, synchronization and evidence independently.artifact:qc-reportScriptwriterteam:preproductionProduce a duration-bounded script from the declared brief.artifact:scriptStoryboard Artistteam:preproductionTranslate the approved script into complete shot coverage.artifact:storyboardVisual Shot Producerteam:asset-productionProduce shot 01 and shot 02 under the same replaceable Seat contract.artifact:visual-shot-01 · artifact:visual-shot-02\n    工件 DAG 与 GateAudio Trackartifact:scriptAnimation Brief输入根Local Master Manifestartifact:qc-report ← artifact:timelineMedia QC Reportartifact:timelineDuration-bounded Scriptartifact:briefStoryboardartifact:scriptAssembled Timelineartifact:audio-track ← artifact:visual-shot-01 ← artifact:visual-shot-02Visual Shot 01artifact:storyboardVisual Shot 02artifact:storyboardVisual and Audio Assetsauthority:creative-director · 不可绕过Local Master Manifestauthority:master-owner · 不可绕过Script and Storyboardauthority:creative-director · 不可绕过Timeline and QCauthority:qc-owner · 不可绕过\n    成本、缺件与人工签发声明成本 CNY 1090 / 预算 900；需调整预算或路由。\n      不可用执行者：无；缺能力：无。\n      运行真相归 W73；当前未启动执行、未授予外部修改或 Publication。"
+  },
+  "library": [
+    {
+      "workflowId": "workflow:mazz-local-animation-short:v1",
+      "version": "1.0.0",
+      "packageDigest": "a3bec981276d30d9aa57bfe8d9e18d28745c67761cdfd878d0b24d0b4a5ce58c",
+      "status": "ACTIVE",
+      "path": "5cec2378aabf8380017fc37c06da879fa7d713815ae36c622f91d4e82c181c56/92521fc3cbd964bdc9f584a991b89fddaa5754ed1cc96d6d42445338669c1305.json",
+      "createdAt": "2026-08-19T09:47:10.095Z"
+    }
+  ],
+  "pageErrors": [],
+  "resources": {
+    "activeCount": 4,
+    "byType": {
+      "browser-window": 1,
+      "file-watcher": 1,
+      "agent-cli-process": 2
+    }
+  },
+  "boundaries": {
+    "executionStarted": false,
+    "publicationAuthorized": false,
+    "workflowRuntimeOwnedBy": "W73"
+  }
+}
