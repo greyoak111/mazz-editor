@@ -1,0 +1,23 @@
+{
+  "schema": "mazz.engineering-evidence/v1",
+  "wave": "W81",
+  "recordedAt": "2026-08-19T00:00:00.000+08:00",
+  "status": "LANDED_LOCAL_PRODUCT_SLICE",
+  "checks": [
+    { "name": "renderer-build", "command": "npm run build", "result": "PASS" },
+    { "name": "w81-contract", "command": "node tests/contract/w81-workspace-event-ledger.test.mjs", "result": "PASS", "passed": 8, "failed": 0 },
+    { "name": "w76-w78-adjacency", "command": "node tests/contract/w76-w78-context-multimodal.test.mjs", "result": "PASS", "passed": 11, "failed": 0 }
+  ],
+  "privacy": {
+    "localOnly": true,
+    "capturesKeystrokes": false,
+    "capturesCommandText": false,
+    "capturesClipboardBody": false,
+    "capturesSecrets": false
+  },
+  "boundaries": [
+    "Event is behavioral evidence, not authoritative state",
+    "Episodes and lifecycle stages are rebuildable inferences",
+    "No synchronization, public event bus, universal profile, or memory daemon"
+  ]
+}

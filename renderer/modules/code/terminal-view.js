@@ -1,6 +1,7 @@
 // renderer/modules/code/terminal-view.js —— 集成终端（xterm.js 多标签 + 右键 11 号上下文）
 import { toast, inputModal } from '../../shell/shell.js';
 import xtermCss from '@xterm/xterm/css/xterm.css';
+import { captureWorkspaceEvent } from '../../lib/workspace-events.js';
 
 let seq = 1;
 let cssInjected = false;
@@ -82,7 +83,11 @@ export class TerminalPanel {
     this.terms.set(id, rec);
 
     // 输入 → 主进程
-    xterm.onData((data) => window.mazz.invoke('term:write', { id, data }));
+    xterm.onData((data) => {
+      window.mazz.invoke('term:write', { id, data });
+      // 只在提交命令时记一条“执行”语义事件；命令正文、逐键、环境变量一律不进账。
+      if (/\r|\n/.test(data)) captureWorkspaceEvent({ sourceModule: 'terminal', action: 'execute', objectRefs: [`terminal-session:${id}`], contextRefs: ['module:code'], outcome: 'unknown', summary: '终端执行（未记录命令正文）' });
+    });
     xterm.onResize(({ cols, rows }) => window.mazz.invoke('term:resize', { id, cols, rows }));
     // 右键 11 号上下文
     wrap.addEventListener('contextmenu', (e) => {

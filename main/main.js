@@ -138,6 +138,7 @@ const { PromotionLedger } = require('./promotion-ledger');
 const { FactorySseDecoder } = require('./factory-sse');
 const { AddressableEvidenceService } = require('./addressable-evidence-service');
 const { ContextRelationService } = require('./context-relation-service');
+const { WorkspaceEventService } = require('./workspace-event-service');
 
 const PROTOCOL = 'mazz';
 
@@ -169,6 +170,7 @@ const addressableEvidence = new AddressableEvidenceService({
 const contextRelations = new ContextRelationService({
   rootProvider: () => store.get('workspace'), store, evidenceService: addressableEvidence,
 });
+const workspaceEvents = new WorkspaceEventService({ rootProvider: () => store.get('workspace'), store });
 if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FACTORY_AI_REQUESTS__ = factoryAiRequests;
   globalThis.__MAZZ_E2E_FACTORY_RUN_OWNERS__ = factoryRunOwners;
@@ -307,6 +309,14 @@ function registerChannels() {
   bus.handle('context:dismissShadowEdge', async ({ edgeId } = {}) => contextRelations.dismissShadowEdge(edgeId));
   bus.handle('context:promoteEdge', async payload => contextRelations.promoteEdge(payload));
   bus.handle('context:importBookmarks', async payload => contextRelations.importBookmarks(payload));
+  bus.handle('events:capture', async payload => workspaceEvents.capture(payload));
+  bus.handle('events:snapshot', async () => workspaceEvents.snapshot());
+  bus.handle('events:search', async ({ query } = {}) => workspaceEvents.search(query));
+  bus.handle('events:lifecycle', async ({ ref } = {}) => workspaceEvents.lifecycle(ref));
+  bus.handle('events:export', async () => workspaceEvents.export());
+  bus.handle('events:setEnabled', async ({ enabled } = {}) => workspaceEvents.setEnabled(enabled));
+  bus.handle('events:applyRetention', async payload => workspaceEvents.applyRetention(payload));
+  bus.handle('events:clear', async payload => workspaceEvents.clear(payload));
   // Windows 原子写：rename 遇 EPERM/EACCES/EBUSY（目标被外部程序占用/杀软扫描）退化为覆盖拷贝，重试两轮后仍败则报人话
   const writeAtomic = (p, data, encoding) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });

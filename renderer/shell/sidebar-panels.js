@@ -78,6 +78,7 @@ export class SidebarPanels {
       ['tags', '🏷', '标签'],
       ['backlinks', '🔗', '反链'],
       ['contexts', '◫', '上下文'],
+      ['history', '◷', '工作史'],
     ];
     this.tabbar.innerHTML = TABS.map(([id, ico, t]) =>
       `<button class="sb-tab" data-t="${id}" title="${t}">${iconHtml(ico)}<span>${t}</span></button>`).join('');
@@ -90,7 +91,7 @@ export class SidebarPanels {
   buildPanels() {
     const tree = this.sidebar.querySelector('.filetree');
     this.panels = {};
-    for (const id of ['outline', 'marks', 'tags', 'backlinks', 'contexts']) {
+    for (const id of ['outline', 'marks', 'tags', 'backlinks', 'contexts', 'history']) {
       const el = document.createElement('div');
       el.className = 'sb-panel sb-panel-' + id;
       el.style.display = 'none';
@@ -103,6 +104,7 @@ export class SidebarPanels {
     this.buildTags();
     this.buildBacklinks();
     this.buildContexts();
+    this.buildHistory();
   }
 
   async refreshWsList() {
@@ -171,6 +173,7 @@ export class SidebarPanels {
     if (id === 'tags') this.refreshTags();
     if (id === 'backlinks') this.refreshBacklinks();
     if (id === 'contexts') this.refreshContexts();
+    if (id === 'history') this.refreshHistory();
   }
 
   refreshActive() {
@@ -593,5 +596,90 @@ export class SidebarPanels {
     };
     this.relationSuggestionsEl.innerHTML = graph.shadowEdges.length ? graph.shadowEdges.map(edge => edgeRow(edge)).join('') : '<div class="sb-empty">（暂无建议）</div>';
     this.relationPromotedEl.innerHTML = graph.promotedEdges.length ? graph.promotedEdges.map(edge => edgeRow(edge, true)).join('') : '<div class="sb-empty">（暂无确认关系）</div>';
+  }
+
+  // ==================== 个人工作运行史（W81） ====================
+  buildHistory() {
+    const el = this.panels.history;
+    el.innerHTML = `
+      <div class="sb-tool sb-history-tool">
+        <input class="sb-filter rb-input" placeholder="模糊找回：例如 VPS 配置" spellcheck="false">
+        <button class="sb-tbtn" data-a="history-search" title="查找">${iconHtml('🔍')}</button>
+      </div>
+      <div class="sb-tool">
+        <label class="sb-history-toggle"><input type="checkbox" data-a="history-enabled"> 记录语义工作事件</label>
+        <button class="sb-tbtn" data-a="history-export" title="导出到剪贴板">${iconHtml('⇪')}</button>
+        <button class="sb-tbtn" data-a="history-retention" title="执行保留策略">${iconHtml('◷')}</button>
+        <button class="sb-tbtn" data-a="history-clear" title="清空（可恢复归档）">${iconHtml('⌫')}</button>
+      </div>
+      <div class="sb-history-budget"></div>
+      <div class="sb-list sb-history-results"></div>
+      <div class="sb-list sb-history-list"></div>
+      <div class="sb-history-privacy">本地保存 · 不记逐键、命令正文、剪贴板正文或凭据</div>`;
+    this.historyListEl = el.querySelector('.sb-history-list');
+    this.historyResultsEl = el.querySelector('.sb-history-results');
+    this.historyBudgetEl = el.querySelector('.sb-history-budget');
+    this.historyInput = el.querySelector('.sb-filter');
+    const search = () => this.searchHistory(this.historyInput.value.trim());
+    this.historyInput.addEventListener('keydown', event => { if (event.key === 'Enter') search(); });
+    el.querySelector('[data-a=history-search]').addEventListener('click', search);
+    el.querySelector('[data-a=history-enabled]').addEventListener('change', async event => {
+      await window.mazz.invoke('events:setEnabled', { enabled: event.target.checked });
+      toast(event.target.checked ? '工作史记录已开启' : '工作史记录已暂停；既有记录未删除');
+      this.refreshHistory();
+    });
+    el.querySelector('[data-a=history-export]').addEventListener('click', async () => {
+      const data = await window.mazz.invoke('events:export');
+      await window.mazz.invoke('clipboard:write', { text: JSON.stringify(data, null, 2) });
+      toast('工作史导出已复制到剪贴板');
+    });
+    el.querySelector('[data-a=history-retention]').addEventListener('click', async () => {
+      try {
+        const result = await window.mazz.invoke('events:applyRetention', { authorityRef: 'human:local-maintainer', reason: '用户在工作史侧栏明确执行保留策略' });
+        toast(result.applied ? `已归档 ${result.expired} 条到期事件，保留 ${result.kept} 条` : '当前没有到期事件');
+        this.refreshHistory();
+      } catch (error) { toast(`保留策略执行失败：${error.message}`, 'error'); }
+    });
+    el.querySelector('[data-a=history-clear]').addEventListener('click', async () => {
+      const answer = await window.mazz.invoke('dialog:confirm', { title: '清空个人工作运行史', message: '清空当前工作区的事件账？', detail: '原账会移动到本地恢复归档，不会直接永久删除。', buttons: ['清空并归档', '取消'] });
+      if (answer !== 0) return;
+      const result = await window.mazz.invoke('events:clear', { authorityRef: 'human:local-maintainer', reason: '用户在工作史侧栏明确清空' });
+      toast(result.cleared ? '已清空；原账保留为恢复归档' : '当前没有事件记录');
+      this.refreshHistory();
+    });
+    el.addEventListener('click', event => {
+      const target = event.target.closest('[data-history-target]');
+      if (!target) return;
+      const ref = decodeURIComponent(target.dataset.historyTarget);
+      if (ref.startsWith('file:')) this.shell.openFile(ref.slice(5));
+      if (ref.startsWith('url:')) window.MazzCommands?.execute('browser.openUrl', { url: ref.slice(4) });
+    });
+  }
+
+  async refreshHistory() {
+    const snapshot = await window.mazz.invoke('events:snapshot').catch(() => null);
+    if (!snapshot) { this.historyListEl.innerHTML = '<div class="sb-empty">工作史暂不可用</div>'; return; }
+    this.panels.history.querySelector('[data-a=history-enabled]').checked = snapshot.enabled;
+    this.historyBudgetEl.textContent = `${snapshot.count} 条语义事件 · ${(snapshot.bytes / 1024).toFixed(1)} KiB · ${snapshot.episodes.length} 个工作片段`;
+    const eventsById = new Map(snapshot.events.map(item => [item.eventId, item]));
+    const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const episodes = [...snapshot.episodes].sort((a, b) => b.endedAt.localeCompare(a.endedAt));
+    this.historyListEl.innerHTML = episodes.length ? episodes.map(episode => `
+      <div class="sb-history-episode">
+        <div class="sb-history-episode-head"><b>${esc(episode.label)}</b><span>${Math.round(episode.confidence * 100)}%</span></div>
+        <small>${new Date(episode.startedAt).toLocaleString('zh-CN')} · ${esc(episode.reasons.join(' / '))}</small>
+        ${episode.eventRefs.map(id => {
+          const item = eventsById.get(id); if (!item) return '';
+          const target = item.objectRefs[0] || item.subjectRefs[0] || '';
+          return `<div class="sb-history-event" ${target ? `data-history-target="${encodeURIComponent(target)}"` : ''}><span>${esc(item.sourceModule)} · ${esc(item.action)}</span><em>${esc(item.summary || item.outcome)}</em></div>`;
+        }).join('')}
+      </div>`).join('') : '<div class="sb-empty">尚无语义工作事件；打开或保存文件、访问网页、在终端提交命令后会出现</div>';
+  }
+
+  async searchHistory(query) {
+    if (!query) { this.historyResultsEl.innerHTML = ''; return; }
+    const rows = await window.mazz.invoke('events:search', { query }).catch(() => []);
+    const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    this.historyResultsEl.innerHTML = rows.length ? `<div class="sb-sec-title">找回候选</div>` + rows.map(row => `<div class="sb-history-hit"><b>${esc(row.label)}</b><small>${esc(row.reasons.join(' · '))} · ${new Date(row.startedAt).toLocaleDateString('zh-CN')}</small></div>`).join('') : '<div class="sb-empty">没有找到可解释候选；换一个问题线索试试</div>';
   }
 }

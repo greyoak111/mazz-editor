@@ -8,6 +8,7 @@ import { toast, modal, inputModal } from '../../shell/shell.js';
 import { snapshotScript } from './clipper.js';
 import { createClipRuntime } from './clip-runtime.js';
 import { createHarvestRuntime } from './harvest-runtime.js';
+import { captureWorkspaceEvent } from '../../lib/workspace-events.js';
 
 const MODULE = 'browser';
 const instances = new Map();
@@ -664,6 +665,11 @@ function createBrowser(container) {
     ctl.history.unshift({ url, title: title || url, at: Date.now() });
     ctl.history = ctl.history.slice(0, 200);
     saveHistory();
+    if (!passive) {
+      let host = '';
+      try { host = new URL(url).hostname; } catch {}
+      captureWorkspaceEvent({ sourceModule: 'browser', action: 'view', objectRefs: [`url:${pageKey(url)}`], contextRefs: ['context:browser-history'], outcome: 'success', summary: `查看网页 · ${host || '网页'}` });
+    }
   }
 
   /** 收藏当前页（命名 + 选文件夹 + 新建文件夹） */

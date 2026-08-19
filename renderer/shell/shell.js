@@ -25,6 +25,7 @@ import { ALL_CODE_EXTENSIONS, CODE_FILE_EXTENSIONS, CODE_FILE_DEFAULTS, CODE_NEW
 import { assertNativeOpenContent, assertOfficeContainer } from '../lib/file-open-policy.js';
 import { visibleHelpSections } from '../core/product-maturity.js';
 import { moduleIconId } from '../core/icon-registry.js';
+import { captureWorkspaceEvent } from '../lib/workspace-events.js';
 
 const CODE_SAMPLE = `// Mazz Editor · 编程内核
 // F5 调试 · Ctrl+\` 终端 · Ctrl+Enter 运行选区 · F12 跳定义 · Shift+F12 引用
@@ -1015,6 +1016,7 @@ export class Shell {
     await window.mazz?.invoke('recent:add', { path: filePath });
     this.fileTree.markActive(filePath);
     this.syncTitle();
+    captureWorkspaceEvent({ sourceModule: 'editor', action: 'open', objectRefs: [`file:${normalizeChangePath(filePath)}`], contextRefs: ['module:code', 'mode:large-file'], outcome: 'success', summary: `大文件降级打开 · ${name}` });
     return true;
   }
 
@@ -1029,6 +1031,7 @@ export class Shell {
       if (pane) this.paneTree.setActive(pane);
       this.fileTree.markActive(filePath);
       this.syncTitle();
+      captureWorkspaceEvent({ sourceModule: 'editor', action: 'activate', objectRefs: [`file:${normalizeChangePath(filePath)}`], contextRefs: [`module:${existing.moduleId}`], outcome: 'success', summary: `切换资产 · ${filePath.split(/[\\/]/).pop()}` });
       return true;
     }
 
@@ -1071,6 +1074,7 @@ export class Shell {
       await window.mazz?.invoke('recent:add', { path: filePath });
       this.fileTree.markActive(filePath);
       this.syncTitle();
+      captureWorkspaceEvent({ sourceModule: 'editor', action: 'open', objectRefs: [`file:${normalizeChangePath(filePath)}`], contextRefs: ['module:library'], outcome: 'success', summary: `打开书籍 · ${name0}` });
       return true;
     }
     // OPML/FreeMind/XMind：导图格式导入（v37；v45 改确定性管道——先解析再开签，
@@ -1096,6 +1100,7 @@ export class Shell {
       await window.mazz?.invoke('recent:add', { path: filePath });
       this.fileTree.markActive(filePath);
       this.syncTitle();
+      captureWorkspaceEvent({ sourceModule: 'editor', action: 'open', objectRefs: [`file:${normalizeChangePath(filePath)}`], contextRefs: ['module:mindmap'], outcome: 'success', summary: `打开导图 · ${name2}` });
       return true;
     }
     // 图片/PDF：查看器模块按路径读二进制，不走文本通道（否则打开全是乱码）
@@ -1118,6 +1123,7 @@ export class Shell {
       await window.mazz?.invoke('recent:add', { path: filePath });
       this.fileTree.markActive(filePath);
       this.syncTitle();
+      captureWorkspaceEvent({ sourceModule: 'editor', action: 'open', objectRefs: [`file:${normalizeChangePath(filePath)}`], contextRefs: ['module:viewer'], outcome: 'success', summary: `打开查看 · ${name}` });
       return true;
     }
     let content = '';
@@ -1161,6 +1167,7 @@ export class Shell {
     await window.mazz?.invoke('fs:watch', { paths: [filePath] });
     this.fileTree.markActive(filePath);
     this.syncTitle();
+    captureWorkspaceEvent({ sourceModule: 'editor', action: 'open', objectRefs: [`file:${normalizeChangePath(filePath)}`], contextRefs: [`module:${moduleId}`], outcome: 'success', summary: `打开文件 · ${name}` });
     return true;
   }
 
@@ -1218,6 +1225,7 @@ export class Shell {
     await window.mazz?.invoke('recent:add', { path: target });
     this.syncTitle();
     toast(`已保存 ${target.split(/[\\/]/).pop()}`);
+    captureWorkspaceEvent({ sourceModule: 'editor', action: saveAs ? 'save-as' : 'save', objectRefs: [`file:${normalizeChangePath(target)}`], contextRefs: [`module:${inst.name}`], outcome: 'success', summary: `${saveAs ? '另存为' : '保存'} · ${target.split(/[\\/]/).pop()}` });
     return true;
   }
 
