@@ -79,6 +79,7 @@ export class SidebarPanels {
       ['backlinks', '🔗', '反链'],
       ['contexts', '◫', '上下文'],
       ['history', '◷', '工作史'],
+      ['cognition', '◈', '认知'],
     ];
     this.tabbar.innerHTML = TABS.map(([id, ico, t]) =>
       `<button class="sb-tab" data-t="${id}" title="${t}">${iconHtml(ico)}<span>${t}</span></button>`).join('');
@@ -91,7 +92,7 @@ export class SidebarPanels {
   buildPanels() {
     const tree = this.sidebar.querySelector('.filetree');
     this.panels = {};
-    for (const id of ['outline', 'marks', 'tags', 'backlinks', 'contexts', 'history']) {
+    for (const id of ['outline', 'marks', 'tags', 'backlinks', 'contexts', 'history', 'cognition']) {
       const el = document.createElement('div');
       el.className = 'sb-panel sb-panel-' + id;
       el.style.display = 'none';
@@ -105,6 +106,7 @@ export class SidebarPanels {
     this.buildBacklinks();
     this.buildContexts();
     this.buildHistory();
+    this.buildCognition();
   }
 
   async refreshWsList() {
@@ -174,6 +176,7 @@ export class SidebarPanels {
     if (id === 'backlinks') this.refreshBacklinks();
     if (id === 'contexts') this.refreshContexts();
     if (id === 'history') this.refreshHistory();
+    if (id === 'cognition') this.refreshCognition();
   }
 
   refreshActive() {
@@ -681,5 +684,60 @@ export class SidebarPanels {
     const rows = await window.mazz.invoke('events:search', { query }).catch(() => []);
     const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     this.historyResultsEl.innerHTML = rows.length ? `<div class="sb-sec-title">找回候选</div>` + rows.map(row => `<div class="sb-history-hit"><b>${esc(row.label)}</b><small>${esc(row.reasons.join(' · '))} · ${new Date(row.startedAt).toLocaleDateString('zh-CN')}</small></div>`).join('') : '<div class="sb-empty">没有找到可解释候选；换一个问题线索试试</div>';
+  }
+
+  // ==================== 认知资产（W70 file-first protocol） ====================
+  buildCognition() {
+    const el = this.panels.cognition;
+    el.innerHTML = `
+      <div class="sb-tool"><button class="sb-tbtn sb-cognition-new" title="新建认知资产">${iconHtml('+')}<span>新建</span></button><button class="sb-tbtn" data-a="cognition-refresh" title="刷新">${iconHtml('↻')}</button></div>
+      <div class="sb-cognition-summary"></div><div class="sb-list sb-cognition-list"></div>
+      <div class="sb-history-privacy">普通 Markdown 是真源 · AI 只能写候选 · 批准与替代必须由人执行</div>`;
+    this.cognitionListEl = el.querySelector('.sb-cognition-list');
+    this.cognitionSummaryEl = el.querySelector('.sb-cognition-summary');
+    el.querySelector('[data-a=cognition-refresh]').addEventListener('click', () => this.refreshCognition());
+    el.querySelector('.sb-cognition-new').addEventListener('click', () => this.openCognitionCreate());
+    el.addEventListener('click', async event => {
+      const open = event.target.closest('[data-cognition-open]');
+      if (open) return this.shell.openFile(decodeURIComponent(open.dataset.cognitionOpen));
+      const approve = event.target.closest('[data-cognition-approve]');
+      if (!approve) return;
+      try {
+        await window.mazz.invoke('cognition:approve', { path: decodeURIComponent(approve.dataset.cognitionApprove), authorityRef: 'human:local-user', reason: '用户在认知侧栏明确批准' });
+        toast('候选已由用户批准'); this.refreshCognition();
+      } catch (error) { toast(`批准失败：${error.message}`, 'error'); }
+    });
+  }
+
+  openCognitionCreate() {
+    const m = modal('新建认知资产');
+    m.body.innerHTML = `<div class="sb-cognition-form">
+      <label>类型<select class="rb-select" data-f="type">${['Concept','Finding','Question','Evidence','Analysis','Solution','Decision','Pattern','Playbook','Method'].map(value => `<option>${value}</option>`).join('')}</select></label>
+      <label>标题<input class="rb-input" data-f="title" maxlength="120"></label>
+      <label>正文<textarea class="rb-input" data-f="body" rows="9" placeholder="普通 Markdown；来源可稍后用活引用补充"></textarea></label>
+      <div class="sb-cognition-actions"><button class="rb-btn" data-a="save">创建并由我批准</button><button class="rb-btn" data-a="candidate">保存为候选</button></div>
+    </div>`;
+    const submit = async actorType => {
+      const title = m.body.querySelector('[data-f=title]').value.trim(); if (!title) return toast('请填写标题', 'error');
+      try {
+        const result = await window.mazz.invoke('cognition:create', { title, type: m.body.querySelector('[data-f=type]').value, body: m.body.querySelector('[data-f=body]').value, sourceRefs: [], actorType });
+        m.close(); toast(actorType === 'human' ? '认知资产已创建并批准' : '认知候选已创建'); this.refreshCognition(); this.shell.openFile(result.path);
+      } catch (error) { toast(`创建失败：${error.message}`, 'error'); }
+    };
+    m.body.querySelector('[data-a=save]').addEventListener('click', () => submit('human'));
+    m.body.querySelector('[data-a=candidate]').addEventListener('click', () => submit('agent'));
+  }
+
+  async refreshCognition() {
+    const [rows, summary] = await Promise.all([
+      window.mazz.invoke('cognition:list').catch(() => []),
+      window.mazz.invoke('cognition:summary', { stageRef: 'workspace:current' }).catch(() => null),
+    ]);
+    const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    this.cognitionSummaryEl.innerHTML = summary ? `<b>阶段摘要</b><span>事实 ${summary.confirmedFacts.length} · 决策 ${summary.decisions.length} · 未决 ${summary.unresolved.length} · 候选 ${summary.futureCandidates.length}</span>` : '';
+    this.cognitionListEl.innerHTML = rows.length ? rows.map(row => row.invalid ? `<div class="sb-cognition-row invalid"><b>元数据损坏</b><small>${esc(row.path)} · ${esc(row.error)}</small></div>` : `<div class="sb-cognition-row">
+      <div data-cognition-open="${encodeURIComponent(row.path)}"><b>${esc(row.item.title)}</b><small>${esc(row.item.type)} · ${esc(row.item.maturity)} / ${esc(row.item.validity)} / ${esc(row.item.implementation)}</small><em>${row.item.authorityState === 'HUMAN_APPROVED' ? '人工批准' : '候选'} · 来源 ${esc(row.item.sourceHealth)}</em></div>
+      ${row.item.authorityState === 'CANDIDATE' ? `<button class="sb-item-act" data-cognition-approve="${encodeURIComponent(row.path)}">批准</button>` : ''}
+    </div>`).join('') : '<div class="sb-empty">尚无认知资产。它们仍是普通 Markdown，不会被锁进数据库。</div>';
   }
 }

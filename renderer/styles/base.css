@@ -809,6 +809,17 @@ body.pane-resizing .pane-divider { pointer-events: auto !important; }
 .sb-history-event span { font-size: 10px; color: var(--fg-dim, #a3a19a); }
 .sb-history-event em { font-style: normal; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-history-hit { margin: 4px 6px; padding: 7px; border-left: 2px solid var(--accent, #4f46e5); background: var(--bg-hover, #f0efe9); }
+.sb-cognition-new { width: auto; gap: 4px; padding-inline: 7px; }
+.sb-cognition-summary { margin: 6px; padding: 8px; border-radius: 7px; background: color-mix(in srgb, var(--accent, #4f46e5) 9%, transparent); display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
+.sb-cognition-summary span { color: var(--fg-dim, #a3a19a); font-size: 10.5px; }
+.sb-cognition-row { margin: 4px 6px; padding: 7px; border: 1px solid var(--border, #e0ded8); border-radius: 7px; display: flex; gap: 5px; align-items: flex-start; }
+.sb-cognition-row > div { flex: 1; min-width: 0; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.sb-cognition-row small, .sb-cognition-row em { font-size: 10px; color: var(--fg-dim, #a3a19a); font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-cognition-row.invalid { border-color: var(--danger, #dc2626); }
+.sb-cognition-form { width: min(520px, 70vw); display: flex; flex-direction: column; gap: 10px; }
+.sb-cognition-form label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--fg-dim, #a3a19a); }
+.sb-cognition-form textarea { resize: vertical; min-height: 140px; font-family: var(--font-mono, monospace); }
+.sb-cognition-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .notes-graph { flex: 1; min-width: 0; position: relative; background: var(--bg, #fff); }
 .notes-graph canvas { display: block; width: 100%; height: 100%; cursor: grab; }
 .notes-graph-legend { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }

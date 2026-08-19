@@ -1,0 +1,22 @@
+{
+  "schema": "mazz.engineering-evidence/v1",
+  "wave": "W70",
+  "recordedAt": "2026-08-19T00:00:00.000+08:00",
+  "status": "LANDED_LOCAL_PRODUCT_SLICE",
+  "source": {
+    "path": "C:/Users/Administrator/Desktop/0814接续用.pdf",
+    "section": "六、W70 是我认为第二严重的压缩失真",
+    "visuallyReviewed": true
+  },
+  "checks": [
+    { "name": "renderer-build", "command": "npm run build", "result": "PASS" },
+    { "name": "w70-contract", "command": "node tests/contract/w70-cognition-protocol.test.mjs", "result": "PASS", "passed": 8, "failed": 0 }
+  ],
+  "boundaries": {
+    "ordinaryMarkdownIsTruth": true,
+    "aiAutomaticApproval": false,
+    "summaryGrantsAuthority": false,
+    "mindmapIsDatabase": false,
+    "factoryDependsOnCognition": false
+  }
+}
