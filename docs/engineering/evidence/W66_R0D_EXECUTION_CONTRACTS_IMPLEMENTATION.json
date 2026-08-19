@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "mazz.w66-r0d-implementation-evidence/v0",
+  "status": "COMPLETE_TO_FROZEN_SCOPE",
+  "date": "2026-08-19",
+  "predecessor": {
+    "wave": "W66-R0c",
+    "commit": "7624216",
+    "regression": "4/4"
+  },
+  "contracts": [
+    "Typed Handle",
+    "Result Envelope",
+    "Tagged Result Union",
+    "Failure Signature",
+    "Retry Budget",
+    "Patch CAS",
+    "Output Completeness Receipt"
+  ],
+  "tests": {
+    "w66R0d": "5/5",
+    "affectedTotal": "34/34",
+    "build": "PASS",
+    "fullSuite": "NOT_RUN_UNAFFECTED",
+    "electronE2e": "NOT_APPLICABLE_NO_UI_OR_RUNTIME_PATH",
+    "packaged": "NOT_APPLICABLE_NO_PACKAGING_CHANGE"
+  },
+  "negativeAssertions": {
+    "childProcessesCreated": 0,
+    "adapterRegistrations": 0,
+    "ipcChanges": 0,
+    "uiChanges": 0
+  },
+  "nextWave": "W66-R0e"
+}
