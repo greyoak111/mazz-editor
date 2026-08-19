@@ -1,12 +1,13 @@
 # W82 Organizational Compiler
 ## Production Organization Compiler / 生产组织编译器
 
-> 状态：`W82a FOUNDATION + W82b SOFTWARE + W82c RESEARCH SLICES LANDED / W82d–W82h NOT STARTED`
-> 版本：v0.8
+> 状态：`W82a FOUNDATION + W82b SOFTWARE + W82c RESEARCH + W82d ANIMATION SLICES LANDED / W82e–W82h NOT STARTED`
+> 版本：v0.9
 > 登记日期：2026-08-18
 > W82a 落地日期：2026-08-19
 > W82b 落地日期：2026-08-19
 > W82c 落地日期：2026-08-19
+> W82d 落地日期：2026-08-19
 > 基础材料：维护者《Media Production Workflows / Industry Workflow Compiler 增量》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 升格材料：维护者《Production Organization Compiler / Organizational Compiler 增量》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 技术补遗：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
@@ -17,7 +18,7 @@
 
 ## 0. 升格结论
 
-W82a 已按维护者独立批准落地纯 Foundation：严格 Workflow Package / Compile Request / Execution Plan、组织考古、Staffing/Delegation 硬边界、Artifact DAG、显式人工 Routing、Authority Separation、Evidence-backed Transition 与 Expert Capability Composition。实证研究仍只是同一内核的纸面 fixture；软件发布则已由 W82b 推进为本地非生产 vertical slice：Requirement → Build → Review → Test → Security → Release，类型化回执与人工决定经三道 Gate 后投影进 W73 Production Run Ledger，失败进入可重开 Recovery State。W82b 不执行任意进程、不推送、不发布，也不授予生产发布权。实现与证据见 [`W82A_ORGANIZATIONAL_KERNEL_SPEC.md`](../engineering/W82A_ORGANIZATIONAL_KERNEL_SPEC.md)、[`W82B_SOFTWARE_RELEASE_SLICE_SPEC.md`](../engineering/W82B_SOFTWARE_RELEASE_SLICE_SPEC.md) 和 [`W82B_SOFTWARE_RELEASE_CHECKPOINT_2026-08-19.md`](../engineering/W82B_SOFTWARE_RELEASE_CHECKPOINT_2026-08-19.md)。
+W82a 已按维护者独立批准落地纯 Foundation：严格 Workflow Package / Compile Request / Execution Plan、组织考古、Staffing/Delegation 硬边界、Artifact DAG、显式人工 Routing、Authority Separation、Evidence-backed Transition 与 Expert Capability Composition。W82b、W82c 与 W82d 已分别落下软件发布、研究证据和动画短片的本地受控切片，统一复用同一 Kernel、严格 receipt/decision 与 W73 Production Run Ledger。三者均不执行任意外部进程、不推送生产发布，也不把本地 fixture 冒充真实交付；W82d 只形成 local master manifest，不生成视频二进制。实现与证据见 `docs/engineering/W82A_*`、`W82B_*`、`W82C_*` 与 `W82D_*` 文档。
 
 媒体只是最容易看懂 Factory 威力的 acceptance domain；“从灵感做到动画、游戏”仍是重要样本，但不再定义 W82 的上限。W82 的真实对象升格为：
 
@@ -513,10 +514,14 @@ Workflow 排名属于 W69k/l 市场视图：比较“完成某类交付物的生
 
 ### W82d — Animation Short Vertical Slice
 
-- 选择 30–180 秒动画短片作为第一个媒体完整样本；
-- Script → Storyboard → visual/audio → timeline → QC → master；
-- 至少两种 Executor 可在同一 Seat 契约下替换；
-- 局部镜头重做不重跑无关工件。
+状态：`LOCAL MASTER MANIFEST SLICE LANDED`。
+
+- 已选择 30–180 秒动画短片，冻结 Brief → Script → Storyboard → visual/audio → timeline → independent QC → local master manifest；
+- `tool:visual-primary` 与 `tool:visual-backup` 可在同一 Visual Seat 契约下替换；
+- Shot 01、Audio、QC、Master 的失败均按 Artifact DAG 局部回退，不重跑无关工件；
+- 严格 receipt/decision 拒绝 arbitrary command、secret、伪 exit code、外部 mutation、Publication 和自动 Authority；
+- 运行事实只在 W73 append 后成立；W82d 不创建媒体 Runtime；
+- 本波未输出视频二进制、未真实调用 Blender/FFmpeg/生成模型、未通过 Sample D。
 
 ### W82e — Cross-media Workflow Family
 
@@ -653,6 +658,6 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 
 ## 16. 当前停止线
 
-本文件已完成 W82 v0.8 Design Capsule、W82a 纯 Foundation、W82b 本地非生产软件发布切片与 W82c 本地未发布研究切片。W82a 只编译组织计划并评估证据跃迁；W82b/c 只接收受控回执、绑定人工决定并投影 W73 事件，不执行模型、外部工具、后台服务、任意命令、生产发布或公共 Publication。
+本文件已完成 W82 v0.9 Design Capsule、W82a 纯 Foundation，以及 W82b 软件发布、W82c 研究证据、W82d 动画短片三个本地受控切片。W82a 只编译组织计划并评估证据跃迁；W82b/c/d 只接收受控回执、绑定人工决定并投影 W73 事件，不执行模型、外部工具、后台服务、任意命令、生产发布或公共 Publication。W82d 输出只到 local master manifest，不是视频二进制。
 
-W82d–W82h 仍未施工，必须继续服从跨波次真源和维护者独立批准。不得把 W82b/c 本地 specimen 反写为真实发布/研究结论；Sample D/E 仍未通过。
+W82e–W82h 仍未施工，必须继续服从跨波次真源和维护者独立批准。不得把 W82b/c/d 本地 specimen 反写为真实发布、研究结论或动画成片；Sample D/E 仍未通过。

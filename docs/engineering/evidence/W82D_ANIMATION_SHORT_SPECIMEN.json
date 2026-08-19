@@ -1,0 +1,62 @@
+{
+  "schema": "mazz.w82d-implementation-evidence/v0",
+  "capturedAt": "2026-08-19T07:55:40.816Z",
+  "preWaveHead": "6f6e46bbb547cbc8e7978bb083ddd90e90fe96f7",
+  "scope": "W82d local 30-180 second animation master manifest slice",
+  "actualChecks": [
+    {
+      "operationRef": "npm:build",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": "renderer/dist ESM chunks, Monaco workers and sample plugins built",
+      "outputDigest": "sha256:fdee9aa29d10110cd2b853816d059b94cce7175a49cc035dab64addfff583462"
+    },
+    {
+      "operationRef": "node:w82d-and-adjacent-contracts",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": "W82d 10/10 after evidence assertion; 10/10 scoped test files",
+      "outputDigest": "sha256:497725cae0db828a6afb09d469bcc1ce010d2c4af40b42e791296b643468e603"
+    },
+    {
+      "operationRef": "npm:audit-provenance",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": ".mazz/audit/oss-provenance-ledger.json CURRENT",
+      "outputDigest": "sha256:e053b7c67c9d5c19b6aac8d1d7489bad9fec5bd193d2aa9de1d5cd3eadcac409"
+    },
+    {
+      "operationRef": "git:diff-check",
+      "status": "passed",
+      "exitCode": 0,
+      "summary": "no whitespace errors; existing Windows LF/CRLF notices only",
+      "outputDigest": "sha256:357dbf9e89d4e1f87eb77be65b712cada4ba14ffe84dd21f050199fe65763c26"
+    }
+  ],
+  "coverage": {
+    "durationBoundary30To180Seconds": true,
+    "replaceableVisualExecutor": true,
+    "shotLocalRecovery": true,
+    "audioLocalRecovery": true,
+    "qcAndMasterRecovery": true,
+    "w73BlockedAndExplicitResume": true,
+    "humanAuthoritySeparation": true,
+    "publicationNotGranted": true
+  },
+  "fullSuite": {
+    "rerunThisWave": false,
+    "latestKnownAtPredecessorCheckpoint": "194/194"
+  },
+  "boundary": {
+    "localSpecimen": true,
+    "masterManifestOnly": true,
+    "binaryMasterProduced": false,
+    "realExternalToolExecuted": false,
+    "sampleDPassed": false,
+    "sampleEPassed": false,
+    "published": false,
+    "externalMutation": false,
+    "runtimeTruthOwner": "W73"
+  },
+  "stopLine": "W82d is landed as a local master-manifest slice. W82e-W82h, Sample D/E, real external media execution, binary master, publication, and the full Organizational Compiler DoD remain open."
+}

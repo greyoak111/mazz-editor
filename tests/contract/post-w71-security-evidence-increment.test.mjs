@@ -19,7 +19,7 @@ describe('Post-W71 strict architecture increment II', () => {
     for (const doc of [w69, w82, w84, w85]) assert.ok(doc.includes(SOURCE_HASH));
     assert.ok(!index.includes('W87'));
     assert.ok(index.includes('v1.5 Design Capsule'));
-    assert.ok(index.includes('W82a Foundation + W82b Software + W82c Research Slices LANDED；W82d–W82h 未施工'));
+    assert.ok(index.includes('W82a Foundation + W82b Software + W82c Research + W82d Animation Slices LANDED；W82e–W82h 未施工'));
     assert.ok(index.includes('v0.2 Design Capsule'));
   });
 
