@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "wave": "W82a",
+  "title": "Organizational Kernel, Archaeology and Transition Contract",
+  "recordedAt": "2026-08-19",
+  "status": "FOUNDATION_LANDED",
+  "predecessorRemoteHead": "cc79b98",
+  "scope": {
+    "compilerOwner": "W82",
+    "runtimeOwner": "W73",
+    "agentHarnessOwner": "W66",
+    "externalToolOwner": "W79",
+    "executes": false,
+    "publishes": false,
+    "w82bThroughW82hStarted": false
+  },
+  "artifacts": [
+    {
+      "path": "main/foundation/organizational-kernel.js",
+      "sha256": "3FB2C9B6AAF785164D9F67C0844E54B52CE2B8B8298D7927C68B2236D8781198"
+    },
+    {
+      "path": "tests/fixtures/w82a-organizational-kernel-fixtures.mjs",
+      "sha256": "772B878D79738DFEF9E58C0B81A437B0BAEC9B2CDB9ECF712ECD70FBBE8FC00B"
+    },
+    {
+      "path": "tests/contract/w82a-organizational-kernel.test.mjs",
+      "sha256": "57337293F56BBC2FD99639F321CB191FE57E51DE3A84A66C446628602F1C6BA5"
+    }
+  ],
+  "paperFixtures": [
+    {
+      "domain": "software-release",
+      "status": "READY",
+      "planId": "plan:sha256:11eccc5af3f48d84927462533e9d034860d0f11ea5df86d5c6f5f90ec1498717",
+      "workflowDigest": "b6b2eea88296bfe62bdc47b802ed786f98802e03b63604e3930297896f70ade1",
+      "requestDigest": "0291a70d8d2103e77a32bae7753d290a60d6eadbfc369438a98d0a60dcea401e",
+      "estimatedAmountCny": 200,
+      "executionPerformed": false
+    },
+    {
+      "domain": "research",
+      "status": "READY",
+      "planId": "plan:sha256:3901aacb1cd1b6d9298dae395c3eca12c9b4b28362eebb90c8ed12aae212b363",
+      "workflowDigest": "caad01b110192efdc8deefbb0ccc4197d99561df40cf23fba2f3dfa58e1b3f5b",
+      "requestDigest": "49b827b009c52e16830730b1f8cfaf4b2cf33926898b6444f5a761bceba0ce5e",
+      "estimatedAmountCny": 360,
+      "executionPerformed": false
+    }
+  ],
+  "verification": {
+    "build": {
+      "command": "npm run build",
+      "status": "PASS"
+    },
+    "targetedTestFiles": 11,
+    "targetedAssertions": 81,
+    "failedAssertions": 0,
+    "tests": [
+      "tests/contract/w82a-organizational-kernel.test.mjs",
+      "tests/contract/w69-architecture-intake.test.mjs",
+      "tests/contract/post-w71-architecture-increment.test.mjs",
+      "tests/contract/post-w71-security-evidence-increment.test.mjs",
+      "tests/contract/w66-doctrine-three-engineering-intake.test.mjs",
+      "tests/contract/w72-foundation.test.mjs",
+      "tests/contract/w72d-external-tool-adapter.test.mjs",
+      "tests/contract/w73e-joint-scheduler.test.mjs",
+      "tests/contract/w73g-process-protocol-assets.test.mjs",
+      "tests/contract/w73g-factory-integration.test.mjs",
+      "tests/contract/w79-blender-headless.test.mjs"
+    ],
+    "provenanceAudit": "CURRENT",
+    "diffCheck": "PASS"
+  },
+  "knownNonBlockingWarnings": [
+    "npm reports deprecated project-level Electron mirror config names",
+    "some adjacent ESM tests report MODULE_TYPELESS_PACKAGE_JSON"
+  ],
+  "stopLine": "W82a proves a pure compiler kernel and two paper fixtures only. W82b-W82h, real workflow execution, UI, Hub publication, nested delegation runtime, and Sample D/E remain unstarted."
+}

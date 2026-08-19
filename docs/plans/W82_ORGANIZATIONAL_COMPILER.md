@@ -1,9 +1,10 @@
 # W82 Organizational Compiler
 ## Production Organization Compiler / 生产组织编译器
 
-> 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
-> 版本：v0.5
+> 状态：`W82a FOUNDATION LANDED / W82b–W82h NOT STARTED`
+> 版本：v0.6
 > 登记日期：2026-08-18
+> W82a 落地日期：2026-08-19
 > 基础材料：维护者《Media Production Workflows / Industry Workflow Compiler 增量》，SHA-256 `92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679`
 > 升格材料：维护者《Production Organization Compiler / Organizational Compiler 增量》，SHA-256 `EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E`
 > 技术补遗：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
@@ -13,6 +14,8 @@
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
 
 ## 0. 升格结论
+
+W82a 已按维护者独立批准落地纯 Foundation：严格 Workflow Package / Compile Request / Execution Plan、组织考古、Staffing/Delegation 硬边界、Artifact DAG、显式人工 Routing、Authority Separation、Evidence-backed Transition 与 Expert Capability Composition。软件发布和实证研究只作为同一内核的纸面 fixture，不执行进程、不发布产品，也不等于 W82b/W82c vertical slice 已施工。实现与证据见 [`W82A_ORGANIZATIONAL_KERNEL_SPEC.md`](../engineering/W82A_ORGANIZATIONAL_KERNEL_SPEC.md) 和 [`W82A_ORGANIZATIONAL_KERNEL_CHECKPOINT_2026-08-19.md`](../engineering/W82A_ORGANIZATIONAL_KERNEL_CHECKPOINT_2026-08-19.md)。
 
 媒体只是最容易看懂 Factory 威力的 acceptance domain；“从灵感做到动画、游戏”仍是重要样本，但不再定义 W82 的上限。W82 的真实对象升格为：
 
@@ -472,6 +475,8 @@ Workflow 排名属于 W69k/l 市场视图：比较“完成某类交付物的生
 
 ### W82a — Organizational Kernel, Archaeology & Transition Contract
 
+状态：`FOUNDATION LANDED`。以下项已由纯函数内核和契约测试冻结；运行事实仍归 W73，Agent Harness 归 W66，外部工具执行归 W79。
+
 - 冻结三工程边界与 `Seat → Staffing/Delegation → Executor → Harness → Tool` 关系；
 - 冻结 Sub-Agent/Child Seat 判定、Work Package、delegation depth/cycle/provenance/cost/liability/qualification/authority contract；
 - 冻结 Goal/Constraint/Asset/Method/Budget 输入与 Team/Seat/Artifact/Gate/Authority/Executor/Routing/Recovery 输出；
@@ -637,6 +642,6 @@ Sample E 未通过，不得使用“Organizational Compiler”“跨行业数字
 
 ## 16. 当前停止线
 
-本文件只完成 W82 v0.5 Design Capsule、W69 第六柱/AI Market 接口、三工程边界、Staffing/Delegation Contract、Evidence-backed State Transition、Expert Capability Composition 与施工拆波。不得据此引入模型、外部工具、后台服务、Workflow Runtime、嵌套 Delegation Runtime、专家资产市场、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
+本文件已完成 W82 v0.6 Design Capsule 与 W82a 纯 Foundation。W82a 只编译组织计划并评估证据跃迁，不执行模型、外部工具、后台服务、Workflow Runtime、嵌套 Delegation Runtime、专家资产市场、软件发布/研究/动画/游戏入口、跨行业 Worker Market、物理 Executor 或公共市场。
 
-下一步只允许在 W71 RC 后经维护者独立批准，先冻结 W82a Organizational Kernel/Archaeology ADR；不得直接从“做成动画”“发布 repo”或“生成研究报告”按钮开工。
+W82b–W82h 仍未施工，必须继续服从跨波次真源和维护者独立批准。不得把双领域纸面 fixture 反写为真实软件发布/研究生产线，更不得直接从“做成动画”“发布 repo”或“生成研究报告”按钮开工。
