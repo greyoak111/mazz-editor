@@ -34,6 +34,7 @@
   .state.warn { border-color:#d97706; color:#b45309; }
   .state.ok { border-color:#16865a; color:#16865a; }
   .empty { color:var(--fg-dim); text-align:center; padding:40px 0; line-height:2; }
+  .boundary { margin:0 16px 8px; padding:7px 9px; border:1px solid #d97706; border-radius:7px; color:#b45309; font-size:11px; background:color-mix(in srgb,#d97706 8%,transparent); }
 </style></head><body>
 <div class="pwin">
   <div class="p-drag"></div>
@@ -43,6 +44,7 @@
     <span class="note">插件默认隔离；只运行已按内容哈希授权的版本</span>
     <button class="btn" id="install">＋ 安装插件</button>
   </div>
+  <div class="boundary">Preview 边界：当前只提供整包 SHA-256 信任与内容变化撤权；声明权限不是进程级沙箱。插件会在受信任的应用渲染环境中执行，只授权你能审计且信任来源的代码。</div>
   <main id="m" class="ps-scroll-y"><div class="empty">加载中…</div></main>
 </div>
 <script>

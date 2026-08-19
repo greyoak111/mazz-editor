@@ -36,13 +36,16 @@ async function saveToWorkspace(blob, name, ext) {
 }
 
 /** 通用录制器封装 */
-class Recorder {
-  constructor(stream, { name, fps = 10, outFormat = 'webm' }) {
+export class Recorder {
+  constructor(stream, { name, fps = 10, outFormat = 'webm', maxBytes = 1024 * 1024 * 1024, maxDurationMs = 2 * 60 * 60 * 1000 }) {
     this.stream = stream;
     this.name = name;
     this.mime = pickMime();
     this.ext = outFormat === 'mp4' ? 'mp4' : 'webm'; // 录制容器恒为 webm；mp4 由转码产出
     this.chunks = [];
+    this.maxBytes = maxBytes;
+    this.maxDurationMs = maxDurationMs;
+    this._stopping = false;
     this.t0 = 0; // 录制起点（duration 修复用）
     this.rec = this.mime ? new MediaRecorder(stream, { mimeType: this.mime, videoBitsPerSecond: 5_000_000 }) : null;
   }
@@ -50,7 +53,15 @@ class Recorder {
     if (!this.rec) return false;
     this.t0 = Date.now();
     this.bytes = 0; // 已收数据量（看门狗与 E2E 断言用）
-    this.rec.ondataavailable = (e) => { if (e.data?.size) { this.chunks.push(e.data); this.bytes += e.data.size; } };
+    this.rec.ondataavailable = (e) => {
+      if (!e.data?.size) return;
+      this.chunks.push(e.data);
+      this.bytes += e.data.size;
+      if (this.bytes >= this.maxBytes && this.rec?.state === 'recording') {
+        toast('录制达到 1 GiB 内存安全上限，已停止并保存当前内容', [], 6000);
+        this.stop();
+      }
+    };
     this.rec.onstop = async () => {
       let blob = new Blob(this.chunks, { type: this.mime });
       try {
@@ -72,6 +83,12 @@ class Recorder {
       this.onstop?.();
     };
     this.rec.start(1000);
+    this._durationTimer = setTimeout(() => {
+      if (this.rec?.state === 'recording') {
+        toast('录制达到 2 小时安全上限，已停止并保存当前内容', [], 6000);
+        this.stop();
+      }
+    }, this.maxDurationMs);
     // 字节看门狗：2.5s 仍零数据=采集链路断流（后台节流掐帧/采集被拒），立即报因并停录——
     // 绝不再闷头空转半小时最后赏用户一个 0KB 文件
     this._watchdog = setTimeout(() => {
@@ -84,9 +101,13 @@ class Recorder {
     return true;
   }
   stop() {
+    if (this._stopping) return false;
+    this._stopping = true;
     clearTimeout(this._watchdog);
+    clearTimeout(this._durationTimer);
     try { this.rec?.state !== 'inactive' && this.rec.stop(); } catch {}
     this.stream.getTracks().forEach(t => t.stop());
+    return true;
   }
 }
 
@@ -99,27 +120,59 @@ export async function startCanvasRecorder(canvas, { name } = {}) {
 }
 
 /** 音频混音：系统音（loopback，可选）+ 麦克风（可选） */
-async function mixAudio({ systemStream, micOn, sysOn }) {
+export async function mixAudio({ systemStream, micOn, sysOn }) {
   const ctx = new AudioContext();
   const dest = ctx.createMediaStreamDestination();
+  const ownedStreams = [];
+  const nodes = [];
   let sources = 0;
   if (sysOn && systemStream?.getAudioTracks().length) {
-    ctx.createMediaStreamSource(new MediaStream(systemStream.getAudioTracks())).connect(dest);
+    const node = ctx.createMediaStreamSource(new MediaStream(systemStream.getAudioTracks()));
+    node.connect(dest); nodes.push(node);
     sources++;
   }
   if (micOn) {
     try {
       const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-      ctx.createMediaStreamSource(mic).connect(dest);
+      ownedStreams.push(mic);
+      const node = ctx.createMediaStreamSource(mic);
+      node.connect(dest); nodes.push(node);
       sources++;
     } catch { toast('麦克风不可用，已仅录画面'); }
   }
   // 零音源绝不挂空目标轨：裸 MediaStreamAudioDestinationNode（无输入）不产任何样本，
   // MediaRecorder(vp9,opus) 死等每轨首样本才开混流——整条录制被它噎成零字节（自录零数据真凶，
   // 变量隔离实验实锤：同画布同编码，挂空轨 bytes=0，不挂 6KB+）
-  if (!sources) { ctx.close().catch(() => {}); return { ctx: null, stream: new MediaStream() };
+  if (!sources) { ctx.close().catch(() => {}); return { ctx: null, stream: new MediaStream(), stop: async () => {} };
   }
-  return { ctx, stream: dest.stream };
+  let stopped = false;
+  return {
+    ctx,
+    stream: dest.stream,
+    stop: async () => {
+      if (stopped) return false;
+      stopped = true;
+      for (const node of nodes) { try { node.disconnect(); } catch {} }
+      for (const owned of ownedStreams) for (const track of owned.getTracks()) { try { track.stop(); } catch {} }
+      try { await ctx.close(); } catch {}
+      return true;
+    },
+  };
+}
+
+export async function captureWithDeadline(factory, timeoutMs = 60_000) {
+  let expired = false;
+  let timer = null;
+  const pending = Promise.resolve().then(factory).then(stream => {
+    if (expired && stream) stream.getTracks?.().forEach(track => { try { track.stop(); } catch {} });
+    if (expired) throw Object.assign(new Error('录屏权限等待超时'), { code: 'REC_CAPTURE_TIMEOUT' });
+    return stream;
+  });
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => { expired = true; reject(Object.assign(new Error('录屏权限等待超过 60 秒'), { code: 'REC_CAPTURE_TIMEOUT' })); }, timeoutMs);
+  });
+  try { return await Promise.race([pending, timeout]); }
+  finally { clearTimeout(timer); }
 }
 
 /** 字幕轨：语音识别实时转写（Web Speech，每句带时间戳） */
@@ -211,7 +264,7 @@ async function captureSource(src, wantAudio) {
   // 授权推送与消费同处一函数，杜绝陈旧授权串源错录（旧实现由对话框预推全部源，自录源不入队即残留）
   try {
     await window.mazz.invoke('rec:useSource', { id: src.id, audio: wantAudio });
-    const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: wantAudio });
+    const s = await captureWithDeadline(() => navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: wantAudio }));
     if (wantAudio && !s.getAudioTracks().length) toast('系统内音不可用，已仅录画面');
     return s;
   } catch {}
@@ -219,17 +272,17 @@ async function captureSource(src, wantAudio) {
   if (wantAudio) {
     try {
       await window.mazz.invoke('rec:useSource', { id: src.id, audio: false });
-      const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false });
+      const s = await captureWithDeadline(() => navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false }));
       toast('系统内音捕获失败，已降级为仅录画面');
       return s;
     } catch {}
   }
   // 三级：Electron 官方 desktopCapturer 经典通路（getUserMedia + chromeMediaSource，全版本兼容）
   try {
-    return await navigator.mediaDevices.getUserMedia({
+    return await captureWithDeadline(() => navigator.mediaDevices.getUserMedia({
       audio: false,
       video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: src.id, maxFrameRate: 15 } },
-    });
+    }));
   } catch {}
   toast(`「${src.name}」画面捕获失败（检查系统录屏权限设置后重试）`, [], 5000);
   return null;
@@ -250,9 +303,14 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
     captures.push({ src, stream });
   }
   // 混音（系统内音取第一路真实采集流；自录虚拟源无流）
-  const { ctx: audioCtx, stream: audioStream } = await mixAudio({
-    systemStream: captures.find(c => c.stream)?.stream, micOn: micAudio, sysOn: sysAudio,
-  });
+  let audio;
+  try {
+    audio = await mixAudio({ systemStream: captures.find(c => c.stream)?.stream, micOn: micAudio, sysOn: sysAudio });
+  } catch (error) {
+    cleanup();
+    throw error;
+  }
+  const { stream: audioStream } = audio;
 
   // 字幕轨：外部语音识别（可选，停止时单独存 .srt 一轨）
   let subTrack = null;
@@ -281,7 +339,7 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
       }
     }
     cleanup(); // 放掉全部采集轨（loopback 系统音/麦克风指示灯的泄露防线——旧实现停录后轨不灭）
-    setTimeout(() => audioCtx?.close?.().catch(() => {}), 600); // 等末段音频冲刷完再回收（零音源时 audioCtx 为 null）
+    setTimeout(() => audio.stop().catch(() => {}), 600); // 等末段音频冲刷完再回收，并显式停麦克风轨
   };
 
   // —— 直录路径（单源原速）：WebRTC 桌面采集轨由浏览器进程推帧，不经渲染器合成器/画布——
@@ -292,8 +350,9 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
     for (const t of audioStream.getAudioTracks()) stream.addTrack(t);
     const r = new Recorder(stream, { name: name || '全局内录', outFormat });
     const rawStop = r.stop.bind(r);
-    r.stop = async () => { await finalizeStop(); rawStop(); };
-    if (!r.start()) { try { subTrack?.stop(); } catch {} cleanup(); return null; }
+    let finalizing = false;
+    r.stop = async () => { if (finalizing) return false; finalizing = true; await finalizeStop(); return rawStop(); };
+    if (!r.start()) { try { subTrack?.stop(); } catch {} cleanup(); await audio.stop(); return null; }
     return r;
   }
 
@@ -352,7 +411,7 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
   const r = new Recorder(stream, { name: name || '全局内录', outFormat });
   // 采集存活检测：DXGI 全屏复制在部分显卡/驱动上整段失败（错误 0x887A0026 键控互斥已弃用），
   // 1.5s 后全部视频源仍无帧 → 明确报因并给出路，不闷头录一坨黑
-  setTimeout(() => {
+  const healthTimer = setTimeout(() => {
     const alive = videos.some(v => v.readyState >= 2 && (v.videoWidth > 0 || v.naturalWidth > 0)); // naturalWidth 兼容自录 img 源
     if (!alive) {
       toast('画面采集失败：全屏源被这台机器的显卡/DXGI 拒绝（Windows 已知兼容问题）——请改用「窗口」源录制，或更新显卡驱动后重试', [], 6000);
@@ -361,11 +420,14 @@ export async function startScreenRecorder({ sources, speed = 3, sysAudio = true,
   }, 1500);
   const rawStop = r.stop.bind(r);
   r.stop = async () => {
+    if (r._mazzFinalizing) return false;
+    r._mazzFinalizing = true;
+    clearTimeout(healthTimer);
     clearInterval(timer);
     videos.forEach(v => { v._stop?.(); v.srcObject = null; }); // _stop 停自录帧轮询
     await finalizeStop();
-    rawStop();
+    return rawStop();
   };
-  if (!r.start()) { try { subTrack?.stop(); } catch {} clearInterval(timer); videos.forEach(v => { v._stop?.(); v.srcObject = null; }); cleanup(); return null; }
+  if (!r.start()) { try { subTrack?.stop(); } catch {} clearTimeout(healthTimer); clearInterval(timer); videos.forEach(v => { v._stop?.(); v.srcObject = null; }); cleanup(); await audio.stop(); return null; }
   return r;
 }

@@ -16,8 +16,8 @@ export const PRODUCT_CAPABILITIES = Object.freeze({
   feed: Object.freeze({ maturity: MATURITY.FORMAL, label: '素材订阅' }),
   agent: Object.freeze({ maturity: MATURITY.HIDDEN, label: 'Agent 执行器整合', foundation: 'internal' }),
   dmhy: Object.freeze({ maturity: MATURITY.FORMAL, label: '四站聚合检索与下载' }),
-  recorder: Object.freeze({ maturity: MATURITY.PREVIEW, label: '全局内录' }),
-  plugins: Object.freeze({ maturity: MATURITY.PREVIEW, label: '插件系统' }),
+  recorder: Object.freeze({ maturity: MATURITY.PREVIEW, label: '全局内录', gate: 'PREVIEW_SETTLED', boundary: 'device-and-display-matrix' }),
+  plugins: Object.freeze({ maturity: MATURITY.PREVIEW, label: '插件系统', gate: 'PREVIEW_SETTLED', boundary: 'trusted-renderer-code', permissionsEnforced: false }),
   ocr: Object.freeze({ maturity: MATURITY.FORMAL, label: '图片文字识别' }),
   archive: Object.freeze({ maturity: MATURITY.FORMAL, label: '压缩包' }),
   // GPL core 的完整 corresponding-source 尚未恢复。封板发行物不携带 core，

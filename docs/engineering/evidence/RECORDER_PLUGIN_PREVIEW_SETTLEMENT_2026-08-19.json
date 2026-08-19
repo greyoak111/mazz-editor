@@ -1,0 +1,16 @@
+{
+  "schema": "mazz.engineering-evidence/v0",
+  "capturedAt": "2026-08-19T00:00:00.000Z",
+  "status": "PREVIEW_SETTLED",
+  "recorder": {
+    "limits": { "permissionWaitMs": 60000, "durationMs": 7200000, "bufferBytes": 1073741824 },
+    "validation": "3/3 PASS",
+    "remaining": ["real device permission matrix", "RDP/virtual display", "two-hour soak", "disk exhaustion"]
+  },
+  "plugins": {
+    "runtimeBoundary": "trusted-renderer-code",
+    "permissionsEnforced": false,
+    "validation": "3/3 PASS",
+    "remaining": ["process sandbox", "signature", "publisher identity"]
+  }
+}
