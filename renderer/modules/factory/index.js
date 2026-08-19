@@ -38,12 +38,16 @@ import {
   saveFactoryRunConvergenceCheckpoint,
 } from './runtime-convergence.js';
 import { productText } from './terms.js';
+import {
+  createArtifactRevision, createFactoryFeedEnvelope, normalizeFactoryUsageRecord,
+} from './bridge-runtime.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
 
 const TASKS_KEY = 'mazz.factory.tasks';
 const HISTORY_KEY = 'mazz.factory.history';
 const AUTO_PREVIEW_KEY = 'mazz.factory.autoPreview';
 const CONCURRENCY_KEY = 'mazz.factory.concurrency';
+const PROVIDER_USAGE_KEY = 'mazz.factory.providerUsage.v0';
 const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const W74A_INGESTION_REQUEST_SCHEMA = 'mazz.ingestion-request/v0';
@@ -104,6 +108,7 @@ export class FactoryPanel {
     this.styleIds = new Set();    // 勾选的文风素材 id
     this.styles = [];             // 全部文风素材
     this.embeds = [];             // 嵌入资料 [{name, text, note}]
+    this.providerUsage = this.loadJSON(PROVIDER_USAGE_KEY, []); // Provider 原样回供；不把估算冒充实收
     this.researchPrepared = null; // W62 M0 取材状态；必须经人工勾选才可投喂创作链
     this.researchSelected = new Set();
     this.researchStatus = '';
@@ -125,6 +130,7 @@ export class FactoryPanel {
       this.pushSnapshot();
     };
     this.beforeUnloadListener = () => this.dispose();
+    this.aiUsageOff = window.mazz?.on?.('factory:aiUsage', payload => { this.recordProviderUsage(payload).catch(error => console.warn('[factory-usage]', error.message)); });
     window.addEventListener('mazz:factory-task-updated', this.taskUpdateListener);
     window.addEventListener('beforeunload', this.beforeUnloadListener, { once: true });
     this.render();
@@ -161,6 +167,8 @@ export class FactoryPanel {
     this.requestStopAll('factory-dispose');
     window.removeEventListener('mazz:factory-task-updated', this.taskUpdateListener);
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
+    this.aiUsageOff?.();
+    this.aiUsageOff = null;
     const pendingTasks = [...this.taskSettlements.values()];
     this.disposePromise = (async () => {
       const cleanupErrors = [];
@@ -882,6 +890,61 @@ export class FactoryPanel {
       this.updateExtraBadge();
       this.log(`已嵌入资料：${p.split(/[\\/]/).pop()}（${text.length} 字）`);
     } catch (e) { toast('嵌入失败：' + e.message); }
+  }
+
+  async feedAssetPath(filePath, { requestedBy = 'human:maintainer' } = {}) {
+    const p = String(filePath || '').trim();
+    if (!p) { toast('请先打开或在文件树选中一个可投喂文件'); return false; }
+    try {
+      const stat = await window.mazz.invoke('fs:stat', { path: p });
+      if (!stat?.exists || stat.isDir) throw new Error('目标不是可读取文件');
+      const { extractText } = await import('./style-studio.js');
+      let text = await extractText(p);
+      if (!String(text).trim()) throw new Error('没有提取到可投喂文本');
+      if (text.length > 8000) text = text.slice(0, 8000) + '\n[预览截断至8000字；立项时由 W74a 从 sourcePath 重读全文]';
+      const envelope = createFactoryFeedEnvelope({ assetPath: p, title: p.split(/[\\/]/).pop(), requestedBy });
+      if (!this.embeds.some(row => row.feedEnvelope?.envelopeId === envelope.envelopeId)) {
+        this.embeds.push({
+          assetId: envelope.assetId, name: envelope.title, text,
+          sourcePath: p, sourceKind: envelope.sourceKind, provenanceSource: envelope.provenanceSource,
+          layer: materialLayerForPath(p), importedAt: envelope.observedAt, feedEnvelope: envelope,
+        });
+      }
+      this.renderEmbeds();
+      this.updateExtraBadge();
+      this.shell?.sideDock?.showTab?.('factory');
+      this.log(`已投喂为项目材料：${envelope.title}；未自动立项、未自动开工`);
+      toast('已加入智能创作材料；仍须由你手动立项或启动');
+      return envelope;
+    } catch (error) {
+      toast(`投喂失败：${error.message || error}`);
+      return false;
+    }
+  }
+
+  async recordProviderUsage(payload = {}) {
+    if (!payload?.totalTokens) return false;
+    const taskIds = [...this.runningTasks];
+    const task = taskIds.length === 1 ? this.tasks.find(row => row.id === taskIds[0]) : null;
+    const record = normalizeFactoryUsageRecord({
+      kind: 'provider-reported', taskRef: task?.id || 'unassigned:concurrent-or-nontask',
+      inputTokens: payload.inputTokens, outputTokens: payload.outputTokens, totalTokens: payload.totalTokens,
+      modelRef: payload.model, providerRef: 'openai-compatible', sourceRef: payload.sourceRef || `provider-response:${payload.requestId || 'unknown'}`,
+      observedAt: payload.observedAt, evidenceRefs: [payload.sourceRef || `provider-response:${payload.requestId || 'unknown'}`],
+    });
+    if (this.providerUsage.some(row => row.usageId === record.usageId)) return record;
+    this.providerUsage = [...this.providerUsage, record].slice(-5000);
+    this.saveJSON(PROVIDER_USAGE_KEY, this.providerUsage);
+    if (task?.folder) {
+      const costPath = `${String(task.folder).replace(/\\/g, '/')}/成本台账.json`;
+      let costs = { protocol: W68_PROTOCOL, units: [], usageRecords: [] };
+      try { costs = JSON.parse(await readOptionalFile(costPath)) || costs; } catch {}
+      if (!Array.isArray(costs.usageRecords)) costs.usageRecords = [];
+      if (!costs.usageRecords.some(row => row.usageId === record.usageId)) costs.usageRecords.push(record);
+      await window.mazz.invoke('fs:writeFile', { path: costPath, content: JSON.stringify(costs, null, 2) });
+      window.dispatchEvent(new CustomEvent('mazz:factory-workshop', { detail: { taskId: task.id, folder: task.folder, path: costPath } }));
+    }
+    return record;
   }
 
   renderEmbeds() {
@@ -2439,6 +2502,8 @@ export class FactoryPanel {
     let text = String(content ?? '');
     if (!target || !text.trim()) { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '文件路径或内容无效' }); return false; }
     if (task.status === 'running') { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '任务生成中，暂不允许回写' }); return false; }
+    const originalTarget = target;
+    const beforeText = await readOptionalFile(target).catch(() => '');
     if (task.reviewProtocol === W68_PROTOCOL && /\/工件\//.test(target.replace(/\\/g, '/'))) {
       this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '交叉审校产物已封存为只读；更正请对正文另立补遗' });
       return false;
@@ -2450,13 +2515,30 @@ export class FactoryPanel {
       const editorCtx = this.editorTasks.get(taskId || instanceId); if (editorCtx) editorCtx.path = target;
     }
     await window.mazz.invoke('fs:writeFile', { path: target, content: text });
+    const revision = createArtifactRevision({
+      taskId: task.id, path: target, before: beforeText, after: text,
+      authorityRef: 'human:factory-editor', reviewStatus: task.reviewState?.finalStatus || task.finalDecision || task.status,
+    });
+    if (revision.changed) {
+      const revisionPath = `${task.folder}/工件修订台账.ndjson`;
+      const ledger = await readOptionalFile(revisionPath).catch(() => '');
+      await window.mazz.invoke('fs:writeFile', { path: revisionPath, content: `${String(ledger).trimEnd()}${ledger ? '\n' : ''}${JSON.stringify({ ...revision, sourcePath: originalTarget })}\n` });
+      task.reviewState = { ...(task.reviewState || {}), finalStatus: revision.nextReviewStatus, revisionId: revision.revisionId };
+      task.finalDecision = 're-review-required';
+      await this.appendWorkshop(task, normalizeFactoryEvent({
+        id: `factory-revision-${revision.revisionId}`, type: 'review', title: '工件人工修订 · 等待重审',
+        content: `保存后差异已登记；此前入库/审校结论不再沿用。\n\n\`\`\`diff\n${revision.diff}\n\`\`\``,
+        stage: 'artifact-revision', tone: 'disagreement', artifactPath: target,
+        card: { kind: 'artifact-revision', revisionId: revision.revisionId, reviewRequired: true, beforeHash: revision.beforeHash, afterHash: revision.afterHash },
+      }));
+    }
     const previous = task.manualRevision || {};
-    task.manualRevision = { count: (previous.count || 0) + 1, lastAt: Date.now(), path: target };
+    task.manualRevision = { count: (previous.count || 0) + 1, lastAt: Date.now(), path: target, revisionId: revision.revisionId, reviewRequired: revision.reviewRequired };
     task.revised = true;
     const statePath = `${task.folder}/${task.outputProtocol === 'W60b' || /(^|[\\/])Output([\\/]|$)/i.test(task.folder) ? '任务状态.json' : 'task_state.json'}`;
     let state = {};
     try { state = JSON.parse(await window.mazz.invoke('fs:readFile', { path: statePath })); } catch {}
-    await writeTaskState(task.folder, { ...state, id: task.id, title: task.label, genreId: task.genreId, status: state.status || task.status || 'done', values: task.values, manualRevision: task.manualRevision });
+    await writeTaskState(task.folder, { ...state, id: task.id, title: task.label, genreId: task.genreId, status: state.status || task.status || 'done', values: task.values, manualRevision: task.manualRevision, reviewState: task.reviewState, finalDecision: task.finalDecision });
     this.persistTasks();
     const files = await this.previewFiles(task.folder, target, 'done');
     this.previewPush(task.id, { type: 'factoryPreviewSynced', path: target, content: text, files, revisionCount: task.manualRevision.count });
@@ -3577,7 +3659,11 @@ export function registerFactoryExtras(commands) {
   commands.register('factory.rewrite', { title: '智能改写', icon: '✍', group: '智能创作', when: "module=='markdown' && hasSelection", run: () => rewriteSelected('改写') });
   commands.register('factory.expand', { title: '智能扩写', icon: '➕', group: '智能创作', when: "module=='markdown' && hasSelection", run: () => rewriteSelected('扩写') });
   menus.contribute('editor/context', [
+    { command: 'factory.feedActiveAsset', title: '喂给智能创作（仅加入材料）', group: '1_factory' },
     { command: 'factory.rewrite', title: '智能改写', when: "module=='markdown' && hasSelection", group: '2_format' },
     { command: 'factory.expand', title: '智能扩写', when: "module=='markdown' && hasSelection", group: '2_format' },
+  ]);
+  menus.contribute('fileTree/file', [
+    { command: 'factory.feedActiveAsset', title: '喂给智能创作（仅加入材料）', group: '2_factory' },
   ]);
 }

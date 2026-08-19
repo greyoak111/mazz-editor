@@ -131,10 +131,19 @@ function createEditor(container, initialText) {
     handleDOMEvents: {
       // 拖拽图片文件进编辑器即插入（v33 反馈：插图要拖拽直达）
       dragover(view, event) {
+        if (event.dataTransfer?.types?.includes('application/x-mazz-live-reference')) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; return true; }
         if (event.dataTransfer?.types?.includes('Files')) { event.preventDefault(); return true; }
         return false;
       },
       drop(view, event) {
+        const liveReference = event.dataTransfer?.getData('application/x-mazz-live-reference') || '';
+        if (/^\{\{ref:[^!{}\r\n]+![^{}\r\n]+\}\}$/.test(liveReference.trim())) {
+          event.preventDefault();
+          const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? view.state.selection.from;
+          view.dispatch(view.state.tr.insertText(liveReference.trim(), pos).scrollIntoView());
+          view.focus();
+          return true;
+        }
         const files = [...(event.dataTransfer?.files || [])];
         const imgs = files.filter(f => /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(f.name));
         if (!imgs.length) return false;

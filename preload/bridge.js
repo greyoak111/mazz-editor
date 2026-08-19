@@ -87,7 +87,7 @@ const INVOKE_CHANNELS = new Set([
 const EVENT_CHANNELS = new Set([
   'file:open', 'file:changed', 'file:import', 'command:invoke', 'menu:clicked',
   'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role',
-  'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'library:download',
+  'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'factory:aiUsage', 'library:download',
   'harness:event',
   'workspace:changed', 'window:fullscreen', 'bv:event', 'bv:frame', 'slideRemote:cmd', 'slideRemote:client',
   'panel:changed', 'panel:action', 'panel:push', 'dock:snapHint',

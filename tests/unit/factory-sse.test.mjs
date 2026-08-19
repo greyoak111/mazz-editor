@@ -28,6 +28,15 @@ describe('Factory SSE 解码器', () => {
     assert.equal(result.completionKind, 'finish-reason');
   });
 
+  test('Provider 在 SSE 回供 usage 时原样分离为实收证据', () => {
+    const usages = [];
+    const decoder = new FactorySseDecoder({ onUsage: usage => usages.push(usage) });
+    decoder.push('data: {"choices":[],"usage":{"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}}\n\ndata: [DONE]\n\n');
+    const result = decoder.finish();
+    assert.deepEqual(usages, [{ inputTokens: 12, outputTokens: 8, totalTokens: 20 }]);
+    assert.deepEqual(result.usage, usages[0]);
+  });
+
   test('完整行里的损坏 JSON 不再被静默吞掉', () => {
     const decoder = new FactorySseDecoder();
     assert.throws(() => decoder.push('data: {not-json}\n\n'), /损坏的 SSE JSON/);

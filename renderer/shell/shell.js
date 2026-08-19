@@ -268,6 +268,7 @@ export class Shell {
         { command: 'factory.toggleDock', icon: '🔥', label: '智能创作' },
         { command: 'factory.openDesk', icon: '🏭', label: '智能创作台' },
         { command: 'factory.openOrganization', icon: '⌘', label: '组织编译台' },
+        { command: 'factory.feedActiveAsset', icon: '↥', label: '投喂当前资产' },
         { command: 'factory.copyMantra', icon: '📋', label: '复制模板' },
         { command: 'factory.generate', icon: '⚡', label: '直接生成' },
       ]);
@@ -1630,6 +1631,12 @@ export class Shell {
       palette.open('files');
     } });
     // —— 智能创作（Factory，右侧工具坞承载）——
+    R('factory.feedActiveAsset', { title: '喂给智能创作（仅加入材料）', icon: '↥', group: '智能创作', run: async ({ path: suppliedPath } = {}) => {
+      const path = suppliedPath || this.fileTree.selected?.path || this.tabs.active?.filePath || '';
+      if (!path) { toast('请先打开或在文件树选中一个文件'); return false; }
+      this.sideDock?.showTab?.('factory');
+      return await this.sideDock?.factoryPanel?.feedAssetPath?.(path, { requestedBy: 'human:global-command' });
+    } });
     R('factory.copyMantra', { title: '新建立项并复制模板母版', icon: '📋', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });
     R('factory.generate', { title: '新建立项并开始创作', icon: '⚡', group: '智能创作', run: () => this.sideDock?.factoryPanel?.openProjectWizard() });
     R('factory.runAll', { title: '全部启动创作任务', icon: '▶', group: '智能创作', run: () => this.sideDock?.factoryPanel?.runAllTasks() });

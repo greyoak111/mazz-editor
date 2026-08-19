@@ -1,0 +1,37 @@
+{
+  "schema": "mazz.factory-bridge-runtime-evidence/v0",
+  "ok": true,
+  "feed": {
+    "found": true,
+    "automaticStart": false,
+    "executionAuthorized": false
+  },
+  "revision": {
+    "saved": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-factory-bridge-ws-sQDwBa/Output/FactoryBridge/正文.md",
+    "records": 1,
+    "reviewStatus": "RE_REVIEW_REQUIRED",
+    "flowHasDiff": true
+  },
+  "conflict": {
+    "conflictCard": true,
+    "humanPreserved": true,
+    "aiWritten": false
+  },
+  "mobile": {
+    "schema": "mazz.factory-mobile-approval/v0",
+    "kind": "request",
+    "clientGate": "CONDITIONAL_MOBILE_CLIENT",
+    "fieldClientAvailable": false,
+    "executionAuthorized": false
+  },
+  "dragged": {
+    "inserted": true,
+    "syntax": "{{ref:C:/Users/ADMINI~1/AppData/Local/Temp/mazz-factory-bridge-ws-sQDwBa/Output/FactoryBridge/正文.md!^factory-event-factory-bridge-artifact}}"
+  },
+  "dashboard": {
+    "metrics": 18,
+    "preview": "点目录或卡片文件，在此对照",
+    "economics": true
+  },
+  "pageErrors": []
+}

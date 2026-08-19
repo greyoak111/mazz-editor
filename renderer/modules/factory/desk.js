@@ -1,7 +1,7 @@
 // renderer/modules/factory/desk.js —— W68b Factory Desk：三栏活稿车间正式窗格模块
 import { contextKeys } from '../../core/contextkey-service.js';
 import { iconHtml } from '../../lib/svg-icons.js';
-import { toast } from '../../shell/shell.js';
+import { inputModal, modal, toast } from '../../shell/shell.js';
 import {
   FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, buildFactoryDebateThreads,
   buildFactoryVirtualItems, computeFactoryVirtualWindow, filterFactoryEvents,
@@ -12,6 +12,11 @@ import {
   computeFactoryHealth, evaluateBudgetCap, makeBudgetCard, makeClarificationCard,
   makeDiffConfirmationCard,
 } from './command-gate.js';
+import {
+  FACTORY_LIVE_REF_MIME, classifyInstructionMailbox, createArtifactLiveReference,
+  createMobileApprovalRequest, makeBibleConflictCard, normalizeFactoryUsageRecord,
+  reconcileLockedBible, reconcileMonthlyUsage,
+} from './bridge-runtime.js';
 import { productFileName, productText } from './terms.js';
 
 const MODULE = 'factorydesk';
@@ -105,11 +110,13 @@ function makeRoot(container) {
       </div>
       <label class="fd-search">⌕ <input placeholder="窗内搜索并展开…" spellcheck="false"><span></span></label>
       <button class="fd-icon" data-a="refresh" title="从创作流档案重载">↻</button>
+      <button class="fd-icon" data-a="economics" title="实收、结算、月度对账与配额">¥</button>
+      <button class="fd-icon" data-a="mobile" title="生成手机审批同步包（客户端条件门）">▣</button>
     </header>
     <section class="fd-pins">
       <button class="fd-pin" data-pin="bible"><i>设定集</i><b>等待载入</b><span>—</span></button>
       <button class="fd-pin" data-pin="precedent"><i>先例库</i><b>等待载入</b><span>—</span></button>
-      <button class="fd-stat fd-budget-pin" data-a="budget"><i>成本</i><b data-stat="cost">0</b><span>预算上限</span></button>
+      <button class="fd-stat fd-budget-pin" data-a="budget"><i>成本</i><b data-stat="cost">—</b><span data-stat="cost-note">实收待回供</span></button>
       <div class="fd-stat"><i>退回率</i><b data-stat="return">0%</b><span>已审结单元</span></div>
       <div class="fd-stat"><i>在途</i><b data-stat="flight">0</b><span>项目</span></div>
       <button class="fd-stat fd-health-pin" data-a="health"><i>运行</i><b>7 项</b><span>点开展开</span></button>
@@ -185,15 +192,16 @@ function createDesk(container) {
     const continuation = item.chunkCount > 1 ? `<span class="fd-chunk">${item.chunkIndex + 1}/${item.chunkCount}</span>` : '';
     const progress = e.progress == null ? '' : `<div class="fd-progress"><i style="width:${e.progress}%"></i><span>${e.progress}%</span></div>`;
     if (item.collapsed) return `<article class="fd-card collapsed type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><button class="fd-fold" title="就地展开">›</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time>${progress}</article>`;
-    const resolution = [...ctl.events].reverse().find(row => row.refId === e.id && ['instruction-choice', 'lock-decision', 'final-human', 'budget-decision', 'help-decision'].includes(row.stage));
+    const resolution = [...ctl.events].reverse().find(row => row.refId === e.id && ['instruction-choice', 'lock-decision', 'bible-conflict-decision', 'final-human', 'budget-decision', 'help-decision'].includes(row.stage));
     const resolved = resolution ? `<div class="fd-resolution">已处理：${esc(productText(resolution.title))}</div>` : '';
     let actions = '';
     if (!resolution && e.card?.kind === 'clarify') actions = `<div class="fd-card-actions">${(e.card.options || []).map(option => `<button data-card-action="clarify:${esc(option.id)}">按「${esc(option.label)}」处理</button>`).join('')}</div>`;
     if (!resolution && e.card?.kind === 'diff-confirm') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="diff:confirm">确认写入设定集</button><button data-card-action="diff:reject">拒绝变更</button></div>';
+    if (!resolution && e.card?.kind === 'bible-conflict') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="conflict:human">保留人工版本</button><button class="danger" data-card-action="conflict:ai">以 AI 提案覆盖</button></div>';
     if (!resolution && e.card?.kind === 'final-review') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="final:seal">入库定本</button><button class="danger" data-card-action="final:return">退回修订</button><button data-card-action="final:hold">暂缓</button></div>';
     if (!resolution && e.card?.kind === 'budget') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="budget:degrade">降级继续</button><button class="danger" data-card-action="budget:stop">暂停</button></div>';
     if (!resolution && e.card?.kind === 'help-moment') actions = '<div class="fd-card-actions"><button data-card-action="help:approve">批准升级</button><button data-card-action="help:return">退回修订</button><button data-card-action="help:evidence">要求补证</button></div>';
-    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">⌄</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" data-path="${esc(e.artifactPath)}">产物 ↗ ${esc(productFileName(pathName(e.artifactPath)))}</button>` : ''}${resolved}${actions}</article>`;
+    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">⌄</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" draggable="true" data-path="${esc(e.artifactPath)}" data-live-path="${esc(e.artifactPath)}" title="打开；也可拖入 Markdown 成为块级活引用">产物 ↗ ${esc(productFileName(pathName(e.artifactPath)))}</button>` : ''}${resolved}${actions}</article>`;
   }
 
   function bindCards() {
@@ -202,6 +210,12 @@ function createDesk(container) {
         const id = card.dataset.event; ctl.memory[id] = !card.classList.contains('collapsed'); saveMemory(); rebuildItems(id);
       });
       card.querySelector('[data-path]')?.addEventListener('click', () => openCompare(card.querySelector('[data-path]').dataset.path));
+      card.querySelector('[data-live-path]')?.addEventListener('dragstart', event => {
+        const ref = createArtifactLiveReference({ artifactPath: event.currentTarget.dataset.livePath, eventId: card.dataset.event, label: card.querySelector('header > b')?.textContent || '' });
+        event.dataTransfer.effectAllowed = 'copyLink';
+        event.dataTransfer.setData(FACTORY_LIVE_REF_MIME, ref.syntax);
+        event.dataTransfer.setData('text/plain', ref.syntax);
+      });
       card.querySelector('[data-thread]')?.addEventListener('click', event => { event.stopPropagation(); jumpThread(event.currentTarget.dataset.thread, event.currentTarget.dataset.event); });
       card.querySelectorAll('[data-card-action]').forEach(btn => btn.addEventListener('click', () => performCardAction(card.dataset.event, btn.dataset.cardAction)));
     });
@@ -264,7 +278,17 @@ function createDesk(container) {
       btn.classList.toggle('changed', !!old && old !== hash);
     };
     setPin('bible', bible); setPin('precedent', precedent);
-    root.querySelector('[data-stat=cost]').textContent = Number(costs.totalTokens || 0).toLocaleString();
+    const legacyEstimates = (costs.units || []).map((row, index) => ({
+      kind: 'estimate', taskRef: ctl.task?.id || 'factory-project', totalTokens: Number(row.budget?.usedTokens) || 0,
+      observedAt: row.at || new Date(0).toISOString(), sourceRef: `${ctl.folder}/成本台账.json#unit-${row.unitNo || index + 1}`,
+    })).filter(row => row.totalTokens);
+    ctl.reconciliation = reconcileMonthlyUsage([...(costs.usageRecords || []), ...legacyEstimates], {
+      quotaTokens: costs.monthlyQuotaTokens || null,
+    });
+    const actual = ctl.reconciliation.tokensByKind['provider-reported'];
+    const estimated = ctl.reconciliation.tokensByKind.estimate;
+    root.querySelector('[data-stat=cost]').textContent = actual ? actual.toLocaleString() : '—';
+    root.querySelector('[data-stat=cost-note]').textContent = actual ? `本月实收 · 估算 ${estimated.toLocaleString()}` : `实收待回供 · 估算 ${estimated.toLocaleString()}`;
     const verdictUnits = new Set(ctl.events.filter(e => e.type === 'verdict').map(e => e.unitNo || e.id));
     const returnedUnits = new Set(ctl.events.filter(e => e.tone === 'disagreement' || (e.stage === 'repair' && !/(?:^|\n)\s*-\s*(?:无|本轮未执行)/.test(e.content))).map(e => e.unitNo || e.id));
     root.querySelector('[data-stat=return]').textContent = verdictUnits.size ? `${Math.min(100, Math.round(returnedUnits.size / verdictUnits.size * 100))}%` : '0%';
@@ -273,7 +297,18 @@ function createDesk(container) {
   function renderHealth() {
     const rows = computeFactoryHealth(ctl.events);
     const host = root.querySelector('.fd-health-grid');
-    host.innerHTML = rows.map(row => `<div class="fd-health-metric trend-${row.trend}"><i>${esc(productText(row.label))}</i><b>${esc(row.display)}</b><span>${esc(productText(row.target))}</span><small>${row.trend === 'good' ? '趋势改善' : row.trend === 'bad' ? '趋势需看' : '本周基线'}</small></div>`).join('');
+    const stageMap = {
+      machineReturnRate: ['machine'], reviewReturnRate: ['repair', 'review'], hearingRate: ['hearing'],
+      revisionFirstPassRate: ['repair'], queryEffectivenessRate: ['objection'], evidenceWithdrawalRate: ['answer'],
+      humanInterventionCount: ['final-human', 'help-decision', 'upgrade-human'],
+    };
+    const drillPath = row => [...ctl.events].reverse().find(event => stageMap[row.id]?.includes(event.stage) && event.artifactPath)?.artifactPath || `${ctl.folder}/${FACTORY_ARCHIVE_FILE}`;
+    const metrics = rows.map(row => `<button class="fd-health-metric trend-${row.trend}" data-drill-path="${esc(drillPath(row))}" title="钻取到本指标对应工件或创作流原文"><i>${esc(productText(row.label))}</i><b>${esc(row.display)}</b><span>${esc(productText(row.target))}</span><small>${row.trend === 'good' ? '趋势改善' : row.trend === 'bad' ? '趋势需看' : '本周基线'} · 点开原文</small></button>`);
+    const account = ctl.reconciliation || reconcileMonthlyUsage([]);
+    metrics.push(`<button class="fd-health-metric" data-drill-path="${esc(`${ctl.folder}/成本台账.json`)}"><i>本月 Provider 实收</i><b>${account.tokensByKind['provider-reported'].toLocaleString()}</b><span>估算 ${account.tokensByKind.estimate.toLocaleString()} · 结算凭据 ${Object.keys(account.amountsByKind['settled-actual']).length}</span><small>分栏对账 · 点开原始台账</small></button>`);
+    metrics.push(`<button class="fd-health-metric quota-${account.quota.state}" data-drill-path="${esc(`${ctl.folder}/成本台账.json`)}"><i>月度配额</i><b>${account.quota.state === 'gray' ? '—' : account.quota.remainingTokens.toLocaleString()}</b><span>${account.quota.state === 'gray' ? '未配置/未回供，明确灰显' : `余量 token · ${account.quota.state}`}</span><small>不以 unknown 补零</small></button>`);
+    host.innerHTML = metrics.join('');
+    host.querySelectorAll('[data-drill-path]').forEach(button => button.addEventListener('click', () => openCompare(button.dataset.drillPath)));
   }
 
   async function renderFiles() {
@@ -332,6 +367,63 @@ function createDesk(container) {
     return ctl.task;
   }
 
+  async function writeCosts(costs) {
+    ctl.costs = costs;
+    await window.mazz.invoke('fs:writeFile', { path: `${ctl.folder}/成本台账.json`, content: JSON.stringify(costs, null, 2) });
+    await loadProject({ taskId: ctl.task?.id, folder: ctl.folder });
+  }
+
+  async function openEconomicsDialog() {
+    if (!ctl.folder) return;
+    const account = ctl.reconciliation || reconcileMonthlyUsage(ctl.costs.usageRecords || [], { quotaTokens: ctl.costs.monthlyQuotaTokens || null });
+    const settled = Object.entries(account.amountsByKind['settled-actual']).map(([currency, amount]) => `${currency} ${amount.toFixed(2)}`).join(' / ') || '尚无结算凭据';
+    const m = modal('Factory 成本对账');
+    m.body.innerHTML = `<div style="min-width:420px;display:grid;gap:10px">
+      <div><b>${esc(account.month)} 月度对账</b><p>Provider 实收 ${account.tokensByKind['provider-reported'].toLocaleString()} token；估算 ${account.tokensByKind.estimate.toLocaleString()} token；差额 ${account.estimatedVarianceTokens == null ? '待实收' : account.estimatedVarianceTokens.toLocaleString()}。</p><p>实际结算：${esc(settled)}；unknown ${account.unknownCount} 条保持未知。</p></div>
+      <div><b>配额：${account.quota.state === 'gray' ? '未配置/未回供（灰显）' : `${account.quota.usedTokens.toLocaleString()} / ${account.quota.capTokens.toLocaleString()} token`}</b></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="rb-btn" data-e="ledger">打开原始台账</button><button class="rb-btn" data-e="quota">设置月度配额</button><button class="rb-btn" data-e="settle">登记实际结算</button></div>
+    </div>`;
+    m.body.querySelector('[data-e=ledger]').addEventListener('click', () => { openCompare(`${ctl.folder}/成本台账.json`); m.close(); });
+    m.body.querySelector('[data-e=quota]').addEventListener('click', async () => {
+      const value = await inputModal('月度 Token 配额（留空取消；只影响灰显/告警，不绕过人工 Gate）', String(ctl.costs.monthlyQuotaTokens || ''));
+      if (value == null) return;
+      const quota = Number(value);
+      if (!Number.isFinite(quota) || quota <= 0) { toast('配额必须是正数'); return; }
+      await writeCosts({ ...ctl.costs, monthlyQuotaTokens: quota }); m.close();
+    });
+    m.body.querySelector('[data-e=settle]').addEventListener('click', async () => {
+      const amountText = await inputModal('输入本月已结算实际金额', '');
+      if (amountText == null) return;
+      const amount = Number(amountText);
+      if (!Number.isFinite(amount) || amount < 0) { toast('金额无效'); return; }
+      const currency = await inputModal('币种', 'CNY'); if (!currency) return;
+      const sourceRef = await inputModal('结算凭据编号或本地路径（必填）', ''); if (!sourceRef) return;
+      const record = normalizeFactoryUsageRecord({ kind: 'settled-actual', taskRef: ctl.task?.id || 'factory-project', amount, currency, sourceRef, observedAt: new Date().toISOString(), evidenceRefs: [sourceRef] });
+      const usageRecords = [...(ctl.costs.usageRecords || [])].filter(row => row.usageId !== record.usageId).concat(record);
+      await writeCosts({ ...ctl.costs, usageRecords }); m.close();
+    });
+  }
+
+  async function createMobileApprovalPackage() {
+    if (!ctl.folder || !ctl.task) return false;
+    const resolved = new Set(ctl.events.filter(row => row.refId && ['instruction-choice', 'lock-decision', 'bible-conflict-decision', 'final-human', 'budget-decision', 'help-decision'].includes(row.stage)).map(row => row.refId));
+    const target = [...ctl.events].reverse().find(row => row.card && !resolved.has(row.id));
+    if (!target) { toast('当前没有等待人工裁决的卡片'); return false; }
+    const request = createMobileApprovalRequest({
+      taskId: ctl.task.id, gateId: target.id,
+      artifactRefs: [target.artifactPath, target.card?.targetPath, target.card?.draftPath].filter(Boolean),
+      authorityRequired: 'human:maintainer',
+    });
+    const packagePath = `${ctl.folder}/手机审批包.json`;
+    await window.mazz.invoke('fs:writeFile', { path: packagePath, content: JSON.stringify({
+      ...request,
+      notice: '本地审批协议已落地；Mobile 客户端当前为 CONDITIONAL_MOBILE_CLIENT。仅同步完整且未过期的 human 回执，绝不在桌面端伪造手机审批。',
+    }, null, 2) });
+    await appendEvents(normalizeFactoryEvent({ type: 'system', title: '手机审批包已生成 · 客户端条件门', content: `审批对象：${target.title}\n\n本地包：${packagePath}\n\n客户端状态：**CONDITIONAL_MOBILE_CLIENT**；生成包不等于批准，也不会触发执行。`, stage: 'mobile-approval-package', refId: target.id, artifactPath: packagePath }));
+    toast('手机审批同步包已落盘；当前没有可冒充的真手机客户端');
+    return request;
+  }
+
   async function forwardProduction(text) {
     const panel = window.MazzShell?.sideDock?.factoryPanel;
     if (panel?.agentInputEl) { panel.agentInputEl.value = text; panel.submitAgent?.(); }
@@ -340,14 +432,14 @@ function createDesk(container) {
 
   async function processInstruction(text, { forcedFamily = '', refId = '' } = {}) {
     if (!cleanInstruction(text) || !ctl.folder) return false;
-    const decision = classifyFactoryInstruction(text, { forcedFamily });
+    const decision = classifyInstructionMailbox(text, { forcedFamily });
     if (decision.ambiguous) {
       const card = makeClarificationCard(text, decision.options);
-      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '指令闸 · 请二选一', content: `原话：**${text}**\n\n${decision.reason}。系统不猜，不触发任何生产动作。`, stage: 'instruction-clarify', family: 'ambiguous', refId, card }));
+      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '异步指令邮箱 L1 · 请二选一', content: `原话：**${text}**\n\n${decision.reason}。系统不猜，不触发任何生产动作。`, stage: 'instruction-clarify', family: 'ambiguous', refId, card }));
       return false;
     }
     if (decision.family === 'chat') {
-      await appendEvents(normalizeFactoryEvent({ type: 'system', title: '闲聊收讫 · 零动作', content: `> ${text}\n\n已归为闲聊；**未调用模型、未触发生产、未改动文件**。`, stage: 'instruction-chat', family: 'chat', refId }));
+      await appendEvents(normalizeFactoryEvent({ type: 'system', title: '异步指令邮箱 L0 · 闲聊收讫 · 零动作', content: `> ${text}\n\n已归为闲聊；**未调用模型、未触发生产、未改动文件**。`, stage: 'instruction-chat', family: 'chat', refId }));
       return true;
     }
     if (decision.family === 'legislation') {
@@ -355,11 +447,11 @@ function createDesk(container) {
       const before = await readOptional(targetPath);
       const proposal = buildLockedBibleProposal(before, text);
       const card = makeDiffConfirmationCard({ targetPath, before: proposal.before, after: proposal.after, instruction: text });
-      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '锁定变更 · 等待差异确认', content: `规则指令：**${text}**\n\n\`\`\`diff\n${card.diff}\n\`\`\`\n\n确认前不会写入设定集。`, stage: 'lock-pending', family: 'legislation', refId, card }));
+      await appendEvents(normalizeFactoryEvent({ type: 'help', title: '异步指令邮箱 L2 · 锁定变更待确认', content: `规则指令：**${text}**\n\n\`\`\`diff\n${card.diff}\n\`\`\`\n\n确认前不会写入设定集。`, stage: 'lock-pending', family: 'legislation', refId, card }));
       return false;
     }
     const label = FACTORY_COMMAND_LABELS[decision.family];
-    await appendEvents(normalizeFactoryEvent({ type: 'system', title: `${label}指令 · 已过闸`, content: `> ${text}\n\n分类：**${label}**。${decision.family === 'quality' ? '已登记为独立质检请求，不改正文。' : '已送生产闭集执行。'}`, stage: `instruction-${decision.family}`, family: decision.family, refId }));
+    await appendEvents(normalizeFactoryEvent({ type: 'system', title: `异步指令邮箱 ${decision.level} · ${label}`, content: `> ${text}\n\n分类：**${label}**。${decision.family === 'quality' ? '已登记为独立质检请求，不改正文。' : '本次提交即人工显式派发；没有后台自动开工。'}`, stage: `instruction-${decision.family}`, family: decision.family, refId }));
     if (decision.family === 'production') await forwardProduction(text);
     else toast('质检请求已登记；不会冒充生产指令改稿');
     return true;
@@ -380,7 +472,7 @@ function createDesk(container) {
 
   async function performCardAction(eventId, action) {
     const target = ctl.events.find(e => e.id === eventId);
-    if (!target?.card || ctl.events.some(e => e.refId === eventId && ['instruction-choice', 'lock-decision', 'final-human', 'budget-decision', 'help-decision'].includes(e.stage))) return false;
+    if (!target?.card || ctl.events.some(e => e.refId === eventId && ['instruction-choice', 'lock-decision', 'bible-conflict-decision', 'final-human', 'budget-decision', 'help-decision'].includes(e.stage))) return false;
     const [kind, value] = String(action || '').split(':');
     if (kind === 'clarify') {
       if (!(target.card.options || []).some(option => option.id === value)) return false;
@@ -392,17 +484,32 @@ function createDesk(container) {
       if (value === 'confirm') {
         const currentText = await readOptional(target.card.targetPath);
         if (currentText.trimEnd() !== String(target.card.before || '').trimEnd()) {
-          const proposal = buildLockedBibleProposal(currentText, target.card.instruction);
-          const card = makeDiffConfirmationCard({ targetPath: target.card.targetPath, before: proposal.before, after: proposal.after, instruction: target.card.instruction });
+          const reconciliation = reconcileLockedBible({ base: target.card.before, human: currentText, aiProposal: target.card.after });
+          const card = makeBibleConflictCard({ targetPath: target.card.targetPath, base: target.card.before, human: currentText, aiProposal: target.card.after, instruction: target.card.instruction });
           await appendEvents([
             normalizeFactoryEvent({ type: 'verdict', title: '旧差异已过期', content: '确认期间设定集另有更新，旧提案未写入。', stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }),
-            normalizeFactoryEvent({ type: 'help', title: '设定集已变化 · 差异重新确认', content: `检测到确认期间设定集另有更新，已按当前版本重算。\n\n\`\`\`diff\n${card.diff}\n\`\`\``, stage: 'lock-pending', family: 'legislation', card }),
+            normalizeFactoryEvent({ type: 'help', title: '设定集人机双写冲突 · 等待裁决', content: `检测到人工版本与 AI 提案都偏离共同基线；系统没有覆盖任何一方。\n\n### 人工修改\n\n\`\`\`diff\n${reconciliation.humanDiff}\n\`\`\`\n\n### AI 提案\n\n\`\`\`diff\n${reconciliation.aiDiff}\n\`\`\``, stage: 'bible-conflict', family: 'legislation', tone: 'disagreement', card }),
           ]);
           return false;
         }
         await window.mazz.invoke('fs:writeFile', { path: target.card.targetPath, content: target.card.after });
       }
       await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'confirm' ? '锁定变更已写入设定集' : '锁定变更已拒绝', content: value === 'confirm' ? `设定集已按确认差异写入：${target.card.instruction}` : `设定集保持原样：${target.card.instruction}`, stage: 'lock-decision', family: 'legislation', refId: target.id, tone: 'verdict' }));
+      return true;
+    }
+    if (kind === 'conflict') {
+      if (!['human', 'ai'].includes(value) || target.card.kind !== 'bible-conflict') return false;
+      const currentText = await readOptional(target.card.targetPath);
+      if (currentText !== target.card.human) {
+        toast('设定集在冲突卡生成后再次变化；请刷新并重新发起裁决');
+        return false;
+      }
+      if (value === 'ai') await window.mazz.invoke('fs:writeFile', { path: target.card.targetPath, content: target.card.aiProposal });
+      await appendEvents(normalizeFactoryEvent({
+        type: 'verdict', title: value === 'human' ? '设定集冲突 · 保留人工版本' : '设定集冲突 · 人工批准 AI 提案',
+        content: value === 'human' ? '人工版本保持不变；AI 提案未写入。' : '由 human Authority 明确批准后写入 AI 提案；不是自动覆盖。',
+        stage: 'bible-conflict-decision', family: 'legislation', refId: target.id, tone: 'verdict',
+      }));
       return true;
     }
     if (kind === 'final') {
@@ -460,6 +567,8 @@ function createDesk(container) {
   taskSelect.addEventListener('change', () => loadProject({ taskId: taskSelect.value }));
   root.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
   root.querySelector('[data-a=refresh]').addEventListener('click', () => loadProject({ taskId: ctl.task?.id, folder: ctl.folder }));
+  root.querySelector('[data-a=economics]').addEventListener('click', openEconomicsDialog);
+  root.querySelector('[data-a=mobile]').addEventListener('click', createMobileApprovalPackage);
   root.querySelector('[data-a=close-compare]').addEventListener('click', () => root.classList.toggle('compare-closed'));
   root.querySelector('[data-a=budget]').addEventListener('click', openBudgetCard);
   root.querySelector('[data-a=health]').addEventListener('click', () => { const board = root.querySelector('.fd-health'); board.hidden = !board.hidden; });

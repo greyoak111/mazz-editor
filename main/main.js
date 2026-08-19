@@ -666,6 +666,16 @@ function registerChannels() {
         const fr = data.choices?.[0]?.finish_reason || '未知';
         throw new Error(`AI 返回为空（finish_reason=${fr}；原始片段：${JSON.stringify(data).slice(0, 200)}）`);
       }
+      const usage = data?.usage || {};
+      const inputTokens = Math.max(0, Number(usage.prompt_tokens ?? usage.input_tokens) || 0);
+      const outputTokens = Math.max(0, Number(usage.completion_tokens ?? usage.output_tokens) || 0);
+      const totalTokens = Math.max(0, Number(usage.total_tokens) || inputTokens + outputTokens);
+      if (totalTokens && wm.main && !wm.main.isDestroyed()) {
+        bus.send(wm.main, 'factory:aiUsage', {
+          requestId: req.id, model: String(model || ''), inputTokens, outputTokens, totalTokens,
+          observedAt: new Date().toISOString(), sourceRef: `provider-response:${req.id}`,
+        });
+      }
       return text.trim();
     } catch (error) {
       outcome = req.cancelled ? req.cancelReason : 'failed';
@@ -814,13 +824,20 @@ function registerChannels() {
       if (!resp.ok) throw new Error(await aiReadError(resp));
       const reader = resp.body.getReader();
       req.attachReader(reader);
-      const sse = new FactorySseDecoder({ onDelta: delta => push({ delta }) });
+      let reportedUsage = null;
+      const sse = new FactorySseDecoder({ onDelta: delta => push({ delta }), onUsage: usage => { reportedUsage = usage; } });
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         sse.push(value);
       }
       sse.finish();
+      if (reportedUsage && wm.main && !wm.main.isDestroyed()) {
+        bus.send(wm.main, 'factory:aiUsage', {
+          requestId, model: String(model || ''), ...reportedUsage,
+          observedAt: new Date().toISOString(), sourceRef: `provider-stream:${requestId}`,
+        });
+      }
       push({ done: true });
       return { ok: true, completionKind: sse.completionKind, deltaCount: sse.deltaCount };
     } catch (e) {

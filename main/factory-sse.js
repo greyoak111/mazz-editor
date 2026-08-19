@@ -14,13 +14,15 @@ const extractText = (message) => {
 };
 
 class FactorySseDecoder {
-  constructor({ onDelta = () => {} } = {}) {
+  constructor({ onDelta = () => {}, onUsage = () => {} } = {}) {
     this.onDelta = onDelta;
+    this.onUsage = onUsage;
     this.decoder = new TextDecoder('utf-8');
     this.buffer = '';
     this.completed = false;
     this.completionKind = '';
     this.deltaCount = 0;
+    this.usage = null;
   }
 
   push(chunk) {
@@ -55,6 +57,7 @@ class FactorySseDecoder {
       completed: this.completed,
       completionKind: this.completionKind,
       deltaCount: this.deltaCount,
+      usage: this.usage,
     };
   }
 
@@ -87,6 +90,15 @@ class FactorySseDecoder {
       throw new Error(`AI 流式响应报错：${String(message).slice(0, 300)}`);
     }
     const choice = data?.choices?.[0];
+    if (data?.usage && typeof data.usage === 'object') {
+      const inputTokens = Math.max(0, Number(data.usage.prompt_tokens ?? data.usage.input_tokens) || 0);
+      const outputTokens = Math.max(0, Number(data.usage.completion_tokens ?? data.usage.output_tokens) || 0);
+      const totalTokens = Math.max(0, Number(data.usage.total_tokens) || inputTokens + outputTokens);
+      if (totalTokens) {
+        this.usage = { inputTokens, outputTokens, totalTokens };
+        this.onUsage(this.usage);
+      }
+    }
     const delta = extractText(choice?.delta);
     if (delta) {
       this.deltaCount++;
