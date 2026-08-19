@@ -35,7 +35,7 @@ describe('W71 Native Surface ResourceLedger', () => {
     const source = read('main/main.js');
     assert.equal((source.match(/new ResourceLedger\(\)/g) || []).length, 1);
     assert.ok(/new WindowManager\(\{[\s\S]{0,180}resourceLedger \}\)/.test(source));
-    assert.ok(source.includes('new PanelWindows({ bus, win: () => wm.main, resourceLedger })'));
+    assert.ok(/new PanelWindows\(\{ bus, win: \(\) => wm\.main, resourceLedger, visualComposition \}\)/.test(source));
     assert.ok(/new BrowserViews\([\s\S]{0,180}resourceLedger/.test(source));
     assert.ok(source.includes("wm.trackWindow(win, 'print-worker')"), '临时打印 BrowserWindow 也必须进入账本');
   });

@@ -25,10 +25,12 @@ describe('W71 Wave 0 Census', () => {
     for (const key of ['visual', 'icon', 'theme', 'layout']) assert.ok(data[key].summary.totalFindings > 0, `${key} 应有事实样本`);
   });
 
-  test('Surface 清单只冻结接口，不授权迁移或删除 workaround', () => {
+  test('Surface 清单标明 W87 supersession，但不授权批量 owner 迁移或删除 workaround', () => {
     const data = readJson('.mazz/audit/surface-census.json');
-    assert.equal(data.surfaceV1InterfaceDraft.status, 'DRAFT_ONLY_NO_MIGRATION');
-    assert.match(data.decision, /NO SurfaceManager/);
+    assert.equal(data.surfaceV1InterfaceDraft.status, 'SUPERSEDED_BY_W87_VISUAL_COMPOSITION_V1');
+    assert.equal(data.compositionRuntime.protocol, 'mazz.visual-composition/v1');
+    assert.equal(data.compositionRuntime.resourceOwnershipMigrated, false);
+    assert.equal(data.compositionRuntime.workaroundRemovalAuthorized, false);
     assert.ok(data.workaroundRegister.length >= 9);
     assert.ok(data.workaroundRegister.every(x => x.status === 'KEEP' && x.removalGate));
   });

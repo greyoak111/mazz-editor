@@ -238,7 +238,7 @@ function createBrowser(container) {
     if (!isElectron()) return;
     const fs = ctl._htmlFs && ctl._htmlFs === ctl.activeId; // HTML5 全屏态：视图铺满主窗
     for (const tab of ctl.tabs) {
-      const on = tab.id === ctl.activeId && !ctl._cloaked && !ctl._dragCloak && tab.host?.isConnected; // _dragCloak=拖拽分屏期间强制隐（独立闸——observer 的 mask 真源不覆盖它）
+      const on = tab.id === ctl.activeId && !ctl._dragCloak && tab.host?.isConnected; // 全局弹层遮挡由 VisualCompositionRuntime 在主进程按宿主仲裁；这里只保留拖拽即时闸
       if (!on) { window.mazz.invoke('bv:bounds', { tabId: tab.viewId, visible: false }).catch(() => {}); continue; }
       let r;
       if (fs) r = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
@@ -251,12 +251,6 @@ function createBrowser(container) {
     // 布局跟随：容器尺寸/窗体尺寸变化即重摆
     try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}
     window.addEventListener('resize', syncBounds);
-    // 兜底遮挡隐身（W52 过渡：只认全屏遮罩两件套（modal/帮助），backgroundThrottling:false 加持下关罩即活不再白死——②③波逐类遣散后此闸退役）
-    const cloakCheck = () => {
-      const cloaked = [...document.querySelectorAll('.mazz-palette-mask, .help-mask')].some(el => el.getBoundingClientRect().width > 0);
-      if (cloaked !== ctl._cloaked) { ctl._cloaked = cloaked; syncBounds(); }
-    };
-    new MutationObserver(cloakCheck).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
   }
 
   /** 主页 HTML（主题变量化：明亮/黑暗/跟随系统 + ⚙ 设置面板） */

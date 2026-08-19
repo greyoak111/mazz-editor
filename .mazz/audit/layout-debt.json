@@ -8,17 +8,17 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 619,
-    "filesWithFindings": 63,
+    "totalFindings": 625,
+    "filesWithFindings": 66,
     "byRule": {
       "fixed-width-px": 183,
-      "white-space-nowrap": 120,
+      "white-space-nowrap": 121,
       "position-absolute": 146,
       "fixed-min-width": 80,
-      "sidebar-pixel-coupling": 10,
+      "sidebar-pixel-coupling": 11,
       "fixed-left-right": 30,
       "width-100vw": 8,
-      "resize-js-layout": 22,
+      "resize-js-layout": 26,
       "calc-viewport-or-container": 9,
       "flex-shrink-zero": 11
     },
@@ -124,6 +124,10 @@
         "count": 4
       },
       {
+        "file": "renderer/core/visual-composition.js",
+        "count": 3
+      },
+      {
         "file": "renderer/modules/markdown/index.js",
         "count": 3
       },
@@ -138,17 +142,13 @@
       {
         "file": "renderer/panels/annotate.html",
         "count": 3
-      },
-      {
-        "file": "renderer/panels/ctxmenu.html",
-        "count": 3
       }
     ],
     "byProvisionalClass": {
       "D": 290,
-      "A": 178,
+      "A": 179,
       "B": 80,
-      "E": 41,
+      "E": 46,
       "C": 30
     }
   },
@@ -744,6 +744,27 @@
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
+      "file": "renderer/core/visual-composition.js",
+      "line": 48,
+      "sample": "window.addEventListener('resize', () => this.updateViewportClass(), { passive: true });"
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/core/visual-composition.js",
+      "line": 122,
+      "sample": "if (typeof ResizeObserver === 'function') {"
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/core/visual-composition.js",
+      "line": 123,
+      "sample": "record.resizeObserver = new ResizeObserver(() => {"
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
       "file": "renderer/lib/annotate.js",
       "line": 50,
       "sample": "window.addEventListener('resize', this._placeBar);"
@@ -829,56 +850,56 @@
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 301,
+      "line": 295,
       "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 309,
+      "line": 303,
       "sample": ".htop{position:fixed;top:14px;right:16px;display:flex;gap:6px;align-items:center;z-index:9}"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/browser/index.js",
-      "line": 313,
+      "line": 307,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 313,
+      "line": 307,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 1187,
+      "line": 1181,
       "sample": "<div style=\"font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1189,
+      "line": 1183,
       "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 1327,
+      "line": 1321,
       "sample": "// 幽灵三钩①（页签一切一炸一片实锤）：切回必显——显隐不再靠 ResizeObserver/偶发事件赏饭"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1496,
+      "line": 1490,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:#83817a;margin-top:8px\">到期：${new Date(share.expiresAt).toLocale"
     },
     {
@@ -1124,7 +1145,7 @@
       "provisionalClass": "B",
       "file": "renderer/modules/organization/index.js",
       "line": 29,
-      "sample": ".org-root{height:100%;overflow:auto;padding:22px;background:var(--bg,#171a21);color:var(--fg,#e5e7eb);font:14px/1.5 system-ui}.org-shell{max-width:1180px;margin:auto}.org-head{display:flex;gap:14px;align-items:end;flex-wrap:wrap;padding:18px;border:1px solid #394052;border-radius:12px;background:#20242e}.org-field{disp"
+      "sample": ".org-root{height:100%;overflow:auto;padding:22px;background:var(--bg);color:var(--fg);font:14px/1.5 var(--font-ui)}.org-shell{max-width:1180px;margin:auto}.org-head{display:flex;gap:14px;align-items:end;flex-wrap:wrap;padding:18px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elev);box-shadow:va"
     },
     {
       "rule": "fixed-min-width",
@@ -1403,7 +1424,7 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/panels/ctxmenu.html",
-      "line": 25,
+      "line": 26,
       "sample": ".submenu { position:fixed; z-index:9; background:var(--bg-elev); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.32); padding:5px; min-width:190px; display:none; }"
     },
     {
@@ -1736,6 +1757,13 @@
       "sample": ".kind { min-width:34px; padding:2px 6px; border:1px solid var(--border); border-radius:5px; color:var(--fg-dim); font-size:10.5px; text-align:center; }"
     },
     {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/panels/panel-runtime.js",
+      "line": 10,
+      "sample": "window.addEventListener('resize', updateSize, { passive: true });"
+    },
+    {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/panels/panel-shared.css",
@@ -2019,35 +2047,35 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 333,
+      "line": 335,
       "sample": "<div style=\"min-width:560px;max-width:720px\">"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/shell/shell.js",
-      "line": 339,
+      "line": 341,
       "sample": "<div style=\"font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${s.name}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3400,
-      "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\">✕</button>"
+      "line": 3405,
+      "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3415,
+      "line": 3421,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 3437,
+      "line": 3443,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
@@ -4380,6 +4408,20 @@
       "file": "renderer/styles/base.css",
       "line": 1788,
       "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/convergence.css",
+      "line": 48,
+      "sample": ".titlebar .tb-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
+    },
+    {
+      "rule": "sidebar-pixel-coupling",
+      "provisionalClass": "E",
+      "file": "renderer/styles/convergence.css",
+      "line": 56,
+      "sample": "[data-ui-size=\"xs\"] .sidebar { width: min(82vw, 280px); }"
     },
     {
       "rule": "fixed-min-width",

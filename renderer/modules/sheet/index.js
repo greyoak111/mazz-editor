@@ -32,7 +32,7 @@ function createSheet(container) {
     </div>
     <div class="sg-grid-wrap"></div>
     <div class="sg-tabs"><div class="sg-tab-list"></div><button class="sg-tab-add" title="新建工作表">＋</button></div>
-    <textarea class="sg-capture" aria-hidden="true" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>`;
+    <textarea class="sg-capture" aria-label="当前单元格输入" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>`;
   container.appendChild(root);
   const capture = root.querySelector('.sg-capture');
 

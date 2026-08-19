@@ -23,9 +23,10 @@ describe('七面板全原生子窗格', () => {
   });
   test('kind 白名单+尺寸标题表', () => {
     const pw = readSrc('main/panel-windows.js');
-    for (const k of ['settings', 'agreement', 'help', 'translate', 'plugins', 'quickopen', 'recorder', 'dockfloat']) {
+    for (const k of ['settings', 'agreement', 'help', 'translate', 'plugins', 'recorder', 'dockfloat']) {
       assert.ok(pw.includes(k), `panel-windows 必须认识 ${k}`);
     }
+    assert.ok(!pw.includes("kind === 'quickopen'") && !pw.includes("plugins|quickopen|recorder"), '已被 palette 收编且无 HTML 的 quickopen Surface kind 必须退役');
   });
   test('桥应答全齐', () => {
     const sh = readSrc('renderer/shell/shell.js');

@@ -32,8 +32,12 @@ describe('地基三钉', () => {
     const main = readSrc('main/main.js');
     assert.ok(main.includes('setBackgroundColor(wm.themeBg()'), 'theme:broadcast 必须实时换底色（主题跟随铁律）');
   });
-  test('兜底 cloak 过渡件', () => {
+  test('W87 统一遮挡调度取代局部 cloak', () => {
     const br = readSrc('renderer/modules/browser/index.js');
-    assert.ok(br.includes('cloakCheck') && br.includes('.mazz-palette-mask, .help-mask'), '全屏遮罩两件套兜底必须有（②③波遣散后退役）');
+    assert.ok(!br.includes('cloakCheck') && !br.includes('ctl._cloaked'), 'Browser 私有弹层观察器与状态机必须退役');
+    const rendererVisual = readSrc('renderer/core/visual-composition.js');
+    const mainVisual = readSrc('main/visual-composition.js');
+    assert.ok(rendererVisual.includes("selector: '.mazz-palette-mask'") && rendererVisual.includes('registerOverlay'), 'DOM Overlay 必须登记唯一 Plane');
+    assert.ok(mainVisual.includes('setHostOccluded') && mainVisual.includes('beginOverlay'), '主进程必须按 host 引用计数遮挡原生 Surface');
   });
 });

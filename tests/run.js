@@ -7,6 +7,7 @@ const files = [
   'tests/unit/core.test.mjs',
   'tests/unit/resource-ledger.test.mjs',
   'tests/unit/memory-governor.test.mjs',
+  'tests/unit/visual-composition-kernel.test.mjs',
   'tests/unit/w67-accumulator-budgets.test.mjs',
   'tests/unit/factory-ai-requests.test.mjs',
   'tests/unit/factory-sse.test.mjs',
@@ -101,6 +102,7 @@ const files = [
   'tests/contract/w71-monaco-lifecycle.test.mjs',
   'tests/contract/w71-plugin-trust.test.mjs',
   'tests/contract/w71-overlay-zorder.test.mjs',
+  'tests/contract/w87-ui-convergence.test.mjs',
   'tests/contract/w71-native-binary-audit.test.mjs',
   'tests/contract/w71-census.test.mjs',
   'tests/contract/hotfix-w59c.test.mjs',
@@ -223,11 +225,12 @@ const files = [
   'tests/roundtrip/pptx.test.mjs',
 ];
 
-let failed = 0;
+const failedFiles = [];
 for (const f of files) {
   console.log(`\n━━━ ${f} ━━━`);
   const r = spawnSync(process.execPath, [path.join(__dirname, '..', f)], { stdio: 'inherit' });
-  if (r.status !== 0) failed++;
+  if (r.status !== 0) failedFiles.push(f);
 }
-console.log(`\n═══ 总计：${files.length - failed}/${files.length} 个测试文件通过 ═══`);
-process.exit(failed ? 1 : 0);
+console.log(`\n═══ 总计：${files.length - failedFiles.length}/${files.length} 个测试文件通过 ═══`);
+if (failedFiles.length) console.log(`失败文件：\n${failedFiles.map(file => `  - ${file}`).join('\n')}`);
+process.exit(failedFiles.length ? 1 : 0);

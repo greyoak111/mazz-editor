@@ -9,21 +9,23 @@ class BrowserViews {
   // theme:broadcast 句柄与装配点不在同一函数体，局部 const 必 ReferenceError（真机实锤）
   static all = new Set();
 
-  constructor({ bus, wm, session: defaultSession, pwList = null, themeId = null, resourceLedger = null }) {
+  constructor({ bus, wm, session: defaultSession, pwList = null, themeId = null, resourceLedger = null, visualComposition = null }) {
     this.bus = bus;
     this.wm = wm;
     this.session = defaultSession;
     this.pwList = pwList || (() => []); // W48：自动填充/修改识别取数口（主进程注入，渲染永不触密钥）
     this.themeId = themeId || (() => null); // W52④ devtools 主题取数口（app 主题 id）
     this.resourceLedger = resourceLedger;
+    this.visualComposition = visualComposition;
     this.views = new Map(); // tabId -> { view, partition }
     this._dtThemed = new WeakSet(); // devtools 主题已注的 wc（每 wc 只注一趟）
     BrowserViews.all.add(this);
+    this.visualComposition?.attachBrowserViews?.(this);
     this.register();
   }
 
   emit(tabId, type, data) {
-    const win = this.wm.main;
+    const win = this.views.get(tabId)?.hostWin || this.wm.main;
     if (win && !win.isDestroyed()) this.bus.send(win, 'bv:event', { tabId, type, data });
   }
   get(tabId) { return this.views.get(tabId)?.view || null; }
@@ -105,7 +107,7 @@ class BrowserViews {
       if (!rec) return null;
       const wc = rec.view.webContents;
       // hidden/reviveGen/lastCtxMenuAt 入状态：白屏复活的 E2E 探针（隐→显振荡规程 + 原生菜单弹出时间戳）
-      return { url: wc.getURL(), title: wc.getTitle(), loading: wc.isLoading(), canBack: wc.navigationHistory.canGoBack(), canFwd: wc.navigationHistory.canGoForward(), dead: !wc.getOSProcessId(), hidden: !!rec.hidden, reviveGen: rec._reviveGen || 0, bounds: rec.view.getBounds(), lastCtxMenuAt: rec._lastCtxMenuAt || 0, invalidateCount: rec._invalidateCount || 0 };
+      return { url: wc.getURL(), title: wc.getTitle(), loading: wc.isLoading(), canBack: wc.navigationHistory.canGoBack(), canFwd: wc.navigationHistory.canGoForward(), dead: !wc.getOSProcessId(), hidden: !!rec.hidden, desiredVisible: !!rec.desiredVisible, occluded: !!rec.occluded, hostWindowId: rec.hostWin?.id || null, reviveGen: rec._reviveGen || 0, bounds: rec.view.getBounds(), lastCtxMenuAt: rec._lastCtxMenuAt || 0, invalidateCount: rec._invalidateCount || 0 };
     });
   }
 
@@ -125,7 +127,12 @@ class BrowserViews {
         backgroundThrottling: false,
       },
     });
-    const rec = { view, partition, hostWin: host, resourceKey: null };
+    const rec = {
+      view, partition, hostWin: host, resourceKey: null,
+      desiredRect: null, desiredVisible: false,
+      occluded: this.visualComposition?.isHostOccluded?.(host?.id) === true,
+      hidden: true,
+    };
     this.views.set(tabId, rec); // hostWin=视图宿主窗（跨窗迁/收尸凭据）
     if (this.resourceLedger) {
       try {
@@ -138,9 +145,13 @@ class BrowserViews {
       }
     }
     host.contentView.addChildView(view);
+    view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+    view.setVisible(false);
+    this.visualComposition?.registerView?.(tabId, rec);
     this.wire(tabId, view);
     view.webContents.once('destroyed', () => {
       if (this.views.get(tabId) === rec) this.views.delete(tabId);
+      this.visualComposition?.unregisterView?.(tabId);
       this._releaseResource(rec, 'web-contents-destroyed');
     });
     // 帧率不设限=显示器 v-sync 自适应（用户定版：setFrameRate 只对离屏生效，原生模式合成器直管——一个闸不留）
@@ -168,19 +179,44 @@ class BrowserViews {
     try { (rec.hostWin || this.wm.main).contentView.removeChildView(rec.view); } catch {}
     try { rec.view.webContents.close(); } catch {}
     this._releaseResource(rec, reason);
+    this.visualComposition?.unregisterView?.(tabId);
     return true;
   }
 
   setBounds(tabId, rect, visible = true) {
     const rec = this.views.get(tabId);
     if (!rec) return false;
-    if (!visible || !rect || rect.width < 2 || rect.height < 2) {
+    const normalized = rect && rect.width >= 2 && rect.height >= 2
+      ? { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
+      : null;
+    rec.desiredVisible = !!visible && !!normalized;
+    if (normalized) rec.desiredRect = normalized;
+    return this._applyBounds(tabId, rec);
+  }
+
+  setHostOccluded(hostWin, occluded) {
+    let changed = 0;
+    for (const [tabId, rec] of this.views) {
+      if (rec.hostWin !== hostWin || rec.occluded === !!occluded) continue;
+      rec.occluded = !!occluded;
+      this._applyBounds(tabId, rec);
+      changed += 1;
+    }
+    return changed;
+  }
+
+  _applyBounds(tabId, rec) {
+    const shouldHide = rec.occluded || !rec.desiredVisible || !rec.desiredRect;
+    if (shouldHide) {
       rec.view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
       rec.view.setVisible(false);
       rec.hidden = true;
+      this.visualComposition?.updateView?.(tabId, {
+        bounds: rec.desiredRect, visible: false, desiredVisible: !!rec.desiredVisible, occluded: !!rec.occluded,
+      });
       return true;
     }
-    const R = { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) };
+    const R = rec.desiredRect;
     // 隐→显转换：Windows D3D 合成器下 WebContentsView 隐身再显示常丢 surface 不重绘（右键菜单/ribbon 弹层后白屏实锤）——
     // 恢复显示走「正矩形 + 次帧 ±1px 双帧振荡」强制重新合成（Chromium 对同值 setBounds 会跳过）
     const reviving = !!rec.hidden;
@@ -204,6 +240,10 @@ class BrowserViews {
         try { rec.view.setBounds({ ...R, height: Math.max(1, R.height - 1) }); rec.view.setBounds(R); } catch {}
       }, 180);
     }
+    this.visualComposition?.updateView?.(tabId, {
+      bounds: R, visible: true, desiredVisible: true, occluded: false,
+      metadata: { reviveGeneration: rec._reviveGen || 0, invalidateCount: rec._invalidateCount || 0 },
+    });
     return true;
   }
 
@@ -254,7 +294,7 @@ class BrowserViews {
       try {
         if (!this.views.get(tabId)) return;
         rec._lastCtxMenuAt = Date.now(); // E2E 探针（bv:state 读）
-        Menu.buildFromTemplate(items).popup({ window: this.wm.main, x: Math.round((params.x || 0) + b.x), y: Math.round((params.y || 0) + b.y) });
+        Menu.buildFromTemplate(items).popup({ window: rec.hostWin || this.wm.main, x: Math.round((params.x || 0) + b.x), y: Math.round((params.y || 0) + b.y) });
       } catch {}
     }, 16);
   }

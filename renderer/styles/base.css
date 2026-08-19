@@ -635,7 +635,7 @@ body.pane-resizing .pane-divider { pointer-events: auto !important; }
 .br-view-wrap { position: absolute; inset: 0; display: none; }
 .br-view-wrap.on { display: block; }
 .br-webview { width: 100%; height: 100%; border: 0; background: #fff; }
-.br-view-host { width: 100%; height: 100%; background: #fff; } /* WebContentsView 宿主：只量尺寸摆位置（视图本体由主进程持有） */
+.br-view-host { width: 100%; height: 100%; background: var(--bg); } /* WebContentsView 宿主：遮挡/重建期间保持主题连续；视图本体由主进程持有 */
 .br-panel { width: 0; overflow: hidden; border-left: 1px solid var(--border); background: var(--bg-elev); display: flex; flex-direction: column; transition: width .15s ease; flex: none; }
 .browser-root.panel-open .br-panel { width: 360px; }
 .br-panel-head { flex: none; display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--border); }

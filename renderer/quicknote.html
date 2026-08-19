@@ -1,31 +1,31 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="paper">
 <head>
   <link rel="icon" href="data:,"><!-- 禁 favicon 请求：mazz-res 时代 404 消息文本不含 allow 字样（file:// 时代 ERR_FILE_NOT_FOUND 侥幸放行实锤） -->
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'" />
   <title>快速笔记</title>
+  <link rel="stylesheet" href="styles/themes.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body {
       font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      display: flex; flex-direction: column; background: #1e293b; color: #e2e8f0;
+      display: flex; flex-direction: column; background: var(--bg); color: var(--fg);
     }
-    @media (prefers-color-scheme: light) { body { background: #ffffff; color: #1e293b; } .bar { border-color: #e2e8f0 !important; } }
     .bar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; font-size: 12px; opacity: .75; border-bottom: 1px solid #334155;
+      padding: 8px 12px; font-size: 12px; opacity: .82; border-bottom: 1px solid var(--border);
       -webkit-app-region: drag; user-select: none;
     }
-    .bar b { color: #818cf8; }
+    .bar b { color: var(--accent); }
     textarea {
       flex: 1; resize: none; border: 0; outline: 0; padding: 12px 14px;
       background: transparent; color: inherit; font-size: 14px; line-height: 1.65;
       font-family: inherit;
     }
     .hint { padding: 6px 12px; font-size: 11px; opacity: .55; display: flex; justify-content: space-between; user-select: none; }
-    .saved { color: #4ade80; opacity: 0; transition: opacity .3s; }
+    .saved { color: var(--ok); opacity: 0; transition: opacity .3s; }
     .saved.show { opacity: 1; }
   </style>
 </head>
@@ -40,6 +40,10 @@
     window.mazzNote?.onFocus(({ initialText } = {}) => {
       ta.focus();
       if (initialText && !ta.value) ta.value = initialText;
+    });
+    window.mazzNote?.onTheme(({ id, vars } = {}) => {
+      if (id) document.documentElement.dataset.theme = id;
+      if (vars) for (const [key, value] of Object.entries(vars)) if (value) document.documentElement.style.setProperty('--' + key, value);
     });
     async function save() {
       const text = ta.value.trim();

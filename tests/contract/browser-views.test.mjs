@@ -49,7 +49,9 @@ describe('浏览器根治·渲染层双路径', () => {
     assert.ok(!src.includes("document.createElement('webview')"), '不得再创建 webview 标签');
     // 摆位与遮挡隐身
     assert.ok(src.includes('syncBounds'), '必须有摆位引擎');
-    assert.ok(src.includes('_cloaked'), '兜底 cloak 过渡件必须有（W52 起只认全屏遮罩两件套——②③波遣散后退役）');
+    assert.ok(!src.includes('_cloaked') && src.includes('_dragCloak'), 'W87 后只保留拖拽即时 cloak，弹层不得再由 Browser 私管');
+    const visual = readSrc('renderer/core/visual-composition.js');
+    assert.ok(visual.includes('visual:overlayBegin') && visual.includes('visual:overlayEnd'), '弹层遮挡必须走统一视觉协议');
     assert.ok(!src.includes("mazz.on('bv:frame'"), '帧管线必须已退（离屏弯路清算实锤）');
     assert.ok(!src.includes('br-osr'), '离屏 canvas 必须已退');
     // 导航纪律：错误页写进失败文档（回退天然落前页，无跳链累赘）+ 减重看门狗

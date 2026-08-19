@@ -12,6 +12,7 @@ class WindowManager {
     this.store = store;
     this.iconPath = iconPath;
     this.resourceLedger = resourceLedger;
+    this.visualComposition = null;
     this.main = null;
     this.quickNote = null;
     this.children = new Set();
@@ -19,20 +20,28 @@ class WindowManager {
     this.forceClose = false;
   }
 
+  setVisualComposition(runtime) {
+    this.visualComposition = runtime || null;
+    this.visualComposition?.attachWindowManager?.(this);
+  }
+
   trackWindow(win, kind) {
-    if (!this.resourceLedger || !win) return;
-    try {
-      const key = this.resourceLedger.register({
-        type: 'browser-window', id: String(win.id), owner: `window-manager:${kind}`,
-        meta: { kind, parentId: win.getParentWindow?.()?.id || null },
-      });
-      win.__resourceLedgerKey = key;
-      win.once('closed', () => {
-        this.resourceLedger.release(key, { reason: 'window-closed' });
-        if (win.__resourceLedgerKey === key) win.__resourceLedgerKey = null;
-      });
-    } catch (error) {
-      console.warn('[resources] BrowserWindow 登记失败:', error.message || error);
+    if (!win) return;
+    this.visualComposition?.registerWindow?.(win, { owner: `window-manager:${kind}`, layer: kind === 'print-worker' ? 'system' : 'workspace' });
+    if (this.resourceLedger) {
+      try {
+        const key = this.resourceLedger.register({
+          type: 'browser-window', id: String(win.id), owner: `window-manager:${kind}`,
+          meta: { kind, parentId: win.getParentWindow?.()?.id || null },
+        });
+        win.__resourceLedgerKey = key;
+        win.once('closed', () => {
+          this.resourceLedger.release(key, { reason: 'window-closed' });
+          if (win.__resourceLedgerKey === key) win.__resourceLedgerKey = null;
+        });
+      } catch (error) {
+        console.warn('[resources] BrowserWindow 登记失败:', error.message || error);
+      }
     }
   }
 
@@ -187,6 +196,7 @@ class WindowManager {
     win.loadURL('mazz-res://app/quicknote.html');
     win.once('ready-to-show', () => {
       win.show();
+      win.webContents.send('mazz:event', { channel: 'theme:changed', payload: { id: this.store.get('theme') || 'paper' } });
       win.webContents.send('mazz:event', { channel: 'quicknote:focus', payload: { initialText } });
     });
     win.on('closed', () => { this.quickNote = null; });

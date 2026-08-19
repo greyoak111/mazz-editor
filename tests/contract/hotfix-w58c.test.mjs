@@ -14,7 +14,7 @@ describe('① 分屏后自动刷新（视图穿帮根治）', () => {
     assert.ok(sh.includes("bus.on('pane:tabMoved'"), 'shell 必须订阅');
     assert.ok(sh.includes('ctl?.__sync?.()'), '布局落稳重同步必须有');
     assert.ok(sh.includes('ctl.reloadTab?.(t)'), '浏览器自动刷新必须有（用户定版药方）');
-    assert.ok(sh.includes('!ctl?._cloaked && !ctl?._dragCloak'), '斗篷闸防护必须有');
+    assert.ok(sh.includes('!ctl?._dragCloak') && !sh.includes('!ctl?._cloaked'), '只保留拖拽即时 cloak；弹层遮挡归统一调度');
     const br = readSrc('renderer/modules/browser/index.js');
     assert.ok(br.includes('W58c 根治：create 必须返回 ctl 本体'), '浏览器 create 返 ctl 根治钉必须在（code W58 同族病）');
     assert.ok(!br.includes('return { container };'), '浏览器畸形态 { container } 返回必须绝迹');
@@ -40,7 +40,7 @@ describe('③ 自定义主题子窗透明化根治', () => {
     assert.ok(mj.includes("bus.handle('theme:broadcast', async ({ id, vars })"), '主进程 vars 透传必须有');
     const pw = readSrc('main/panel-windows.js');
     assert.ok(pw.includes('static broadcastTheme(id, vars)'), '面板广播 vars 必须有');
-    assert.ok(pw.includes('payload.kind = kind'), '发件 kind 标注必须有（17 面板免手带）');
+    assert.ok(pw.includes('payload.kind = sourcePanel.__panelKind'), '发件 kind 必须从真实来源 Panel 标注（全族免手带）');
   });
   test('17 面板全收编（无漏网）', () => {
     const files = fs.readdirSync(path.resolve('renderer/panels')).filter(f => f.endsWith('.html'));

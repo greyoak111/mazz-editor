@@ -10,14 +10,17 @@ const w69 = read('docs/plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md');
 const w82 = read('docs/plans/W82_ORGANIZATIONAL_COMPILER.md');
 const w84 = read('docs/plans/W84_MAZ_PRODUCTION_ASSET_STANDARD.md');
 const w85 = read('docs/plans/W85_CONTEXT_COMPILER_AND_COVERAGE.md');
+const w87 = read('docs/plans/W87_UNIFIED_VISUAL_COMPOSITION_AND_UI_SEAL.md');
 const w71 = read('docs/engineering/W71_FINAL_CONVERGENCE_EXECUTION_SPEC.md');
 
 const SOURCE_HASH = '98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0';
 
 describe('Post-W71 strict architecture increment II', () => {
-  test('the increment is source-bound and absorbed without inventing W87', () => {
+  test('the old increment did not invent W87; the later W87 has its own source and supersession authority', () => {
     for (const doc of [w69, w82, w84, w85]) assert.ok(doc.includes(SOURCE_HASH));
-    assert.ok(!index.includes('W87'));
+    assert.ok(w87.includes('ED8AF6DA040EEA93A04ECA93939BCB7941D2A5A11C6DAA0E922BC4EDCB4331B6'));
+    assert.ok(w87.includes('此后 Browser 原生 Surface 遮挡'));
+    assert.ok(index.includes('W87 全软件 UI / Unified Visual Composition'));
     assert.ok(index.includes('v1.5 Design Capsule'));
     assert.ok(index.includes('W82a–W82h 本地受控切片全部 LANDED；W69 发布除外'));
     assert.ok(index.includes('W84a–W84f 本地合同与只读产品入口 LANDED；Marketplace 排除'));

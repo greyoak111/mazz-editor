@@ -1,0 +1,60 @@
+/* W87 Unified Visual Composition / UI seal: final shared layer, loaded after module-era CSS. */
+:root {
+  --ui-hit: 30px;
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 10px;
+  --ui-focus: 0 0 0 2px color-mix(in srgb, var(--accent) 72%, transparent);
+  --ui-overlay-backdrop: color-mix(in srgb, #08090d 42%, transparent);
+  color-scheme: light;
+}
+[data-theme="ink"], [data-theme="indigo"], [data-theme="moss"] { color-scheme: dark; }
+
+html, body { min-width: 0; min-height: 0; }
+body, button, input, select, textarea { text-rendering: optimizeLegibility; }
+button, input, select, textarea { font: inherit; }
+button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+:where(button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+  box-shadow: var(--ui-focus);
+}
+:where(button, [role="button"], input, select, textarea):disabled,
+:where(button, [role="button"])[aria-disabled="true"] { opacity: .46; cursor: not-allowed !important; filter: saturate(.65); }
+.mz-ico { display: inline-block; flex: 0 0 auto; vertical-align: -.14em; overflow: visible; }
+button > .mz-ico:only-child, [role="button"] > .mz-ico:only-child { margin: auto; }
+
+#mazz-overlay-plane {
+  position: fixed; inset: 0; z-index: 9000; pointer-events: none; isolation: isolate;
+  width: 100%; height: 100%; overflow: visible;
+}
+#mazz-overlay-plane > * { pointer-events: auto; }
+.mazz-palette-mask:not([data-visual-ready]),
+.appwin-mask:not([data-visual-ready]),
+.page-preview-mask:not([data-visual-ready]),
+.sl-present:not([data-visual-ready]) { visibility: hidden !important; }
+.mazz-palette-mask, .help-mask, .appwin-mask { background: var(--ui-overlay-backdrop); }
+.mazz-palette, .help-dialog, .appwin {
+  border-color: var(--border); background: var(--bg-elev); color: var(--fg);
+  box-shadow: 0 18px 64px color-mix(in srgb, #000 32%, transparent);
+}
+.mazz-palette { max-width: min(92vw, 920px); max-height: min(84vh, 760px); overflow: auto; }
+
+.app-shell, .workspace, .main-area, .content-area, .pane-tree, .pane, .pane-content,
+[class$="-root"], [class$="-view"], [class$="-body"] { min-width: 0; min-height: 0; }
+.ribbon, .ribbon-body, .ribbon-groups, .tabbar { min-width: 0; }
+.ribbon-groups { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.ribbon-groups::-webkit-scrollbar { height: 0; }
+.tabbar { overflow-x: auto; overflow-y: hidden; }
+.titlebar .tb-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+[data-ui-size="sm"] .ribbon-groups,
+[data-ui-size="xs"] .ribbon-groups { scroll-snap-type: x proximity; }
+[data-ui-size="sm"] .rb-group,
+[data-ui-size="xs"] .rb-group { scroll-snap-align: start; flex: 0 0 auto; }
+[data-ui-size="xs"] .ribbon { max-height: 96px; }
+[data-ui-size="xs"] .rb-btn { min-width: var(--ui-hit); padding-inline: 6px; }
+[data-ui-size="xs"] .sidebar { width: min(82vw, 280px); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

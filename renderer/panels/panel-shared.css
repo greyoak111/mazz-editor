@@ -27,3 +27,30 @@
 
 /* 文本截断提示：裁切必须带省略号，不许生吞 */
 .ps-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* W87 面板封板层：同一焦点、控件状态、图标与窄窗折行协议。 */
+:root {
+  --ui-hit: 30px;
+  --ui-focus: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent);
+  color-scheme: light;
+}
+[data-theme="ink"], [data-theme="indigo"], [data-theme="moss"] { color-scheme: dark; }
+html, body { min-width: 0; min-height: 0; }
+*, *::before, *::after { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; }
+:where(button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+  box-shadow: var(--ui-focus);
+}
+:where(button, [role="button"], input, select, textarea):disabled,
+:where(button, [role="button"])[aria-disabled="true"] { opacity: .46; cursor: not-allowed !important; filter: saturate(.65); }
+.mz-ico { display: inline-block; width: 1em; height: 1em; flex: 0 0 auto; vertical-align: -.14em; }
+.pwin, main, section, .body, .content, .list { min-width: 0; min-height: 0; }
+[data-ui-size="xs"] .set-row { align-items: stretch; flex-direction: column; gap: 6px; }
+[data-ui-size="xs"] .set-row > label { width: auto !important; }
+[data-ui-size="xs"] .inp, [data-ui-size="xs"] .sel, [data-ui-size="xs"] input, [data-ui-size="xs"] select { max-width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

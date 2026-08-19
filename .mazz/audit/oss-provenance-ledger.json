@@ -105,8 +105,8 @@
       {
         "path": "package.json",
         "present": true,
-        "bytes": 6703,
-        "sha256": "E2078CEDF8B989E9542C22DD804BC7C5E3CFD6F2B1CB867744A098E51FABC9CE"
+        "bytes": 6788,
+        "sha256": "5ADFB252BDF3563418688C26DE622465C50BA0261DCC47D441F13AE41E6C355F"
       },
       {
         "path": "patches/webtorrent+2.8.5.patch",

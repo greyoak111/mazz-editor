@@ -1,5 +1,7 @@
 # W71 Theme Census
 
+> **W87 状态：** Paper/Ink 已通过正式 computed-style 与双截图矩阵，QuickNote/Panel/Organization/Browser host 已收敛；静态硬编码候选仍保留作后续 owner review，不得误报为已知 P0/P1。见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。
+
 > 状态：Wave 0 源码基线；硬编码候选尚未逐项判定
 > 机器证据：[`../../.mazz/audit/ui-census.json`](../../.mazz/audit/ui-census.json)
 

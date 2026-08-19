@@ -10,6 +10,9 @@ const { Readable } = require('stream'); // mazz-res media/ 分支：range 流式
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+// 应用级服务各自拥有独立 before-quit 收尸钩；显式容量覆盖当前正式服务数，避免 Node 默认 10 个把合法治理误报为泄漏。
+app.setMaxListeners(32);
+
 // E2E 用户目录必须在单实例锁之前切换；Chromium 的锁文件按当时 userData 定位。
 // 放在 requestSingleInstanceLock 之后会先碰正常用户目录，在受限 Windows 环境直接拒绝访问。
 if (process.env.MAZZ_E2E_USER_DATA) app.setPath('userData', process.env.MAZZ_E2E_USER_DATA);
@@ -116,6 +119,7 @@ const __pwDecrypt = (payload) => {
 };
 const PanelWindows = require('./panel-windows');
 const BrowserViews = require('./browser-views'); // 模块级：theme:broadcast 等跨函数句柄要摸到静态注册表（作用域病实锤绝育）
+const VisualCompositionRuntime = require('./visual-composition');
 const ShareService = require('./share');
 const Importer = require('./importer');
 const StartMenuApps = require('./startmenu');
@@ -200,6 +204,9 @@ if (process.env.NODE_ENV === 'test') {
 }
 const factoryRuntimeOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
+const visualComposition = new VisualCompositionRuntime({ bus, wm });
+wm.setVisualComposition(visualComposition);
+if (process.env.NODE_ENV === 'test') globalThis.__MAZZ_E2E_VISUAL_COMPOSITION__ = visualComposition;
 const memoryGovernor = new MemoryGovernor({
   resourceLedger,
   appMetrics: () => app.getAppMetrics(),
@@ -1103,6 +1110,11 @@ function registerChannels() {
       if (!child.isDestroyed()) child.webContents.send('mazz:event', { channel: 'theme:changed', payload: { id, vars } });
     }
     PanelWindows.broadcastTheme(id, vars); // W47：面板窗（收藏/密码/工具坞）同跟随主界面主题；W58c：vars 快照随播——自定义/主题包下子窗不再透明裸奔
+    if (wm.quickNote && !wm.quickNote.isDestroyed()) {
+      wm.quickNote.webContents.send('mazz:event', { channel: 'theme:changed', payload: { id, vars } });
+      try { wm.quickNote.setBackgroundColor(wm.themeBg()); } catch {}
+    }
+    for (const child of wm.children) { try { if (!child.isDestroyed()) child.setBackgroundColor(wm.themeBg()); } catch {} }
     for (const bvs of BrowserViews.all) bvs.rethemeAllDevTools(id); // W52④：开着 devtools 也实时换主题（静态注册表——局部 const 跨函数引用必 ReferenceError，真机实锤）
     // W52e：应用主题映射 nativeTheme（运行时，不落 store 不覆盖用户 themeSource 设置）——
     // devtools/原生件跟随的唯一活路：uiTheme localStorage 键 Chromium 已不读（探针实锤 body 纹丝不动）
@@ -1680,7 +1692,8 @@ app.whenReady().then(() => {
   const SlideRemote = require('./slide-remote');
   new SlideRemote({ bus, win: () => wm.main });
   // —— 衍生面板原生子窗（W43 并行进程：收藏管理/密码管理器独立合成，与 WebContentsView 永不相见——白屏病根除） ——
-  new PanelWindows({ bus, win: () => wm.main, resourceLedger });
+  const panelWindows = new PanelWindows({ bus, win: () => wm.main, resourceLedger, visualComposition });
+  visualComposition.attachPanelWindows(panelWindows);
   // W58b 解压缩服务（魔数识别+JSZip 主力+7zip-bin 兜底+GBK 修复+打包+进度取消+2 并发）
   try {
     const ArchiveService = require('./archive');
@@ -1743,8 +1756,10 @@ app.whenReady().then(() => {
   // 类走模块级 require（顶部）：局部 const 会遮蔽且跨函数不可达（ReferenceError 病源）
   const browserViews = new BrowserViews({ bus, wm, session: browserSess,
     resourceLedger,
+    visualComposition,
     themeId: () => store.get('theme'), // W52④ devtools 主题取数
     pwList: () => (store.get('passwords', [])).map(e => ({ id: e.id, site: e.site, username: e.username, password: __pwDecrypt(e.password) })) }); // W48 自动填充/修改识别取数
+  visualComposition.attachBrowserViews(browserViews);
 
   // —— 投稿会话（persist:mazz-author）：电子书站登录态下载 → 自动存工作区书库并入库 ——
   try {

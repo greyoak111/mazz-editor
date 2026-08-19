@@ -3,6 +3,7 @@ import { commands } from './command-registry.js';
 import { iconHtml } from '../lib/svg-icons.js';
 import { keymap, displayKey } from './keymap-service.js';
 import { t } from '../i18n/index.js';
+import { visualComposition } from './visual-composition.js';
 
 /** 子序列模糊匹配打分：连续命中/词首命中加权 */
 export function fuzzyScore(query, text) {
@@ -49,7 +50,7 @@ class CommandPalette {
         <input class="mazz-palette-input" placeholder="${provider.placeholder}" spellcheck="false" />
         <div class="mazz-palette-list"></div>
       </div>`;
-    document.body.appendChild(this.el);
+    this.visualHandle = visualComposition.mountOverlay(this.el, { kind: 'command-palette', onDismiss: () => this.close() });
     const input = this.el.querySelector('input');
     const list = this.el.querySelector('.mazz-palette-list');
     this.items = []; this.selected = 0;
@@ -108,7 +109,7 @@ class CommandPalette {
     this.close();
     this.active.onPick(it);
   }
-  close() { this.el?.remove(); this.el = null; }
+  close() { this.visualHandle?.release('command-palette-close'); this.visualHandle = null; this.el?.remove(); this.el = null; }
 }
 
 function highlight(label, ranges) {

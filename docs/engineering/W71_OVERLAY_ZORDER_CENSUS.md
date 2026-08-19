@@ -1,5 +1,7 @@
 # W71 Global Overlay / Multi-Surface Z-order Census
 
+> **2026-08-19 supersession：** 本文保留 W71 当时的证据和判断，但“无需统一调度器”已被复发缺陷与维护者新授权推翻。W87 已落 `mazz.visual-composition/v1`，统一登记 Window、PanelWindow、WebContentsView 与 DOM Overlay；local resource owner 和既有 Windows workaround 仍保留。现行结论见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。
+
 > 日期：2026-08-16
 > 状态：代表性 Windows packaged 路径已产证；不是 Universal Overlay Manager 立项
 > 机器证据：[`evidence/W71_OVERLAY_ZORDER.json`](./evidence/W71_OVERLAY_ZORDER.json)

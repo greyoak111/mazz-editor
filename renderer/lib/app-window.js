@@ -2,6 +2,7 @@
 // 用途：打印预览、分页预览等需要大空间的弹层（不再暴力最大化，关闭钮不再和主窗口控件叠位）
 import { t } from '../i18n/index.js';
 import { iconHtml } from './svg-icons.js';
+import { visualComposition } from '../core/visual-composition.js';
 
 /**
  * 打开一个应用内窗口
@@ -31,19 +32,20 @@ export function openAppWindow({ title, widthRatio = 0.72, heightRatio = 0.8, bui
     <div class="appwin-body"></div>
     <div class="appwin-resize" title="拖拽调整大小"></div>`;
   mask.appendChild(win);
-  document.body.appendChild(mask);
+  let visualHandle = null;
   win.querySelector('.appwin-title').textContent = title || '';
   const body = win.querySelector('.appwin-body');
 
   const api = {
     el: mask, win, body, maximized: false,
-    close() { mask.remove(); document.removeEventListener('keydown', onKey, true); onClose?.(); },
+    close() { visualHandle?.release('app-window-close'); mask.remove(); document.removeEventListener('keydown', onKey, true); onClose?.(); },
     toggleMax() {
       api.maximized = !api.maximized;
       win.classList.toggle('max', api.maximized);
       win.querySelector('[data-a=max]').innerHTML = iconHtml(api.maximized ? '❐' : '▢');
     },
   };
+  visualHandle = visualComposition.mountOverlay(mask, { kind: 'app-window', onDismiss: () => api.close() });
   win.querySelector('[data-a=close]').addEventListener('click', () => api.close());
   win.querySelector('[data-a=max]').addEventListener('click', () => api.toggleMax());
   win.querySelector('.appwin-bar').addEventListener('dblclick', (e) => {

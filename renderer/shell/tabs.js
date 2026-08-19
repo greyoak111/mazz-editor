@@ -26,6 +26,8 @@ export class Tabs {
     const view = document.createElement('div');
     view.className = 'module-view';
     view.dataset.tabId = id;
+    view.setAttribute('aria-hidden', 'true');
+    view.setAttribute('inert', '');
     this.area.appendChild(view);
     const tab = { id, title, moduleId, iconId, filePath, dirty: false, pinned: false, view };
     this.tabs.push(tab);
@@ -38,12 +40,28 @@ export class Tabs {
   get(id) { return this.tabs.find(t => t.id === id); }
   get active() { return this.get(this.activeId); }
 
+  _releaseFocus(view) {
+    const focused = document.activeElement;
+    if (focused && view?.contains(focused)) {
+      try { focused.blur(); } catch {}
+    }
+  }
+
   activate(id) {
     const tab = this.get(id);
     if (!tab) return;
-    if (this.activeId && this.activeId !== id) bus.emit('tab:deactivate', this.activeId);
+    if (this.activeId && this.activeId !== id) {
+      const outgoing = this.get(this.activeId);
+      this._releaseFocus(outgoing?.view);
+      bus.emit('tab:deactivate', this.activeId);
+    }
     this.activeId = id;
-    this.tabs.forEach(t => t.view.classList.toggle('on', t.id === id));
+    this.tabs.forEach(t => {
+      const active = t.id === id;
+      t.view.classList.toggle('on', active);
+      t.view.setAttribute('aria-hidden', String(!active));
+      t.view.toggleAttribute('inert', !active);
+    });
     bus.emit('tab:activate', tab);
     this.render();
     contextKeys.set('hasTabs', this.tabs.length > 0);
@@ -63,6 +81,7 @@ export class Tabs {
     if (i < 0) return false;
     const tab = this.tabs[i];
     if (tab.dirty && !force && !tab.forceClose) return false; // 确认流程由 shell 处理
+    this._releaseFocus(tab.view);
     bus.emit('tab:closing', tab);
     tab.view.remove();
     this.tabs.splice(i, 1);

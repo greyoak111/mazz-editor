@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
 <title>菜单</title>
 <link rel="stylesheet" href="../styles/themes.css">
 <link rel="stylesheet" href="panel-shared.css">
@@ -21,13 +21,14 @@
   .mi .sub { color:var(--fg-dim); font-size:11px; }
   .sep { height:1px; background:var(--border); margin:5px 8px; }
   .heading { position:sticky; top:-5px; z-index:2; padding:6px 10px 4px; color:var(--accent); background:var(--bg-elev); font-weight:700; letter-spacing:.02em; }
+  .menu-state { min-height:96px; display:grid; place-items:center; padding:18px; color:var(--fg-dim); text-align:center; }
   /* 子菜单飞行列 */
   .submenu { position:fixed; z-index:9; background:var(--bg-elev); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.32); padding:5px; min-width:190px; display:none; }
   .submenu.open { display:block; }
-</style></head><body>
+</style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
   <div class="p-drag"></div>
-  <main id="m" class="ps-scroll-y"></main>
+  <main id="m" class="ps-scroll-y"><div class="menu-state" role="status">正在准备菜单…</div></main>
 </div>
 <div class="submenu ps-scroll-y" id="sub"></div>
 <script>
@@ -39,7 +40,7 @@ window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
 window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-let items = [], sel = -1, subFor = null;
+let items = [], sel = -1, subFor = null, received = false;
 function iconOf(it) {
   if (!it.icon) return '<span class="ico"></span>';
   // iconHtml 映射走主窗（svg 串经 push 带过来——菜单项 svg 字段直嵌）
@@ -47,6 +48,11 @@ function iconOf(it) {
 }
 function render() {
   const m = $('#m');
+  if (!items.length) {
+    m.innerHTML = `<div class="menu-state" role="status">${received ? '没有可用操作' : '正在准备菜单…'}</div>`;
+    closeSub();
+    return;
+  }
   m.innerHTML = items.map((it, i) => {
     if (it.type === 'separator') return '<div class="sep"></div>';
     if (it.type === 'heading') return `<div class="heading">${esc(it.label)}</div>`;
@@ -104,6 +110,7 @@ document.addEventListener('keydown', (e) => {
 window.mazz.invoke('panel:action', { type: 'ctxmenuQuery' }).catch(() => {});
 window.mazz.on('panel:push', (p) => {
   if (p?.type !== 'ctxmenu') return;
+  received = true;
   items = p.items || [];
   render();
 });

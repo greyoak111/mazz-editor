@@ -1,5 +1,7 @@
 # W71 插件安全与 Overlay/Z-order 检查点
 
+> **后续修正：** 本文的局部 Overlay 结论已被 W87 统一视觉合成运行时 supersede；插件信任结论不变。见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。
+
 > 日期：2026-08-16
 > 父坐标：`main@842a45d`
 > 范围：插件执行信任边界、首启协议遮挡、代表性跨 Surface 浮层

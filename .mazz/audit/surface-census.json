@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 88,
-    "scannedLines": 21023
+    "scannedFiles": 90,
+    "scannedLines": 21455
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -21,7 +21,6 @@
       "help",
       "translate",
       "plugins",
-      "quickopen",
       "recorder",
       "dockfloat",
       "bookmark",
@@ -46,46 +45,47 @@
     ]
   },
   "protocolReality": {
-    "ownership": "WindowManager owns shell windows; PanelWindows owns panel windows; BrowserViews owns WebContentsView records.",
-    "host": "BrowserViews resolves BrowserWindow.fromWebContents(event.sender), records hostWin and mounts through host.contentView.",
-    "move": "Renderer pane/window handoff emits layout state; browser native bounds are resynchronized after host changes.",
-    "destroy": "Window/panel closed hooks and BrowserViews destroy/destroyByHost paths are authoritative; ResourceLedger observes but does not own resources."
+    "ownership": "WindowManager, PanelWindows and BrowserViews retain resource ownership; W87 VisualCompositionRuntime is the single registry and arbitration plane for visible, input-receiving or occluding surfaces.",
+    "host": "All managed windows, panel windows, WebContentsViews and registered DOM overlays carry an explicit host; overlay tokens occlude native surfaces per host with reference counting.",
+    "move": "Local owners perform the move while VisualCompositionRuntime updates host/geometry/focus state; browser native bounds still use packaged-Windows convergence.",
+    "destroy": "Local closed/destroy paths remain authoritative, VisualCompositionRuntime unregisters the visual record, and ResourceLedger independently verifies resource convergence.",
+    "visualSovereignty": "Every supported visible/input/occluding entity must register with mazz.visual-composition/v1; module-local modal observers may not cloak native surfaces."
   },
   "findings": [
     {
       "rule": "browser-window-registry",
       "file": "main/browser-views.js",
-      "line": 36,
+      "line": 38,
       "sample": "const hostWin = BrowserWindow.fromWebContents(event?.sender) || this.wm.main;"
     },
     {
       "rule": "session-partition",
       "file": "main/browser-views.js",
-      "line": 115,
+      "line": 117,
       "sample": "const ses = partition ? session.fromPartition(partition) : this.session;"
     },
     {
       "rule": "web-contents-view-construction",
       "file": "main/browser-views.js",
-      "line": 116,
+      "line": 118,
       "sample": "const view = new WebContentsView({"
     },
     {
       "rule": "native-content-view-ownership",
       "file": "main/browser-views.js",
-      "line": 140,
+      "line": 147,
       "sample": "host.contentView.addChildView(view);"
     },
     {
       "rule": "native-content-view-ownership",
       "file": "main/browser-views.js",
-      "line": 168,
+      "line": 179,
       "sample": "try { (rec.hostWin || this.wm.main).contentView.removeChildView(rec.view); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/browser-views.js",
-      "line": 393,
+      "line": 433,
       "sample": "wc.on('render-process-gone', (_e, details) => this.emit(tabId, 'render-process-gone', { reason: details?.reason }));"
     },
     {
@@ -97,43 +97,43 @@
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 313,
+      "line": 320,
       "sample": "sender.on('render-process-gone', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 990,
+      "line": 997,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1031,
+      "line": 1038,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1048,
+      "line": 1055,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1321,
+      "line": 1333,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1663,
+      "line": 1675,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1751,
+      "line": 1766,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -143,39 +143,45 @@
       "sample": "win.on('closed', () => {"
     },
     {
+      "rule": "browser-window-registry",
+      "file": "main/panel-windows.js",
+      "line": 36,
+      "sample": "const host = BrowserWindow.fromWebContents(event?.sender) || this.win?.();"
+    },
+    {
       "rule": "browser-window-construction",
       "file": "main/panel-windows.js",
-      "line": 202,
+      "line": 214,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 216,
+      "line": 228,
       "sample": "win.on('closed', () => { this.panels.delete('annotate'); this._unfollow(parent, win); });"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/panel-windows.js",
-      "line": 250,
+      "line": 271,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 260,
+      "line": 281,
       "sample": "if (host) { host.on('move', follow); host.on('resize', follow); win.on('closed', () => { try { host.off('move', follow); host.off('resize', follow); } catch {} }); }"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/panel-windows.js",
-      "line": 280,
+      "line": 302,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 314,
+      "line": 351,
       "sample": "win.on('closed', () => {"
     },
     {
@@ -185,51 +191,63 @@
       "sample": "const persistentSession = session.fromPartition('persist:mazz-torrent-sites');"
     },
     {
+      "rule": "browser-window-registry",
+      "file": "main/visual-composition.js",
+      "line": 25,
+      "sample": "const host = BrowserWindow.fromWebContents(source) || this.wm?.main;"
+    },
+    {
+      "rule": "browser-window-registry",
+      "file": "main/visual-composition.js",
+      "line": 69,
+      "sample": "return BrowserWindow.getAllWindows().find(win => win.id === Number(id)) || null;"
+    },
+    {
       "rule": "browser-window-construction",
       "file": "main/window-manager.js",
-      "line": 58,
+      "line": 67,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/window-manager.js",
-      "line": 108,
+      "line": 117,
       "sample": "win.on('closed', () => { this.main = null; });"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/window-manager.js",
-      "line": 117,
+      "line": 126,
       "sample": "win.webContents.on('render-process-gone', (_e, details) => {"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/window-manager.js",
-      "line": 129,
+      "line": 138,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/window-manager.js",
-      "line": 150,
+      "line": 159,
       "sample": "win.on('closed', () => {"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/window-manager.js",
-      "line": 157,
+      "line": 166,
       "sample": "win.webContents.on('render-process-gone', (_e, details) => {"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/window-manager.js",
-      "line": 174,
+      "line": 183,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/window-manager.js",
-      "line": 192,
+      "line": 202,
       "sample": "win.on('closed', () => { this.quickNote = null; });"
     }
   ],
@@ -243,7 +261,7 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 193,
+          "line": 229,
           "sample": "try { rec.view.webContents.invalidate(); rec._invalidateCount = (rec._invalidateCount || 0) + 1; } catch {}"
         }
       ]
@@ -257,12 +275,12 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 200,
+          "line": 236,
           "sample": "try { rec.view.setBounds({ ...R, width: Math.max(1, R.width - 1) }); rec.view.setBounds(R); } catch {}"
         },
         {
           "file": "main/browser-views.js",
-          "line": 204,
+          "line": 240,
           "sample": "try { rec.view.setBounds({ ...R, height: Math.max(1, R.height - 1) }); rec.view.setBounds(R); } catch {}"
         }
       ]
@@ -276,23 +294,18 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 125,
+          "line": 127,
           "sample": "backgroundThrottling: false,"
         },
         {
           "file": "main/window-manager.js",
-          "line": 72,
+          "line": 81,
           "sample": "backgroundThrottling: false, // 全局内录命脉：窗口最小化/被遮挡时画布合成与定时器照常（配主进程反节流三开关）"
         },
         {
           "file": "renderer/lib/recorder.js",
           "line": 359,
           "sample": "// —— 画布合成路径（多源平铺/变速/自录虚拟源）：反节流三开关+backgroundThrottling:false 护体 ——"
-        },
-        {
-          "file": "renderer/modules/browser/index.js",
-          "line": 254,
-          "sample": "// 兜底遮挡隐身（W52 过渡：只认全屏遮罩两件套（modal/帮助），backgroundThrottling:false 加持下关罩即活不再白死——②③波逐类遣散后此闸退役）"
         }
       ]
     },
@@ -305,17 +318,17 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 566,
+          "line": 560,
           "sample": "reloadTab(tab);"
         },
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 934,
+          "line": 928,
           "sample": "function reloadTab(t) {"
         },
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 940,
+          "line": 934,
           "sample": "root.querySelector('[data-a=reload]').addEventListener('click', () => reloadTab(activeTab()));"
         }
       ]
@@ -329,12 +342,12 @@
       "evidence": [
         {
           "file": "renderer/shell/shell.js",
-          "line": 456,
+          "line": 458,
           "sample": "const cleanup = () => { hideOverlay(); shields(false); clearTimeout(dog); dog = null; dragCloak(false); }; // 落下即恢复视图"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 460,
+          "line": 462,
           "sample": "if (e.dataTransfer?.types?.includes('mazz/tab') || e.target.closest?.('.tab')) { shields(true); armDog(); dragCloak(true); } // 拖起即隐视图（不抢渲染）"
         }
       ]
@@ -348,7 +361,7 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 1318,
+          "line": 1312,
           "sample": "// pane:tabMoved 监听器拿 { container } 空调 __sync/reloadTab=分屏自动刷新全静默失效）"
         },
         {
@@ -358,7 +371,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2257,
+          "line": 2262,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]
@@ -372,22 +385,22 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 257,
-          "sample": "Menu.buildFromTemplate(items).popup({ window: this.wm.main, x: Math.round((params.x || 0) + b.x), y: Math.round((params.y || 0) + b.y) });"
+          "line": 297,
+          "sample": "Menu.buildFromTemplate(items).popup({ window: rec.hostWin || this.wm.main, x: Math.round((params.x || 0) + b.x), y: Math.round((params.y || 0) + b.y) });"
         },
         {
           "file": "main/main.js",
-          "line": 1509,
+          "line": 1521,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1602,
+          "line": 1614,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1631,
+          "line": 1643,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -406,12 +419,12 @@
       "evidence": [
         {
           "file": "main/browser-views.js",
-          "line": 152,
+          "line": 163,
           "sample": "destroyByHost(win) {"
         },
         {
           "file": "main/window-manager.js",
-          "line": 153,
+          "line": 162,
           "sample": "try { const BV = require('./browser-views'); for (const bvs of BV.all) bvs.destroyByHost(win); } catch {}"
         }
       ]
@@ -425,7 +438,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 1665,
+          "line": 1677,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
@@ -439,24 +452,24 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 52,
+          "line": 55,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
         },
         {
           "file": "main/main.js",
-          "line": 56,
+          "line": 59,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
         },
         {
           "file": "main/main.js",
-          "line": 57,
+          "line": 60,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition-video-overlays');"
         }
       ]
     }
   ],
   "surfaceV1InterfaceDraft": {
-    "status": "DRAFT_ONLY_NO_MIGRATION",
+    "status": "SUPERSEDED_BY_W87_VISUAL_COMPOSITION_V1",
     "methods": [
       "create(spec, host)",
       "attach(host)",
@@ -480,5 +493,17 @@
       "Existing workarounds remain adapter-local until packaged Windows evidence permits removal."
     ]
   },
-  "decision": "NO SurfaceManager implementation or migration is authorized by this census."
+  "compositionRuntime": {
+    "status": "LANDED_W87",
+    "protocol": "mazz.visual-composition/v1",
+    "registryKinds": [
+      "window",
+      "panel-window",
+      "web-contents-view",
+      "dom-overlay"
+    ],
+    "resourceOwnershipMigrated": false,
+    "workaroundRemovalAuthorized": false
+  },
+  "decision": "W87 visual scheduling is implemented; this census does not authorize bulk resource-owner migration or deletion of packaged-Windows workarounds."
 }

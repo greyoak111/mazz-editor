@@ -1,6 +1,7 @@
 // renderer/app.js —— 渲染进程入口：桥安装 → 模块注册 → 外壳启动
 import { installBrowserBridge } from './lib/browser-bridge.js';
 if (!window.mazz) installBrowserBridge(); // 浏览器预览模式；Electron 由 preload 注入
+import { visualComposition } from './core/visual-composition.js';
 
 import { commands } from './core/command-registry.js';
 import { keymap } from './core/keymap-service.js';
@@ -38,6 +39,7 @@ import { registerWebBridge } from './modules/webbridge/index.js';
 
 // 全局命令入口（契约文档命名）
 window.MazzCommands = commands;
+visualComposition.start();
 
 // —— 注册契约模块 ——
 modules.register('markdown', markdownModule);
@@ -76,7 +78,10 @@ keymap.attach();
 contextKeys.set('module', null);
 contextKeys.set('hasSelection', false);
 
-shell.boot().then(() => {
+const bootPromise = shell.boot();
+window.MazzBoot = bootPromise;
+bootPromise.then(() => {
+  document.documentElement.dataset.appReady = '1';
   console.log('%c◆ Mazz Editor%c 已启动 — 一切操作皆命令', 'color:#818cf8;font-weight:bold', '');
   // 首次启动：弹出用户服务协议及隐私政策（勾选"后续不再弹出"后不再显示）
   // 子窗（?role=child）不跑——协议是主窗职责，二级窗弹协议会抢 lean 弹窗的屏（实锤）

@@ -137,7 +137,7 @@ const uiCensus = {
   thresholds: {
     normalTextContrast: 4.5,
     largeTextKeyIconFocusContrast: 3,
-    note: 'Wave 0 frozen baseline; runtime computed-style verification remains a later gate.',
+    note: 'Static source census only. W87 runtime matrices now gate supported UI; source-line candidates remain review inputs, not automatic defects.',
   },
   visual: { summary: summarize(visualFindings), findings: visualFindings },
   icon: { summary: summarize(iconFindings), findings: iconFindings },
@@ -195,15 +195,16 @@ const surfaceCensus = {
     sessionPartitions: [...new Set(surfaceFindings.filter(x => x.rule === 'session-partition').map(x => x.sample))],
   },
   protocolReality: {
-    ownership: 'WindowManager owns shell windows; PanelWindows owns panel windows; BrowserViews owns WebContentsView records.',
-    host: 'BrowserViews resolves BrowserWindow.fromWebContents(event.sender), records hostWin and mounts through host.contentView.',
-    move: 'Renderer pane/window handoff emits layout state; browser native bounds are resynchronized after host changes.',
-    destroy: 'Window/panel closed hooks and BrowserViews destroy/destroyByHost paths are authoritative; ResourceLedger observes but does not own resources.',
+    ownership: 'WindowManager, PanelWindows and BrowserViews retain resource ownership; W87 VisualCompositionRuntime is the single registry and arbitration plane for visible, input-receiving or occluding surfaces.',
+    host: 'All managed windows, panel windows, WebContentsViews and registered DOM overlays carry an explicit host; overlay tokens occlude native surfaces per host with reference counting.',
+    move: 'Local owners perform the move while VisualCompositionRuntime updates host/geometry/focus state; browser native bounds still use packaged-Windows convergence.',
+    destroy: 'Local closed/destroy paths remain authoritative, VisualCompositionRuntime unregisters the visual record, and ResourceLedger independently verifies resource convergence.',
+    visualSovereignty: 'Every supported visible/input/occluding entity must register with mazz.visual-composition/v1; module-local modal observers may not cloak native surfaces.',
   },
   findings: surfaceFindings,
   workaroundRegister: workarounds,
   surfaceV1InterfaceDraft: {
-    status: 'DRAFT_ONLY_NO_MIGRATION',
+    status: 'SUPERSEDED_BY_W87_VISUAL_COMPOSITION_V1',
     methods: ['create(spec, host)', 'attach(host)', 'setBounds(rect, visible)', 'focus()', 'snapshot()', 'move(nextHost)', 'dispose(reason)'],
     events: ['ready', 'state', 'crashed', 'unresponsive', 'disposed'],
     invariants: [
@@ -213,7 +214,14 @@ const surfaceCensus = {
       'Existing workarounds remain adapter-local until packaged Windows evidence permits removal.',
     ],
   },
-  decision: 'NO SurfaceManager implementation or migration is authorized by this census.',
+  compositionRuntime: {
+    status: 'LANDED_W87',
+    protocol: 'mazz.visual-composition/v1',
+    registryKinds: ['window', 'panel-window', 'web-contents-view', 'dom-overlay'],
+    resourceOwnershipMigrated: false,
+    workaroundRemovalAuthorized: false,
+  },
+  decision: 'W87 visual scheduling is implemented; this census does not authorize bulk resource-owner migration or deletion of packaged-Windows workarounds.',
 };
 
 function whereCommand(command) {

@@ -1,5 +1,7 @@
 # W71 Visual Census
 
+> **W87 状态：** 静态 Census 继续作为候选账，但运行态封板矩阵已经落地；正式结论与截图见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。源码命中数不是未关闭缺陷数。
+
 > 状态：Wave 0 事实基线，不是视觉整改完成证明
 > 可重复命令：`npm run audit:w71:census`
 > 机器证据：[`../../.mazz/audit/ui-census.json`](../../.mazz/audit/ui-census.json)

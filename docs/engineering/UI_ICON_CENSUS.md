@@ -1,5 +1,7 @@
 # W71 Icon Census
 
+> **W87 状态：** 正式运行矩阵已达到 raw control emoji 0、无名 icon button 0；所有 `iconHtml()` 字面量必须命中 `currentColor` SVG，动态面板由 control runtime 收敛。帮助、示例和用户正文里的字符仍不属于控件违规。见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。
+
 > 状态：C2 更新；模块页签稳定 IconRegistry 已落地，整应用控件迁移保留为 Post-W71 完整主义
 > 机器证据：[`../../.mazz/audit/ui-census.json`](../../.mazz/audit/ui-census.json)
 

@@ -26,6 +26,7 @@ import { assertNativeOpenContent, assertOfficeContainer } from '../lib/file-open
 import { visibleHelpSections } from '../core/product-maturity.js';
 import { moduleIconId } from '../core/icon-registry.js';
 import { captureWorkspaceEvent } from '../lib/workspace-events.js';
+import { visualComposition } from '../core/visual-composition.js';
 
 const CODE_SAMPLE = `// Mazz Editor · 编程内核
 // F5 调试 · Ctrl+\` 终端 · Ctrl+Enter 运行选区 · F12 跳定义 · Shift+F12 引用
@@ -104,6 +105,7 @@ export class Shell {
     this.root = root;
     this.workspace = null;
     this.zoom = 1;
+    this._themeRevision = 0;
     this.containerTab = new WeakMap(); // container -> tabId
 
     // —— DOM 骨架 ——
@@ -421,7 +423,7 @@ export class Shell {
     const dragCloak = (on) => {
       const bctl = window.__activeBrowserCtl;
       if (!bctl) return;
-      bctl._dragCloak = !!on; // 拖拽独立闸（不复用 _cloaked——mask observer 会每帧覆盖它（探针实锤 dragging=true cloaked=false））
+      bctl._dragCloak = !!on; // 拖拽独立即时闸；全局弹层遮挡归 VisualCompositionRuntime
       bctl.__sync?.();
     };
     const showOverlay = (leaf, z) => {
@@ -682,6 +684,7 @@ export class Shell {
 
   // ==================== 启动 ====================
   async boot() {
+    const initialThemeRevision = this._themeRevision;
     let theme = 'paper';
     if (window.mazz?.isElectron) {
       const dark = await window.mazz.invoke('theme:isDark');
@@ -699,7 +702,8 @@ export class Shell {
       if (saved) theme = saved;
       this.statusbar.setSpell(false);
     }
-    this.setTheme(theme);
+    // 启动读盘可能慢于用户的首个主题动作；迟到的启动值不得覆盖较新的显式选择。
+    if (this._themeRevision === initialThemeRevision) this.setTheme(theme);
     await this.fileTree.refresh();
     await this.rebuildFileIndex();
     this.syncAppMenu();
@@ -752,6 +756,7 @@ export class Shell {
   }
 
   setTheme(id) {
+    this._themeRevision += 1;
     // W58c：广播必须在变量真落应用之后——旧版开口就播，子窗拿到的是上一主题的皮；
     // 自定义主题包/图片主题干脆只有 id 没有变量通道=面板无 [data-theme] 规则可匹配=透明裸奔（真机实锤）
     if (id?.startsWith('pack:')) {
@@ -2261,7 +2266,7 @@ export class Shell {
         const ctl = inst.state;
         ctl?.__sync?.();
         const t = ctl?.tabs?.find(x => x.id === ctl.activeId) || ctl?.tabs?.[0];
-        if (t && !ctl?._cloaked && !ctl?._dragCloak) ctl.reloadTab?.(t);
+        if (t && !ctl?._dragCloak) ctl.reloadTab?.(t);
       }, 80);
     });
     // 资源管理器右键「导入到 Mazz 工作区」（--import 参数经主进程转发）
@@ -3397,13 +3402,14 @@ export function modal(title) {
   mask.innerHTML = `<div class="mazz-palette" style="padding:18px 20px;max-height:76vh;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <b style="font-size:15px">${title}</b>
-      <button class="rb-btn" style="min-width:28px" id="m-close">✕</button>
+      <button class="rb-btn" style="min-width:28px" id="m-close" title="关闭" aria-label="关闭">${iconHtml('✕')}</button>
     </div><div class="modal-body"></div></div>`;
-  // 全屏挂接：全屏时只有 fullscreenElement 子树可见——mask 挂 body 必隐身（播放设置全屏打不开实锤）
-  (document.fullscreenElement || document.body).appendChild(mask);
-  mask.querySelector('#m-close').addEventListener('click', () => mask.remove());
-  mask.addEventListener('mousedown', e => { if (e.target === mask) mask.remove(); });
-  return { el: mask, body: mask.querySelector('.modal-body'), close: () => mask.remove() };
+  let handle = null;
+  const close = () => { handle?.release('modal-close'); mask.remove(); };
+  handle = visualComposition.mountOverlay(mask, { kind: 'modal', onDismiss: close });
+  mask.querySelector('#m-close').addEventListener('click', close);
+  mask.addEventListener('mousedown', e => { if (e.target === mask) close(); });
+  return { el: mask, body: mask.querySelector('.modal-body'), close };
 }
 
 /** 新建文件类型选择弹窗：分组展示全量类型，resolve 扩展名（不含点）或 null（取消） */

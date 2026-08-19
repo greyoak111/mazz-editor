@@ -1,5 +1,7 @@
 # W71 Layout Debt Census
 
+> **W87 状态：** `960×600` 正式窗口门、尺寸档、Panel 窄窗共享层与 document overflow 运行检查已通过；A–E 静态候选仍不是自动缺陷。见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。
+
 > 状态：Wave 0 `PROVISIONAL_OWNER_REVIEW_REQUIRED`
 > 机器证据：[`../../.mazz/audit/layout-debt.json`](../../.mazz/audit/layout-debt.json)
 > 生成命令：`npm run audit:w71:census`

@@ -11,7 +11,7 @@ describe('右键菜单原生 popup 化（并行 surface 根治）', () => {
     const src = readSrc('main/browser-views.js');
     assert.ok(/Menu\s*} = require\('electron'\)/.test(src), 'Menu 必须入主进程解构');
     assert.ok(src.includes('Menu.buildFromTemplate'), '原生模板必须构建');
-    assert.ok(src.includes('.popup({ window: this.wm.main'), '必须绑主窗 popup');
+    assert.ok(src.includes('.popup({ window: rec.hostWin || this.wm.main'), '必须绑定 Surface 的真实宿主，并以主窗兜底');
     assert.ok(src.includes('setTimeout'), '弹出必须延迟下一帧（deepseek 弹药：给渲染器绘制时间）');
     assert.ok(src.includes('browser.navBack') && src.includes('browser.bookmark') && src.includes('browser.pageToLibrary'), '菜单动作必须全');
     assert.ok(src.includes("label: '摘录到笔记'") && src.includes("label: 'SearXNG 搜索选中内容'"), '选区条件项必须有');

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
 <title>批注</title>
 <link rel="stylesheet" href="../styles/themes.css">
 <link rel="stylesheet" href="panel-shared.css"> <!-- 军规④：滚动条族消费方真实加载（base.css 面板窗不载——写了不算做了病绝育） -->
@@ -23,7 +23,7 @@
   .bar .act:hover { color: var(--accent); border-color: var(--accent); }
   .bar.collapsed .body { display: none; }
   .bar .body { display: flex; align-items: center; gap: 8px; }
-</style></head><body>
+</style></head><body><script type="module" src="panel-runtime.js"></script>
 <canvas id="cv"></canvas>
 <div class="bar" id="bar">
   <button class="fold" id="fold" title="折叠/展开"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>

@@ -16,4 +16,9 @@ contextBridge.exposeInMainWorld('mazzNote', {
       if (channel === 'quicknote:focus') callback(payload);
     });
   },
+  onTheme(callback) {
+    ipcRenderer.on('mazz:event', (_e, { channel, payload }) => {
+      if (channel === 'theme:changed') callback(payload);
+    });
+  },
 });

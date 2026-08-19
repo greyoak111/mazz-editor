@@ -30,10 +30,11 @@ describe('B11 内录录制中实况流', () => {
 });
 
 describe('B4/B6 新形态验收钉点', () => {
-  test('B4 cloak 机制在场（W52 建——验收场景钉死）', () => {
+  test('B4 遮挡场景由 W87 统一视觉合成接管', () => {
     const bi = readSrc('renderer/modules/browser/index.js');
-    assert.ok(bi.includes('.mazz-palette-mask, .help-mask'), 'cloak 选择器必须在');
-    assert.ok(bi.includes('ctl._cloaked'), 'cloak 状态机必须在');
+    assert.ok(!bi.includes('.mazz-palette-mask, .help-mask') && !bi.includes('ctl._cloaked'), 'Browser 私有 cloak 选择器与状态机必须绝迹');
+    const visual = readSrc('renderer/core/visual-composition.js');
+    assert.ok(visual.includes("selector: '.mazz-palette-mask'") && visual.includes('releaseOverlay'), '统一 Plane 必须覆盖登记与释放');
   });
   test('B6 全屏处理链在场', () => {
     const bi = readSrc('renderer/modules/browser/index.js');

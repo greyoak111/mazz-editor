@@ -26,18 +26,25 @@ class PanelWindows {
     }
   }
 
-  constructor({ bus, win, resourceLedger = null }) {
+  constructor({ bus, win, resourceLedger = null, visualComposition = null }) {
     this.bus = bus;
     this.win = win; // () => 主窗
     this.resourceLedger = resourceLedger;
+    this.visualComposition = visualComposition;
     this.panels = new Map(); // singleton: kind；multi: kind:instanceId
-    bus.handle('panel:open', async ({ kind, opts }) => this.open(kind, opts));
+    bus.handle('panel:open', async ({ kind, opts } = {}, event) => {
+      const host = BrowserWindow.fromWebContents(event?.sender) || this.win?.();
+      return this.open(kind, opts, host);
+    });
     bus.handle('panel:close', async ({ kind, instanceId }) => {
       for (const p of this._windowsFor(kind, instanceId)) if (!p.isDestroyed()) p.close();
       return true;
     });
     // 面板 → 主窗回推：数据已变（主窗浏览器模块刷新收藏/密码）与动作请求（打开网址/填充密码/工具坞命令/密码保存询问）
-    bus.handle('panel:changed', async (payload) => { this.forward('panel:changed', payload); return true; });
+    bus.handle('panel:changed', async (payload, event) => {
+      this.forward('panel:changed', payload, this._panelBySender(event?.sender));
+      return true;
+    });
     // W54 B10 坞拖拽手势三态（自绘拖拽：transparent+app-region 跨屏病绕开——面板页 e.screenX/Y 供屏坐标，主进程 setBounds 跟手）
     bus.handle('panel:dragStart', async ({ kind, instanceId, sx, sy }) => {
       const win = this._panelFor(kind, instanceId);
@@ -68,7 +75,7 @@ class PanelWindows {
           const mb = m.getBounds(), wb = d.win.getBounds();
           const vOverlap = Math.max(0, Math.min(wb.y + wb.height, mb.y + mb.height) - Math.max(wb.y, mb.y)) / wb.height;
           const snap = Math.abs((wb.x + wb.width) - (mb.x + mb.width)) <= 48 && vOverlap >= 0.4;
-          if (snap !== d.snap) { d.snap = snap; this.forward('dock:snapHint', { on: snap }); }
+          if (snap !== d.snap) { d.snap = snap; this.forward('dock:snapHint', { on: snap }, d.win); }
         }
       } catch {}
       return true;
@@ -77,10 +84,10 @@ class PanelWindows {
       const d = this._drag;
       this._drag = null;
       if (!d || d.win.isDestroyed()) return false;
-      this.forward('dock:snapHint', { on: false });
+      this.forward('dock:snapHint', { on: false }, d.win);
       if (d.snap && kind === 'dockfloat') {
         // 拽回侧载位=自动停靠：主窗联动回岗 + 子窗自闭（手势三态之拽回）
-        this.forward('panel:changed', { kind: 'dockfloat', closed: true });
+        this.forward('panel:changed', { kind: 'dockfloat', closed: true }, d.win);
         try { d.win.close(); } catch {}
         return 'docked';
       }
@@ -88,17 +95,12 @@ class PanelWindows {
     });
     // W58c：标注发件面板 kind（主题快照等通用桥的回推寻址——17 面板免逐一手带 kind；视图宿主化同款思路）
     bus.handle('panel:action', async (payload, event) => {
-      if (payload && !payload.kind) {
-        for (const w of this.panels.values()) {
-          if (!w.isDestroyed() && w.webContents === event?.sender) {
-            const kind = w.__panelKind;
-            payload.kind = kind;
-            if (w.__panelInstanceId) payload.instanceId = w.__panelInstanceId;
-            break;
-          }
-        }
+      const sourcePanel = this._panelBySender(event?.sender);
+      if (payload && !payload.kind && sourcePanel) {
+        payload.kind = sourcePanel.__panelKind;
+        if (sourcePanel.__panelInstanceId) payload.instanceId = sourcePanel.__panelInstanceId;
       }
-      this.forward('panel:action', payload);
+      this.forward('panel:action', payload, sourcePanel);
       return true;
     });
     // W52③ 薄子窗回推（paletteQuery/shortcutQuery 的答案信道：主窗渲染层 → 指定面板窗）
@@ -119,6 +121,10 @@ class PanelWindows {
   _panelFor(kind, instanceId) {
     return this.panels.get(this._key(String(kind || ''), instanceId));
   }
+  _panelBySender(sender) {
+    if (!sender) return null;
+    return [...this.panels.values()].find(win => !win.isDestroyed() && win.webContents === sender) || null;
+  }
   _windowsFor(kind, instanceId) {
     kind = String(kind || '');
     if (!PanelWindows.MULTI_KINDS.has(kind) || instanceId != null) {
@@ -132,12 +138,18 @@ class PanelWindows {
     if (!win.__panelReady) { (win.__panelQueue ||= []).push(payload); return; }
     win.webContents.send('mazz:event', { channel: 'panel:push', payload });
   }
-  _prepare(win, kind, instanceId, key) {
+  _prepare(win, kind, instanceId, key, host = null) {
     win.__panelKind = kind;
     win.__panelInstanceId = PanelWindows.MULTI_KINDS.has(kind) ? this._instanceId(instanceId) : '';
     win.__panelKey = key;
     win.__panelReady = false;
     win.__panelQueue = [];
+    win.__panelHost = host || win.getParentWindow?.() || this.win?.();
+    this.visualComposition?.registerPanel?.(win, {
+      kind,
+      instanceId: win.__panelInstanceId || null,
+      hostWindowId: win.__panelHost?.id || null,
+    });
     if (this.resourceLedger) {
       try {
         const ledgerKey = this.resourceLedger.register({
@@ -211,7 +223,7 @@ class PanelWindows {
         contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: false,
       },
     });
-    this._prepare(win, 'annotate', '', 'annotate');
+    this._prepare(win, 'annotate', '', 'annotate', parent);
     this.panels.set('annotate', win);
     win.on('closed', () => { this.panels.delete('annotate'); this._unfollow(parent, win); });
     PanelWindows.register('annotate', win);
@@ -232,18 +244,27 @@ class PanelWindows {
     try { parent.removeListener('move', win._followSync); parent.removeListener('resize', win._followSync); } catch {}
   }
 
-  forward(channel, payload) {
-    const w = this.win?.();
+  forward(channel, payload, panelWin = null) {
+    const ownedHost = panelWin?.__panelHost;
+    const w = ownedHost && !ownedHost.isDestroyed() ? ownedHost : this.win?.();
     if (w && !w.isDestroyed()) this.bus.send(w, channel, payload);
   }
-  open(kind, opts = {}) {
+  open(kind, opts = {}, hostWin = null) {
     kind = String(kind || '');
-    if (!/^(favmgr|pwmgr|palette|shortcuts|annotate|settings|agreement|help|translate|plugins|quickopen|recorder|dockfloat|bookmark|ctxmenu|splitpreview|sync|notif|factorycfg|newfile|picklist|fpreview|fedit|harvest|archive)$/.test(kind)) return { error: '未知面板' };
+    if (!/^(favmgr|pwmgr|palette|shortcuts|annotate|settings|agreement|help|translate|plugins|recorder|dockfloat|bookmark|ctxmenu|splitpreview|sync|notif|factorycfg|newfile|picklist|fpreview|fedit|harvest|archive)$/.test(kind)) return { error: '未知面板' };
     const instanceId = PanelWindows.MULTI_KINDS.has(kind) ? this._instanceId(opts.instanceId) : '';
     const panelKey = this._key(kind, instanceId);
     const exist = this.panels.get(panelKey);
-    if (exist && !exist.isDestroyed()) { exist.show(); exist.focus(); return { already: true }; }
-    const parent = this.win?.();
+    const parent = hostWin && !hostWin.isDestroyed() ? hostWin : this.win?.();
+    if (exist && !exist.isDestroyed()) {
+      if (parent && exist.__panelHost !== parent) {
+        try { exist.setParentWindow(parent); } catch {}
+        exist.__panelHost = parent;
+        this.visualComposition?.updatePanelHost?.(exist, parent);
+      }
+      exist.show(); exist.focus();
+      return { already: true, hostWindowId: exist.__panelHost?.id || null };
+    }
     if (kind === 'annotate') return this.openAnnotate(parent);
     if (kind === 'splitpreview') {
       // W55④ 分屏预览罩：全透无边跟随主窗（annotate 同款——预览框永不被浏览器视图压，样式主窗算好推来）
@@ -258,7 +279,7 @@ class PanelWindows {
       const follow = () => { if (!win.isDestroyed() && host && !host.isDestroyed()) win.setBounds(host.getBounds()); };
       follow(); win.showInactive();
       if (host) { host.on('move', follow); host.on('resize', follow); win.on('closed', () => { try { host.off('move', follow); host.off('resize', follow); } catch {} }); }
-      this._prepare(win, kind, '', panelKey);
+      this._prepare(win, kind, '', panelKey, host);
       this.panels.set(panelKey, win);
       PanelWindows.register(panelKey, win);
       win.loadURL('mazz-res://app/panels/splitpreview.html');
@@ -269,14 +290,15 @@ class PanelWindows {
         : kind === 'picklist' ? (opts.w || 340)
         : kind === 'palette' ? 720 : kind === 'shortcuts' ? 720 : kind === 'favmgr' ? 780 : kind === 'harvest' ? 880
         : kind === 'help' ? 860 : kind === 'settings' ? 760 : kind === 'plugins' ? 740
-        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? 400 : kind === 'notif' ? 520 : kind === 'quickopen' ? 640 : kind === 'bookmark' ? 520 : kind === 'factorycfg' ? 920 : 700;
+        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? 400 : kind === 'notif' ? 520 : kind === 'bookmark' ? 520 : kind === 'factorycfg' ? 920 : 700;
     const panelHeight = kind === 'fpreview' ? (opts.h || 640) : kind === 'fedit' ? (opts.h || 700)
       : kind === 'ctxmenu' ? (opts.h || 300)
         : kind === 'picklist' ? (opts.h || 420)
-        : kind === 'palette' ? 540 : kind === 'quickopen' ? 480 : kind === 'dockfloat' ? 620 : kind === 'notif' ? 650 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : kind === 'harvest' ? 700 : 560;
+        : kind === 'palette' ? 540 : kind === 'dockfloat' ? 620 : kind === 'notif' ? 650 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : kind === 'harvest' ? 700 : 560;
     const stairIndex = PanelWindows.MULTI_KINDS.has(kind) ? this._nextStairIndex(kind) : -1;
     const stairSide = kind === 'fedit' ? 'left' : 'right';
     const stair = PanelWindows.MULTI_KINDS.has(kind) ? this._stairBounds(parent, panelWidth, panelHeight, stairIndex, stairSide) : {};
+    const transientPanel = kind === 'ctxmenu' || kind === 'picklist';
     const win = new BrowserWindow({
       width: panelWidth,
       height: panelHeight,
@@ -295,26 +317,41 @@ class PanelWindows {
       parent: parent || undefined,
       title: opts.title || { favmgr: '收藏管理', pwmgr: '密码管理器', palette: 'Quick Switcher', shortcuts: '快捷键速查',
         settings: '设置', agreement: '用户服务协议及隐私政策', help: '使用指南', translate: '翻译',
-        plugins: '插件管理（预览）', quickopen: '快速跳转', recorder: '全局内录（预览）', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步', notif: '通知中心', factorycfg: '项目立项 · AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择', archive: '压缩包', fpreview: '生成预览', fedit: '章节编辑', harvest: 'AI 对话整理' }[kind] || '面板',
+        plugins: '插件管理（预览）', recorder: '全局内录（预览）', dockfloat: '工具坞', bookmark: '收藏当前页', ctxmenu: '菜单', sync: '局域网同步', notif: '通知中心', factorycfg: '项目立项 · AI 服务 · 创作模板', newfile: '新建文件', picklist: '选择', archive: '压缩包', fpreview: '生成预览', fedit: '章节编辑', harvest: 'AI 对话整理' }[kind] || '面板',
       autoHideMenuBar: true,
       // W47 圆角+拖拽：transparent+圆角体（Win10 原生无圆角 API 的唯一路径；拖拽=页面顶窄拖拽条 app-region:drag，
       // 窗控三键=页面右上角小件（非全套标题栏——用户定版）。thickFrame 默认保留=边框缩放在 Win10 仍有抓手
       transparent: true, frame: false,
       backgroundColor: '#00000000',
+      // 瞬时菜单必须等首帧就绪后再显现并获取焦点；若创建即显示，前一面板的收尾
+      // focus() 可能在加载期制造一次假 blur，导致菜单尚未绘制就自闭。
+      show: !transientPanel,
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: false,
       },
     });
-    this._prepare(win, kind, instanceId, panelKey);
+    this._prepare(win, kind, instanceId, panelKey, parent);
     win.__stairIndex = stairIndex;
     win.__stairSide = stairSide;
     this.panels.set(panelKey, win);
-    if (kind === 'ctxmenu' || kind === 'picklist') win.on('blur', () => { try { win.close(); } catch {} }); // 菜单惯例：失焦即收（W58i picklist 字体/字号选择格同例）
+    if (transientPanel) {
+      win.__dismissOnBlurArmed = false;
+      win.once('ready-to-show', () => {
+        if (win.isDestroyed()) return;
+        win.show();
+        win.focus();
+        setImmediate(() => { if (!win.isDestroyed()) win.__dismissOnBlurArmed = true; });
+      });
+      win.on('blur', () => {
+        if (!win.__dismissOnBlurArmed) return;
+        try { win.close(); } catch {}
+      }); // 菜单惯例：真正显示并获得焦点后，失焦才收。
+    }
     win.on('closed', () => {
       this.panels.delete(panelKey);
       // 坞浮动子窗格关闭 → 主窗联动坞回停靠（W53 纯原生浮动——关窗即收队；open() 系真钩，15 行那个是 annotate 系）
-      if (kind === 'dockfloat') this.forward('panel:changed', { kind: 'dockfloat', closed: true });
+      if (kind === 'dockfloat') this.forward('panel:changed', { kind: 'dockfloat', closed: true }, win);
       // 焦点抢回：子窗一关焦点归主窗（防流浪到 cmd 等 Z 序下一位）
       try { const m = typeof this.win === 'function' ? this.win() : this.win; if (m && !m.isDestroyed()) { m.show(); m.focus(); } } catch {}
     });

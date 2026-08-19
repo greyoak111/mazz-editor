@@ -1,5 +1,7 @@
 # W71 Surface / Protocol Reality / Workaround Register
 
+> **2026-08-19 supersession：** W71 draft 已由 W87 `mazz.visual-composition/v1` 吸收。统一视觉注册/host/geometry/focus/occlusion 已落地，但 WindowManager、PanelWindows、BrowserViews 仍分别持有资源；本文 workaround register 全部继续 KEEP。现行证据见 [`W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md`](./W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)。
+
 > 状态：Wave 0 现实清单与 `Surface v1` 接口草案
 > 决策：不实施 SurfaceManager，不迁移现有 Surface，不删除 workaround
 > 机器证据：[`../../.mazz/audit/surface-census.json`](../../.mazz/audit/surface-census.json)

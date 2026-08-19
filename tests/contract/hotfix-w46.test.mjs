@@ -7,12 +7,14 @@ import path from 'node:path';
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
 describe('工具坞遮挡', () => {
-  test('浮层遮盖根治史（W46 cloak → W49 命中测试 → W50 离屏终局）', () => {
+  test('浮层遮盖根治史（W46 局部 cloak → W87 统一视觉合成）', () => {
     const src = readSrc('renderer/modules/browser/index.js');
     assert.ok(!src.includes('br-osr'), 'W52 起离屏 canvas 退役（回正原生渲染——浮层改走原生/子窗/推挤三路）');
-    assert.ok(src.includes('cloakCheck'), '兜底 cloak 过渡件在岗');
+    assert.ok(!src.includes('cloakCheck') && !src.includes('ctl._cloaked'), 'W87 后 Browser 局部弹层 cloak 不得复活');
+    const visual = readSrc('renderer/core/visual-composition.js');
+    assert.ok(visual.includes("selector: '.mazz-palette-mask'") && visual.includes("'visual:overlayBegin'"), '遮挡必须汇入统一 Overlay Plane 与主进程协议');
     const dock = readSrc('renderer/shell/side-dock.js');
-    assert.ok(dock.includes("classList.add('floating')") && dock.includes("classList.remove('floating')"), '浮窗态类必须在（cloak 判定锚）');
+    assert.ok(dock.includes("classList.add('floating')") && dock.includes("classList.remove('floating')"), '浮窗态类仍是工具坞布局真相');
   });
 });
 
