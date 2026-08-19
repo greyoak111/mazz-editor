@@ -36,6 +36,19 @@ There are no remaining ambiguous `OPEN`, `PARTIAL`, “未确认落地” or “
 | Recorder / Plugins | PREVIEW_SETTLED | Honest capability/trust boundaries and cleanup landed; hardware matrix/process sandbox/signing are not claimed |
 | Mobile / Updater | HIDDEN / CONDITIONAL | Local shells/contracts/security checks settled; native builds, stores, live signed feed and rollback need external infrastructure |
 
+## Terminal non-commitments — removed from the active backlog
+
+The following names remain useful design history but are not unfinished product promises. They may only return through a separately approved specification with new evidence; they cannot be revived by relabelling them as convergence debt:
+
+- Task Capsule and SeatPackage: current W73 Run, W85 Context Package, Seat, Qualification, Delegation and AgentRulePack contracts already own the required boundaries.
+- Universal Graph / Graph Bus / universal Asset or Event database: rejected in favour of file/asset truth, append-only event evidence and derived pairwise relations.
+- Full SurfaceManager migration: rejected without a demonstrated P0/P1 ownership defect and a bounded single-surface proof of benefit.
+- A second native declarative drawing engine or Blender UI clone: rejected; Mindmap/Slide/Draw remain product surfaces and external generation stays a W72/W79 Capability.
+- A universal calculator/solver, “厂花” product shell, separate Showrunner shell and unified personality super-asset: not current commitments; bounded calculation, personas, doctrine and process assets already have separate owners.
+- Human P2P co-watch rooms, Browser whole-series Harvest and additional Agent vendors beyond Kimi/Codex/Claude: archived candidates, not queued work.
+
+This is a scope decision, not a claim that speculative software was implemented. It eliminates ambiguous backlog rows while preserving the design record.
+
 ## Final verification
 
 - Build: PASS.
