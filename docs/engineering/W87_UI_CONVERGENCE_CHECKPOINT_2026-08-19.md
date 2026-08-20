@@ -2,7 +2,7 @@
 
 > 日期：2026-08-19
 > 起始坐标：`main@c125454`
-> 结论：**W87a–h EXECUTED SCOPE RESEALED；W71 COMPLETE WAVE 5A OPEN**
+> 结论：**W87a–i EXECUTED SCOPE RESEALED；W71 COMPLETE WAVE 5A OPEN**
 > 协议：`mazz.visual-composition/v1`
 
 > 2026-08-19 修订：原封板遗漏“主窗多 Browser + 工作台 child + 主/子窗盖顶 + 已有分屏再次拖拽 + child Panel 盖顶”的复合矩阵，后被 W87b RED 证伪。该组合根因已关闭，并完成 source/packaged × hardware/compatibility 复验；详见 [`W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md`](./W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md)。原报告的单轴证据保留，但不再单独承担复合场景封板结论。
@@ -15,13 +15,15 @@
 
 > 2026-08-21 W87h 修订：W87g 仍未穷举所有可达 Shell 路由、动态/嵌套控件和 Browser 一方 HOME。W87h 以 55 个页面身份 × Paper/Ink 在 source/packaged 各执行 `110/110`，并把控件图形升级为语义 `currentColor` SVG、unknown fail-closed；详见 [`W87H_UI_PAGE_SWEEP_AND_CONTROL_ICON_CHECKPOINT_2026-08-21.md`](./W87H_UI_PAGE_SWEEP_AND_CONTROL_ICON_CHECKPOINT_2026-08-21.md)。
 
+> 2026-08-21 W87i 修订：维护者 16 张实机截图又证明“页面可达、图标可辨”仍不足以封板交互状态。W87i 关闭 caption、Ribbon 压缩、页签右锚、Dock 拖出/快照、Panel 结构与尺寸能力、status toast、默认色块和 dev 编码问题，并以 SOURCE/PACKAGED state v1 与 pane/dock v4 复封；详见 [`W87I_UI_INTERACTION_CONVERGENCE_CHECKPOINT_2026-08-21.md`](./W87I_UI_INTERACTION_CONVERGENCE_CHECKPOINT_2026-08-21.md)。
+
 ## 1. 结果
 
 本轮没有把 Browser 局部即时 cloak 当成视觉解决方案。Main Window、PanelWindow、WebContentsView 和 DOM Overlay 已进入同一视觉注册与仲裁面；local owner 继续持有真实资源，统一运行时持有 host、geometry、focus、occlusion 和视觉生命周期。W87d 保留 drag cloak 作为 Windows 命中药方，但把它严格放在 sender-host 捕获、代理预绘、relayout 和 Overlay 身份门之后。
 
 同时对主应用、24 个独立 Panel HTML、QuickNote、主题、图标、焦点、禁用态、最小窗口和瞬时菜单执行了全量收敛。原单轴支持矩阵与 W87b Browser 复合矩阵中没有已知未关闭 P0/P1；外部硬件与第三方内容边界单列，不冒充已验。
 
-这里的“全量”现在指 W87a–h 明列且已有运行证据的执行范围；它仍不代表 W71 Wave 5A 已在 Shell、Sheet、Browser、Factory、Library 全面推广。
+这里的“全量”现在指 W87a–i 明列且已有运行证据的执行范围；它仍不代表 W71 Wave 5A 已在 Shell、Sheet、Browser、Factory、Library 全面推广。
 
 ## 2. 落地件
 
@@ -41,6 +43,7 @@
 | Theme legibility | Paper/Ink token 与旧别名收敛；一方文字/placeholder/disabled 和交互 SVG 以 computed contrast 穷举；Slide 内容主题与应用主题命名空间分离 |
 | Semantic Control Icons | 语义 SVG 注册表、unknown fail-closed；动态/嵌套控件递归收口，纯图标具名，tabs/menu/list 的键盘与焦点生命周期闭环 |
 | Page Sweep | 16 主模块 + 8 Sidebar + 3 Ribbon + 3 Side Dock + 24 Panel + QuickNote；source/packaged 双主题截图、Browser native capture 与 HOME 内部门 |
+| Interaction state | 专用 Windows caption；Ribbon 容器分档与显式横滚；Tabs 右缘/活动签滚动状态机；Dock 双原点拖拽与工作态快照；Panel structure/resize policy；statusbar 中央 toast；dev UTF-8 启动链 |
 
 ## 3. 本轮抓到并关闭的真实缺陷
 
@@ -62,6 +65,15 @@
 16. **抽样页面与字符映射假全量**：旧图标运行时只认按钮直系文本，动态命令、嵌套 `span/i`、伪按钮、Panel 和 QuickNote 会漏出 emoji/几何字符。W87h 改为语义注册表、unknown fail-closed 与递归动态门，并以 55 身份页面 census 取代凭记忆抽页。
 17. **菜单焦点与外点监听漂移**：模块自绘菜单打开后不归还焦点，`once:true` 外点监听又会被 disabled 项提前消费。现由统一 close 路径恢复原触发控件并显式解除监听，键盘反复开关不再累积。
 18. **Browser 一方页被 renderer 截图绕过**：WCV 不进入 renderer screenshot，旧页面 sweep 即使 Browser 内容缺失也可能假绿。现把 native capture 缺失/空白升为硬失败，并在一方 HOME 内部审计 marker、placeholder 对比度和 SVG currentColor；第三方网页继续不被注入扫描。
+19. **系统标题栏被业务图标污染**：通用 SVG 映射把最大化画成近似日历/缺口图形，后置 `button svg` 又可能覆写细描边。现以独立 12×12 caption primitive、46×36 hit target 和 1.15 线宽隔离。
+20. **Ribbon 中文压缩成竖排**：旧实现按 viewport 猜密度，分屏和 Dock 下组件真实宽度不同。现按自身容器执行 `full → compact → icon`，剩余能力由 Ribbon 自身显式横滚；不把 residual 冒充 0。
+21. **页签随书库、分屏和改名横跳**：auto margin 只能处理未溢出；`Tabs.render()` 全删重建又丢失 scroll 状态。现删前保存 `scrollLeft/rightPinned/active/visibleAnchor`，挂载后恢复并硬保证 active 可见。
+22. **Dock 拖出先跳中心、二次拖动再错位**：主窗和浮窗共用同一原点/click-through 语义。现 host 与 float drag session 分权，主窗拖出只在必要阶段穿透；up/cancel/blur/close 全收尾。
+23. **浮动 Factory 重绘丢草稿和焦点**：子窗只拿展示快照，冷启动空工具清单还被当终态。现保留 draft/selection/focus/adapter/model，owner ready 有界重试并主动补推，cold tools 稳定 18 卡。
+24. **Construct 只换颜色不换结构**：Panel 没收到 hard-edge token，共享样式又 blanket rounding。现颜色和 `soft/hard-edge` 一起传播到已打开 Panel，自定义 Construct 同合同；圆形/pill 语义保留。
+25. **所有子窗都能自由拉伸**：固定工具窗与工作台窗共享 resizable 默认值。现声明 `fixed/workbench` native policy，并直接核验 BrowserWindow 的 min/max/resize/maximize/fullscreen 属性。
+26. **状态气泡抢左下内容**：普通 toast 自己占页面角落。现进入 statusbar 中央独立 slot，左右状态区不被覆盖；无状态栏场景才使用受控 fallback。
+27. **颜色初值、Help 层级与 dev 编码不闭环**：Markdown 色块缺默认语义，Help 过度强调，Windows 终端依赖外部 code page。现分别固定黑/红初值、Help 与 Agreement 中性同级、dev 入口先切 UTF-8。
 
 ## 4. 机器与视觉证据
 
@@ -83,6 +95,8 @@
 | [`W87F_SIDEBAR_PLAYER_LAYOUT_SOURCE.json`](./evidence/W87F_SIDEBAR_PLAYER_LAYOUT_SOURCE.json)、[`PACKAGED`](./evidence/W87F_SIDEBAR_PLAYER_LAYOUT_PACKAGED.json) 与 4 张图 | **CURRENT / PASS**：Sidebar `180/232/320px` 与空 Player 侧栏开关 20×；fatal/error 0 |
 | [`W87G_THEME_LEGIBILITY_SOURCE.json`](./evidence/W87G_THEME_LEGIBILITY_SOURCE.json)、[`PACKAGED`](./evidence/W87G_THEME_LEGIBILITY_PACKAGED.json) 与 12 张接触表/QuickNote 图 | **CURRENT / PASS**：16 主界面 + 24 Panel + QuickNote × Paper/Ink = 每种运行态 82 scopes；contrast failure 0、renderer error 0 |
 | [`UI_PAGE_SWEEP_SOURCE.json`](./evidence/UI_PAGE_SWEEP_SOURCE.json)、[`PACKAGED`](./evidence/UI_PAGE_SWEEP_PACKAGED.json) | **CURRENT / PASS**：每种运行态 55 身份 × Paper/Ink = `110/110`；issue 0、runtime error 0；Browser native `2/2` 与 HOME 内部门通过 |
+| [`W87I_UI_STATE_CONVERGENCE_SOURCE.json`](./evidence/W87I_UI_STATE_CONVERGENCE_SOURCE.json)、[`PACKAGED`](./evidence/W87I_UI_STATE_CONVERGENCE_PACKAGED.json) | **CURRENT / PASS**：state v1 双态；caption、Ribbon、swatch、Help/Agreement、status toast、22 Panel native policy、Construct/custom structure 和主题竞态通过 |
+| [`W87I_PANE_DOCK_CONTINUITY_SOURCE.json`](./evidence/W87I_PANE_DOCK_CONTINUITY_SOURCE.json)、[`PACKAGED`](./evidence/W87I_PANE_DOCK_CONTINUITY_PACKAGED.json) | **CURRENT / PASS**：pane/dock v4 双态；12 长签、真实 Library、dirty/rename、split/join、Dock 主窗/二次拖、草稿焦点和 cold tools 18 卡通过 |
 
 截图已逐张回看：Paper/Ink 确实分化；Organization、Browser host、Panel 空态已同盘；最低窗口没有横向裁切；Overlay 下方 native 页面不穿透；面板矩阵没有新的黑闪或未主题化孤岛。
 
@@ -112,7 +126,7 @@ OSS provenance                             CURRENT
 full suite at W87d coordinate              221 / 221 test files PASS
 ```
 
-上表是 W87d 封板坐标的历史验证账。W87e–h 的最终增量账如下：
+上表是 W87d 封板坐标的历史验证账。W87e–i 的最终增量账如下：
 
 ```text
 W87e Player Node contract                 PASS 13 / 13
@@ -129,7 +143,14 @@ W87h source page sweep                    PASS 110 / 110 scenes
 W87h packaged page sweep                  PASS 110 / 110 scenes
 W87h issues / runtime errors              0 / 0
 Browser native capture source / packaged  2 / 2 · 2 / 2
-final full suite                          PASS 224 / 224 test files
+W87i state v1 source / packaged           PASS / PASS
+W87i pane+dock v4 source / packaged       PASS / PASS
+12 long tabs + Library/dirty/rename       PASS
+split 11+1 / join / active visibility     PASS
+Dock draft/focus/secondary drag/cold18    PASS
+UI sweep legal Sheet scroll warnings      2 / 2 per runtime
+final full suite                          PASS 228 / 228 test files
+dist:dir / release audit                  PASS / PASS
 release audit / OSS provenance            PASS / CURRENT
 W71 complete Wave 5A                      OPEN
 ```
@@ -154,4 +175,4 @@ W67 本轮数据：baseline `351.2 MiB`；WCV peak/after `2039.6/356.0 MiB`；Pa
 
 ## 7. 封板边界
 
-“已知 P0/P1 = 0”只针对计划文件中的 W87a–h 已执行范围，不覆盖完整 W71 Wave 5A。Player Control Center 是 stage-local DOM owner，不是 `mazz.visual-composition/v1` 新 kind。确定性 Browser 主矩阵使用 renderer `DragEvent`；Playwright CDP pointer 路径虽已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 在 W87f–h 按维护者要求禁用，本轮不以该工具作证；此前 GPU `0xC0000135` 阻断已由后续 clean rerun 解除。W87g 背书 Mazz 一方 UI 的 computed contrast；W87h 只背书 `1440×900` 下已列出的默认/代表状态，不把任意外部网页、用户文档、第三方插件自绘、所有条件态或其余五主题全排列冒充已验。多显示器与多 DPI 全排列、真实 Win32 物理拖放、真实屏幕阅读器/触摸设备、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。
+“已知 P0/P1 = 0”只针对计划文件中的 W87a–i 已执行范围，不覆盖完整 W71 Wave 5A。Player Control Center 是 stage-local DOM owner，不是 `mazz.visual-composition/v1` 新 kind。确定性 Browser 主矩阵使用 renderer `DragEvent`；Playwright CDP pointer 路径虽已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 在 W87f–i 按维护者要求禁用，本轮不以该工具作证；W87i 的全部状态判定来自 Electron/Playwright、native BrowserWindow 查询、computed audit 与截图。此前 GPU `0xC0000135` 阻断已由后续 clean rerun 解除。W87g 背书 Mazz 一方 UI 的 computed contrast；W87h/i 只背书已列出的默认/代表状态。Ribbon residual 是有序降级后的自身可横滚能力面，不是 0 overflow；UI sweep 每种运行态两条 Sheet warning 是合法内部横滚，也不是 document overflow。任意外部网页、用户文档、第三方插件自绘、所有条件态或其余五主题全排列不被冒充已验。多显示器与多 DPI 全排列、真实 Win32 物理拖放、真实屏幕阅读器/触摸设备、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。
