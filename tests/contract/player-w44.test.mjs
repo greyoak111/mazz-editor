@@ -39,6 +39,9 @@ describe('媒体库递归与工作区树', () => {
     assert.ok(src.includes("SKIP = new Set(['.audcache'])"), '抽轨缓存必须跳过');
     assert.ok(src.includes('mz-ml-dir') && src.includes('mz-ml-caret'), '树节点折叠必须有');
     assert.ok(src.includes('ctl._mlOpen'), '折叠态记忆必须有');
+    assert.ok(src.includes('class="mz-ml-dir" role="button" tabindex="0" aria-expanded='), '媒体库目录必须可键盘折叠');
+    assert.ok(src.includes('class="mz-li mz-ml-item" role="button" tabindex="0"'), '媒体文件必须可键盘播放');
+    assert.ok(src.includes("el.querySelector('.mz-ml-caret').innerHTML = iconHtml"), '目录动态箭头必须为 currentColor SVG');
   });
   test('下载目录明面化', () => {
     const src = readSrc('main/torrent-daemon.js');

@@ -11,6 +11,9 @@ let seq = 1;
 export class Tabs {
   constructor(root, area) {
     this.el = root;          // .tabbar
+    this.el.setAttribute('role', 'tablist');
+    this.el.setAttribute('aria-label', '已打开内容');
+    this.el.setAttribute('aria-orientation', 'horizontal');
     this.area = area;        // .editor-area
     this.tabs = [];          // {id, title, moduleId, iconId, filePath, dirty, pinned, view}
     this.activeId = null;
@@ -26,6 +29,9 @@ export class Tabs {
     const view = document.createElement('div');
     view.className = 'module-view';
     view.dataset.tabId = id;
+    view.id = id + '-panel';
+    view.setAttribute('role', 'tabpanel');
+    view.setAttribute('aria-labelledby', id + '-tab');
     view.setAttribute('aria-hidden', 'true');
     view.setAttribute('inert', '');
     this.area.appendChild(view);
@@ -110,8 +116,15 @@ export class Tabs {
       // W87d：document capture 阶段必须在抓取原生 Surface 前识别并激活拖动源。
       // dataTransfer 要到本节点的 dragstart 才会写入，来不及作为 capture 阶段的身份源。
       el.dataset.tabId = t.id;
+      el.setAttribute('role', 'presentation');
       const name = document.createElement('span');
       name.className = 't-name';
+      name.id = t.id + '-tab';
+      name.setAttribute('role', 'tab');
+      name.setAttribute('aria-controls', t.id + '-panel');
+      name.setAttribute('aria-selected', String(t.id === this.activeId));
+      name.setAttribute('aria-label', `${t.title}${t.dirty ? '，未保存' : ''}`);
+      name.tabIndex = t.id === this.activeId ? 0 : -1;
       name.innerHTML = '';
       if (t.pinned) { const pin = document.createElement('span'); pin.className = 'tab-pin'; pin.innerHTML = iconHtml('📌'); name.appendChild(pin); }
       const icon = document.createElement('span');
@@ -126,13 +139,29 @@ export class Tabs {
       el.appendChild(name);
       if (t.dirty) {
         const d = document.createElement('span');
-        d.className = 't-dirty'; d.textContent = '●';
+        d.className = 't-dirty'; d.innerHTML = iconHtml('●'); d.setAttribute('aria-hidden', 'true');
         el.appendChild(d);
       }
       const closeBtn = document.createElement('button');
-      closeBtn.className = 't-close'; closeBtn.title = '关闭'; closeBtn.textContent = '✕';
+      closeBtn.type = 'button';
+      closeBtn.className = 't-close'; closeBtn.title = '关闭'; closeBtn.setAttribute('aria-label', `关闭 ${t.title}`); closeBtn.innerHTML = iconHtml('✕');
       el.appendChild(closeBtn);
       el.addEventListener('click', (e) => { if (!e.target.closest('.t-close')) this.activate(t.id); });
+      name.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          this.activate(t.id);
+          return;
+        }
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const at = this.tabs.findIndex(tab => tab.id === t.id);
+        const target = event.key === 'Home' ? this.tabs[0]
+          : event.key === 'End' ? this.tabs.at(-1)
+            : this.tabs[(at + (event.key === 'ArrowRight' ? 1 : -1) + this.tabs.length) % this.tabs.length];
+        this.activate(target.id);
+        requestAnimationFrame(() => this.el.querySelector(`[data-tab-id="${target.id}"] .t-name`)?.focus());
+      });
       // 双击重命名（自定义标签标题，未命名文件尤其需要）
       el.addEventListener('dblclick', async (e) => {
         if (e.target.closest('.t-close')) return;

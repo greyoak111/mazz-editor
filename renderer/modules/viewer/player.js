@@ -74,7 +74,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           <button class="mz-btn" data-a="pip" data-player-min="960" data-player-group="picture" data-player-label="画中画" data-player-video-only="1" title="画中画（PiP）">${iconHtml('🗔')}</button>
           <button class="mz-btn" data-a="loop" data-player-min="960" data-player-group="transport" data-player-label="循环模式" aria-pressed="true" title="循环（L）：列表循环">${iconHtml('🔁')}</button>
           <button class="mz-btn" data-a="snap" data-player-min="never" data-player-group="tools" data-player-label="截图" data-player-video-only="1" title="截图（S）">${iconHtml('📷')}</button>
-          ${canExportGif ? `<button class="mz-btn" data-a="gif" data-player-min="never" data-player-group="tools" data-player-label="录制 GIF" data-player-video-only="1" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>` : ''}
+          ${canExportGif ? `<button class="mz-btn" data-a="gif" data-player-min="never" data-player-group="tools" data-player-label="录制 GIF" data-player-video-only="1" aria-label="录制 GIF" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>` : ''}
           <button class="mz-btn" data-a="progmem" data-player-min="never" data-player-group="tools" data-player-label="进度记忆" aria-pressed="true" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
           <button class="mz-btn" data-a="sub" data-player-min="600" data-player-group="sound" data-player-label="字幕" aria-pressed="false" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
           <button class="mz-btn" data-a="companion" data-player-min="never" data-player-group="tools" data-player-label="陪看" title="陪看：防剧透的人格对话与本地观剧档">${iconHtml('✨')}</button>
@@ -104,7 +104,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       <div class="mz-empty-ico">${iconHtml('🎬')}</div>
       <div class="mz-empty-t">没有正在播放的内容</div>
       <div class="mz-empty-d">左侧「媒体库 / 网络资源」选源即播，或直接导入视频</div>
-      <button class="rb-btn mz-empty-btn">＋ 导入视频</button>
+      <button class="rb-btn mz-empty-btn">${iconHtml('＋')}<span>导入视频</span></button>
     </div>`;
     // 几何只由 side-open/side-overlay 状态驱动；关闭侧栏时必须与媒体面、底栏一起铺满舞台。
     empty.querySelector('.mz-empty-in').style.cssText = 'text-align:center;color:#94a3b8;font-size:13px;line-height:2';
@@ -538,16 +538,16 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const countF = (nodes) => { for (const n of nodes) { if (n.file) total++; else countF(n.kids); } };
     countF(tree);
     root.querySelector('.mz-side-count').textContent = `（${total}）`;
-    const escH = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const escH = (s) => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     const renderNodes = (nodes) => nodes.map(n => {
       if (n.dir) {
         const open = (ctl._mlOpen ??= new Set()).has(n.dir.path) || depth_default(n.depth);
-        return `<div class="mz-ml-dir" data-d="${escH(n.dir.path)}" data-open="${open ? 1 : 0}">
-          <span class="mz-ml-caret">${open ? '▾' : '▸'}</span><span class="mz-ml-dname" style="padding-left:${n.depth * 14}px">${iconHtml('📂')} ${escH(n.dir.name)}</span>
+        return `<div class="mz-ml-dir" role="button" tabindex="0" aria-expanded="${open ? 'true' : 'false'}" aria-label="${open ? '折叠' : '展开'}文件夹 ${escH(n.dir.name)}" data-d="${escH(n.dir.path)}" data-open="${open ? 1 : 0}">
+          <span class="mz-ml-caret">${iconHtml(open ? '▾' : '▸')}</span><span class="mz-ml-dname" style="padding-left:${n.depth * 14}px">${iconHtml('📂')} ${escH(n.dir.name)}</span>
         </div><div class="mz-ml-kids" data-k="${escH(n.dir.path)}" style="display:${open ? '' : 'none'}">${renderNodes(n.kids)}</div>`;
       }
-      return `<div class="mz-li mz-ml-item" data-p="${escH(n.file.path)}" title="${escH(n.file.path.replace(dir + '/', ''))}">
-        <span class="mz-ml-name" style="padding-left:${n.depth * 14 + 14}px">${escH(n.file.name)}</span><span class="mz-ml-size">${(n.file.size / 1048576).toFixed(1)}MB</span>
+      return `<div class="mz-li mz-ml-item" role="button" tabindex="0" aria-label="播放 ${escH(n.file.name)}" data-p="${escH(n.file.path)}" title="${escH(n.file.path.replace(dir + '/', ''))}">
+        <span class="mz-ml-name" style="padding-left:${n.depth * 14 + 14}px">${iconHtml('🎞')}<span>${escH(n.file.name)}</span></span><span class="mz-ml-size">${(n.file.size / 1048576).toFixed(1)}MB</span>
       </div>`;
     }).join('');
     // 默认展开第一层（余者记忆折叠态）
@@ -573,18 +573,36 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     mlEl.querySelector('[data-ml=open]').addEventListener('click', () => {
       window.mazz.invoke('shell:showItemInFolder', { path: dir }).catch(() => {});
     });
-    mlEl.querySelectorAll('.mz-ml-item').forEach(el => el.addEventListener('click', () => onNav?.(el.dataset.p)));
+    mlEl.querySelectorAll('.mz-ml-item').forEach(el => {
+      const activate = () => onNav?.(el.dataset.p);
+      el.addEventListener('click', activate);
+      el.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        activate();
+      });
+    });
     // 文件夹折叠/展开（记忆在 ctl._mlOpen；kids 即相邻下一节点）
-    mlEl.querySelectorAll('.mz-ml-dir').forEach(el => el.addEventListener('click', () => {
+    const toggleMediaDirectory = el => {
       const d = el.dataset.d;
       const kids = el.nextElementSibling;
       const open = el.dataset.open === '1';
       el.dataset.open = open ? '0' : '1';
-      el.querySelector('.mz-ml-caret').textContent = open ? '▸' : '▾';
+      el.setAttribute('aria-expanded', String(!open));
+      el.setAttribute('aria-label', `${open ? '展开' : '折叠'}文件夹 ${el.querySelector('.mz-ml-dname')?.textContent?.trim() || ''}`);
+      el.querySelector('.mz-ml-caret').innerHTML = iconHtml(open ? '▸' : '▾');
       if (kids?.classList.contains('mz-ml-kids')) kids.style.display = open ? 'none' : '';
       const set = (ctl._mlOpen ??= new Set());
       if (open) set.delete(d); else set.add(d);
-    }));
+    };
+    mlEl.querySelectorAll('.mz-ml-dir').forEach(el => {
+      el.addEventListener('click', () => toggleMediaDirectory(el));
+      el.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        toggleMediaDirectory(el);
+      });
+    });
   }
   // 工作区切换 → 媒体库模式重扫（工作区切换则切换实装）
   window.mazz?.on?.('workspace:changed', () => { if (ctl.srcMode === 'medialib') renderMedialib(); });
@@ -1168,6 +1186,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       const { stream, rec, drawTimer } = gifRec;
       gifRec = null;
       btn.innerHTML = iconHtml('🎞');
+      btn.setAttribute('aria-label', '录制 GIF');
       btn.classList.remove('on');
       clearInterval(drawTimer); // 停抽帧
       try { if (rec.state !== 'inactive') rec.stop(); } catch {}
@@ -1210,11 +1229,12 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           await window.mazz.invoke('fs:writeFileBase64', { path: p, base64: btoa(bin) });
           toast('GIF 已保存：' + p.split('/').pop());
         } catch (e) { toast('GIF 转码失败：' + e.message); }
-        finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); }
+        finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); btn.setAttribute('aria-label', '录制 GIF'); }
       };
       rec.start(500);
       gifRec = { stream, rec, drawTimer };
-      btn.textContent = '■ 停止';
+      btn.innerHTML = `${iconHtml('■')}<span>停止</span>`;
+      btn.setAttribute('aria-label', '停止 GIF 录制并转码');
       btn.classList.add('on');
       toast('GIF 录制中…（再按停止并转码）');
     } catch (e) {

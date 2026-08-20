@@ -26,7 +26,7 @@ export function openPluginManager() {
     m.body.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-size:12px;color:var(--fg-dim)">插件默认隔离；只运行已按内容哈希授权的版本</span>
-        <button id="plg-install" class="rb-btn" style="flex-direction:row">＋ 安装插件</button>
+        <button id="plg-install" class="rb-btn" style="flex-direction:row">${iconHtml('＋')}<span>安装插件</span></button>
       </div>
       <div style="max-height:50vh;overflow-y:auto">
         ${rows.length ? rows.map(r => `

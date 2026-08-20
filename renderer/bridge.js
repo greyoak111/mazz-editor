@@ -2,6 +2,7 @@
 // 公共能力：桥接通知条 3s 自消失、插件可注册新桥接
 import { toast, modal } from './shell/shell.js';
 import { bus } from './core/events.js';
+import { iconHtml } from './lib/svg-icons.js';
 
 // ==================== 桥接目标文件（桥接/ 文件夹 + 同窗更新 + 自选文件名） ====================
 // 规则：首次桥接弹出目标选择（自动新建到 桥接/、选工作区已有同类型文件、或自定新名）；
@@ -39,22 +40,26 @@ async function pickBridgeTarget(tabId, ext, defaultName) {
     m.body.innerHTML = `
       <div style="min-width:420px;max-width:560px">
         <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:10px">本窗格后续桥接内容将持续更新到同一文件（关闭窗格后失效）。选择目标：</div>
-        <div class="bt-opt" data-v="__auto__" style="padding:9px 12px;border:1px solid var(--acc,#4f46e5);border-radius:8px;margin-bottom:8px;cursor:pointer;background:color-mix(in srgb, var(--acc,#4f46e5) 6%, transparent)">
-          ✨ 自动新建到「桥接/」（推荐）：桥接/${defaultName}${ext}</div>
+        <div class="bt-opt" role="button" tabindex="0" data-v="__auto__" style="padding:9px 12px;border:1px solid var(--acc,#4f46e5);border-radius:8px;margin-bottom:8px;cursor:pointer;background:color-mix(in srgb, var(--acc,#4f46e5) 6%, transparent)">
+          ${iconHtml('✨')}<span>自动新建到「桥接/」（推荐）：桥接/${defaultName}${ext}</span></div>
         ${existing.slice(0, 12).map(f => `
-          <div class="bt-opt" data-v="${f}" style="padding:8px 12px;border:1px solid var(--bd,#e0ded8);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12.5px">📄 ${f.replace(ws + '/', '')}</div>`).join('')}
+          <div class="bt-opt" role="button" tabindex="0" data-v="${f}" style="padding:8px 12px;border:1px solid var(--bd,#e0ded8);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12.5px">${iconHtml('📄')}<span>${f.replace(ws + '/', '')}</span></div>`).join('')}
         <div style="display:flex;gap:6px;margin-top:10px">
           <input id="bt-name" class="rb-input" style="flex:1" placeholder="或自定新文件名（不含后缀）" spellcheck="false">
           <button id="bt-new" class="rb-btn" style="flex-direction:row">新建到 桥接/</button>
         </div>
       </div>`;
-    m.body.querySelectorAll('.bt-opt').forEach(el => el.addEventListener('click', () => {
-      const v = el.dataset.v;
-      m.close();
-      const path = v === '__auto__' ? `${ws}/桥接/${defaultName}${ext}` : v;
-      bridgeTargets.set(key, path);
-      resolve(path);
-    }));
+    m.body.querySelectorAll('.bt-opt').forEach(el => {
+      const choose = () => {
+        const v = el.dataset.v;
+        m.close();
+        const path = v === '__auto__' ? `${ws}/桥接/${defaultName}${ext}` : v;
+        bridgeTargets.set(key, path);
+        resolve(path);
+      };
+      el.addEventListener('click', choose);
+      el.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(); } });
+    });
     m.body.querySelector('#bt-new').addEventListener('click', () => {
       const name = (m.body.querySelector('#bt-name').value.trim() || defaultName).replace(/[\\/:*?"<>|]/g, '-');
       m.close();

@@ -27,9 +27,9 @@ function createViewer(container) {
   root.className = 'viewer-root';
   root.innerHTML = `
     <div class="viewer-bar">
-      <button data-a="out" title="缩小">－</button>
+      <button data-a="out" title="缩小">${iconHtml('－')}</button>
       <span class="viewer-pct">100%</span>
-      <button data-a="in" title="放大">＋</button>
+      <button data-a="in" title="放大">${iconHtml('＋')}</button>
       <button data-a="fit" title="适应窗口">适应</button>
       <button data-a="actual" title="实际大小">1:1</button>
       <span class="viewer-name"></span>
@@ -160,7 +160,7 @@ async function enterImageEdit(ctl, img, path, ext) {
         <div class="vf-name"></div>
         <div class="vf-reason">${reason}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-          ${canTranscode ? '<button class="vf-tc rb-btn" style="flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)">⚙ 转码播放</button>' : ''}
+          ${canTranscode ? '<button class="vf-tc rb-btn" style="flex-direction:row;padding:8px 22px;background:var(--accent);color:var(--accent-fg)">' + iconHtml('⚙') + ' 转码播放</button>' : ''}
           <button class="vf-open rb-btn" style="flex-direction:row;padding:8px 22px">用系统默认程序打开</button>
         </div>
         <div class="vf-progress" style="display:none;width:260px"></div>

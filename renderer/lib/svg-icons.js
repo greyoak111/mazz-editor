@@ -1,7 +1,10 @@
 // renderer/lib/svg-icons.js —— 单色 SVG 图标库（思源风线条图标）
 // 核心原则：stroke=currentColor —— 图标颜色跟随按钮文字色，天然适配全部主题
-// （七套预置 + 图片自定义），hover/激活态随 accent 变。未映射的 emoji 原样回落。
+// （七套预置 + 图片自定义），hover/激活态随 accent 变。图标入口禁止把未知
+// emoji / 私有字形原样回落给系统字体：未知 token 统一使用中性 SVG 占位。
 const S = (inner) => `<svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`; // 2px 线宽 + currentColor：Paper/Ink 小尺寸控件仍保持可辨识轮廓；em 随容器字号全场景自适应
+
+const FALLBACK_ICON = S('<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>');
 
 const MAP = {
   // —— 新建类 ——
@@ -18,6 +21,7 @@ const MAP = {
   '📋': S('<rect x="6" y="4" width="13" height="17" rx="2"/><path d="M9 4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 10h7M9 14h7"/>'),
   '⚡': S('<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>'),
   '▶': S('<path d="M6 4l14 8-14 8V4z"/>'),
+  '▶▶': S('<path d="M3 5l8 7-8 7V5zM11 5l8 7-8 7V5z"/><path d="M21 5v14"/>'),
   '■': S('<rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor"/>'),
   '●': S('<circle cx="12" cy="12" r="7" fill="currentColor"/>'),
   '○': S('<circle cx="12" cy="12" r="7"/>'),
@@ -63,24 +67,45 @@ const MAP = {
   '🏠': S('<path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9z"/><path d="M9 22v-8h6v8"/>'),
   '⬅': S('<path d="M19 12H5M12 19l-7-7 7-7"/>'),
   '➡': S('<path d="M5 12h14M12 5l7 7-7 7"/>'),
+  '←': S('<path d="M19 12H5M12 19l-7-7 7-7"/>'),
+  '→': S('<path d="M5 12h14M12 5l7 7-7 7"/>'),
+  '↑': S('<path d="M12 19V5M5 12l7-7 7 7"/>'),
+  '↓': S('<path d="M12 5v14M5 12l7 7 7-7"/>'),
   '◀': S('<path d="M16 5L7 12l9 7V5z"/>'),
   '↩': S('<path d="M9 7L4 12l5 5M4 12h9a6 6 0 0 1 6 6"/>'),
   '↪': S('<path d="M15 7l5 5-5 5M20 12h-9a6 6 0 0 0-6 6"/>'),
+  '↵': S('<path d="M19 5v7a3 3 0 0 1-3 3H6M10 11l-4 4 4 4"/>'),
   '↷': S('<path d="M5 7h9a5 5 0 0 1 5 5v2"/><path d="M15 11l4 4 4-4"/>'),
   '↻': S('<path d="M20 7v5h-5"/><path d="M18.5 16a8 8 0 1 1 .7-8.8L20 12"/>'),
   '⟳': S('<path d="M20 7v5h-5"/><path d="M18.5 16a8 8 0 1 1 .7-8.8L20 12"/>'),
   '↔': S('<path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/>'),
   '↕': S('<path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/>'),
   '⇪': S('<path d="M12 17V5M6 11l6-6 6 6M5 19h14"/>'),
+  '↥': S('<path d="M12 18V6M7 11l5-5 5 5M5 21h14"/>'),
+  '⇥': S('<path d="M5 5v14M8 12h11M15 8l4 4-4 4"/>'),
+  '⇣': S('<path d="M12 4v16M6 14l6 6 6-6"/>'),
+  '⤵': S('<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>'),
+  '⤒': S('<path d="M5 5h14M12 20V8M7 13l5-5 5 5"/>'),
+  '⤓': S('<path d="M5 19h14M12 4v12M7 11l5 5 5-5"/>'),
   '⇩': S('<path d="M12 5v12M6 13l6 6 6-6M5 5h14"/>'),
   '⌫': S('<path d="M9 5h11a1 1 0 011 1v12a1 1 0 01-1 1H9l-6-7 6-7zM12 10l5 5M17 10l-5 5"/>'),
   '≣': S('<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>'),
+  '∑': S('<path d="M18 4H6l7 8-7 8h12"/>'),
+  '⊞': S('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 7v10M7 12h10"/>'),
+  '⏎': S('<path d="M19 5v7a3 3 0 0 1-3 3H6M10 11l-4 4 4 4"/>'),
+  '⇹': S('<path d="M5 7h14M15 3l4 4-4 4M19 17H5M9 13l-4 4 4 4"/>'),
+  '⇨': S('<path d="M4 7h16M10 12h10M16 8l4 4-4 4M4 17h16"/>'),
+  '⇦': S('<path d="M4 7h16M4 12h10M8 8l-4 4 4 4M4 17h16"/>'),
   '◫': S('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
+  '▣': S('<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
+  '▗': S('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 12h8v8h-8z" fill="currentColor" stroke="none"/>'),
   '⬒': S('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 12h18"/>'),
   '◇': S('<path d="M12 3l8 9-8 9-8-9 8-9z"/>'),
+  '◎': S('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'),
   '▾': S('<path d="M5 9l7 7 7-7"/>'),
   '⌄': S('<path d="M5 9l7 7 7-7"/>'),
   '▴': S('<path d="M5 15l7-7 7 7"/>'),
+  '▸': S('<path d="M9 5l7 7-7 7"/>'),
   '‹': S('<path d="M14 6l-6 6 6 6"/>'),
   '›': S('<path d="M10 6l6 6-6 6"/>'),
   '⋯': S('<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>'),
@@ -107,12 +132,14 @@ const MAP = {
   '↗': S('<path d="M7 17L17 7M9 7h8v8"/>'),
   '✏': S('<path d="M17 3l4 4L8 20l-5 1 1-5L17 3zM15 5l4 4"/>'),
   '🖥': S('<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/>'),
+  '🪟': S('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/>'),
   '✒': S('<path d="M14 4l6 6-8.5 8.5L5 20l1.5-6.5L14 4zM12 6l6 6M5 15l4 4"/>'),
   '🌀': S('<path d="M12 4a8 8 0 1 1-8 8c0-2 1.5-3 3-3a3 3 0 0 1 0 6c-1 0-1.5-.5-1.5-1.5"/>'),
   '🪣': S('<path d="M5 8l7-5 7 5-3 12H8L5 8zM5 8h14"/>'),
   '💉': S('<path d="M16 3l5 5M8 12l8-8M8 12l-4 8 8-4M8 12l4 4"/>'),
   '🧽': S('<rect x="5" y="9" width="14" height="9" rx="2"/><path d="M5 9l3-5h8l3 5"/>'),
   '➤': S('<path d="M6 4l12 8-12 8V4z"/>'),
+  '➕': S('<circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/>'),
   '➜': S('<path d="M4 12h15M14 6l6 6-6 6"/>'),
   '👁': S('<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/>'),
   '◡': S('<path d="M2 12s3.5-6 10-6c2.5 0 4.5 1 6 2M22 12s-3.5 6-10 6c-2.5 0-4.5-1-6-2"/><path d="M4 20L20 4"/>'),
@@ -155,6 +182,8 @@ const MAP = {
   '✍': S('<path d="M14 5l5 5L8 21H3v-5L14 5zM12 7l5 5M7 17l2 2"/>'),
   '📦': S('<path d="M3 8l9-4 9 4v8l-9 4-9-4V8zm9-4v8m9-4-9 4M3 8l9 4"/>'),
   '🏭': S('<path d="M3 21V10l6 4v-4l6 4V6h6v15H3zM7 18h2M12 18h2M17 18h2"/>'),
+  '🕘': S('<circle cx="12" cy="12" r="9"/><path d="M12 7v5H8"/>'),
+  '🗜': S('<path d="M5 4h14M5 20h14M8 4v5l4 3-4 3v5M16 4v5l-4 3 4 3v5"/>'),
   // —— W58e 缺口补（五区 emoji 平反）——
   '✂': S('<circle cx="6.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="17.5" r="2.5"/><path d="M8.6 8.1L20 19M8.6 15.9L20 5"/>'),
   '📑': S('<path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v4h4M10 3v5l2-1.5L14 8V3"/>'),
@@ -193,6 +222,9 @@ const MAP = {
   '◌': S('<circle cx="12" cy="12" r="8" stroke-dasharray="2.5 2.5"/>'),
   '≡': S('<path d="M4 6h16M4 12h16M4 18h10"/>'),
   '⬇': S('<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>'),
+  '⧩': S('<path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 19h14"/>'),
+  '⧉': S('<rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>'),
+  '🔄': S('<path d="M20 7v5h-5M4 17v-5h5"/><path d="M18 15a7 7 0 0 1-12 2M6 9a7 7 0 0 1 12-2"/>'),
   '📕': S('<path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13"/>'),
   '📜': S('<path d="M8 3h11a2 2 0 0 1 2 2v13a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zm7 6h4M11 13h4"/>'),
   '🐍': S('<path d="M12 3c-3 0-4 1.3-4 3v2h8v1H5a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h3v-3a2 2 0 0 1 2-2h4a3 3 0 0 0 3-3V6c0-1.7-1-3-4-3zM9 5.5h.01"/>'),
@@ -200,15 +232,35 @@ const MAP = {
   '🄵': S('<path d="M6 2h8l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1v6h6"/>'),
   'Ⓜ': S('<path d="M6 2h8l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm1 14v-6l2 3 2-3v6M15 14v-4h3m-3 2h2.5"/>'),
   '◆': S('<path d="M12 2l7 10-7 10L5 12z"/>'),
+  '◈': S('<path d="M12 2l7 10-7 10L5 12z"/><path d="M12 7l3.5 5-3.5 5-3.5-5 3.5-5z"/>'),
+  '¶': S('<path d="M13 4v16M17 4v16M13 4H9a4 4 0 0 0 0 8h4"/>'),
+  '•≡': S('<circle cx="5" cy="7" r="1" fill="currentColor"/><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="5" cy="17" r="1" fill="currentColor"/><path d="M9 7h10M9 12h10M9 17h10"/>'),
+  '1≡': S('<path d="M4 6h2v4M4 10h4M4 14h3l-3 4h4M11 7h9M11 12h9M11 17h9"/>'),
+  'A↓': S('<path d="M5 18L9 6l4 12M6.5 14h5M18 5v14M15 16l3 3 3-3"/>'),
+  'Z↓': S('<path d="M5 6h8l-8 12h8M18 5v14M15 16l3 3 3-3"/>'),
+  '―': S('<path d="M4 12h16"/>'),
+  '†': S('<path d="M12 3v18M7 8h10"/>'),
+  '⌂': S('<path d="M3 11l9-8 9 8v9H5v-9M9 20v-6h6v6"/>'),
+  '·': S('<circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>'),
+  'T': S('<path d="M5 5h14M12 5v14M8 19h8"/>'),
+  '⊕': S('<circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/>'),
+  '∅': S('<circle cx="12" cy="12" r="9"/><path d="M6 18L18 6"/>'),
+  '🖊': S('<path d="M15 4l5 5-9 9-6 2 2-6 8-10zM13 6l5 5"/>'),
   '⇱': S('<path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 6 6v6"/>'),
 };
 
+/** 清除 emoji variation selector，避免同一图标因平台编码差异漏映射。 */
+export function normalizeIconToken(icon) {
+  return String(icon ?? '').replace(/[\uFE0E\uFE0F]/g, '').trim();
+}
 
-/** emoji → 主题自适应 SVG（命中映射返回 svg 字符串，否则原样返回） */
+/** emoji / symbol → 主题自适应 SVG。未知图标也绝不回落到系统 emoji 字体。 */
 export function iconHtml(icon) {
-  if (!icon) return '';
-  return MAP[icon] || icon;
+  const token = normalizeIconToken(icon);
+  if (!token) return '';
+  return MAP[token] || FALLBACK_ICON;
 }
 
 /** 批量替换元素内图标（兜底用） */
 export { MAP as SVG_ICONS };
+export { FALLBACK_ICON as SVG_ICON_FALLBACK };

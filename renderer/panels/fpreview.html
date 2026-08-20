@@ -44,7 +44,7 @@
   .reader { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
   .reader-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-bottom: 1px solid var(--border); color: var(--fg-dim); font-size: 11px; }
   .reader-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .editbtn { flex: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; background: var(--bg-elev); color: var(--fg); font: 10.5px var(--font-ui); cursor: pointer; }
+  .editbtn { flex: none; display:inline-flex; align-items:center; gap:5px; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; background: var(--bg-elev); color: var(--fg); font: 10.5px var(--font-ui); cursor: pointer; }
   .editbtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
   .editbtn:disabled { opacity: .58; cursor: not-allowed; }
   .readonly { margin-left: auto; flex: none; padding: 2px 7px; border: 1px solid var(--border); border-radius: 999px; font-size: 10px; }
@@ -69,15 +69,25 @@
     <div class="status" id="status">等待任务</div>
   </header>
   <div class="p-winbtns">
-    <button id="p-min" title="最小化">—</button><button id="p-max" title="最大化/还原">□</button><button class="x" id="p-close" title="关闭">×</button>
+    <button id="p-min" title="最小化" data-svg-icon="minimize"></button><button id="p-max" title="最大化/还原" data-svg-icon="maximize"></button><button class="x" id="p-close" title="关闭" data-svg-icon="close"></button>
   </div>
   <div class="body">
     <aside class="rail"><div class="rail-label">任务目录 · 只读</div><nav class="files" id="files"><div class="empty">等待文件落盘…</div></nav></aside>
-    <main class="reader"><div class="reader-head"><span id="path">实时生成内容</span><button class="editbtn" id="edit" disabled>✎ 去编辑</button><b class="readonly">READ ONLY</b></div><article class="doc" id="doc"><div class="empty">正在连接生成任务…</div></article></main>
+    <main class="reader"><div class="reader-head"><span id="path">实时生成内容</span><button class="editbtn" id="edit" disabled><span data-svg-icon="edit" aria-hidden="true"></span><span>去编辑</span></button><b class="readonly">READ ONLY</b></div><article class="doc" id="doc"><div class="empty">正在连接生成任务…</div></article></main>
   </div>
 </div>
-<script>
+<script type="module">
+import { iconHtml } from '../lib/svg-icons.js';
+
 const $ = s => document.querySelector(s);
+const ICON_TOKEN = Object.freeze({
+  minimize: '—', maximize: '□', close: '×', edit: '✎',
+  blueprint: '▣', outline: '≡', snapshot: '◫', body: '¶', other: '·',
+  running: '●', done: '✓',
+});
+document.querySelectorAll('[data-svg-icon]').forEach((element) => {
+  element.innerHTML = iconHtml(ICON_TOKEN[element.dataset.svgIcon]);
+});
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const attr = s => esc(s).replace(/'/g, '&#39;');
 const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
@@ -120,17 +130,17 @@ function markdown(text) {
   return html || '<div class="empty">空文件</div>';
 }
 function groupOf(name) {
-  if (name === '创作蓝图.md') return ['蓝图', '▣'];
-  if (name === '章节大纲.md') return ['大纲', '≡'];
-  if (/状态快照/.test(name)) return ['快照', '◫'];
-  if (/^第\d+/.test(name)) return ['正文', '¶'];
-  return ['其他', '·'];
+  if (name === '创作蓝图.md') return ['蓝图', 'blueprint'];
+  if (name === '章节大纲.md') return ['大纲', 'outline'];
+  if (/状态快照/.test(name)) return ['快照', 'snapshot'];
+  if (/^第\d+/.test(name)) return ['正文', 'body'];
+  return ['其他', 'other'];
 }
 function renderFiles() {
   const groups = new Map();
-  for (const f of fileList) { const [g, ico] = groupOf(f.name); if (!groups.has(g)) groups.set(g, []); groups.get(g).push({ ...f, ico }); }
+  for (const f of fileList) { const [g, iconKey] = groupOf(f.name); if (!groups.has(g)) groups.set(g, []); groups.get(g).push({ ...f, iconKey }); }
   const order = ['蓝图', '大纲', '正文', '快照', '其他'];
-  $('#files').innerHTML = order.filter(g => groups.has(g)).map(g => `<section><div class="group">${g}</div>${groups.get(g).map(f => `<button class="file ${f.status || ''} ${f.path === currentPath ? 'on' : ''}" data-path="${attr(f.path)}" title="${attr(f.name)}"><span>${f.ico}</span><span class="name">${esc(f.name)}</span><span class="mark">${f.status === 'running' ? '●' : '✓'}</span></button>`).join('')}</section>`).join('') || '<div class="empty">等待文件落盘…</div>';
+  $('#files').innerHTML = order.filter(g => groups.has(g)).map(g => `<section><div class="group">${g}</div>${groups.get(g).map(f => `<button class="file ${f.status || ''} ${f.path === currentPath ? 'on' : ''}" data-path="${attr(f.path)}" title="${attr(f.name)}"><span aria-hidden="true">${iconHtml(ICON_TOKEN[f.iconKey])}</span><span class="name">${esc(f.name)}</span><span class="mark" aria-label="${f.status === 'running' ? '生成中' : '已完成'}">${iconHtml(ICON_TOKEN[f.status === 'running' ? 'running' : 'done'])}</span></button>`).join('')}</section>`).join('') || '<div class="empty">等待文件落盘…</div>';
   $('#files').querySelectorAll('[data-path]').forEach(b => b.addEventListener('click', () => {
     currentPath = b.dataset.path; renderFiles();
     updateEdit();
@@ -170,11 +180,11 @@ window.mazz.on('panel:push', p => {
   if (p.type === 'factoryPreviewFile') { showText(p.content || '', p.path || currentPath, false); return; }
   if (p.type === 'factoryPreviewDone') {
     fileList = p.files || fileList;
-    setStatus(`第${p.chapterNo || 1}${p.unitName || '章'} · ✓完成`, 'done'); showText(p.text || streamText, p.path || currentPath, false); return;
+    setStatus(`第${p.chapterNo || 1}${p.unitName || '章'} · 完成`, 'done'); showText(p.text || streamText, p.path || currentPath, false); return;
   }
-  if (p.type === 'factoryPreviewTaskDone') { taskRunning = false; fileList = p.files || fileList; setStatus('✓ 全部完成', 'done'); renderFiles(); updateEdit(); return; }
-  if (p.type === 'factoryPreviewFail') { taskRunning = false; fileList = p.files || fileList; setStatus('✗ ' + (p.message || '生成失败'), 'failed'); renderFiles(); updateEdit(); return; }
-  if (p.type === 'factoryPreviewSynced') { taskRunning = false; fileList = p.files || fileList; setStatus('预览已同步 ✓', 'done'); showText(p.content || '', p.path || currentPath, false); }
+  if (p.type === 'factoryPreviewTaskDone') { taskRunning = false; fileList = p.files || fileList; setStatus('全部完成', 'done'); renderFiles(); updateEdit(); return; }
+  if (p.type === 'factoryPreviewFail') { taskRunning = false; fileList = p.files || fileList; setStatus(p.message || '生成失败', 'failed'); renderFiles(); updateEdit(); return; }
+  if (p.type === 'factoryPreviewSynced') { taskRunning = false; fileList = p.files || fileList; setStatus('预览已同步', 'done'); showText(p.content || '', p.path || currentPath, false); }
 });
 window.mazz.invoke('panel:action', { type: 'factoryPreviewQuery' }).catch(() => {});
 </script>

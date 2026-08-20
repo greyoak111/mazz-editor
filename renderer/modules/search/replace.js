@@ -71,7 +71,7 @@ export function previewReplace(groups, { onConfirm }) {
         </div>`).join('')}
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
         <button class="rb-btn" id="rp-cancel" style="flex-direction:row">取消</button>
-        <button class="rb-btn" id="rp-go" style="flex-direction:row;background:var(--danger,#dc2626);color:#fff">确认全部替换</button>
+        <button class="rb-btn" id="rp-go" style="flex-direction:row;background:var(--danger,#dc2626);color:var(--danger-fg,#fff)">确认全部替换</button>
       </div>
     </div>`;
   m.body.querySelectorAll('[data-gi]').forEach(cb => cb.addEventListener('change', () => {

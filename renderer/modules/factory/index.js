@@ -322,7 +322,7 @@ export class FactoryPanel {
       <div class="factory-body">
         <div class="fc-projectbar">
           <div><b>智能创作执行台</b><span class="fc-daily-hint">新项目统一进入 Output 目录协议</span><span class="fc-role-pickers" aria-label="AI 岗位就地指派"></span></div>
-          <span class="fc-project-actions"><button class="fc-btn" data-a="desk">🏭 智能创作台</button><button class="fc-btn fc-accent" data-a="project">＋ 新建立项</button></span>
+          <span class="fc-project-actions"><button class="fc-btn" data-a="desk">${iconHtml('🏭')} 智能创作台</button><button class="fc-btn fc-accent" data-a="project">${iconHtml('＋')} 新建立项</button></span>
         </div>
         <div class="fc-project-stash" aria-hidden="true">
         <div class="fc-row">
@@ -403,19 +403,19 @@ export class FactoryPanel {
           <button class="fc-btn" data-a="copy" title="生成创作模板母版并复制到剪贴板（可粘到任意 AI 对话）">${iconHtml('📋')} 复制模板母版</button>
           <button class="fc-btn fc-accent" data-a="generate" title="调用配置的 AI 直接生成内容进编辑器">${iconHtml('⚡')} 直接生成</button>
         </div>
-        <button class="fc-btn" data-a="addtask">＋ 加入任务队列</button>
+        <button class="fc-btn" data-a="addtask">${iconHtml('＋')}<span>加入任务队列</span></button>
         </div>
         <div class="fc-resume"></div>
         <div class="fc-batch">
           <div class="fc-label">写作任务队列 <span class="fc-batch-acts">
-            <button class="fc-mini" data-a="startsel">▶ 开始选中</button>
-            <button class="fc-mini" data-a="runall">▶▶ 全部启动</button>
-            <button class="fc-mini" data-a="stopsel">■ 停止</button>
+            <button class="fc-mini" data-a="startsel">${iconHtml('▶')}<span>开始选中</span></button>
+            <button class="fc-mini" data-a="runall">${iconHtml('▶▶')} 全部启动</button>
+            <button class="fc-mini" data-a="stopsel">${iconHtml('■')}<span>停止</span></button>
             <button class="fc-mini" data-a="importcsv">导入CSV</button>
           </span></div>
           <div class="fc-tasklist"></div>
           <div class="fc-batch-acts2">
-            <button class="fc-mini" data-a="resumesel">↻ 恢复选中（断点续写）</button>
+            <button class="fc-mini" data-a="resumesel">${iconHtml('↻')}<span>恢复选中（断点续写）</span></button>
             <button class="fc-mini" data-a="delsel">删除选中</button>
             <button class="fc-mini" data-a="cleardone">清空完成</button>
           </div>
@@ -950,7 +950,7 @@ export class FactoryPanel {
   renderEmbeds() {
     const box = this.el.querySelector('.fc-embeds');
     box.innerHTML = this.embeds.length
-      ? this.embeds.map((e, i) => `<div class="fc-embedrow">${iconHtml('📎')} ${e.name} <span class="fc-dim">${e.text.length}字</span> <button class="fc-mini" data-edelete="${i}">✕</button></div>`).join('')
+      ? this.embeds.map((e, i) => `<div class="fc-embedrow">${iconHtml('📎')} ${e.name} <span class="fc-dim">${e.text.length}字</span> <button class="fc-mini" data-edelete="${i}" title="移除附件" aria-label="移除附件">${iconHtml('✕')}</button></div>`).join('')
       : '<div class="fc-empty">（可拖入大纲/设定/已完成内容，冲突时以嵌入内容为准）</div>';
     box.querySelectorAll('[data-edelete]').forEach(b => b.addEventListener('click', () => {
       this.embeds.splice(+b.dataset.edelete, 1);
@@ -1253,7 +1253,7 @@ export class FactoryPanel {
     const box = this.el.querySelector('.fc-resume');
     if (!this.resumables.length) { box.innerHTML = ''; return; }
     box.innerHTML = `<div class="fc-label">${iconHtml('⚠')} 发现 ${this.resumables.length} 个中断任务 <span class="fc-batch-acts">
-      ${this.resumables.map((r, i) => `<button class="fc-mini" data-res="${i}" title="${r.outDir}">↻ ${r.title || '未命名'}（第${(r.currentChapter || 0) + 1}章续）</button>`).join('')}
+      ${this.resumables.map((r, i) => `<button class="fc-mini" data-res="${i}" title="${r.outDir}">${iconHtml('↻')}<span>${r.title || '未命名'}（第${(r.currentChapter || 0) + 1}章续）</span></button>`).join('')}
       <button class="fc-mini" data-resclear>忽略全部</button></span></div>`;
     box.querySelectorAll('[data-res]').forEach(b => b.addEventListener('click', () => this.resumeFromState(this.resumables[+b.dataset.res])));
     box.querySelector('[data-resclear]').addEventListener('click', async () => {
@@ -3249,7 +3249,7 @@ export class FactoryPanel {
       <div style="font-size:12px;color:var(--acc,#4f46e5);margin-bottom:4px">✎ 编辑第 ${c.chapterNo} ${unitName}——保存后自动写回文件并重建状态快照</div>
       <textarea class="fc-live-edit rb-input" style="width:100%;height:180px;font-size:13px;line-height:1.8"></textarea>
       <div style="display:flex;gap:6px;margin-top:6px">
-        <button class="fc-mini fc-accent" data-l="save">💾 保存并应用（重建快照）</button>
+        <button class="fc-mini fc-accent" data-l="save">${iconHtml('💾')}<span>保存并应用（重建快照）</span></button>
         <button class="fc-mini" data-l="cancel">取消</button>
       </div>`;
     const ta = this.liveEl.querySelector('.fc-live-edit');
@@ -3452,7 +3452,7 @@ export class FactoryPanel {
           <input type="checkbox" data-i="${i}">
           <span class="fc-task-label" title="${t.label}">${t.mode === 'max' ? '📖 ' : '📄 '}${t.label}${t.mode === 'max' && t.doneChapters ? ` [${t.doneChapters}${getSnapshotSchema(this.genres.find(g => g.id === t.genreId) || {}).unitName}]` : ''}${t.manualRevision?.count ? ` · ✎人工修订×${t.manualRevision.count}` : ''}</span>
           <span class="fc-task-status">${STATUS[t.status] || t.status}</span>
-          ${t.mode === 'max' && t.doneChapters ? `<button class="fc-mini" data-retry="${i}" title="重试某一内容单元/蓝图">↻</button>` : ''}
+          ${t.mode === 'max' && t.doneChapters ? `<button class="fc-mini" data-retry="${i}" title="重试某一内容单元/蓝图">${iconHtml('↻')}</button>` : ''}
         </div>`).join('')
       : '<div class="fc-empty">（队列为空——点上方「新建立项」创建一次性项目）</div>';
     this.taskListEl.querySelectorAll('[data-retry]').forEach(b => b.addEventListener('click', async (e) => {
@@ -3483,7 +3483,7 @@ export class FactoryPanel {
           <span class="${h.ok ? 'fc-ok' : 'fc-warn'}">${h.ok ? '✓' : '✗'}</span>
           <span class="fc-his-label" title="${h.label}">${h.label}</span>
           <span class="fc-his-genre">${h.genre}</span>
-          ${h.text ? `<button class="fc-mini" data-open="${i}" title="打开">↗</button>` : ''}
+          ${h.text ? `<button class="fc-mini" data-open="${i}" title="打开">${iconHtml('↗')}</button>` : ''}
         </div>`).join('')
       : '<div class="fc-empty">（暂无历史）</div>';
     this.hisListEl.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => {

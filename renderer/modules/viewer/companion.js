@@ -1,4 +1,5 @@
 import { getProviderConfig, providerReady, chat } from '../factory/provider.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 
 export const COMPANION_PERSONAS = Object.freeze([
   Object.freeze({ id: 'veteran', name: '吧龄老哥', expertise: ['callback', 'culture'], color: '#f59e0b' }),
@@ -152,7 +153,7 @@ export function mountCompanion({ root, media, mediaName, mediaPath, sampleRms = 
   panel.className = 'mz-companion';
   panel.hidden = true;
   panel.innerHTML = `
-    <header><b>陪看</b><span class="mz-companion-gate">静候拍点</span><button data-c="close" title="收起">×</button></header>
+    <header><b>陪看</b><span class="mz-companion-gate">静候拍点</span><button data-c="close" title="收起" aria-label="收起陪看">${iconHtml('✕')}</button></header>
     <div class="mz-companion-log" aria-live="polite"></div>
     <div class="mz-companion-status">防剧透锁：开 · 观剧档：开 · 当前不自动调用 AI</div>
     <div class="mz-companion-compose"><input placeholder="暂停或播放时都可以聊…"><button data-c="send">说</button></div>`;

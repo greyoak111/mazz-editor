@@ -1,6 +1,7 @@
 // renderer/modules/text/index.js —— 纯文本模块（验证契约可插拔：TXT 读写，即开即用）
 import { contextKeys } from '../../core/contextkey-service.js';
 import { menus } from '../../core/menu-service.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 
 const MODULE = 'text';
 const instances = new Map(); // container -> {ta}
@@ -92,11 +93,11 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="编辑">
-      <button class="rb-btn" data-command="text.undo"><i class="ico">↩</i><span>撤销</span></button>
-      <button class="rb-btn" data-command="text.redo"><i class="ico">↪</i><span>重做</span></button>
+      <button class="rb-btn" data-command="text.undo"><i class="ico">${iconHtml('↩')}</i><span>撤销</span></button>
+      <button class="rb-btn" data-command="text.redo"><i class="ico">${iconHtml('↪')}</i><span>重做</span></button>
     </div>
     <div class="rb-group" data-label="换行">
-      <button class="rb-btn" data-command="text.toggleWrap"><i class="ico">↵</i><span>自动换行</span></button>
+      <button class="rb-btn" data-command="text.toggleWrap"><i class="ico">${iconHtml('↵')}</i><span>自动换行</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

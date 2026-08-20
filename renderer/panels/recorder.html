@@ -55,7 +55,7 @@
         <label>格式 <select id="rec-fmt" class="sel"><option value="webm">webm（即存即播）</option></select></label>
       </div>
       <div style="display:flex;justify-content:flex-end">
-        <button class="btn pri" id="rec-go">● 开始录制</button>
+        <button class="btn pri" id="rec-go"><svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="currentColor"/></svg><span>开始录制</span></button>
       </div>
       <div class="hint">默认保存到工作区「录制/」。封板版只提供 webm；mp4 转码将在可验证源码分发闭环后重新启用。录制本体在主窗执行——本面板可关闭，录制不中断。</div>
       <div class="hint">Preview 安全边界：权限等待 60 秒超时；单次最多 2 小时或 1 GiB 内存缓冲，先到即停止并保存。麦克风/系统音、全屏、RDP 与虚拟显示兼容性取决于本机设备和 Windows 策略。</div>
@@ -65,7 +65,7 @@
       <img id="live" alt="" style="width:100%;max-width:340px;border-radius:10px;border:1px solid var(--border);display:none">
       <div class="tm" id="tm">00:00</div>
       <div class="hint" id="st-srcs"></div>
-      <button class="btn stop" id="rec-stop">■ 停止录制</button>
+      <button class="btn stop" id="rec-stop"><svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor"/></svg><span>停止录制</span></button>
     </div>
   </main>
 </div>

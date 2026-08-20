@@ -48,6 +48,12 @@ button, input, select, textarea { font: inherit; }
 :where(button, [role="button"])[aria-disabled="true"] { opacity: .58; cursor: not-allowed !important; filter: saturate(.72); }
 .mz-ico { display: inline-block; width: 1em; height: 1em; flex: 0 0 auto; vertical-align: -.14em; color: inherit; opacity: 1; }
 button svg, [role="button"] svg { stroke-width: 2; }
+/* 子窗本地旧样式常写死 #e81123/#fff；统一由主题成对语义色接管，
+ * Paper/Ink/自定义主题的危险动作都保持可辨，且不靠平台默认白字。 */
+.p-winbtns button.x:hover,
+.p-winbtns .x:hover,
+.winbtns button:hover { background: var(--danger) !important; color: var(--danger-fg) !important; }
+.btn.stop { background: var(--danger) !important; color: var(--danger-fg) !important; border-color: var(--danger) !important; }
 .pwin, main, section, .body, .content, .list { min-width: 0; min-height: 0; }
 [data-ui-size="xs"] .set-row { align-items: stretch; flex-direction: column; gap: 6px; }
 [data-ui-size="xs"] .set-row > label { width: auto !important; }

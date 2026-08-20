@@ -69,7 +69,7 @@ function createLibrary(container) {
     </div>
     <div class="lib-reader" style="display:none">
       <div class="lib-reader-bar">
-        <button class="rb-btn" data-a="back">← 书架</button>
+        <button class="rb-btn" data-a="back">${iconHtml('←')}<span>书架</span></button>
         <span class="lib-book-title"></span>
         <span style="flex:1"></span>
         <button class="rb-btn" data-a="toc" title="大纲/目录">${iconHtml('≡')}</button>
@@ -87,8 +87,8 @@ function createLibrary(container) {
         <select class="lib-read-theme rb-select" title="阅读主题">
           ${Object.entries(READ_THEMES).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}
         </select>
-        <button class="rb-btn" data-a="font-minus" title="字号减小">A−</button>
-        <button class="rb-btn" data-a="font-plus" title="字号增大">A＋</button>
+        <button class="rb-btn" data-a="font-minus" title="字号减小"><span data-ui-icon-text>A</span>${iconHtml('―')}</button>
+        <button class="rb-btn" data-a="font-plus" title="字号增大"><span data-ui-icon-text>A</span>${iconHtml('+')}</button>
         <select class="lib-pagew rb-select" title="页宽（单页占窗格百分比，随窗格拖变——epub.js 正宗：页宽跟容器走，不写死 px）">
           <option value="0.5">页宽 50%</option><option value="0.6">页宽 60%</option>
           <option value="0.7" selected>页宽 70%</option><option value="0.8">页宽 80%</option>
@@ -108,7 +108,7 @@ function createLibrary(container) {
         <div class="lib-prog-track"><div class="lib-prog-fill"></div></div>
         <span class="lib-pos"></span>
         <button class="rb-btn" data-a="next">›</button>
-        <button class="rb-btn" data-a="prog-fold" title="收起进度条" style="padding:2px 6px">▾</button>
+        <button class="rb-btn" data-a="prog-fold" title="收起进度条" style="padding:2px 6px">${iconHtml('▾')}</button>
       </div>
       <div class="lib-progress-peek" style="display:none" title="展开进度条">▴</div>
     </div>`;
@@ -249,7 +249,7 @@ function createLibrary(container) {
     m.innerHTML = `<div class="mazz-palette" style="padding:16px 18px;min-width:280px">
       <b>移到分类</b>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
-        ${cats.map(c => `<button class="rb-btn" data-c="${c}" style="flex-direction:row;justify-content:flex-start">${(book.category || '未分类') === c ? '✓ ' : ''}${c}</button>`).join('')}
+        ${cats.map(c => `<button class="rb-btn" data-c="${c}" style="flex-direction:row;justify-content:flex-start">${(book.category || '未分类') === c ? iconHtml('✓') : ''}<span>${c}</span></button>`).join('')}
       </div></div>`;
     document.body.appendChild(m);
     m.addEventListener('mousedown', (e) => { if (e.target === m) m.remove(); });
@@ -1033,8 +1033,8 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       <b>书签</b>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:50vh;overflow-y:auto">
         ${list.map((mk, i) => `<div style="display:flex;gap:6px;align-items:center">
-          <button class="rb-btn" data-i="${i}" style="flex:1;flex-direction:row;justify-content:flex-start">🔖 ${mk.name}</button>
-          <button class="rb-btn" data-del="${i}" title="删除">✕</button></div>`).join('')}
+          <button class="rb-btn" data-i="${i}" style="flex:1;flex-direction:row;justify-content:flex-start">${iconHtml('🔖')}<span>${mk.name}</span></button>
+          <button class="rb-btn" data-del="${i}" title="删除" aria-label="删除书签">${iconHtml('✕')}</button></div>`).join('')}
       </div></div>`;
     document.body.appendChild(m);
     m.addEventListener('mousedown', (e) => { if (e.target === m) m.remove(); });
@@ -1058,7 +1058,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     if (!ctl.book || ctl.book.meta.format === 'pdf') { toast('PDF 请用内建查找'); return; }
     const bar = document.createElement('div');
     bar.className = 'lib-search-bar';
-    bar.innerHTML = `<input class="rb-input" placeholder="书内搜索…" spellcheck="false"><button class="rb-btn">搜</button><button class="rb-btn lib-search-close">✕</button>`;
+    bar.innerHTML = `<input class="rb-input" placeholder="书内搜索…" spellcheck="false"><button class="rb-btn">搜</button><button class="rb-btn lib-search-close" title="关闭搜索" aria-label="关闭搜索">${iconHtml('✕')}</button>`;
     root.querySelector('.lib-reader-bar').appendChild(bar);
     const input = bar.querySelector('input');
     input.focus();
@@ -1142,7 +1142,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
         <div class="cat-list">${await renderCatMgr()}</div>
         <div style="display:flex;gap:6px;margin-top:10px">
           <input class="rb-input cat-newname" placeholder="新分类名" style="flex:1">
-          <button class="rb-btn cat-add" style="flex-direction:row">＋ 新建</button>
+          <button class="rb-btn cat-add" style="flex-direction:row">${iconHtml('＋')}<span>新建</span></button>
         </div>
         <div style="font-size:11px;color:var(--fg-dim);margin-top:6px">删除分类不会删书，书自动归到「未分类」。</div>
       </div>`;
@@ -1324,7 +1324,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
           <select class="rb-select cr-type"><option value="delete">删除</option><option value="replace">替换为</option></select>
           <input class="rb-input cr-rep" placeholder="替换为（删除留空）" style="width:120px">
           <select class="rb-select cr-scope"><option value="all">全书</option><option value="book">本书</option></select>
-          <button class="rb-btn cr-add" style="flex-direction:row">＋ 添加</button>
+          <button class="rb-btn cr-add" style="flex-direction:row">${iconHtml('＋')}<span>添加</span></button>
         </div>
         <div style="font-size:11px;color:var(--fg-dim);margin-top:6px">规则按序生效；作用于文本节点（永不碰标签结构）；坏正则会自动跳过。</div>
       </div>`;
@@ -1616,8 +1616,8 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="书库">
-      <button class="rb-btn" data-command="library.import"><i class="ico">＋</i><span>导入书籍</span></button>
-      <button class="rb-btn" data-command="library.exportMd"><i class="ico">⇪</i><span>导出MD</span></button>
+      <button class="rb-btn" data-command="library.import"><i class="ico">${iconHtml('＋')}</i><span>导入书籍</span></button>
+      <button class="rb-btn" data-command="library.exportMd"><i class="ico">${iconHtml('⇪')}</i><span>导出MD</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

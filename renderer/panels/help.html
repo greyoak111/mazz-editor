@@ -17,11 +17,13 @@
   .layout { flex:1; min-height:0; display:flex; }
   .side { width:250px; flex:none; display:flex; flex-direction:column; border-right:1px solid var(--border); background:var(--bg-elev); }
   .side-head { padding:12px 14px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:8px; }
-  .side-head .t { font-size:15px; font-weight:600; }
+  .side-head .t { display:flex; align-items:center; gap:6px; font-size:15px; font-weight:600; }
   .side-head select, .side-head input { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); width:100%; }
   .side-head input:focus, .side-head select:focus { border-color:var(--accent); outline:none; }
   .toc { flex:1; min-height:0; overflow-y:auto; padding:8px; }
-  .toc-item { padding:8px 10px; border-radius:8px; cursor:pointer; font-size:12.5px; line-height:1.4; }
+  .toc-item { display:flex; align-items:center; gap:7px; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:12.5px; line-height:1.4; }
+  .toc-item .mz-ico { flex:none; }
+  .toc-item .label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .toc-item:hover { background:var(--bg-hover); }
   .toc-item.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
   .toc-empty { color:var(--fg-dim); text-align:center; padding:30px 0; font-size:12px; }
@@ -46,7 +48,7 @@
   <div class="layout">
     <div class="side">
       <div class="side-head">
-        <span class="t">❓ 使用指南</span>
+        <span class="t"><span id="help-title-icon" aria-hidden="true"></span><span>使用指南</span></span>
         <select id="ver"><option value="std">喂饭级（常规详细版）</option><option value="senior">喂奶级（零基础老人版）</option></select>
         <input id="q" placeholder="搜索帮助内容…" spellcheck="false" />
       </div>
@@ -55,8 +57,11 @@
     <div class="body"><div class="content ps-scroll-y" id="content"></div></div>
   </div>
 </div>
-<script>
+<script type="module">
+import { iconHtml } from '../lib/svg-icons.js';
+
 const $ = (s) => document.querySelector(s);
+$('#help-title-icon').innerHTML = iconHtml('❓');
 const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
 $('#p-min').addEventListener('click', () => pwb('minimize'));
 $('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
@@ -66,6 +71,14 @@ window.mazz.invoke('panel:action', { type: 'themeSnapshot' }).catch(() => {});
 window.mazz.on('theme:changed', ({ id, vars }) => applyTheme(id, vars));
 window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.id, p.vars); });
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const HELP_ICON_ALIASES = Object.freeze({
+  uitheme: '⚙',
+  'ai-model-v43': '⚡',
+  's-aiservice': '⚡',
+  's-hello': 'ℹ',
+  's-ticket': '❓',
+});
+const helpSectionIconHtml = (section) => iconHtml(HELP_ICON_ALIASES[section?.id] || section?.icon || '❓');
 
 let SECTIONS = [];
 function ask(ver) { window.mazz.invoke('panel:action', { type: 'helpQuery', ver }).catch(() => {}); }
@@ -79,7 +92,7 @@ function show(id) {
 function renderToc(filter = '') {
   const f = filter.trim().toLowerCase();
   const items = f ? SECTIONS.filter(s => (s.title + (s.text || '')).toLowerCase().includes(f)) : SECTIONS;
-  $('#toc').innerHTML = items.map(s => `<div class="toc-item" data-id="${esc(s.id)}">${esc(s.icon || '')} ${esc(s.title)}</div>`).join('')
+  $('#toc').innerHTML = items.map(s => `<div class="toc-item" data-id="${esc(s.id)}">${helpSectionIconHtml(s)}<span class="label">${esc(s.title)}</span></div>`).join('')
     || '<div class="toc-empty">（无匹配章节）</div>';
   document.querySelectorAll('.toc-item').forEach(el => el.addEventListener('click', () => show(el.dataset.id)));
   if (f && items.length) show(items[0].id);

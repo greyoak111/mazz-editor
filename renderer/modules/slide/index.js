@@ -124,9 +124,9 @@ function createSlide(container) {
     const bar = document.createElement('div');
     bar.className = 'sl-zoomctl';
     bar.innerHTML = `
-      <button data-z="out" title="缩小">－</button>
+      <button data-z="out" title="缩小">${iconHtml('－')}</button>
       <span>${Math.round((ctl.stageZoom || 1) * 100)}%</span>
-      <button data-z="in" title="放大">＋</button>
+      <button data-z="in" title="放大">${iconHtml('＋')}</button>
       <button data-z="reset" title="复位 100%">1:1</button>`;
     bar.querySelector('[data-z=in]').addEventListener('click', () => { ctl.stageZoom = Math.min(2.5, (ctl.stageZoom || 1) * 1.25); renderAll(); });
     bar.querySelector('[data-z=out]').addEventListener('click', () => { ctl.stageZoom = Math.max(0.3, (ctl.stageZoom || 1) / 1.25); renderAll(); });
@@ -502,9 +502,9 @@ function createSlide(container) {
         ${fr.actions ? `<span class="mk ac" title="帧动作：${[fr.actions.clearMedia ? '清媒体' : '', fr.actions.stopTimer ? '停计时' : '', fr.actions.trigger ? '触发器' : ''].filter(Boolean).join('·')}">⚡</span>` : ''}
         ${sl?.notes ? `<span class="nt" title="有演讲者备注">≡</span>` : ''}
         ${fr.disabled ? `<span class="db" title="已禁用（放映跳过）">⊘</span>` : ''}
-        <span class="acts"><i data-a="up" title="上移">↑</i><i data-a="dn" title="下移">↓</i><i data-a="dup" title="复制帧（克隆物料插入其后）">⧉</i><i data-a="del" title="删除帧">✕</i></span>`;
+        <span class="acts"><i data-a="up" role="button" tabindex="0" title="上移" aria-label="上移">${iconHtml('↑')}</i><i data-a="dn" role="button" tabindex="0" title="下移" aria-label="下移">${iconHtml('↓')}</i><i data-a="dup" role="button" tabindex="0" title="复制帧（克隆物料插入其后）" aria-label="复制帧">${iconHtml('⧉')}</i><i data-a="del" role="button" tabindex="0" title="删除帧" aria-label="删除帧">${iconHtml('✕')}</i></span>`;
       el.addEventListener('click', (e) => {
-        const a = e.target.dataset?.a;
+        const a = e.target.closest?.('[data-a]')?.dataset.a;
         if (a === 'up' || a === 'dn') {
           const j = a === 'up' ? i - 1 : i + 1;
           if (j < 0 || j >= frames.length) return;
@@ -527,6 +527,11 @@ function createSlide(container) {
         ctl.curSlideId = fr.slideId;
         renderPageList(); renderCanvasShell();
       });
+      el.querySelectorAll('.acts [role="button"]').forEach(action => action.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        action.click();
+      }));
       // 拖拽排序（HTML5）
       el.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', String(i)); });
       el.addEventListener('dragover', (e) => e.preventDefault());
@@ -553,9 +558,9 @@ function createSlide(container) {
       el.innerHTML = `<span class="no">${i + 1}</span><span class="t" title="${slideTitleOf(sl).replace(/"/g, '&quot;')}">${slideTitleOf(sl)}</span>
         ${n ? `<span class="mk in" title="在编排中 ${n} 次">×${n}</span>` : `<span class="mk out" title="未入编排">○</span>`}
         ${sl?.notes ? `<span class="nt" title="有演讲者备注">≡</span>` : ''}
-        <span class="acts"><i data-a="enq" title="追加到编排尾">⇥</i><i data-a="dup" title="复制物料">⧉</i><i data-a="del" title="删除物料（引用它的帧一并清）">✕</i></span>`;
+        <span class="acts"><i data-a="enq" role="button" tabindex="0" title="追加到编排尾" aria-label="追加到编排尾">${iconHtml('⇥')}</i><i data-a="dup" role="button" tabindex="0" title="复制物料" aria-label="复制物料">${iconHtml('⧉')}</i><i data-a="del" role="button" tabindex="0" title="删除物料（引用它的帧一并清）" aria-label="删除物料">${iconHtml('✕')}</i></span>`;
       el.addEventListener('click', (e) => {
-        const a = e.target.dataset?.a;
+        const a = e.target.closest?.('[data-a]')?.dataset.a;
         const frames = ctl.doc2.layouts.main.frames;
         if (a === 'enq') { frames.push(createFrame(sl.id)); ctl.sideView = 'sequence'; ctl.curSlideId = sl.id; markDirty(); renderPageList(); renderCanvasShell(); return; }
         if (a === 'dup') { const cp = cloneSlide(sl); ctl.doc2.slides[cp.id] = cp; markDirty(); renderPageList(); toast('已复制到页库'); return; }
@@ -571,6 +576,11 @@ function createSlide(container) {
         ctl.curSlideId = sl.id;
         markDirty(); renderPageList(); renderCanvasShell();
       });
+      el.querySelectorAll('.acts [role="button"]').forEach(action => action.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        action.click();
+      }));
       list.appendChild(el);
     });
   }
@@ -585,7 +595,7 @@ function createSlide(container) {
     const tr = fr.transition || 'fade';
     box.innerHTML = `
       <div class="h">帧 ${fi + 1} 属性</div>
-      <div class="row"><span>切换</span><span class="trsw">${TRANSITIONS.map(t => `<button class="sw ${tr === t.id ? 'on' : ''}" data-tr="${t.id}" title="${t.name}">${t.ico} ${t.name}</button>`).join('')}</span></div>
+      <div class="row"><span>切换</span><span class="trsw">${TRANSITIONS.map(t => `<button class="sw ${tr === t.id ? 'on' : ''}" data-tr="${t.id}" title="${t.name}">${iconHtml(t.ico)}<span>${t.name}</span></button>`).join('')}</span></div>
       <div class="row"><span>到时翻页</span><input type="number" class="na" min="0" max="3600" step="0.5" value="${fr.nextAfter || 0}" title="秒，0=不自动"> <span class="u">秒</span></div>
       <div class="row"><label><input type="checkbox" class="dis" ${fr.disabled ? 'checked' : ''}> 禁用（放映跳过）</label></div>
       <div class="row"><label><input type="checkbox" class="acm" ${fr.actions?.clearMedia ? 'checked' : ''}> 到帧清媒体</label><label><input type="checkbox" class="act" ${fr.actions?.stopTimer ? 'checked' : ''}> 到帧停计时</label></div>`;
@@ -639,7 +649,7 @@ function createSlide(container) {
     const zc = document.createElement('div');
     zc.className = 'sl-v2-zoom';
     zc.style.cssText = 'position:absolute;right:12px;bottom:12px;display:flex;gap:6px;align-items:center;background:rgba(20,20,24,.6);border-radius:999px;padding:4px 12px;font-size:12px;color:#eee;backdrop-filter:blur(4px)';
-    zc.innerHTML = `<button data-z="out">－</button><span>${Math.round((ctl.stageZoom || 1) * 100)}%</span><button data-z="in">＋</button><button data-z="reset">1:1</button>`;
+    zc.innerHTML = `<button data-z="out" title="缩小">${iconHtml('－')}</button><span>${Math.round((ctl.stageZoom || 1) * 100)}%</span><button data-z="in" title="放大">${iconHtml('＋')}</button><button data-z="reset">1:1</button>`;
     zc.addEventListener('pointerdown', (e) => e.stopPropagation()); // 缩放控件同压画布——拦截防误触 selrect
     zc.querySelectorAll('button').forEach(b => {
       b.style.cssText = 'border:0;background:none;color:#eee;cursor:pointer;font-size:13px';
@@ -880,7 +890,7 @@ function createSlide(container) {
     }
     const sel = ctl.selItem ? curSlide()?.items.find(x => x.id === ctl.selItem) : null;
     bar.innerHTML = ITEM_TOOLS.map(t => `<button data-t="${t.id}" class="sl-tool ${ctl._addTool === t.id ? 'on' : ''}" title="加${t.name}（点击后画布拖框）">${iconHtml(t.ico)} ${t.name}</button>`).join('')
-      + (sel ? `<span style="width:1px;background:rgba(255,255,255,.2)"></span><span style="font-size:11px;color:#ccc;align-self:center">${sel.type}${(sel.reveal?.order | 0) >= 1 ? '（揭示#' + sel.reveal.order + '）' : ''}${ctl.multiSel?.size ? '（+' + (ctl.multiSel.size - 1) + '）' : ''}</span><button data-a="del" title="删除选中（Delete）">✕</button>` : '');
+      + (sel ? `<span style="width:1px;background:rgba(255,255,255,.2)"></span><span style="font-size:11px;color:#ccc;align-self:center">${sel.type}${(sel.reveal?.order | 0) >= 1 ? '（揭示#' + sel.reveal.order + '）' : ''}${ctl.multiSel?.size ? '（+' + (ctl.multiSel.size - 1) + '）' : ''}</span><button data-a="del" title="删除选中（Delete）" aria-label="删除选中">${iconHtml('✕')}</button>` : '');
     bar.querySelectorAll('[data-t]').forEach(b => {
       b.style.cssText = `border:1px solid rgba(255,255,255,.18);background:${b.classList.contains('on') ? 'var(--acc,#4f46e5)' : 'rgba(20,20,24,.7)'};color:#eee;border-radius:6px;padding:3px 8px;font-size:11.5px;cursor:pointer;backdrop-filter:blur(4px)`;
       b.addEventListener('click', () => {
@@ -899,13 +909,18 @@ function createSlide(container) {
       const card = document.createElement('div');
       card.className = 'sl-remote-card';
       card.innerHTML = `
-        <div class="h"><b>📱 手机遥控</b><span class="cnt">在线 <em class="n">0</em> 台</span><i class="x" title="关闭面板（伺服保持）">✕</i></div>
+        <div class="h"><b>${iconHtml('📱')}<span>手机遥控</span></b><span class="cnt">在线 <em class="n">0</em> 台</span><i class="x" role="button" tabindex="0" title="关闭面板（伺服保持）" aria-label="关闭手机遥控面板">${iconHtml('✕')}</i></div>
         ${r.qr ? `<img class="qr" src="${r.qr}" alt="扫码进遥控页">` : ''}
         <div class="url">${r.url}</div>
         <div class="tip">手机与电脑同一局域网，扫码进页即遥控<br>先按 F5 放映，◀▶ 翻帧、黑屏（B）同键</div>
         <button class="stop">停止遥控伺服</button>`;
       document.body.appendChild(card);
       card.querySelector('.x').addEventListener('click', () => card.remove());
+      card.querySelector('.x').addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        card.remove();
+      });
       card.querySelector('.stop').addEventListener('click', async () => {
         await window.mazz.invoke('slideRemote:stop').catch(() => {});
         card.remove(); toast('遥控伺服已停止');
@@ -1084,16 +1099,16 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="页面">
-      <button class="rb-btn" data-command="slide.prev"><i class="ico">◀</i><span>上一页</span></button>
-      <button class="rb-btn" data-command="slide.next"><i class="ico">▶</i><span>下一页</span></button>
-      <button class="rb-btn" data-command="slide.add"><i class="ico">＋</i><span>新页</span></button>
+      <button class="rb-btn" data-command="slide.prev"><i class="ico">${iconHtml('◀')}</i><span>上一页</span></button>
+      <button class="rb-btn" data-command="slide.next"><i class="ico">${iconHtml('▶')}</i><span>下一页</span></button>
+      <button class="rb-btn" data-command="slide.add"><i class="ico">${iconHtml('＋')}</i><span>新页</span></button>
     </div>
     <div class="rb-group" data-label="主题">
-      ${SLIDE_THEMES.map(t => `<button class="rb-btn" data-command="slide.theme" data-slide-theme="${t.id}" title="主题：${t.name}"><i class="ico" style="color:${t.accent}">●</i><span>${t.name}</span></button>`).join('')}
+      ${SLIDE_THEMES.map(t => `<button class="rb-btn" data-command="slide.theme" data-slide-theme="${t.id}" title="主题：${t.name}"><i class="ico" style="color:${t.accent}">${iconHtml('●')}</i><span>${t.name}</span></button>`).join('')}
     </div>
     <div class="rb-group" data-label="画布">
       <button class="rb-btn" data-command="slide.canvasMode"><i class="ico">${iconHtml('✏')}</i><span>画布</span></button>
-      <button class="rb-btn" data-command="slide.addText"><i class="ico">T</i><span>文本框</span></button>
+      <button class="rb-btn" data-command="slide.addText"><i class="ico">${iconHtml('T')}</i><span>文本框</span></button>
       <button class="rb-btn" data-command="slide.addRect"><i class="ico">${iconHtml('▭')}</i><span>矩形</span></button>
       <button class="rb-btn" data-command="slide.addEllipse"><i class="ico">${iconHtml('◯')}</i><span>椭圆</span></button>
       <button class="rb-btn" data-command="slide.addImage"><i class="ico">${iconHtml('🖼')}</i><span>图片</span></button>

@@ -35,12 +35,13 @@
   .syntax { pointer-events: none; color: var(--fg); background: transparent; }
   .editor { z-index: 2; resize: none; color: transparent; caret-color: var(--fg); background: transparent; -webkit-text-fill-color: transparent; }
   .editor::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); -webkit-text-fill-color: transparent; }
-  .syn-head { color: #7c8cff; font-weight: 700; }
-  .syn-mark { color: #c084fc; }
-  .syn-bold { color: #f59e0b; font-weight: 700; }
-  .syn-code { color: #34d399; }
-  .syn-link { color: #38bdf8; text-decoration: underline; }
-  .syn-quote { color: #94a3b8; font-style: italic; }
+  /* 语法色必须先保住正文对比度，再叠加色相；不能把只适合暗底的亮色直接搬到 Paper。 */
+  .syn-head { color: color-mix(in srgb, var(--fg) 62%, #2563eb); font-weight: 700; }
+  .syn-mark { color: color-mix(in srgb, var(--fg) 64%, #9333ea); }
+  .syn-bold { color: color-mix(in srgb, var(--fg) 58%, #d97706); font-weight: 700; }
+  .syn-code { color: color-mix(in srgb, var(--fg) 62%, #059669); }
+  .syn-link { color: color-mix(in srgb, var(--fg) 58%, #0284c7); text-decoration: underline; }
+  .syn-quote { color: var(--fg-dim); font-style: italic; }
   .foot { flex: none; display: flex; align-items: center; gap: 10px; padding: 4px 11px; border-top: 1px solid var(--border); color: var(--fg-dim); font-size: 10.5px; }
   .foot .spacer { flex: 1; }
 </style>
@@ -48,7 +49,7 @@
 <body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
   <header class="head"><div class="head-main"><div class="title" id="title">章节编辑</div><div class="path" id="path"></div></div><i class="dirty" title="尚未保存"></i></header>
-  <div class="p-winbtns"><button id="p-min" title="最小化">—</button><button id="p-max" title="最大化/还原">□</button><button class="x" id="p-close" title="关闭">×</button></div>
+  <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="bar"><button class="btn pri" id="save">保存并回写 <kbd>Ctrl+S</kbd></button><button class="btn" id="arrange">收拢左列</button><span class="status" id="status">只编辑已落盘文件</span></div>
   <div class="stage"><div class="lines" id="lines">1</div><div class="codebox"><pre class="syntax" id="syntax" aria-hidden="true"></pre><textarea class="editor" id="editor" wrap="off" spellcheck="false" aria-label="Markdown 源码编辑器"></textarea></div></div>
   <footer class="foot"><span id="pos">Ln 1, Col 1</span><span id="count">0 字</span><span class="spacer"></span><span>Markdown · 轻量语法色 · 无 ProseMirror</span></footer>

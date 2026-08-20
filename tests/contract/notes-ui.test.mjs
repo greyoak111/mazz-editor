@@ -50,6 +50,11 @@ describe('笔记模块 UI：实例化与交互', () => {
     assert.ok(container.querySelector('.ProseMirror'), 'markdown 编辑器应嵌入');
     const items = container.querySelectorAll('.notes-item');
     assert.ok(items.length >= 2, '列表应渲染笔记');
+    assert.equal(items[0].getAttribute('role'), 'button', '笔记行应向辅助技术暴露为按钮');
+    assert.equal(items[0].tabIndex, 0, '笔记行应进入 Tab 序列');
+    items[0].dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    await tick(80);
+    assert.equal(instances.get(container).currentPath, items[0].dataset.path, 'Enter 应打开当前笔记行');
     notesModule.deactivate(container);
     container.remove();
   });
@@ -70,6 +75,9 @@ describe('笔记模块 UI：实例化与交互', () => {
     assert.ok(pm.textContent.includes('B 标题'), '编辑器应显示笔记内容');
     const bl = container.querySelector('.bl-list');
     assert.ok(bl.textContent.includes('笔记A'), '反链应显示来源笔记A');
+    const blItem = bl.querySelector('.notes-bl-item');
+    assert.equal(blItem?.getAttribute('role'), 'button', '反链行应向辅助技术暴露为按钮');
+    assert.ok(blItem?.querySelector('svg.mz-ico'), '反链箭头应为 currentColor SVG');
     container.remove();
   });
 

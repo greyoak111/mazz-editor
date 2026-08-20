@@ -6,6 +6,8 @@
   /* 模块旧别名统一回接主题真源，禁止在 Ink 下回落到 #fff/#4f46e5 等 Paper 常量。 */
   --acc: var(--accent); --bd: var(--border); --bd2: var(--bg-active); --card: var(--bg-elev);
   --mut: var(--fg-dim); --faint: var(--fg-dim); --sh: color-mix(in srgb, #000 16%, transparent);
+  /* 软层是跨模块公共语义，不允许未定义后让卡片/状态丸静默透明。 */
+  --bg-soft: var(--bg-hover);
 }
 
 /* 1. 纸白（light 默认） */
@@ -13,7 +15,7 @@
   --bg: #f7f6f3; --bg-elev: #ffffff; --bg-hover: #ecebe6; --bg-active: #e3e1da;
   --fg: #2c2c2a; --fg-dim: #66645e; --border: #e0ded8;
   --accent: #4f46e5; --accent-soft: #e0e7ff; --accent-fg: #ffffff;
-  --danger: #dc2626; --warn: #b45309; --ok: #15803d;
+  --danger: #dc2626; --danger-fg: #ffffff; --warn: #b45309; --warn-fg: #ffffff; --ok: #15803d; --ok-fg: #ffffff;
   --shadow: 0 8px 30px rgba(0,0,0,.10);
   --doc-bg: #ffffff;
 }
@@ -22,7 +24,7 @@
   --bg: #16181d; --bg-elev: #1e2128; --bg-hover: #262a33; --bg-active: #2e3340;
   --fg: #e2e4e9; --fg-dim: #9da3af; --border: #2c313c;
   --accent: #a5b4fc; --accent-soft: #312e5f; --accent-fg: #111827;
-  --danger: #f87171; --warn: #fbbf24; --ok: #4ade80;
+  --danger: #f87171; --danger-fg: #111827; --warn: #fbbf24; --warn-fg: #111827; --ok: #4ade80; --ok-fg: #111827;
   --shadow: 0 8px 30px rgba(0,0,0,.45);
   --doc-bg: #1b1e24;
 }
@@ -31,7 +33,7 @@
   --bg: #101226; --bg-elev: #191b36; --bg-hover: #22244a; --bg-active: #2c2f5e;
   --fg: #dcdff5; --fg-dim: #7a7ea8; --border: #2a2d55;
   --accent: #7dd3fc; --accent-soft: #0c4a6e; --accent-fg: #082f49;
-  --danger: #fb7185; --warn: #fcd34d; --ok: #34d399;
+  --danger: #fb7185; --danger-fg: #101226; --warn: #fcd34d; --warn-fg: #101226; --ok: #34d399; --ok-fg: #101226;
   --shadow: 0 8px 30px rgba(0,0,10,.5);
   --doc-bg: #151733;
 }
@@ -40,7 +42,7 @@
   --bg: #1a211c; --bg-elev: #222b25; --bg-hover: #2b362f; --bg-active: #35443b;
   --fg: #dce8df; --fg-dim: #7e938a; --border: #30403a;
   --accent: #86c5a0; --accent-soft: #234a37; --accent-fg: #0d211a;
-  --danger: #ef8888; --warn: #e8c468; --ok: #7dd8a8;
+  --danger: #ef8888; --danger-fg: #1a211c; --warn: #e8c468; --warn-fg: #1a211c; --ok: #7dd8a8; --ok-fg: #1a211c;
   --shadow: 0 8px 30px rgba(0,10,5,.5);
   --doc-bg: #202a24;
 }
@@ -49,7 +51,7 @@
   --bg: #f4ede1; --bg-elev: #fbf7ee; --bg-hover: #ece2d0; --bg-active: #e2d4bc;
   --fg: #41392c; --fg-dim: #96897a; --border: #e2d7c3;
   --accent: #b45309; --accent-soft: #fde8cd; --accent-fg: #ffffff;
-  --danger: #c2410c; --warn: #a16207; --ok: #4d7c0f;
+  --danger: #c2410c; --danger-fg: #ffffff; --warn: #a16207; --warn-fg: #ffffff; --ok: #4d7c0f; --ok-fg: #ffffff;
   --shadow: 0 8px 30px rgba(80,60,20,.12);
   --doc-bg: #fdfaf3;
 }
@@ -59,7 +61,7 @@
   --bg: #f0e6d2; --bg-elev: #f8f0dd; --bg-hover: #e8dbc0; --bg-active: #dccfae;
   --fg: #1a1a1a; --fg-dim: #6b6255; --border: #1a1a1a;
   --accent: #c8211b; --accent-soft: #f3d8c2; --accent-fg: #f8f0dd;
-  --danger: #c8211b; --warn: #b8860b; --ok: #3d6b35;
+  --danger: #c8211b; --danger-fg: #f8f0dd; --warn: #b8860b; --warn-fg: #1a1a1a; --ok: #3d6b35; --ok-fg: #f8f0dd;
   --shadow: 5px 5px 0 #1a1a1a;
   --doc-bg: #f8f0dd;
   /* 模块自定义变量双套对齐 */
@@ -122,7 +124,7 @@
   --bg: #f3eee1; --bg-elev: #faf6ea; --bg-hover: #eae2cd; --bg-active: #e0d5b8;
   --fg: #4a4436; --fg-dim: #8c8471; --border: #d9cba8;
   --accent: #c79a3d; --accent-soft: #f1e3bd; --accent-fg: #3e2f12;
-  --danger: #c9453c; --warn: #c9862b; --ok: #6fa46b;
+  --danger: #c9453c; --danger-fg: #ffffff; --warn: #c9862b; --warn-fg: #111827; --ok: #6fa46b; --ok-fg: #111827;
   --shadow: 0 6px 24px rgba(120, 95, 40, .18);
   --doc-bg: #faf6ec;
   --acc: #c79a3d; --bd: #d9cba8; --bd2: #b8a276; --card: #faf6ea;

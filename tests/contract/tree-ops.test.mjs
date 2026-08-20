@@ -140,8 +140,12 @@ describe('自动命名与行内新建', () => {
     const node = [...document.querySelectorAll('.ft-node')].find(n => n.dataset.path === '/workspace/dirbtn');
     const btns = node.querySelectorAll('.ft-more');
     assert.equal(btns.length, 3);
-    assert.equal(btns[0].textContent, '🗀'); // 添加文件夹靠左
-    assert.equal(btns[1].textContent, '＋');
+    assert.equal(btns[0].getAttribute('aria-label'), '在此文件夹内新建文件夹'); // 添加文件夹靠左
+    assert.equal(btns[1].getAttribute('aria-label'), '在此文件夹内新建文件');
+    assert.ok(btns[0].querySelector('svg[stroke="currentColor"]'), '添加文件夹必须是主题自适应 SVG');
+    assert.ok(btns[1].querySelector('svg[stroke="currentColor"]'), '添加文件必须是主题自适应 SVG');
+    assert.equal(node.getAttribute('role'), 'treeitem');
+    assert.equal(node.getAttribute('aria-expanded'), 'false');
   });
 });
 

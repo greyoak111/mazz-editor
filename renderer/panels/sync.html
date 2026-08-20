@@ -26,12 +26,13 @@
   .btn { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer; font-family:var(--font-ui); display:inline-flex; align-items:center; gap:5px; }
   .btn:hover { border-color:var(--accent); color:var(--accent); }
   .btn.pri { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
-  .btn.stop { background:#c2410c; color:#fff; border-color:#c2410c; }
+  .btn.stop { background:var(--danger); color:var(--danger-fg); border-color:var(--danger); }
   .row { display:flex; gap:8px; align-items:center; margin-top:8px; }
   .dev { border:1px solid var(--border); border-radius:9px; padding:8px 12px; margin-bottom:7px; cursor:pointer; }
   .dev:hover { border-color:var(--accent); }
-  .msg-ok { color:#16a34a; font-weight:600; }
-  .msg-new { color:var(--accent); font-weight:600; }
+  /* 状态正文沿用高对比前景，语义色退到表面与内侧标记，避免 Paper 小字发虚。 */
+  .msg-ok { color:var(--fg); background:color-mix(in srgb,var(--ok) 12%,var(--bg)); box-shadow:inset 3px 0 0 var(--ok); text-indent:8px; font-weight:600; }
+  .msg-new { color:var(--fg); background:color-mix(in srgb,var(--accent) 12%,var(--bg)); box-shadow:inset 3px 0 0 var(--accent); text-indent:8px; font-weight:600; }
   .notes { font-size:12.5px; color:var(--fg-dim); white-space:pre-wrap; max-height:180px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:10px; }
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
@@ -43,7 +44,8 @@
   </div>
   <main id="m" class="ps-scroll-y"></main>
 </div>
-<script>
+<script type="module">
+import { iconHtml } from '../lib/svg-icons.js';
 const $ = (s) => document.querySelector(s);
 const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
 $('#p-min').addEventListener('click', () => pwb('minimize'));
@@ -114,8 +116,12 @@ async function renderJoin() {
   try {
     const found = await window.mazz.invoke('sync:discover').catch(() => []);
     if (found?.length) {
-      $('#devs').innerHTML = found.map(d => `<div class="dev" data-h="${esc(d.host)}" data-p="${d.port}">📡 ${esc(d.name || d.host)} <span class="dim">${esc(d.host)}:${d.port}</span></div>`).join('');
-      document.querySelectorAll('.dev').forEach(el => el.addEventListener('click', () => { $('#j-host').value = el.dataset.h; $('#j-port').value = el.dataset.p; }));
+      $('#devs').innerHTML = found.map(d => `<div class="dev" role="button" tabindex="0" data-h="${esc(d.host)}" data-p="${d.port}">${iconHtml('📡')}<span>${esc(d.name || d.host)}</span> <span class="dim">${esc(d.host)}:${d.port}</span></div>`).join('');
+      document.querySelectorAll('.dev').forEach(el => {
+        const choose = () => { $('#j-host').value = el.dataset.h; $('#j-port').value = el.dataset.p; };
+        el.addEventListener('click', choose);
+        el.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(); } });
+      });
     }
   } catch {}
   $('#go').addEventListener('click', async () => {

@@ -36,6 +36,18 @@ const hueDist = (a, b) => {
   return Math.min(d, 360 - d);
 };
 
+/** 实色状态底必须自带可验证前景；在深/浅基准中选 WCAG 对比更高者。 */
+function pairedForeground(hex) {
+  if (!/^#[0-9a-f]{6}$/i.test(String(hex || ''))) return '#ffffff';
+  const luminance = (value) => {
+    const channels = value.slice(1).match(/../g).map(part => parseInt(part, 16) / 255)
+      .map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const ratio = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
+  return ratio(hex, '#111827') >= ratio(hex, '#ffffff') ? '#111827' : '#ffffff';
+}
+
 // ==================== 提取（量化分桶：色相 12 桶 × 明度 3 层） ====================
 /** pixels: RGBA Uint8ClampedArray。返回 {palette:[{h,s,l,count}], stats} */
 export function extractPalette(pixels, { maxColors = 6 } = {}) {
@@ -103,10 +115,12 @@ export function assignRoles(palette) {
   const okHex = hslToHex(115, 0.45, 0.32);
 
   return {
-    bg: bgHex, bgElev: cardHex, bgHover: hoverHex, bgActive: activeHex,
+    bg: bgHex, bgElev: cardHex, bgHover: hoverHex, bgActive: activeHex, bgSoft: hoverHex,
     fg: fgHex, fgDim: hslToHex(darkest.h, Math.min(darkest.s, 0.3), 0.38), border: fgHex,
     accent: accHex, accentSoft: softHex, accentFg: cardHex,
-    danger: accHex, warn: acc2Hex, ok: okHex,
+    danger: accHex, dangerFg: pairedForeground(accHex),
+    warn: acc2Hex, warnFg: pairedForeground(acc2Hex),
+    ok: okHex, okFg: pairedForeground(okHex),
     docBg: cardHex,
     acc: accHex, bd: fgHex, bd2: activeHex, card: cardHex,
     mut: hslToHex(darkest.h, Math.min(darkest.s, 0.3), 0.38),
@@ -126,9 +140,12 @@ export function injectCustomTheme(vars) {
   el.textContent = `[data-theme="custom"] {\n` +
     Object.entries({
       bg: vars.bg, 'bg-elev': vars.bgElev, 'bg-hover': vars.bgHover, 'bg-active': vars.bgActive,
+      'bg-soft': vars.bgSoft || vars.bgHover,
       fg: vars.fg, 'fg-dim': vars.fgDim, border: vars.border,
       accent: vars.accent, 'accent-soft': vars.accentSoft, 'accent-fg': vars.accentFg,
-      danger: vars.danger, warn: vars.warn, ok: vars.ok,
+      danger: vars.danger, 'danger-fg': vars.dangerFg || pairedForeground(vars.danger),
+      warn: vars.warn, 'warn-fg': vars.warnFg || pairedForeground(vars.warn),
+      ok: vars.ok, 'ok-fg': vars.okFg || pairedForeground(vars.ok),
       shadow: `5px 5px 0 ${vars.border}`, 'doc-bg': vars.docBg,
       acc: vars.acc, bd: vars.bd, bd2: vars.bd2, card: vars.card,
       mut: vars.mut, faint: vars.faint, sh: vars.sh,
@@ -174,13 +191,15 @@ export async function applyImageTheme() {
       const dir = await wsPath('/themes');
       await window.mazz.invoke('fs:mkdir', { path: dir }).catch(() => {});
       const safe = name.trim().replace(/[\\/:*?"<>|]/g, '-');
-      // 键名对齐主题包规范（VAR_KEYS 全量 22 键 kebab-case；图片主题为浅色基底）
-      // 主套 15 键 + 模块第二套（acc/bd/bd2/card/mut/faint/sh）+ structure 结构镜像——缺一样，重载后构成主义就缺腿
+      // 键名对齐主题包规范（VAR_KEYS 全量 26 键 kebab-case；图片主题为浅色基底）
+      // 主套 19 键 + 模块第二套（acc/bd/bd2/card/mut/faint/sh）+ structure 结构镜像——缺一样，重载后构成主义就缺腿
       const packVars = {
-        bg: vars.bg, 'bg-elev': vars.bgElev, 'bg-hover': vars.bgHover, 'bg-active': vars.bgActive,
+        bg: vars.bg, 'bg-elev': vars.bgElev, 'bg-hover': vars.bgHover, 'bg-active': vars.bgActive, 'bg-soft': vars.bgSoft,
         fg: vars.fg, 'fg-dim': vars.fgDim, border: vars.border,
         accent: vars.accent, 'accent-soft': vars.accentSoft, 'accent-fg': vars.accentFg,
-        danger: vars.danger, warn: vars.warn, ok: vars.ok,
+        danger: vars.danger, 'danger-fg': vars.dangerFg,
+        warn: vars.warn, 'warn-fg': vars.warnFg,
+        ok: vars.ok, 'ok-fg': vars.okFg,
         shadow: `5px 5px 0 ${vars.border}`, 'doc-bg': vars.docBg,
         acc: vars.acc, bd: vars.bd, bd2: vars.bd2, card: vars.card,
         mut: vars.mut, faint: vars.faint, sh: vars.sh,

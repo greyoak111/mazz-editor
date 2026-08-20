@@ -463,19 +463,19 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="语言">
-      <button class="rb-btn" id="code-lang-btn" title="编程语言（点击切换——子窗格选择格，分屏不被压）"><i class="ico">≣</i><span id="code-lang-text">JavaScript</span><i class="ico">▾</i></button>
+      <button class="rb-btn" id="code-lang-btn" title="编程语言（点击切换——子窗格选择格，分屏不被压）"><i class="ico">${iconHtml('≣')}</i><span id="code-lang-text">JavaScript</span><i class="ico">${iconHtml('▾')}</i></button>
       <select class="rb-select" id="code-lang" title="编程语言" style="display:none">
         ${LANGUAGE_CATALOG.map(x => `<option value="${x.id}">${x.label}</option>`).join('')}
       </select>
     </div>
     <div class="rb-group" data-label="运行">
-      <button class="rb-btn" data-command="code.runFile"><i class="ico">▶</i><span>运行文件</span></button>
-      <button class="rb-btn" data-command="code.runSelection"><i class="ico">⏎</i><span>运行选区</span></button>
+      <button class="rb-btn" data-command="code.runFile"><i class="ico">${iconHtml('▶')}</i><span>运行文件</span></button>
+      <button class="rb-btn" data-command="code.runSelection"><i class="ico">${iconHtml('⏎')}</i><span>运行选区</span></button>
       <button class="rb-btn" data-command="code.format"><i class="ico">${iconHtml('⌨')}</i><span>格式化</span></button>
     </div>
     <div class="rb-group" data-label="终端">
-      <button class="rb-btn" data-command="code.toggleTerminal"><i class="ico">▗</i><span>切换终端</span></button>
-      <button class="rb-btn" data-command="code.newTerminal"><i class="ico">＋</i><span>新建终端</span></button>
+      <button class="rb-btn" data-command="code.toggleTerminal"><i class="ico">${iconHtml('▗')}</i><span>切换终端</span></button>
+      <button class="rb-btn" data-command="code.newTerminal"><i class="ico">${iconHtml('＋')}</i><span>新建终端</span></button>
     </div>`,
   async bindToolbar(panel) { // async（W58 B12 菜单贡献 await import 需要）
     panel.querySelectorAll('[data-command]').forEach(btn => {

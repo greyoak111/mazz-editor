@@ -28,10 +28,12 @@
   .row kbd { background:var(--bg-active); border-radius:4px; padding:0 7px; font-family:var(--font-mono); font-size:11px; color:var(--fg-dim); }
   .empty { color:var(--fg-dim); text-align:center; padding:44px 0; }
   .kind { min-width:34px; padding:2px 6px; border:1px solid var(--border); border-radius:5px; color:var(--fg-dim); font-size:10.5px; text-align:center; }
-  .kind-recent { color:#d59628; border-color:color-mix(in srgb,#d59628 44%,transparent); background:color-mix(in srgb,#d59628 10%,transparent); }
-  .kind-file { color:#54a1dd; border-color:color-mix(in srgb,#54a1dd 44%,transparent); background:color-mix(in srgb,#54a1dd 10%,transparent); }
-  .kind-command { color:#aa82e6; border-color:color-mix(in srgb,#aa82e6 44%,transparent); background:color-mix(in srgb,#aa82e6 10%,transparent); }
-  .kind-content { color:#46ad7b; border-color:color-mix(in srgb,#46ad7b 44%,transparent); background:color-mix(in srgb,#46ad7b 10%,transparent); }
+  /* 小字号类别签先与主题正文混色，Paper/Ink 都保持可读；纯色只承担边线与底色语义。 */
+  .kind-recent { --kind-tone:#d59628; }
+  .kind-file { --kind-tone:#54a1dd; }
+  .kind-command { --kind-tone:#aa82e6; }
+  .kind-content { --kind-tone:#46ad7b; }
+  .kind-recent, .kind-file, .kind-command, .kind-content { color:color-mix(in srgb,var(--fg) 72%,var(--kind-tone)); border-color:color-mix(in srgb,var(--kind-tone) 52%,var(--border)); background:color-mix(in srgb,var(--kind-tone) 11%,var(--bg)); }
   .foot { flex:none; display:flex; gap:14px; padding:5px 16px 7px; border-top:1px solid var(--border); color:var(--fg-dim); font-size:10.5px; }
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">

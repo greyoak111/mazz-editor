@@ -14,7 +14,7 @@ export class SidebarCtl {
     if (acts) {
       acts.insertAdjacentHTML('afterbegin',
         `<button data-a="pin" title="钉住（推挤布局）/取消钉住（浮层覆盖）"></button>
-         <button data-a="collapse" title="折叠工作区">«</button>`);
+         <button data-a="collapse" title="折叠工作区">${iconHtml('‹')}</button>`);
       acts.querySelector('[data-a=pin]').addEventListener('click', () => this.togglePin());
       acts.querySelector('[data-a=collapse]').addEventListener('click', () => this.setCollapsed(true));
     }
@@ -27,7 +27,7 @@ export class SidebarCtl {
     // 折叠态的展开轨道条
     this.rail = document.createElement('button');
     this.rail.className = 'sidebar-rail';
-    this.rail.textContent = '»';
+    this.rail.innerHTML = iconHtml('›');
     this.rail.title = '展开工作区';
     this.rail.style.display = 'none';
     this.rail.addEventListener('click', () => this.setCollapsed(false));

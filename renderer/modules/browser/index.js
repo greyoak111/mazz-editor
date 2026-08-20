@@ -37,21 +37,21 @@ function createBrowser(container) {
   root.className = 'browser-root';
   root.innerHTML = `
     <div class="br-bar">
-      <button class="br-nav" data-a="back" title="后退（Alt+←）">←</button>
-      <button class="br-nav" data-a="forward" title="前进（Alt+→）">→</button>
-      <button class="br-nav" data-a="reload" title="刷新（Ctrl+R）">⟳</button>
-      <button class="br-nav" data-a="home" title="主页">⌂</button>
+      <button class="br-nav" data-a="back" title="后退（Alt+←）">${iconHtml('⬅')}</button>
+      <button class="br-nav" data-a="forward" title="前进（Alt+→）">${iconHtml('➡')}</button>
+      <button class="br-nav" data-a="reload" title="刷新（Ctrl+R）">${iconHtml('⟳')}</button>
+      <button class="br-nav" data-a="home" title="主页">${iconHtml('🏠')}</button>
       <input class="br-addr" placeholder="输入网址，或关键词搜索（Enter 直达 / 搜索）" spellcheck="false" />
       <button class="br-nav" data-a="find" title="页内查找（Ctrl+F）">${iconHtml('🔍')}</button>
       <button class="br-nav" data-a="bookmark" title="收藏当前页（Ctrl+Shift+B）">${iconHtml('⭐')}</button>
-      <button class="br-nav" data-a="newtab" title="新标签（Ctrl+T）">＋</button>
+      <button class="br-nav" data-a="newtab" title="新标签（Ctrl+T）">${iconHtml('＋')}</button>
     </div>
     <div class="br-findbar">
       <input class="br-find-input" placeholder="页内查找…" spellcheck="false" />
       <span class="br-find-count"></span>
-      <button class="br-nav" data-f="prev">↑</button>
-      <button class="br-nav" data-f="next">↓</button>
-      <button class="br-nav" data-f="close">✕</button>
+      <button class="br-nav" data-f="prev" title="上一个匹配">${iconHtml('⬆')}</button>
+      <button class="br-nav" data-f="next" title="下一个匹配">${iconHtml('⬇')}</button>
+      <button class="br-nav" data-f="close" title="关闭页内查找">${iconHtml('✕')}</button>
     </div>
     <div class="br-body">
       <div class="br-tabs"></div>
@@ -63,7 +63,7 @@ function createBrowser(container) {
             <div class="br-panel-acts">
               <button data-p="insert" title="结果插入文档">插入文档</button>
               <button data-p="selfcheck" title="实例连通性自检">自检</button>
-              <button data-p="close">✕</button>
+              <button data-p="close" title="关闭搜索面板">${iconHtml('✕')}</button>
             </div>
           </div>
           <div class="br-panel-body"></div>
@@ -156,7 +156,7 @@ function createBrowser(container) {
     for (const t of ctl.tabs) {
       const el = document.createElement('div');
       el.className = 'br-tab' + (t.id === ctl.activeId ? ' on' : '');
-      el.innerHTML = `<span class="br-tab-title"></span><button class="br-tab-close">✕</button>`;
+      el.innerHTML = `<span class="br-tab-title"></span><button class="br-tab-close" title="关闭标签">${iconHtml('✕')}</button>`;
       el.querySelector('.br-tab-title').textContent = t.title.slice(0, 24) || '新标签页';
       el.title = t.url;
       el.addEventListener('click', (e) => { if (!e.target.closest('.br-tab-close')) activate(t.id); });
@@ -218,6 +218,7 @@ function createBrowser(container) {
       }
       try {
         tab._errorPage = false;
+        tab._errorInfo = null;
         if (isElectron()) {
           if (!tab.host?.isConnected) return;
           await window.mazz.invoke('bv:nav', { tabId: tab.viewId, action: 'load', url }).catch(() => {});
@@ -278,15 +279,15 @@ function createBrowser(container) {
       const items = ctl.bookmarks.filter(b => (b.folder || 'default') === f.id).slice(0, 8);
       if (!items.length && ctl.folders.length <= 1) return '';
       return `<h2>${iconHtml('📁')} ${escapeHtml(f.name)}${items.length ? '' : ' <small>（空）</small>'}</h2><div class="grid">${
-        items.map(b => `<span class="card-wrap"><a class="card" href="${escapeAttr(b.url)}" title="${escapeAttr(b.url)}">${escapeHtml(b.name || b.title)}</a><span class="card-acts"><i data-act="rename" data-url="${escapeAttr(b.url)}">✎</i><i data-act="del-bm" data-url="${escapeAttr(b.url)}">✕</i></span></span>`).join('')
+        items.map(b => `<span class="card-wrap"><a class="card" href="${escapeAttr(b.url)}" title="${escapeAttr(b.url)}">${escapeHtml(b.name || b.title)}</a><span class="card-acts"><i role="button" tabindex="0" title="重命名收藏" aria-label="重命名收藏" data-act="rename" data-url="${escapeAttr(b.url)}">${iconHtml('✎')}</i><i role="button" tabindex="0" title="删除收藏" aria-label="删除收藏" data-act="del-bm" data-url="${escapeAttr(b.url)}">${iconHtml('✕')}</i></span></span>`).join('')
       }</div>`;
     }).join('');
     // 主题变量取自 Mazz 当前主题（跟随软件主题，与播放器同源），而非写死色板
     const cs = getComputedStyle(document.documentElement);
     const v = (name, fb) => cs.getPropertyValue(name).trim() || fb;
-    const mazzVars = `--bg:${v('--bg', '#f7f6f3')};--fg:${v('--fg', '#2c2c2a')};--mut:${v('--fg-dim', '#83817a')};--faint:${v('--fg-dim', '#a3a19a')};--card:${v('--bg-soft', '#fff')};--bd:${v('--border', '#e0ded8')};--bd2:${v('--bg-hover', '#ecebe6')};--acc:${v('--accent', '#4f46e5')};--sh:rgba(0,0,0,.08)`;
-    const lightVars = `--bg:#f7f6f3;--fg:#2c2c2a;--mut:#83817a;--faint:#a3a19a;--card:#fff;--bd:#e0ded8;--bd2:#ecebe6;--acc:#4f46e5;--sh:rgba(0,0,0,.05)`;
-    const darkVars = `--bg:#1b1b1a;--fg:#e8e6e1;--mut:#9b9890;--faint:#7d7b74;--card:#262625;--bd:#3d3c39;--bd2:#333231;--acc:#818cf8;--sh:rgba(0,0,0,.4)`;
+    const mazzVars = `--bg:${v('--bg', '#f7f6f3')};--fg:${v('--fg', '#2c2c2a')};--mut:${v('--fg-dim', '#6f6d67')};--faint:${v('--fg-dim', '#77756f')};--card:${v('--bg-soft', v('--bg-elev', '#fff'))};--bd:${v('--border', '#d7d5cf')};--bd2:${v('--bg-hover', '#ecebe6')};--acc:${v('--accent', '#4f46e5')};--accfg:${v('--accent-fg', '#fff')};--font:${v('--font-ui', '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif')};--sh:rgba(0,0,0,.08)`;
+    const lightVars = `--bg:#f7f6f3;--fg:#2c2c2a;--mut:#66645e;--faint:#716f69;--card:#fff;--bd:#d7d5cf;--bd2:#ecebe6;--acc:#4f46e5;--accfg:#fff;--font:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;--sh:rgba(0,0,0,.05)`;
+    const darkVars = `--bg:#1b1b1a;--fg:#e8e6e1;--mut:#aaa79f;--faint:#949188;--card:#262625;--bd:#4a4945;--bd2:#333231;--acc:#818cf8;--accfg:#11131a;--font:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;--sh:rgba(0,0,0,.4)`;
     const themeCss = theme === 'dark' ? `:root{${darkVars}}`
       : theme === 'light' ? `:root{${lightVars}}`
       : `:root{${mazzVars}}`; // 「跟随系统」= 跟随 Mazz 软件主题（v33 反馈：与播放器同一套变量）
@@ -296,7 +297,7 @@ function createBrowser(container) {
       /* SVG 图标钉死：webview 独立文档里没有 .mz-ico 尺寸规则，无 width/height 的 SVG 按默认 300×150
          甚至拉伸失控——收藏夹文件夹图案全屏巨大的总根（用户实图实锤） */
       .mz-ico{width:1.05em;height:1.05em;vertical-align:-0.15em;flex:none}
-      body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:40px 40px 30px}
+      body{font-family:var(--font);background:var(--bg);color:var(--fg);margin:0;padding:40px 40px 30px}
       .hero{text-align:center;margin:4vh 0 26px}
       h1{font-size:30px;margin:0 0 4px}h1 b{color:var(--acc)}
       .sub{color:var(--mut);font-size:13px}
@@ -304,7 +305,8 @@ function createBrowser(container) {
       .searchbox{display:flex;width:min(560px,90%);background:var(--card);border:1.5px solid var(--bd);border-radius:999px;overflow:hidden;box-shadow:0 2px 12px var(--sh)}
       .searchbox:focus-within{border-color:var(--acc)}
       #q{flex:1;border:0;outline:0;padding:13px 20px;font-size:15px;background:transparent;color:var(--fg)}
-      button{border:0;background:var(--acc);color:#fff;padding:0 26px;font-size:14px;cursor:pointer}
+      #q::placeholder,.hset input::placeholder{color:var(--mut);opacity:1}
+      button{border:0;background:var(--acc);color:var(--accfg);padding:0 26px;font-size:14px;cursor:pointer}
       button:hover{filter:brightness(1.1)}
       h2{font-size:13px;color:var(--mut);margin:24px 0 8px;font-weight:600}
       .grid{display:flex;flex-wrap:wrap;gap:10px}
@@ -354,7 +356,7 @@ function createBrowser(container) {
         <button type="submit">搜索</button>
       </div></form>
       ${folderBlocks}
-      <h2>最近访问</h2><div class="grid">${recent.length ? recent.map(h => `<span class="card-wrap"><a class="card" href="${escapeAttr(h.url)}" title="${escapeAttr(h.url)}">${escapeHtml(h.name || h.title)}</a><span class="card-acts"><i data-act="rename-his" data-url="${escapeAttr(h.url)}">✎</i><i data-act="del-his" data-url="${escapeAttr(h.url)}">✕</i></span></span>`).join('') : '<span style="color:var(--mut);font-size:12px">暂无历史</span>'}</div>
+      <h2>最近访问</h2><div class="grid">${recent.length ? recent.map(h => `<span class="card-wrap"><a class="card" href="${escapeAttr(h.url)}" title="${escapeAttr(h.url)}">${escapeHtml(h.name || h.title)}</a><span class="card-acts"><i role="button" tabindex="0" title="重命名访问记录" aria-label="重命名访问记录" data-act="rename-his" data-url="${escapeAttr(h.url)}">${iconHtml('✎')}</i><i role="button" tabindex="0" title="删除访问记录" aria-label="删除访问记录" data-act="del-his" data-url="${escapeAttr(h.url)}">${iconHtml('✕')}</i></span></span>`).join('') : '<span style="color:var(--mut);font-size:12px">暂无历史</span>'}</div>
       <div class="privacy">独立会话隔离 · UA 归一化 · 跨域 Referer 剥离 · 追踪域名拦截 · 第三方 Cookie 限制<br>搜索经主进程代理转发，本页与任何网页都无法获知搜索通道信息</div>
       <script>
         document.getElementById('sf').addEventListener('submit', function(e) {
@@ -374,6 +376,12 @@ function createBrowser(container) {
           try { console.log('MAZZ_ACT:' + act + '|' + url); } catch (_) {}
           try { parent.postMessage({ mazzAct: act, url: url }, '*'); } catch (_) {}
         }, true);
+        document.addEventListener('keydown', function(e) {
+          if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.card-acts [data-act]')) {
+            e.preventDefault();
+            e.target.click();
+          }
+        });
         document.getElementById('home-url').addEventListener('keydown', function(e) {
           if (e.key === 'Enter') { e.preventDefault(); document.querySelector('[data-act=set-home]').click(); }
         });
@@ -384,7 +392,10 @@ function createBrowser(container) {
   // Mazz 主题变化 → 重建主页（跟随软件主题）
   if (!ctl._themeWatch) {
     ctl._themeWatch = new MutationObserver(() => {
-      for (const t of ctl.tabs || []) if (t.url === HOME) renderHome(t);
+      for (const t of ctl.tabs || []) {
+        if (t.url === HOME) renderHome(t);
+        else if (t._errorPage && t._errorInfo) renderLoadError(t, t._errorInfo);
+      }
     });
     ctl._themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   }
@@ -431,15 +442,20 @@ function createBrowser(container) {
   function renderLoadError(tab, e) {
     const desc = e.errorDescription || String(e.errorCode);
     const friendly = friendlyError(desc, tab.url);
+    const cs = getComputedStyle(document.documentElement);
+    const v = (name, fallback) => cs.getPropertyValue(name).trim() || fallback;
+    const vars = `--bg:${v('--bg', '#f7f6f3')};--fg:${v('--fg', '#2c2c2a')};--dim:${v('--fg-dim', '#66645e')};--soft:${v('--bg-soft', v('--bg-elev', '#fff'))};--accent:${v('--accent', '#4f46e5')};--accent-fg:${v('--accent-fg', '#fff')};--font:${v('--font-ui', '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif')}`;
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-      body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f7f6f3;color:#2c2c2a;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+      :root{${vars}}
+      body{font-family:var(--font);background:var(--bg);color:var(--fg);display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
       .box{max-width:460px;text-align:center;padding:32px}
-      h2{font-size:20px;margin:0 0 10px;color:#c2410c}
-      p{color:#66645e;font-size:13px;line-height:1.8;margin:6px 0}
-      code{background:#e3e1da;padding:2px 7px;border-radius:5px;font-size:12px}
-      button{margin-top:18px;border:0;background:#4f46e5;color:#fff;padding:9px 26px;border-radius:8px;font-size:14px;cursor:pointer}
+      h2{font-size:20px;margin:0 0 10px;color:var(--fg);display:flex;align-items:center;justify-content:center;gap:8px}
+      h2 .mz-ico{width:1.15em;height:1.15em;flex:none}
+      p{color:var(--dim);font-size:13px;line-height:1.8;margin:6px 0}
+      code{background:var(--soft);color:var(--fg);padding:2px 7px;border-radius:5px;font-size:12px}
+      button{margin-top:18px;border:0;background:var(--accent);color:var(--accent-fg);padding:9px 26px;border-radius:8px;font-size:14px;cursor:pointer}
     </style></head><body><div class="box">
-      <h2>😕 页面加载失败</h2>
+      <h2>${iconHtml('⚠')}<span>页面加载失败</span></h2>
       <p><code>${escapeHtml(tab.url)}</code></p>
       <p>${escapeHtml(desc)}</p>
       <p>${escapeHtml(friendly)}</p>
@@ -448,6 +464,7 @@ function createBrowser(container) {
     if (isElectron()) {
       // 错误页写进失败文档本体（URL 保持失败地址，返回导航天然正常——不进 data: 不污染历史）
       tab._errorPage = true;
+      tab._errorInfo = { errorDescription: desc, errorCode: e.errorCode };
       window.mazz.invoke('bv:js', {
         tabId: tab.viewId,
         code: `document.open();document.write(${JSON.stringify(html)});document.close();`,
@@ -507,6 +524,7 @@ function createBrowser(container) {
         tab.url = d.url;
         tab.homeLoaded = false;
         tab._errorPage = false; // 真导航落地即离开错误页
+        tab._errorInfo = null;
         if (ctl.activeId === tab.id) ctl.addrEl.value = d.url;
         pushHistory(d.url, tab.title, passive);
         window.MazzHost?.notifyChange(container);
@@ -516,6 +534,7 @@ function createBrowser(container) {
         if (d.isMainFrame && !isInternalUrl(d.url)) {
           tab.url = d.url;
           tab._errorPage = false;
+          tab._errorInfo = null;
           if (ctl.activeId === tab.id) ctl.addrEl.value = d.url;
         }
         return;
@@ -730,10 +749,10 @@ function createBrowser(container) {
         return `
         <div class="bm-folder" data-fid="${f.id}">
           <div class="bm-folder-head">
-            <span class="bm-fold-name">📁 ${escapeHtml(f.name)} <small>(${items.length})</small></span>
+            <span class="bm-fold-name">${iconHtml('📁')} ${escapeHtml(f.name)} <small>(${items.length})</small></span>
             <span class="bm-fold-acts">
-              <button data-a="rename" title="重命名收藏夹">✎</button>
-              ${f.id !== 'default' ? `<button data-a="delfolder" title="删除收藏夹（条目移到默认）">✕</button>` : ''}
+              <button data-a="rename" title="重命名收藏夹">${iconHtml('✎')}</button>
+              ${f.id !== 'default' ? `<button data-a="delfolder" title="删除收藏夹（条目移到默认）">${iconHtml('✕')}</button>` : ''}
             </span>
           </div>
           <div class="bm-items">
@@ -741,9 +760,9 @@ function createBrowser(container) {
               <div class="bm-item" data-url="${escapeAttr(b.url)}">
                 <span class="bm-item-name">${escapeHtml(b.name || b.title)}</span>
                 <span class="bm-item-acts">
-                  <button data-a="rename-item" title="重命名">✎</button>
-                  <button data-a="move" title="移动到…">⇢</button>
-                  <button data-a="del" title="删除">✕</button>
+                  <button data-a="rename-item" title="重命名">${iconHtml('✎')}</button>
+                  <button data-a="move" title="移动到…">${iconHtml('⇢')}</button>
+                  <button data-a="del" title="删除">${iconHtml('✕')}</button>
                 </span>
               </div>`).join('') : '<div class="bm-empty">（空）</div>'}
           </div>
@@ -751,7 +770,7 @@ function createBrowser(container) {
       }).join('');
       m.body.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <button id="bm-add-folder" class="rb-btn" style="flex-direction:row">＋ 新建收藏夹</button>
+          <button id="bm-add-folder" class="rb-btn" style="flex-direction:row">${iconHtml('＋')} 新建收藏夹</button>
           <button id="bm-clear-history" class="rb-btn" style="flex-direction:row">清空最近访问</button>
         </div>
         <div style="max-height:55vh;overflow-y:auto">${foldersHtml}</div>`;
@@ -868,7 +887,7 @@ function createBrowser(container) {
 
   function renderSelfcheck(sc) {
     return `<div class="br-selfcheck">${sc.checks.map(c =>
-      `<div class="${c.pass ? 'pass' : 'fail'}">${c.pass ? '✓' : '✗'} ${escapeHtml(c.name)}：${escapeHtml(c.detail)}</div>`).join('')}</div>`;
+      `<div class="${c.pass ? 'pass' : 'fail'}">${iconHtml(c.pass ? '✓' : '✗')} ${escapeHtml(c.name)}：${escapeHtml(c.detail)}</div>`).join('')}</div>`;
   }
   async function runSelfcheck() {
     const sc = await window.mazz.invoke('searx:selfcheck');
@@ -1173,8 +1192,8 @@ function createBrowser(container) {
       const list = (await window.mazz.invoke('pw:list').catch(() => [])) || [];
       m.body.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px">
-          <button id="pw-add" class="rb-btn" style="flex-direction:row">＋ 添加账号</button>
-          <span style="font-size:11.5px;color:var(--fg-dim)">${encAvail ? '🔒 系统级加密存储（safeStorage）' : '⚠ 系统加密不可用，密码以编码形式保存'}</span>
+          <button id="pw-add" class="rb-btn" style="flex-direction:row">${iconHtml('＋')} 添加账号</button>
+          <span style="font-size:11.5px;color:var(--fg-dim)">${encAvail ? `${iconHtml('🔒')} 系统级加密存储（safeStorage）` : `${iconHtml('⚠')} 系统加密不可用，密码以编码形式保存`}</span>
         </div>
         <div id="pw-form" style="display:none;border:1px solid var(--bd,#e0ded8);border-radius:8px;padding:10px 12px;margin-bottom:10px">
           <input id="pwf-id" type="hidden">
@@ -1197,10 +1216,10 @@ function createBrowser(container) {
                 <div style="font-size:12px;color:var(--fg-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>
               </div>
               <span class="pw-secret" data-shown="0" style="font-family:monospace;font-size:12px;min-width:76px;text-align:right">••••••</span>
-              <button data-a="show" style="${btnStyle}" title="显示/隐藏">👁</button>
-              <button data-a="copy" style="${btnStyle}" title="复制密码">📋</button>
-              <button data-a="edit" style="${btnStyle}" title="编辑">✎</button>
-              <button data-a="del" style="${btnStyle}" title="删除">✕</button>
+              <button data-a="show" style="${btnStyle}" title="显示/隐藏">${iconHtml('👁')}</button>
+              <button data-a="copy" style="${btnStyle}" title="复制密码">${iconHtml('📋')}</button>
+              <button data-a="edit" style="${btnStyle}" title="编辑">${iconHtml('✎')}</button>
+              <button data-a="del" style="${btnStyle}" title="删除">${iconHtml('✕')}</button>
             </div>`).join('')
           : '<div style="color:var(--fg-dim);font-size:12.5px;padding:18px 0;text-align:center">还没有保存的账号——点「添加账号」开始</div>'}
         </div>`;
@@ -1417,20 +1436,20 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="导航">
-      <button class="rb-btn" data-command="browser.newTab"><i class="ico">＋</i><span>新标签</span></button>
-      <button class="rb-btn" data-command="browser.home"><i class="ico">⌂</i><span>主页</span></button>
+      <button class="rb-btn" data-command="browser.newTab"><i class="ico">${iconHtml('＋')}</i><span>新标签</span></button>
+      <button class="rb-btn" data-command="browser.home"><i class="ico">${iconHtml('🏠')}</i><span>主页</span></button>
       <button class="rb-btn" data-command="browser.bookmark"><i class="ico">${iconHtml('☆')}</i><span>收藏</span></button>
       <button class="rb-btn" data-command="browser.find"><i class="ico">${iconHtml('🔍')}</i><span>页内查找</span></button>
     </div>
     <div class="rb-group" data-label="协同">
       <button class="rb-btn" data-command="browser.clipToNote"><i class="ico">${iconHtml('✂')}</i><span>摘录到笔记</span></button>
       <button class="rb-btn" data-command="browser.pageToLibrary"><i class="ico">${iconHtml('📥')}</i><span>网页剪藏</span></button>
-      <button class="rb-btn" data-command="browser.harvestAiChat"><i class="ico">☷</i><span>AI 对话整理</span></button>
-      <button class="rb-btn" data-command="browser.clipBookmarks"><i class="ico">⇊</i><span>批量剪藏</span></button>
-      <button class="rb-btn" data-command="browser.shareLocal"><i class="ico">⌁</i><span>局域网分享</span></button>
+      <button class="rb-btn" data-command="browser.harvestAiChat"><i class="ico">${iconHtml('☷')}</i><span>AI 对话整理</span></button>
+      <button class="rb-btn" data-command="browser.clipBookmarks"><i class="ico">${iconHtml('⇊')}</i><span>批量剪藏</span></button>
+      <button class="rb-btn" data-command="browser.shareLocal"><i class="ico">${iconHtml('⌁')}</i><span>局域网分享</span></button>
       <button class="rb-btn" data-command="browser.manageBookmarks"><i class="ico">${iconHtml('📁')}</i><span>收藏管理</span></button>
       <button class="rb-btn" data-command="browser.exportBookmarks"><i class="ico">${iconHtml('📑')}</i><span>导出收藏</span></button>
-      <button class="rb-btn" data-command="browser.bookmarksToContexts"><i class="ico">◫</i><span>转为上下文</span></button>
+      <button class="rb-btn" data-command="browser.bookmarksToContexts"><i class="ico">${iconHtml('◫')}</i><span>转为上下文</span></button>
     </div>
     <div class="rb-group" data-label="搜索">
       <button class="rb-btn" data-command="browser.selfcheck"><i class="ico">${iconHtml('⚡')}</i><span>实例自检</span></button>

@@ -1,6 +1,7 @@
 // renderer/lib/annotate.js —— 全局批注层（外套）：全窗悬浮手写，与任何窗格内容完全隔离
 // 圈画在顶层画布上，不写入任何文档；撤销上一笔 / 清屏 / 退出即还
 import { getStroke } from 'perfect-freehand';
+import { iconHtml } from './svg-icons.js';
 
 const COLORS = ['#dc2626', '#d97706', '#2563eb', '#16a34a', '#1a1a1a'];
 const PF_OPTS = { thinning: 0.55, smoothing: 0.5, streamline: 0.42, easing: (t) => t, last: true };
@@ -25,13 +26,13 @@ export class AnnotateLayer {
     this.el.innerHTML = `
       <canvas class="annotate-canvas"></canvas>
       <div class="annotate-bar">
-        <button class="an-fold" data-a="fold" title="折叠/展开颜色条">▾</button>
+        <button class="an-fold" data-a="fold" aria-expanded="true" title="折叠/展开颜色条">${iconHtml('▾')}</button>
         <span class="an-body">
           ${COLORS.map(c => `<i class="an-c${c === this.color ? ' on' : ''}" data-c="${c}" style="background:${c}"></i>`).join('')}
           <span class="an-sep"></span>
           <input class="an-size" type="range" min="2" max="16" value="${this.size}" title="粗细">
-          <button class="an-btn" data-a="undo" title="撤销上一笔（Ctrl+Z）">↩ 撤销</button>
-          <button class="an-btn" data-a="clear" title="清空全部批注">✕ 清屏</button>
+        <button class="an-btn" data-a="undo" title="撤销上一笔（Ctrl+Z）">${iconHtml('↩')} 撤销</button>
+        <button class="an-btn" data-a="clear" title="清空全部批注">${iconHtml('✕')} 清屏</button>
           <button class="an-btn an-exit" data-a="exit" title="退出批注（Esc）">退出批注</button>
         </span>
       </div>`;
@@ -53,7 +54,8 @@ export class AnnotateLayer {
     foldBtn.addEventListener('click', () => {
       const bar = this.el.querySelector('.annotate-bar');
       const collapsed = bar.classList.toggle('collapsed');
-      foldBtn.textContent = collapsed ? '▸' : '▾';
+      foldBtn.innerHTML = iconHtml(collapsed ? '▸' : '▾');
+      foldBtn.setAttribute('aria-expanded', String(!collapsed));
     });
     this.resize();
     this._ro = new ResizeObserver(() => this.resize());

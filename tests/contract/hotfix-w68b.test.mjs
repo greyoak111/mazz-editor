@@ -91,6 +91,8 @@ describe('W68b 正式模块与生产链接线', () => {
     assert(app.includes("modules.register('factorydesk', factoryDeskModule)"));
     for (const method of ['create(container)', 'activate(container)', 'deactivate(container)', 'getContent(state)', 'setContent(data, state)', 'newDocument(state)']) assert(desk.includes(method), `缺模块契约 ${method}`);
     for (const pin of ['fd-directory', 'fd-stream', 'fd-compare', 'computeFactoryVirtualWindow', 'buildFactoryDebateThreads', 'mazz:factory-workshop']) assert(desk.includes(pin), `缺桌面钉 ${pin}`);
+    assert(desk.includes('role="tab" aria-selected="false" tabindex="-1"'), '三视图必须使用 ARIA tab 契约');
+    assert(desk.includes("event.key === 'ArrowRight'") && desk.includes("event.key === 'ArrowLeft'"), '三视图必须支持左右键切换');
   });
 
   test('生产流追加群档、命令/Ribbon/侧坞三入口齐全', () => {

@@ -1,0 +1,3591 @@
+{
+  "protocol": "mazz.ui-page-sweep/v1",
+  "generatedAt": "2026-08-20T16:12:56.679Z",
+  "runtimeMode": "source",
+  "executable": null,
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "themes": [
+    "paper",
+    "ink"
+  ],
+  "requested": {
+    "modules": [
+      "welcome",
+      "markdown",
+      "text",
+      "sheet",
+      "slide",
+      "code",
+      "math",
+      "notes",
+      "search",
+      "mindmap",
+      "draw",
+      "library",
+      "viewer",
+      "factorydesk",
+      "organization",
+      "browser"
+    ],
+    "sidebarTabs": [
+      "files",
+      "outline",
+      "marks",
+      "tags",
+      "backlinks",
+      "contexts",
+      "history",
+      "cognition"
+    ],
+    "ribbonPages": [
+      "file",
+      "factory",
+      "view"
+    ],
+    "sideDockTabs": [
+      "factory",
+      "openwith",
+      "tools"
+    ],
+    "panels": [
+      "favmgr",
+      "pwmgr",
+      "palette",
+      "shortcuts",
+      "annotate",
+      "settings",
+      "agreement",
+      "help",
+      "translate",
+      "plugins",
+      "recorder",
+      "dockfloat",
+      "bookmark",
+      "ctxmenu",
+      "splitpreview",
+      "sync",
+      "notif",
+      "factorycfg",
+      "newfile",
+      "picklist",
+      "fpreview",
+      "fedit",
+      "harvest",
+      "archive"
+    ],
+    "quicknote": true
+  },
+  "screenshotsRoot": "tests/e2e/shots/ui-page-sweep/source",
+  "scenes": [
+    {
+      "order": 1,
+      "scope": "module/welcome",
+      "label": "欢迎页",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/001-paper-module-welcome.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 238,
+          "buttons": 87,
+          "svg": 87,
+          "images": 0,
+          "controls": 87,
+          "controlSvg": 72,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 2,
+      "scope": "module/markdown",
+      "label": "文档",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/002-paper-module-markdown.png",
+      "audit": {
+        "theme": "paper",
+        "title": "文档 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 234,
+          "buttons": 82,
+          "svg": 74,
+          "images": 0,
+          "controls": 83,
+          "controlSvg": 58,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 3,
+      "scope": "module/text",
+      "label": "纯文本",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/003-paper-module-text.png",
+      "audit": {
+        "theme": "paper",
+        "title": "纯文本 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 173,
+          "buttons": 66,
+          "svg": 67,
+          "images": 0,
+          "controls": 67,
+          "controlSvg": 51,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 4,
+      "scope": "module/sheet",
+      "label": "表格",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/004-paper-module-sheet.png",
+      "audit": {
+        "theme": "paper",
+        "title": "表格 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 598,
+          "buttons": 83,
+          "svg": 78,
+          "images": 0,
+          "controls": 84,
+          "controlSvg": 62,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": [
+          {
+            "code": "ELEMENT_OUTSIDE_VIEWPORT",
+            "selector": "div.sg-hcell",
+            "text": "M",
+            "rect": {
+              "left": 1358,
+              "right": 1448,
+              "width": 90
+            },
+            "viewportWidth": 1440
+          }
+        ]
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 5,
+      "scope": "module/slide",
+      "label": "演示",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/005-paper-module-slide.png",
+      "audit": {
+        "theme": "paper",
+        "title": "演示 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 290,
+          "buttons": 98,
+          "svg": 97,
+          "images": 0,
+          "controls": 99,
+          "controlSvg": 80,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 6,
+      "scope": "module/code",
+      "label": "代码",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/006-paper-module-code.png",
+      "audit": {
+        "theme": "paper",
+        "title": "代码 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 197,
+          "buttons": 71,
+          "svg": 73,
+          "images": 0,
+          "controls": 72,
+          "controlSvg": 57,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 7,
+      "scope": "module/math",
+      "label": "计算",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/007-paper-module-math.png",
+      "audit": {
+        "theme": "paper",
+        "title": "计算 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 171,
+          "buttons": 66,
+          "svg": 64,
+          "images": 0,
+          "controls": 67,
+          "controlSvg": 49,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 8,
+      "scope": "module/notes",
+      "label": "笔记",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/008-paper-module-notes.png",
+      "audit": {
+        "theme": "paper",
+        "title": "笔记 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 186,
+          "buttons": 67,
+          "svg": 68,
+          "images": 0,
+          "controls": 68,
+          "controlSvg": 52,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 9,
+      "scope": "module/search",
+      "label": "搜索",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/009-paper-module-search.png",
+      "audit": {
+        "theme": "paper",
+        "title": "搜索 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 185,
+          "buttons": 68,
+          "svg": 67,
+          "images": 0,
+          "controls": 69,
+          "controlSvg": 51,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 10,
+      "scope": "module/mindmap",
+      "label": "导图",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/010-paper-module-mindmap.png",
+      "audit": {
+        "theme": "paper",
+        "title": "导图 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 285,
+          "buttons": 91,
+          "svg": 85,
+          "images": 0,
+          "controls": 92,
+          "controlSvg": 68,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 11,
+      "scope": "module/draw",
+      "label": "画板",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/011-paper-module-draw.png",
+      "audit": {
+        "theme": "paper",
+        "title": "画板 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 283,
+          "buttons": 107,
+          "svg": 106,
+          "images": 0,
+          "controls": 108,
+          "controlSvg": 89,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 12,
+      "scope": "module/library",
+      "label": "书库",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/012-paper-module-library.png",
+      "audit": {
+        "theme": "paper",
+        "title": "书库 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 173,
+          "buttons": 68,
+          "svg": 70,
+          "images": 0,
+          "controls": 69,
+          "controlSvg": 53,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 13,
+      "scope": "module/viewer",
+      "label": "播放器",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/013-paper-module-viewer.png",
+      "audit": {
+        "theme": "paper",
+        "title": "播放器 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 238,
+          "buttons": 90,
+          "svg": 91,
+          "images": 0,
+          "controls": 91,
+          "controlSvg": 74,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 14,
+      "scope": "module/factorydesk",
+      "label": "智能创作台",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/014-paper-module-factorydesk.png",
+      "audit": {
+        "theme": "paper",
+        "title": "智能创作台 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 225,
+          "buttons": 76,
+          "svg": 72,
+          "images": 0,
+          "controls": 77,
+          "controlSvg": 55,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 15,
+      "scope": "module/organization",
+      "label": "组织编译台",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/015-paper-module-organization.png",
+      "audit": {
+        "theme": "paper",
+        "title": "组织编译台 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 212,
+          "buttons": 76,
+          "svg": 74,
+          "images": 0,
+          "controls": 77,
+          "controlSvg": 58,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 16,
+      "scope": "module/browser",
+      "label": "隐私浏览器",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/016-paper-module-browser.png",
+      "audit": {
+        "theme": "paper",
+        "title": "隐私浏览器 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 209,
+          "buttons": 80,
+          "svg": 81,
+          "images": 0,
+          "controls": 81,
+          "controlSvg": 65,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [
+        {
+          "screenshot": "tests/e2e/shots/ui-page-sweep/source/016-paper-module-browser-native-01.png",
+          "tabId": "bt-7991daea-df10-438c-a6dc-092a31fa8794",
+          "bounds": {
+            "x": 232,
+            "y": 243,
+            "width": 1207,
+            "height": 557
+          }
+        }
+      ],
+      "nativeSurfaceAudits": [
+        {
+          "tabId": "bt-7991daea-df10-438c-a6dc-092a31fa8794",
+          "firstPartyHome": true,
+          "href": "about:blank",
+          "placeholders": [
+            {
+              "id": "home-url",
+              "text": "留空则使用内置主页",
+              "ratio": 5.47
+            },
+            {
+              "id": "q",
+              "text": "输入关键词回车搜索，或输入网址直达…",
+              "ratio": 4.96
+            }
+          ],
+          "invalidControlSvg": 0
+        }
+      ],
+      "error": null
+    },
+    {
+      "order": 17,
+      "scope": "sidebar/files",
+      "label": "文档",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/017-paper-sidebar-files.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 234,
+          "buttons": 81,
+          "svg": 73,
+          "images": 0,
+          "controls": 82,
+          "controlSvg": 57,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 18,
+      "scope": "sidebar/outline",
+      "label": "大纲",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/018-paper-sidebar-outline.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 165,
+          "buttons": 49,
+          "svg": 27,
+          "images": 0,
+          "controls": 50,
+          "controlSvg": 25,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 19,
+      "scope": "sidebar/marks",
+      "label": "书签",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/019-paper-sidebar-marks.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 157,
+          "buttons": 48,
+          "svg": 25,
+          "images": 0,
+          "controls": 49,
+          "controlSvg": 24,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 20,
+      "scope": "sidebar/tags",
+      "label": "标签",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/020-paper-sidebar-tags.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 158,
+          "buttons": 48,
+          "svg": 25,
+          "images": 0,
+          "controls": 49,
+          "controlSvg": 24,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 21,
+      "scope": "sidebar/backlinks",
+      "label": "反链",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/021-paper-sidebar-backlinks.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 167,
+          "buttons": 47,
+          "svg": 24,
+          "images": 0,
+          "controls": 48,
+          "controlSvg": 23,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 22,
+      "scope": "sidebar/contexts",
+      "label": "上下文",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/022-paper-sidebar-contexts.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 164,
+          "buttons": 49,
+          "svg": 26,
+          "images": 0,
+          "controls": 50,
+          "controlSvg": 25,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 23,
+      "scope": "sidebar/history",
+      "label": "工作史",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/023-paper-sidebar-history.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 166,
+          "buttons": 51,
+          "svg": 28,
+          "images": 0,
+          "controls": 53,
+          "controlSvg": 27,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 24,
+      "scope": "sidebar/cognition",
+      "label": "认知",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/024-paper-sidebar-cognition.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 163,
+          "buttons": 49,
+          "svg": 26,
+          "images": 0,
+          "controls": 50,
+          "controlSvg": 25,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 25,
+      "scope": "ribbon/file",
+      "label": "文件",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/025-paper-ribbon-file.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 199,
+          "buttons": 73,
+          "svg": 74,
+          "images": 0,
+          "controls": 74,
+          "controlSvg": 58,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 26,
+      "scope": "ribbon/factory",
+      "label": "智能创作",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/026-paper-ribbon-factory.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 189,
+          "buttons": 70,
+          "svg": 71,
+          "images": 0,
+          "controls": 71,
+          "controlSvg": 55,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 27,
+      "scope": "ribbon/view",
+      "label": "视图",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/027-paper-ribbon-view.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 183,
+          "buttons": 68,
+          "svg": 69,
+          "images": 0,
+          "controls": 69,
+          "controlSvg": 53,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 28,
+      "scope": "side-dock/factory",
+      "label": "智能创作",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/028-paper-side-dock-factory.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 264,
+          "buttons": 96,
+          "svg": 86,
+          "images": 0,
+          "controls": 97,
+          "controlSvg": 70,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 29,
+      "scope": "side-dock/openwith",
+      "label": "打开方式",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/029-paper-side-dock-openwith.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 216,
+          "buttons": 80,
+          "svg": 79,
+          "images": 0,
+          "controls": 81,
+          "controlSvg": 62,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 30,
+      "scope": "side-dock/tools",
+      "label": "工具",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/030-paper-side-dock-tools.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 290,
+          "buttons": 90,
+          "svg": 88,
+          "images": 0,
+          "controls": 91,
+          "controlSvg": 72,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 31,
+      "scope": "panel/favmgr",
+      "label": "favmgr",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/031-paper-panel-favmgr.png",
+      "audit": {
+        "theme": "paper",
+        "title": "收藏管理",
+        "url": "mazz-res://app/panels/favmgr.html",
+        "viewport": {
+          "width": 780,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 29,
+          "buttons": 6,
+          "svg": 4,
+          "images": 0,
+          "controls": 6,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 32,
+      "scope": "panel/pwmgr",
+      "label": "pwmgr",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/032-paper-panel-pwmgr.png",
+      "audit": {
+        "theme": "paper",
+        "title": "密码管理器",
+        "url": "mazz-res://app/panels/pwmgr.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 25,
+          "buttons": 4,
+          "svg": 3,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 33,
+      "scope": "panel/palette",
+      "label": "palette",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/033-paper-panel-palette.png",
+      "audit": {
+        "theme": "paper",
+        "title": "Quick Switcher",
+        "url": "mazz-res://app/panels/palette.html",
+        "viewport": {
+          "width": 720,
+          "height": 540
+        },
+        "counts": {
+          "visibleElements": 63,
+          "buttons": 3,
+          "svg": 3,
+          "images": 0,
+          "controls": 3,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 34,
+      "scope": "panel/shortcuts",
+      "label": "shortcuts",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/034-paper-panel-shortcuts.png",
+      "audit": {
+        "theme": "paper",
+        "title": "快捷键速查",
+        "url": "mazz-res://app/panels/shortcuts.html",
+        "viewport": {
+          "width": 720,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 69,
+          "buttons": 3,
+          "svg": 3,
+          "images": 0,
+          "controls": 3,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 35,
+      "scope": "panel/annotate",
+      "label": "annotate",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/035-paper-panel-annotate.png",
+      "audit": {
+        "theme": "paper",
+        "title": "批注",
+        "url": "mazz-res://app/panels/annotate.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 24,
+          "buttons": 4,
+          "svg": 4,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 36,
+      "scope": "panel/settings",
+      "label": "settings",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/036-paper-panel-settings.png",
+      "audit": {
+        "theme": "paper",
+        "title": "设置",
+        "url": "mazz-res://app/panels/settings.html",
+        "viewport": {
+          "width": 760,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 75,
+          "buttons": 10,
+          "svg": 9,
+          "images": 0,
+          "controls": 10,
+          "controlSvg": 9,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 37,
+      "scope": "panel/agreement",
+      "label": "agreement",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/037-paper-panel-agreement.png",
+      "audit": {
+        "theme": "paper",
+        "title": "用户服务协议及隐私政策",
+        "url": "mazz-res://app/panels/agreement.html",
+        "viewport": {
+          "width": 700,
+          "height": 600
+        },
+        "counts": {
+          "visibleElements": 41,
+          "buttons": 5,
+          "svg": 3,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 38,
+      "scope": "panel/help",
+      "label": "help",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/038-paper-panel-help.png",
+      "audit": {
+        "theme": "paper",
+        "title": "使用指南",
+        "url": "mazz-res://app/panels/help.html",
+        "viewport": {
+          "width": 860,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 68,
+          "buttons": 3,
+          "svg": 17,
+          "images": 0,
+          "controls": 3,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 39,
+      "scope": "panel/translate",
+      "label": "translate",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/039-paper-panel-translate.png",
+      "audit": {
+        "theme": "paper",
+        "title": "翻译",
+        "url": "mazz-res://app/panels/translate.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 30,
+          "buttons": 8,
+          "svg": 4,
+          "images": 0,
+          "controls": 8,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 40,
+      "scope": "panel/plugins",
+      "label": "plugins",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/040-paper-panel-plugins.png",
+      "audit": {
+        "theme": "paper",
+        "title": "插件管理（预览）",
+        "url": "mazz-res://app/panels/plugins.html",
+        "viewport": {
+          "width": 740,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 20,
+          "buttons": 4,
+          "svg": 4,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 41,
+      "scope": "panel/recorder",
+      "label": "recorder",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/041-paper-panel-recorder.png",
+      "audit": {
+        "theme": "paper",
+        "title": "全局内录（预览）",
+        "url": "mazz-res://app/panels/recorder.html",
+        "viewport": {
+          "width": 720,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 44,
+          "buttons": 4,
+          "svg": 4,
+          "images": 4,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 42,
+      "scope": "panel/dockfloat",
+      "label": "dockfloat",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/042-paper-panel-dockfloat.png",
+      "audit": {
+        "theme": "paper",
+        "title": "工具坞",
+        "url": "mazz-res://app/panels/dockfloat.html",
+        "viewport": {
+          "width": 480,
+          "height": 620
+        },
+        "counts": {
+          "visibleElements": 29,
+          "buttons": 10,
+          "svg": 7,
+          "images": 0,
+          "controls": 10,
+          "controlSvg": 7,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 43,
+      "scope": "panel/bookmark",
+      "label": "bookmark",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/043-paper-panel-bookmark.png",
+      "audit": {
+        "theme": "paper",
+        "title": "收藏当前页",
+        "url": "mazz-res://app/panels/bookmark.html",
+        "viewport": {
+          "width": 520,
+          "height": 380
+        },
+        "counts": {
+          "visibleElements": 24,
+          "buttons": 5,
+          "svg": 3,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 44,
+      "scope": "panel/ctxmenu",
+      "label": "ctxmenu",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/044-paper-panel-ctxmenu.png",
+      "audit": {
+        "theme": "paper",
+        "title": "菜单",
+        "url": "mazz-res://app/panels/ctxmenu.html",
+        "viewport": {
+          "width": 240,
+          "height": 303
+        },
+        "counts": {
+          "visibleElements": 4,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 45,
+      "scope": "panel/splitpreview",
+      "label": "splitpreview",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/045-paper-panel-splitpreview.png",
+      "audit": {
+        "theme": "paper",
+        "title": "分屏预览",
+        "url": "mazz-res://app/panels/splitpreview.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 0,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 46,
+      "scope": "panel/sync",
+      "label": "sync",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/046-paper-panel-sync.png",
+      "audit": {
+        "theme": "paper",
+        "title": "局域网同步",
+        "url": "mazz-res://app/panels/sync.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 31,
+          "buttons": 6,
+          "svg": 3,
+          "images": 0,
+          "controls": 6,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 47,
+      "scope": "panel/notif",
+      "label": "notif",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/047-paper-panel-notif.png",
+      "audit": {
+        "theme": "paper",
+        "title": "通知中心",
+        "url": "mazz-res://app/panels/notif.html",
+        "viewport": {
+          "width": 520,
+          "height": 651
+        },
+        "counts": {
+          "visibleElements": 16,
+          "buttons": 5,
+          "svg": 1,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 1,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 48,
+      "scope": "panel/factorycfg",
+      "label": "factorycfg",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/048-paper-panel-factorycfg.png",
+      "audit": {
+        "theme": "paper",
+        "title": "AI 服务 · 创作模板",
+        "url": "mazz-res://app/panels/factorycfg.html",
+        "viewport": {
+          "width": 920,
+          "height": 720
+        },
+        "counts": {
+          "visibleElements": 138,
+          "buttons": 20,
+          "svg": 14,
+          "images": 0,
+          "controls": 20,
+          "controlSvg": 14,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 49,
+      "scope": "panel/newfile",
+      "label": "newfile",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/049-paper-panel-newfile.png",
+      "audit": {
+        "theme": "paper",
+        "title": "新建文件",
+        "url": "mazz-res://app/panels/newfile.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 110,
+          "buttons": 32,
+          "svg": 3,
+          "images": 0,
+          "controls": 32,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 50,
+      "scope": "panel/picklist",
+      "label": "picklist",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/050-paper-panel-picklist.png",
+      "audit": {
+        "theme": "paper",
+        "title": "选择",
+        "url": "mazz-res://app/panels/picklist.html",
+        "viewport": {
+          "width": 343,
+          "height": 423
+        },
+        "counts": {
+          "visibleElements": 5,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 51,
+      "scope": "panel/fpreview",
+      "label": "fpreview",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/051-paper-panel-fpreview.png",
+      "audit": {
+        "theme": "paper",
+        "title": "生成预览",
+        "url": "mazz-res://app/panels/fpreview.html",
+        "viewport": {
+          "width": 760,
+          "height": 640
+        },
+        "counts": {
+          "visibleElements": 22,
+          "buttons": 4,
+          "svg": 4,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 52,
+      "scope": "panel/fedit",
+      "label": "fedit",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/052-paper-panel-fedit.png",
+      "audit": {
+        "theme": "paper",
+        "title": "章节编辑",
+        "url": "mazz-res://app/panels/fedit.html",
+        "viewport": {
+          "width": 823,
+          "height": 703
+        },
+        "counts": {
+          "visibleElements": 26,
+          "buttons": 5,
+          "svg": 3,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 53,
+      "scope": "panel/harvest",
+      "label": "harvest",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/053-paper-panel-harvest.png",
+      "audit": {
+        "theme": "paper",
+        "title": "AI 对话整理",
+        "url": "mazz-res://app/panels/harvest.html",
+        "viewport": {
+          "width": 880,
+          "height": 700
+        },
+        "counts": {
+          "visibleElements": 31,
+          "buttons": 13,
+          "svg": 3,
+          "images": 0,
+          "controls": 13,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 54,
+      "scope": "panel/archive",
+      "label": "archive",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/054-paper-panel-archive.png",
+      "audit": {
+        "theme": "paper",
+        "title": "压缩包",
+        "url": "mazz-res://app/panels/archive.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 22,
+          "buttons": 7,
+          "svg": 3,
+          "images": 0,
+          "controls": 7,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 55,
+      "scope": "window/quicknote",
+      "label": "快速笔记",
+      "theme": "paper",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/055-paper-window-quicknote.png",
+      "audit": {
+        "theme": "paper",
+        "title": "快速笔记",
+        "url": "mazz-res://app/quicknote.html",
+        "viewport": {
+          "width": 440,
+          "height": 300
+        },
+        "counts": {
+          "visibleElements": 6,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 56,
+      "scope": "module/welcome",
+      "label": "欢迎页",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/056-ink-module-welcome.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 222,
+          "buttons": 82,
+          "svg": 81,
+          "images": 0,
+          "controls": 82,
+          "controlSvg": 66,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 57,
+      "scope": "module/markdown",
+      "label": "文档",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/057-ink-module-markdown.png",
+      "audit": {
+        "theme": "ink",
+        "title": "文档 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 233,
+          "buttons": 81,
+          "svg": 73,
+          "images": 0,
+          "controls": 82,
+          "controlSvg": 57,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 58,
+      "scope": "module/text",
+      "label": "纯文本",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/058-ink-module-text.png",
+      "audit": {
+        "theme": "ink",
+        "title": "纯文本 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 173,
+          "buttons": 66,
+          "svg": 66,
+          "images": 0,
+          "controls": 67,
+          "controlSvg": 51,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 59,
+      "scope": "module/sheet",
+      "label": "表格",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/059-ink-module-sheet.png",
+      "audit": {
+        "theme": "ink",
+        "title": "表格 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 598,
+          "buttons": 83,
+          "svg": 78,
+          "images": 0,
+          "controls": 84,
+          "controlSvg": 62,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": [
+          {
+            "code": "ELEMENT_OUTSIDE_VIEWPORT",
+            "selector": "div.sg-hcell",
+            "text": "M",
+            "rect": {
+              "left": 1358,
+              "right": 1448,
+              "width": 90
+            },
+            "viewportWidth": 1440
+          }
+        ]
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 60,
+      "scope": "module/slide",
+      "label": "演示",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/060-ink-module-slide.png",
+      "audit": {
+        "theme": "ink",
+        "title": "演示 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 290,
+          "buttons": 98,
+          "svg": 97,
+          "images": 0,
+          "controls": 99,
+          "controlSvg": 80,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 61,
+      "scope": "module/code",
+      "label": "代码",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/061-ink-module-code.png",
+      "audit": {
+        "theme": "ink",
+        "title": "代码 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 197,
+          "buttons": 71,
+          "svg": 73,
+          "images": 0,
+          "controls": 72,
+          "controlSvg": 57,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 62,
+      "scope": "module/math",
+      "label": "计算",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/062-ink-module-math.png",
+      "audit": {
+        "theme": "ink",
+        "title": "计算 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 171,
+          "buttons": 66,
+          "svg": 65,
+          "images": 0,
+          "controls": 67,
+          "controlSvg": 49,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 63,
+      "scope": "module/notes",
+      "label": "笔记",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/063-ink-module-notes.png",
+      "audit": {
+        "theme": "ink",
+        "title": "笔记 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 186,
+          "buttons": 67,
+          "svg": 68,
+          "images": 0,
+          "controls": 68,
+          "controlSvg": 52,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 64,
+      "scope": "module/search",
+      "label": "搜索",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/064-ink-module-search.png",
+      "audit": {
+        "theme": "ink",
+        "title": "搜索 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 185,
+          "buttons": 68,
+          "svg": 66,
+          "images": 0,
+          "controls": 69,
+          "controlSvg": 51,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 65,
+      "scope": "module/mindmap",
+      "label": "导图",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/065-ink-module-mindmap.png",
+      "audit": {
+        "theme": "ink",
+        "title": "导图 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 285,
+          "buttons": 91,
+          "svg": 85,
+          "images": 0,
+          "controls": 92,
+          "controlSvg": 68,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 66,
+      "scope": "module/draw",
+      "label": "画板",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/066-ink-module-draw.png",
+      "audit": {
+        "theme": "ink",
+        "title": "画板 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 283,
+          "buttons": 107,
+          "svg": 106,
+          "images": 0,
+          "controls": 108,
+          "controlSvg": 89,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 67,
+      "scope": "module/library",
+      "label": "书库",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/067-ink-module-library.png",
+      "audit": {
+        "theme": "ink",
+        "title": "书库 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 173,
+          "buttons": 68,
+          "svg": 70,
+          "images": 0,
+          "controls": 69,
+          "controlSvg": 53,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 68,
+      "scope": "module/viewer",
+      "label": "播放器",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/068-ink-module-viewer.png",
+      "audit": {
+        "theme": "ink",
+        "title": "播放器 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 238,
+          "buttons": 90,
+          "svg": 91,
+          "images": 0,
+          "controls": 91,
+          "controlSvg": 74,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 69,
+      "scope": "module/factorydesk",
+      "label": "智能创作台",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/069-ink-module-factorydesk.png",
+      "audit": {
+        "theme": "ink",
+        "title": "智能创作台 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 225,
+          "buttons": 76,
+          "svg": 72,
+          "images": 0,
+          "controls": 77,
+          "controlSvg": 55,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 70,
+      "scope": "module/organization",
+      "label": "组织编译台",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/070-ink-module-organization.png",
+      "audit": {
+        "theme": "ink",
+        "title": "组织编译台 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 212,
+          "buttons": 76,
+          "svg": 74,
+          "images": 0,
+          "controls": 77,
+          "controlSvg": 58,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 71,
+      "scope": "module/browser",
+      "label": "隐私浏览器",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/071-ink-module-browser.png",
+      "audit": {
+        "theme": "ink",
+        "title": "隐私浏览器 — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 209,
+          "buttons": 80,
+          "svg": 81,
+          "images": 0,
+          "controls": 81,
+          "controlSvg": 65,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [
+        {
+          "screenshot": "tests/e2e/shots/ui-page-sweep/source/071-ink-module-browser-native-01.png",
+          "tabId": "bt-1bc755de-1129-47e4-9c4a-4686e13468ea",
+          "bounds": {
+            "x": 232,
+            "y": 243,
+            "width": 1207,
+            "height": 557
+          }
+        }
+      ],
+      "nativeSurfaceAudits": [
+        {
+          "tabId": "bt-1bc755de-1129-47e4-9c4a-4686e13468ea",
+          "firstPartyHome": true,
+          "href": "about:blank",
+          "placeholders": [
+            {
+              "id": "home-url",
+              "text": "留空则使用内置主页",
+              "ratio": 7.01
+            },
+            {
+              "id": "q",
+              "text": "输入关键词回车搜索，或输入网址直达…",
+              "ratio": 5.67
+            }
+          ],
+          "invalidControlSvg": 0
+        }
+      ],
+      "error": null
+    },
+    {
+      "order": 72,
+      "scope": "sidebar/files",
+      "label": "文档",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/072-ink-sidebar-files.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 234,
+          "buttons": 81,
+          "svg": 73,
+          "images": 0,
+          "controls": 82,
+          "controlSvg": 57,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 73,
+      "scope": "sidebar/outline",
+      "label": "大纲",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/073-ink-sidebar-outline.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 165,
+          "buttons": 49,
+          "svg": 27,
+          "images": 0,
+          "controls": 50,
+          "controlSvg": 25,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 74,
+      "scope": "sidebar/marks",
+      "label": "书签",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/074-ink-sidebar-marks.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 157,
+          "buttons": 48,
+          "svg": 25,
+          "images": 0,
+          "controls": 49,
+          "controlSvg": 24,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 75,
+      "scope": "sidebar/tags",
+      "label": "标签",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/075-ink-sidebar-tags.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 158,
+          "buttons": 48,
+          "svg": 25,
+          "images": 0,
+          "controls": 49,
+          "controlSvg": 24,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 76,
+      "scope": "sidebar/backlinks",
+      "label": "反链",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/076-ink-sidebar-backlinks.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 167,
+          "buttons": 47,
+          "svg": 24,
+          "images": 0,
+          "controls": 48,
+          "controlSvg": 23,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 77,
+      "scope": "sidebar/contexts",
+      "label": "上下文",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/077-ink-sidebar-contexts.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 164,
+          "buttons": 49,
+          "svg": 26,
+          "images": 0,
+          "controls": 50,
+          "controlSvg": 25,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 78,
+      "scope": "sidebar/history",
+      "label": "工作史",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/078-ink-sidebar-history.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 166,
+          "buttons": 51,
+          "svg": 28,
+          "images": 0,
+          "controls": 53,
+          "controlSvg": 27,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 79,
+      "scope": "sidebar/cognition",
+      "label": "认知",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/079-ink-sidebar-cognition.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 163,
+          "buttons": 49,
+          "svg": 26,
+          "images": 0,
+          "controls": 50,
+          "controlSvg": 25,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 80,
+      "scope": "ribbon/file",
+      "label": "文件",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/080-ink-ribbon-file.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 199,
+          "buttons": 73,
+          "svg": 74,
+          "images": 0,
+          "controls": 74,
+          "controlSvg": 58,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 81,
+      "scope": "ribbon/factory",
+      "label": "智能创作",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/081-ink-ribbon-factory.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 189,
+          "buttons": 70,
+          "svg": 71,
+          "images": 0,
+          "controls": 71,
+          "controlSvg": 55,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 82,
+      "scope": "ribbon/view",
+      "label": "视图",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/082-ink-ribbon-view.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 183,
+          "buttons": 68,
+          "svg": 69,
+          "images": 0,
+          "controls": 69,
+          "controlSvg": 53,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 83,
+      "scope": "side-dock/factory",
+      "label": "智能创作",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/083-ink-side-dock-factory.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 264,
+          "buttons": 96,
+          "svg": 86,
+          "images": 0,
+          "controls": 97,
+          "controlSvg": 70,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 84,
+      "scope": "side-dock/openwith",
+      "label": "打开方式",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/084-ink-side-dock-openwith.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 216,
+          "buttons": 80,
+          "svg": 79,
+          "images": 0,
+          "controls": 81,
+          "controlSvg": 62,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 85,
+      "scope": "side-dock/tools",
+      "label": "工具",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/085-ink-side-dock-tools.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Chrome Host — Mazz Editor",
+        "url": "mazz-res://app/index.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 290,
+          "buttons": 90,
+          "svg": 88,
+          "images": 0,
+          "controls": 91,
+          "controlSvg": 72,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 86,
+      "scope": "panel/favmgr",
+      "label": "favmgr",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/086-ink-panel-favmgr.png",
+      "audit": {
+        "theme": "ink",
+        "title": "收藏管理",
+        "url": "mazz-res://app/panels/favmgr.html",
+        "viewport": {
+          "width": 780,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 29,
+          "buttons": 6,
+          "svg": 4,
+          "images": 0,
+          "controls": 6,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 87,
+      "scope": "panel/pwmgr",
+      "label": "pwmgr",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/087-ink-panel-pwmgr.png",
+      "audit": {
+        "theme": "ink",
+        "title": "密码管理器",
+        "url": "mazz-res://app/panels/pwmgr.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 25,
+          "buttons": 4,
+          "svg": 3,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 88,
+      "scope": "panel/palette",
+      "label": "palette",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/088-ink-panel-palette.png",
+      "audit": {
+        "theme": "ink",
+        "title": "Quick Switcher",
+        "url": "mazz-res://app/panels/palette.html",
+        "viewport": {
+          "width": 720,
+          "height": 540
+        },
+        "counts": {
+          "visibleElements": 63,
+          "buttons": 3,
+          "svg": 3,
+          "images": 0,
+          "controls": 3,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 89,
+      "scope": "panel/shortcuts",
+      "label": "shortcuts",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/089-ink-panel-shortcuts.png",
+      "audit": {
+        "theme": "ink",
+        "title": "快捷键速查",
+        "url": "mazz-res://app/panels/shortcuts.html",
+        "viewport": {
+          "width": 720,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 69,
+          "buttons": 3,
+          "svg": 3,
+          "images": 0,
+          "controls": 3,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 90,
+      "scope": "panel/annotate",
+      "label": "annotate",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/090-ink-panel-annotate.png",
+      "audit": {
+        "theme": "ink",
+        "title": "批注",
+        "url": "mazz-res://app/panels/annotate.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 24,
+          "buttons": 4,
+          "svg": 4,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 91,
+      "scope": "panel/settings",
+      "label": "settings",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/091-ink-panel-settings.png",
+      "audit": {
+        "theme": "ink",
+        "title": "设置",
+        "url": "mazz-res://app/panels/settings.html",
+        "viewport": {
+          "width": 760,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 75,
+          "buttons": 10,
+          "svg": 9,
+          "images": 0,
+          "controls": 10,
+          "controlSvg": 9,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 92,
+      "scope": "panel/agreement",
+      "label": "agreement",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/092-ink-panel-agreement.png",
+      "audit": {
+        "theme": "ink",
+        "title": "用户服务协议及隐私政策",
+        "url": "mazz-res://app/panels/agreement.html",
+        "viewport": {
+          "width": 700,
+          "height": 600
+        },
+        "counts": {
+          "visibleElements": 41,
+          "buttons": 5,
+          "svg": 3,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 93,
+      "scope": "panel/help",
+      "label": "help",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/093-ink-panel-help.png",
+      "audit": {
+        "theme": "ink",
+        "title": "使用指南",
+        "url": "mazz-res://app/panels/help.html",
+        "viewport": {
+          "width": 860,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 68,
+          "buttons": 3,
+          "svg": 17,
+          "images": 0,
+          "controls": 3,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 94,
+      "scope": "panel/translate",
+      "label": "translate",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/094-ink-panel-translate.png",
+      "audit": {
+        "theme": "ink",
+        "title": "翻译",
+        "url": "mazz-res://app/panels/translate.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 30,
+          "buttons": 8,
+          "svg": 4,
+          "images": 0,
+          "controls": 8,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 95,
+      "scope": "panel/plugins",
+      "label": "plugins",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/095-ink-panel-plugins.png",
+      "audit": {
+        "theme": "ink",
+        "title": "插件管理（预览）",
+        "url": "mazz-res://app/panels/plugins.html",
+        "viewport": {
+          "width": 740,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 20,
+          "buttons": 4,
+          "svg": 4,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 96,
+      "scope": "panel/recorder",
+      "label": "recorder",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/096-ink-panel-recorder.png",
+      "audit": {
+        "theme": "ink",
+        "title": "全局内录（预览）",
+        "url": "mazz-res://app/panels/recorder.html",
+        "viewport": {
+          "width": 720,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 44,
+          "buttons": 4,
+          "svg": 4,
+          "images": 4,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 97,
+      "scope": "panel/dockfloat",
+      "label": "dockfloat",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/097-ink-panel-dockfloat.png",
+      "audit": {
+        "theme": "ink",
+        "title": "工具坞",
+        "url": "mazz-res://app/panels/dockfloat.html",
+        "viewport": {
+          "width": 480,
+          "height": 620
+        },
+        "counts": {
+          "visibleElements": 29,
+          "buttons": 10,
+          "svg": 7,
+          "images": 0,
+          "controls": 10,
+          "controlSvg": 7,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 98,
+      "scope": "panel/bookmark",
+      "label": "bookmark",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/098-ink-panel-bookmark.png",
+      "audit": {
+        "theme": "ink",
+        "title": "收藏当前页",
+        "url": "mazz-res://app/panels/bookmark.html",
+        "viewport": {
+          "width": 520,
+          "height": 380
+        },
+        "counts": {
+          "visibleElements": 24,
+          "buttons": 5,
+          "svg": 3,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 99,
+      "scope": "panel/ctxmenu",
+      "label": "ctxmenu",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/099-ink-panel-ctxmenu.png",
+      "audit": {
+        "theme": "ink",
+        "title": "菜单",
+        "url": "mazz-res://app/panels/ctxmenu.html",
+        "viewport": {
+          "width": 240,
+          "height": 303
+        },
+        "counts": {
+          "visibleElements": 4,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 100,
+      "scope": "panel/splitpreview",
+      "label": "splitpreview",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/100-ink-panel-splitpreview.png",
+      "audit": {
+        "theme": "ink",
+        "title": "分屏预览",
+        "url": "mazz-res://app/panels/splitpreview.html",
+        "viewport": {
+          "width": 1440,
+          "height": 824
+        },
+        "counts": {
+          "visibleElements": 0,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 101,
+      "scope": "panel/sync",
+      "label": "sync",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/101-ink-panel-sync.png",
+      "audit": {
+        "theme": "ink",
+        "title": "局域网同步",
+        "url": "mazz-res://app/panels/sync.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 31,
+          "buttons": 6,
+          "svg": 3,
+          "images": 0,
+          "controls": 6,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 102,
+      "scope": "panel/notif",
+      "label": "notif",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/102-ink-panel-notif.png",
+      "audit": {
+        "theme": "ink",
+        "title": "通知中心",
+        "url": "mazz-res://app/panels/notif.html",
+        "viewport": {
+          "width": 520,
+          "height": 651
+        },
+        "counts": {
+          "visibleElements": 16,
+          "buttons": 5,
+          "svg": 1,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 1,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 103,
+      "scope": "panel/factorycfg",
+      "label": "factorycfg",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/103-ink-panel-factorycfg.png",
+      "audit": {
+        "theme": "ink",
+        "title": "AI 服务 · 创作模板",
+        "url": "mazz-res://app/panels/factorycfg.html",
+        "viewport": {
+          "width": 920,
+          "height": 720
+        },
+        "counts": {
+          "visibleElements": 138,
+          "buttons": 20,
+          "svg": 14,
+          "images": 0,
+          "controls": 20,
+          "controlSvg": 14,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 104,
+      "scope": "panel/newfile",
+      "label": "newfile",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/104-ink-panel-newfile.png",
+      "audit": {
+        "theme": "ink",
+        "title": "新建文件",
+        "url": "mazz-res://app/panels/newfile.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 110,
+          "buttons": 32,
+          "svg": 3,
+          "images": 0,
+          "controls": 32,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 105,
+      "scope": "panel/picklist",
+      "label": "picklist",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/105-ink-panel-picklist.png",
+      "audit": {
+        "theme": "ink",
+        "title": "选择",
+        "url": "mazz-res://app/panels/picklist.html",
+        "viewport": {
+          "width": 343,
+          "height": 423
+        },
+        "counts": {
+          "visibleElements": 5,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 106,
+      "scope": "panel/fpreview",
+      "label": "fpreview",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/106-ink-panel-fpreview.png",
+      "audit": {
+        "theme": "ink",
+        "title": "生成预览",
+        "url": "mazz-res://app/panels/fpreview.html",
+        "viewport": {
+          "width": 760,
+          "height": 640
+        },
+        "counts": {
+          "visibleElements": 22,
+          "buttons": 4,
+          "svg": 4,
+          "images": 0,
+          "controls": 4,
+          "controlSvg": 4,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 107,
+      "scope": "panel/fedit",
+      "label": "fedit",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/107-ink-panel-fedit.png",
+      "audit": {
+        "theme": "ink",
+        "title": "章节编辑",
+        "url": "mazz-res://app/panels/fedit.html",
+        "viewport": {
+          "width": 823,
+          "height": 703
+        },
+        "counts": {
+          "visibleElements": 26,
+          "buttons": 5,
+          "svg": 3,
+          "images": 0,
+          "controls": 5,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 108,
+      "scope": "panel/harvest",
+      "label": "harvest",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/108-ink-panel-harvest.png",
+      "audit": {
+        "theme": "ink",
+        "title": "AI 对话整理",
+        "url": "mazz-res://app/panels/harvest.html",
+        "viewport": {
+          "width": 880,
+          "height": 700
+        },
+        "counts": {
+          "visibleElements": 31,
+          "buttons": 13,
+          "svg": 3,
+          "images": 0,
+          "controls": 13,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 109,
+      "scope": "panel/archive",
+      "label": "archive",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/109-ink-panel-archive.png",
+      "audit": {
+        "theme": "ink",
+        "title": "压缩包",
+        "url": "mazz-res://app/panels/archive.html",
+        "viewport": {
+          "width": 700,
+          "height": 560
+        },
+        "counts": {
+          "visibleElements": 22,
+          "buttons": 7,
+          "svg": 3,
+          "images": 0,
+          "controls": 7,
+          "controlSvg": 3,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    },
+    {
+      "order": 110,
+      "scope": "window/quicknote",
+      "label": "快速笔记",
+      "theme": "ink",
+      "status": "PASS",
+      "screenshot": "tests/e2e/shots/ui-page-sweep/source/110-ink-window-quicknote.png",
+      "audit": {
+        "theme": "ink",
+        "title": "快速笔记",
+        "url": "mazz-res://app/quicknote.html",
+        "viewport": {
+          "width": 440,
+          "height": 300
+        },
+        "counts": {
+          "visibleElements": 6,
+          "buttons": 0,
+          "svg": 0,
+          "images": 0,
+          "controls": 0,
+          "controlSvg": 0,
+          "rawControlGlyphs": 0
+        },
+        "issues": [],
+        "warnings": []
+      },
+      "nativeSurfaceScreenshots": [],
+      "nativeSurfaceAudits": [],
+      "error": null
+    }
+  ],
+  "runtimeErrors": [],
+  "summary": {
+    "expectedScenes": 110,
+    "capturedScenes": 110,
+    "passScenes": 110,
+    "failScenes": 0,
+    "errorScenes": 0,
+    "issueCount": 0,
+    "warningCount": 2,
+    "runtimeErrorCount": 0
+  },
+  "ok": true,
+  "verdict": "PASS"
+}

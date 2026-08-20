@@ -59,7 +59,11 @@ export class Ribbon {
       this.panelEl.style.overflowY = '';
     }
     const foldBtn = this.tabsEl.querySelector('.ribbon-fold-btn');
-    if (foldBtn) foldBtn.textContent = this.ribbonState.collapsed ? '▾' : '▴';
+    if (foldBtn) {
+      foldBtn.innerHTML = iconHtml(this.ribbonState.collapsed ? '▾' : '▴');
+      foldBtn.setAttribute('aria-expanded', String(!this.ribbonState.collapsed));
+      foldBtn.setAttribute('aria-label', this.ribbonState.collapsed ? '展开工具栏' : '折叠工具栏');
+    }
   }
   startDrag(e) {
     e.preventDefault();
@@ -102,15 +106,17 @@ export class Ribbon {
     // 常驻：折叠钮 + 帮助入口（右对齐，所有页面可见）
     const fold = document.createElement('button');
     fold.className = 'ribbon-tab ribbon-fold-btn';
-    fold.textContent = this.ribbonState.collapsed ? '▾' : '▴';
+    fold.innerHTML = iconHtml(this.ribbonState.collapsed ? '▾' : '▴');
     fold.title = '折叠/展开工具栏（双击页签栏同效）';
+    fold.setAttribute('aria-expanded', String(!this.ribbonState.collapsed));
+    fold.setAttribute('aria-label', this.ribbonState.collapsed ? '展开工具栏' : '折叠工具栏');
     fold.style.marginLeft = 'auto';
     fold.addEventListener('click', () => this.setCollapsed(!this.ribbonState.collapsed));
     this.tabsEl.appendChild(fold);
     // 常驻：协议入口（帮助左侧，所有页面可见）
     const agree = document.createElement('button');
     agree.className = 'ribbon-tab';
-    agree.innerHTML = '<span class="ribbon-tab-ico">§</span> 协议';
+    agree.textContent = '协议';
     agree.title = '用户服务协议及隐私政策';
     agree.addEventListener('click', async () => {
       const { showAgreement } = await import('../lib/agreement.js');
@@ -183,7 +189,7 @@ export class Ribbon {
     if (extra.length) {
       const more = document.createElement('button');
       more.className = 'rb-btn rb-more';
-      more.innerHTML = `<i class="ico">▾</i><span>更多</span>`;
+      more.innerHTML = `<i class="ico">${iconHtml('▾')}</i><span>更多</span>`;
       more.title = `${label}·更多（${extra.length} 项）`;
       more.addEventListener('click', (e) => {
         e.stopPropagation();

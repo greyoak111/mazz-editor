@@ -1,5 +1,6 @@
 // renderer/modules/math/index.js —— 数学计算内核（Python+JS 双后端 REPL）
 import { contextKeys } from '../../core/contextkey-service.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import { toast } from '../../shell/shell.js';
 
 const MODULE = 'math';
@@ -136,7 +137,7 @@ function createMath(container) {
       <select class="rb-select" id="math-backend">
         <option value="python">Python</option><option value="js">JavaScript</option>
       </select>
-      <button class="rb-btn" data-a="restart" title="重启内核">↻ 重启内核</button>
+      <button class="rb-btn" data-a="restart" title="重启内核">${iconHtml('↻')}<span>重启内核</span></button>
       <button class="rb-btn" data-a="clear" title="清屏">清屏</button>
       <span class="math-status"></span>
     </div>
@@ -301,9 +302,9 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="内核">
-      <button class="rb-btn" data-command="math.run"><i class="ico">▶</i><span>运行</span></button>
-      <button class="rb-btn" data-command="math.restart"><i class="ico">↻</i><span>重启内核</span></button>
-      <button class="rb-btn" data-command="math.clear"><i class="ico">⌫</i><span>清屏</span></button>
+      <button class="rb-btn" data-command="math.run"><i class="ico">${iconHtml('▶')}</i><span>运行</span></button>
+      <button class="rb-btn" data-command="math.restart"><i class="ico">${iconHtml('↻')}</i><span>重启内核</span></button>
+      <button class="rb-btn" data-command="math.clear"><i class="ico">${iconHtml('⌫')}</i><span>清屏</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

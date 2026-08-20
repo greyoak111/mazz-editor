@@ -30,13 +30,13 @@ export class FileTree {
     this.el.innerHTML = `
       <div class="sidebar-head"><span>工作区</span>
         <span class="acts">
-          <button data-a="newFile" title="新建文件">＋</button>
-          <button data-a="newFolder" title="新建文件夹">🗀</button>
-          <button data-a="reindex" title="重建索引（全量重扫）">⟳</button>
-          <button data-a="collapse-all" title="全部折叠">⇤</button>
-          <button data-a="sortmenu" title="排序方式">⇅</button>
+          <button data-a="newFile" title="新建文件" aria-label="新建文件">${iconHtml('＋')}</button>
+          <button data-a="newFolder" title="新建文件夹" aria-label="新建文件夹">${iconHtml('🗀')}</button>
+          <button data-a="reindex" title="重建索引（全量重扫）" aria-label="重建索引">${iconHtml('⟳')}</button>
+          <button data-a="collapse-all" title="全部折叠" aria-label="全部折叠">${iconHtml('⇤')}</button>
+          <button data-a="sortmenu" title="排序方式" aria-label="选择排序方式">${iconHtml('⇅')}</button>
         </span></div>
-      <div class="filetree" tabindex="0"></div>`;
+      <div class="filetree" role="tree" tabindex="-1" aria-label="工作区文件树"></div>`;
     this.treeEl = this.el.querySelector('.filetree');
     // B13b「..st」窄列观感根治：侧栏过窄时隐藏父路径后缀（rtl+ellipsis 在窄列只剩两字符=视觉垃圾实锤）——
     // ResizeObserver 看树容器真实宽度，比阈值即挂 ft-narrow 类整族隐藏（无 RO 环境=一次性判定+resize 兜底）
@@ -60,7 +60,7 @@ export class FileTree {
       const btn = e.currentTarget.getBoundingClientRect();
       import('../lib/dom-menu.js').then(({ showDomMenu }) => {
         const cur = this.sortMode;
-        const mk = (label, mode) => ({ label: (cur === mode ? '✓ ' : '') + label, fn: () => this.setSortMode(mode) });
+        const mk = (label, mode) => ({ label: (cur === mode ? '当前 · ' : '') + label, fn: () => this.setSortMode(mode) });
         showDomMenu([
           mk('名称字母升序', 'name-asc'), mk('名称字母降序', 'name-desc'),
           mk('名称自然升序', 'natural-asc'), mk('名称自然降序', 'natural-desc'),
@@ -159,8 +159,14 @@ export class FileTree {
     contextKeys.set('treeIsDir', !!sel?.isDir);
     // W58b：压缩包选中态（右键菜单显隐凭据——扩展名白名单，魔数在 list/extract 才动）
     contextKeys.set('treeArchive', !!sel && !sel.isDir && /^(zip|rar|7z|tar|gz|tgz|bz2|xz|jar|apk|7zip|cab)$/i.test((sel.path.split('.').pop() || '')));
-    this.treeEl.querySelectorAll('.ft-node').forEach(n =>
-      n.classList.toggle('on', !!sel && n.dataset.path === sel.path));
+    const treeItems = [...this.treeEl.querySelectorAll('.ft-node[role="treeitem"]')];
+    treeItems.forEach(n => {
+      const selected = !!sel && n.dataset.path === sel.path;
+      n.classList.toggle('on', selected);
+      n.setAttribute('aria-selected', String(selected));
+      n.tabIndex = selected ? 0 : -1;
+    });
+    if (!sel && treeItems[0]) treeItems[0].tabIndex = 0;
   }
 
   /** 新建落点：选中文件夹 → 其内；未选中 → 工作区根；选中文件 → 报错文案 */
@@ -408,32 +414,50 @@ export class FileTree {
     wrap.className = 'ft-closed';
     const open = this._closedOpen !== false;
     // 箭头独立 span：展收只换箭头字符，绝不吃标题文字（此前替换整个文本节点，点一次「已关闭的文件夹」就消失）
-    wrap.innerHTML = `<div class="ft-closed-head"><span class="ft-closed-arrow">${open ? '▾' : '▸'}</span> 已关闭的文件夹 <span class="ft-closed-count">${list.length}</span></div>`;
+    wrap.innerHTML = `<div class="ft-closed-head" role="button" tabindex="0" aria-expanded="${open}" aria-controls="ft-closed-body"><span class="ft-closed-arrow" aria-hidden="true">${iconHtml(open ? '▾' : '▸')}</span> 已关闭的文件夹 <span class="ft-closed-count">${list.length}</span></div>`;
     const body = document.createElement('div');
     body.className = 'ft-closed-body';
+    body.id = 'ft-closed-body';
     body.style.display = open ? '' : 'none';
     for (const d of list) {
       const row = document.createElement('div');
       row.className = 'ft-node ft-closed-item';
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+      row.setAttribute('aria-label', `重新打开文件夹 ${d.name}`);
       row.innerHTML = `<span class="ft-ico">${iconHtml('🗂')}</span><span class="ft-name">${d.name}</span>`;
       row.title = d.path;
-      const reopen = document.createElement('button');
+      const reopen = document.createElement('span');
       reopen.className = 'ft-more ft-reopen';
       reopen.title = '重新打开（移回主树）';
+      reopen.setAttribute('aria-hidden', 'true');
       reopen.innerHTML = iconHtml('⇱');
-      reopen.addEventListener('click', (e) => { e.stopPropagation(); this.reopenDir(d.path); });
       row.appendChild(reopen);
       // 整行可点 = 重新打开（此前只有小图标能点，窄栏字没了就点不动）
       row.style.cursor = 'pointer';
       row.title = d.path + '\n点击重新打开';
       row.addEventListener('click', () => this.reopenDir(d.path));
+      row.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.stopPropagation();
+        row.click();
+      });
       body.appendChild(row);
     }
-    wrap.querySelector('.ft-closed-head').addEventListener('click', () => {
+    const head = wrap.querySelector('.ft-closed-head');
+    head.addEventListener('click', () => {
       // 读当前态取反（不用渲染闭包 open——旧值让第二次点击恒定赋回同值=「点完卡住，点别处刷新回来才好」实锤）
       this._closedOpen = !(this._closedOpen !== false);
       body.style.display = this._closedOpen ? '' : 'none';
-      wrap.querySelector('.ft-closed-arrow').textContent = this._closedOpen ? '▾' : '▸'; // 只换箭头，标题永驻
+      wrap.querySelector('.ft-closed-arrow').innerHTML = iconHtml(this._closedOpen ? '▾' : '▸'); // 只换箭头，标题永驻
+      head.setAttribute('aria-expanded', String(this._closedOpen));
+    });
+    head.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      event.stopPropagation();
+      head.click();
     });
     wrap.appendChild(body);
     return wrap;
@@ -462,6 +486,8 @@ export class FileTree {
     // 「已关闭的文件夹」组（思源已关闭笔记本）：收在树根底部
     const closed = await this.renderClosedDirs();
     if (closed && seq === this._refreshSeq) this.treeEl.appendChild(closed);
+    const treeItems = [...this.treeEl.querySelectorAll('.ft-node[role="treeitem"]')];
+    if (treeItems.length && !treeItems.some(item => item.tabIndex === 0)) treeItems[0].tabIndex = 0;
   }
 
   async renderDir(dirPath, depth) {
@@ -480,11 +506,17 @@ export class FileTree {
       node.className = 'ft-node' + (this.selected?.path === entry.path ? ' on' : '');
       node.dataset.path = entry.path;
       node.dataset.isdir = entry.isDir ? '1' : '';
+      node.setAttribute('role', 'treeitem');
+      node.setAttribute('aria-selected', String(this.selected?.path === entry.path));
+      node.setAttribute('aria-level', String(depth + 1));
+      node.tabIndex = this.selected?.path === entry.path ? 0 : -1;
       node.draggable = true;
       const isOpen = this.expanded.has(entry.path);
+      if (entry.isDir) node.setAttribute('aria-expanded', String(isOpen));
       const ico = document.createElement('span');
       ico.className = 'ft-ico';
-      if (entry.isDir) ico.textContent = isOpen ? '▾' : '▸';
+      ico.setAttribute('aria-hidden', 'true');
+      if (entry.isDir) ico.innerHTML = iconHtml(isOpen ? '▾' : '▸');
       else ico.innerHTML = iconFor(entry.name);
       const name = document.createElement('span');
       name.className = 'ft-name';
@@ -503,8 +535,9 @@ export class FileTree {
           const b = document.createElement('button');
           b.className = 'ft-more';
           b.style.right = rightPx + 'px';
-          b.textContent = text;
+          b.innerHTML = iconHtml(text);
           b.title = title;
+          b.setAttribute('aria-label', title);
           b.addEventListener('click', (e) => {
             e.stopPropagation();
             this.select({ path: entry.path, isDir: true });
@@ -520,8 +553,9 @@ export class FileTree {
       // 触屏 ⋯ 按钮（桌面端 hover 显示，触屏常显）
       const more = document.createElement('button');
       more.className = 'ft-more';
-      more.textContent = '⋯';
+      more.innerHTML = iconHtml('⋯');
       more.title = '更多操作';
+      more.setAttribute('aria-label', `${entry.name} 的更多操作`);
       more.addEventListener('click', (e) => {
         e.stopPropagation();
         this.select({ path: entry.path, isDir: entry.isDir });
@@ -543,6 +577,7 @@ export class FileTree {
           this.treeEl.focus({ preventScroll: true }); // 打开后焦点留在树上（资源管理器习惯；点编辑区再输入）
         }
       });
+      node.addEventListener('focus', () => this.select({ path: entry.path, isDir: entry.isDir }));
       // 双击已选中行 → 行内重命名（触屏长按同效）
       node.addEventListener('dblclick', (e) => {
         e.preventDefault();
@@ -734,12 +769,13 @@ export class FileTree {
 
   // ==================== 键盘（资源管理器习惯） ====================
   onKey(e) {
+    if (e.target.closest('button,input,select,textarea')) return;
     const sel = this.selected;
     const exec = (id) => { e.preventDefault(); e.stopPropagation(); commands.execute(id); };
     if (e.key === 'F2' && sel) return exec('fileTree.rename');
     if (e.key === 'F5') return exec('fileTree.refresh');
     if (e.key === 'Delete' && sel) return exec('fileTree.delete');
-    if (e.key === 'Enter' && sel) {
+    if ((e.key === 'Enter' || e.key === ' ') && sel) {
       e.preventDefault(); e.stopPropagation();
       if (sel.isDir) {
         this.expanded.has(sel.path) ? this.expanded.delete(sel.path) : this.expanded.add(sel.path);

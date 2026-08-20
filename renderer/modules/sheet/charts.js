@@ -1,6 +1,9 @@
 // renderer/modules/sheet/charts.js —— ECharts 浮动图表（柱/线/饼/散/面积/雷达）
+import { iconHtml } from '../../lib/svg-icons.js';
+
 let chartInst = null;
 let chartEl = null;
+let chartThemeObserver = null;
 
 const CHART_TYPES = [
   ['bar', '柱状图'], ['line', '折线图'], ['pie', '饼图'],
@@ -17,7 +20,7 @@ export async function insertChart(container, sheet, sel, getValue) {
   chartEl.innerHTML = `
     <div class="sg-chart-bar">
       <select class="rb-select">${CHART_TYPES.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select>
-      <button class="rb-btn" data-a="close" title="关闭">✕</button>
+      <button class="rb-btn" data-a="close" title="关闭" aria-label="关闭">${iconHtml('✕')}</button>
     </div>
     <div class="sg-chart-body"></div>`;
   container.appendChild(chartEl);
@@ -34,6 +37,8 @@ export async function insertChart(container, sheet, sel, getValue) {
   import('../../lib/select-menu.js').then(({ selectProxy }) => selectProxy(chartEl.querySelector('select')));
   chartEl.querySelector('[data-a=close]').addEventListener('click', closeChart);
   rebuild();
+  chartThemeObserver = new MutationObserver(rebuild);
+  chartThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
   // 拖拽移动
   const bar = chartEl.querySelector('.sg-chart-bar');
@@ -62,11 +67,22 @@ function buildOption(type, sheet, sel, getValue) {
   const data = hasHeader ? rows.slice(1) : rows;
   const cats = data.map(row => String(row[0] ?? ''));
   const seriesCount = Math.max(1, (rows[0].length - 1));
+  const theme = resolveThemeColors();
+  const axis = {
+    axisLabel: { color: theme.fgDim },
+    axisLine: { lineStyle: { color: theme.border } },
+    splitLine: { lineStyle: { color: theme.border } },
+  };
 
   const base = {
     backgroundColor: 'transparent',
-    textStyle: { color: 'var(--fg)' },
-    tooltip: { trigger: type === 'pie' ? 'item' : 'axis' },
+    textStyle: { color: theme.fg },
+    tooltip: {
+      trigger: type === 'pie' ? 'item' : 'axis',
+      backgroundColor: theme.bgElev,
+      borderColor: theme.border,
+      textStyle: { color: theme.fg },
+    },
     animation: false,
   };
 
@@ -76,7 +92,7 @@ function buildOption(type, sheet, sel, getValue) {
       series: [{
         type: 'pie', radius: ['30%', '65%'],
         data: data.map((row, i) => ({ name: cats[i], value: Number(row[1]) || 0 })),
-        label: { color: 'var(--fg)' },
+        label: { color: theme.fg },
       }],
     };
   }
@@ -84,7 +100,12 @@ function buildOption(type, sheet, sel, getValue) {
     const indicators = cats.map(name => ({ name, max: Math.max(...data.map(r => Number(r[1]) || 0)) * 1.2 || 10 }));
     return {
       ...base,
-      radar: { indicator: indicators },
+      radar: {
+        indicator: indicators,
+        axisName: { color: theme.fgDim },
+        axisLine: { lineStyle: { color: theme.border } },
+        splitLine: { lineStyle: { color: theme.border } },
+      },
       series: Array.from({ length: seriesCount }, (_, si) => ({
         type: 'radar', name: String(header[si + 1] ?? `系列${si + 1}`),
         data: [{ value: data.map(row => Number(row[si + 1]) || 0), name: String(header[si + 1] ?? `系列${si + 1}`) }],
@@ -94,8 +115,8 @@ function buildOption(type, sheet, sel, getValue) {
   if (type === 'scatter') {
     return {
       ...base,
-      xAxis: { type: 'value' },
-      yAxis: { type: 'value' },
+      xAxis: { type: 'value', ...axis },
+      yAxis: { type: 'value', ...axis },
       series: Array.from({ length: seriesCount }, (_, si) => ({
         type: 'scatter', name: String(header[si + 1] ?? `系列${si + 1}`),
         data: data.map((row, i) => [Number(row[0]) || i, Number(row[si + 1]) || 0]),
@@ -105,9 +126,9 @@ function buildOption(type, sheet, sel, getValue) {
   // bar / line / area
   return {
     ...base,
-    xAxis: { type: 'category', data: cats },
-    yAxis: { type: 'value' },
-    legend: seriesCount > 1 ? { textStyle: { color: 'var(--fg-dim)' } } : undefined,
+    xAxis: { type: 'category', data: cats, ...axis },
+    yAxis: { type: 'value', ...axis },
+    legend: seriesCount > 1 ? { textStyle: { color: theme.fgDim } } : undefined,
     series: Array.from({ length: seriesCount }, (_, si) => ({
       type: type === 'area' ? 'line' : type,
       name: String(header[si + 1] ?? `系列${si + 1}`),
@@ -117,7 +138,21 @@ function buildOption(type, sheet, sel, getValue) {
   };
 }
 
+/** Canvas 不解析 CSS var() 字符串；图表配置必须接收已经计算出的实色。 */
+function resolveThemeColors() {
+  const style = getComputedStyle(document.documentElement);
+  const read = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
+  return {
+    bgElev: read('--bg-elev', '#ffffff'),
+    fg: read('--fg', '#2c2c2a'),
+    fgDim: read('--fg-dim', '#66645e'),
+    border: read('--border', '#e0ded8'),
+  };
+}
+
 export function closeChart() {
+  chartThemeObserver?.disconnect();
+  chartThemeObserver = null;
   chartInst?.dispose();
   chartEl?.remove();
   chartInst = null; chartEl = null;
@@ -126,7 +161,7 @@ export function closeChart() {
 export function getChartImage() {
   if (!chartInst) return null;
   return {
-    dataUrl: chartInst.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' }),
+    dataUrl: chartInst.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: resolveThemeColors().bgElev }),
     width: 480, height: 300,
   };
 }

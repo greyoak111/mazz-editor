@@ -2,10 +2,10 @@
 // 存储：工作区 themes/ 目录（普通文件夹——随局域网同步、可在文件树/资源管理器里改名）
 // 主题包 = 基底主题 + 变量覆盖：只覆盖填了的变量，空白包等价于纸白基底
 const VAR_KEYS = [
-  'bg', 'bg-elev', 'bg-hover', 'bg-active',
+  'bg', 'bg-elev', 'bg-hover', 'bg-active', 'bg-soft',
   'fg', 'fg-dim', 'border',
   'accent', 'accent-soft', 'accent-fg',
-  'danger', 'warn', 'ok', 'shadow', 'doc-bg',
+  'danger', 'danger-fg', 'warn', 'warn-fg', 'ok', 'ok-fg', 'shadow', 'doc-bg',
   // 模块自定义变量双套（构成主题同款第二套，缺了只剩主套=风格缺腿）
   'acc', 'bd', 'bd2', 'card', 'mut', 'faint', 'sh',
 ];

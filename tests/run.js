@@ -107,6 +107,7 @@ const files = [
   'tests/contract/w87d-browser-drag-visual-continuity.test.mjs',
   'tests/contract/w87e-player-control-surface.test.mjs',
   'tests/contract/w87g-theme-legibility.test.mjs',
+  'tests/contract/w87h-control-icon-system.test.mjs',
   'tests/contract/w71-native-binary-audit.test.mjs',
   'tests/contract/w71-census.test.mjs',
   'tests/contract/hotfix-w59c.test.mjs',

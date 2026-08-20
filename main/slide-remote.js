@@ -57,7 +57,7 @@ const REMOTE_HTML = `<!DOCTYPE html>
   .title { font-size: 15px; opacity: .9; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .meta { padding: 0 16px 10px; display: flex; justify-content: space-between; font-size: 13px; opacity: .65; }
   .pad { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; padding: 10px 14px 18px; }
-  button { border: 1px solid #2e2e3a; background: #17171f; color: #eee; border-radius: 14px; font-size: 22px; font-weight: 600; }
+  button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #2e2e3a; background: #17171f; color: #eee; border-radius: 14px; font-size: 22px; font-weight: 600; }
   button:active { background: #26263a; transform: scale(.98); }
   .next { grid-row: span 2; background: #232347; font-size: 26px; }
   .black { font-size: 18px; }
@@ -66,8 +66,8 @@ const REMOTE_HTML = `<!DOCTYPE html>
   <div class="top"><span class="dot" id="dot"></span><span class="title" id="title">Mazz 手机遥控</span></div>
   <div class="meta"><span id="pos">— / —</span><span id="clock">00:00</span></div>
   <div class="pad">
-    <button id="prev">◀ 上一帧</button>
-    <button class="next" id="next">下一帧 ▶</button>
+    <button id="prev"><svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 5L7 12l9 7V5z"/></svg> 上一帧</button>
+    <button class="next" id="next">下一帧 <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5l9 7-9 7V5z"/></svg></button>
     <button class="black" id="black">黑屏</button>
   </div>
 <script>

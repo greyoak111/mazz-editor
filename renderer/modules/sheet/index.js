@@ -31,7 +31,7 @@ function createSheet(container) {
       <input class="sg-finput" spellcheck="false" placeholder="选中单元格查看/编辑内容或公式…" />
     </div>
     <div class="sg-grid-wrap"></div>
-    <div class="sg-tabs"><div class="sg-tab-list"></div><button class="sg-tab-add" title="新建工作表">＋</button></div>
+    <div class="sg-tabs"><div class="sg-tab-list"></div><button class="sg-tab-add" title="新建工作表">${iconHtml('＋')}</button></div>
     <textarea class="sg-capture" aria-label="当前单元格输入" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>`;
   container.appendChild(root);
   const capture = root.querySelector('.sg-capture');
@@ -503,9 +503,9 @@ export default {
       <select class="rb-select" id="sg-border-width" title="边框粗细">
         <option value="thin">细线</option><option value="medium">粗线</option>
       </select>
-      <button class="rb-btn" data-command="sheet.valignTop"><i class="ico">⤒</i><span>顶对齐</span></button>
-      <button class="rb-btn" data-command="sheet.valignMiddle"><i class="ico">↔</i><span>垂直居中</span></button>
-      <button class="rb-btn" data-command="sheet.valignBottom"><i class="ico">⤓</i><span>底对齐</span></button>
+      <button class="rb-btn" data-command="sheet.valignTop"><i class="ico">${iconHtml('⤒')}</i><span>顶对齐</span></button>
+      <button class="rb-btn" data-command="sheet.valignMiddle"><i class="ico">${iconHtml('↔')}</i><span>垂直居中</span></button>
+      <button class="rb-btn" data-command="sheet.valignBottom"><i class="ico">${iconHtml('⤓')}</i><span>底对齐</span></button>
     </div>
     <div class="rb-group" data-label="数字格式">
       <select class="rb-select" id="sg-fmt">
@@ -514,33 +514,33 @@ export default {
         <option value="0.00%">百分比(2位)</option><option value="&quot;¥&quot;#,##0.00">人民币</option>
         <option value="yyyy-mm-dd">日期</option><option value="yyyy-mm-dd hh:mm">日期时间</option>
       </select>
-      <button class="rb-btn" data-command="sheet.alignLeft"><i class="ico">⇤</i><span>左对齐</span></button>
-      <button class="rb-btn" data-command="sheet.alignCenter"><i class="ico">↔</i><span>居中</span></button>
-      <button class="rb-btn" data-command="sheet.alignRight"><i class="ico">⇥</i><span>右对齐</span></button>
+      <button class="rb-btn" data-command="sheet.alignLeft"><i class="ico">${iconHtml('⇤')}</i><span>左对齐</span></button>
+      <button class="rb-btn" data-command="sheet.alignCenter"><i class="ico">${iconHtml('↔')}</i><span>居中</span></button>
+      <button class="rb-btn" data-command="sheet.alignRight"><i class="ico">${iconHtml('⇥')}</i><span>右对齐</span></button>
     </div>
     <div class="rb-group" data-label="结构">
-      <button class="rb-btn" data-command="sheet.merge"><i class="ico">▣</i><span>合并</span></button>
-      <button class="rb-btn" data-command="sheet.unmerge"><i class="ico">▢</i><span>拆合并</span></button>
+      <button class="rb-btn" data-command="sheet.merge"><i class="ico">${iconHtml('▣')}</i><span>合并</span></button>
+      <button class="rb-btn" data-command="sheet.unmerge"><i class="ico">${iconHtml('▢')}</i><span>拆合并</span></button>
       <button class="rb-btn" data-command="sheet.freezeAt"><i class="ico">${iconHtml('❄')}</i><span>冻结至此</span></button>
       <button class="rb-btn" data-command="sheet.unfreeze"><i class="ico">${iconHtml('☀')}</i><span>解冻</span></button>
     </div>
     <div class="rb-group" data-label="数据">
-      <button class="rb-btn" data-command="sheet.sortAsc"><i class="ico">A↓</i><span>升序</span></button>
-      <button class="rb-btn" data-command="sheet.sortDesc"><i class="ico">Z↓</i><span>降序</span></button>
-      <button class="rb-btn" data-command="sheet.toggleFilter"><i class="ico">⧩</i><span>筛选</span></button>
-      <button class="rb-btn" data-command="sheet.validation"><i class="ico">✓</i><span>验证</span></button>
+      <button class="rb-btn" data-command="sheet.sortAsc"><i class="ico">${iconHtml('A↓')}</i><span>升序</span></button>
+      <button class="rb-btn" data-command="sheet.sortDesc"><i class="ico">${iconHtml('Z↓')}</i><span>降序</span></button>
+      <button class="rb-btn" data-command="sheet.toggleFilter"><i class="ico">${iconHtml('⧩')}</i><span>筛选</span></button>
+      <button class="rb-btn" data-command="sheet.validation"><i class="ico">${iconHtml('✓')}</i><span>验证</span></button>
       <button class="rb-btn" data-command="sheet.condFormat"><i class="ico">${iconHtml('🎨')}</i><span>条件格式</span></button>
     </div>
     <div class="rb-group" data-label="分析">
       <button class="rb-btn" data-command="sheet.insertChart"><i class="ico">${iconHtml('📈')}</i><span>图表</span></button>
-      <button class="rb-btn" data-command="sheet.pivot"><i class="ico">∑</i><span>透视表</span></button>
+      <button class="rb-btn" data-command="sheet.pivot"><i class="ico">${iconHtml('∑')}</i><span>透视表</span></button>
       <button class="rb-btn" data-command="sheet.insertFunction"><i class="ico">fx</i><span>函数</span></button>
     </div>
     <div class="rb-group" data-label="文件">
       <button class="rb-btn" data-command="sheet.exportXlsx"><i class="ico">${iconHtml('📦')}</i><span>导出xlsx</span></button>
       <button class="rb-btn" data-command="sheet.exportCsv"><i class="ico">${iconHtml('📄')}</i><span>导出CSV</span></button>
-      <button class="rb-btn" data-command="edit.undo"><i class="ico">↩</i><span>撤销</span></button>
-      <button class="rb-btn" data-command="edit.redo"><i class="ico">↪</i><span>重做</span></button>
+      <button class="rb-btn" data-command="edit.undo"><i class="ico">${iconHtml('↩')}</i><span>撤销</span></button>
+      <button class="rb-btn" data-command="edit.redo"><i class="ico">${iconHtml('↪')}</i><span>重做</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

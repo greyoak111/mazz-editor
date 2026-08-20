@@ -42,7 +42,7 @@ function createMindmap(container) {
     <div class="mm-stylebar" style="display:none"></div>
     <div class="mm-canvas-wrap" tabindex="-1">
       <button class="mm-source-hook" type="button" hidden title="回到提炼来源">
-        <span class="mm-source-hook-icon">↩</span><span class="mm-source-hook-label"></span>
+        <span class="mm-source-hook-icon">${iconHtml('↩')}</span><span class="mm-source-hook-label"></span>
       </button>
       <svg class="mm-svg"><defs>
         <pattern id="mmGrid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -1757,7 +1757,7 @@ function createMindmap(container) {
         <button class="mm-sb-btn ${n.style?.italic ? 'on' : ''}" data-n="italic" title="斜体"><i>I</i></button>
         <input type="color" class="mm-sb-color" data-n="__textcolor" value="${n.style?.color || '#5b4a1e'}" title="文字颜色">
         <input type="color" class="mm-sb-color" data-n="__notecolor" value="${n.color || '#fde68a'}" title="便笺底色">
-        <button class="mm-sb-btn" data-n="__del" title="删除便笺">✕</button>`;
+        <button class="mm-sb-btn" data-n="__del" title="删除便笺" aria-label="删除便笺">${iconHtml('✕')}</button>`;
       stylebar.querySelectorAll('[data-n]').forEach(el => el.addEventListener('change', () => onNoteStyle(el.dataset.n, el.value)));
       stylebar.querySelectorAll('[data-n]').forEach(el => el.addEventListener('click', () => onNoteStyle(el.dataset.n, el.value)));
       proxyStylebarSelects();
@@ -1793,7 +1793,7 @@ function createMindmap(container) {
         <button class="mm-sb-btn ${curNote.strike ? 'on' : ''}" data-l="__ls" title="注释删除线"><s>S</s></button>
         <input type="color" class="mm-sb-color" data-l="__nc" value="${curNote.color || '#2c2c2a'}" title="注释颜色">
         <select class="mm-sb" data-l="__ns" title="注释字号">${[10, 11.5, 13, 16].map(v => `<option value="${v}" ${+(curNote.size || 11.5) === v ? 'selected' : ''}>${v}</option>`).join('')}</select>
-        <button class="mm-sb-btn" data-l="__del" title="${isConn ? '清除自定义样式' : '删除这条线'}">✕</button>
+        <button class="mm-sb-btn" data-l="__del" title="${isConn ? '清除自定义样式' : '删除这条线'}">${iconHtml('✕')}</button>
         <span style="font-size:11px;color:var(--fg-dim)">双击线加拐点 · 右键拐点删除</span>`;
       // 控件只绑 change（选完才应用）：click 就应用会立刻 mutate→render 重建样式条，
       // 正在下拉的 select/输入框被瞬间销毁（v33 实测闪缩/失焦根因）；按钮类只绑 click
@@ -1826,7 +1826,7 @@ function createMindmap(container) {
           ${LEVEL_SCHEMES.map((sc, i) => `<option value="${i}" ${ctl.doc.scheme === i ? 'selected' : ''}>${sc.name}配色</option>`).join('')}
         </select>
         <button class="mm-sb-btn" data-k="__beautify" title="一键美化（清手动痕迹自动重排）">美化</button>
-        <button class="mm-sb-btn" data-k="__lane" title="新建泳道（标题条拖动移位，右下手柄调尺寸）">＋泳道</button>
+        <button class="mm-sb-btn" data-k="__lane" title="新建泳道（标题条拖动移位，右下手柄调尺寸）">${iconHtml('＋')}<span>泳道</span></button>
         <button class="mm-sb-btn ${ctl.doc.showGrid ? 'on' : ''}" data-k="__grid" title="网格坐标线（手动定位辅助）">网格</button>
         <span style="width:1px;height:18px;background:var(--bd,#e0ded8)"></span>
         <select class="mm-sb" data-k="__arrow" title="箭头形态（全局）">
@@ -1835,8 +1835,8 @@ function createMindmap(container) {
         <select class="mm-sb" data-k="__pack" title="模板包（mmtpl-packs/ 库）"><option value="">模板包…</option></select>
         <button class="mm-sb-btn" data-k="__pack-export" title="当前文档+样式打包为 .mmtpl 入库">打包</button>
         <span style="width:1px;height:18px;background:var(--bd,#e0ded8)"></span>
-        <button class="mm-sb-btn" data-k="__frame-add" title="当前视口圈为一帧（Prezi 式叙事）">＋帧</button>
-        <button class="mm-sb-btn ${ctl.mmStatus === 'present' ? 'on' : ''}" data-k="__present" title="F5 放映（→/空格 下一帧 · ← 上一帧 · Esc 退出）">▶ 放映</button>
+        <button class="mm-sb-btn" data-k="__frame-add" title="当前视口圈为一帧（Prezi 式叙事）">${iconHtml('＋')}<span>帧</span></button>
+        <button class="mm-sb-btn ${ctl.mmStatus === 'present' ? 'on' : ''}" data-k="__present" title="F5 放映（→/空格 下一帧 · ← 上一帧 · Esc 退出）">${iconHtml('▶')}<span>放映</span></button>
         <span class="mm-frames" style="display:inline-flex;gap:4px;align-items:center"></span>`;
       stylebar.querySelector('[data-k="__mode"]').addEventListener('change', (e) => mutate(() => { ctl.doc.mode = e.target.value; }));
       stylebar.querySelector('[data-k="__scheme"]').addEventListener('change', (e) => mutate(() => { ctl.doc.scheme = +e.target.value; }));
@@ -1881,7 +1881,7 @@ function createMindmap(container) {
       </select>
       <input type="color" class="mm-sb-color" data-k="__color" value="${s.color || (node.color || '#4f46e5')}" title="文字颜色">
       <input type="color" class="mm-sb-color" data-k="__nodecolor" value="${node.color || '#4f46e5'}" title="节点颜色">
-      <button class="mm-sb-btn" data-k="__clearcolor" title="清除自定义颜色">✕</button>
+      <button class="mm-sb-btn" data-k="__clearcolor" title="清除自定义颜色">${iconHtml('✕')}</button>
       <select class="mm-sb" data-k="__scheme" title="各级配色方案">
         ${LEVEL_SCHEMES.map((sc, i) => `<option value="${i}" ${ctl.doc.scheme === i ? 'selected' : ''}>${sc.name}配色</option>`).join('')}
       </select>
@@ -2127,22 +2127,28 @@ function createMindmap(container) {
     if (!host) return;
     const fs = ctl.doc.frames || [];
     host.innerHTML = fs.map((f, i) => `
-      <span class="mm-frame" data-id="${f.id}" title="${(f.title || '').replace(/"/g, '&quot;')}（点击跳转镜头；↑↓ 排序 · ✕ 删除）"
+      <span class="mm-frame" role="group" data-id="${f.id}" title="${(f.title || '').replace(/"/g, '&quot;')}（点击跳转镜头；↑↓ 排序 · 删除）"
         style="display:inline-flex;gap:2px;align-items:center;border:1px solid var(--bd,#e0ded8);border-radius:6px;padding:1px 5px;font-size:11px;cursor:pointer">
-        <b>${i + 1}</b>·${(f.title || '帧').slice(0, 8)}<i data-a="up" style="cursor:pointer">↑</i><i data-a="dn" style="cursor:pointer">↓</i><i data-a="del" style="cursor:pointer">✕</i>
+        <button data-a="jump" title="跳转镜头" style="border:0;background:none;color:inherit;font:inherit;padding:0;cursor:pointer"><b>${i + 1}</b>·${(f.title || '帧').slice(0, 8)}</button><i data-a="up" role="button" tabindex="0" title="上移" aria-label="上移" style="cursor:pointer">${iconHtml('↑')}</i><i data-a="dn" role="button" tabindex="0" title="下移" aria-label="下移" style="cursor:pointer">${iconHtml('↓')}</i><i data-a="del" role="button" tabindex="0" title="删除帧" aria-label="删除帧" style="cursor:pointer">${iconHtml('✕')}</i>
       </span>`).join('');
     host.querySelectorAll('.mm-frame').forEach(el => {
       const id = el.dataset.id;
       el.addEventListener('click', (e) => {
-        const a = e.target.dataset?.a;
+        const a = e.target.closest?.('[data-a]')?.dataset.a;
         if (a === 'del') { mmExec(ctl, 'removeFrame', id); renderFramesBar(); return; }
         if (a === 'up') { mmExec(ctl, 'moveFrame', { id, dir: -1 }); renderFramesBar(); return; }
         if (a === 'dn') { mmExec(ctl, 'moveFrame', { id, dir: 1 }); renderFramesBar(); return; }
         // 跳转镜头（预览=帧适配动画）
         const f = (ctl.doc.frames || []).find(x => x.id === id);
-        if (f && ctl.mmStatus !== 'present') {
+        if ((a === 'jump' || !a) && f && ctl.mmStatus !== 'present') {
           camTween(ctl, camOfFrame(ctl, f, wrap), { duration: 480 }); // 帧跳转预览（镜头动画器直引）
         }
+      });
+      el.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        const action = event.target.closest?.('[data-a]');
+        action?.click();
       });
     });
   }
@@ -2155,7 +2161,7 @@ function createMindmap(container) {
     st.style.cssText = 'position:fixed;inset:auto 0 0 0;z-index:60;display:none;justify-content:center;pointer-events:none;padding-bottom:26px';
     st.innerHTML = `<div class="mm-present-hud" style="pointer-events:auto;display:flex;gap:14px;align-items:center;background:rgba(20,20,24,.82);color:#eee;border-radius:999px;padding:8px 18px;font-size:12.5px;backdrop-filter:blur(6px)">
       <b class="mm-pv-title"></b><span class="mm-pv-idx" style="opacity:.75"></span><span style="opacity:.55">→/空格 下一帧 · ← 上一帧 · Esc 退出</span>
-      <button class="mm-pv-exit" style="background:none;border:0;color:#eee;cursor:pointer;font-size:14px" title="退出放映（Esc）">✕</button>
+      <button class="mm-pv-exit" style="background:none;border:0;color:#eee;cursor:pointer;font-size:14px" title="退出放映（Esc）" aria-label="退出放映">${iconHtml('✕')}</button>
     </div>`;
     st.querySelector('.mm-pv-exit').addEventListener('click', () => mmExec(ctl, 'exitPresent'));
     document.body.appendChild(st);
@@ -2609,18 +2615,18 @@ export default {
 
   toolbarHTML: `
     <div class="rb-group" data-label="节点">
-      <button class="rb-btn" data-command="mindmap.addChild"><i class="ico">⤵</i><span>子节点</span></button>
-      <button class="rb-btn" data-command="mindmap.addRoot"><i class="ico">＋</i><span>根节点</span></button>
-      <button class="rb-btn" data-command="mindmap.delete"><i class="ico">✕</i><span>删除</span></button>
+      <button class="rb-btn" data-command="mindmap.addChild"><i class="ico">${iconHtml('⤵')}</i><span>子节点</span></button>
+      <button class="rb-btn" data-command="mindmap.addRoot"><i class="ico">${iconHtml('＋')}</i><span>根节点</span></button>
+      <button class="rb-btn" data-command="mindmap.delete"><i class="ico">${iconHtml('✕')}</i><span>删除</span></button>
     </div>
     <div class="rb-group" data-label="布局">
-      <button class="rb-btn" data-command="mindmap.modeLR"><i class="ico">⇢</i><span>左右</span></button>
-      <button class="rb-btn" data-command="mindmap.modeTB"><i class="ico">⇣</i><span>上下</span></button>
-      <button class="rb-btn" data-command="mindmap.modeRadial"><i class="ico">◎</i><span>环绕</span></button>
+      <button class="rb-btn" data-command="mindmap.modeLR"><i class="ico">${iconHtml('⇢')}</i><span>左右</span></button>
+      <button class="rb-btn" data-command="mindmap.modeTB"><i class="ico">${iconHtml('⇣')}</i><span>上下</span></button>
+      <button class="rb-btn" data-command="mindmap.modeRadial"><i class="ico">${iconHtml('◎')}</i><span>环绕</span></button>
     </div>
     <div class="rb-group" data-label="历史">
-      <button class="rb-btn" data-command="mindmap.undo"><i class="ico">↩</i><span>撤销</span></button>
-      <button class="rb-btn" data-command="mindmap.redo"><i class="ico">↪</i><span>重做</span></button>
+      <button class="rb-btn" data-command="mindmap.undo"><i class="ico">${iconHtml('↩')}</i><span>撤销</span></button>
+      <button class="rb-btn" data-command="mindmap.redo"><i class="ico">${iconHtml('↪')}</i><span>重做</span></button>
     </div>
     <div class="rb-group" data-label="便笺/引用">
       <button class="rb-btn" data-command="mindmap.addNote"><i class="ico">${iconHtml('🗒')}</i><span>便笺</span></button>
@@ -2630,8 +2636,8 @@ export default {
     </div>
     <div class="rb-group" data-label="导出/导入">
       <button class="rb-btn" data-command="mindmap.fit"><i class="ico">${iconHtml('⛶')}</i><span>适应视图</span></button>
-      <button class="rb-btn" data-command="mindmap.exportMenu"><i class="ico">⇪</i><span>导出 ▾</span></button>
-      <button class="rb-btn" data-command="mindmap.importFile"><i class="ico">⇩</i><span>导入</span></button>
+      <button class="rb-btn" data-command="mindmap.exportMenu"><i class="ico">${iconHtml('⇪')}</i><span>导出</span></button>
+      <button class="rb-btn" data-command="mindmap.importFile"><i class="ico">${iconHtml('⇩')}</i><span>导入</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

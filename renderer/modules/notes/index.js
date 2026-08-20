@@ -26,9 +26,9 @@ function createNotes(container) {
     <div class="notes-main">
       <div class="notes-side">
         <div class="notes-side-head">
-          <button class="rb-btn" data-a="foldside" title="折叠/展开笔记列表" style="min-width:26px;padding:2px 6px">◀</button>
+          <button class="rb-btn" data-a="foldside" aria-expanded="true" title="折叠/展开笔记列表" style="min-width:26px;padding:2px 6px">${iconHtml('◀')}</button>
           <input class="notes-filter" placeholder="筛选笔记…" spellcheck="false" style="min-width:0;flex:1">
-          <button class="rb-btn" data-a="refresh" title="重建笔记索引" style="min-width:30px">↻</button>
+          <button class="rb-btn" data-a="refresh" title="重建笔记索引" style="min-width:30px">${iconHtml('↻')}</button>
         </div>
         <div class="notes-list"></div>
       </div>
@@ -49,8 +49,10 @@ function createNotes(container) {
   const sideEl = root.querySelector('.notes-side');
   root.querySelector('[data-a=foldside]').addEventListener('click', (e) => {
     const folded = sideEl.classList.toggle('folded');
-    e.currentTarget.textContent = folded ? '▶' : '◀';
+    e.currentTarget.innerHTML = iconHtml(folded ? '▶' : '◀');
     e.currentTarget.title = folded ? '展开笔记列表' : '折叠笔记列表';
+    e.currentTarget.setAttribute('aria-label', e.currentTarget.title);
+    e.currentTarget.setAttribute('aria-expanded', String(!folded));
   });
   const blWrap = root.querySelector('.notes-backlinks');
   const blList = root.querySelector('.bl-list');
@@ -169,15 +171,22 @@ function createNotes(container) {
     const daily = items.filter(e => e.path.includes(DAILY_DIR));
     const others = items.filter(e => !e.path.includes(DAILY_DIR));
     const itemHtml = (e) => `
-      <div class="notes-item${e.path === ctl.currentPath ? ' on' : ''}" data-path="${e.path.replace(/"/g, '&quot;')}" title="${e.path.replace(/"/g, '&quot;')}">
+      <div class="notes-item${e.path === ctl.currentPath ? ' on' : ''}" role="button" tabindex="0" aria-label="打开笔记 ${e.name.replace(/"/g, '&quot;')}" data-path="${e.path.replace(/"/g, '&quot;')}" title="${e.path.replace(/"/g, '&quot;')}">
         <span class="n-name">${iconHtml(e.path.includes(DAILY_DIR) ? '📅' : '📄')} ${e.name}</span>
       </div>`;
     listEl.innerHTML =
       (daily.length ? `<div class="notes-sect">每日笔记</div>` + daily.map(itemHtml).join('') : '')
       + (others.length ? `<div class="notes-sect">全部笔记（${others.length}）</div>` + others.map(itemHtml).join('') : '')
       + (!items.length ? '<div class="notes-sect">（无匹配笔记）</div>' : '');
-    listEl.querySelectorAll('.notes-item').forEach(el =>
-      el.addEventListener('click', () => openNote(el.dataset.path)));
+    listEl.querySelectorAll('.notes-item').forEach(el => {
+      const activate = () => openNote(el.dataset.path);
+      el.addEventListener('click', activate);
+      el.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        activate();
+      });
+    });
   }
 
   async function renderBacklinks() {
@@ -186,10 +195,17 @@ function createNotes(container) {
     if (ctl._destroyed) return;
     blWrap.style.display = 'block';
     blList.innerHTML = list.length
-      ? list.map(x => `<div class="notes-bl-item" data-path="${x.path.replace(/"/g, '&quot;')}">← ${x.name}</div>`).join('')
+      ? list.map(x => `<div class="notes-bl-item" role="button" tabindex="0" aria-label="打开反向链接笔记 ${x.name.replace(/"/g, '&quot;')}" data-path="${x.path.replace(/"/g, '&quot;')}">${iconHtml('←')}<span>${x.name}</span></div>`).join('')
       : '<div class="notes-bl-ctx">（暂无其他笔记链接到这里）</div>';
-    blList.querySelectorAll('.notes-bl-item').forEach(el =>
-      el.addEventListener('click', () => openNote(el.dataset.path)));
+    blList.querySelectorAll('.notes-bl-item').forEach(el => {
+      const activate = () => openNote(el.dataset.path);
+      el.addEventListener('click', activate);
+      el.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        activate();
+      });
+    });
   }
 
   function setMode(mode) {
@@ -324,7 +340,7 @@ export default {
     <div class="rb-group" data-label="笔记">
       <button class="rb-btn" data-command="notes.daily"><i class="ico">${iconHtml('📅')}</i><span>每日笔记</span></button>
       <button class="rb-btn" data-command="notes.toggleGraph"><i class="ico">${iconHtml('🕸')}</i><span>图谱</span></button>
-      <button class="rb-btn" data-command="notes.refresh"><i class="ico">↻</i><span>重建索引</span></button>
+      <button class="rb-btn" data-command="notes.refresh"><i class="ico">${iconHtml('↻')}</i><span>重建索引</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

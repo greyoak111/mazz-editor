@@ -1,6 +1,7 @@
 // renderer/modules/markdown/find-replace.js —— 查找替换面板（含正则）
 import { Plugin, PluginKey, TextSelection } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
+import { iconHtml } from '../../lib/svg-icons.js';
 
 export const findKey = new PluginKey('mazz-find');
 
@@ -104,11 +105,11 @@ export class FindReplaceBar {
         <div style="display:flex;gap:5px;align-items:center">
           <input class="f-find-input" placeholder="查找…" spellcheck="false" />
           <span class="f-count"></span>
-          <button data-a="prev" title="上一个（Shift+F3）">↑</button>
-          <button data-a="next" title="下一个（F3）">↓</button>
+        <button data-a="prev" title="上一个（Shift+F3）">${iconHtml('↑')}</button>
+        <button data-a="next" title="下一个（F3）">${iconHtml('↓')}</button>
           <button data-a="case" title="区分大小写">Aa</button>
           <button data-a="regex" title="正则表达式">.*</button>
-          <button data-a="close" title="关闭（Esc）">✕</button>
+        <button data-a="close" title="关闭（Esc）">${iconHtml('✕')}</button>
         </div>
         <div class="f-replace-row" style="display:none;gap:5px;align-items:center">
           <input class="f-replace-input" placeholder="替换为…" spellcheck="false" />

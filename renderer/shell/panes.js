@@ -3,6 +3,7 @@
 import { bus } from '../core/events.js';
 import { contextKeys } from '../core/contextkey-service.js';
 import { Tabs } from './tabs.js';
+import { iconHtml } from '../lib/svg-icons.js';
 
 const MIN_RATIO = 0.1; // 每侧最小占比
 let paneSeq = 1;
@@ -21,7 +22,8 @@ class Leaf {
     this.closeBtn = document.createElement('button');
     this.closeBtn.className = 'pane-close';
     this.closeBtn.title = '关闭此窗格（标签移到相邻窗格）';
-    this.closeBtn.textContent = '✕';
+    this.closeBtn.setAttribute('aria-label', '关闭此窗格');
+    this.closeBtn.innerHTML = iconHtml('✕');
     this.closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.tree.closePane(this);

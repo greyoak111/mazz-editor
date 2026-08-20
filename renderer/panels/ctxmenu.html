@@ -28,10 +28,11 @@
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
   <div class="p-drag"></div>
-  <main id="m" class="ps-scroll-y"><div class="menu-state" role="status">正在准备菜单…</div></main>
+  <main id="m" class="ps-scroll-y" role="menu"><div class="menu-state" role="status">正在准备菜单…</div></main>
 </div>
-<div class="submenu ps-scroll-y" id="sub"></div>
-<script>
+<div class="submenu ps-scroll-y" id="sub" role="menu"></div>
+<script type="module">
+import { iconHtml } from '../lib/svg-icons.js';
 const $ = (s) => document.querySelector(s);
 const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
 const applyTheme = (id, vars) => { if (id) document.documentElement.dataset.theme = id; if (vars) for (const [k, v] of Object.entries(vars)) if (v) document.documentElement.style.setProperty('--' + k, v); };
@@ -44,7 +45,7 @@ let items = [], sel = -1, subFor = null, received = false;
 function iconOf(it) {
   if (!it.icon) return '<span class="ico"></span>';
   // iconHtml 映射走主窗（svg 串经 push 带过来——菜单项 svg 字段直嵌）
-  return `<span class="ico">${it.svg || esc(it.icon)}</span>`;
+  return `<span class="ico">${it.svg || iconHtml(it.icon)}</span>`;
 }
 function render() {
   const m = $('#m');
@@ -56,10 +57,10 @@ function render() {
   m.innerHTML = items.map((it, i) => {
     if (it.type === 'separator') return '<div class="sep"></div>';
     if (it.type === 'heading') return `<div class="heading">${esc(it.label)}</div>`;
-    return `<div class="mi${it.enabled === false ? ' dis' : ''}${i === sel ? ' on' : ''}" data-i="${i}">
+    return `<div class="mi${it.enabled === false ? ' dis' : ''}${i === sel ? ' on' : ''}" role="menuitem" tabindex="-1" aria-disabled="${it.enabled === false ? 'true' : 'false'}" ${it.submenu ? 'aria-haspopup="menu"' : ''} data-i="${i}">
       ${iconOf(it)}<span class="t">${esc(it.label)}</span>
       ${it.accelerator ? `<kbd>${esc(it.accelerator)}</kbd>` : ''}
-      ${it.submenu ? '<span class="sub">▸</span>' : ''}
+      ${it.submenu ? `<span class="sub" aria-hidden="true">${iconHtml('▸')}</span>` : ''}
     </div>`;
   }).join('');
   m.querySelectorAll('.mi').forEach(el => {
@@ -78,7 +79,7 @@ function openSub(anchor, it) {
   const r = anchor.getBoundingClientRect();
   const sub = $('#sub');
   sub.innerHTML = (it.submenu || []).map((s2, j) => s2.type === 'separator' ? '<div class="sep"></div>'
-    : `<div class="mi${s2.enabled === false ? ' dis' : ''}" data-j="${j}"><span class="ico"></span><span class="t">${esc(s2.label)}</span>${s2.accelerator ? `<kbd>${esc(s2.accelerator)}</kbd>` : ''}</div>`).join('');
+    : `<div class="mi${s2.enabled === false ? ' dis' : ''}" role="menuitem" tabindex="-1" aria-disabled="${s2.enabled === false ? 'true' : 'false'}" data-j="${j}"><span class="ico"></span><span class="t">${esc(s2.label)}</span>${s2.accelerator ? `<kbd>${esc(s2.accelerator)}</kbd>` : ''}</div>`).join('');
   sub.classList.add('open');
   sub.style.left = Math.min(r.right - 2, innerWidth - 200) + 'px';
   sub.style.top = Math.min(r.top, innerHeight - sub.offsetHeight - 8) + 'px';

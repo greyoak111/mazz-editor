@@ -337,7 +337,7 @@ export class Shell {
         <div class="rec-srcs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;max-height:280px;overflow-y:auto">
           ${sources.map(s => `
             <div class="rec-src ${picked.has(s.id) ? 'on' : ''}" data-id="${s.id}" style="border:2px solid ${picked.has(s.id) ? 'var(--acc,#4f46e5)' : 'var(--bd,#e0ded8)'};border-radius:8px;padding:5px;cursor:pointer;text-align:center">
-              ${s.thumb ? `<img src="${s.thumb}" style="width:100%;border-radius:5px">` : '<div style="height:80px;display:grid;place-items:center;color:#999">无预览</div>'}
+              ${s.thumb ? `<img src="${s.thumb}" style="width:100%;border-radius:5px">` : '<div style="height:80px;display:grid;place-items:center;color:var(--fg-dim)">无预览</div>'}
               <div style="font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</div>
             </div>`).join('')}
         </div>
@@ -348,7 +348,7 @@ export class Shell {
           <label>变速 <select id="rec-speed" class="rb-select"><option value="1">原速</option><option value="3" selected>3 倍速</option><option value="10">10 倍速</option><option value="6">6 倍速</option></select></label>
           <label>格式 <select id="rec-fmt" class="rb-select"><option value="webm">webm（即存即播）</option><option value="mp4">mp4（H.264，录完转码）</option></select></label>
           <span style="flex:1"></span>
-          <button id="rec-go" class="rb-btn" style="flex-direction:row;background:var(--acc,#4f46e5);color:#fff">● 开始录制</button>
+          <button id="rec-go" class="rb-btn" style="flex-direction:row;background:var(--accent,var(--acc,#4f46e5));color:var(--accent-fg,#fff)">${iconHtml('●')}<span>开始录制</span></button>
         </div>
         <div style="font-size:11.5px;color:var(--fg-dim);margin-top:8px">默认保存到工作区「录制/」；mp4 经本地转码产出真 H.264（首次需加载转码内核）</div>
       </div>`;
@@ -972,7 +972,7 @@ export class Shell {
   /** W58c 主题变量快照：主窗 computed style 单源（预设/主题包/图片自定义通吃）——
    *  广播与面板初始化共用；自定义主题下原生子窗透明裸奔的根治件 */
   _themeVarsSnapshot() {
-    const KEYS = ['bg', 'bg-elev', 'bg-hover', 'bg-active', 'fg', 'fg-dim', 'border', 'accent', 'accent-soft', 'accent-fg', 'danger', 'warn', 'ok', 'shadow', 'doc-bg', 'acc', 'bd', 'bd2', 'card', 'mut', 'faint', 'sh'];
+    const KEYS = ['bg', 'bg-elev', 'bg-hover', 'bg-active', 'bg-soft', 'fg', 'fg-dim', 'border', 'accent', 'accent-soft', 'accent-fg', 'danger', 'danger-fg', 'warn', 'warn-fg', 'ok', 'ok-fg', 'shadow', 'doc-bg', 'acc', 'bd', 'bd2', 'card', 'mut', 'faint', 'sh'];
     const cs = getComputedStyle(document.documentElement);
     const vars = {};
     for (const k of KEYS) { const v = cs.getPropertyValue('--' + k).trim(); if (v) vars[k] = v; }
@@ -1050,7 +1050,7 @@ export class Shell {
       <div class="w-grid">
           <button class="w-card" data-cmd="file.new"><div class="t">${iconHtml('＋')} ${t('新建文档')}</div><div class="d">${t('Markdown 文档内核')}<br>${t('WYSIWYG 即时渲染')}</div></button>
           <button class="w-card" data-cmd="file.newSheet"><div class="t">${iconHtml('📊')} ${t('新建表格')}</div><div class="d">${t('虚拟网格 · 100+ 公式')}<br>${t('图表 / 透视 / xlsx')}</div></button>
-          <button class="w-card" data-cmd="file.newSlide"><div class="t">${iconHtml('📽')} ${t('新建演示')}</div><div class="d">${t('大纲成稿 · 主题×5')}<br>${t('放映 / pptx 导出')}</div></button>
+          <button class="w-card" data-cmd="file.newSlide"><div class="t">${iconHtml('📽')} ${t('新建演示')}</div><div class="d">${t('大纲成稿 · 5 套主题')}<br>${t('放映 / pptx 导出')}</div></button>
           <button class="w-card" data-cmd="file.newBrowser"><div class="t">${iconHtml('🌐')} ${t('隐私浏览器')}</div><div class="d">${t('独立会话 · 反追踪')}<br>${t('SearXNG 搜索内核')}</div></button>
           <button class="w-card" data-cmd="file.newCode"><div class="t">${iconHtml('💻')} ${t('新建代码')}</div><div class="d">${t('Monaco 智能 · F5 调试')}<br>${t('集成终端')}</div></button>
           <button class="w-card" data-cmd="file.newMath"><div class="t">${iconHtml('🧮')} ${t('计算 REPL')}</div><div class="d">${t('Python+JS 双后端')}<br>${t('calc 算块')}</div></button>
@@ -3348,13 +3348,13 @@ export class Shell {
         <select id="s-tsource" class="rb-select"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></div>
       <div class="set-row"><label>UI 主题</label>
         <select id="s-theme" class="rb-select" style="max-width:56%"></select>
-        <button id="s-theme-del" class="rb-btn" style="flex-direction:row" title="删除选中的自定义主题（自带主题不可删）">🗑 删除</button></div>
+        <button id="s-theme-del" class="rb-btn" style="flex-direction:row" title="删除选中的自定义主题（自带主题不可删）">${iconHtml('🗑')}<span>删除</span></button></div>
       <div class="set-row"><label>主题包</label>
-        <button id="s-theme-blank" class="rb-btn" style="flex-direction:row" title="在工作区 themes/ 生成空白主题包模板">📄 获取空白主题包</button>
-        <button id="s-theme-import" class="rb-btn" style="flex-direction:row" title="从 JSON 文件导入主题包">📥 导入</button>
-        <button id="s-theme-folder" class="rb-btn" style="flex-direction:row" title="打开主题文件夹（可给自定义主题改名）">📂 主题文件夹</button></div>
+        <button id="s-theme-blank" class="rb-btn" style="flex-direction:row" title="在工作区 themes/ 生成空白主题包模板">${iconHtml('📄')}<span>获取空白主题包</span></button>
+        <button id="s-theme-import" class="rb-btn" style="flex-direction:row" title="从 JSON 文件导入主题包">${iconHtml('📥')}<span>导入</span></button>
+        <button id="s-theme-folder" class="rb-btn" style="flex-direction:row" title="打开主题文件夹（可给自定义主题改名）">${iconHtml('📂')}<span>主题文件夹</span></button></div>
       <div class="set-row"><label>图片取色</label>
-        <button id="s-imgtheme" class="rb-btn" style="flex-direction:row">🖼 从图片生成主题</button>
+        <button id="s-imgtheme" class="rb-btn" style="flex-direction:row">${iconHtml('🖼')}<span>从图片生成主题</span></button>
         <span style="font-size:11px;color:var(--fg-dim)">提取颜色按构成主义原则组合；色彩太少会提示换图</span></div>
       <div class="set-row"><label>快速笔记保存到</label>
         <select id="s-qn" class="rb-select"><option value="daily">每日笔记</option><option value="inbox">inbox.md</option></select></div>
@@ -3364,7 +3364,7 @@ export class Shell {
         <button id="s-clearRecent" class="rb-btn" style="flex-direction:row">清空</button></div>
       <div class="set-row"><label>系统集成</label>
         <label style="font-weight:400;font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="s-autolaunch"> 开机自启动（默认关闭）</label>
-        <button id="s-shortcut" class="rb-btn" style="flex-direction:row">🖥 发送桌面快捷方式</button>
+        <button id="s-shortcut" class="rb-btn" style="flex-direction:row">${iconHtml('🖥')}<span>发送桌面快捷方式</span></button>
         <span id="s-shortcut-status" style="font-size:11px;color:var(--fg-dim)"></span></div>
       <div class="set-row" id="s-explorer-row"><label>资源管理器</label>
         <button id="s-explorer-reg" class="rb-btn" style="flex-direction:row">注册右键「导入到 Mazz 工作区」</button>

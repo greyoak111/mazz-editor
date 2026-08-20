@@ -1,6 +1,7 @@
 // renderer/modules/markdown/calc-block.js —— ```calc 算块：文档内可执行代码块（Python/JS 双后端）
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
+import { iconHtml } from '../../lib/svg-icons.js';
 
 export const calcKey = new PluginKey('mazz-calc');
 
@@ -41,7 +42,8 @@ function buildWidget(view, code, id) {
   bar.className = 'calc-bar';
   const runBtn = document.createElement('button');
   runBtn.className = 'calc-run';
-  runBtn.textContent = '▶ 运行';
+  runBtn.innerHTML = `${iconHtml('▶')}<span>运行</span>`;
+  runBtn.setAttribute('aria-label', '运行算块');
   const lang = document.createElement('span');
   lang.className = 'calc-lang';
   lang.textContent = 'Python';
@@ -57,7 +59,7 @@ function buildWidget(view, code, id) {
     e.preventDefault();
     e.stopPropagation();
     if (!window.mazz?.isElectron) { out.textContent = 'calc 算块需要桌面版（Python 内核）'; return; }
-    runBtn.textContent = '⏳ 执行中…';
+    runBtn.innerHTML = `${iconHtml('⏳')}<span>执行中…</span>`;
     runBtn.disabled = true;
     try {
       const r = await window.mazz.invoke('py:exec', { code });
@@ -69,7 +71,7 @@ function buildWidget(view, code, id) {
     } catch (err) {
       out.textContent = err.message;
     }
-    runBtn.textContent = '▶ 运行';
+    runBtn.innerHTML = `${iconHtml('▶')}<span>运行</span>`;
     runBtn.disabled = false;
   });
 

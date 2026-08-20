@@ -5,6 +5,18 @@ import { HELP_SECTIONS } from './content.js';
 import { SENIOR_SECTIONS } from './content-senior.js';
 import { t } from '../i18n/index.js';
 import { visibleHelpSections } from '../core/product-maturity.js';
+import { iconHtml } from '../lib/svg-icons.js';
+
+// 旧帮助内容仍以字符保存栏目图标；渲染边界统一转成主题自适应 SVG。
+// 四个历史字符尚无专属路径，先绑定到含义接近的现有图标，避免未知占位符。
+const HELP_ICON_ALIASES = Object.freeze({
+  uitheme: '⚙',
+  'ai-model-v43': '⚡',
+  's-aiservice': '⚡',
+  's-hello': 'ℹ',
+  's-ticket': '❓',
+});
+const helpSectionIconHtml = (section) => iconHtml(HELP_ICON_ALIASES[section?.id] || section?.icon || '❓');
 
 // ==================== mini Markdown 渲染器（帮助文档专用子集） ====================
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -81,7 +93,7 @@ export function openHelp(sectionId) {
     <div class="help-dialog">
       <div class="help-side">
         <div class="help-side-head">
-          <b>❓ ${t('使用指南')}</b>
+          <b>${iconHtml('❓')} <span>${t('使用指南')}</span></b>
           <select class="help-ver rb-select" title="文档版本切换">
             <option value="std">喂饭级（常规详细版）</option>
             <option value="senior">喂奶级（零基础老人版）</option>
@@ -91,7 +103,7 @@ export function openHelp(sectionId) {
         <div class="help-toc"></div>
       </div>
       <div class="help-body">
-        <button class="help-close rb-btn" title="关闭（Esc）">✕</button>
+        <button class="help-close rb-btn" title="关闭（Esc）">${iconHtml('✕')}</button>
         <div class="help-content"></div>
       </div>
     </div>`;
@@ -130,7 +142,7 @@ export function openHelp(sectionId) {
       ? SECTIONS.filter(s => (s.title + s.body).toLowerCase().includes(f))
       : SECTIONS;
     tocEl.innerHTML = items.map(s =>
-      `<div class="help-toc-item" data-id="${s.id}">${s.icon} ${s.title}</div>`).join('')
+      `<div class="help-toc-item" data-id="${esc(s.id)}">${helpSectionIconHtml(s)} <span>${esc(s.title)}</span></div>`).join('')
       || '<div class="help-toc-empty">' + t('（无匹配章节）') + '</div>';
     tocEl.querySelectorAll('.help-toc-item').forEach(el =>
       el.addEventListener('click', () => show(el.dataset.id)));

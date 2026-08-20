@@ -30,8 +30,8 @@ function createSearch(container) {
       <select class="rb-select gs-scope" title="搜索范围">
         <option value="both">文件名+内容</option><option value="name">仅文件名</option><option value="content">仅内容</option>
       </select>
-      <button class="rb-btn" data-a="replace-mode" title="查找替换">⇄ 替换</button>
-      <button class="rb-btn" data-a="rebuild" title="重建全文索引">↻ 重建索引</button>
+      <button class="rb-btn" data-a="replace-mode" title="查找替换">${iconHtml('⇄')}<span>替换</span></button>
+      <button class="rb-btn" data-a="rebuild" title="重建全文索引">${iconHtml('↻')}<span>重建索引</span></button>
     </div>
     <div class="gs-bar gs-replace-bar" style="display:none">
       <input class="gs-replace-input" placeholder="替换为…（留空 = 删除匹配）" spellcheck="false" />
@@ -185,7 +185,7 @@ function createSearch(container) {
         ${r.hits.map(h => `
           <div class="gs-hit" data-path="${r.path.replace(/"/g, '&quot;')}" data-ln="${h.ln || 0}">
             <span class="gs-ln">${h.ln || '名'}</span><span class="gs-hit-t">${highlightLine(h.text, q, o)}</span>
-            <button class="gs-peek" data-peek="${r.path.replace(/"/g, '&quot;')}" title="小窗预览并直接编辑">✎</button>
+            <button class="gs-peek" data-peek="${r.path.replace(/"/g, '&quot;')}" title="小窗预览并直接编辑" aria-label="小窗预览并直接编辑">${iconHtml('✎')}</button>
           </div>`).join('')}
       </div>`).join('');
     resultsEl.querySelectorAll('.gs-hit[data-path]').forEach(el =>
@@ -437,8 +437,8 @@ export default {
   toolbarHTML: `
     <div class="rb-group" data-label="搜索">
       <button class="rb-btn" data-command="search.focus"><i class="ico">${iconHtml('🔎')}</i><span>聚焦搜索框</span></button>
-      <button class="rb-btn" data-command="search.rebuild"><i class="ico">↻</i><span>重建索引</span></button>
-      <button class="rb-btn" data-command="search.research"><i class="ico">⌁</i><span>证据研究</span></button>
+      <button class="rb-btn" data-command="search.rebuild"><i class="ico">${iconHtml('↻')}</i><span>重建索引</span></button>
+      <button class="rb-btn" data-command="search.research"><i class="ico">${iconHtml('⌁')}</i><span>证据研究</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

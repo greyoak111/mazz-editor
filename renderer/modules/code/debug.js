@@ -1,6 +1,7 @@
 // renderer/modules/code/debug.js —— DAP 调试客户端（断点/单步/变量/监视/调用栈/调试控制台）
 import { toast, modal } from '../../shell/shell.js';
 import { inputModal } from '../../shell/shell.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 
 export class DebugService {
   constructor(ctl) {
@@ -217,16 +218,16 @@ export class DebugService {
     this.panel.className = 'debug-panel';
     this.panel.innerHTML = `
       <div class="debug-controls">
-        <button data-a="continue" title="继续 (F5)">▶</button>
-        <button data-a="over" title="单步跳过 (F10)">↷</button>
-        <button data-a="in" title="单步进入 (F11)">↓</button>
-        <button data-a="out" title="单步跳出 (Shift+F11)">↑</button>
-        <button data-a="stop" title="停止 (Shift+F5)">■</button>
+        <button data-a="continue" title="继续 (F5)">${iconHtml('▶')}</button>
+        <button data-a="over" title="单步跳过 (F10)">${iconHtml('↷')}</button>
+        <button data-a="in" title="单步进入 (F11)">${iconHtml('↓')}</button>
+        <button data-a="out" title="单步跳出 (Shift+F11)">${iconHtml('↑')}</button>
+        <button data-a="stop" title="停止 (Shift+F5)">${iconHtml('■')}</button>
       </div>
       <div class="debug-sections">
         <div class="debug-sec"><div class="debug-sec-title">调用栈</div><div class="debug-stack"></div></div>
         <div class="debug-sec"><div class="debug-sec-title">变量</div><div class="debug-vars"></div></div>
-        <div class="debug-sec"><div class="debug-sec-title">监视 <button data-a="addwatch">＋</button></div><div class="debug-watch"></div></div>
+        <div class="debug-sec"><div class="debug-sec-title">监视 <button data-a="addwatch" title="添加监视表达式">${iconHtml('＋')}</button></div><div class="debug-watch"></div></div>
         <div class="debug-sec debug-sec-console"><div class="debug-sec-title">调试控制台</div>
           <div class="debug-console"></div>
           <input class="debug-eval" placeholder="回车求值（断点上下文）" spellcheck="false" />

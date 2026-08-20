@@ -27,14 +27,14 @@
   .plg .name { font-weight:600; font-size:13px; }
   .plg .name small { color:var(--fg-dim); font-weight:400; }
   .plg .desc { font-size:11.5px; color:var(--fg-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .plg .desc.err { color:#c2410c; }
+  .plg .desc.err { color:var(--fg); text-decoration:underline dotted var(--danger) 2px; text-underline-offset:2px; }
   .plg .meta { display:flex; flex-wrap:wrap; gap:5px 10px; margin-top:3px; color:var(--fg-dim); font-size:10.5px; }
   .plg .hash { font-family:ui-monospace,Consolas,monospace; }
   .state { border:1px solid var(--border); border-radius:999px; padding:1px 6px; }
-  .state.warn { border-color:var(--warn); color:var(--warn); }
-  .state.ok { border-color:#16865a; color:#16865a; }
+  .state.warn { border-color:var(--warn); background:var(--warn); color:var(--warn-fg); }
+  .state.ok { border-color:var(--ok); background:var(--ok); color:var(--ok-fg); }
   .empty { color:var(--fg-dim); text-align:center; padding:40px 0; line-height:2; }
-  .boundary { margin:0 16px 8px; padding:7px 9px; border:1px solid var(--warn); border-radius:7px; color:var(--warn); font-size:11px; background:color-mix(in srgb,var(--warn) 8%,transparent); }
+  .boundary { margin:0 16px 8px; padding:7px 9px; border:1px solid var(--warn); border-radius:7px; color:var(--fg); font-size:11px; background:color-mix(in srgb,var(--warn) 10%,var(--bg)); }
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
   <div class="p-drag"></div>
@@ -42,7 +42,7 @@
   <div class="head">
     <span class="t">插件管理（预览）</span>
     <span class="note">插件默认隔离；只运行已按内容哈希授权的版本</span>
-    <button class="btn" id="install">＋ 安装插件</button>
+    <button class="btn" id="install"><svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>安装插件</span></button>
   </div>
   <div class="boundary">Preview 边界：当前只提供整包 SHA-256 信任与内容变化撤权；声明权限不是进程级沙箱。插件会在受信任的应用渲染环境中执行，只授权你能审计且信任来源的代码。</div>
   <main id="m" class="ps-scroll-y"><div class="empty">加载中…</div></main>

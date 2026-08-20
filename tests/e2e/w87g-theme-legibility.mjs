@@ -96,7 +96,16 @@ async function audit(page, scope, theme) {
       let color = [255, 255, 255, 1];
       const layers = [];
       while (node instanceof Element) {
-        const parsed = parse(getComputedStyle(node).backgroundColor);
+        const nodeStyle = getComputedStyle(node);
+        // A translucent first gradient stop is the paint immediately behind
+        // top-aligned labels such as the Player title. Treating every gradient
+        // as transparent made the audit compare white overlay text with the
+        // Paper app chrome behind the dark media scrim (a deterministic false
+        // positive). Push image before color because the final reverse pass
+        // must composite background-color first, then background-image.
+        const image = nodeStyle.backgroundImage !== 'none' ? parse(nodeStyle.backgroundImage) : null;
+        if (image && image[3] > .001) layers.push(image);
+        const parsed = parse(nodeStyle.backgroundColor);
         if (parsed && parsed[3] > .001) layers.push(parsed);
         node = node.parentElement;
       }

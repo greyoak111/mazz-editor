@@ -85,7 +85,7 @@ export async function docToWeb(shell) {
     const { queue } = await import('./queue.js');
     const listEl = m.body.querySelector('.wb-queue-list');
     const renderQ = (items) => {
-      const ICON = { pending: '⏳', injecting: '⚡', review: '✅', failed: '✗' };
+      const ICON = { pending: iconHtml('⏳'), injecting: iconHtml('⚡'), review: iconHtml('✅'), failed: iconHtml('✗') };
       listEl.innerHTML = items.map(it => `
         <div style="display:flex;gap:8px;align-items:center;font-size:12.5px;padding:4px 0;border-top:1px solid var(--border)">
           <span>${ICON[it.status] || ''}</span><b>${it.adapter.name}</b>

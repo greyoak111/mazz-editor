@@ -1,6 +1,7 @@
 // renderer/lib/ai-role-picker.js —— W62a-0 AI 岗位就地指派公共件
 // 中央登记、就地指派：所有模块只调用本件；选项只来自已有 Key 的 provider×model。
 import { AI_ROLES, getProviderAdminSnapshot, saveProviderRoute } from '../modules/factory/provider.js';
+import { iconHtml } from './svg-icons.js';
 
 const FOLLOW = '__follow_global__';
 const roleMeta = id => AI_ROLES.find(r => r.id === id) || { id, label: id };
@@ -36,7 +37,7 @@ export function aiRolePicker(role, anchor, { className = '', onChange } = {}) {
     snapshot = await getProviderAdminSnapshot();
     const route = snapshot.roles.find(r => r.id === role)?.target || null;
     const current = snapshot.connected.find(x => x.value === targetValue(route));
-    button.textContent = `⚡ ${meta.label} · ${current?.label || '跟随全局'}`;
+    button.innerHTML = `${iconHtml('⚡')}<span>${meta.label} · ${current?.label || '跟随全局'}</span>`;
     button.title = `就地指派「${meta.label}」；配置真相源在 AI 服务 → AI 分工`;
   };
   const commit = async value => {
@@ -61,6 +62,6 @@ export function aiRolePicker(role, anchor, { className = '', onChange } = {}) {
   };
   button.addEventListener('click', open);
   anchor.appendChild(button);
-  refresh().catch(() => { button.textContent = `⚡ ${meta.label}`; });
+  refresh().catch(() => { button.innerHTML = `${iconHtml('⚡')}<span>${meta.label}</span>`; });
   return { button, refresh, destroy() { button.removeEventListener('click', open); button.remove(); } };
 }

@@ -1,5 +1,6 @@
 // renderer/shell/statusbar.js —— 状态栏：模块/字数/光标/主题/拼写/缩放
 import { commands } from '../core/command-registry.js';
+import { iconHtml } from '../lib/svg-icons.js';
 
 export class StatusBar {
   constructor(root) {
@@ -10,17 +11,23 @@ export class StatusBar {
       <span class="st plain" id="st-count"></span>
       <span class="st plain" id="st-pos"></span>
       <span class="spacer"></span>
-      <span class="st" id="st-memory" title="进程工作集 / 资源账本；点击重置观测基线" hidden>内存 —</span>
-      <span class="st" id="st-notif" title="通知中心（被动入账，不抢焦点）">通知</span>
-      <span class="st" id="st-spell" title="拼写检查">拼写</span>
-      <span class="st" id="st-theme" title="轮换主题（Ctrl+Alt+T）">主题</span>
-      <span class="st" id="st-zoom" title="缩放">100%</span>`;
+      <span class="st" id="st-memory" role="button" tabindex="0" aria-label="重置内存观测基线" title="进程工作集 / 资源账本；点击重置观测基线" hidden>内存 —</span>
+      <span class="st" id="st-notif" role="button" tabindex="0" aria-label="打开通知中心" title="通知中心（被动入账，不抢焦点）">通知</span>
+      <span class="st" id="st-spell" role="button" tabindex="0" aria-label="切换拼写检查" aria-pressed="false" title="拼写检查">拼写</span>
+      <span class="st" id="st-theme" role="button" tabindex="0" aria-label="轮换主题" title="轮换主题（Ctrl+Alt+T）">主题</span>
+      <span class="st" id="st-zoom" role="button" tabindex="0" aria-label="重置缩放" title="缩放">100%</span>`;
     root.appendChild(this.el);
     this.el.querySelector('#st-theme').addEventListener('click', () => commands.execute('view.cycleTheme'));
     this.el.querySelector('#st-notif').addEventListener('click', () => commands.execute('app.notifications'));
     this.el.querySelector('#st-spell').addEventListener('click', () => commands.execute('app.toggleSpellcheck'));
     this.el.querySelector('#st-zoom').addEventListener('click', () => commands.execute('view.zoomReset'));
     this.el.querySelector('#st-memory').addEventListener('click', () => window.mazz?.invoke('memory:resetBaseline').then(() => this.refreshMemory()).catch(() => {}));
+    this.el.addEventListener('keydown', (event) => {
+      const control = event.target.closest('.st[role="button"]');
+      if (!control || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      control.click();
+    });
     this.memoryTimer = null;
     window.mazz?.invoke('settings:get', { key: 'memory.monitor.enabled' }).then(enabled => this.setMemoryMonitor(!!enabled)).catch(() => {});
   }
@@ -34,7 +41,12 @@ export class StatusBar {
     if (count != null) this.el.querySelector('#st-count').textContent = count;
     if (pos != null) this.el.querySelector('#st-pos').textContent = pos;
   }
-  setSpell(on) { this.el.querySelector('#st-spell').textContent = on ? '拼写✓' : '拼写○'; }
+  setSpell(on) {
+    const slot = this.el.querySelector('#st-spell');
+    slot.innerHTML = `<span>拼写</span>${iconHtml(on ? '✓' : '○')}`;
+    slot.setAttribute('aria-pressed', String(!!on));
+    slot.setAttribute('aria-label', `拼写检查：${on ? '已开启' : '已关闭'}；按下切换`);
+  }
   setTheme(name) { this.el.querySelector('#st-theme').textContent = name; }
   setZoom(z) { this.el.querySelector('#st-zoom').textContent = Math.round(z * 100) + '%'; }
   setNotifications(count) {

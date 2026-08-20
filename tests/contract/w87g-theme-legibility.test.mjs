@@ -11,6 +11,7 @@ const convergence = read('renderer/styles/convergence.css');
 const panels = read('renderer/panels/panel-shared.css');
 const icons = read('renderer/lib/svg-icons.js');
 const slide = read('renderer/modules/slide/index.js');
+const browser = read('renderer/modules/browser/index.js');
 const runner = read('tests/e2e/w87g-theme-legibility.mjs');
 
 const luminance = hex => {
@@ -43,6 +44,7 @@ describe('W87g Theme Legibility', () => {
     assert.match(base, /\.rb-btn:disabled \{ opacity:\s*\.58/);
     assert.match(convergence, /\[aria-disabled="true"\][^{]*\{ opacity:\s*\.58/);
     assert.match(base, /\.mz-empty \.mz-empty-btn \{[^}]*background:\s*#1f2937[^}]*color:\s*#f8fafc/);
+    assert.match(browser, /#q::placeholder,\.hset input::placeholder\{color:var\(--mut\);opacity:1\}/, 'Browser 自有主页输入提示必须使用主题次级前景');
   });
 
   test('主壳与 Panel 的 SVG 控件统一 currentColor 和 2px 轮廓', () => {
@@ -50,6 +52,7 @@ describe('W87g Theme Legibility', () => {
     assert.match(convergence, /button svg, \[role="button"\] svg \{ stroke-width:\s*2; \}/);
     assert.match(panels, /button svg, \[role="button"\] svg \{ stroke-width:\s*2; \}/);
     assert.match(runner, /style\.stroke !== 'none'[\s\S]*style\.fill !== 'none'/, 'E2E 必须审计 SVG 实际 stroke/fill，不能只看 color');
+    assert.match(runner, /backgroundImage !== 'none'[\s\S]*parse\(nodeStyle\.backgroundImage\)/, 'E2E 必须合成渐变首层，不能把播放器暗色 scrim 当透明');
   });
 
   test('Slide 领域主题不再劫持应用 data-theme；全页 E2E 覆盖双主题、面板和 QuickNote', () => {

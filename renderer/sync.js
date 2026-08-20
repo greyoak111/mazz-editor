@@ -1,5 +1,6 @@
 // renderer/sync.js —— 局域网同步 UI + 更新检查命令
 import { modal, toast } from './shell/shell.js';
+import { iconHtml } from './lib/svg-icons.js';
 
 /** 发起共享（主机模式）：桌面走 TLS+WS 双通道；手机/平板走内置 WS 主机（原生 TCP 插件） */
 async function openHostDialog() {
@@ -122,7 +123,7 @@ async function openJoinDialog() {
   m.body.innerHTML = `
     <div style="min-width:400px">
       ${discovered.length ? `<div style="font-size:12px;color:var(--fg-dim);margin-bottom:6px">局域网内发现：</div>` +
-        discovered.map(d => `<div class="sync-peer" data-host="${d.host}" data-port="${d.port}" style="padding:6px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;cursor:pointer;font-size:12.5px">📡 ${d.name} <small style="color:var(--fg-dim)">${d.host}:${d.port}</small></div>`).join('')
+        discovered.map(d => `<div class="sync-peer" role="button" tabindex="0" data-host="${d.host}" data-port="${d.port}" style="padding:6px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;cursor:pointer;font-size:12.5px">${iconHtml('📡')}<span>${d.name}</span> <small style="color:var(--fg-dim)">${d.host}:${d.port}</small></div>`).join('')
       : '<div style="font-size:12px;color:var(--fg-dim);margin-bottom:8px">（mDNS 未发现设备——可手动输入主机信息；也可让对端先「发起共享」）</div>'}
       <div class="set-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
         <label style="width:52px">主机</label>
@@ -138,10 +139,14 @@ async function openJoinDialog() {
       </div>
       <div class="sj-status" style="margin-top:10px;font-size:12.5px;color:var(--fg-dim)"></div>
     </div>`;
-  m.body.querySelectorAll('.sync-peer').forEach(el => el.addEventListener('click', () => {
-    m.body.querySelector('#sj-host').value = el.dataset.host;
-    m.body.querySelector('#sj-port').value = el.dataset.port;
-  }));
+  m.body.querySelectorAll('.sync-peer').forEach(el => {
+    const choose = () => {
+      m.body.querySelector('#sj-host').value = el.dataset.host;
+      m.body.querySelector('#sj-port').value = el.dataset.port;
+    };
+    el.addEventListener('click', choose);
+    el.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(); } });
+  });
   m.body.querySelector('#sj-go').addEventListener('click', async () => {
     const host = m.body.querySelector('#sj-host').value.trim();
     const port = parseInt(m.body.querySelector('#sj-port').value, 10) || 47820;

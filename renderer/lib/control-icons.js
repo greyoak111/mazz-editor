@@ -1,13 +1,17 @@
-import { SVG_ICONS } from './svg-icons.js';
+import { SVG_ICONS, iconHtml, normalizeIconToken } from './svg-icons.js';
 
 const ICON_CONTAINER_SELECTOR = [
-  'button', '[role="button"]', '.ico', '.pi-icon', '.appwin-btn', '.p-winbtns button',
+  'button', '[role="button"]', '[role="menuitem"]', '[role="tab"]', '[data-a]', '[data-act]',
+  '.mazz-menu-item', '.ico', '.pi-icon', '.appwin-btn', '.p-winbtns button',
   '.tb-btn', '.win-btn', '.icon-btn', '[data-ui-icon]', '[data-icon-only]',
 ].join(',');
 
 const ICON_KEYS = Object.keys(SVG_ICONS).sort((a, b) => b.length - a.length);
 const ICON_ONLY = new RegExp(`^\\s*(${ICON_KEYS.map(escapeRegex).join('|')})\\s*$`, 'u');
 const ICON_PREFIX = new RegExp(`^(\\s*)(${ICON_KEYS.map(escapeRegex).join('|')})(?=\\s|$)`, 'u');
+const RAW_ICON_ONLY = /^\s*((?:\p{Extended_Pictographic}|[\u2190-\u21FF\u2300-\u23FF\u2500-\u25FF\u2600-\u27BF\u2B00-\u2BFF])(?:[\uFE0E\uFE0F\u200D]|\p{Extended_Pictographic}|[\u2190-\u21FF\u2300-\u23FF\u2500-\u25FF\u2600-\u27BF\u2B00-\u2BFF])*)\s*$/u;
+const RAW_ICON_PREFIX = /^(\s*)((?:\p{Extended_Pictographic}|[\u2190-\u21FF\u2300-\u23FF\u2500-\u25FF\u2600-\u27BF\u2B00-\u2BFF])(?:[\uFE0E\uFE0F\u200D]|\p{Extended_Pictographic}|[\u2190-\u21FF\u2300-\u23FF\u2500-\u25FF\u2600-\u27BF\u2B00-\u2BFF])*)(?=\s|$)/u;
+const SKIP_TEXT_ANCESTOR = 'svg,script,style,textarea,input,option,[data-ui-icon-text]';
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -15,20 +19,25 @@ function escapeRegex(value) {
 
 function svgNode(icon, documentRef) {
   const template = documentRef.createElement('template');
-  template.innerHTML = SVG_ICONS[icon] || '';
+  template.innerHTML = iconHtml(icon);
   return template.content.firstElementChild;
 }
 
 function replaceTextNode(textNode, documentRef) {
   const value = textNode.nodeValue || '';
-  const exact = ICON_ONLY.exec(value);
-  const prefix = exact || ICON_PREFIX.exec(value);
-  if (!prefix) return false;
-  const icon = exact ? exact[1] : prefix[2];
+  const knownExact = ICON_ONLY.exec(value);
+  const knownPrefix = knownExact ? null : ICON_PREFIX.exec(value);
+  const rawExact = knownExact || knownPrefix ? null : RAW_ICON_ONLY.exec(value);
+  const rawPrefix = knownExact || knownPrefix || rawExact ? null : RAW_ICON_PREFIX.exec(value);
+  const match = knownExact || knownPrefix || rawExact || rawPrefix;
+  if (!match) return false;
+  const isExact = Boolean(knownExact || rawExact);
+  const icon = normalizeIconToken(isExact ? match[1] : match[2]);
   const svg = svgNode(icon, documentRef);
   if (!svg) return false;
-  const before = exact ? value.slice(0, value.indexOf(icon)) : prefix[1];
-  const after = value.slice(value.indexOf(icon) + icon.length);
+  const rawIcon = isExact ? match[1] : match[2];
+  const before = isExact ? value.slice(0, value.indexOf(rawIcon)) : match[1];
+  const after = value.slice(value.indexOf(rawIcon) + rawIcon.length);
   const fragment = documentRef.createDocumentFragment();
   if (before) fragment.append(documentRef.createTextNode(before));
   fragment.append(svg);
@@ -37,11 +46,27 @@ function replaceTextNode(textNode, documentRef) {
   return true;
 }
 
+function descendantTextNodes(element) {
+  const documentRef = element.ownerDocument;
+  const filter = documentRef.defaultView?.NodeFilter || globalThis.NodeFilter;
+  if (!filter || !documentRef.createTreeWalker) return [...element.childNodes].filter(node => node.nodeType === 3);
+  const walker = documentRef.createTreeWalker(element, filter.SHOW_TEXT, {
+    acceptNode(node) {
+      return node.parentElement?.closest?.(SKIP_TEXT_ANCESTOR)
+        ? filter.FILTER_REJECT
+        : filter.FILTER_ACCEPT;
+    },
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  return nodes;
+}
+
 function normalizeOne(element) {
   if (!(element instanceof Element) || element.dataset.uiIconNormalized === '1') return 0;
   const originalLabel = element.getAttribute('aria-label') || element.getAttribute('title') || element.textContent?.trim() || '';
   let changed = 0;
-  for (const node of [...element.childNodes]) {
+  for (const node of descendantTextNodes(element)) {
     if (node.nodeType === Node.TEXT_NODE && replaceTextNode(node, element.ownerDocument)) changed += 1;
   }
   if (changed) {
@@ -83,8 +108,10 @@ export function installControlIconRuntime(documentRef = document) {
 export function findRawControlIcons(root = document) {
   const findings = [];
   for (const element of root.querySelectorAll?.(ICON_CONTAINER_SELECTOR) || []) {
-    const text = [...element.childNodes].filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.nodeValue || '').join('').trim();
-    if (ICON_ONLY.test(text) || ICON_PREFIX.test(text) || /[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(text)) findings.push({ tag: element.tagName, text, title: element.getAttribute('title') || '' });
+    const text = descendantTextNodes(element).map(node => node.nodeValue || '').join(' ').trim();
+    if (ICON_ONLY.test(text) || ICON_PREFIX.test(text) || RAW_ICON_ONLY.test(text) || RAW_ICON_PREFIX.test(text)) {
+      findings.push({ tag: element.tagName, text, title: element.getAttribute('title') || '' });
+    }
   }
   return findings;
 }

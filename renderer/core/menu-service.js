@@ -11,6 +11,8 @@ class MenuService {
   constructor() {
     this.contributions = new Map(); // menuId -> [{command, when, group, order, title}]
     this.activeDom = null;
+    this._domPreviousFocus = null;
+    this._domOutsideHandler = null;
   }
 
   contribute(menuId, items) {
@@ -79,9 +81,15 @@ class MenuService {
   }
 
   showDom(items, { x, y }) {
-    this.closeDom();
+    const HTMLElementCtor = document.defaultView?.HTMLElement;
+    const previousFocus = this.activeDom
+      ? this._domPreviousFocus
+      : (HTMLElementCtor && document.activeElement instanceof HTMLElementCtor ? document.activeElement : null);
+    this.closeDom({ restoreFocus: false });
+    this._domPreviousFocus = previousFocus?.isConnected ? previousFocus : null;
     const menu = document.createElement('div');
     menu.className = 'mazz-menu';
+    menu.setAttribute('role', 'menu');
     for (const it of items) {
       if (it.type === 'separator') {
         const sep = document.createElement('div');
@@ -98,6 +106,9 @@ class MenuService {
       }
       const row = document.createElement('div');
       row.className = 'mazz-menu-item' + (it.enabled ? '' : ' disabled');
+      row.setAttribute('role', 'menuitem');
+      row.tabIndex = it.enabled ? 0 : -1;
+      row.setAttribute('aria-disabled', it.enabled ? 'false' : 'true');
       row.innerHTML = `<span class="mazz-menu-icon">${iconHtml(it.icon || '')}</span><span class="mazz-menu-label"></span><span class="mazz-menu-key">${it.accelerator || ''}</span>`;
       row.querySelector('.mazz-menu-label').textContent = it.label;
       if (it.enabled) {
@@ -110,12 +121,42 @@ class MenuService {
     menu.style.left = Math.min(x, window.innerWidth - rect.width - 8) + 'px';
     menu.style.top = Math.min(y, window.innerHeight - rect.height - 8) + 'px';
     this.activeDom = menu;
+    const enabledRows = [...menu.querySelectorAll('[role="menuitem"]:not(.disabled)')];
+    const moveFocus = (delta) => {
+      if (!enabledRows.length) return;
+      const at = Math.max(0, enabledRows.indexOf(document.activeElement));
+      enabledRows[(at + delta + enabledRows.length) % enabledRows.length].focus();
+    };
+    menu.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        moveFocus(event.key === 'ArrowDown' ? 1 : -1);
+      } else if ((event.key === 'Enter' || event.key === ' ') && document.activeElement?.matches?.('[role="menuitem"]:not(.disabled)')) {
+        event.preventDefault();
+        document.activeElement.click();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeDom();
+      }
+    });
+    enabledRows[0]?.focus({ preventScroll: true });
     setTimeout(() => {
-      window.addEventListener('mousedown', (e) => { if (!menu.contains(e.target)) this.closeDom(); }, { once: true });
-      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.closeDom(); }, { once: true });
+      if (this.activeDom !== menu) return;
+      this._domOutsideHandler = (event) => {
+        if (!menu.contains(event.target)) this.closeDom({ restoreFocus: false });
+      };
+      window.addEventListener('mousedown', this._domOutsideHandler);
     }, 0);
   }
-  closeDom() { this.activeDom?.remove(); this.activeDom = null; }
+  closeDom({ restoreFocus = true } = {}) {
+    if (this._domOutsideHandler) window.removeEventListener('mousedown', this._domOutsideHandler);
+    this._domOutsideHandler = null;
+    this.activeDom?.remove();
+    this.activeDom = null;
+    const previousFocus = this._domPreviousFocus;
+    this._domPreviousFocus = null;
+    if (restoreFocus && previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+  }
 }
 
 export const menus = new MenuService();

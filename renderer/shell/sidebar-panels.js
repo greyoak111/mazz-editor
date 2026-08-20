@@ -51,7 +51,7 @@ export class SidebarPanels {
     this.wsBar.className = 'sb-wsbar';
     this.wsBar.innerHTML = `
       <select class="sb-ws-sel rb-select" title="切换工作区"></select>
-      <button class="sb-tbtn" data-a="ws-manage" title="工作区管理（添加/移除/改名）">⋯</button>`;
+      <button class="sb-tbtn" data-a="ws-manage" title="工作区管理（添加/移除/改名）" aria-label="工作区管理">${iconHtml('⋯')}</button>`;
     head.before(this.wsBar);
     this.wsSel = this.wsBar.querySelector('.sb-ws-sel');
     // B12b 收编：工作区切换器子窗格化（原生弹出层被视图压的根治形——select 隐藏保留作状态单源，选项开格时重读）
@@ -71,6 +71,8 @@ export class SidebarPanels {
 
     this.tabbar = document.createElement('div');
     this.tabbar.className = 'sb-tabbar';
+    this.tabbar.setAttribute('role', 'tablist');
+    this.tabbar.setAttribute('aria-label', '侧栏页面');
     const TABS = [
       ['files', '🗀', '文档'],
       ['outline', '≡', '大纲'],
@@ -82,19 +84,36 @@ export class SidebarPanels {
       ['cognition', '◈', '认知'],
     ];
     this.tabbar.innerHTML = TABS.map(([id, ico, t]) =>
-      `<button class="sb-tab" data-t="${id}" title="${t}"><span class="sb-tab-icon" aria-hidden="true">${iconHtml(ico)}</span><span>${t}</span></button>`).join('');
+      `<button class="sb-tab" id="sb-tab-${id}" role="tab" aria-controls="sb-panel-${id}" aria-selected="false" tabindex="-1" data-t="${id}" title="${t}"><span class="sb-tab-icon" aria-hidden="true">${iconHtml(ico)}</span><span>${t}</span></button>`).join('');
     head.before(this.tabbar);
     this.tabbar.querySelectorAll('.sb-tab').forEach(b =>
       b.addEventListener('click', () => this.showTab(b.dataset.t)));
+    this.tabbar.addEventListener('keydown', (event) => {
+      const current = event.target.closest('[role="tab"]');
+      if (!current || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = [...this.tabbar.querySelectorAll('[role="tab"]')];
+      const at = tabs.indexOf(current);
+      const next = event.key === 'Home' ? tabs[0]
+        : event.key === 'End' ? tabs.at(-1)
+          : tabs[(at + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+      this.showTab(next.dataset.t);
+      next.focus();
+    });
   }
 
   // ==================== 面板容器 ====================
   buildPanels() {
     const tree = this.sidebar.querySelector('.filetree');
+    tree.id = 'sb-panel-files';
+    tree.setAttribute('aria-labelledby', 'sb-tab-files');
     this.panels = {};
     for (const id of ['outline', 'marks', 'tags', 'backlinks', 'contexts', 'history', 'cognition']) {
       const el = document.createElement('div');
       el.className = 'sb-panel sb-panel-' + id;
+      el.id = 'sb-panel-' + id;
+      el.setAttribute('role', 'tabpanel');
+      el.setAttribute('aria-labelledby', 'sb-tab-' + id);
       el.style.display = 'none';
       tree.after(el);
       this.panels[id] = el;
@@ -147,7 +166,7 @@ export class SidebarPanels {
         <div style="min-width:420px">
           <div class="ws-list" style="max-height:40vh;overflow:auto"></div>
           <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="rb-btn" id="ws-add" style="flex-direction:row">＋ 添加工作区…</button>
+            <button class="rb-btn" id="ws-add" style="flex-direction:row">${iconHtml('＋')}<span>添加工作区…</span></button>
           </div>
         </div>`;
       m.body.querySelector('#ws-add').addEventListener('click', async () => {
@@ -168,8 +187,17 @@ export class SidebarPanels {
   showTab(id) {
     this.tab = id;
     if (this.toolhead) this.toolhead.style.display = id === 'files' ? '' : 'none';
-    this.tabbar.querySelectorAll('.sb-tab').forEach(b => b.classList.toggle('on', b.dataset.t === id));
-    for (const [k, el] of Object.entries(this.panels)) el.style.display = k === id ? '' : 'none';
+    this.tabbar.querySelectorAll('.sb-tab').forEach(b => {
+      const selected = b.dataset.t === id;
+      b.classList.toggle('on', selected);
+      b.setAttribute('aria-selected', String(selected));
+      b.tabIndex = selected ? 0 : -1;
+    });
+    for (const [k, el] of Object.entries(this.panels)) {
+      const selected = k === id;
+      el.style.display = selected ? '' : 'none';
+      el.setAttribute('aria-hidden', String(!selected));
+    }
     if (id === 'outline') this.refreshOutline();
     if (id === 'marks') this.refreshMarks();
     if (id === 'tags') this.refreshTags();
@@ -204,17 +232,22 @@ export class SidebarPanels {
     el.innerHTML = `
       <div class="sb-tool">
         <input class="sb-filter rb-input" placeholder="关键字过滤 Enter" spellcheck="false">
-        <button class="sb-tbtn" data-a="expand-all" title="全部展开">${iconHtml('▾')}</button>
-        <button class="sb-tbtn" data-a="collapse-all" title="全部收起">${iconHtml('▴')}</button>
+        <button class="sb-tbtn" data-a="expand-all" title="全部展开" aria-label="全部展开大纲">${iconHtml('▾')}</button>
+        <button class="sb-tbtn" data-a="collapse-all" title="全部收起" aria-label="全部收起大纲">${iconHtml('▴')}</button>
       </div>
-      <div class="sb-list sb-outline"></div>`;
+      <div class="sb-list sb-outline" role="tree" aria-label="当前文档大纲"></div>`;
     this.outlineList = el.querySelector('.sb-outline');
     el.querySelector('.sb-filter').addEventListener('keydown', (e) => {
       e.stopPropagation();
       if (e.key === 'Enter') this.refreshOutline(e.target.value.trim());
     });
     el.querySelector('[data-a=expand-all]').addEventListener('click', () => {
-      this.outlineList.querySelectorAll('.sb-ol-node').forEach(n => { n.classList.remove('closed'); n.style.display = ''; });
+      this.outlineList.querySelectorAll('.sb-ol-node').forEach(n => {
+        n.classList.remove('closed');
+        n.style.display = '';
+        const item = n.querySelector('.sb-ol-item');
+        if (item?.hasAttribute('aria-expanded')) item.setAttribute('aria-expanded', 'true');
+      });
     });
     el.querySelector('[data-a=collapse-all]').addEventListener('click', () => {
       // 只折顶层（后代随父级隐藏），与单击箭头同一套逻辑
@@ -230,6 +263,18 @@ export class SidebarPanels {
       // 双重绑定曾致 class 被连切两次：节点藏了状态却复位，全展全收全乱）
       const item = e.target.closest('.sb-ol-item');
       if (item && !e.target.closest('.sb-ol-arrow')) this.jumpToHeading(item.dataset.text);
+    });
+    this.outlineList.addEventListener('keydown', (event) => {
+      const item = event.target.closest('.sb-ol-item');
+      if (!item) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.jumpToHeading(item.dataset.text);
+      } else if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && item.hasAttribute('aria-expanded')) {
+        event.preventDefault();
+        const node = item.closest('.sb-ol-node');
+        this._olSetClosed?.(node, event.key === 'ArrowLeft');
+      }
     });
   }
 
@@ -261,8 +306,8 @@ export class SidebarPanels {
       for (let j = i + 1; j < items.length && items[j].level > h.level; j++) children++;
       const pad = (h.level - 1) * 14;
       html.push(`<div class="sb-ol-node" style="padding-left:${pad + 6}px">
-        <span class="sb-ol-item" data-text="${h.text.replace(/"/g, '&quot;')}">
-          ${children ? `<i class="sb-ol-arrow">▾</i>` : '<i class="sb-ol-arrow sb-ol-leaf"></i>'}
+        <span class="sb-ol-item" role="treeitem" tabindex="0" aria-level="${h.level}" ${children ? 'aria-expanded="true"' : ''} data-text="${h.text.replace(/"/g, '&quot;')}">
+          ${children ? `<i class="sb-ol-arrow" aria-hidden="true">${iconHtml('▾')}</i>` : '<i class="sb-ol-arrow sb-ol-leaf" aria-hidden="true"></i>'}
           <em class="sb-ol-lv">H${h.level}</em> ${h.text}
           ${children ? `<span class="sb-ol-count">${children}</span>` : ''}
         </span></div>`);
@@ -271,6 +316,8 @@ export class SidebarPanels {
     // 折叠态：父级收起时隐藏后代（用 max-level 标记实现）
     const setNodeClosed = (node, close) => {
       node.classList.toggle('closed', close);
+      const item = node.querySelector('.sb-ol-item');
+      if (item?.hasAttribute('aria-expanded')) item.setAttribute('aria-expanded', String(!close));
       const myLv = +node.querySelector('.sb-ol-lv').textContent.slice(1);
       let sib = node.nextElementSibling;
       while (sib) {
@@ -335,6 +382,12 @@ export class SidebarPanels {
       const item = e.target.closest('.sb-item');
       if (item?.dataset.path) this.shell.openFile(item.dataset.path);
     });
+    this.marksList.addEventListener('keydown', (event) => {
+      const del = event.target.closest('[data-del]');
+      if (!del || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      del.click();
+    });
   }
 
   async getMarks() {
@@ -345,7 +398,7 @@ export class SidebarPanels {
   async refreshMarks() {
     const all = await this.getMarks();
     this.marksList.innerHTML = all.length
-      ? all.map((m, i) => `<div class="sb-item" data-path="${m.path}">${iconHtml('🔖')}<span class="sb-item-t">${m.title || m.path.split(/[\\/]/).pop()}</span><span class="sb-item-del" data-del="${i}" title="移除">✕</span></div>`).join('')
+      ? all.map((m, i) => `<div class="sb-item" data-path="${m.path}">${iconHtml('🔖')}<span class="sb-item-t">${m.title || m.path.split(/[\\/]/).pop()}</span><span class="sb-item-del" role="button" tabindex="0" aria-label="移除书签" data-del="${i}" title="移除">${iconHtml('✕')}</span></div>`).join('')
       : '<div class="sb-empty">未找到相关内容——把常用文件加入书签，一键直达</div>';
   }
 
@@ -585,8 +638,8 @@ export class SidebarPanels {
           const target = node.kind === 'file' ? node.provenance?.filePath : node.canonicalRef;
           return `<div class="sb-item sb-context-item" data-context-node="${encodeURIComponent(node.nodeId)}" data-kind="${node.kind}" data-target="${encodeURIComponent(target || '')}">
             ${iconHtml(node.kind === 'url' ? '🌐' : '📄')}<span class="sb-item-t"><b>${esc(placement.alias || node.label)}</b>${placement.note ? `<small>${esc(placement.note)}</small>` : ''}</span>
-            <button class="sb-item-act" data-context-edit="${encodeURIComponent(placement.placementId)}" data-alias="${encodeURIComponent(placement.alias || '')}" data-note="${encodeURIComponent(placement.note || '')}" title="编辑此处名称与备注">✎</button>
-            <button class="sb-item-act" data-context-remove="${encodeURIComponent(placement.placementId)}" title="仅从此上下文移除">✕</button>
+            <button class="sb-item-act" data-context-edit="${encodeURIComponent(placement.placementId)}" data-alias="${encodeURIComponent(placement.alias || '')}" data-note="${encodeURIComponent(placement.note || '')}" title="编辑此处名称与备注" aria-label="编辑此处名称与备注">${iconHtml('✎')}</button>
+            <button class="sb-item-act" data-context-remove="${encodeURIComponent(placement.placementId)}" title="仅从此上下文移除" aria-label="仅从此上下文移除">${iconHtml('✕')}</button>
           </div>`;
         }).join('') : '<div class="sb-empty">（空上下文）</div>'}
       </div>`;

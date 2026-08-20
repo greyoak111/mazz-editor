@@ -734,20 +734,20 @@ export default {
     <div class="rb-group" data-label="颜色">
       <div id="md-color-picker"></div>
       <div id="md-highlight-picker"></div>
-      <button class="rb-btn" data-command="markdown.clearTextStyle"><i class="ico">⌫</i><span>清样式</span></button>
+      <button class="rb-btn" data-command="markdown.clearTextStyle"><i class="ico">${iconHtml('⌫')}</i><span>清样式</span></button>
     </div>
     <div class="rb-group" data-label="对齐/行距">
-      <button class="rb-btn" data-command="markdown.setAlign" data-align="left"><i class="ico">⇤</i><span>左对齐</span></button>
-      <button class="rb-btn" data-command="markdown.setAlign" data-align="center"><i class="ico">↔</i><span>居中</span></button>
-      <button class="rb-btn" data-command="markdown.setAlign" data-align="right"><i class="ico">⇥</i><span>右对齐</span></button>
-      <button class="rb-btn" data-command="markdown.setAlign" data-align="justify"><i class="ico">☰</i><span>两端</span></button>
-      <button class="rb-btn" data-command="markdown.setAlign" data-align="distributed"><i class="ico">⇹</i><span>分散</span></button>
+      <button class="rb-btn" data-command="markdown.setAlign" data-align="left"><i class="ico">${iconHtml('⇤')}</i><span>左对齐</span></button>
+      <button class="rb-btn" data-command="markdown.setAlign" data-align="center"><i class="ico">${iconHtml('↔')}</i><span>居中</span></button>
+      <button class="rb-btn" data-command="markdown.setAlign" data-align="right"><i class="ico">${iconHtml('⇥')}</i><span>右对齐</span></button>
+      <button class="rb-btn" data-command="markdown.setAlign" data-align="justify"><i class="ico">${iconHtml('☰')}</i><span>两端</span></button>
+      <button class="rb-btn" data-command="markdown.setAlign" data-align="distributed"><i class="ico">${iconHtml('⇹')}</i><span>分散</span></button>
       <select class="rb-select" id="md-lineheight" title="行距">
         <option value="">行距</option><option value="1">1.0</option><option value="1.15">1.15</option>
         <option value="1.5">1.5</option><option value="2">2.0</option><option value="2.5">2.5</option><option value="3">3.0</option>
       </select>
-      <button class="rb-btn" data-command="markdown.setIndent" data-indent="2"><i class="ico">⇨</i><span>首行缩进</span></button>
-      <button class="rb-btn" data-command="markdown.setIndent" data-indent=""><i class="ico">⇦</i><span>去缩进</span></button>
+      <button class="rb-btn" data-command="markdown.setIndent" data-indent="2"><i class="ico">${iconHtml('⇨')}</i><span>首行缩进</span></button>
+      <button class="rb-btn" data-command="markdown.setIndent" data-indent=""><i class="ico">${iconHtml('⇦')}</i><span>去缩进</span></button>
       <button class="rb-btn" data-command="markdown.toggleDropCap"><i class="ico">${iconHtml('❆')}</i><span>首字下沉</span></button>
     </div>
     <div class="rb-group" data-label="段落">
@@ -756,29 +756,29 @@ export default {
         <option value="3">标题 3</option><option value="4">标题 4</option><option value="5">标题 5</option>
         <option value="6">标题 6</option>
       </select>
-      <button class="rb-btn" data-command="markdown.toggleBulletList"><i class="ico">•≡</i><span>无序列表</span></button>
-      <button class="rb-btn" data-command="markdown.toggleOrderedList"><i class="ico">1≡</i><span>有序列表</span></button>
-      <button class="rb-btn" data-command="markdown.toggleBlockquote"><i class="ico">❝</i><span>引用</span></button>
+      <button class="rb-btn" data-command="markdown.toggleBulletList"><i class="ico">${iconHtml('•≡')}</i><span>无序列表</span></button>
+      <button class="rb-btn" data-command="markdown.toggleOrderedList"><i class="ico">${iconHtml('1≡')}</i><span>有序列表</span></button>
+      <button class="rb-btn" data-command="markdown.toggleBlockquote"><i class="ico">${iconHtml('❝')}</i><span>引用</span></button>
       <button class="rb-btn" data-command="markdown.setCodeBlock"><i class="ico">{ }</i><span>代码块</span></button>
     </div>
     <div class="rb-group" data-label="插入">
       <button class="rb-btn" data-command="markdown.insertLink"><i class="ico">${iconHtml('🔗')}</i><span>链接</span></button>
       <button class="rb-btn" data-command="markdown.insertImage"><i class="ico">${iconHtml('🖼')}</i><span>图片</span></button>
-      <button class="rb-btn" data-command="markdown.insertHr"><i class="ico">―</i><span>分割线</span></button>
-      <button class="rb-btn" data-command="markdown.insertTable"><i class="ico">▦</i><span>表格</span></button>
-      <button class="rb-btn" data-command="markdown.insertFootnote"><i class="ico">†</i><span>脚注</span></button>
+      <button class="rb-btn" data-command="markdown.insertHr"><i class="ico">${iconHtml('―')}</i><span>分割线</span></button>
+      <button class="rb-btn" data-command="markdown.insertTable"><i class="ico">${iconHtml('▦')}</i><span>表格</span></button>
+      <button class="rb-btn" data-command="markdown.insertFootnote"><i class="ico">${iconHtml('†')}</i><span>脚注</span></button>
     </div>
     <div class="rb-group" data-label="页面">
-      <button class="rb-btn" data-command="markdown.toggleToc"><i class="ico">≡</i><span>目录</span></button>
+      <button class="rb-btn" data-command="markdown.toggleToc"><i class="ico">${iconHtml('≡')}</i><span>目录</span></button>
       <button class="rb-btn" data-command="markdown.pageSetup"><i class="ico">${iconHtml('⚙')}</i><span>页面设置</span></button>
       <button class="rb-btn" data-command="markdown.pagePreview"><i class="ico">${iconHtml('📄')}</i><span>分页预览</span></button>
       <button class="rb-btn" data-command="markdown.exportDocx"><i class="ico">${iconHtml('📦')}</i><span>导出docx</span></button>
     </div>
     <div class="rb-group" data-label="编辑">
-      <button class="rb-btn" data-command="edit.find"><i class="ico">🔍</i><span>查找</span></button>
-      <button class="rb-btn" data-command="edit.replace"><i class="ico">⇄</i><span>替换</span></button>
-      <button class="rb-btn" data-command="edit.undo"><i class="ico">↩</i><span>撤销</span></button>
-      <button class="rb-btn" data-command="edit.redo"><i class="ico">↪</i><span>重做</span></button>
+      <button class="rb-btn" data-command="edit.find"><i class="ico">${iconHtml('🔍')}</i><span>查找</span></button>
+      <button class="rb-btn" data-command="edit.replace"><i class="ico">${iconHtml('⇄')}</i><span>替换</span></button>
+      <button class="rb-btn" data-command="edit.undo"><i class="ico">${iconHtml('↩')}</i><span>撤销</span></button>
+      <button class="rb-btn" data-command="edit.redo"><i class="ico">${iconHtml('↪')}</i><span>重做</span></button>
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {

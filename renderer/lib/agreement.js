@@ -107,7 +107,7 @@ export async function showAgreement() {
         <input type="checkbox" id="agree-nomore"> ${c.noMore}
       </label>
       <button id="agree-close" class="rb-btn" style="flex-direction:row;padding:6px 18px">${c.close}</button>
-      <button id="agree-accept" class="rb-btn" style="flex-direction:row;padding:6px 18px;background:var(--acc,#4f46e5);color:#fff">${c.accept}</button>
+      <button id="agree-accept" class="rb-btn" style="flex-direction:row;padding:6px 18px;background:var(--accent,var(--acc,#4f46e5));color:var(--accent-fg,#fff)">${c.accept}</button>
     </div>`;
   // 轻量 Markdown 渲染（## 标题 / **加粗** / 段落）
   const html = c.body

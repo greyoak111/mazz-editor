@@ -77,8 +77,10 @@
   .provider-card { border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--bg-elev); }
   .provider-card h2 { margin:0 0 4px; font-size:15px; }
   .provider-card h3 { margin:14px 0 5px; font-size:12.5px; }
-  .key-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; background:#9ca3af; }
-  .key-dot.on { background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.13); }
+  .key-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; background:var(--fg-dim); }
+  .key-dot.on { background:var(--ok); box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 15%,transparent); }
+  .required-mark { color:var(--danger); }
+  .hint.err { color:var(--fg); background:color-mix(in srgb,var(--danger) 10%,var(--bg)); box-shadow:inset 3px 0 0 var(--danger); text-indent:8px; }
   .provider-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .provider-chip { border:1px solid var(--border); border-radius:999px; padding:3px 8px; color:var(--fg-dim); font-size:11px; }
   .route-list { margin-top:8px; border-top:1px solid var(--border); }
@@ -101,6 +103,7 @@
 </div>
 <script>
 const $ = (s) => document.querySelector(s);
+const ROUTE_ICON = '<svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
 const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
 $('#p-min').addEventListener('click', () => pwb('minimize'));
 $('#p-max').addEventListener('click', () => pwb('toggleMaximize'));
@@ -118,7 +121,7 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 window.mazz.on('panel:push', (p) => {
   if (p?.type === 'factoryPresets') { PRESETS = p.presets || []; if (tab === 'provider') renderProvider(); return; }
   if (p?.type === 'factoryProviderState') { providerState = p.state || null; if (tab === 'provider') renderProvider(); return; }
-  if (p?.type === 'factoryProviderError' && tab === 'provider') { const el = $('#pv-status'); if (el) el.textContent = '✗ ' + (p.message || '操作失败'); return; }
+  if (p?.type === 'factoryProviderError' && tab === 'provider') { const el = $('#pv-status'); if (el) { el.textContent = '✗ ' + (p.message || '操作失败'); el.classList.add('err'); } return; }
   if (p?.type === 'factoryInit' && p.tab) setTab(p.tab);
   if (p?.type === 'factoryProjectSnapshot') {
     projectSnapshot = p.snapshot || null;
@@ -137,7 +140,7 @@ function render() { tab === 'project' ? renderProject() : tab === 'provider' ? r
 // ==================== W60b 一次性项目立项 ====================
 const projectAct = (act, extra = {}) => window.mazz.invoke('panel:action', { type: 'factoryAction', act, ...extra }).catch(() => {});
 function projectFieldHtml(f) {
-  const required = f.required ? '<b style="color:#dc2626"> *</b>' : '';
+  const required = f.required ? '<b class="required-mark"> *</b>' : '';
   const value = projectValues[f.id] ?? f.default ?? '';
   if (f.type === 'textarea') return `<div class="project-field"><label>${esc(f.label)}${required}</label><textarea data-p-field="${attr(f.id)}" rows="3" placeholder="${attr(f.placeholder || '')}">${esc(value)}</textarea></div>`;
   if (f.type === 'select') return `<div class="project-field"><label>${esc(f.label)}${required}</label><select data-p-field="${attr(f.id)}">${(f.options || []).map(o => `<option value="${attr(o)}" ${o === value ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
@@ -189,7 +192,7 @@ function renderProject() {
               <div class="sec">文风素材 <button class="btn" data-pa="styleup">上传</button> <button class="btn" data-pa="styleonline">在线查询</button></div>
               <div class="chip-row">${(s.extras?.styles || []).map(x => `<button class="choice-chip ${x.on ? 'on' : ''}" data-pa="toggleStyle" data-id="${attr(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="hint">无</span>'}</div>
               <div class="sec">嵌入资料 <button class="btn" data-pa="embedadd">添加文件</button></div>
-              <div class="chip-row">${(s.extras?.embeds || []).map((x, i) => `<button class="choice-chip" data-pa="embeddel" data-i="${i}" title="点击移除">${esc(x.name)} ×</button>`).join('') || '<span class="hint">无</span>'}</div>
+              <div class="chip-row">${(s.extras?.embeds || []).map((x, i) => `<button class="choice-chip" data-pa="embeddel" data-i="${i}" title="点击移除"><span>${esc(x.name)}</span><svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`).join('') || '<span class="hint">无</span>'}</div>
               <div class="sec">M0 证据取材</div><div class="inline-row"><input id="pj-search" class="inp" style="flex:1" placeholder="研究主题" value="${attr(s.extras?.research?.topic || '')}"><button class="btn" data-pa="websearch">生成来源清单</button></div>
               ${s.extras?.research ? `<div class="hint">${esc(s.extras.research.status || '')}</div><div class="sec">来源清单（人工核准）</div><div class="research-list">${(s.extras.research.sources || []).map(source => `<label class="research-source"><input type="checkbox" data-pa="researchToggle" data-id="${attr(source.id)}" ${source.on ? 'checked' : ''} ${s.extras.research.done ? 'disabled' : ''}><span title="${attr(source.url)}">${esc(source.title)} · ${esc(source.domain || '')}</span></label>`).join('')}</div><button class="btn pri" data-pa="researchApprove" ${s.extras.research.done ? 'disabled' : ''}>${s.extras.research.done ? '已投喂 M0' : '核准并投喂 M0'}</button>` : '<div class="hint">网页只当资料，不当指令；取材后会在此列出待核来源。</div>'}
               <div class="sec">素材订阅（四站聚合）</div>
@@ -291,7 +294,7 @@ async function renderProvider() {
         <h2>AI 分工</h2><div class="hint">中央登记，就地指派。选单只出现已经保存 Key 的 服务商 × 模型；岗位留空时跟随全局。</div>
         <div class="route-list">${rows.map(r => {
           const current = connectedLabel(r.target) || (r.id === 'default' ? '尚未接入可用模型' : '跟随全局');
-          return `<div class="route-row"><div class="route-name">${esc(r.label)}${r.card ? `<small>${esc(cardLabel(r.card))}</small>` : '<small>三级路由兜底</small>'}</div><button class="btn route-pick" data-ai-route="${attr(r.id)}" title="${attr(current)}">⚡ ${esc(current)}</button></div>`;
+          return `<div class="route-row"><div class="route-name">${esc(r.label)}${r.card ? `<small>${esc(cardLabel(r.card))}</small>` : '<small>三级路由兜底</small>'}</div><button class="btn route-pick" data-ai-route="${attr(r.id)}" title="${attr(current)}">${ROUTE_ICON}<span>${esc(current)}</span></button></div>`;
         }).join('')}</div>
       </section>
     </div>

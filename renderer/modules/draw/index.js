@@ -83,9 +83,9 @@ function createDraw(container) {
     <div class="draw-main">
       <div class="draw-canvas-wrap" tabindex="0">
         <canvas class="draw-canvas"></canvas>
-        <button class="draw-collapse-ts" title="收起/展开工具菜单">«</button>
+        <button class="draw-collapse-ts" aria-expanded="true" title="收起/展开工具菜单">${iconHtml('‹')}</button>
         <div class="draw-tool-strip">
-          <div class="draw-ts-grip" title="拖动移动工具条">⠿</div>
+          <div class="draw-ts-grip" title="拖动移动工具条">${iconHtml('⠿')}</div>
           <div class="draw-palette">${PALETTE.map(c => `<i data-c="${c}" style="background:${c}" title="${c}"></i>`).join('')}</div>
           <div class="draw-tool-row1"></div>
           <div class="draw-tool-row2">
@@ -95,20 +95,20 @@ function createDraw(container) {
             <label title="平滑">〜<input type="range" class="draw-smooth" min="0" max="90" value="50" /></label>
             <button data-a="save-brush" title="把当前参数保存为自定义笔刷">存笔刷</button>
             <button data-a="import-abr" title="导入 Photoshop 笔刷（.abr）">ABR</button>
-            <button data-a="more" title="更多（滤镜/翻转/信息）">更多 ▾</button>
+            <button data-a="more" title="更多（滤镜/翻转/信息）"><span>更多</span>${iconHtml('▾')}</button>
             <select class="draw-guides" title="辅助线">
               <option value="">辅助线</option><option value="center">中线</option><option value="thirds">三分网格</option>
               <option value="p1">一点透视</option><option value="p2">二点透视</option><option value="p3">三点透视</option>
             </select>
             <label title="抖动修正（越高越稳）">稳<input type="range" class="draw-stab" min="0" max="90" value="0" /></label>
-            <button data-a="record" class="draw-rec" title="录制绘制过程（mp4 存工作区）">● 内录</button>
+            <button data-a="record" class="draw-rec" title="录制绘制过程（mp4 存工作区）">${iconHtml('●')}<span>内录</span></button>
           </div>
         </div>
       </div>
       <div class="draw-side">
-        <div class="draw-sect">图层 <button data-a="add-layer" title="新建图层">＋</button><button class="draw-collapse-side" title="收起/展开图层面板">«</button></div>
+        <div class="draw-sect">图层 <button data-a="add-layer" title="新建图层">${iconHtml('＋')}</button><button class="draw-collapse-side" aria-expanded="true" title="收起/展开图层面板">${iconHtml('‹')}</button></div>
         <div class="draw-layers"></div>
-        <div class="draw-sect">参考图 <button data-a="add-image" title="贴入参考图">＋</button></div>
+        <div class="draw-sect">参考图 <button data-a="add-image" title="贴入参考图">${iconHtml('＋')}</button></div>
         <div class="draw-images"></div>
         <div class="draw-sect draw-ref-sect" style="display:none">分镜参考</div>
         <div class="draw-ref" style="display:none"></div>
@@ -117,9 +117,9 @@ function createDraw(container) {
     <div class="draw-frames">
       <label class="draw-onion"><input type="checkbox" class="onion-toggle" /> 洋葱皮</label>
       <div class="draw-frame-list"></div>
-      <button data-a="add-frame" title="新建帧">＋帧</button>
-      <button data-a="dup-frame" title="复制当前帧">⧉</button>
-      <button data-a="del-frame" title="删除当前帧">✕</button>
+      <button data-a="add-frame" title="新建帧">${iconHtml('＋')}<span>帧</span></button>
+      <button data-a="dup-frame" title="复制当前帧">${iconHtml('⧉')}</button>
+      <button data-a="del-frame" title="删除当前帧" aria-label="删除当前帧">${iconHtml('✕')}</button>
     </div>`;
   container.appendChild(root);
 
@@ -748,7 +748,8 @@ function createDraw(container) {
   const strip = root.querySelector('.draw-tool-strip');
   tsBtn.addEventListener('click', () => {
     const collapsed = strip.classList.toggle('collapsed');
-    tsBtn.textContent = collapsed ? '»' : '«';
+    tsBtn.innerHTML = iconHtml(collapsed ? '›' : '‹');
+    tsBtn.setAttribute('aria-expanded', String(!collapsed));
   });
   // 工具条拖拽移动（握住 ⠿ 手柄拖到任意位置，位置随会话保留）
   const grip = root.querySelector('.draw-ts-grip');
@@ -772,7 +773,8 @@ function createDraw(container) {
   const side = root.querySelector('.draw-side');
   sideBtn.addEventListener('click', () => {
     const collapsed = side.classList.toggle('collapsed');
-    sideBtn.textContent = collapsed ? '»' : '«';
+    sideBtn.innerHTML = iconHtml(collapsed ? '›' : '‹');
+    sideBtn.setAttribute('aria-expanded', String(!collapsed));
     resize();
   });
 
@@ -975,7 +977,7 @@ function createDraw(container) {
       <div class="mazz-menu-item" data-a="redo">重做</div>
       <div class="mazz-menu-sep"></div>
       <div class="mazz-menu-item" data-a="clear-layer">清空当前图层</div>
-      <div class="mazz-menu-item" data-a="onion">${ctl.onion ? '✓ ' : ''}洋葱皮</div>
+      <div class="mazz-menu-item" data-a="onion">${ctl.onion ? iconHtml('✓') : ''}<span>洋葱皮</span></div>
       <div class="mazz-menu-sep"></div>
       <div class="mazz-menu-item" data-a="export">导出 PNG</div>
       <div class="mazz-menu-item" data-a="export-seq">导出 PNG 序列（全部帧）</div>`;
@@ -1022,17 +1024,17 @@ function createDraw(container) {
   function renderRow1() {
     const cats = [...ctl.brushes.filter(b => !b.custom), ...ctl.brushes.filter(b => b.custom)];
     row1.innerHTML = cats.map(b =>
-      `<button data-t="${b.type}" data-id="${b.id}" title="${b.name}（${b.type}）">${iconHtml(({ pen: '✒', pencil: '✏', marker: '🖍', airbrush: '💨', watercolor: '💧', calligraphy: '🖌', soft: '☁', stamp: '🌸' })[b.type]) || '🖊'}</button>`
+      `<button data-t="${b.type}" data-id="${b.id}" title="${b.name}（${b.type}）">${iconHtml(({ pen: '✒', pencil: '✏', marker: '🖍', airbrush: '💨', watercolor: '💧', calligraphy: '🖌', soft: '☁', stamp: '🌸' })[b.type] || '🖊')}</button>`
     ).join('') + `
       <span class="sep"></span>
       <button data-t="liquify" title="液化（推抹像素）">${iconHtml('🌀')}</button>
-      <button data-t="shape-rect" title="矩形">▭</button>
-      <button data-t="shape-ellipse" title="椭圆">◯</button>
-      <button data-t="shape-line" title="直线">╱</button>
-      <button data-t="shape-text" title="文字">T</button>
+      <button data-t="shape-rect" title="矩形">${iconHtml('▭')}</button>
+      <button data-t="shape-ellipse" title="椭圆">${iconHtml('◯')}</button>
+      <button data-t="shape-line" title="直线">${iconHtml('╱')}</button>
+      <button data-t="shape-text" title="文字">${iconHtml('T')}</button>
       <button data-t="bucket" title="油漆桶">${iconHtml('🪣')}</button>
       <button data-t="picker" title="吸管取色">${iconHtml('💉')}</button>
-      <button data-t="lasso" title="套索选择">◌</button>
+      <button data-t="lasso" title="套索选择">${iconHtml('◌')}</button>
       <span class="sep"></span>
       <button data-t="eraser" title="橡皮：拖过擦除（粗细随画笔；选区删除用选择工具+Delete）（E）">${iconHtml('🧽')}</button>
       <button data-t="select" title="选择/移动整笔（V）">${iconHtml('➤')}</button>
@@ -1168,11 +1170,13 @@ function createDraw(container) {
     const r = await startCanvasRecorder(canvas, { name: (ctl.title || '画板过程') });
     if (!r) { toast('当前环境不支持内录'); return; }
     ctl.recorder = r;
-    recBtn.textContent = '■ 停止';
+    recBtn.innerHTML = `${iconHtml('■')}<span>停止</span>`;
+    recBtn.setAttribute('aria-label', '停止录制绘制过程');
     recBtn.classList.add('on');
     r.onstop = () => {
       ctl.recorder = null;
-      recBtn.textContent = '● 内录';
+      recBtn.innerHTML = `${iconHtml('●')}<span>内录</span>`;
+      recBtn.setAttribute('aria-label', '录制绘制过程');
       recBtn.classList.remove('on');
     };
   });
@@ -1190,7 +1194,7 @@ function createDraw(container) {
         <button class="lv-vis" title="显隐">${iconHtml(l.visible ? '👁' : '◡')}</button>
         <span class="lv-name" title="双击重命名">${l.name}</span>
         <span class="lv-count">${l.strokes.length}</span>
-        <button class="lv-del" title="删除图层">✕</button>
+        <button class="lv-del" title="删除图层" aria-label="删除图层">${iconHtml('✕')}</button>
       </div>`).join('');
     layersEl.querySelectorAll('.draw-layer').forEach(el => {
       const i = +el.dataset.i;
@@ -1232,7 +1236,7 @@ function createDraw(container) {
   function renderImages() {
     const imgs = activeLayer().images;
     imagesEl.innerHTML = imgs.length ? imgs.map((im, i) => `
-      <div class="draw-img-item" data-i="${i}"><span>🖼 图 ${i + 1}</span><button title="删除">✕</button></div>`).join('')
+      <div class="draw-img-item" data-i="${i}"><span>${iconHtml('🖼')} 图 ${i + 1}</span><button title="删除" aria-label="删除参考图">${iconHtml('✕')}</button></div>`).join('')
       : '<div class="draw-img-empty">（无）选择工具下可拖动</div>';
     imagesEl.querySelectorAll('.draw-img-item button').forEach(btn => btn.addEventListener('click', () => {
       const i = +btn.parentElement.dataset.i;
@@ -1501,11 +1505,11 @@ export default {
     <div class="rb-group" data-label="工具">
       <button class="rb-btn" data-command="draw.pen"><i class="ico">${iconHtml('✏')}</i><span>画笔</span></button>
       <button class="rb-btn" data-command="draw.eraser"><i class="ico">${iconHtml('🧽')}</i><span>橡皮</span></button>
-      <button class="rb-btn" data-command="draw.select"><i class="ico">➤</i><span>选择</span></button>
+      <button class="rb-btn" data-command="draw.select"><i class="ico">${iconHtml('➤')}</i><span>选择</span></button>
     </div>
     <div class="rb-group" data-label="历史">
-      <button class="rb-btn" data-command="draw.undo"><i class="ico">↩</i><span>撤销</span></button>
-      <button class="rb-btn" data-command="draw.redo"><i class="ico">↪</i><span>重做</span></button>
+      <button class="rb-btn" data-command="draw.undo"><i class="ico">${iconHtml('↩')}</i><span>撤销</span></button>
+      <button class="rb-btn" data-command="draw.redo"><i class="ico">${iconHtml('↪')}</i><span>重做</span></button>
     </div>
     <div class="rb-group" data-label="输出">
       <button class="rb-btn" data-command="draw.exportPNG"><i class="ico">${iconHtml('🖼')}</i><span>导出PNG</span></button>

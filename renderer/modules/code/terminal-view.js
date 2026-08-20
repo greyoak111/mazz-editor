@@ -1,5 +1,6 @@
 // renderer/modules/code/terminal-view.js —— 集成终端（xterm.js 多标签 + 右键 11 号上下文）
 import { toast, inputModal } from '../../shell/shell.js';
+import { iconHtml } from '../../lib/svg-icons.js';
 import xtermCss from '@xterm/xterm/css/xterm.css';
 import { captureWorkspaceEvent } from '../../lib/workspace-events.js';
 
@@ -23,7 +24,7 @@ export class TerminalPanel {
     this.eventUnsubscribers = [];
     this.el = document.createElement('div');
     this.el.className = 'term-panel';
-    this.el.innerHTML = `<div class="term-tabs"><button class="term-new" title="新建终端（Ctrl+Shift+\`）">＋ 终端</button></div><div class="term-body"></div>`;
+    this.el.innerHTML = `<div class="term-tabs"><button class="term-new" title="新建终端（Ctrl+Shift+\`）">${iconHtml('＋')}<span>终端</span></button></div><div class="term-body"></div>`;
     container.appendChild(this.el);
     this.tabsEl = this.el.querySelector('.term-tabs');
     this.bodyEl = this.el.querySelector('.term-body');
@@ -167,7 +168,7 @@ export class TerminalPanel {
     for (const [id, rec] of this.terms) {
       const el = document.createElement('div');
       el.className = 'term-tab' + (id === this.activeId ? ' on' : '');
-      el.innerHTML = `<span>${rec.title}</span><button class="term-tab-x">✕</button>`;
+      el.innerHTML = `<span>${rec.title}</span><button class="term-tab-x" title="关闭终端" aria-label="关闭终端">${iconHtml('✕')}</button>`;
       el.addEventListener('click', (e) => { if (!e.target.closest('.term-tab-x')) this.activate(id); });
       el.querySelector('.term-tab-x').addEventListener('click', () => this.kill(id));
       this.tabsEl.insertBefore(el, this.tabsEl.querySelector('.term-new'));

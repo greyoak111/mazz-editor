@@ -120,6 +120,10 @@ describe('画板 UI', () => {
     assert.ok(container.querySelector('.draw-canvas'), '画布应挂载');
     assert.ok(container.querySelector('.draw-tool-strip'), '工具条应存在');
     assert.equal(container.querySelectorAll('.draw-layer').length, 1, '默认一个图层');
+    const foldTools = container.querySelector('.draw-collapse-ts');
+    foldTools.click();
+    assert.equal(foldTools.getAttribute('aria-expanded'), 'false', '工具条折叠态应暴露');
+    assert.ok(foldTools.querySelector('svg.mz-ico'), '折叠后箭头仍应为 SVG');
     // 切工具
     container.querySelector('[data-t=eraser]').click();
     assert.equal(ctl.tool, 'eraser');

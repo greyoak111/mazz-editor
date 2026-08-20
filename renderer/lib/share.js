@@ -56,10 +56,11 @@ async function shareDesktop(filePath) {
   const name = filePath.split(/[\\/]/).pop();
 
   const m = modal('发送到工作软件');
+  const toneChip = (tone, text) => `<span style="display:inline-flex;align-items:center;border-radius:999px;padding:1px 6px;background:var(--${tone});color:var(--${tone}-fg);font-size:11.5px;font-weight:600">${text}</span>`;
   const chip = (t) => t.running
-    ? '<span style="color:#16a34a;font-size:11.5px">运行中</span>'
+    ? toneChip('ok', '运行中')
     : t.installed
-      ? `<span style="color:#b45309;font-size:11.5px">${t.hasCustomPath ? '自选路径' : '未运行'}</span>`
+      ? toneChip('warn', t.hasCustomPath ? '自选路径' : '未运行')
       : '<span style="color:var(--fg-dim);font-size:11.5px">未安装</span>';
   const { listCustomApps, editCustomAppDialog, appIconHtml } = await import('./custom-apps.js');
   const renderRows = async () => {
@@ -67,7 +68,7 @@ async function shareDesktop(filePath) {
     const customs = await listCustomApps('chat');
     const customRows = customs.map(a => `
       <div class="share-target share-custom" data-exe="${a.exe.replace(/"/g, '&quot;')}" data-name="${a.name.replace(/"/g, '&quot;')}" data-cid="${a.id}" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border:1px dashed var(--accent,#4f46e5);border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:13.5px">
-        <span style="flex:1;display:inline-flex;align-items:center;gap:6px">${appIconHtml(a)} ${a.name}</span><span style="color:#16a34a;font-size:11.5px">自定义</span>
+        <span style="flex:1;display:inline-flex;align-items:center;gap:6px">${appIconHtml(a)} ${a.name}</span>${toneChip('ok', '自定义')}
         <button class="rb-btn share-edit" data-cid="${a.id}" title="编辑/删除" style="flex-direction:row;padding:3px 9px;font-size:11.5px">${iconHtml('✎')}</button>
       </div>`).join('');
     const addRow = `
@@ -134,7 +135,7 @@ async function shareDesktop(filePath) {
     <div style="min-width:400px">
       <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:10px">发送「${name}」：文件会复制到剪贴板并唤起客户端，到聊天窗口 <b>Ctrl+V</b> 即发送</div>
       <div class="share-rows"></div>
-      <div class="share-status" style="font-size:12.5px;color:var(--fg-dim);margin-top:6px"></div>
+      <div class="share-status" style="font-size:12.5px;color:var(--fg);margin-top:6px"></div>
     </div>`;
   await renderRows();
   m.body.querySelectorAll('.share-target').forEach(el => el.addEventListener('click', async () => {

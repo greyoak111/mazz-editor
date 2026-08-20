@@ -105,13 +105,13 @@ function makeRoot(container) {
     <header class="fd-topbar">
       <div class="fd-brand"><b>智能创作台</b><span>创作流</span></div>
       <select class="fd-task-select" aria-label="选择创作项目"></select>
-      <div class="fd-views" role="tablist">
-        <button data-view="body">只看正文</button><button data-view="workshop">创作流全景</button><button data-view="summary">摘要折叠</button>
+      <div class="fd-views" role="tablist" aria-label="创作流视图">
+        <button type="button" role="tab" aria-selected="false" tabindex="-1" data-view="body">只看正文</button><button type="button" role="tab" aria-selected="false" tabindex="-1" data-view="workshop">创作流全景</button><button type="button" role="tab" aria-selected="false" tabindex="-1" data-view="summary">摘要折叠</button>
       </div>
-      <label class="fd-search">⌕ <input placeholder="窗内搜索并展开…" spellcheck="false"><span></span></label>
-      <button class="fd-icon" data-a="refresh" title="从创作流档案重载">↻</button>
-      <button class="fd-icon" data-a="economics" title="实收、结算、月度对账与配额">¥</button>
-      <button class="fd-icon" data-a="mobile" title="生成手机审批同步包（客户端条件门）">▣</button>
+      <label class="fd-search">${iconHtml('🔍')}<input placeholder="窗内搜索并展开…" spellcheck="false"><span></span></label>
+      <button class="fd-icon" data-a="refresh" title="从创作流档案重载">${iconHtml('↻')}</button>
+      <button class="fd-icon" data-a="economics" aria-label="成本对账" title="实收、结算、月度对账与配额">${iconHtml('📈')}</button>
+      <button class="fd-icon" data-a="mobile" title="生成手机审批同步包（客户端条件门）">${iconHtml('▣')}</button>
     </header>
     <section class="fd-pins">
       <button class="fd-pin" data-pin="bible"><i>设定集</i><b>等待载入</b><span>—</span></button>
@@ -167,7 +167,12 @@ function createDesk(container) {
   function setView(view) {
     ctl.view = ['body', 'workshop', 'summary'].includes(view) ? view : 'workshop';
     localStorage.setItem(VIEW_KEY, ctl.view);
-    root.querySelectorAll('[data-view]').forEach(btn => btn.classList.toggle('on', btn.dataset.view === ctl.view));
+    root.querySelectorAll('[data-view]').forEach(btn => {
+      const selected = btn.dataset.view === ctl.view;
+      btn.classList.toggle('on', selected);
+      btn.setAttribute('aria-selected', String(selected));
+      btn.tabIndex = selected ? 0 : -1;
+    });
     rebuildItems();
   }
 
@@ -188,10 +193,10 @@ function createDesk(container) {
   function cardHtml(item) {
     const e = item.event;
     const thread = ctl.threadMap.get(e.id);
-    const threadBadge = thread ? `<button class="fd-thread" data-thread="${esc(thread.id)}" data-event="${esc(e.id)}" title="跳到本复核线程下一件">↕ ${thread.index + 1}/${thread.total}</button>` : '';
+    const threadBadge = thread ? `<button class="fd-thread" data-thread="${esc(thread.id)}" data-event="${esc(e.id)}" title="跳到本复核线程下一件">${iconHtml('↕')}<span>${thread.index + 1}/${thread.total}</span></button>` : '';
     const continuation = item.chunkCount > 1 ? `<span class="fd-chunk">${item.chunkIndex + 1}/${item.chunkCount}</span>` : '';
     const progress = e.progress == null ? '' : `<div class="fd-progress"><i style="width:${e.progress}%"></i><span>${e.progress}%</span></div>`;
-    if (item.collapsed) return `<article class="fd-card collapsed type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><button class="fd-fold" title="就地展开">›</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time>${progress}</article>`;
+    if (item.collapsed) return `<article class="fd-card collapsed type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><button class="fd-fold" title="就地展开" aria-label="就地展开">${iconHtml('›')}</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time>${progress}</article>`;
     const resolution = [...ctl.events].reverse().find(row => row.refId === e.id && ['instruction-choice', 'lock-decision', 'bible-conflict-decision', 'final-human', 'budget-decision', 'help-decision'].includes(row.stage));
     const resolved = resolution ? `<div class="fd-resolution">已处理：${esc(productText(resolution.title))}</div>` : '';
     let actions = '';
@@ -201,7 +206,7 @@ function createDesk(container) {
     if (!resolution && e.card?.kind === 'final-review') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="final:seal">入库定本</button><button class="danger" data-card-action="final:return">退回修订</button><button data-card-action="final:hold">暂缓</button></div>';
     if (!resolution && e.card?.kind === 'budget') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="budget:degrade">降级继续</button><button class="danger" data-card-action="budget:stop">暂停</button></div>';
     if (!resolution && e.card?.kind === 'help-moment') actions = '<div class="fd-card-actions"><button data-card-action="help:approve">批准升级</button><button data-card-action="help:return">退回修订</button><button data-card-action="help:evidence">要求补证</button></div>';
-    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">⌄</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" draggable="true" data-path="${esc(e.artifactPath)}" data-live-path="${esc(e.artifactPath)}" title="打开；也可拖入 Markdown 成为块级活引用">产物 ↗ ${esc(productFileName(pathName(e.artifactPath)))}</button>` : ''}${resolved}${actions}</article>`;
+    return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">${iconHtml('⌄')}</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productText(e.title))}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(item.content, ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" draggable="true" data-path="${esc(e.artifactPath)}" data-live-path="${esc(e.artifactPath)}" title="打开；也可拖入 Markdown 成为块级活引用"><span>产物</span>${iconHtml('↗')}<span>${esc(productFileName(pathName(e.artifactPath)))}</span></button>` : ''}${resolved}${actions}</article>`;
   }
 
   function bindCards() {
@@ -314,7 +319,7 @@ function createDesk(container) {
   async function renderFiles() {
     ctl.files = await listFiles(ctl.folder);
     const host = root.querySelector('.fd-files');
-    host.innerHTML = ctl.files.length ? ctl.files.map(row => `<button data-file="${esc(row.path)}" style="--depth:${row.level}"><span>${/\.json$/i.test(row.name) ? '{}' : '¶'}</span>${esc(productFileName(row.name))}</button>`).join('') : '<div class="fd-side-empty">暂无可对照产物</div>';
+    host.innerHTML = ctl.files.length ? ctl.files.map(row => `<button data-file="${esc(row.path)}" style="--depth:${row.level}"><span>${iconHtml(/\.json$/i.test(row.name) ? '▣' : '¶')}</span>${esc(productFileName(row.name))}</button>`).join('') : '<div class="fd-side-empty">暂无可对照产物</div>';
     host.querySelectorAll('[data-file]').forEach(btn => btn.addEventListener('click', () => openCompare(btn.dataset.file)));
   }
 
@@ -565,7 +570,22 @@ function createDesk(container) {
   let scrollTick = 0;
   stream.addEventListener('scroll', () => { if (scrollTick) return; scrollTick = requestAnimationFrame(() => { scrollTick = 0; renderVirtual(); }); });
   taskSelect.addEventListener('change', () => loadProject({ taskId: taskSelect.value }));
-  root.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
+  const viewTabs = [...root.querySelectorAll('[data-view]')];
+  viewTabs.forEach((btn, index) => {
+    btn.addEventListener('click', () => setView(btn.dataset.view));
+    btn.addEventListener('keydown', event => {
+      let next = -1;
+      if (event.key === 'ArrowRight') next = (index + 1) % viewTabs.length;
+      else if (event.key === 'ArrowLeft') next = (index - 1 + viewTabs.length) % viewTabs.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = viewTabs.length - 1;
+      if (next < 0) return;
+      event.preventDefault();
+      const target = viewTabs[next];
+      setView(target.dataset.view);
+      target.focus();
+    });
+  });
   root.querySelector('[data-a=refresh]').addEventListener('click', () => loadProject({ taskId: ctl.task?.id, folder: ctl.folder }));
   root.querySelector('[data-a=economics]').addEventListener('click', openEconomicsDialog);
   root.querySelector('[data-a=mobile]').addEventListener('click', createMobileApprovalPackage);
@@ -623,7 +643,7 @@ export default {
   newDocument(state) { instances.get(state.container)?.loadProject({}); },
   getCharCount(state) { return instances.get(state.container)?.events.reduce((n, e) => n + e.content.length, 0) || 0; },
   getCursorPos() { return '创作流'; },
-  toolbarHTML: `<div class="rb-group" data-label="创作流"><button class="rb-btn" data-command="factorydesk.refresh"><i class="ico">↻</i><span>重载档案</span></button><button class="rb-btn" data-command="factory.toggleDock"><i class="ico">🔥</i><span>指令台</span></button></div><div class="rb-group" data-label="视图"><button class="rb-btn" data-command="factorydesk.body"><i class="ico">¶</i><span>只看正文</span></button><button class="rb-btn" data-command="factorydesk.workshop"><i class="ico">🏭</i><span>创作流全景</span></button><button class="rb-btn" data-command="factorydesk.summary"><i class="ico">≡</i><span>摘要折叠</span></button></div>`,
+  toolbarHTML: `<div class="rb-group" data-label="创作流"><button class="rb-btn" data-command="factorydesk.refresh"><i class="ico">${iconHtml('↻')}</i><span>重载档案</span></button><button class="rb-btn" data-command="factory.toggleDock"><i class="ico">${iconHtml('🔥')}</i><span>指令台</span></button></div><div class="rb-group" data-label="视图"><button class="rb-btn" data-command="factorydesk.body"><i class="ico">${iconHtml('¶')}</i><span>只看正文</span></button><button class="rb-btn" data-command="factorydesk.workshop"><i class="ico">${iconHtml('🏭')}</i><span>创作流全景</span></button><button class="rb-btn" data-command="factorydesk.summary"><i class="ico">${iconHtml('≡')}</i><span>摘要折叠</span></button></div>`,
   bindToolbar(panel) { panel.querySelectorAll('[data-command]').forEach(btn => btn.addEventListener('click', () => window.MazzCommands.execute(btn.dataset.command))); },
   contributes: {
     commands: [

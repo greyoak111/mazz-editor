@@ -8,11 +8,11 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 640,
+    "totalFindings": 641,
     "filesWithFindings": 67,
     "byRule": {
       "fixed-width-px": 185,
-      "white-space-nowrap": 125,
+      "white-space-nowrap": 126,
       "position-absolute": 148,
       "fixed-min-width": 81,
       "sidebar-pixel-coupling": 12,
@@ -104,6 +104,10 @@
         "count": 4
       },
       {
+        "file": "renderer/panels/help.html",
+        "count": 4
+      },
+      {
         "file": "renderer/panels/notif.html",
         "count": 4
       },
@@ -138,15 +142,11 @@
       {
         "file": "renderer/panels/annotate.html",
         "count": 3
-      },
-      {
-        "file": "renderer/panels/ctxmenu.html",
-        "count": 3
       }
     ],
     "byProvisionalClass": {
-      "D": 295,
-      "A": 182,
+      "D": 294,
+      "A": 184,
       "B": 81,
       "E": 51,
       "C": 31
@@ -738,7 +738,7 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/bridge.js",
-      "line": 40,
+      "line": 41,
       "sample": "<div style=\"min-width:420px;max-width:560px\">"
     },
     {
@@ -766,14 +766,14 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/lib/annotate.js",
-      "line": 50,
+      "line": 51,
       "sample": "window.addEventListener('resize', this._placeBar);"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/lib/annotate.js",
-      "line": 59,
+      "line": 61,
       "sample": "this._ro = new ResizeObserver(() => this.resize());"
     },
     {
@@ -829,77 +829,77 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/lib/share.js",
-      "line": 134,
+      "line": 135,
       "sample": "<div style=\"min-width:400px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 268,
+      "line": 269,
       "sample": "try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 269,
+      "line": 270,
       "sample": "window.addEventListener('resize', syncBounds);"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 311,
+      "line": 313,
       "sample": "a.card{display:block;padding:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:9px;color:var(--fg);text-decoration:none;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 319,
+      "line": 321,
       "sample": ".htop{position:fixed;top:14px;right:16px;display:flex;gap:6px;align-items:center;z-index:9}"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/browser/index.js",
-      "line": 323,
+      "line": 325,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/browser/index.js",
-      "line": 323,
+      "line": 325,
       "sample": ".hset{display:none;position:fixed;top:46px;right:16px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px var(--sh);width:300px;z-index:9}"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/browser/index.js",
-      "line": 1197,
+      "line": 1216,
       "sample": "<div style=\"font-size:12px;color:var(--fg-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1199,
+      "line": 1218,
       "sample": "<span class=\"pw-secret\" data-shown=\"0\" style=\"font-family:monospace;font-size:12px;min-width:76px;text-align:right\">••••••</span>"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 1342,
+      "line": 1361,
       "sample": "// 幽灵三钩①（页签一切一炸一片实锤）：切回必显——显隐不再靠 ResizeObserver/偶发事件赏饭"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1529,
+      "line": 1548,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:var(--fg-dim);margin-top:8px\">到期：${new Date(share.expiresAt).to"
     },
     {
@@ -913,35 +913,35 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/draw/index.js",
-      "line": 1129,
+      "line": 1131,
       "sample": "pop.style.cssText = 'position:fixed;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--bd,#e0ded8);border-radius:9px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:3px;min-width:130px';"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/draw/index.js",
-      "line": 1341,
+      "line": 1345,
       "sample": "<div style=\"display:flex;flex-direction:column;gap:8px;min-width:240px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/draw/index.js",
-      "line": 1446,
+      "line": 1450,
       "sample": "if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(wrap);"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/desk.js",
-      "line": 381,
+      "line": 386,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;display:grid;gap:10px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/factory/desk.js",
-      "line": 603,
+      "line": 623,
       "sample": "ctl.resizeObserver = new ResizeObserver(entries => {"
     },
     {
@@ -1131,14 +1131,14 @@
       "provisionalClass": "B",
       "file": "renderer/modules/notes/index.js",
       "line": 29,
-      "sample": "<button class=\"rb-btn\" data-a=\"foldside\" title=\"折叠/展开笔记列表\" style=\"min-width:26px;padding:2px 6px\">◀</button>"
+      "sample": "<button class=\"rb-btn\" data-a=\"foldside\" aria-expanded=\"true\" title=\"折叠/展开笔记列表\" style=\"min-width:26px;padding:2px 6px\">${iconHtml('◀')}</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/notes/index.js",
       "line": 31,
-      "sample": "<button class=\"rb-btn\" data-a=\"refresh\" title=\"重建笔记索引\" style=\"min-width:30px\">↻</button>"
+      "sample": "<button class=\"rb-btn\" data-a=\"refresh\" title=\"重建笔记索引\" style=\"min-width:30px\">${iconHtml('↻')}</button>"
     },
     {
       "rule": "fixed-min-width",
@@ -1193,42 +1193,42 @@
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 626,
+      "line": 636,
       "sample": "svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/slide/index.js",
-      "line": 641,
+      "line": 651,
       "sample": "zc.style.cssText = 'position:absolute;right:12px;bottom:12px;display:flex;gap:6px;align-items:center;background:rgba(20,20,24,.6);border-radius:999px;padding:4px 12px;font-size:12px;color:#eee;backdrop-filter:blur(4px)';"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 641,
+      "line": 651,
       "sample": "zc.style.cssText = 'position:absolute;right:12px;bottom:12px;display:flex;gap:6px;align-items:center;background:rgba(20,20,24,.6);border-radius:999px;padding:4px 12px;font-size:12px;color:#eee;backdrop-filter:blur(4px)';"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 761,
+      "line": 771,
       "sample": "drag.ghost.style.cssText = `position:absolute;left:${x / DESIGN.w * 100}%;top:${y / DESIGN.h * 100}%;width:${Math.abs(p.x - drag.sx) / DESIGN.w * 100}%;height:${Math.abs(p.y - drag.sy) / DESIGN.h * 100}%;border:1.5px dashed var(--acc, #4f46e5);background:rgba(79,70,229,.12);pointer-events:none;z-index:5`;"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/slide/index.js",
-      "line": 877,
+      "line": 887,
       "sample": "bar.style.cssText = 'position:absolute;left:12px;top:12px;display:flex;gap:5px;z-index:6;flex-wrap:wrap;max-width:70%';"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 877,
+      "line": 887,
       "sample": "bar.style.cssText = 'position:absolute;left:12px;top:12px;display:flex;gap:5px;z-index:6;flex-wrap:wrap;max-width:70%';"
     },
     {
@@ -1291,7 +1291,7 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1360,
+      "line": 1380,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {
@@ -1487,21 +1487,21 @@
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 88,
+      "line": 90,
       "sample": ".route-pick { width:100%; justify-content:flex-start; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 186,
+      "line": 189,
       "sample": "<div class=\"inline-row\"><label><input id=\"pj-dual\" type=\"checkbox\" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id=\"pj-max\" type=\"checkbox\" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>交叉审校 <select id=\"pj-review-ritual\" class=\"sel\"><option value=\"light\" ${(s.reviewRitual || 'light') === 'light' ? '"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/panels/factorycfg.html",
-      "line": 196,
+      "line": 199,
       "sample": "<div class=\"inline-row\"><input id=\"pj-feed-query\" class=\"inp\" style=\"flex:1\" placeholder=\"要持续观察的主题\" value=\"${attr(s.extras?.feed?.query || '')}\"><input id=\"pj-feed-dimension\" class=\"inp\" style=\"width:150px\" placeholder=\"工作维度\" value=\"${attr(s.extras?.feed?.dimension || '外部动态')}\"><button class=\"btn\" data-pa=\"feedScan\" ${"
     },
     {
@@ -1663,7 +1663,7 @@
       "provisionalClass": "D",
       "file": "renderer/panels/harvest.html",
       "line": 38,
-      "sample": ".manager-row strong{display:block;font-size:12.5px;font-weight:600}.manager-row small{display:block;color:var(--fg-dim);margin-top:2px}.manager-row.on small{color:color-mix(in srgb,var(--accent-fg,#fff) 74%,transparent)}.status-pill{border-radius:999px;padding:2px 7px;background:var(--bg);color:var(--fg-dim);font-size:"
+      "sample": ".manager-row strong{display:block;font-size:12.5px;font-weight:600}.manager-row small{display:block;color:var(--fg-dim);margin-top:2px}.manager-row.on small{color:var(--fg)}.status-pill{border-radius:999px;padding:2px 7px;background:var(--bg);color:var(--fg-dim);font-size:11px;white-space:nowrap}"
     },
     {
       "rule": "position-absolute",
@@ -1685,6 +1685,13 @@
       "file": "renderer/panels/help.html",
       "line": 18,
       "sample": ".side { width:250px; flex:none; display:flex; flex-direction:column; border-right:1px solid var(--border); background:var(--bg-elev); }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/panels/help.html",
+      "line": 26,
+      "sample": ".toc-item .label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "position-absolute",
@@ -1942,14 +1949,14 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/panels/sync.html",
-      "line": 110,
+      "line": 112,
       "sample": "+ '<div class=\"row\"><label style=\"width:64px\">主机</label><input id=\"j-host\" class=\"inp\" style=\"flex:1\" placeholder=\"192.168.1.100\"><input id=\"j-port\" class=\"inp\" style=\"width:80px\" placeholder=\"47820\"></div>'"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/panels/sync.html",
-      "line": 111,
+      "line": 113,
       "sample": "+ '<div class=\"row\"><label style=\"width:64px\">配对码</label><input id=\"j-code\" class=\"inp\" style=\"width:140px\" placeholder=\"6 位数字\" maxlength=\"6\"></div>'"
     },
     {
@@ -2047,7 +2054,7 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/ribbon.js",
-      "line": 225,
+      "line": 231,
       "sample": "pop.style.cssText = `position:fixed;top:${r.bottom + 4}px;left:${Math.max(8, Math.min(r.left, vw - 260))}px;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--border,#e0ded8);border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(0,0,0,.14);min-width:190px;max-height:60vh;overflow-y:auto;display:flex"
     },
     {
@@ -2089,7 +2096,7 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/sidebar-panels.js",
-      "line": 147,
+      "line": 166,
       "sample": "<div style=\"min-width:420px\">"
     },
     {
@@ -3546,14 +3553,14 @@
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1097,
-      "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: #fff; border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
+      "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: var(--accent-fg, #fff); border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 1097,
-      "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: #fff; border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
+      "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: var(--accent-fg, #fff); border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
     },
     {
       "rule": "white-space-nowrap",
@@ -3840,7 +3847,7 @@
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1376,
-      "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; background: color-mix(in srgb, var(--accent) 80%, #000 10%); color: #fff; font-size: 10px; border-radius: 4px; padding: 1px 6px; opacity: .92; }"
+      "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; background: var(--accent); color: var(--accent-fg); font-size: 10px; border-radius: 4px; padding: 1px 6px; }"
     },
     {
       "rule": "fixed-width-px",
@@ -3874,644 +3881,644 @@
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1402,
+      "line": 1410,
       "sample": ".mz-empty { position: absolute; inset: 0; display: grid; place-items: center; background: #101014; z-index: 3; transition: right .15s ease; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1407,
+      "line": 1415,
       "sample": ".mz-spectrum { position: absolute; inset: auto 0 0 0; bottom: 0; width: 100%; height: 42%; opacity: .85; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1408,
+      "line": 1416,
       "sample": ".mz-audio-disc { position: relative; z-index: 1; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; background: conic-gradient(var(--bg-active), var(--bg), var(--bg-active), var(--bg), var(--bg-active)); border: 2px solid var(--border); box-shadow: var(--shadow), inset"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1411,
-      "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: transparent; transition: opacity .3s; }"
+      "line": 1419,
+      "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px 24px; background: linear-gradient(180deg, rgba(10,12,18,.82) 0%, rgba(10,12,18,.48) 58%, transparent 100%); transition: opacity .3s; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1414,
-      "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--fg); }"
+      "line": 1422,
+      "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--mz-overlay-fg); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1415,
-      "sample": ".mz-meta { font-size: 11px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
+      "line": 1423,
+      "sample": ".mz-meta { font-size: 11px; color: var(--mz-overlay-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1418,
+      "line": 1426,
       "sample": ".mz-controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; min-width: 0; padding: 6px 14px 10px; background: transparent; transition: opacity .3s; container: player-controls / inline-size; } /* W87e：按真实 control seat 宽度退化，不再让 max-content 越过窗格 */"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1427,
+      "line": 1435,
       "sample": ".mz-seek-track::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1431,
+      "line": 1439,
       "sample": ".mz-seek-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000 10%)); border-radius: 3px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1432,
+      "line": 1440,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1432,
+      "line": 1440,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1434,
+      "line": 1442,
       "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1445,
+      "line": 1453,
       "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1446,
+      "line": 1454,
       "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1447,
+      "line": 1455,
       "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1452,
+      "line": 1460,
       "sample": ".ie-crop { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; z-index: 4; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1453,
+      "line": 1461,
       "sample": ".ie-crop .ie-ch { position: absolute; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1465,
+      "line": 1473,
       "sample": ".mz-play { font-size: 18px; width: 34px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1467,
+      "line": 1475,
       "sample": ".mz-vol { width: 74px; accent-color: var(--accent); }"
     },
     {
       "rule": "position-absolute",
-      "provisionalClass": "D",
+      "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1470,
-      "sample": ".mz-more-dot { position: absolute; right: 4px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg) 75%, transparent); }"
+      "line": 1478,
+      "sample": ".mz-more-dot { position: absolute; right: 4px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--mz-overlay-bg); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1474,
+      "line": 1482,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1474,
+      "line": 1482,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1474,
+      "line": 1482,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1479,
+      "line": 1487,
       "sample": ".mz-control-density { font-size: 10.5px; color: var(--fg-dim); white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1480,
+      "line": 1488,
       "sample": ".mz-control-center > header button { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--fg-dim); cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1490,
+      "line": 1498,
       "sample": ".mz-control-center .mz-overflow-item.mz-btn::after { content: attr(data-player-label); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1495,
+      "line": 1504,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-control-center { right: calc(var(--mz-side-w) + 14px); width: min(360px, calc(100% - var(--mz-side-w) - 28px)); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1514,
+      "line": 1523,
       "sample": ".mz-bar .mz-btn { min-width: 40px; min-height: 40px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1517,
+      "line": 1526,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1517,
+      "line": 1526,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1521,
+      "line": 1530,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-media, .mz-stage.side-open:not(.side-overlay) .mz-audio-wrap, .mz-stage.side-open:not(.side-overlay) .mz-sub-host { width: calc(100% - var(--mz-side-w)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1524,
+      "line": 1533,
       "sample": ".mz-side-grip { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 9; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1527,
+      "line": 1536,
       "sample": ".mz-stream-err { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 12%; text-align: center; background: color-mix(in srgb, #000 72%, transparent); color: #eee; pointer-events: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1532,
+      "line": 1541,
       "sample": ".mz-decode-actions .rb-btn { min-width: 112px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1542,
+      "line": 1551,
       "sample": ".mz-ml-caret { flex: none; width: 14px; text-align: center; opacity: .7; font-size: 10px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1543,
+      "line": 1552,
       "sample": ".mz-ml-dname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1548,
+      "line": 1557,
       "sample": ".mz-li { padding: 6px 9px; font-size: 12px; color: var(--fg-dim); border-radius: 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1577,
+      "line": 1586,
       "sample": ".fc-feed-cluster-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1583,
+      "line": 1592,
       "sample": ".fc-hit-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1599,
+      "line": 1608,
       "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1599,
+      "line": 1608,
       "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1622,
+      "line": 1631,
       "sample": ".sd-grip-b { position: absolute; left: 0; right: 0; bottom: -4px; height: 8px; cursor: ns-resize; z-index: 5; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1623,
+      "line": 1632,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1623,
+      "line": 1632,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1642,
+      "line": 1651,
       "sample": ".mz-ico { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1643,
+      "line": 1652,
       "sample": ".rb-btn .mz-ico { width: 17px; height: 17px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1644,
+      "line": 1653,
       "sample": ".mazz-menu-icon .mz-ico { width: 15px; height: 15px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1648,
+      "line": 1657,
       "sample": ".w-card .mz-ico { width: 20px; height: 20px; color: var(--accent); vertical-align: -4px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1652,
+      "line": 1661,
       "sample": ".ribbon-tab-ico .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1654,
+      "line": 1663,
       "sample": ".tab-pin .mz-ico { width: 12px; height: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1657,
+      "line": 1666,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1657,
+      "line": 1666,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1665,
+      "line": 1674,
       "sample": ".sb-tab { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; border: 0; background: none; color: var(--fg-dim); font-size: 11.5px; padding: 5px 2px; cursor: pointer; border-radius: 6px; font-family: var(--font-ui); white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1666,
+      "line": 1675,
       "sample": ".sb-tab > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1669,
+      "line": 1678,
       "sample": ".sb-tab-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1670,
+      "line": 1679,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1671,
+      "line": 1680,
       "sample": "@container workspace-sidebar (max-width: 260px) {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1679,
+      "line": 1688,
       "sample": ".sb-tbtn .mz-ico { width: 13px; height: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1686,
+      "line": 1695,
       "sample": ".sb-item .mz-ico { width: 14px; height: 14px; flex: none; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1687,
+      "line": 1696,
       "sample": ".sb-item-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1693,
+      "line": 1702,
       "sample": ".sb-ol-arrow { font-style: normal; color: var(--fg-dim); width: 14px; text-align: center; cursor: pointer; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1700,
+      "line": 1709,
       "sample": ".sb-tag-head .mz-ico { width: 14px; height: 14px; color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1714,
+      "line": 1723,
       "sample": ".ft-dir { margin-left: auto; padding-left: 6px; padding-right: 26px; font-size: 10px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; direction: rtl; text-align: right; flex: none; pointer-events: none; position: relative; z-index: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1723,
+      "line": 1732,
       "sample": ".mz-bright { width: 56px; accent-color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1743,
+      "line": 1752,
       "sample": ".selmenu-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1747,
+      "line": 1756,
       "sample": ".sb-ws-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1762,
+      "line": 1771,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1762,
+      "line": 1771,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1767,
+      "line": 1776,
       "sample": ".fs-exit { position: fixed; right: 18px; bottom: 18px; z-index: 9999; border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); color: var(--fg); border-radius: 999px; padding: 8px 18px; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1773,
+      "line": 1782,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1773,
+      "line": 1782,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1773,
+      "line": 1782,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1789,
+      "line": 1798,
       "sample": ".mz-danmaku-canvas { position:absolute; inset:0; z-index:6; pointer-events:none; width:100%; height:100%; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1790,
+      "line": 1799,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1790,
+      "line": 1799,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1793,
+      "line": 1802,
       "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1794,
+      "line": 1803,
       "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1795,
+      "line": 1804,
       "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1796,
+      "line": 1805,
       "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1797,
+      "line": 1806,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1799,
+      "line": 1808,
       "sample": ".ft-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1801,
+      "line": 1810,
       "sample": ".sd-tool-ico { display: inline-flex; align-items: center; justify-content: center; width: 18px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1810,
-      "sample": ".mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: #b8b6ae; font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }"
+      "line": 1819,
+      "sample": ".mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: var(--fg-dim); font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1816,
+      "line": 1825,
       "sample": ".mz-ml-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1833,
+      "line": 1842,
       "sample": ".mz-mikan-season { min-width: 116px; max-width: 170px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1839,
+      "line": 1848,
       "sample": ".mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1840,
+      "line": 1849,
       "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1844,
+      "line": 1853,
       "sample": ".mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1848,
+      "line": 1857,
       "sample": ".mz-catalog-cover { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 16px; font-weight: 650; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1849,
+      "line": 1858,
       "sample": ".mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1855,
+      "line": 1864,
       "sample": ".mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1861,
+      "line": 1870,
       "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
@@ -4602,35 +4609,35 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/sync.js",
-      "line": 123,
+      "line": 124,
       "sample": "<div style=\"min-width:400px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/sync.js",
-      "line": 128,
+      "line": 129,
       "sample": "<label style=\"width:52px\">主机</label>"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/sync.js",
-      "line": 130,
+      "line": 131,
       "sample": "<input id=\"sj-port\" class=\"rb-input\" style=\"width:80px\" placeholder=\"47820\" spellcheck=\"false\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/sync.js",
-      "line": 133,
+      "line": 134,
       "sample": "<label style=\"width:52px\">配对码</label>"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/sync.js",
-      "line": 134,
+      "line": 135,
       "sample": "<input id=\"sj-code\" class=\"rb-input\" style=\"width:140px\" placeholder=\"6 位数字\" maxlength=\"6\" spellcheck=\"false\">"
     }
   ],

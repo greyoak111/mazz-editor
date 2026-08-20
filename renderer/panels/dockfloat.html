@@ -44,11 +44,11 @@
   /* 智能创作页 */
   .fc-row { margin-bottom:8px; }
   .fc-row select, .fc-row input { width:100%; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:4px 8px; font-size:12px; font-family:var(--font-ui); }
-  .fc-provider-hint { font-size:11.5px; color:var(--warn); margin:4px 0 8px; }
-  .fc-provider-hint.ok { color:var(--fg-dim); }
+  .fc-provider-hint { font-size:11.5px; color:var(--fg); margin:4px 0 8px; background:color-mix(in srgb,var(--warn) 10%,var(--bg)); box-shadow:inset 3px 0 0 var(--warn); text-indent:8px; }
+  .fc-provider-hint.ok { color:var(--fg); background:color-mix(in srgb,var(--ok) 10%,var(--bg)); box-shadow:inset 3px 0 0 var(--ok); }
   .fc-field { margin-bottom:9px; }
   .fc-field label { display:block; font-size:12px; font-weight:600; margin-bottom:4px; }
-  .fc-field label b { color:#c2410c; }
+  .fc-field label b { color:var(--danger); }
   .fc-field input, .fc-field textarea, .fc-field select { width:100%; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:7px; padding:6px 10px; font-size:12.5px; font-family:var(--font-ui); }
   .fc-field textarea { resize:vertical; }
   .fc-field input:focus, .fc-field textarea:focus { border-color:var(--accent); outline:none; }
@@ -85,7 +85,8 @@
   </div>
   <main id="m" class="ps-scroll-y"></main>
 </div>
-<script>
+<script type="module">
+import { iconHtml } from '../lib/svg-icons.js';
 const $ = (s) => document.querySelector(s);
 // W54 手势三态②：自绘拖拽（跨屏自由——app-region:drag 的 transparent 跨屏病绕开）；
 // setPointerCapture 兜底页外跟手，e.screenX/Y 供屏坐标，主进程 setBounds
@@ -157,7 +158,7 @@ function renderTools() {
   if (!toolsData) { $('#m').innerHTML = '<div class="note">加载工具清单…</div>'; return; }
   $('#m').innerHTML = toolsData.map(([g, items]) => `
     <div class="tg"><div class="tg-t">${esc(g)}</div><div class="tg-grid">
-      ${items.map(it => `<button class="tg-card" data-cmd="${esc(it.cmd)}"><span class="i">${it.ico || ''}</span><span><span class="t">${esc(it.t)}</span><div class="d">${esc(it.d)}</div></span></button>`).join('')}
+      ${items.map(it => `<button class="tg-card" data-cmd="${esc(it.cmd)}"><span class="i">${iconHtml(it.ico || '')}</span><span><span class="t">${esc(it.t)}</span><div class="d">${esc(it.d)}</div></span></button>`).join('')}
     </div></div>`).join('');
   document.querySelectorAll('.tg-card').forEach(b => b.addEventListener('click', () => act('dockRun', { cmd: b.dataset.cmd })));
 }
@@ -175,8 +176,8 @@ function renderFactory() {
   const s = snapshot;
   $('#m').innerHTML = `
     <div class="fc-provider-hint ${s.providerConfigured ? 'ok' : ''}">${esc(s.providerHint || '')}</div>
-    <div class="fc-task" style="margin-top:8px"><div class="tt"><span>智能创作执行台</span><button class="fc-mini" id="fc-project">＋ 新建立项</button></div><div class="ts">立项表单只在独立向导出现；这里保留任务、进度与日常执行。</div></div>
-    <div class="fc-actions"><button class="fc-btn fc-accent" id="fc-runall">▶▶ 全部启动</button><button class="fc-btn" id="fc-autopreview">${s.autoPreview !== false ? '●' : '○'} 自动预览</button><span class="note">并发 ${s.runningCount || 0}/${s.concurrency || 1}</span></div>
+    <div class="fc-task" style="margin-top:8px"><div class="tt"><span>智能创作执行台</span><button class="fc-mini" id="fc-project">${iconHtml('＋')} 新建立项</button></div><div class="ts">立项表单只在独立向导出现；这里保留任务、进度与日常执行。</div></div>
+    <div class="fc-actions"><button class="fc-btn fc-accent" id="fc-runall">${iconHtml('▶▶')} 全部启动</button><button class="fc-btn" id="fc-autopreview">${iconHtml(s.autoPreview !== false ? '●' : '○')} 自动预览</button><span class="note">并发 ${s.runningCount || 0}/${s.concurrency || 1}</span></div>
     <div class="fc-tasks" id="fc-tasks">${renderTasksHtml(s.tasks)}</div>`;
   $('#fc-project')?.addEventListener('click', () => act('factoryAction', { act: 'project' }));
   $('#fc-runall')?.addEventListener('click', () => act('factoryAction', { act: 'runall' }));

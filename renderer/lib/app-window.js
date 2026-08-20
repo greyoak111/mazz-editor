@@ -25,8 +25,8 @@ export function openAppWindow({ title, widthRatio = 0.72, heightRatio = 0.8, bui
     <div class="appwin-bar">
       <span class="appwin-title"></span>
       <span class="appwin-acts">
-        <button class="appwin-btn" data-a="max" title="最大化/还原">▢</button>
-        <button class="appwin-btn" data-a="close" title="关闭（Esc）">✕</button>
+        <button class="appwin-btn" data-a="max" title="最大化/还原" aria-label="最大化/还原">${iconHtml('▢')}</button>
+        <button class="appwin-btn" data-a="close" title="关闭（Esc）" aria-label="关闭">${iconHtml('✕')}</button>
       </span>
     </div>
     <div class="appwin-body"></div>
