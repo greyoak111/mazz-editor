@@ -7,6 +7,7 @@ import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
 import { classifyVideoFrameHealth, ZERO_VIDEO_FRAMES } from '../../lib/video-frame-health.js';
 import { mountCompanion } from './companion.js';
 import { mountDanmaku, parseAssDanmaku, parseBilibiliXml, parseJsonTrack } from './danmaku.js';
+import { mountPlayerControlSurface } from './player-controls.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
@@ -56,36 +57,41 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       </div>
       <div class="mz-controls">
         <div class="mz-seek">
-          <div class="mz-seek-track"><div class="mz-seek-fill"></div><div class="mz-seek-knob"></div></div>
+          <div class="mz-seek-track" role="slider" tabindex="0" aria-label="播放进度" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="00:00 / --:--" aria-disabled="true"><div class="mz-seek-fill"></div><div class="mz-seek-knob"></div></div>
           <div class="mz-thumb" style="display:none"><canvas></canvas><span></span></div>
         </div>
         <div class="mz-bar">
-          <button class="mz-btn" data-a="prev" title="上一个">${iconHtml('⏮')}</button>
+          <button class="mz-btn" data-a="prev" data-player-min="440" data-player-group="transport" data-player-label="上一个" title="上一个">${iconHtml('⏮')}</button>
           <button class="mz-btn mz-play" data-a="play" title="播放/暂停（空格）">${iconHtml('▶')}</button>
-          <button class="mz-btn" data-a="next" title="下一个">${iconHtml('⏭')}</button>
-          <span class="mz-time"><b>00:00</b> / --:--</span>
-          <span style="flex:1"></span>
-          <button class="mz-btn" data-a="mute" title="静音（M）">${iconHtml('🔊')}</button>
-          <input class="mz-vol" type="range" min="0" max="1" step="0.05" value="1" title="音量（↑↓）">
-          <span class="mz-bright-wrap" title="画面亮度">${iconHtml('☀')}<input class="mz-bright" type="range" min="0.4" max="1.6" step="0.05" value="1"></span>
-          <select class="mz-speed" title="倍速">${[0.5, 0.8, 1, 1.2, 1.5, 2].map(v => `<option value="${v}" ${v === 1 ? 'selected' : ''}>${v}×</option>`).join('')}</select>
-          <span class="mz-track-wrap" style="display:none"></span>
-          <button class="mz-btn" data-a="pip" title="画中画（PiP）">${iconHtml('🗔')}</button>
-          <button class="mz-btn" data-a="loop" title="循环（L）：列表循环">${iconHtml('🔁')}</button>
-          <button class="mz-btn" data-a="snap" title="截图（S）">${iconHtml('📷')}</button>
-          ${canExportGif ? `<button class="mz-btn" data-a="gif" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>` : ''}
-          <button class="mz-btn" data-a="progmem" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
-          <button class="mz-btn" data-a="sub" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
-          <button class="mz-btn" data-a="companion" title="陪看：防剧透的人格对话与本地观剧档">${iconHtml('✨')}</button>
-          <button class="mz-btn" data-a="danmaku" title="弹幕：导入本地 XML / ASS / JSON 时间轨">弹</button>
-          <button class="mz-btn" data-a="pset" title="播放设置（字幕/连播/片源）">${iconHtml('⚙')}</button>
-          <button class="mz-btn" data-a="list" title="播放列表">${iconHtml('☰')}</button>
-          <button class="mz-btn" data-a="zoom-reset" title="画面复位（缩放/亮度一键还原）">1:1</button>
-          <button class="mz-btn" data-a="lock" title="窗口锁定（沉浸观影防误触，一键开关）">${iconHtml('🔓')}</button>
-          <button class="mz-btn" data-a="borderless" title="无边框（B）">${iconHtml('▢')}</button>
-          <button class="mz-btn" data-a="fullscreen" title="全屏（F）">${iconHtml('⛶')}</button>
+          <button class="mz-btn" data-a="next" data-player-min="440" data-player-group="transport" data-player-label="下一个" title="下一个">${iconHtml('⏭')}</button>
+          <span class="mz-time"><b>00:00</b><span class="mz-time-total"> / --:--</span></span>
+          <span class="mz-bar-spacer"></span>
+          <button class="mz-btn" data-a="mute" data-player-min="280" data-player-group="sound" data-player-label="静音" aria-pressed="false" title="静音（M）">${iconHtml('🔊')}</button>
+          <span class="mz-control-slot" data-player-min="960" data-player-group="sound" data-player-label="音量"><input class="mz-vol" type="range" min="0" max="1" step="0.05" value="1" title="音量（↑↓）"></span>
+          <span class="mz-control-slot mz-bright-wrap" data-player-min="never" data-player-group="picture" data-player-label="画面亮度" data-player-video-only="1" title="画面亮度">${iconHtml('☀')}<input class="mz-bright" type="range" min="0.4" max="1.6" step="0.05" value="1"></span>
+          <span class="mz-control-slot mz-speed-wrap" data-player-min="600" data-player-group="sound" data-player-label="倍速"><select class="mz-speed" title="倍速">${[0.5, 0.8, 1, 1.2, 1.5, 2].map(v => `<option value="${v}" ${v === 1 ? 'selected' : ''}>${v}×</option>`).join('')}</select></span>
+          <span class="mz-control-slot mz-track-wrap" data-player-min="960" data-player-group="sound" data-player-label="音轨" style="display:none"></span>
+          <button class="mz-btn" data-a="pip" data-player-min="960" data-player-group="picture" data-player-label="画中画" data-player-video-only="1" title="画中画（PiP）">${iconHtml('🗔')}</button>
+          <button class="mz-btn" data-a="loop" data-player-min="960" data-player-group="transport" data-player-label="循环模式" aria-pressed="true" title="循环（L）：列表循环">${iconHtml('🔁')}</button>
+          <button class="mz-btn" data-a="snap" data-player-min="never" data-player-group="tools" data-player-label="截图" data-player-video-only="1" title="截图（S）">${iconHtml('📷')}</button>
+          ${canExportGif ? `<button class="mz-btn" data-a="gif" data-player-min="never" data-player-group="tools" data-player-label="录制 GIF" data-player-video-only="1" title="录制 GIF（G）：再按停止并转码">${iconHtml('🎞')}</button>` : ''}
+          <button class="mz-btn" data-a="progmem" data-player-min="never" data-player-group="tools" data-player-label="进度记忆" aria-pressed="true" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
+          <button class="mz-btn" data-a="sub" data-player-min="600" data-player-group="sound" data-player-label="字幕" aria-pressed="false" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
+          <button class="mz-btn" data-a="companion" data-player-min="never" data-player-group="tools" data-player-label="陪看" title="陪看：防剧透的人格对话与本地观剧档">${iconHtml('✨')}</button>
+          <button class="mz-btn" data-a="danmaku" data-player-min="never" data-player-group="tools" data-player-label="弹幕" aria-pressed="false" title="弹幕：导入本地 XML / ASS / JSON 时间轨">弹</button>
+          <button class="mz-btn" data-a="pset" data-player-min="never" data-player-group="tools" data-player-label="播放设置" title="播放设置（字幕/连播/片源）">${iconHtml('⚙')}</button>
+          <button class="mz-btn" data-a="list" data-player-min="600" data-player-group="tools" data-player-label="播放列表" title="播放列表">${iconHtml('☰')}</button>
+          <button class="mz-btn" data-a="zoom-reset" data-player-min="never" data-player-group="picture" data-player-label="画面复位" data-player-video-only="1" title="画面复位（缩放/亮度一键还原）">1:1</button>
+          <button class="mz-btn" data-a="lock" data-player-min="never" data-player-group="tools" data-player-label="锁定控制" aria-pressed="false" title="窗口锁定（沉浸观影防误触，一键开关）">${iconHtml('🔓')}</button>
+          <button class="mz-btn" data-a="borderless" data-player-min="never" data-player-group="picture" data-player-label="无边框" aria-pressed="false" title="无边框（B）">${iconHtml('▢')}</button>
+          <button class="mz-btn mz-more" data-a="more-controls" type="button" aria-haspopup="dialog" aria-expanded="false" title="更多播放控制">${iconHtml('⋯')}<span class="mz-more-dot" aria-hidden="true" hidden></span></button>
+          <button class="mz-btn" data-a="fullscreen" data-player-min="280" data-player-group="picture" data-player-label="全屏" title="全屏（F）">${iconHtml('⛶')}</button>
         </div>
       </div>
+      <section class="mz-control-center" role="dialog" aria-label="播放控制" aria-modal="false" hidden>
+        <header><div><b>播放控制</b><span class="mz-control-density"></span></div><button type="button" data-a="more-close" aria-label="关闭播放控制">${iconHtml('✕')}</button></header>
+        <div class="mz-control-center-body"></div>
+      </section>
     </div>`;
 
   const media = root.querySelector('.mz-media');
@@ -100,7 +106,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       <div class="mz-empty-d">左侧「媒体库 / 网络资源」选源即播，或直接导入视频</div>
       <button class="rb-btn mz-empty-btn">＋ 导入视频</button>
     </div>`;
-    empty.style.cssText = 'position:absolute;left:0;top:0;bottom:0;right:var(--mz-side-w,0px);display:grid;place-items:center;background:#101014;z-index:3'; // 黑画面中央：侧栏推挤同步收窄（列表开不在列表下居中——真机点名校正）
+    // 几何只由 side-open/side-overlay 状态驱动；关闭侧栏时必须与媒体面、底栏一起铺满舞台。
     empty.querySelector('.mz-empty-in').style.cssText = 'text-align:center;color:#94a3b8;font-size:13px;line-height:2';
     empty.querySelector('.mz-empty-btn').style.cssText = 'margin-top:10px;padding:6px 18px';
     empty.querySelector('.mz-empty-btn').addEventListener('click', async () => {
@@ -119,6 +125,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   const progBtn = root.querySelector('[data-a=progmem]');
   const syncProgBtn = () => {
     progBtn.classList.toggle('on', progEnabled);
+    progBtn.setAttribute('aria-pressed', String(progEnabled));
     progBtn.style.opacity = progEnabled ? '1' : '.45';
     progBtn.title = progEnabled ? '进度记忆：开（点击关闭）——本片位置正在记录' : '进度记忆：关（点击开启）';
   };
@@ -172,7 +179,9 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   let subEnabled = true, subVisible = true;
   const subBtn = root.querySelector('[data-a=sub]');
   const syncSubBtn = () => {
-    subBtn.classList.toggle('on', subVisible && subtitleAttached());
+    const active = subVisible && subtitleAttached();
+    subBtn.classList.toggle('on', active);
+    subBtn.setAttribute('aria-pressed', String(active));
     subBtn.style.opacity = subVisible ? '1' : '.45';
   };
   let subLoadSeq = 0; // 并发序号闸：settings 回调与 setSource 双触发只许最新一趟生效（并发双挂载竞态实锤）
@@ -218,6 +227,9 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   // ==================== 播放设置面板（字幕/连播/片源集中地） ====================
   root.querySelector('[data-a=pset]')?.addEventListener('click', async () => {
+    // modal 会记录当前焦点供关闭时归还；pset 随即被移回 hidden Control Center，
+    // 因此必须在第一个 await 之前同步把焦点交给稳定的 More，而不是让 modal 记住 pset。
+    controlSurface?.focusMoreNow();
     const { modal, toast } = await import('../../shell/shell.js');
     const m = modal('播放设置');
     const seedSites = [
@@ -334,6 +346,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     if (danmaku.scheduler.timeline.events.length) {
       const enabled = danmaku.toggle();
       root.querySelector('[data-a=danmaku]')?.classList.toggle('on', enabled);
+      root.querySelector('[data-a=danmaku]')?.setAttribute('aria-pressed', String(enabled));
       return;
     }
     try {
@@ -348,6 +361,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       danmaku.load(events);
       danmaku.toggle(true);
       root.querySelector('[data-a=danmaku]')?.classList.add('on');
+      root.querySelector('[data-a=danmaku]')?.setAttribute('aria-pressed', 'true');
       import('../../shell/shell.js').then(({ toast }) => toast(`已载入 ${events.length} 条本地弹幕`));
     } catch (error) { import('../../shell/shell.js').then(({ toast }) => toast(`弹幕轨载入失败：${error.message || error}`)); }
   });
@@ -1008,15 +1022,25 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   media.addEventListener('playing', armDecodeWatch);
   media.addEventListener('seeking', clearDecodeWatch);
   media.addEventListener('pause', () => { clearDecodeWatch(); playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });
+  const syncSeekUi = (time = media.currentTime) => {
+    const duration = Number.isFinite(media.duration) && media.duration > 0 ? media.duration : 0;
+    const current = duration ? Math.min(duration, Math.max(0, Number(time) || 0)) : 0;
+    const ratio = duration ? current / duration : 0;
+    fill.style.width = ratio * 100 + '%';
+    knob.style.left = ratio * 100 + '%';
+    track.setAttribute('aria-valuemax', String(Math.round(duration)));
+    track.setAttribute('aria-valuenow', String(Math.round(current)));
+    track.setAttribute('aria-valuetext', `${fmtTime(current)} / ${duration ? fmtTime(duration) : '--:--'}`);
+    track.setAttribute('aria-disabled', String(!duration));
+  };
   media.addEventListener('loadedmetadata', () => {
-    timeEl.innerHTML = `<b>00:00</b> / ${fmtTime(media.duration)}`;
+    timeEl.innerHTML = `<b>00:00</b><span class="mz-time-total"> / ${fmtTime(media.duration)}</span>`;
+    syncSeekUi();
   });
   media.addEventListener('timeupdate', () => {
     if (ctl.seeking || !isFinite(media.duration)) return;
-    const pct = (media.currentTime / media.duration) * 100;
-    fill.style.width = pct + '%';
-    knob.style.left = pct + '%';
-    timeEl.innerHTML = `<b>${fmtTime(media.currentTime)}</b> / ${fmtTime(media.duration)}`;
+    syncSeekUi();
+    timeEl.innerHTML = `<b>${fmtTime(media.currentTime)}</b><span class="mz-time-total"> / ${fmtTime(media.duration)}</span>`;
   });
   // 循环兜底（非连播路径的原逻辑）
   const fallbackLoop = () => {
@@ -1056,8 +1080,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const r = track.getBoundingClientRect();
     const ratio = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
     if (isFinite(media.duration)) media.currentTime = ratio * media.duration;
-    fill.style.width = ratio * 100 + '%';
-    knob.style.left = ratio * 100 + '%';
+    syncSeekUi(ratio * (Number.isFinite(media.duration) ? media.duration : 0));
   };
   track.addEventListener('pointerdown', (e) => { ctl.seeking = true; seekTo(e.clientX); track.setPointerCapture?.(e.pointerId); e.stopPropagation(); });
   // 悬停判定挂父区域（整个进度条区，含上下缓冲带），拖拽仍走轨道本身
@@ -1065,6 +1088,18 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   seekZone.addEventListener('pointermove', (e) => { if (ctl.seeking) seekTo(e.clientX); hoverThumb(e); });
   track.addEventListener('pointermove', (e) => { if (ctl.seeking) seekTo(e.clientX); });
   track.addEventListener('pointerup', () => { ctl.seeking = false; thumb.style.display = 'none'; });
+  track.addEventListener('keydown', (event) => {
+    if (!Number.isFinite(media.duration) || media.duration <= 0) return;
+    const delta = { ArrowLeft: -5, ArrowDown: -5, ArrowRight: 5, ArrowUp: 5, PageDown: -30, PageUp: 30 }[event.key];
+    let nextTime = delta == null ? null : media.currentTime + delta;
+    if (event.key === 'Home') nextTime = 0;
+    if (event.key === 'End') nextTime = media.duration;
+    if (nextTime == null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    media.currentTime = Math.min(media.duration, Math.max(0, nextTime));
+    syncSeekUi();
+  });
   // 延迟隐藏：移动经过的瞬时 leave 不误杀，真正离开才隐藏
   track.parentElement.addEventListener('pointerenter', () => clearTimeout(ctl._thumbHideT));
   track.parentElement.addEventListener('pointermove', () => clearTimeout(ctl._thumbHideT));
@@ -1198,14 +1233,40 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   // 窗口锁定：沉浸观影防误触（锁后键盘/鼠标媒体控制全部失效，再点一次或 Esc 解锁）
   let locked = false;
   const lockBtn = root.querySelector('[data-a=lock]');
+  const lockDisabledState = new Map();
+  const syncLockedControls = (value) => {
+    const interactive = stage.querySelectorAll('button, input, select, [role=slider], [tabindex]');
+    for (const element of interactive) {
+      if (element === lockBtn) continue;
+      if (value) {
+        if (!lockDisabledState.has(element)) lockDisabledState.set(element, { disabled: !!element.disabled, tabindex: element.getAttribute('tabindex') });
+        if ('disabled' in element) element.disabled = true;
+        else element.setAttribute('tabindex', '-1');
+      } else {
+        const prior = lockDisabledState.get(element);
+        if (!prior) continue;
+        if ('disabled' in element) element.disabled = prior.disabled;
+        if (prior.tabindex == null) element.removeAttribute('tabindex'); else element.setAttribute('tabindex', prior.tabindex);
+      }
+    }
+    if (!value) lockDisabledState.clear();
+  };
   const setLock = (v) => {
     locked = v;
     root.classList.toggle('mz-locked', v);
     lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');
     lockBtn.classList.toggle('on', v);
+    lockBtn.setAttribute('aria-pressed', String(v));
+    // 锁定后把唯一解锁键提升到核心栏；其余控件退出指针与 Tab 序列，Esc 仍可解锁。
+    lockBtn.dataset.playerMin = v ? '0' : 'never';
+    syncLockedControls(v);
+    controlSurface?.refresh();
+    // 解锁会把锁键移回隐藏的 Control Center；先把键盘焦点交还可见 More，避免 hidden-focus 陷阱。
+    if (!v) controlSurface?.focusMore();
     import('../../shell/shell.js').then(({ toast }) => toast(v ? '已锁定（点锁定键或 Esc 解锁）' : '已解锁'));
   };
-  lockBtn?.addEventListener('click', (e) => { e.stopPropagation(); setLock(!locked); });
+  // 不阻断冒泡：从 Control Center 触发锁定时，surface 必须同步收起面板并恢复稳定焦点。
+  lockBtn?.addEventListener('click', () => setLock(!locked));
 
   // 画面复位：缩放/亮度一键还原
   root.querySelector('[data-a=zoom-reset]')?.addEventListener('click', () => {
@@ -1231,6 +1292,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   vol.addEventListener('input', () => { media.volume = +vol.value; media.muted = +vol.value === 0; syncVolIcon(); });
   function syncVolIcon() {
     muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');
+    muteBtn.setAttribute('aria-pressed', String(media.muted || media.volume === 0));
   }
   muteBtn.addEventListener('click', () => { media.muted = !media.muted; syncVolIcon(); });
   root.querySelector('.mz-speed').addEventListener('change', (e) => {
@@ -1238,7 +1300,13 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     window.mazz?.invoke('settings:set', { key: 'player.lastSpeed', value: +e.target.value }).catch(() => {}); // 倍速记忆
   });
   // B12b 收编：倍速子窗格化（select 隐藏保留作状态单源，change 联动照旧）
-  import('../../lib/select-menu.js').then(({ selectProxy }) => selectProxy(root.querySelector('.mz-speed'), { btnClass: 'mz-btn selmenu-btn' }));
+  let speedProxy = null;
+  import('../../lib/select-menu.js').then(({ selectProxy }) => {
+    if (destroyed) return;
+    speedProxy = selectProxy(root.querySelector('.mz-speed'), { btnClass: 'mz-btn selmenu-btn' });
+    if (destroyed) { speedProxy?.destroy(); speedProxy = null; return; }
+    controlSurface?.refresh();
+  }).catch(() => {});
   root.querySelector('[data-a=pip]')?.addEventListener('click', async () => {
     if (!isVideo) return;
     try {
@@ -1252,6 +1320,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);
     loopBtn.title = '循环（L）：' + ({ list: '列表循环', single: '单集循环', sequential: '顺序播（播完即停）', off: '关闭循环' })[ctl.loop];
     loopBtn.classList.toggle('off', ctl.loop === 'off');
+    loopBtn.setAttribute('aria-pressed', String(ctl.loop !== 'off'));
   });
   root.querySelector('[data-a=snap]').addEventListener('click', async () => {
     if (!isVideo) return;
@@ -1270,25 +1339,34 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   });
 
   // ---------- 播放列表面板（工作区栏同款：展开推挤视频区/收起铺满/左缘 grip 拖拽调宽/折叠符号/状态记忆） ----------
-  const SIDE_MIN = 200, SIDE_MAX = 520;
-  // 限位（真机点名）：侧栏宽度同时受窗宽钳制——视频区+底栏（含全屏钮）至少 560px，绝不被挤掉；
+  const SIDE_MIN = 150, SIDE_MAX = 520, CONTROL_MIN = 240, SIDE_OVERLAY_AT = SIDE_MIN + CONTROL_MIN;
+  // 限位（W87e）：侧栏 CSS/JS 同用 150px 下限和 30% 上限；响应式底栏只需保留 240px 核心控制位。
   // W58h：拖拽上界与 CSS 30% 渲染封顶同函数——拖的是未封顶值、渲染按封顶值=极限脱同步（面板停走、媒体区/底栏给幽灵让位实锤）
-  const sideMaxNow = () => Math.max(SIDE_MIN, Math.min(SIDE_MAX, stage.clientWidth - 560, Math.floor(stage.clientWidth * 0.3)));
-  ctl.sideW = 260; ctl.sideOpen = false;
+  const sideMaxNow = () => Math.max(SIDE_MIN, Math.min(SIDE_MAX, stage.clientWidth - CONTROL_MIN, Math.floor(stage.clientWidth * 0.3)));
+  ctl.sidePreferredW = 260; ctl.sideW = 260; ctl.sideOpen = false;
   const applySide = () => {
-    ctl.sideW = Math.min(ctl.sideW, sideMaxNow());
+    const stageWidth = stage.clientWidth;
+    if (stageWidth > 0) {
+      const overlay = stageWidth < SIDE_OVERLAY_AT;
+      ctl.sideW = overlay
+        ? Math.min(ctl.sidePreferredW, Math.max(0, Math.floor(stageWidth * 0.72)))
+        : Math.min(ctl.sidePreferredW, sideMaxNow());
+      stage.classList.toggle('side-overlay', ctl.sideOpen && overlay);
+    }
     stage.style.setProperty('--mz-side-w', ctl.sideW + 'px');
     stage.classList.toggle('side-open', ctl.sideOpen);
   };
   // 窗宽变化即重钳（缩窗时全屏钮区永不被侧栏顶掉）
   window.addEventListener('resize', applySide);
+  // 窗格 divider 只改 flex、不触发 window.resize；Control Surface 的 RO 同时重钳侧栏与 L/M/S/XS 密度。
+  const controlSurface = mountPlayerControlSurface({ root, stage, controls, isVideo, onRelayoutSide: applySide });
   const persistSide = () => {
-    window.mazz?.invoke('settings:set', { key: 'player.listSide', value: { width: ctl.sideW, open: ctl.sideOpen } }).catch(() => {});
+    window.mazz?.invoke('settings:set', { key: 'player.listSide', value: { width: ctl.sidePreferredW, open: ctl.sideOpen } }).catch(() => {});
   };
   const setSideOpen = (open) => { ctl.sideOpen = !!open; applySide(); persistSide(); };
   window.mazz?.invoke('settings:get', { key: 'player.listSide' }).then(v => {
     if (v && typeof v === 'object') {
-      if (v.width >= SIDE_MIN && v.width <= SIDE_MAX) ctl.sideW = Math.min(v.width, sideMaxNow());
+      if (v.width >= SIDE_MIN && v.width <= SIDE_MAX) ctl.sidePreferredW = v.width;
       if (typeof v.open === 'boolean') ctl.sideOpen = v.open;
     }
     applySide();
@@ -1304,8 +1382,11 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     sideGrip.classList.add('on');
     const startX = e.clientX, startW = ctl.sideW;
     const move = (ev) => {
-      ctl.sideW = Math.min(Math.max(startW + (startX - ev.clientX), SIDE_MIN), sideMaxNow());
-      stage.style.setProperty('--mz-side-w', ctl.sideW + 'px');
+      const dragMax = stage.clientWidth < SIDE_OVERLAY_AT
+        ? Math.max(SIDE_MIN, Math.min(SIDE_MAX, Math.floor(stage.clientWidth * 0.72)))
+        : sideMaxNow();
+      ctl.sidePreferredW = Math.min(Math.max(startW + (startX - ev.clientX), SIDE_MIN), dragMax);
+      applySide();
     };
     const cleanup = () => {
       window.removeEventListener('mousemove', move);
@@ -1328,9 +1409,11 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   function scheduleHide() {
     clearTimeout(hideTimer);
     if (media.paused) return;
+    if (controlSurface.isOpen() || controls.matches(':focus-within')) return;
     // W58f：自动隐藏只留全屏/无边框——窗口态底栏常驻（窗口态消失=「离谱情况」真机实锤）
     if (!document.fullscreenElement && !ctl.borderless) return;
     hideTimer = setTimeout(() => {
+      if (controlSurface.isOpen() || controls.matches(':focus-within')) return;
       if (!ctl.borderless) controls.classList.add('fade');
       topbar.classList.add('fade');
     }, 2400);
@@ -1340,13 +1423,23 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     topbar.classList.remove('fade');
     scheduleHide();
   }
+  const onControlSurfaceChange = () => showChrome();
+  const onControlsFocusOut = () => queueMicrotask(() => {
+    if (!controls.matches(':focus-within') && !controlSurface.isOpen()) scheduleHide();
+  });
+  root.addEventListener('playercontrolsurfacechange', onControlSurfaceChange);
+  controls.addEventListener('focusin', showChrome);
+  controls.addEventListener('focusout', onControlsFocusOut);
   stage.addEventListener('mousemove', showChrome);
   stage.addEventListener('pointerdown', showChrome);
   media.addEventListener('play', scheduleHide);
   media.addEventListener('pause', showChrome);
-  root.querySelector('[data-a=borderless]').addEventListener('click', () => {
+  const borderlessBtn = root.querySelector('[data-a=borderless]');
+  borderlessBtn.addEventListener('click', () => {
     ctl.borderless = !ctl.borderless;
     root.classList.toggle('borderless', ctl.borderless);
+    borderlessBtn.classList.toggle('on', ctl.borderless);
+    borderlessBtn.setAttribute('aria-pressed', String(ctl.borderless));
     // 真无边框：隐藏应用 titlebar/ribbon/statusbar（此前只隐播放器控制条，窗口框原样=没体现作用）
     document.body.classList.toggle('player-borderless', ctl.borderless);
     import('../../shell/shell.js').then(({ toast }) => toast(ctl.borderless ? '无边框已开（再按 B 还原）' : '已还原'));
@@ -1360,7 +1453,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   };
   document.addEventListener('fullscreenchange', onFullscreenChange);
   stage.addEventListener('dblclick', (e) => {
-    if (e.target.closest('.mz-controls, .mz-topbar, .mz-side')) return;
+    if (e.target.closest('.mz-controls, .mz-control-center, .mz-topbar, .mz-side')) return;
     togglePlay();
   });
 
@@ -1403,11 +1496,13 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     // 否则全屏快捷键全灭、锁定后连 Esc 解锁键都进不来（全屏锁定死，两症同根）
     const inFs = !!document.fullscreenElement && root.contains(document.fullscreenElement);
     if (!inFs && (!root.isConnected || !root.offsetParent || root.getBoundingClientRect().width < 10)) return;
-    if (e.target.closest('input, textarea, select, [contenteditable]')) return;
     if (locked) {
       if (e.key === 'Escape') { e.stopPropagation(); setLock(false); }
       return; // 锁定中：除解锁外全部按键失效（沉浸防误触）
     }
+    // 交互控件拥有自己的键盘协议。尤其 seek slider 的方向键必须先到本地 handler，
+    // 不能被 document capture 误解释为全局快进/音量；button 也保留原生 Space/Enter。
+    if (e.target.closest('button, input, textarea, select, [role=slider], [contenteditable]')) return;
     const used = (fn) => { e.preventDefault(); e.stopPropagation(); fn(); };
     if (e.key === ' ') used(() => togglePlay());
     else if (e.key === 'ArrowLeft') used(() => { media.currentTime = Math.max(0, media.currentTime - 5); });
@@ -1443,6 +1538,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     danmaku.load([]);
     danmaku.toggle(false);
     root.querySelector('[data-a=danmaku]')?.classList.remove('on');
+    root.querySelector('[data-a=danmaku]')?.setAttribute('aria-pressed', 'false');
     root.querySelector('.mz-empty')?.remove(); // 空起手占位退场（首次上源）
     media.pause();
     if (pathChanged) { detachSubtitle(); subFor = null; detachAuxAudio(); audioTracks = []; probeAudioTracks(); }
@@ -1487,11 +1583,21 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      if (locked) {
+        locked = false;
+        syncLockedControls(false);
+      }
+      speedProxy?.destroy();
+      speedProxy = null;
+      controlSurface.destroy();
       companion.destroy().catch(() => {});
       danmaku.destroy();
       subLoadSeq++; // 令所有在途字幕探测/挂载失效。
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('fullscreenchange', onFullscreenChange);
+      root.removeEventListener('playercontrolsurfacechange', onControlSurfaceChange);
+      controls.removeEventListener('focusin', showChrome);
+      controls.removeEventListener('focusout', onControlsFocusOut);
       window.removeEventListener('resize', applySide);
       dragCleanup?.();
       clearTimeout(hideTimer);

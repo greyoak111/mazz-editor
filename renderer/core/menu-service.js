@@ -19,7 +19,9 @@ class MenuService {
   }
   removeBySource(source) {
     for (const [id, items] of this.contributions) {
-      this.contributions.set(id, items.filter(it => it.source !== source));
+      const remaining = items.filter(it => it.source !== source);
+      if (remaining.length) this.contributions.set(id, remaining);
+      else this.contributions.delete(id);
     }
   }
 

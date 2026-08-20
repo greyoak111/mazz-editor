@@ -7,10 +7,12 @@ import path from 'node:path';
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
 describe('播放器与图标', () => {
-  test('空页提示黑画面中央（推挤补偿）', () => {
+  test('空页提示随真实侧栏状态收敛（W87f supersede 永久右偏移）', () => {
     const src = readSrc('renderer/modules/viewer/player.js');
-    assert.ok(src.includes('right:var(--mz-side-w,0px)'), '空页提示必须随侧栏收窄（黑画面中央——真机点名校正）');
-    assert.ok(!src.includes("empty.style.cssText = 'position:absolute;inset:0"), 'inset:0 全台居中不得复活');
+    const css = readSrc('renderer/styles/base.css');
+    assert.ok(!src.includes('right:var(--mz-side-w,0px)') && !src.includes('empty.style.cssText'), '空页不得用永久 inline right 制造收栏残余空洞');
+    assert.ok(css.includes('.mz-empty { position: absolute; inset: 0;'), '空页关闭态必须铺满舞台');
+    assert.ok(css.includes('.mz-stage.side-open:not(.side-overlay) .mz-empty { right: var(--mz-side-w); }'), '只有真实推挤侧栏展开时空页才同步让位');
   });
   test('文件夹 emoji 消灭', () => {
     const p = readSrc('renderer/modules/viewer/player.js');

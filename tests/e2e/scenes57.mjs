@@ -16,7 +16,7 @@ export async function scenes57({ app, win, human, WS, WS2, scenario }) {
 
   try {
     // ==================== 1：分屏后自动刷新（视图穿帮根治） ====================
-    await scenario('分屏·移签自动刷新页面', async () => {
+    await scenario('分屏·移签本地重组且页面状态守恒', async () => {
       await evaluate(() => window.MazzCommands?.execute('file.newBrowser'));
       await wait(1400);
       await evaluate((u) => {
@@ -35,7 +35,7 @@ export async function scenes57({ app, win, human, WS, WS2, scenario }) {
       await human.assert(!!shellTabId, '浏览器壳页签必须在');
       // 向右分屏（移签跨窗格——触发 pane:tabMoved 唯一闸）
       await evaluate((id) => window.MazzShell?.splitWithTab?.(id, 'right'), shellTabId);
-      await wait(1500); // 80ms 延后闸 + 重载耗时
+      await wait(1500); // bounds/recompose/invalidate convergence；禁止网络 reload
       const after = await evaluate(() => {
         const panes = document.querySelectorAll('.pane').length;
         const bctl = window.__activeBrowserCtl;
@@ -50,8 +50,8 @@ export async function scenes57({ app, win, human, WS, WS2, scenario }) {
         return { mark, mk };
       }, after.viewId);
       human.log('分屏后视图状态:', JSON.stringify(chk));
-      await human.assert(chk && chk.mark === 'undefined', `挪窝后必须自动重载（页面标记应消失=重绘，实拿 ${JSON.stringify(chk)}）`);
-      await human.assert(chk.mk === true, '重载后必须仍是原页（mk 在）');
+      await human.assert(chk && chk.mark === 'string', `挪窝后页面内存态必须守恒（实拿 ${JSON.stringify(chk)}）`);
+      await human.assert(chk.mk === true, '本地重组后必须仍是原页（mk 在）');
       // 清场：关新窗格页签回单格
       await evaluate(() => {
         const leaves = window.MazzShell?.paneTree?.leaves?.() || [];
@@ -62,8 +62,8 @@ export async function scenes57({ app, win, human, WS, WS2, scenario }) {
       await wait(600);
     });
 
-    // ==================== 2：播放器底部栏最低宽度 ====================
-    await scenario('播放器·底部栏全组件不被压', async () => {
+    // ==================== 2：播放器底部栏容器响应式 ====================
+    await scenario('播放器·核心常驻+次要能力进入 More', async () => {
       await evaluate(() => window.MazzCommands?.execute('file.newViewer'));
       await wait(1500);
       const r = await evaluate(() => {
@@ -72,17 +72,19 @@ export async function scenes57({ app, win, human, WS, WS2, scenario }) {
         if (!bar || !ctr) return null;
         const cs = getComputedStyle(bar), cc = getComputedStyle(ctr);
         return {
-          minWidth: cs.minWidth, zIndex: cc.zIndex,
-          btns: bar.querySelectorAll('.mz-btn').length,
+          minWidth: cs.minWidth, zIndex: cc.zIndex, clientWidth: bar.clientWidth, scrollWidth: bar.scrollWidth,
+          btns: document.querySelectorAll('.mz-player [data-player-min]').length,
+          more: !!bar.querySelector('[data-a=more-controls]'), density: ctr.dataset.density,
           speedBtn: !!bar.querySelector('.selmenu-btn'), // B12b 倍速已子窗格化
           speedSelHidden: getComputedStyle(bar.querySelector('.mz-speed')).display === 'none',
         };
       });
       human.log('播放器栏:', JSON.stringify(r));
       await human.assert(!!r, '播放器栏必须在');
-      await human.assert(r.minWidth === 'max-content', `bar min-width 必须 max-content（实拿 ${r.minWidth}）`);
+      await human.assert(r.minWidth === '0px', `bar 必须可按 control seat 收缩（实拿 ${r.minWidth}）`);
       await human.assert(r.zIndex === '9', `controls z-index 必须 9 压侧栏（实拿 ${r.zIndex}）`);
-      await human.assert(r.btns >= 17, `全组件必须在 DOM（实拿 ${r.btns} 钮）`);
+      await human.assert(r.scrollWidth <= r.clientWidth + 1, `底栏不得静默裁切（实拿 ${r.scrollWidth}/${r.clientWidth}）`);
+      await human.assert(r.btns >= 17 && r.more && r.density, `能力必须全量留在同一 Control Surface（实拿 ${JSON.stringify(r)}）`);
       await human.assert(r.speedBtn && r.speedSelHidden, '倍速必须已子窗格化（按钮在+select 隐）');
     });
 

@@ -19,14 +19,17 @@ export async function scenes60({ app, win, human, WS, WS2, scenario }) {
       return {
         opacity: ctr ? getComputedStyle(ctr).opacity : null,
         fade: ctr?.classList.contains('fade') ?? null,
-        btns: bar?.querySelectorAll('.mz-btn').length ?? 0,
+        actions: document.querySelectorAll('.mz-player [data-player-min]').length,
+        clientWidth: bar?.clientWidth ?? 0, scrollWidth: bar?.scrollWidth ?? 0,
+        more: !!bar?.querySelector('[data-a=more-controls]'), density: ctr?.dataset.density,
         sideW: side?.getBoundingClientRect().width ?? 0,
         stageW: stage?.getBoundingClientRect().width ?? 0,
       };
     });
     human.log('底栏常驻:', JSON.stringify(st));
     await human.assert(st.opacity === '1' && st.fade === false, `窗口态底栏必须常驻（实拿 opacity=${st.opacity} fade=${st.fade}）`);
-    await human.assert(st.btns >= 17, `全组件必须在（实拿 ${st.btns}）`);
+    await human.assert(st.actions >= 17 && st.more && st.density, `全能力必须在 Control Surface 可达（实拿 ${JSON.stringify(st)}）`);
+    await human.assert(st.scrollWidth <= st.clientWidth + 1, `底栏不得越过 control seat（实拿 ${st.scrollWidth}/${st.clientWidth}）`);
     // 右栏 24% 封顶实证（1920 视口下 260 ≤ 24%——先确认基线）
     await human.assert(st.sideW <= Math.ceil(st.stageW * 0.24) + 1, `右栏必须 ≤24% 舞台（实拿 ${st.sideW}/${st.stageW}）`);
   });

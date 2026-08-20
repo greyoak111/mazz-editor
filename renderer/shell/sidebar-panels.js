@@ -82,7 +82,7 @@ export class SidebarPanels {
       ['cognition', '◈', '认知'],
     ];
     this.tabbar.innerHTML = TABS.map(([id, ico, t]) =>
-      `<button class="sb-tab" data-t="${id}" title="${t}">${iconHtml(ico)}<span>${t}</span></button>`).join('');
+      `<button class="sb-tab" data-t="${id}" title="${t}"><span class="sb-tab-icon" aria-hidden="true">${iconHtml(ico)}</span><span>${t}</span></button>`).join('');
     head.before(this.tabbar);
     this.tabbar.querySelectorAll('.sb-tab').forEach(b =>
       b.addEventListener('click', () => this.showTab(b.dataset.t)));

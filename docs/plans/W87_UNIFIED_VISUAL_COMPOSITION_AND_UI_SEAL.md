@@ -1,11 +1,13 @@
 # W87 Unified Visual Composition / 全软件 UI 封板
 
-> 状态：**COMPLETE / SUPPORTED-SCOPE SEALED**
-> 日期：2026-08-19
+> 状态：**W87a–f EXECUTED SCOPE SEALED；W71 COMPLETE WAVE 5A OPEN**
+> 日期：2026-08-19（2026-08-20 W87e 修订）
 > 起始坐标：`main@c125454`
 > 原始修正材料：`C:\Users\Administrator\.codex\attachments\a4eebcc8-a823-4edd-8853-c512143d9092\pasted-text.txt`
 > 来源 SHA-256：`ED8AF6DA040EEA93A04ECA93939BCB7941D2A5A11C6DAA0E922BC4EDCB4331B6`
 > 实施检查点：[W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md](../engineering/W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)
+> Player 响应式增量：[W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md](../engineering/W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md)
+> Sidebar / Player 几何增量：[W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md](../engineering/W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md)
 
 ## 1. 决策
 
@@ -24,9 +26,11 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 
 本地 owner 继续创建、迁移和销毁真实资源；统一运行时只持有视觉注册、宿主关系、遮挡令牌、几何快照和焦点仲裁。这样既消除各模块私自 cloak 的分叉，又不冒险一次性重构成熟生命周期。
 
+2026-08-20 的 Player 窄分屏复核又暴露了另一类此前未纳入 W87a–d 复合矩阵的布局债：DOM 控制条在组件容器内的渐进收缩。W87e 采用 Player stage-local owner 关闭第一参考切片，并已完成 source/packaged Electron 复封。随后 W87f 又关闭 Workspace Sidebar 八页签窄栏溢出与空 Player 收栏残余右偏移。两者都不是新的全局 Surface kind，也不改写 W87a–d 已通过的 Browser/Panel 合成结论；W71 完整 Wave 5A 仍为 OPEN。
+
 ## 2. 不变量
 
-1. 任何受支持的可见、可输入或可遮挡实体必须登记到 `mazz.visual-composition/v1`。
+1. 任何进入跨 host 合成、能够遮挡 native Surface 或拥有独立 native window 的受支持实体必须登记到 `mazz.visual-composition/v1`；严格限制在模块 DOM stage 内的普通控件仍由 local owner 管理。
 2. `window / panel-window / web-contents-view / dom-overlay` 使用同一注册表和显式 host。
 3. DOM Overlay 先取得主进程遮挡确认再显示，避免弹层出现而原生 Surface 尚未退场的单帧穿帮。
 4. 同一 host 的 Overlay 使用令牌引用计数；关闭一层不得提前恢复下层 WebContentsView。
@@ -40,6 +44,8 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 12. 全部代理 decode/预绘后须按当前 DOM 几何 relayout；Overlay 激活再复核身份全集，成功后才允许 cloak。
 13. proxy/frame/gradient 必须 pointer-through；渐变只过渡 opacity，几何不得使用 `transition:all`。
 14. 有效 drop 后 pane 数必须恰增 1，source 在 pane tree 中恰有一个 owner；恢复必须等待 native visible/bounds Gate 后再撤代理。
+15. 纯 DOM、严格限制在模块 stage 内且不遮挡 native Surface 的控制面由模块 local owner 管理；不能为了“统一”强行登记成全局 Surface kind。
+16. 密集控件条必须按组件容器而非 viewport 分档；能力降级只能移动同一真实节点，不能复制 handler 或状态。
 
 ## 3. 实施波次
 
@@ -52,6 +58,8 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 | W87-4 | 24 面板共享运行时、全局控件 SVG、主题/窄窗/QuickNote 收敛 | Panel runtime/CSP/shared CSS 全覆盖；正式控件无已知 emoji fallback |
 | W87-5 | 源码与安装包真实 Electron 矩阵、截图人工复核、20× 生命周期、发布与全量回归 | 检查点全部为 GREEN |
 | W87b–d 复开 | 复杂 Browser/child/Panel 复合矩阵、无框渐隐、跨渲染面代理帧交接 | 六组 source/packaged × hardware/compatibility/light 全 PASS；三块同时 Surface、实际 topology/owner、pointer-through 和恢复账通过 |
+| W87e Player Control Surface | Player stage-local L/M/S/XS、同节点 More、侧栏 preferred/effective、焦点/锁定/ARIA/lifecycle | Node `13/13`、lifecycle `4/4`、P1 加固后 source/packaged Electron、12 宽度档与 20× ownership 全 PASS |
+| W87f Sidebar / empty Player geometry | Sidebar `4×2` + container density；空 Player 与 controls 共用 side-open 真值 | source/packaged：`180/232/320px`、开关侧栏 20×、fatal/error 0；全 PASS |
 
 ## 4. 支持矩阵
 
@@ -66,6 +74,8 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 - Browser 最终矩阵包含 source/packaged 各自 hardware Ink、compatibility Ink、hardware Construct light，共六组；
 - 主窗 `1280×800` 与最低支持窗口 `960×600`；
 - 打包目录 `release/win-unpacked` 的真实运行路径。
+
+W87e 的目标组件宽度矩阵为 `1200 / 960 / 959 / 900 / 720 / 600 / 599 / 560 / 440 / 439 / 420 / 320 px`，现已在 P1 加固后的 source 与 packaged Electron 中通过；8 张图与两个 JSON 已由最终代码重新生成。W87f 另覆盖 Workspace Sidebar `180 / 232 / 320px` 与空 Player 侧栏 20 轮开关。
 
 ## 5. 保留项
 
@@ -85,10 +95,12 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 - 主进程 fatal log 与 renderer error 均为 0；
 - 20 WebContentsView + 20 PanelWindow 全关后 ResourceLedger 回基线，工作集回落率均不低于 90%；
 - 源码与 packaged UI E2E 均通过，packaged 至少连续两轮无竞态；
-- 全量测试 `221/221` 个文件通过；
+- 全量测试 `222/222` 个文件通过；
 - 发布审计与 OSS provenance 为 CURRENT；
 - 截图由施工方人工回看，不以测试生成文件存在冒充视觉验收。
 
+上列 DoD 记录的是 W87a–f 已执行范围。W87e/W87f 的附加 DoD 以独立检查点为准：20 轮 resize/ownership 或侧栏开关 convergence 不得写成真实媒体打开关闭、内存回落或媒体 soak；Player 与 Workspace Sidebar 完成也不替代 Shell、Sheet、Browser、Factory、Library 的完整 Wave 5A 推广。
+
 ## 7. 条件边界
 
-确定性 Browser 主矩阵使用 renderer `DragEvent`；额外 Playwright CDP pointer 已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 因 `0x80004002` 无法捕获 frameless Electron 窗口，该工具失败不能据此判产品失败或通过。多显示器、100/150/200% DPI 全排列、真实 Win32 物理拖放、屏幕阅读器实机、触屏、摄像头/麦克风权限、RDP/虚拟显示驱动、第三方插件自绘 UI、任意用户内容和异机 GPU 仍是外部矩阵。它们不被伪写成已通过；一旦出现可复现问题，按 W87 协议归属到统一 host/geometry/focus/occlusion/lifecycle 之一处理，不再新增模块私有视觉补丁。
+确定性 Browser 主矩阵使用 renderer `DragEvent`；额外 Playwright CDP pointer 已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 因另一路工具故障在 W87f 明确禁用，本轮所有结论只来自 Electron E2E、截图与几何证据；不能用工具失败判产品失败或通过。此前 W87e 的 GPU `0xC0000135` 阻断已在后续干净重跑中解除。多显示器、100/150/200% DPI 全排列、真实 Win32 物理拖放、屏幕阅读器实机、触屏、摄像头/麦克风权限、RDP/虚拟显示驱动、第三方插件自绘 UI、任意用户内容和异机 GPU 仍是外部矩阵。它们不被伪写成已通过；一旦出现可复现问题，按 W87 协议归属到统一 host/geometry/focus/occlusion/lifecycle 之一处理，不再新增模块私有视觉补丁。

@@ -26,11 +26,14 @@ describe('① 分屏后本地重组（视图穿帮根治）', () => {
   });
 });
 
-describe('② 播放器底部栏最低宽度（窗口态）', () => {
-  test('z-index 压侧栏+min-width 全组件自然宽', () => {
+describe('② 播放器底部栏视觉层与响应式接管（W87e supersede W58c max-content）', () => {
+  test('z-index 压侧栏；底栏必须允许收缩并由 Control Surface 保证能力可达', () => {
     const css = readSrc('renderer/styles/base.css');
     assert.ok(/\.mz-controls \{[^}]*z-index: 9/.test(css), 'controls z-index 必须压过 .mz-side(8)');
-    assert.ok(/\.mz-bar \{[^}]*min-width: max-content/.test(css), 'bar min-width=max-content 必须有');
+    assert.ok(/\.mz-bar \{[^}]*min-width: 0/.test(css), 'bar 必须服从真实 control seat 宽度');
+    assert.ok(!/\.mz-bar \{[^}]*min-width: max-content/.test(css), '旧 max-content 静默裁切药方不得复活');
+    const player = readSrc('renderer/modules/viewer/player.js');
+    assert.ok(player.includes('mountPlayerControlSurface'), '隐藏能力必须由 Control Surface 收纳，不得直接消失');
   });
 });
 

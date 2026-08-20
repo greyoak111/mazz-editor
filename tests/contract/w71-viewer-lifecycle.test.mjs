@@ -104,7 +104,7 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
 
     const tracked = [
       [window, 'resize'], [window, 'mousemove'], [window, 'mouseup'],
-      [document, 'fullscreenchange'], [document, 'keydown'],
+      [document, 'fullscreenchange'], [document, 'keydown'], [document, 'pointerdown'],
     ];
     const listeners = new Map(tracked.map(([target, type]) => [`${target === window ? 'w' : 'd'}:${type}`, new Set()]));
     const originals = new Map();
@@ -135,12 +135,17 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
     try {
       const player = createPlayer(root, { url: null, name: 'W71', ext: '', path: null, kind: 'video' });
       root.querySelector('.mz-side-grip').dispatchEvent(new window.MouseEvent('mousedown', { bubbles: true, clientX: 200 }));
-      assert.equal(listeners.get('w:resize').size, 1);
+      assert.equal(listeners.get('w:resize').size, 2, '侧栏 window 重钳与 Control Surface fallback 各一');
       assert.equal(listeners.get('w:mousemove').size, 1);
       assert.equal(listeners.get('w:mouseup').size, 1);
       assert.equal(listeners.get('d:fullscreenchange').size, 1);
-      assert.equal(listeners.get('d:keydown').size, 1);
-      assert.equal(activeIntervals.size, 2, '进度记忆与 P2P 状态轮询 interval 都应纳入生命周期');
+      assert.equal(listeners.get('d:keydown').size, 2, '媒体快捷键与 More Escape 门各一');
+      assert.equal(listeners.get('d:pointerdown').size, 1, 'More 外点关闭门必须在');
+      // jsdom 以一个短命 interval 驱动 RAF；先让 Control Surface 的首帧布局收敛，
+      // 再盘点真正长住的 Player 资源，不把测试环境实现细节误报成泄漏。
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise(resolve => setTimeout(resolve, 80));
+      assert.equal(activeIntervals.size, 2, '进度记忆与陪看观察 interval 都应纳入生命周期');
 
       const media = root.querySelector('.mz-media');
       media.setAttribute('src', 'mazz-res://media/test.mp4');
@@ -171,6 +176,8 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
     const viewer = readSrc('renderer/modules/viewer/index.js');
     assert.ok(player.includes("removeEventListener('fullscreenchange', onFullscreenChange)"));
     assert.ok(player.includes("removeEventListener('resize', applySide)"));
+    assert.ok(player.includes('controlSurface.destroy()'));
+    assert.ok(player.includes("removeEventListener('playercontrolsurfacechange', onControlSurfaceChange)"));
     assert.ok(player.includes('cancelAnimationFrame(waveRaf)'));
     assert.ok(player.includes('stream.getTracks().forEach(t => t.stop())'));
     assert.ok(player.includes("if (rec.state !== 'inactive') rec.stop()"));
@@ -181,5 +188,76 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
     assert.ok(viewer.includes('dispose(state)'));
     assert.ok(viewer.includes("invoke?.('fs:delete', { path: tempPath })"));
     assert.ok(viewer.includes('instances.delete(container)'));
+  });
+
+  test('多轮 Player create/destroy 后 selmenu 命令严格回到基线，迟到 import 不得复活', async () => {
+    const { createPlayer } = await import('../../renderer/modules/viewer/player.js');
+    const { commands } = await import('../../renderer/core/command-registry.js');
+    const { menus } = await import('../../renderer/core/menu-service.js');
+    const mediaProto = window.HTMLMediaElement.prototype;
+    const originalPlay = mediaProto.play;
+    const originalPause = mediaProto.pause;
+    const originalLoad = mediaProto.load;
+    const canvasProto = window.HTMLCanvasElement.prototype;
+    const originalGetContext = canvasProto.getContext;
+    mediaProto.play = () => Promise.resolve();
+    mediaProto.pause = () => {};
+    mediaProto.load = () => {};
+    canvasProto.getContext = () => null;
+
+    window.mazz = {
+      isElectron: true,
+      invoke(channel) {
+        if (channel === 'settings:get') return Promise.resolve(null);
+        if (channel === 'fs:listDir') return Promise.resolve([]);
+        return Promise.resolve(true);
+      },
+    };
+
+    const selmenuCount = () => commands.list({ includeDisabled: true }).filter(command => command.source?.startsWith('selmenu-')).length;
+    const selmenuMenuCount = () => [...menus.contributions.keys()].filter(id => id.startsWith('selmenu/')).length;
+    const baseline = selmenuCount();
+    const baselineMenus = selmenuMenuCount();
+    const live = [];
+    try {
+      for (let i = 0; i < 12; i++) {
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+        const player = createPlayer(root, { url: null, name: `W71-cycle-${i}`, ext: '', path: null, kind: 'video' });
+        live.push({ root, player });
+
+        if (i % 2) {
+          // 奇数轮让 selectProxy 真正注册，再验证 destroy 的同源反注册。
+          await tick();
+          await tick();
+          assert.ok(selmenuCount() > baseline, '存活 Player 的倍速代理应贡献临时命令');
+          assert.ok(selmenuMenuCount() > baselineMenus, '存活 Player 的倍速代理应贡献临时菜单');
+        }
+        // 偶数轮同拍销毁，专门覆盖 dynamic import 回调迟到的竞态。
+        player.destroy();
+        player.destroy();
+        root.remove();
+        live.pop();
+        await tick();
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        await tick();
+        assert.equal(selmenuCount(), baseline, `第 ${i + 1} 轮异步收敛后 selmenu 命令必须精确回基线`);
+        assert.equal(selmenuMenuCount(), baselineMenus, `第 ${i + 1} 轮异步收敛后 selmenu 菜单键必须精确回基线`);
+      }
+    } finally {
+      for (const entry of live.splice(0)) {
+        entry.player.destroy();
+        entry.root.remove();
+      }
+      await tick();
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      await tick();
+      mediaProto.play = originalPlay;
+      mediaProto.pause = originalPause;
+      mediaProto.load = originalLoad;
+      canvasProto.getContext = originalGetContext;
+    }
+    assert.equal(selmenuCount(), baseline, '清理出口不得放宽命令基线');
+    assert.equal(selmenuMenuCount(), baselineMenus, '清理出口不得遗留空 selmenu 菜单墓碑');
   });
 });

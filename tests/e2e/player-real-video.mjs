@@ -102,6 +102,13 @@ try {
         .find(item => item.getBoundingClientRect().width > 0);
       const quality = media.getVideoPlaybackQuality?.();
       const probe = document.createElement('video');
+      const root = media.closest('.mz-player');
+      const controls = root?.querySelector('.mz-controls');
+      const bar = root?.querySelector('.mz-bar');
+      const rectOf = element => {
+        const rect = element?.getBoundingClientRect?.();
+        return rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height } : null;
+      };
       return {
         path: inputPath,
         readyState: media.readyState,
@@ -117,6 +124,18 @@ try {
         frameCallbacks: window.__realVideoFrames,
         hevcCanPlay: probe.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"') || '',
         blackFrameOverlay: !!document.querySelector('.mz-decode-failure'),
+        controlSurface: {
+          rootClass: root?.className || '',
+          controlsClass: controls?.className || '',
+          opacity: controls ? getComputedStyle(controls).opacity : null,
+          pointerEvents: controls ? getComputedStyle(controls).pointerEvents : null,
+          controlsRect: rectOf(controls),
+          barRect: rectOf(bar),
+          stageRect: rectOf(root?.querySelector('.mz-stage')),
+          density: controls?.dataset.density || null,
+          snapshot: root?.__playerControlSurface?.snapshot?.() || null,
+          fullscreen: !!document.fullscreenElement,
+        },
       };
     }, input);
     const expectation = expectations[index] || 'frames';

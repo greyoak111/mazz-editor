@@ -2,18 +2,22 @@
 
 > 日期：2026-08-19
 > 起始坐标：`main@c125454`
-> 结论：**SUPPORTED-SCOPE RESEALED AFTER W87b；已执行矩阵内已知 P0/P1 = 0**
+> 结论：**W87a–f EXECUTED SCOPE RESEALED；W71 COMPLETE WAVE 5A OPEN**
 > 协议：`mazz.visual-composition/v1`
 
 > 2026-08-19 修订：原封板遗漏“主窗多 Browser + 工作台 child + 主/子窗盖顶 + 已有分屏再次拖拽 + child Panel 盖顶”的复合矩阵，后被 W87b RED 证伪。该组合根因已关闭，并完成 source/packaged × hardware/compatibility 复验；详见 [`W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md`](./W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md)。原报告的单轴证据保留，但不再单独承担复合场景封板结论。
 
 > 2026-08-19 W87d 再修订：W87b 又把“拖拽期全部 WCV hidden”误当成功，遗漏用户实际看到的网页空底。跨渲染面视觉连续性现以 [`W87D_BROWSER_DRAG_VISUAL_CONTINUITY_CHECKPOINT_2026-08-19.md`](./W87D_BROWSER_DRAG_VISUAL_CONTINUITY_CHECKPOINT_2026-08-19.md) 为准；W87/W87b 其他单轴与复合结论不受影响。
 
+> 2026-08-20 W87e/f 修订：Player 底栏在窄 Pane/侧栏组合下仍会被 W58c `max-content` 药方裁切；Workspace Sidebar 八页签与空 Player 又暴露组件级宽度和状态几何缺口。W87e/f 已在最终代码上完成 source/packaged Electron 复封；详见 [`W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md`](./W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md) 与 [`W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md`](./W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md)。这仍不等于 W71 全部 Wave 5A 已推广。
+
 ## 1. 结果
 
 本轮没有把 Browser 局部即时 cloak 当成视觉解决方案。Main Window、PanelWindow、WebContentsView 和 DOM Overlay 已进入同一视觉注册与仲裁面；local owner 继续持有真实资源，统一运行时持有 host、geometry、focus、occlusion 和视觉生命周期。W87d 保留 drag cloak 作为 Windows 命中药方，但把它严格放在 sender-host 捕获、代理预绘、relayout 和 Overlay 身份门之后。
 
 同时对主应用、24 个独立 Panel HTML、QuickNote、主题、图标、焦点、禁用态、最小窗口和瞬时菜单执行了全量收敛。原单轴支持矩阵与 W87b Browser 复合矩阵中没有已知未关闭 P0/P1；外部硬件与第三方内容边界单列，不冒充已验。
+
+这里的“全量”现在指 W87a–f 明列且已有运行证据的执行范围；它仍不代表 W71 Wave 5A 已在 Shell、Sheet、Browser、Factory、Library 全面推广。
 
 ## 2. 落地件
 
@@ -28,6 +32,8 @@
 | Theme | Paper/Ink 真实 computed gate；QuickNote 接应用主题；Organization 和 Browser host 清除硬编码暗岛/白底 |
 | Lifecycle | 页签隐藏前 blur，隐藏 view 同步 `aria-hidden + inert`；瞬时菜单只在首帧 ready 并取得焦点后武装 blur-close |
 | Browser drag continuity | main 按 IPC sender-host 执行 `captureVisibleHost`；捕获瞬间精确校验可见集合、`tabId/webContentsId` 与 bounds；代理预绘后 relayout，Overlay 激活复核身份全集，再 cloak；恢复通过 native visible/bounds Gate |
+| Player Control Surface | stage-local L/M/S/XS；同一真实控件 inline ↔ Control Center；侧栏 preferred/effective、焦点/锁定/ARIA 与 lifecycle 闭环 |
+| Sidebar / empty Player layout | Workspace Sidebar `4×2` + container density；空 Player 只在真实 push-side open 时让位，收栏与底栏同步铺满 |
 
 ## 3. 本轮抓到并关闭的真实缺陷
 
@@ -43,6 +49,8 @@
 10. **迁移靠网络 reload 收敛**：`pane:tabMoved` 曾以 reload 掩盖合成失配，带来白帧和页面状态丢失。现改为本地 `bv:recompose`，并以 generation 使旧几何 timer 失效。
 11. **child / Panel 首帧与焦点错宿主**：Browser handoff 未完成时 child 已显示，普通 Panel 也会裸壳先显；child Panel 关闭后还会抢回 main。现统一延迟到 handoff ACK / `ready-to-show`，并向实际 host 归还焦点。
 12. **迟到 HOME 假绿**：异步 `document.write` 可在真网页加载后覆盖画面，而 Window JS 标记仍存活。现将 HOME 写入串进导航队列，并用 WCV 原生像素抓取而非只看状态探针验收。
+13. **Player `max-content` 裁切**：W58c 的“控件不缩”药方在窄 Pane 中变成静默裁切。W87e 改为按 control seat 容器宽度分档并把同一真实节点有序迁入 More。
+14. **Sidebar 文字竖排 / 空 Player 假侧栏**：八页签单行 flex 挤压标签；空画面永久 inline right 在收栏后仍占位。W87f 分别改为 `4×2` container grid 与 class-driven side geometry。
 
 ## 4. 机器与视觉证据
 
@@ -60,6 +68,8 @@
 | [`W87B_BROWSER_COMPOSITION_SOURCE_HARDWARE_W87D.json`](./evidence/W87B_BROWSER_COMPOSITION_SOURCE_HARDWARE_W87D.json)、[`SOURCE_COMPATIBILITY_W87D`](./evidence/W87B_BROWSER_COMPOSITION_SOURCE_COMPATIBILITY_W87D.json)、[`SOURCE_HARDWARE_W87DLIGHT`](./evidence/W87B_BROWSER_COMPOSITION_SOURCE_HARDWARE_W87DLIGHT.json) | source：hardware/compatibility Ink + hardware Construct light 三组最终 Browser 复合矩阵均 PASS |
 | [`W87B_BROWSER_COMPOSITION_PACKAGED_HARDWARE_W87D.json`](./evidence/W87B_BROWSER_COMPOSITION_PACKAGED_HARDWARE_W87D.json)、[`PACKAGED_COMPATIBILITY_W87D`](./evidence/W87B_BROWSER_COMPOSITION_PACKAGED_COMPATIBILITY_W87D.json)、[`PACKAGED_HARDWARE_W87DLIGHT`](./evidence/W87B_BROWSER_COMPOSITION_PACKAGED_HARDWARE_W87DLIGHT.json) | packaged：相同三组矩阵均 PASS；独立 WCV `colorfulRatio≈0.924–0.988` |
 | [`W87D_BROWSER_CDP_POINTER_AFTER_DROP_HARDWARE.json`](./evidence/W87D_BROWSER_CDP_POINTER_AFTER_DROP_HARDWARE.json)、[`DURING_DRAG`](./evidence/W87D_BROWSER_CDP_POINTER_DURING_DRAG_HARDWARE.png)、[`AFTER_DROP`](./evidence/W87D_BROWSER_CDP_POINTER_AFTER_DROP_HARDWARE.png) | Playwright CDP pointer：pointer-through、drop 后 topology/owner 与清理通过；明确不是 Win32 `SendInput` |
+| [`W87E_PLAYER_CONTROL_SURFACE_SOURCE.json`](./evidence/W87E_PLAYER_CONTROL_SURFACE_SOURCE.json)、[`PACKAGED`](./evidence/W87E_PLAYER_CONTROL_SURFACE_PACKAGED.json) 与 8 张 Player 图 | **CURRENT / PASS**：P1 加固后 source/packaged；12 宽度档、真实分屏/侧栏、焦点/锁定/ARIA、20× ownership；fatal/error 0 |
+| [`W87F_SIDEBAR_PLAYER_LAYOUT_SOURCE.json`](./evidence/W87F_SIDEBAR_PLAYER_LAYOUT_SOURCE.json)、[`PACKAGED`](./evidence/W87F_SIDEBAR_PLAYER_LAYOUT_PACKAGED.json) 与 4 张图 | **CURRENT / PASS**：Sidebar `180/232/320px` 与空 Player 侧栏开关 20×；fatal/error 0 |
 
 截图已逐张回看：Paper/Ink 确实分化；Organization、Browser host、Panel 空态已同盘；最低窗口没有横向裁切；Overlay 下方 native 页面不穿透；面板矩阵没有新的黑闪或未主题化孤岛。
 
@@ -86,8 +96,24 @@ main fatal logs / renderer errors          0 / 0
 20 PanelWindow lifecycle                  PASS
 release audit                              PASS
 OSS provenance                             CURRENT
-full suite                                 221 / 221 test files PASS
+full suite at W87d coordinate              221 / 221 test files PASS
 ```
+
+上表是 W87d 封板坐标的历史验证账。W87e/f 的最终增量账如下：
+
+```text
+W87e Player Node contract                 PASS 13 / 13
+W71 Viewer/Player lifecycle               PASS 4 / 4
+P1-hardened source Electron               PASS / CURRENT
+P1-hardened packaged Electron             PASS / CURRENT
+W87f Sidebar/empty Player source          PASS / CURRENT
+W87f Sidebar/empty Player packaged        PASS / CURRENT
+final full suite                          PASS 222 / 222 test files
+release audit / OSS provenance            PASS / CURRENT
+W71 complete Wave 5A                      OPEN
+```
+
+W87e 的精确组件宽度门为 `1200 / 960 / 959 / 900 / 720 / 600 / 599 / 560 / 440 / 439 / 420 / 320 px`。W87f 的 Sidebar 门为 `180 / 232 / 320px`。两者的 20 轮分别只验 resize/DOM ownership 与侧栏开关几何 convergence，不是 20 次真实媒体打开关闭、内存回落或媒体 soak。
 
 拖拽整窗像素口径为 Ink `colorfulRatio≈0.5665–0.5666`、Construct `≈0.9100–0.9128`；独立 WCV 为 `≈0.924–0.988`。二者观察对象不同，不得混写为同一分数。
 
@@ -101,7 +127,9 @@ W67 本轮数据：baseline `351.2 MiB`；WCV peak/after `2039.6/356.0 MiB`；Pa
 | W71 Surface v1 draft | 方法语义被 W87 registry/overlay/focus/host 协议吸收；不实施全量 owner 迁移 |
 | W46/W50 Browser module-local cloak | 正式 modal 遮挡逻辑退役；统一 Overlay token 取代 |
 | drag cloak / invalidate / bounds oscillation 等 | 继续 KEEP；但 drag cloak 只能位于 W87d 代理预绘之后，直接 cloak 已禁止 |
+| W58c Player `.mz-bar min-width:max-content` | 仅由 W87e Player Control Surface supersede；不把这次局部替换扩写成全局 CSS 删除许可 |
+| W58f fade / W58h side geometry | 继续 KEEP；W87e 在其上补焦点唤回与 preferred/effective 宽度，不抹掉既有窗口/侧栏语义 |
 
 ## 7. 封板边界
 
-“已知 P0/P1 = 0”只针对计划文件中的原单轴矩阵与 W87b/W87d 已执行复合矩阵。确定性主矩阵使用 renderer `DragEvent`；Playwright CDP pointer 路径虽已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 因 `0x80004002` 无法捕获 frameless Electron 窗口，其失败既不是产品失败证据，也不是产品通过证据。多显示器与多 DPI 全排列、真实 Win32 物理拖放、真实屏幕阅读器/触摸设备、第三方插件 UI、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 和任意外部网页仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。
+“已知 P0/P1 = 0”只针对计划文件中的 W87a–f 已执行范围，不覆盖完整 W71 Wave 5A。Player Control Center 是 stage-local DOM owner，不是 `mazz.visual-composition/v1` 新 kind。确定性 Browser 主矩阵使用 renderer `DragEvent`；Playwright CDP pointer 路径虽已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 在 W87f 按维护者要求禁用，本轮不以该工具作证；此前 GPU `0xC0000135` 阻断已由后续 clean rerun 解除。多显示器与多 DPI 全排列、真实 Win32 物理拖放、真实屏幕阅读器/触摸设备、第三方插件 UI、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 和任意外部网页仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。

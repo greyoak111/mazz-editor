@@ -33,7 +33,7 @@ export async function scenes62({ app, win, human, WS, WS2, scenario }) {
         panelLeft: Math.round(sideR.left),
         controlsRight: Math.round(ctrR.right),
         stageW: Math.round(stage.getBoundingClientRect().width),
-        expected: Math.max(200, Math.min(520, Math.round(stage.getBoundingClientRect().width) - 560, Math.floor(stage.getBoundingClientRect().width * 0.3))),
+        expected: Math.max(150, Math.min(520, Math.round(stage.getBoundingClientRect().width) - 240, Math.floor(stage.getBoundingClientRect().width * 0.3))),
       };
     });
     human.log('极限拖拽:', JSON.stringify(st));

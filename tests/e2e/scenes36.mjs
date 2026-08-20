@@ -118,12 +118,38 @@ export async function scenes36({ app, win, human, WS, scenario }) {
   await scenario('播放器·空页居中文件夹SVG', async () => {
     await evaluate(() => window.MazzCommands?.execute('file.newViewer'));
     await human.until(() => !!document.querySelector('.mz-player .mz-empty'), { timeout: 9000, msg: '空播放器' });
-    const r = await evaluate(() => {
-      const em = document.querySelector('.mz-empty');
-      return { right: em?.style.right, hasVar: (em?.style.right || '').includes('mz-side-w') };
+    const emptyState = () => evaluate(() => {
+      const stage = document.querySelector('.mz-stage');
+      const empty = stage?.querySelector('.mz-empty');
+      const controls = stage?.querySelector('.mz-controls');
+      const side = stage?.querySelector('.mz-side');
+      const rect = el => el?.getBoundingClientRect()?.toJSON?.() || {};
+      return {
+        sideOpen: stage?.classList.contains('side-open'),
+        sideOverlay: stage?.classList.contains('side-overlay'),
+        inlineRight: empty?.style.right || '',
+        stage: rect(stage), empty: rect(empty), controls: rect(controls), side: rect(side),
+      };
     });
-    human.log('空页:', JSON.stringify(r));
-    await human.assert(r.hasVar, '空页提示必须随侧栏收窄（黑画面中央）');
+    const fillsStage = state => Math.abs(state.empty.left - state.stage.left) <= 1
+      && Math.abs(state.empty.right - state.stage.right) <= 1
+      && Math.abs(state.controls.left - state.stage.left) <= 1
+      && Math.abs(state.controls.right - state.stage.right) <= 1;
+    const closed = await emptyState();
+    human.log('空页·收栏:', JSON.stringify(closed));
+    await human.assert(!closed.sideOpen && closed.inlineRight === '' && fillsStage(closed), `空页收栏必须与底栏共同铺满（${JSON.stringify(closed)}）`);
+    await evaluate(() => document.querySelector('.mz-player [data-a=list]')?.click());
+    await wait(250);
+    const open = await emptyState();
+    human.log('空页·开栏:', JSON.stringify(open));
+    if (!open.sideOverlay) {
+      await human.assert(open.sideOpen && Math.abs(open.empty.right - open.side.left) <= 2 && Math.abs(open.controls.right - open.side.left) <= 2,
+        `空页开栏必须与底栏共同让位（${JSON.stringify(open)}）`);
+    }
+    await evaluate(() => document.querySelector('.mz-player .mz-side-x')?.click());
+    await wait(250);
+    const reclosed = await emptyState();
+    await human.assert(!reclosed.sideOpen && fillsStage(reclosed), `空页再收栏必须恢复铺满（${JSON.stringify(reclosed)}）`);
     // 媒体库树文件夹 SVG（非 emoji）
     const r2 = await evaluate(() => {
       document.querySelector('[data-src="medialib"]')?.click();

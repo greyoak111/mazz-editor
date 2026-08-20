@@ -27,7 +27,8 @@ export async function scenes37({ win, human, WS, scenario }) {
     });
     human.log('限位:', JSON.stringify(r2));
     const w = parseInt(r2.sideW);
-    await human.assert(w <= Math.max(200, Math.min(520, r2.stageW - 560)), `拖爆必须被窗宽钳住（sideW=${w} stageW=${r2.stageW}——全屏钮区不被挤掉实锤）`);
+    const expected = Math.max(150, Math.min(520, r2.stageW - 240, Math.floor(r2.stageW * 0.3)));
+    await human.assert(w <= expected, `拖爆必须被窗格/30%/响应式核心位同函数钳住（sideW=${w} stageW=${r2.stageW} expected<=${expected}）`);
     // 缩窗模拟：stage 变窄 → resize 重钳
     const r3 = await evaluate(() => {
       const stage = document.querySelector('.mz-stage');

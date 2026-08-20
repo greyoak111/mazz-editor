@@ -2,7 +2,7 @@
 
 | 波次 | 文件 | 状态 | 来源校验 |
 |---|---|---|---|
-| W87 全软件 UI / Unified Visual Composition | [封板规格](./W87_UNIFIED_VISUAL_COMPOSITION_AND_UI_SEAL.md) · [检查点](../engineering/W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md) | **COMPLETE / SUPPORTED-SCOPE SEALED** | 来源 SHA-256 `ED8AF6DA040EEA93A04ECA93939BCB7941D2A5A11C6DAA0E922BC4EDCB4331B6`；14 模块双主题、24 Panel、嵌套 native overlay、960×600、source + packaged Electron、20× 生命周期、219/219 全量均过门 |
+| W87 全软件 UI / Unified Visual Composition | [封板规格](./W87_UNIFIED_VISUAL_COMPOSITION_AND_UI_SEAL.md) · [W87a–f 检查点](../engineering/W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md) · [W87e Player](../engineering/W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md) · [W87f Sidebar/Player](../engineering/W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md) | **W87a–f EXECUTED SCOPE SEALED；W71 COMPLETE WAVE 5A OPEN** | Player Node `13/13`、lifecycle `4/4`、source/packaged Electron PASS；Sidebar `180/232/320px` 与空 Player 侧栏 20× source/packaged PASS；全量 `222/222`、release audit PASS、provenance CURRENT |
 | W65 网络资源四站极致 | `四站爬取方案（移交版）.md` · [封波规格](../engineering/W65_FOUR_SITE_CONVERGENCE_SPEC.md) · [检查点](../engineering/W65_FOUR_SITE_CONVERGENCE_CHECKPOINT_2026-08-18.md) | **COMPLETE / FORMAL** | 原件 `C:\Users\Administrator\Downloads\四站爬取方案（移交版）.md`；SHA-256 `70F704A4745DD6BD6D6CD13140078E0460CA99BE59E9FFCBDC61736D33D6BCF8`；四站真实目录/聚合/健康/分页与主进程五态队列已通过定向合同、构建及 Electron `run11 5/5` |
 | W66 Agent Harness / Doctrine | [W66 Real Adapter](./W66_REAL_AGENT_ADAPTER_ACTIVATION.md) · [三工程与 Doctrine 入库](./MAZZ_THREE_ENGINEERING_DOCTRINE_INTAKE_2026-08-18.md) | **LOCAL COMPLETE；Codex + Kimi 已真实授权，Claude 按维护者决定暂缓** | 完整 raw 军规不可裁剪；Codex packaged 真实回合/取消通过，三家 packaged fixture 20 轮通过；Claude 是显式外部条件门，不构成本地代码欠账 |
 

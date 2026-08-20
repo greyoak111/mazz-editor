@@ -39,11 +39,12 @@ export function selectProxy(sel, { items, btnClass = 'rb-btn' } = {}) {
   const setCurrent = (id) => { norm = readOpts(); label.textContent = nameOf(id); };
   const wire = () => {
     menus.removeBySource?.(source);
+    commands.unregisterBySource(source);
     menus.contribute('selmenu/' + source, norm.map(o => ({ command: source + '.' + o.id, title: o.name, group: 'sel', source })));
     for (const o of norm) {
       const cmdId = source + '.' + o.id;
-      if (!commands.get(cmdId)) commands.register(cmdId, {
-        title: o.name, group: '选择',
+      commands.register(cmdId, {
+        title: o.name, group: '选择', source, agent: false,
         run: () => { sel.value = o.id; sel.dispatchEvent(new Event('change', { bubbles: true })); setCurrent(o.id); },
       });
     }
@@ -51,14 +52,28 @@ export function selectProxy(sel, { items, btnClass = 'rb-btn' } = {}) {
   wire();
   setCurrent(sel.value);
   // 程序改值（模块代码直接 sel.value=x）文案不脱节：外部可调 setCurrent，值变化事件亦监听
-  sel.addEventListener('change', () => setCurrent(sel.value));
+  const onChange = () => setCurrent(sel.value);
+  sel.addEventListener('change', onChange);
   // 选项被整批重建（innerHTML 重写/append）自动保鲜——动态 select 零接线（genre/分类筛选同款病绝育）
   const mo = new MutationObserver(() => { norm = readOpts(); wire(); setCurrent(sel.value); });
   mo.observe(sel, { childList: true });
+  let destroyed = false;
   const api = {
     setCurrent,
     setItems(next) { norm = (next || []).map(x => Array.isArray(x) ? { id: x[0], name: x[1] } : x); wire(); setCurrent(sel.value); },
-    destroy() { mo.disconnect(); menus.removeBySource?.(source); btn.removeEventListener('click', onClick); btn.remove(); sel.style.display = ''; sel._selProxied = false; delete sel._selProxy; },
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      mo.disconnect();
+      menus.removeBySource?.(source);
+      commands.unregisterBySource(source);
+      sel.removeEventListener('change', onChange);
+      btn.removeEventListener('click', onClick);
+      btn.remove();
+      sel.style.display = '';
+      sel._selProxied = false;
+      delete sel._selProxy;
+    },
   };
   sel._selProxy = api; // 程序直赋值后的手动同步口（sel._selProxy?.setCurrent(v)）
 

@@ -39,11 +39,15 @@
     },
     {
       "id": "kimi",
-      "foundPaths": [],
-      "detection": "NOT_FOUND",
+      "foundPaths": [
+        "C:\\Users\\Administrator\\.kimi-code\\bin\\kimi.exe"
+      ],
+      "detection": "FOUND",
       "versionProbe": {
-        "status": "NOT_RUN",
-        "reason": "Executable not found."
+        "status": "OK",
+        "exitCode": 0,
+        "stdout": "0.37.2",
+        "stderr": ""
       },
       "authentication": {
         "status": "NOT_PROBED",

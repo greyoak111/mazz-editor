@@ -7,12 +7,18 @@ import path from 'node:path';
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
 describe('侧栏限位', () => {
-  test('窗宽钳制+resize 重钳', () => {
+  test('W58f/W58h 边界保留 + window/Pane 双路重钳', () => {
     const src = readSrc('renderer/modules/viewer/player.js');
+    const surface = readSrc('renderer/modules/viewer/player-controls.js');
     assert.ok(src.includes('sideMaxNow'), '动态限位必须有');
-    assert.ok(src.includes('stage.clientWidth - 560'), '视频区+底栏 560px 保留必须有（全屏钮区不被挤掉——真机点名）');
+    assert.ok(src.includes('SIDE_MIN = 150, SIDE_MAX = 520, CONTROL_MIN = 240'), '侧栏 150/520 与响应式核心位 240 边界必须同源');
+    assert.ok(src.includes('stage.clientWidth - CONTROL_MIN') && src.includes('Math.floor(stage.clientWidth * 0.3)'), '窗格宽和 30% 渲染封顶必须进同一 sideMaxNow');
     assert.ok(src.includes("window.addEventListener('resize', applySide)"), '缩窗重钳必须有');
-    assert.ok(src.includes('Math.min(v.width, sideMaxNow())'), '记忆恢复也必须过钳');
+    assert.ok(src.includes('onRelayoutSide: applySide'), 'Control Surface 必须把 Pane 尺寸变化回供侧栏重钳');
+    assert.ok(surface.includes('resizeObserver?.observe(stage)') && surface.includes('onRelayoutSide?.()'), 'Pane divider 不发 window.resize，必须由 stage ResizeObserver 补齐');
+    assert.ok(src.includes('ctl.sidePreferredW = v.width'), '记忆恢复必须写用户 preferred 宽度，不能被当前窄窗永久改小');
+    assert.ok(src.includes('Math.min(ctl.sidePreferredW, sideMaxNow())'), '渲染 effective 宽度仍必须按当前窗格动态重钳');
+    assert.ok(src.includes('width: ctl.sidePreferredW'), '持久化必须保存 preferred 而非当前 effective 宽度');
   });
 });
 

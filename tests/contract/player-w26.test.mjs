@@ -12,9 +12,11 @@ describe('列表栏推挤布局（展开压缩/收起铺满）', () => {
     assert.ok(css.includes('--mz-side-w'), '舞台必须有 --mz-side-w 变量');
     assert.ok(css.includes('width: var(--mz-side-w)'), '侧栏宽必须走变量（自由拉伸基础）');
     assert.ok(css.includes('.mz-stage.side-open .mz-side'), '展开态必须 class 驱动（非内联显隐）');
-    assert.ok(/side-open \.mz-media, \.mz-stage\.side-open \.mz-audio-wrap|side-open \.mz-media/.test(css), '展开必须压缩视频区');
-    assert.ok(css.includes('side-open .mz-topbar') && css.includes('side-open .mz-controls'), '顶条/控制条必须同步收窄（关闭/全屏钮防盖）');
-    assert.ok(css.includes('side-open .mz-sub-host'), '字幕画布必须同步收窄');
+    assert.ok(css.includes('.mz-stage.side-open:not(.side-overlay) .mz-media'), '有足够核心控制位时展开必须压缩视频区');
+    assert.ok(css.includes('.mz-stage.side-open:not(.side-overlay) .mz-empty'), '空播放器也必须按同一 side-open 真值推挤，关闭后不得留白');
+    assert.ok(css.includes('side-open:not(.side-overlay) .mz-topbar') && css.includes('side-open:not(.side-overlay) .mz-controls'), '非覆盖态顶条/控制条必须同步收窄（关闭/全屏钮防盖）');
+    assert.ok(css.includes('side-open:not(.side-overlay) .mz-sub-host'), '非覆盖态字幕画布必须同步收窄');
+    assert.ok(css.includes('.mz-stage.side-overlay .mz-side'), '极窄 Pane 必须切局部覆盖，不能继续挤掉 P0 控制位');
     assert.ok(css.includes('.mz-side-grip'), 'grip 拖拽手柄样式必须有');
   });
   test('JS 开合统一入口与状态记忆', () => {

@@ -1,0 +1,1068 @@
+{
+  "protocol": "mazz.w87e-player-control-surface/v1",
+  "createdAt": "2026-08-20T05:16:12.995Z",
+  "mode": "source",
+  "ok": true,
+  "verdict": "PASS",
+  "exact": [
+    {
+      "requested": 1200,
+      "width": 1200,
+      "density": "l",
+      "clientWidth": 1172,
+      "scrollWidth": 1172,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "音量",
+        "倍速",
+        "pip",
+        "loop",
+        "sub",
+        "list",
+        "fullscreen"
+      ],
+      "overflow": [
+        "画面亮度",
+        "snap",
+        "progmem",
+        "companion",
+        "danmaku",
+        "pset",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 260,
+      "stageWidth": 1200
+    },
+    {
+      "requested": 960,
+      "width": 960,
+      "density": "l",
+      "clientWidth": 932,
+      "scrollWidth": 932,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "音量",
+        "倍速",
+        "pip",
+        "loop",
+        "sub",
+        "list",
+        "fullscreen"
+      ],
+      "overflow": [
+        "画面亮度",
+        "snap",
+        "progmem",
+        "companion",
+        "danmaku",
+        "pset",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 260,
+      "stageWidth": 960
+    },
+    {
+      "requested": 959,
+      "width": 959,
+      "density": "m",
+      "clientWidth": 931,
+      "scrollWidth": 931,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "倍速",
+        "sub",
+        "list",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "companion",
+        "danmaku",
+        "pset",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 260,
+      "stageWidth": 959
+    },
+    {
+      "requested": 900,
+      "width": 900,
+      "density": "m",
+      "clientWidth": 872,
+      "scrollWidth": 872,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "倍速",
+        "sub",
+        "list",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "companion",
+        "danmaku",
+        "pset",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 260,
+      "stageWidth": 900
+    },
+    {
+      "requested": 720,
+      "width": 720,
+      "density": "m",
+      "clientWidth": 692,
+      "scrollWidth": 692,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "倍速",
+        "sub",
+        "list",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "companion",
+        "danmaku",
+        "pset",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 216,
+      "stageWidth": 720
+    },
+    {
+      "requested": 600,
+      "width": 600,
+      "density": "m",
+      "clientWidth": 572,
+      "scrollWidth": 572,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "倍速",
+        "sub",
+        "list",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "companion",
+        "danmaku",
+        "pset",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 180,
+      "stageWidth": 600
+    },
+    {
+      "requested": 599,
+      "width": 599,
+      "density": "s",
+      "clientWidth": 571,
+      "scrollWidth": 571,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 179,
+      "stageWidth": 599
+    },
+    {
+      "requested": 560,
+      "width": 560,
+      "density": "s",
+      "clientWidth": 532,
+      "scrollWidth": 532,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 168,
+      "stageWidth": 560
+    },
+    {
+      "requested": 440,
+      "width": 440,
+      "density": "s",
+      "clientWidth": 412,
+      "scrollWidth": 412,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 150,
+      "stageWidth": 440
+    },
+    {
+      "requested": 439,
+      "width": 439,
+      "density": "xs",
+      "clientWidth": 411,
+      "scrollWidth": 411,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "prev",
+        "next",
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 150,
+      "stageWidth": 439
+    },
+    {
+      "requested": 420,
+      "width": 420,
+      "density": "xs",
+      "clientWidth": 392,
+      "scrollWidth": 392,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "prev",
+        "next",
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 150,
+      "stageWidth": 420
+    },
+    {
+      "requested": 320,
+      "width": 320,
+      "density": "xs",
+      "clientWidth": 292,
+      "scrollWidth": 292,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "prev",
+        "next",
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": false,
+      "sideOverlay": false,
+      "sideWidth": 0,
+      "sideVar": 230,
+      "stageWidth": 320
+    }
+  ],
+  "more": {
+    "withinStage": true,
+    "loopState": {
+      "title": "循环（L）：单集循环",
+      "panelHidden": true,
+      "focusAction": "more-controls",
+      "focusTag": "BUTTON",
+      "focusClass": "mz-btn mz-more has-active",
+      "focusInsideHidden": false,
+      "more": {
+        "hidden": false,
+        "disabled": false,
+        "display": "flex",
+        "connected": true
+      }
+    }
+  },
+  "sideGeometry": {
+    "extreme320": {
+      "width": 320,
+      "density": "xs",
+      "clientWidth": 292,
+      "scrollWidth": 292,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "prev",
+        "next",
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": true,
+      "sideOverlay": true,
+      "sideWidth": 230,
+      "sideVar": 230,
+      "stageWidth": 320
+    },
+    "extreme240": {
+      "width": 240,
+      "density": "xs",
+      "clientWidth": 212,
+      "scrollWidth": 212,
+      "outside": [],
+      "overlaps": [],
+      "inline": [],
+      "overflow": [
+        "prev",
+        "next",
+        "mute",
+        "音量",
+        "画面亮度",
+        "倍速",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "zoom-reset",
+        "lock",
+        "borderless",
+        "fullscreen"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": false
+      },
+      "sideOpen": true,
+      "sideOverlay": true,
+      "sideWidth": 172,
+      "sideVar": 172,
+      "stageWidth": 240
+    },
+    "preferredRecovery": {
+      "width": 940,
+      "density": "m",
+      "clientWidth": 912,
+      "scrollWidth": 912,
+      "outside": [],
+      "overlaps": [],
+      "inline": [
+        "prev",
+        "next",
+        "mute",
+        "倍速",
+        "sub",
+        "list",
+        "fullscreen"
+      ],
+      "overflow": [
+        "音量",
+        "画面亮度",
+        "pip",
+        "loop",
+        "snap",
+        "progmem",
+        "companion",
+        "danmaku",
+        "pset",
+        "zoom-reset",
+        "lock",
+        "borderless"
+      ],
+      "moreVisible": true,
+      "core": {
+        "play": true,
+        "time": true,
+        "more": true,
+        "fullscreen": true
+      },
+      "sideOpen": true,
+      "sideOverlay": false,
+      "sideWidth": 260,
+      "sideVar": 260,
+      "stageWidth": 1200
+    }
+  },
+  "lock": {
+    "lockedState": {
+      "locked": true,
+      "lockInline": true,
+      "lockFocused": true,
+      "panelHidden": true,
+      "moreExpanded": "false",
+      "enabledOthers": [],
+      "seekTabIndex": "-1",
+      "lockPressed": "true"
+    },
+    "unlockedState": {
+      "locked": false,
+      "focusAction": "more-controls",
+      "focusInsideHidden": false,
+      "seekTabIndex": "0",
+      "lockPressed": "false"
+    }
+  },
+  "settingsFocus": {
+    "focusAction": "more-controls",
+    "focusInsideHidden": false,
+    "panelHidden": true
+  },
+  "borderlessFocus": {
+    "borderless": true,
+    "focusAction": "more-controls",
+    "opacity": "1",
+    "pointerEvents": "auto"
+  },
+  "audioCapability": {
+    "videoOnly": [
+      {
+        "action": "画面亮度",
+        "hidden": true,
+        "display": "none",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "action": "pip",
+        "hidden": true,
+        "display": "none",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "action": "zoom-reset",
+        "hidden": true,
+        "display": "none",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "action": "snap",
+        "hidden": true,
+        "display": "none",
+        "width": 0,
+        "height": 0
+      }
+    ],
+    "snapshot": {
+      "density": "xs",
+      "width": 323,
+      "inline": [
+        "mute",
+        "fullscreen"
+      ],
+      "overflow": [
+        "prev",
+        "next",
+        "音量",
+        "倍速",
+        "loop",
+        "progmem",
+        "sub",
+        "companion",
+        "danmaku",
+        "pset",
+        "list",
+        "lock",
+        "borderless"
+      ],
+      "open": true
+    }
+  },
+  "seekKeyboard": {
+    "before": {
+      "currentTime": 10,
+      "volume": 0.4,
+      "valueNow": "0"
+    },
+    "afterRight": {
+      "currentTime": 15,
+      "volume": 0.4,
+      "valueNow": "15",
+      "focused": true
+    },
+    "afterUp": {
+      "currentTime": 20,
+      "volume": 0.4,
+      "valueNow": "20",
+      "focused": true
+    }
+  },
+  "split": {
+    "width": 479,
+    "density": "s",
+    "clientWidth": 451,
+    "scrollWidth": 451,
+    "outside": [],
+    "overlaps": [],
+    "inline": [
+      "prev",
+      "next",
+      "mute",
+      "fullscreen"
+    ],
+    "overflow": [
+      "音量",
+      "画面亮度",
+      "倍速",
+      "pip",
+      "loop",
+      "snap",
+      "progmem",
+      "sub",
+      "companion",
+      "danmaku",
+      "pset",
+      "list",
+      "zoom-reset",
+      "lock",
+      "borderless"
+    ],
+    "moreVisible": true,
+    "core": {
+      "play": true,
+      "time": true,
+      "more": true,
+      "fullscreen": true
+    },
+    "sideOpen": true,
+    "sideOverlay": false,
+    "sideWidth": 204,
+    "sideVar": 204,
+    "stageWidth": 683
+  },
+  "soak": [
+    {
+      "cycle": 1,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 2,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 3,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 4,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 5,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 6,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 7,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 8,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 9,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 10,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 11,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 12,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 13,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 14,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 15,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 16,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 17,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 18,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 19,
+      "density": "s",
+      "width": 479,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    },
+    {
+      "cycle": 20,
+      "density": "xs",
+      "width": 323,
+      "ownership": {
+        "total": 20,
+        "unique": 20,
+        "panels": 1,
+        "surfaces": 1
+      }
+    }
+  ],
+  "shots": {
+    "ink": {
+      "closed": "W87E_PLAYER_CONTROLS_SOURCE_INK.png",
+      "open": "W87E_PLAYER_CONTROL_CENTER_SOURCE_INK.png"
+    },
+    "paper": {
+      "closed": "W87E_PLAYER_CONTROLS_SOURCE_PAPER.png",
+      "open": "W87E_PLAYER_CONTROL_CENTER_SOURCE_PAPER.png"
+    }
+  },
+  "errors": {
+    "main": [],
+    "renderer": []
+  }
+}
