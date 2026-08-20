@@ -1664,6 +1664,10 @@ function applySettings() {
 if (GRAPHICS_MODE.safe) console.log(`[mazz] 安全图形模式：${GRAPHICS_MODE.reason}；GPU 子进程/系统错误框已禁用`);
 else if (GRAPHICS_MODE.mode === 'compatibility') console.log(`[mazz] 远程图形兼容模式：${GRAPHICS_MODE.reason}；保留硬件视频解码并禁用 DirectComposition 视频叠加层`);
 app.whenReady().then(() => {
+  // Windows 辅助技术与自动化必须拿到 Chromium 的完整 UIA provider。
+  // Electron 要求 ready 之后调用；同时必须早于首个 BrowserWindow 创建。
+  if (process.platform === 'win32') app.setAccessibilitySupportEnabled(true);
+
   bus.start();
   registerChannels();
   new CrashRecovery({ app, bus });

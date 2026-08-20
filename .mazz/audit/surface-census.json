@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 90,
-    "scannedLines": 21591
+    "scannedLines": 21689
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -133,61 +133,61 @@
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1681,
+      "line": 1685,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 1772,
+      "line": 1776,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 17,
+      "line": 29,
       "sample": "win.on('closed', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/panel-windows.js",
-      "line": 36,
+      "line": 50,
       "sample": "const host = BrowserWindow.fromWebContents(event?.sender) || this.win?.();"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/panel-windows.js",
-      "line": 214,
+      "line": 272,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 228,
+      "line": 286,
       "sample": "win.on('closed', () => { this.panels.delete('annotate'); this._unfollow(parent, win); });"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/panel-windows.js",
-      "line": 274,
+      "line": 332,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 284,
+      "line": 342,
       "sample": "if (host) { host.on('move', follow); host.on('resize', follow); win.on('closed', () => { try { host.off('move', follow); host.off('resize', follow); } catch {} }); }"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/panel-windows.js",
-      "line": 305,
+      "line": 376,
       "sample": "const win = new BrowserWindow({"
     },
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 356,
+      "line": 449,
       "sample": "win.on('closed', () => {"
     },
     {
@@ -329,17 +329,17 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 576,
+          "line": 595,
           "sample": "reloadTab(tab);"
         },
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 944,
+          "line": 963,
           "sample": "function reloadTab(t) {"
         },
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 950,
+          "line": 969,
           "sample": "root.querySelector('[data-a=reload]').addEventListener('click', () => reloadTab(activeTab()));"
         }
       ]
@@ -402,17 +402,17 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 1333,
+          "line": 1352,
           "sample": "// pane:tabMoved 监听器拿 { container } 会令 __sync/recompose 成为空调，分屏后的原生 Surface 无法按新矩形重组）"
         },
         {
           "file": "renderer/shell/panes.js",
-          "line": 195,
+          "line": 197,
           "sample": "bus.emit('pane:tabMoved', { tabId, from, target: targetLeaf });"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 2495,
+          "line": 2511,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]
@@ -479,7 +479,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 1683,
+          "line": 1687,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
