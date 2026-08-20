@@ -151,45 +151,20 @@ export async function scenes55({ app, win, human, WS, scenario }) {
       await wait(300);
     });
 
-    // ==================== ③toast 挪顶 ====================
-    await scenario('toast·视图覆盖区挪顶', async () => {
+    // ==================== ③toast 状态栏中央 Seat ====================
+    await scenario('toast·原生视图下状态栏中央Seat', async () => {
       await evaluate(() => window.MazzCommands?.execute('file.newBrowser'));
       await human.until(() => window.__activeBrowserCtl?.tabs?.length > 0, { timeout: 15000, msg: '浏览器就绪' });
       await wait(600);
-      // （toast 实证在下方两段：sync.again 触产+覆盖判定逻辑）
-      // 触发 toast（借命令层的 toast 出口——sync 系已收编，直接调 shell 导出不可行，用 toast 机制探针：settings:set 触发不了 toast——走 MazzCommands 里一个会 toast 的命令）
-      await evaluate(async () => {
-        // 直接造 toast（复用 shell toast 同款结构+判定——测的是 toast() 的挪顶判定逻辑本身）
-        const mod = window.MazzShell;
-        // 经内部 toast 触发器：openChildModal 已退役——用 settings 面板的 toast 代：直接调用 window.toast?（无全局）
-        // 正路：命令执行一个必 toast 的动作（file.import 无工作区时会 toast）
-        window.MazzCommands?.execute('app.openSettings');
-      });
-      await wait(600);
-      // 简化实证：手动构造 toast 元素走 toast() 判定？——toast() 是模块内导出，页面内不可直调。
-      // 换实证面：浏览器前台状态下 toast 的 CSS 类存在性+判定逻辑（模拟视图覆盖：强制执行一次 toast 走 shell 内部 API）
-      const topOk = await evaluate(async () => {
-        // 经 MazzShell 实例方法链 toast（shell.toast 是实例方法？——导出函数 toast 挂在 window 哪？
-        // 实证：MazzShell.toast? 不存在。改从命令层触发：file.newBrowser 重复开=toast '已是最后页签'？——换成快速笔记（Ctrl+Alt+N）？
-        // 最直接的：sync.again（未接入时会 toast）
-        try { await window.MazzCommands?.execute('sync.again'); } catch {}
-        await new Promise(r => setTimeout(r, 700));
+      const seat = await evaluate(async () => {
+        const { toast } = await import('./shell/shell.js');
+        toast('原生视图状态提示', [], 1200);
         const el = document.querySelector('.mazz-toast');
-        return el ? { top: el.classList.contains('mazz-toast-top'), text: el.textContent.slice(0, 30), has: true } : { has: false };
+        const rect = el?.getBoundingClientRect();
+        return el ? { host: el.parentElement?.id, text: el.textContent, center: rect.left + rect.width / 2, viewport: innerWidth } : { host: '' };
       });
-      if (topOk.has) {
-        await human.assert(topOk.top === true, `视图覆盖区 toast 必须挪顶（text=${topOk.text}）`);
-      } else {
-        human.log('该命令未产 toast——构造直接 toast 通道实证');
-        const forced = await evaluate(() => {
-          // 手工复刻 toast() 判定：视图覆盖左下时应加 mazz-toast-top
-          const bctl = window.__activeBrowserCtl;
-          const t = bctl?.tabs?.find(x => x.id === bctl.activeId);
-          const vr = t?.host?.getBoundingClientRect?.();
-          return { covers: !!(vr && vr.left < 300 && vr.bottom > window.innerHeight - 120), rect: vr ? { l: vr.left, b: vr.bottom } : null };
-        });
-        await human.assert(forced.covers === true, `覆盖判定逻辑必须成立（rect=${JSON.stringify(forced.rect)}）`);
-      }
+      await human.assert(seat.host === 'status-toast-slot', `Browser 原生视图下 toast 仍须进入状态栏 Seat（${JSON.stringify(seat)}）`);
+      await human.assert(Math.abs(seat.center - seat.viewport / 2) <= 2, 'Browser 原生视图下 toast 必须保持窗口几何居中');
     });
   } finally {}
 }

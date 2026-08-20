@@ -1,6 +1,6 @@
 {
   "protocol": "mazz.ui-page-sweep/v1",
-  "generatedAt": "2026-08-20T16:12:56.679Z",
+  "generatedAt": "2026-08-20T17:28:23.490Z",
   "runtimeMode": "source",
   "executable": null,
   "viewport": {
@@ -96,12 +96,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 238,
+          "visibleElements": 239,
           "buttons": 87,
-          "svg": 87,
+          "svg": 86,
           "images": 0,
           "controls": 87,
-          "controlSvg": 72,
+          "controlSvg": 71,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -127,12 +127,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 234,
-          "buttons": 82,
-          "svg": 74,
+          "visibleElements": 266,
+          "buttons": 92,
+          "svg": 82,
           "images": 0,
-          "controls": 83,
-          "controlSvg": 58,
+          "controls": 93,
+          "controlSvg": 66,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -158,12 +158,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 173,
+          "visibleElements": 174,
           "buttons": 66,
-          "svg": 67,
+          "svg": 66,
           "images": 0,
           "controls": 67,
-          "controlSvg": 51,
+          "controlSvg": 50,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -189,12 +189,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 598,
-          "buttons": 83,
-          "svg": 78,
+          "visibleElements": 636,
+          "buttons": 94,
+          "svg": 87,
           "images": 0,
-          "controls": 84,
-          "controlSvg": 62,
+          "controls": 95,
+          "controlSvg": 71,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -232,12 +232,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 290,
+          "visibleElements": 291,
           "buttons": 98,
-          "svg": 97,
+          "svg": 96,
           "images": 0,
           "controls": 99,
-          "controlSvg": 80,
+          "controlSvg": 79,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -263,12 +263,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 197,
+          "visibleElements": 198,
           "buttons": 71,
-          "svg": 73,
+          "svg": 72,
           "images": 0,
           "controls": 72,
-          "controlSvg": 57,
+          "controlSvg": 56,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -294,12 +294,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 171,
+          "visibleElements": 172,
           "buttons": 66,
           "svg": 64,
           "images": 0,
           "controls": 67,
-          "controlSvg": 49,
+          "controlSvg": 48,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -325,12 +325,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 186,
+          "visibleElements": 187,
           "buttons": 67,
-          "svg": 68,
+          "svg": 67,
           "images": 0,
           "controls": 68,
-          "controlSvg": 52,
+          "controlSvg": 51,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -356,12 +356,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 185,
+          "visibleElements": 186,
           "buttons": 68,
-          "svg": 67,
+          "svg": 66,
           "images": 0,
           "controls": 69,
-          "controlSvg": 51,
+          "controlSvg": 50,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -387,12 +387,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 285,
+          "visibleElements": 286,
           "buttons": 91,
-          "svg": 85,
+          "svg": 84,
           "images": 0,
           "controls": 92,
-          "controlSvg": 68,
+          "controlSvg": 67,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -418,12 +418,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 283,
+          "visibleElements": 284,
           "buttons": 107,
-          "svg": 106,
+          "svg": 105,
           "images": 0,
           "controls": 108,
-          "controlSvg": 89,
+          "controlSvg": 88,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -449,12 +449,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 173,
+          "visibleElements": 174,
           "buttons": 68,
-          "svg": 70,
+          "svg": 69,
           "images": 0,
           "controls": 69,
-          "controlSvg": 53,
+          "controlSvg": 52,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -480,12 +480,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 238,
+          "visibleElements": 239,
           "buttons": 90,
-          "svg": 91,
+          "svg": 90,
           "images": 0,
           "controls": 91,
-          "controlSvg": 74,
+          "controlSvg": 73,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -511,12 +511,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 225,
+          "visibleElements": 226,
           "buttons": 76,
-          "svg": 72,
+          "svg": 71,
           "images": 0,
           "controls": 77,
-          "controlSvg": 55,
+          "controlSvg": 54,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -542,12 +542,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 212,
+          "visibleElements": 213,
           "buttons": 76,
-          "svg": 74,
+          "svg": 73,
           "images": 0,
           "controls": 77,
-          "controlSvg": 58,
+          "controlSvg": 57,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -573,12 +573,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 209,
+          "visibleElements": 210,
           "buttons": 80,
-          "svg": 81,
+          "svg": 80,
           "images": 0,
           "controls": 81,
-          "controlSvg": 65,
+          "controlSvg": 64,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -587,18 +587,18 @@
       "nativeSurfaceScreenshots": [
         {
           "screenshot": "tests/e2e/shots/ui-page-sweep/source/016-paper-module-browser-native-01.png",
-          "tabId": "bt-7991daea-df10-438c-a6dc-092a31fa8794",
+          "tabId": "bt-e8d486ac-f994-4ae2-8bc1-addb60ceda36",
           "bounds": {
             "x": 232,
-            "y": 243,
+            "y": 242,
             "width": 1207,
-            "height": 557
+            "height": 558
           }
         }
       ],
       "nativeSurfaceAudits": [
         {
-          "tabId": "bt-7991daea-df10-438c-a6dc-092a31fa8794",
+          "tabId": "bt-e8d486ac-f994-4ae2-8bc1-addb60ceda36",
           "firstPartyHome": true,
           "href": "about:blank",
           "placeholders": [
@@ -634,12 +634,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 234,
-          "buttons": 81,
-          "svg": 73,
+          "visibleElements": 266,
+          "buttons": 91,
+          "svg": 81,
           "images": 0,
-          "controls": 82,
-          "controlSvg": 57,
+          "controls": 92,
+          "controlSvg": 65,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -665,12 +665,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 165,
-          "buttons": 49,
-          "svg": 27,
+          "visibleElements": 197,
+          "buttons": 59,
+          "svg": 35,
           "images": 0,
-          "controls": 50,
-          "controlSvg": 25,
+          "controls": 60,
+          "controlSvg": 33,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -696,12 +696,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 157,
-          "buttons": 48,
-          "svg": 25,
+          "visibleElements": 189,
+          "buttons": 58,
+          "svg": 33,
           "images": 0,
-          "controls": 49,
-          "controlSvg": 24,
+          "controls": 59,
+          "controlSvg": 32,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -727,12 +727,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 158,
-          "buttons": 48,
-          "svg": 25,
+          "visibleElements": 190,
+          "buttons": 58,
+          "svg": 33,
           "images": 0,
-          "controls": 49,
-          "controlSvg": 24,
+          "controls": 59,
+          "controlSvg": 32,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -758,12 +758,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 167,
-          "buttons": 47,
-          "svg": 24,
+          "visibleElements": 199,
+          "buttons": 57,
+          "svg": 32,
           "images": 0,
-          "controls": 48,
-          "controlSvg": 23,
+          "controls": 58,
+          "controlSvg": 31,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -789,12 +789,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 164,
-          "buttons": 49,
-          "svg": 26,
+          "visibleElements": 196,
+          "buttons": 59,
+          "svg": 34,
           "images": 0,
-          "controls": 50,
-          "controlSvg": 25,
+          "controls": 60,
+          "controlSvg": 33,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -820,12 +820,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 166,
-          "buttons": 51,
-          "svg": 28,
+          "visibleElements": 198,
+          "buttons": 61,
+          "svg": 36,
           "images": 0,
-          "controls": 53,
-          "controlSvg": 27,
+          "controls": 63,
+          "controlSvg": 35,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -851,12 +851,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 163,
-          "buttons": 49,
-          "svg": 26,
+          "visibleElements": 195,
+          "buttons": 59,
+          "svg": 34,
           "images": 0,
-          "controls": 50,
-          "controlSvg": 25,
+          "controls": 60,
+          "controlSvg": 33,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -882,12 +882,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 199,
+          "visibleElements": 200,
           "buttons": 73,
-          "svg": 74,
+          "svg": 73,
           "images": 0,
           "controls": 74,
-          "controlSvg": 58,
+          "controlSvg": 57,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -913,12 +913,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 189,
+          "visibleElements": 190,
           "buttons": 70,
-          "svg": 71,
+          "svg": 70,
           "images": 0,
           "controls": 71,
-          "controlSvg": 55,
+          "controlSvg": 54,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -944,12 +944,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 183,
+          "visibleElements": 184,
           "buttons": 68,
-          "svg": 69,
+          "svg": 68,
           "images": 0,
           "controls": 69,
-          "controlSvg": 53,
+          "controlSvg": 52,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -975,12 +975,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 264,
-          "buttons": 96,
-          "svg": 86,
+          "visibleElements": 262,
+          "buttons": 95,
+          "svg": 85,
           "images": 0,
-          "controls": 97,
-          "controlSvg": 70,
+          "controls": 96,
+          "controlSvg": 69,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1006,12 +1006,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 216,
+          "visibleElements": 217,
           "buttons": 80,
-          "svg": 79,
+          "svg": 78,
           "images": 0,
           "controls": 81,
-          "controlSvg": 62,
+          "controlSvg": 61,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1037,12 +1037,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 290,
+          "visibleElements": 291,
           "buttons": 90,
-          "svg": 88,
+          "svg": 87,
           "images": 0,
           "controls": 91,
-          "controlSvg": 72,
+          "controlSvg": 71,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1062,7 +1062,7 @@
       "audit": {
         "theme": "paper",
         "title": "收藏管理",
-        "url": "mazz-res://app/panels/favmgr.html",
+        "url": "mazz-res://app/panels/favmgr.html?kind=favmgr&resize=workbench",
         "viewport": {
           "width": 780,
           "height": 560
@@ -1093,7 +1093,7 @@
       "audit": {
         "theme": "paper",
         "title": "密码管理器",
-        "url": "mazz-res://app/panels/pwmgr.html",
+        "url": "mazz-res://app/panels/pwmgr.html?kind=pwmgr&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560
@@ -1124,18 +1124,18 @@
       "audit": {
         "theme": "paper",
         "title": "Quick Switcher",
-        "url": "mazz-res://app/panels/palette.html",
+        "url": "mazz-res://app/panels/palette.html?kind=palette&resize=fixed",
         "viewport": {
           "width": 720,
           "height": 540
         },
         "counts": {
-          "visibleElements": 63,
-          "buttons": 3,
-          "svg": 3,
+          "visibleElements": 60,
+          "buttons": 2,
+          "svg": 2,
           "images": 0,
-          "controls": 3,
-          "controlSvg": 3,
+          "controls": 2,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1155,18 +1155,18 @@
       "audit": {
         "theme": "paper",
         "title": "快捷键速查",
-        "url": "mazz-res://app/panels/shortcuts.html",
+        "url": "mazz-res://app/panels/shortcuts.html?kind=shortcuts&resize=fixed",
         "viewport": {
           "width": 720,
           "height": 560
         },
         "counts": {
-          "visibleElements": 69,
-          "buttons": 3,
-          "svg": 3,
+          "visibleElements": 66,
+          "buttons": 2,
+          "svg": 2,
           "images": 0,
-          "controls": 3,
-          "controlSvg": 3,
+          "controls": 2,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1217,7 +1217,7 @@
       "audit": {
         "theme": "paper",
         "title": "设置",
-        "url": "mazz-res://app/panels/settings.html",
+        "url": "mazz-res://app/panels/settings.html?kind=settings&resize=workbench",
         "viewport": {
           "width": 760,
           "height": 560
@@ -1248,18 +1248,18 @@
       "audit": {
         "theme": "paper",
         "title": "用户服务协议及隐私政策",
-        "url": "mazz-res://app/panels/agreement.html",
+        "url": "mazz-res://app/panels/agreement.html?kind=agreement&resize=fixed",
         "viewport": {
           "width": 700,
           "height": 600
         },
         "counts": {
-          "visibleElements": 41,
-          "buttons": 5,
-          "svg": 3,
+          "visibleElements": 38,
+          "buttons": 4,
+          "svg": 2,
           "images": 0,
-          "controls": 5,
-          "controlSvg": 3,
+          "controls": 4,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1279,7 +1279,7 @@
       "audit": {
         "theme": "paper",
         "title": "使用指南",
-        "url": "mazz-res://app/panels/help.html",
+        "url": "mazz-res://app/panels/help.html?kind=help&resize=workbench",
         "viewport": {
           "width": 860,
           "height": 560
@@ -1310,7 +1310,7 @@
       "audit": {
         "theme": "paper",
         "title": "翻译",
-        "url": "mazz-res://app/panels/translate.html",
+        "url": "mazz-res://app/panels/translate.html?kind=translate&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560
@@ -1341,7 +1341,7 @@
       "audit": {
         "theme": "paper",
         "title": "插件管理（预览）",
-        "url": "mazz-res://app/panels/plugins.html",
+        "url": "mazz-res://app/panels/plugins.html?kind=plugins&resize=workbench",
         "viewport": {
           "width": 740,
           "height": 560
@@ -1372,7 +1372,7 @@
       "audit": {
         "theme": "paper",
         "title": "全局内录（预览）",
-        "url": "mazz-res://app/panels/recorder.html",
+        "url": "mazz-res://app/panels/recorder.html?kind=recorder&resize=workbench",
         "viewport": {
           "width": 720,
           "height": 560
@@ -1403,17 +1403,17 @@
       "audit": {
         "theme": "paper",
         "title": "工具坞",
-        "url": "mazz-res://app/panels/dockfloat.html",
+        "url": "mazz-res://app/panels/dockfloat.html?kind=dockfloat&resize=workbench",
         "viewport": {
-          "width": 480,
-          "height": 620
+          "width": 400,
+          "height": 623
         },
         "counts": {
-          "visibleElements": 29,
-          "buttons": 10,
+          "visibleElements": 48,
+          "buttons": 12,
           "svg": 7,
           "images": 0,
-          "controls": 10,
+          "controls": 12,
           "controlSvg": 7,
           "rawControlGlyphs": 0
         },
@@ -1434,18 +1434,18 @@
       "audit": {
         "theme": "paper",
         "title": "收藏当前页",
-        "url": "mazz-res://app/panels/bookmark.html",
+        "url": "mazz-res://app/panels/bookmark.html?kind=bookmark&resize=fixed",
         "viewport": {
           "width": 520,
           "height": 380
         },
         "counts": {
-          "visibleElements": 24,
-          "buttons": 5,
-          "svg": 3,
+          "visibleElements": 21,
+          "buttons": 4,
+          "svg": 2,
           "images": 0,
-          "controls": 5,
-          "controlSvg": 3,
+          "controls": 4,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1465,10 +1465,10 @@
       "audit": {
         "theme": "paper",
         "title": "菜单",
-        "url": "mazz-res://app/panels/ctxmenu.html",
+        "url": "mazz-res://app/panels/ctxmenu.html?kind=ctxmenu&resize=fixed",
         "viewport": {
           "width": 240,
-          "height": 303
+          "height": 300
         },
         "counts": {
           "visibleElements": 4,
@@ -1527,7 +1527,7 @@
       "audit": {
         "theme": "paper",
         "title": "局域网同步",
-        "url": "mazz-res://app/panels/sync.html",
+        "url": "mazz-res://app/panels/sync.html?kind=sync&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560
@@ -1558,7 +1558,7 @@
       "audit": {
         "theme": "paper",
         "title": "通知中心",
-        "url": "mazz-res://app/panels/notif.html",
+        "url": "mazz-res://app/panels/notif.html?kind=notif&resize=workbench",
         "viewport": {
           "width": 520,
           "height": 651
@@ -1589,7 +1589,7 @@
       "audit": {
         "theme": "paper",
         "title": "AI 服务 · 创作模板",
-        "url": "mazz-res://app/panels/factorycfg.html",
+        "url": "mazz-res://app/panels/factorycfg.html?kind=factorycfg&resize=workbench",
         "viewport": {
           "width": 920,
           "height": 720
@@ -1620,18 +1620,18 @@
       "audit": {
         "theme": "paper",
         "title": "新建文件",
-        "url": "mazz-res://app/panels/newfile.html",
+        "url": "mazz-res://app/panels/newfile.html?kind=newfile&resize=fixed",
         "viewport": {
           "width": 700,
           "height": 560
         },
         "counts": {
-          "visibleElements": 110,
-          "buttons": 32,
-          "svg": 3,
+          "visibleElements": 107,
+          "buttons": 31,
+          "svg": 2,
           "images": 0,
-          "controls": 32,
-          "controlSvg": 3,
+          "controls": 31,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1651,10 +1651,10 @@
       "audit": {
         "theme": "paper",
         "title": "选择",
-        "url": "mazz-res://app/panels/picklist.html",
+        "url": "mazz-res://app/panels/picklist.html?kind=picklist&resize=fixed",
         "viewport": {
-          "width": 343,
-          "height": 423
+          "width": 340,
+          "height": 420
         },
         "counts": {
           "visibleElements": 5,
@@ -1682,7 +1682,7 @@
       "audit": {
         "theme": "paper",
         "title": "生成预览",
-        "url": "mazz-res://app/panels/fpreview.html",
+        "url": "mazz-res://app/panels/fpreview.html?kind=fpreview&resize=workbench",
         "viewport": {
           "width": 760,
           "height": 640
@@ -1713,7 +1713,7 @@
       "audit": {
         "theme": "paper",
         "title": "章节编辑",
-        "url": "mazz-res://app/panels/fedit.html",
+        "url": "mazz-res://app/panels/fedit.html?kind=fedit&resize=workbench",
         "viewport": {
           "width": 823,
           "height": 703
@@ -1744,7 +1744,7 @@
       "audit": {
         "theme": "paper",
         "title": "AI 对话整理",
-        "url": "mazz-res://app/panels/harvest.html",
+        "url": "mazz-res://app/panels/harvest.html?kind=harvest&resize=workbench",
         "viewport": {
           "width": 880,
           "height": 700
@@ -1775,7 +1775,7 @@
       "audit": {
         "theme": "paper",
         "title": "压缩包",
-        "url": "mazz-res://app/panels/archive.html",
+        "url": "mazz-res://app/panels/archive.html?kind=archive&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560
@@ -1843,12 +1843,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 222,
+          "visibleElements": 223,
           "buttons": 82,
-          "svg": 81,
+          "svg": 80,
           "images": 0,
           "controls": 82,
-          "controlSvg": 66,
+          "controlSvg": 65,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1874,12 +1874,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 233,
-          "buttons": 81,
-          "svg": 73,
+          "visibleElements": 265,
+          "buttons": 91,
+          "svg": 81,
           "images": 0,
-          "controls": 82,
-          "controlSvg": 57,
+          "controls": 92,
+          "controlSvg": 65,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1905,12 +1905,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 173,
+          "visibleElements": 174,
           "buttons": 66,
-          "svg": 66,
+          "svg": 65,
           "images": 0,
           "controls": 67,
-          "controlSvg": 51,
+          "controlSvg": 50,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1936,12 +1936,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 598,
-          "buttons": 83,
-          "svg": 78,
+          "visibleElements": 636,
+          "buttons": 94,
+          "svg": 87,
           "images": 0,
-          "controls": 84,
-          "controlSvg": 62,
+          "controls": 95,
+          "controlSvg": 71,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -1979,12 +1979,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 290,
+          "visibleElements": 291,
           "buttons": 98,
-          "svg": 97,
+          "svg": 96,
           "images": 0,
           "controls": 99,
-          "controlSvg": 80,
+          "controlSvg": 79,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2010,12 +2010,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 197,
+          "visibleElements": 198,
           "buttons": 71,
-          "svg": 73,
+          "svg": 72,
           "images": 0,
           "controls": 72,
-          "controlSvg": 57,
+          "controlSvg": 56,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2041,12 +2041,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 171,
+          "visibleElements": 172,
           "buttons": 66,
-          "svg": 65,
+          "svg": 64,
           "images": 0,
           "controls": 67,
-          "controlSvg": 49,
+          "controlSvg": 48,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2072,12 +2072,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 186,
+          "visibleElements": 187,
           "buttons": 67,
-          "svg": 68,
+          "svg": 67,
           "images": 0,
           "controls": 68,
-          "controlSvg": 52,
+          "controlSvg": 51,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2103,12 +2103,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 185,
+          "visibleElements": 186,
           "buttons": 68,
-          "svg": 66,
+          "svg": 65,
           "images": 0,
           "controls": 69,
-          "controlSvg": 51,
+          "controlSvg": 50,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2134,12 +2134,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 285,
+          "visibleElements": 286,
           "buttons": 91,
-          "svg": 85,
+          "svg": 84,
           "images": 0,
           "controls": 92,
-          "controlSvg": 68,
+          "controlSvg": 67,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2165,12 +2165,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 283,
+          "visibleElements": 284,
           "buttons": 107,
-          "svg": 106,
+          "svg": 105,
           "images": 0,
           "controls": 108,
-          "controlSvg": 89,
+          "controlSvg": 88,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2196,12 +2196,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 173,
+          "visibleElements": 174,
           "buttons": 68,
-          "svg": 70,
+          "svg": 69,
           "images": 0,
           "controls": 69,
-          "controlSvg": 53,
+          "controlSvg": 52,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2227,12 +2227,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 238,
+          "visibleElements": 239,
           "buttons": 90,
-          "svg": 91,
+          "svg": 90,
           "images": 0,
           "controls": 91,
-          "controlSvg": 74,
+          "controlSvg": 73,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2258,12 +2258,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 225,
+          "visibleElements": 226,
           "buttons": 76,
-          "svg": 72,
+          "svg": 71,
           "images": 0,
           "controls": 77,
-          "controlSvg": 55,
+          "controlSvg": 54,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2289,12 +2289,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 212,
+          "visibleElements": 213,
           "buttons": 76,
-          "svg": 74,
+          "svg": 73,
           "images": 0,
           "controls": 77,
-          "controlSvg": 58,
+          "controlSvg": 57,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2320,12 +2320,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 209,
+          "visibleElements": 210,
           "buttons": 80,
-          "svg": 81,
+          "svg": 80,
           "images": 0,
           "controls": 81,
-          "controlSvg": 65,
+          "controlSvg": 64,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2334,18 +2334,18 @@
       "nativeSurfaceScreenshots": [
         {
           "screenshot": "tests/e2e/shots/ui-page-sweep/source/071-ink-module-browser-native-01.png",
-          "tabId": "bt-1bc755de-1129-47e4-9c4a-4686e13468ea",
+          "tabId": "bt-a9f4a54d-b7ed-4250-949d-7ea0e5f7ac3c",
           "bounds": {
             "x": 232,
-            "y": 243,
+            "y": 242,
             "width": 1207,
-            "height": 557
+            "height": 558
           }
         }
       ],
       "nativeSurfaceAudits": [
         {
-          "tabId": "bt-1bc755de-1129-47e4-9c4a-4686e13468ea",
+          "tabId": "bt-a9f4a54d-b7ed-4250-949d-7ea0e5f7ac3c",
           "firstPartyHome": true,
           "href": "about:blank",
           "placeholders": [
@@ -2381,12 +2381,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 234,
-          "buttons": 81,
-          "svg": 73,
+          "visibleElements": 266,
+          "buttons": 91,
+          "svg": 81,
           "images": 0,
-          "controls": 82,
-          "controlSvg": 57,
+          "controls": 92,
+          "controlSvg": 65,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2412,12 +2412,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 165,
-          "buttons": 49,
-          "svg": 27,
+          "visibleElements": 197,
+          "buttons": 59,
+          "svg": 35,
           "images": 0,
-          "controls": 50,
-          "controlSvg": 25,
+          "controls": 60,
+          "controlSvg": 33,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2443,12 +2443,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 157,
-          "buttons": 48,
-          "svg": 25,
+          "visibleElements": 189,
+          "buttons": 58,
+          "svg": 33,
           "images": 0,
-          "controls": 49,
-          "controlSvg": 24,
+          "controls": 59,
+          "controlSvg": 32,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2474,12 +2474,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 158,
-          "buttons": 48,
-          "svg": 25,
+          "visibleElements": 190,
+          "buttons": 58,
+          "svg": 33,
           "images": 0,
-          "controls": 49,
-          "controlSvg": 24,
+          "controls": 59,
+          "controlSvg": 32,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2505,12 +2505,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 167,
-          "buttons": 47,
-          "svg": 24,
+          "visibleElements": 199,
+          "buttons": 57,
+          "svg": 32,
           "images": 0,
-          "controls": 48,
-          "controlSvg": 23,
+          "controls": 58,
+          "controlSvg": 31,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2536,12 +2536,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 164,
-          "buttons": 49,
-          "svg": 26,
+          "visibleElements": 196,
+          "buttons": 59,
+          "svg": 34,
           "images": 0,
-          "controls": 50,
-          "controlSvg": 25,
+          "controls": 60,
+          "controlSvg": 33,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2567,12 +2567,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 166,
-          "buttons": 51,
-          "svg": 28,
+          "visibleElements": 198,
+          "buttons": 61,
+          "svg": 36,
           "images": 0,
-          "controls": 53,
-          "controlSvg": 27,
+          "controls": 63,
+          "controlSvg": 35,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2598,12 +2598,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 163,
-          "buttons": 49,
-          "svg": 26,
+          "visibleElements": 195,
+          "buttons": 59,
+          "svg": 34,
           "images": 0,
-          "controls": 50,
-          "controlSvg": 25,
+          "controls": 60,
+          "controlSvg": 33,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2629,12 +2629,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 199,
+          "visibleElements": 200,
           "buttons": 73,
-          "svg": 74,
+          "svg": 73,
           "images": 0,
           "controls": 74,
-          "controlSvg": 58,
+          "controlSvg": 57,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2660,12 +2660,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 189,
+          "visibleElements": 190,
           "buttons": 70,
-          "svg": 71,
+          "svg": 70,
           "images": 0,
           "controls": 71,
-          "controlSvg": 55,
+          "controlSvg": 54,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2691,12 +2691,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 183,
+          "visibleElements": 184,
           "buttons": 68,
-          "svg": 69,
+          "svg": 68,
           "images": 0,
           "controls": 69,
-          "controlSvg": 53,
+          "controlSvg": 52,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2722,12 +2722,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 264,
-          "buttons": 96,
-          "svg": 86,
+          "visibleElements": 262,
+          "buttons": 95,
+          "svg": 85,
           "images": 0,
-          "controls": 97,
-          "controlSvg": 70,
+          "controls": 96,
+          "controlSvg": 69,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2753,12 +2753,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 216,
+          "visibleElements": 217,
           "buttons": 80,
-          "svg": 79,
+          "svg": 78,
           "images": 0,
           "controls": 81,
-          "controlSvg": 62,
+          "controlSvg": 61,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2784,12 +2784,12 @@
           "height": 824
         },
         "counts": {
-          "visibleElements": 290,
+          "visibleElements": 291,
           "buttons": 90,
-          "svg": 88,
+          "svg": 87,
           "images": 0,
           "controls": 91,
-          "controlSvg": 72,
+          "controlSvg": 71,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2809,7 +2809,7 @@
       "audit": {
         "theme": "ink",
         "title": "收藏管理",
-        "url": "mazz-res://app/panels/favmgr.html",
+        "url": "mazz-res://app/panels/favmgr.html?kind=favmgr&resize=workbench",
         "viewport": {
           "width": 780,
           "height": 560
@@ -2840,7 +2840,7 @@
       "audit": {
         "theme": "ink",
         "title": "密码管理器",
-        "url": "mazz-res://app/panels/pwmgr.html",
+        "url": "mazz-res://app/panels/pwmgr.html?kind=pwmgr&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560
@@ -2871,18 +2871,18 @@
       "audit": {
         "theme": "ink",
         "title": "Quick Switcher",
-        "url": "mazz-res://app/panels/palette.html",
+        "url": "mazz-res://app/panels/palette.html?kind=palette&resize=fixed",
         "viewport": {
           "width": 720,
           "height": 540
         },
         "counts": {
-          "visibleElements": 63,
-          "buttons": 3,
-          "svg": 3,
+          "visibleElements": 60,
+          "buttons": 2,
+          "svg": 2,
           "images": 0,
-          "controls": 3,
-          "controlSvg": 3,
+          "controls": 2,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2902,18 +2902,18 @@
       "audit": {
         "theme": "ink",
         "title": "快捷键速查",
-        "url": "mazz-res://app/panels/shortcuts.html",
+        "url": "mazz-res://app/panels/shortcuts.html?kind=shortcuts&resize=fixed",
         "viewport": {
           "width": 720,
           "height": 560
         },
         "counts": {
-          "visibleElements": 69,
-          "buttons": 3,
-          "svg": 3,
+          "visibleElements": 66,
+          "buttons": 2,
+          "svg": 2,
           "images": 0,
-          "controls": 3,
-          "controlSvg": 3,
+          "controls": 2,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -2964,7 +2964,7 @@
       "audit": {
         "theme": "ink",
         "title": "设置",
-        "url": "mazz-res://app/panels/settings.html",
+        "url": "mazz-res://app/panels/settings.html?kind=settings&resize=workbench",
         "viewport": {
           "width": 760,
           "height": 560
@@ -2995,18 +2995,18 @@
       "audit": {
         "theme": "ink",
         "title": "用户服务协议及隐私政策",
-        "url": "mazz-res://app/panels/agreement.html",
+        "url": "mazz-res://app/panels/agreement.html?kind=agreement&resize=fixed",
         "viewport": {
           "width": 700,
           "height": 600
         },
         "counts": {
-          "visibleElements": 41,
-          "buttons": 5,
-          "svg": 3,
+          "visibleElements": 38,
+          "buttons": 4,
+          "svg": 2,
           "images": 0,
-          "controls": 5,
-          "controlSvg": 3,
+          "controls": 4,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -3026,7 +3026,7 @@
       "audit": {
         "theme": "ink",
         "title": "使用指南",
-        "url": "mazz-res://app/panels/help.html",
+        "url": "mazz-res://app/panels/help.html?kind=help&resize=workbench",
         "viewport": {
           "width": 860,
           "height": 560
@@ -3057,7 +3057,7 @@
       "audit": {
         "theme": "ink",
         "title": "翻译",
-        "url": "mazz-res://app/panels/translate.html",
+        "url": "mazz-res://app/panels/translate.html?kind=translate&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560
@@ -3088,7 +3088,7 @@
       "audit": {
         "theme": "ink",
         "title": "插件管理（预览）",
-        "url": "mazz-res://app/panels/plugins.html",
+        "url": "mazz-res://app/panels/plugins.html?kind=plugins&resize=workbench",
         "viewport": {
           "width": 740,
           "height": 560
@@ -3119,7 +3119,7 @@
       "audit": {
         "theme": "ink",
         "title": "全局内录（预览）",
-        "url": "mazz-res://app/panels/recorder.html",
+        "url": "mazz-res://app/panels/recorder.html?kind=recorder&resize=workbench",
         "viewport": {
           "width": 720,
           "height": 560
@@ -3150,17 +3150,17 @@
       "audit": {
         "theme": "ink",
         "title": "工具坞",
-        "url": "mazz-res://app/panels/dockfloat.html",
+        "url": "mazz-res://app/panels/dockfloat.html?kind=dockfloat&resize=workbench",
         "viewport": {
-          "width": 480,
-          "height": 620
+          "width": 400,
+          "height": 623
         },
         "counts": {
-          "visibleElements": 29,
-          "buttons": 10,
+          "visibleElements": 48,
+          "buttons": 12,
           "svg": 7,
           "images": 0,
-          "controls": 10,
+          "controls": 12,
           "controlSvg": 7,
           "rawControlGlyphs": 0
         },
@@ -3181,18 +3181,18 @@
       "audit": {
         "theme": "ink",
         "title": "收藏当前页",
-        "url": "mazz-res://app/panels/bookmark.html",
+        "url": "mazz-res://app/panels/bookmark.html?kind=bookmark&resize=fixed",
         "viewport": {
           "width": 520,
           "height": 380
         },
         "counts": {
-          "visibleElements": 24,
-          "buttons": 5,
-          "svg": 3,
+          "visibleElements": 21,
+          "buttons": 4,
+          "svg": 2,
           "images": 0,
-          "controls": 5,
-          "controlSvg": 3,
+          "controls": 4,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -3212,10 +3212,10 @@
       "audit": {
         "theme": "ink",
         "title": "菜单",
-        "url": "mazz-res://app/panels/ctxmenu.html",
+        "url": "mazz-res://app/panels/ctxmenu.html?kind=ctxmenu&resize=fixed",
         "viewport": {
           "width": 240,
-          "height": 303
+          "height": 300
         },
         "counts": {
           "visibleElements": 4,
@@ -3274,7 +3274,7 @@
       "audit": {
         "theme": "ink",
         "title": "局域网同步",
-        "url": "mazz-res://app/panels/sync.html",
+        "url": "mazz-res://app/panels/sync.html?kind=sync&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560
@@ -3305,7 +3305,7 @@
       "audit": {
         "theme": "ink",
         "title": "通知中心",
-        "url": "mazz-res://app/panels/notif.html",
+        "url": "mazz-res://app/panels/notif.html?kind=notif&resize=workbench",
         "viewport": {
           "width": 520,
           "height": 651
@@ -3336,7 +3336,7 @@
       "audit": {
         "theme": "ink",
         "title": "AI 服务 · 创作模板",
-        "url": "mazz-res://app/panels/factorycfg.html",
+        "url": "mazz-res://app/panels/factorycfg.html?kind=factorycfg&resize=workbench",
         "viewport": {
           "width": 920,
           "height": 720
@@ -3367,18 +3367,18 @@
       "audit": {
         "theme": "ink",
         "title": "新建文件",
-        "url": "mazz-res://app/panels/newfile.html",
+        "url": "mazz-res://app/panels/newfile.html?kind=newfile&resize=fixed",
         "viewport": {
           "width": 700,
           "height": 560
         },
         "counts": {
-          "visibleElements": 110,
-          "buttons": 32,
-          "svg": 3,
+          "visibleElements": 107,
+          "buttons": 31,
+          "svg": 2,
           "images": 0,
-          "controls": 32,
-          "controlSvg": 3,
+          "controls": 31,
+          "controlSvg": 2,
           "rawControlGlyphs": 0
         },
         "issues": [],
@@ -3398,10 +3398,10 @@
       "audit": {
         "theme": "ink",
         "title": "选择",
-        "url": "mazz-res://app/panels/picklist.html",
+        "url": "mazz-res://app/panels/picklist.html?kind=picklist&resize=fixed",
         "viewport": {
-          "width": 343,
-          "height": 423
+          "width": 340,
+          "height": 420
         },
         "counts": {
           "visibleElements": 5,
@@ -3429,7 +3429,7 @@
       "audit": {
         "theme": "ink",
         "title": "生成预览",
-        "url": "mazz-res://app/panels/fpreview.html",
+        "url": "mazz-res://app/panels/fpreview.html?kind=fpreview&resize=workbench",
         "viewport": {
           "width": 760,
           "height": 640
@@ -3460,7 +3460,7 @@
       "audit": {
         "theme": "ink",
         "title": "章节编辑",
-        "url": "mazz-res://app/panels/fedit.html",
+        "url": "mazz-res://app/panels/fedit.html?kind=fedit&resize=workbench",
         "viewport": {
           "width": 823,
           "height": 703
@@ -3491,7 +3491,7 @@
       "audit": {
         "theme": "ink",
         "title": "AI 对话整理",
-        "url": "mazz-res://app/panels/harvest.html",
+        "url": "mazz-res://app/panels/harvest.html?kind=harvest&resize=workbench",
         "viewport": {
           "width": 880,
           "height": 700
@@ -3522,7 +3522,7 @@
       "audit": {
         "theme": "ink",
         "title": "压缩包",
-        "url": "mazz-res://app/panels/archive.html",
+        "url": "mazz-res://app/panels/archive.html?kind=archive&resize=workbench",
         "viewport": {
           "width": 700,
           "height": 560

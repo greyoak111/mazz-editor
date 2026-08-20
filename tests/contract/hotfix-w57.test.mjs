@@ -46,13 +46,15 @@ describe('图标补丁两件（dockfloat 0×0/快速跳转裸 emoji）', () => {
   });
 });
 
-describe('toast 防压', () => {
-  test('视图覆盖左下挪顶', () => {
+describe('toast 防压（W87i 状态栏中央 Seat 接管）', () => {
+  test('普通态不再猜 Browser 矩形跳顶；全屏/沉浸态才降级宿主内浮层', () => {
     const sh = readSrc('renderer/shell/shell.js');
-    assert.ok(sh.includes('mazz-toast-top'), '挪顶类判定必须有');
-    assert.ok(sh.includes('vr.bottom > window.innerHeight - 120'), '覆盖判定必须有');
+    assert.ok(sh.includes("document.querySelector('#status-toast-slot')"), '普通态必须进入状态栏中央 Seat');
+    assert.ok(sh.includes("el.classList.add('mazz-toast-floating')"), '无可见状态栏时必须有宿主内 fallback');
+    assert.ok(!sh.includes('mazz-toast-top'), 'W57 猜矩形挪顶 workaround 不得复活');
+    assert.ok(!sh.includes('vr.bottom > window.innerHeight - 120'), 'Browser 左下矩形猜测必须退役');
     const css = readSrc('renderer/styles/base.css');
-    assert.ok(css.includes('.mazz-toast-top'), '挪顶样式必须有');
-    assert.ok(css.includes('top: 46px; left: 50%'), '顶部居中必须有');
+    assert.ok(css.includes('.mazz-toast-floating'), '全屏/沉浸降级样式必须有');
+    assert.ok(!css.includes('.mazz-toast-top'), '陈旧挪顶样式必须退役');
   });
 });

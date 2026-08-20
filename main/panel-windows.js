@@ -4,7 +4,19 @@
 // W47 追加：主题跟随主界面（all 静态注册表收 theme:changed 广播）+ 圆角透明窗+窄拖拽条（Win10 无圆角 API 的唯一路径）
 'use strict';
 const path = require('path');
-const { BrowserWindow, nativeTheme, screen } = require('electron');
+const { app, BrowserWindow, nativeTheme, screen } = require('electron');
+
+// Window geometry is part of the panel contract, not a one-size-fits-all
+// BrowserWindow default.  Fixed utilities present a bounded choice/document;
+// workbench panels own layouts that genuinely benefit from resizing.
+const PANEL_RESIZE_MODES = Object.freeze({
+  favmgr: 'workbench', pwmgr: 'workbench', settings: 'workbench', help: 'workbench',
+  translate: 'workbench', plugins: 'workbench', recorder: 'workbench', dockfloat: 'workbench',
+  sync: 'workbench', notif: 'workbench', factorycfg: 'workbench', archive: 'workbench',
+  fpreview: 'workbench', fedit: 'workbench', harvest: 'workbench',
+  palette: 'fixed', shortcuts: 'fixed', agreement: 'fixed', bookmark: 'fixed',
+  newfile: 'fixed', picklist: 'fixed', ctxmenu: 'fixed',
+});
 
 class PanelWindows {
   // W61a：只有预览/编辑两族允许多实例；其余面板继续严格单例。
@@ -31,6 +43,8 @@ class PanelWindows {
     this.win = win; // () => 主窗
     this.resourceLedger = resourceLedger;
     this.visualComposition = visualComposition;
+    this._appQuitting = false;
+    app.on('before-quit', () => { this._appQuitting = true; });
     this.panels = new Map(); // singleton: kind；multi: kind:instanceId
     bus.handle('panel:open', async ({ kind, opts } = {}, event) => {
       const host = BrowserWindow.fromWebContents(event?.sender) || this.win?.();
@@ -46,20 +60,54 @@ class PanelWindows {
       return true;
     });
     // W54 B10 坞拖拽手势三态（自绘拖拽：transparent+app-region 跨屏病绕开——面板页 e.screenX/Y 供屏坐标，主进程 setBounds 跟手）
-    bus.handle('panel:dragStart', async ({ kind, instanceId, sx, sy }) => {
+    const setDockDragPassthrough = (win, enabled) => {
+      if (!win || win.isDestroyed()) return;
+      try {
+        win.setIgnoreMouseEvents(!!enabled, enabled ? { forward: true } : undefined);
+        win.__panelDragPassthrough = !!enabled; // E2E/诊断探针：没有 Electron getter，只记 owner 实际下发态。
+      } catch {}
+    };
+    const cancelPanelDrag = ({ kind, instanceId } = {}) => {
+      const d = this._drag;
+      this._drag = null;
+      const dragWin = d?.win || this._panelFor(kind, instanceId);
+      if (d?.win && !d.win.isDestroyed()) this.forward('dock:snapHint', { on: false }, d.win);
+      if (dragWin && !dragWin.isDestroyed()) {
+        dragWin.__panelDragActive = false;
+        dragWin.__panelDragOrigin = null;
+        setDockDragPassthrough(dragWin, false);
+      }
+      return !!dragWin;
+    };
+    bus.handle('panel:dragStart', async ({ kind, instanceId, origin, sx, sy }) => {
       const win = this._panelFor(kind, instanceId);
       if (!win || win.isDestroyed()) return false;
+      if (this._drag?.win && this._drag.win !== win && !this._drag.win.isDestroyed()) {
+        this._drag.win.__panelDragActive = false;
+        this._drag.win.__panelDragOrigin = null;
+        setDockDragPassthrough(this._drag.win, false);
+      }
       const b = win.getBounds();
-      this._drag = { win, dx: sx - b.x, dy: sy - b.y, w: b.width, h: b.height, lastMove: 0, snap: false };
+      const dragOrigin = kind === 'dockfloat' && origin === 'host' ? 'host' : 'float';
+      this._drag = { win, origin: dragOrigin, dx: sx - b.x, dy: sy - b.y, w: b.width, h: b.height, lastMove: 0, snap: false };
+      win.__panelDragActive = true;
+      win.__panelDragOrigin = dragOrigin;
+      // 停靠坞一浮出就会横在原主窗指针之上；让它在整个拖拽会话中命中穿透，
+      // 主窗的 pointer capture 才能持续收到 move/up，不会在第一帧后断流。
+      if (kind === 'dockfloat' && dragOrigin === 'host') setDockDragPassthrough(win, true);
       return true;
     });
-    bus.handle('panel:move', async ({ kind, instanceId, sx, sy }) => {
+    bus.handle('panel:move', async ({ kind, instanceId, origin, sx, sy }) => {
       // 容错补建：拖出场景（坞 bar 起拖）子窗格可能刚开未 dragStart——按现 bounds 补建会话
       if (!this._drag && kind) {
         const win = this._panelFor(kind, instanceId);
         if (win && !win.isDestroyed()) {
           const b = win.getBounds();
-          this._drag = { win, dx: sx - b.x, dy: sy - b.y, w: b.width, h: b.height, lastMove: 0, snap: false };
+          const dragOrigin = kind === 'dockfloat' && origin === 'host' ? 'host' : 'float';
+          this._drag = { win, origin: dragOrigin, dx: sx - b.x, dy: sy - b.y, w: b.width, h: b.height, lastMove: 0, snap: false };
+          win.__panelDragActive = true;
+          win.__panelDragOrigin = dragOrigin;
+          if (kind === 'dockfloat' && dragOrigin === 'host') setDockDragPassthrough(win, true);
         }
       }
       const d = this._drag;
@@ -80,9 +128,15 @@ class PanelWindows {
       } catch {}
       return true;
     });
-    bus.handle('panel:dragEnd', async ({ kind }) => {
+    bus.handle('panel:dragEnd', async ({ kind, instanceId } = {}) => {
       const d = this._drag;
       this._drag = null;
+      const dragWin = d?.win || this._panelFor(kind, instanceId);
+      if (dragWin && !dragWin.isDestroyed()) {
+        dragWin.__panelDragActive = false;
+        dragWin.__panelDragOrigin = null;
+        setDockDragPassthrough(dragWin, false);
+      }
       if (!d || d.win.isDestroyed()) return false;
       this.forward('dock:snapHint', { on: false }, d.win);
       if (d.snap && kind === 'dockfloat') {
@@ -91,8 +145,12 @@ class PanelWindows {
         try { d.win.close(); } catch {}
         return 'docked';
       }
+      try { d.win.focus(); } catch {}
       return true;
     });
+    // pointercancel / 源窗 blur / 宿主销毁均走无吸附副作用的取消路径，保证 click-through 必被撤销。
+    bus.handle('panel:dragCancel', async (payload = {}) => cancelPanelDrag(payload));
+    this._cancelPanelDrag = cancelPanelDrag;
     // W58c：标注发件面板 kind（主题快照等通用桥的回推寻址——17 面板免逐一手带 kind；视图宿主化同款思路）
     bus.handle('panel:action', async (payload, event) => {
       const sourcePanel = this._panelBySender(event?.sender);
@@ -293,22 +351,46 @@ class PanelWindows {
         : kind === 'picklist' ? (opts.w || 340)
         : kind === 'palette' ? 720 : kind === 'shortcuts' ? 720 : kind === 'favmgr' ? 780 : kind === 'harvest' ? 880
         : kind === 'help' ? 860 : kind === 'settings' ? 760 : kind === 'plugins' ? 740
-        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? 400 : kind === 'notif' ? 520 : kind === 'bookmark' ? 520 : kind === 'factorycfg' ? 920 : 700;
+        : kind === 'recorder' ? 720 : kind === 'dockfloat' ? (opts.w || 400) : kind === 'notif' ? 520 : kind === 'bookmark' ? 520 : kind === 'factorycfg' ? 920 : 700;
     const panelHeight = kind === 'fpreview' ? (opts.h || 640) : kind === 'fedit' ? (opts.h || 700)
       : kind === 'ctxmenu' ? (opts.h || 300)
         : kind === 'picklist' ? (opts.h || 420)
-        : kind === 'palette' ? 540 : kind === 'dockfloat' ? 620 : kind === 'notif' ? 650 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : kind === 'harvest' ? 700 : 560;
+        : kind === 'palette' ? 540 : kind === 'dockfloat' ? (opts.h || 620) : kind === 'notif' ? 650 : kind === 'agreement' ? 600 : kind === 'bookmark' ? 380 : kind === 'factorycfg' ? 720 : kind === 'harvest' ? 700 : 560;
     const stairIndex = PanelWindows.MULTI_KINDS.has(kind) ? this._nextStairIndex(kind) : -1;
     const stairSide = kind === 'fedit' ? 'left' : 'right';
     const stair = PanelWindows.MULTI_KINDS.has(kind) ? this._stairBounds(parent, panelWidth, panelHeight, stairIndex, stairSide) : {};
     const transientPanel = kind === 'ctxmenu' || kind === 'picklist';
+    const resizeMode = PANEL_RESIZE_MODES[kind] || 'workbench';
+    const resizablePanel = resizeMode === 'workbench';
+    // 停靠坞拖出时由 renderer 传入原工具坞抓手对应的屏幕坐标。若不把它带到 BrowserWindow 创建阶段，
+    // Electron 会先居中，随后 panel:move 从这个错位 bounds 推出 offset，结果就是“拖一下跳到画面中间”。
+    const dockAnchor = kind === 'dockfloat' && Number.isFinite(Number(opts.x)) && Number.isFinite(Number(opts.y)) ? (() => {
+      const raw = { x: Math.round(Number(opts.x)), y: Math.round(Number(opts.y)) };
+      const area = screen.getDisplayNearestPoint(raw).workArea;
+      // 允许跨屏拖动，只保证至少 80px 抓手留在某块屏幕内，不擅自重新居中。
+      return {
+        x: Math.max(area.x - panelWidth + 80, Math.min(raw.x, area.x + area.width - 80)),
+        y: Math.max(area.y, Math.min(raw.y, area.y + area.height - 32)),
+      };
+    })() : {};
     const win = new BrowserWindow({
       width: panelWidth,
       height: panelHeight,
-      minWidth: kind === 'ctxmenu' ? 160 : kind === 'picklist' ? 240 : kind === 'fpreview' ? 560 : kind === 'fedit' ? 620 : 480,
-      minHeight: kind === 'ctxmenu' ? 60 : kind === 'picklist' ? 200 : kind === 'fpreview' ? 420 : kind === 'fedit' ? 440 : 360,
+      minWidth: resizablePanel
+        ? (kind === 'dockfloat' ? 360 : kind === 'fpreview' ? 560 : kind === 'fedit' ? 620 : 480)
+        : panelWidth,
+      minHeight: resizablePanel
+        ? (kind === 'dockfloat' ? 420 : kind === 'fpreview' ? 420 : kind === 'fedit' ? 440 : 360)
+        : panelHeight,
+      maxWidth: resizablePanel ? undefined : panelWidth,
+      maxHeight: resizablePanel ? undefined : panelHeight,
+      resizable: resizablePanel,
+      maximizable: resizablePanel,
+      fullscreenable: resizablePanel,
+      thickFrame: resizablePanel,
       // W55 右键菜单子窗格：屏坐标定位（主窗内容区坐标→屏坐标）+防出屏翻边（W58i picklist 字体/字号格同例）
       ...stair,
+      ...dockAnchor,
       ...((kind === 'ctxmenu' || kind === 'picklist') ? (() => {
         const cb = (parent || (typeof this.win === 'function' ? this.win() : this.win))?.getContentBounds?.() || { x: 0, y: 0, width: 1440, height: 900 };
         let x = Math.round(cb.x + (opts.x || 0)), y = Math.round(cb.y + (opts.y || 0));
@@ -336,14 +418,17 @@ class PanelWindows {
       },
     });
     this._prepare(win, kind, instanceId, panelKey, parent);
+    win.__panelResizeMode = resizeMode;
     win.__stairIndex = stairIndex;
     win.__stairSide = stairSide;
     this.panels.set(panelKey, win);
     win.__dismissOnBlurArmed = false;
     win.once('ready-to-show', () => {
       if (win.isDestroyed()) return;
-      win.show();
-      win.focus();
+      // 停靠坞正从主窗拖出时不能抢焦点：抢焦点会让源窗 blur、截断它持有的 pointer 序列。
+      // 结束拖拽后 panel:dragEnd 再恢复命中并聚焦浮窗。
+      if (kind === 'dockfloat' && win.__panelDragActive && win.__panelDragOrigin === 'host') win.showInactive();
+      else { win.show(); win.focus(); }
       this.visualComposition?.refreshHost?.(win.__panelHost, `panel-ready:${kind}`);
       if (transientPanel) setImmediate(() => { if (!win.isDestroyed()) win.__dismissOnBlurArmed = true; });
     });
@@ -353,10 +438,19 @@ class PanelWindows {
         try { win.close(); } catch {}
       }); // 菜单惯例：真正显示并获得焦点后，失焦才收。
     }
+    win.on('close', () => {
+      if (kind !== 'dockfloat') return;
+      // close 发生在 closed 之前，此时 BrowserWindow 仍可接受 setIgnoreMouseEvents(false)。
+      if (this._drag?.win === win) this._drag = null;
+      win.__panelDragActive = false;
+      win.__panelDragOrigin = null;
+      try { win.setIgnoreMouseEvents(false); win.__panelDragPassthrough = false; } catch {}
+    });
     win.on('closed', () => {
       this.panels.delete(panelKey);
+      if (this._drag?.win === win) this._drag = null;
       // 坞浮动子窗格关闭 → 主窗联动坞回停靠（W53 纯原生浮动——关窗即收队；open() 系真钩，15 行那个是 annotate 系）
-      if (kind === 'dockfloat') this.forward('panel:changed', { kind: 'dockfloat', closed: true }, win);
+      if (kind === 'dockfloat' && !this._appQuitting) this.forward('panel:changed', { kind: 'dockfloat', closed: true }, win);
       // 焦点与 compositor 回真实宿主；Panel 从工作台分窗打开时，禁止无条件把焦点抢回主窗。
       try {
         const host = win.__panelHost && !win.__panelHost.isDestroyed()
@@ -369,7 +463,7 @@ class PanelWindows {
       } catch {}
     });
     PanelWindows.register(panelKey, win); // 主题广播面；多实例按 kind:instanceId 注册
-    win.loadURL(`mazz-res://app/panels/${kind}.html`);
+    win.loadURL(`mazz-res://app/panels/${kind}.html?kind=${encodeURIComponent(kind)}&resize=${resizeMode}`);
     return { ok: true, kind, instanceId: instanceId || undefined, key: panelKey, bounds: win.getBounds() };
   }
 }

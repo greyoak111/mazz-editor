@@ -1,0 +1,310 @@
+{
+  "protocol": "mazz.w87i-pane-dock-continuity/v4",
+  "createdAt": "2026-08-20T17:30:52.985Z",
+  "mode": "PACKAGED",
+  "verdict": "PASS",
+  "single": [
+    {
+      "paneId": "pane-1",
+      "count": 12,
+      "rightGap": 0,
+      "clientWidth": 1208,
+      "scrollWidth": 2313,
+      "scrollLeft": 1105,
+      "maxScroll": 1105,
+      "rightPinned": true,
+      "activeId": "tab-12",
+      "activeTitle": "W87i-11-超长页签名称-保持右缘稳定.txt",
+      "activeVisible": true,
+      "activeLeft": 1008
+    }
+  ],
+  "rightMutation": [
+    {
+      "paneId": "pane-1",
+      "count": 12,
+      "rightGap": 0,
+      "clientWidth": 1208,
+      "scrollWidth": 2313,
+      "scrollLeft": 1105,
+      "maxScroll": 1105,
+      "rightPinned": true,
+      "activeId": "tab-12",
+      "activeTitle": "W87i-11-已重命名且未保存-右缘仍固定.txt",
+      "activeVisible": true,
+      "activeLeft": 1008
+    }
+  ],
+  "libraryActive": [
+    {
+      "paneId": "pane-1",
+      "count": 12,
+      "rightGap": -1083,
+      "clientWidth": 1208,
+      "scrollWidth": 2313,
+      "scrollLeft": 22,
+      "maxScroll": 1105,
+      "rightPinned": false,
+      "activeId": "tab-1",
+      "activeTitle": "书库",
+      "activeVisible": true,
+      "activeLeft": 0
+    }
+  ],
+  "libraryMutation": [
+    {
+      "paneId": "pane-1",
+      "count": 12,
+      "rightGap": -1192,
+      "clientWidth": 1208,
+      "scrollWidth": 2422,
+      "scrollLeft": 22,
+      "maxScroll": 1214,
+      "rightPinned": false,
+      "activeId": "tab-1",
+      "activeTitle": "书库 · 长标题重命名后仍留在原阅读位置",
+      "activeVisible": true,
+      "activeLeft": 0
+    }
+  ],
+  "resealed": [
+    {
+      "paneId": "pane-1",
+      "count": 12,
+      "rightGap": 0,
+      "clientWidth": 1208,
+      "scrollWidth": 2422,
+      "scrollLeft": 1214,
+      "maxScroll": 1214,
+      "rightPinned": true,
+      "activeId": "tab-12",
+      "activeTitle": "W87i-11-已重命名且未保存-右缘仍固定.txt",
+      "activeVisible": true,
+      "activeLeft": 1008
+    }
+  ],
+  "split": [
+    {
+      "paneId": "pane-1",
+      "count": 11,
+      "rightGap": 0,
+      "clientWidth": 603,
+      "scrollWidth": 2222,
+      "scrollLeft": 1618,
+      "maxScroll": 1619,
+      "rightPinned": true,
+      "activeId": "tab-11",
+      "activeTitle": "W87i-10-超长页签名称-保持右缘稳定.txt",
+      "activeVisible": true,
+      "activeLeft": 404
+    },
+    {
+      "paneId": "pane-2",
+      "count": 1,
+      "rightGap": 0,
+      "clientWidth": 603,
+      "scrollWidth": 603,
+      "scrollLeft": 0,
+      "maxScroll": 0,
+      "rightPinned": true,
+      "activeId": "tab-12",
+      "activeTitle": "W87i-11-已重命名且未保存-右缘仍固定.txt",
+      "activeVisible": true,
+      "activeLeft": 403
+    }
+  ],
+  "joined": [
+    {
+      "paneId": "pane-1",
+      "count": 12,
+      "rightGap": 0,
+      "clientWidth": 1208,
+      "scrollWidth": 2400,
+      "scrollLeft": 1192,
+      "maxScroll": 1192,
+      "rightPinned": true,
+      "activeId": "tab-12",
+      "activeTitle": "W87i-11-已重命名且未保存-右缘仍固定.txt",
+      "activeVisible": true,
+      "activeLeft": 1008
+    }
+  ],
+  "libraryAfterJoin": [
+    {
+      "paneId": "pane-1",
+      "count": 12,
+      "rightGap": -1192,
+      "clientWidth": 1208,
+      "scrollWidth": 2400,
+      "scrollLeft": 0,
+      "maxScroll": 1192,
+      "rightPinned": false,
+      "activeId": "tab-1",
+      "activeTitle": "书库 · 长标题重命名后仍留在原阅读位置",
+      "activeVisible": true,
+      "activeLeft": 0
+    }
+  ],
+  "narrow": {
+    "dockWidth": 300,
+    "commandInside": true,
+    "commandOverflow": 0,
+    "harnessOverflow": 0
+  },
+  "dragStart": {
+    "x": 1147,
+    "y": 148
+  },
+  "pointerFrames": [
+    {
+      "pointer": {
+        "x": 1123,
+        "y": 156
+      },
+      "frame": {
+        "x": 1116,
+        "y": 152
+      }
+    },
+    {
+      "pointer": {
+        "x": 1087,
+        "y": 166
+      },
+      "frame": {
+        "x": 1080,
+        "y": 161
+      }
+    },
+    {
+      "pointer": {
+        "x": 1051,
+        "y": 178
+      },
+      "frame": {
+        "x": 1044,
+        "y": 173
+      }
+    }
+  ],
+  "duringDrag": {
+    "passthrough": true,
+    "active": true,
+    "origin": "host",
+    "bounds": {
+      "x": 1116,
+      "y": 152,
+      "width": 360,
+      "height": 656
+    }
+  },
+  "afterDrag": {
+    "passthrough": false,
+    "active": false,
+    "origin": null,
+    "bounds": {
+      "x": 1044,
+      "y": 173,
+      "width": 360,
+      "height": 658
+    }
+  },
+  "floating": {
+    "x": 1044,
+    "y": 173,
+    "width": 360,
+    "horizontalOverflow": 0,
+    "command": true
+  },
+  "draftSeed": {
+    "draft": "W87i snapshot 保留这段未提交草稿",
+    "adapter": "internal",
+    "model": "w87i-local-model-draft",
+    "start": 6,
+    "end": 14
+  },
+  "draftAfterSnapshot": {
+    "draft": "W87i snapshot 保留这段未提交草稿",
+    "adapter": "internal",
+    "model": "w87i-local-model-draft",
+    "activeId": "df-agent-input",
+    "start": 6,
+    "end": 14
+  },
+  "secondaryStart": {
+    "x": 55,
+    "y": 8
+  },
+  "secondaryFrames": [
+    {
+      "pointer": {
+        "x": 43,
+        "y": 10
+      },
+      "passthrough": false,
+      "active": true,
+      "origin": "float",
+      "bounds": {
+        "x": 1032,
+        "y": 174,
+        "width": 360,
+        "height": 660
+      }
+    },
+    {
+      "pointer": {
+        "x": 30,
+        "y": 12
+      },
+      "passthrough": false,
+      "active": true,
+      "origin": "float",
+      "bounds": {
+        "x": 1018,
+        "y": 176,
+        "width": 362,
+        "height": 660
+      }
+    },
+    {
+      "pointer": {
+        "x": 16,
+        "y": 14
+      },
+      "passthrough": false,
+      "active": true,
+      "origin": "float",
+      "bounds": {
+        "x": 1004,
+        "y": 178,
+        "width": 362,
+        "height": 660
+      }
+    }
+  ],
+  "afterSecondaryDrag": {
+    "passthrough": false,
+    "active": false,
+    "origin": null,
+    "bounds": {
+      "x": 1004,
+      "y": 178,
+      "width": 362,
+      "height": 660
+    }
+  },
+  "tools": {
+    "cards": 18,
+    "loading": false
+  },
+  "coldTools": {
+    "cards": 18,
+    "loading": false,
+    "labels": [
+      "压缩包",
+      "图片文字识别",
+      "翻译面板",
+      "翻译选中文本"
+    ]
+  }
+}

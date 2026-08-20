@@ -17,6 +17,24 @@ export class Tabs {
     this.area = area;        // .editor-area
     this.tabs = [];          // {id, title, moduleId, iconId, filePath, dirty, pinned, view}
     this.activeId = null;
+    // W87i：页签条是一个“右缘锚定、活动项优先可见”的滚动视口。
+    // render 会重建 .tab 节点，不能把浏览器偶然保留下来的 scrollLeft 当状态。
+    this._scrollPinnedRight = true;
+    this._renderGeneration = 0;
+    this.el.addEventListener('scroll', (event) => {
+      // 只把用户真实滚动解释为“离开/回到右缘”；程序写入由 _setScroll 记账。
+      if (event.isTrusted) this._scrollPinnedRight = this._isAtRight();
+    }, { passive: true });
+    this._resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
+      if (!this.el.isConnected) {
+        this._resizeObserver?.disconnect();
+        return;
+      }
+      if (!this.tabs.length) return;
+      if (this._scrollPinnedRight) this._setScroll(this._maxScroll(), true);
+      else this._ensureActiveVisible();
+    }) : null;
+    this._resizeObserver?.observe(this.el);
   }
 
   add({ title, moduleId, iconId = moduleIconId(moduleId), filePath = null }) {
@@ -108,7 +126,89 @@ export class Tabs {
   }
   activateIndex(n) { if (this.tabs[n - 1]) this.activate(this.tabs[n - 1].id); }
 
+  _maxScroll() {
+    return Math.max(0, this.el.scrollWidth - this.el.clientWidth);
+  }
+
+  _isAtRight() {
+    return this._maxScroll() - this.el.scrollLeft <= 2;
+  }
+
+  _tabElement(id) {
+    return [...this.el.querySelectorAll('.tab')].find(el => el.dataset.tabId === id) || null;
+  }
+
+  _setScroll(value, pinned = null) {
+    const max = this._maxScroll();
+    this.el.scrollLeft = Math.max(0, Math.min(max, Number(value) || 0));
+    this._scrollPinnedRight = pinned == null ? this._isAtRight() : !!pinned;
+  }
+
+  _scrollSnapshot() {
+    const barRect = this.el.getBoundingClientRect();
+    const renderedActive = this.el.querySelector('.tab.on');
+    const visible = [...this.el.querySelectorAll('.tab')].filter(el => {
+      const rect = el.getBoundingClientRect();
+      return rect.right > barRect.left + 1 && rect.left < barRect.right - 1;
+    });
+    const anchor = renderedActive && visible.includes(renderedActive) ? renderedActive : visible[0];
+    return {
+      scrollLeft: this.el.scrollLeft,
+      rightPinned: this._scrollPinnedRight || this._isAtRight(),
+      renderedActiveId: renderedActive?.dataset.tabId || null,
+      anchorId: anchor?.dataset.tabId || null,
+      anchorLeft: anchor ? anchor.getBoundingClientRect().left - barRect.left : null,
+    };
+  }
+
+  _ensureActiveVisible() {
+    const active = this._tabElement(this.activeId);
+    if (!active) {
+      this._scrollPinnedRight = this._isAtRight();
+      return;
+    }
+    const tabs = [...this.el.querySelectorAll('.tab')];
+    if (active === tabs.at(-1)) {
+      this._setScroll(this._maxScroll(), true);
+      return;
+    }
+    const barRect = this.el.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    let next = this.el.scrollLeft;
+    if (activeRect.left < barRect.left) next -= barRect.left - activeRect.left;
+    else if (activeRect.right > barRect.right) next += activeRect.right - barRect.right;
+    this._setScroll(next);
+  }
+
+  _restoreScroll(snapshot) {
+    if (!this.tabs.length) {
+      this._setScroll(0, true);
+      return;
+    }
+    const activeChanged = snapshot.renderedActiveId !== this.activeId;
+    if (!activeChanged && snapshot.rightPinned) {
+      // append / dirty / rename / reorder 在右缘发生时，新增宽度由右侧吸收。
+      this._setScroll(this._maxScroll(), true);
+      return;
+    }
+
+    this._setScroll(snapshot.scrollLeft, false);
+    if (!activeChanged && snapshot.anchorId && snapshot.anchorLeft != null) {
+      // 非右缘浏览状态用同一可见标签作视觉锚，避免全量重建或前项改名造成横跳。
+      const anchor = this._tabElement(snapshot.anchorId);
+      if (anchor) {
+        const barRect = this.el.getBoundingClientRect();
+        const currentLeft = anchor.getBoundingClientRect().left - barRect.left;
+        this._setScroll(this.el.scrollLeft + currentLeft - snapshot.anchorLeft, false);
+      }
+    }
+    // 激活、dirty、rename、跨窗格迁移最终都以活动标签完整可见为硬门。
+    this._ensureActiveVisible();
+  }
+
   render() {
+    const scrollSnapshot = this._scrollSnapshot();
+    const generation = ++this._renderGeneration;
     this.el.querySelectorAll('.tab').forEach(e => e.remove()); // 保留窗格关闭钮等非标签元素
     for (const t of this.tabs) {
       const el = document.createElement('div');
@@ -208,6 +308,13 @@ export class Tabs {
       });
       this.el.appendChild(el);
     }
+    this._restoreScroll(scrollSnapshot);
+    // 字体/图标在同一帧完成布局后再收敛一次；generation 防旧 render 覆写新激活态。
+    requestAnimationFrame(() => {
+      if (generation !== this._renderGeneration) return;
+      if (this._scrollPinnedRight) this._setScroll(this._maxScroll(), true);
+      else this._ensureActiveVisible();
+    });
     contextKeys.set('hasTabs', this.tabs.length > 0);
   }
 }

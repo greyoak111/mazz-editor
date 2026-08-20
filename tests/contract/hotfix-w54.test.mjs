@@ -31,7 +31,7 @@ describe('坞拖拽手势三态（B10）', () => {
   test('①停靠态拽出跟手（老浮动路径退役）', () => {
     const sd = readSrc('renderer/shell/side-dock.js');
     assert.ok(sd.includes("panel:move', { kind: 'dockfloat'"), 'bar 拽出必须跟手 dockfloat');
-    assert.ok(sd.includes('floated = true') && sd.includes('this.toggleFloat()'), '超阈值即浮必须有');
+    assert.ok(sd.includes('floated = true') && sd.includes('this.toggleFloat({') && sd.includes('anchor:'), '超阈值即浮且必须携原工具坞抓手锚点');
   });
   test('②dockfloat 自绘拖拽（跨屏自由）', () => {
     const html = readSrc('renderer/panels/dockfloat.html');

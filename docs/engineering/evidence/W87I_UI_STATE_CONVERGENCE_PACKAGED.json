@@ -1,0 +1,1773 @@
+{
+  "protocol": "mazz.w87i-ui-state-convergence/v1",
+  "createdAt": "2026-08-20T17:30:44.332Z",
+  "mode": "PACKAGED",
+  "executable": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "ok": true,
+  "verdict": "PASS",
+  "computerUse": "DISABLED / NOT USED",
+  "titlebar": {
+    "buttons": [
+      {
+        "action": "min",
+        "rect": {
+          "x": 1302,
+          "y": 0,
+          "width": 46,
+          "height": 35.20000076293945
+        },
+        "svg": {
+          "x": 1319,
+          "y": 11.600000381469727,
+          "width": 12,
+          "height": 12
+        },
+        "strokeWidth": 1.15,
+        "centerDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.15\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M2 8.5h8\"></path></svg>"
+      },
+      {
+        "action": "max",
+        "rect": {
+          "x": 1348,
+          "y": 0,
+          "width": 46,
+          "height": 35.20000076293945
+        },
+        "svg": {
+          "x": 1365,
+          "y": 11.600000381469727,
+          "width": 12,
+          "height": 12
+        },
+        "strokeWidth": 1.15,
+        "centerDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.15\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><rect x=\"2.25\" y=\"2.25\" width=\"7.5\" height=\"7.5\"></rect></svg>"
+      },
+      {
+        "action": "close",
+        "rect": {
+          "x": 1394,
+          "y": 0,
+          "width": 46,
+          "height": 35.20000076293945
+        },
+        "svg": {
+          "x": 1411,
+          "y": 11.600000381469727,
+          "width": 12,
+          "height": 12
+        },
+        "strokeWidth": 1.15,
+        "centerDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.15\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M2.5 2.5l7 7M9.5 2.5l-7 7\"></path></svg>"
+      }
+    ]
+  },
+  "ribbonWidths": [
+    {
+      "width": 1920,
+      "density": "icon",
+      "overflow": 35,
+      "overflowMode": "true",
+      "overflowX": "auto",
+      "maxScroll": 35,
+      "documentOverflow": 0,
+      "labels": [
+        {
+          "text": "加粗",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "斜体",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "删除线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下划线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "行内码",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "上标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "文字色",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "突出显示",
+          "width": 48,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "代码块",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        }
+      ],
+      "overlaps": []
+    },
+    {
+      "width": 1440,
+      "density": "icon",
+      "overflow": 515,
+      "overflowMode": "true",
+      "overflowX": "auto",
+      "maxScroll": 515,
+      "documentOverflow": 0,
+      "labels": [
+        {
+          "text": "加粗",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "斜体",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "删除线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下划线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "行内码",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "上标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "文字色",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "突出显示",
+          "width": 48,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "代码块",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        }
+      ],
+      "overlaps": []
+    },
+    {
+      "width": 1100,
+      "density": "icon",
+      "overflow": 855,
+      "overflowMode": "true",
+      "overflowX": "auto",
+      "maxScroll": 855,
+      "documentOverflow": 0,
+      "labels": [
+        {
+          "text": "加粗",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "斜体",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "删除线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下划线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "行内码",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "上标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "文字色",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "突出显示",
+          "width": 48,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "代码块",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        }
+      ],
+      "overlaps": []
+    },
+    {
+      "width": 960,
+      "density": "icon",
+      "overflow": 995,
+      "overflowMode": "true",
+      "overflowX": "auto",
+      "maxScroll": 995,
+      "documentOverflow": 0,
+      "labels": [
+        {
+          "text": "加粗",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "斜体",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "删除线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下划线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "行内码",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "上标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "文字色",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "突出显示",
+          "width": 48,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "代码块",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        }
+      ],
+      "overlaps": []
+    },
+    {
+      "width": 1100,
+      "density": "icon",
+      "overflow": 855,
+      "overflowMode": "true",
+      "overflowX": "auto",
+      "maxScroll": 855,
+      "documentOverflow": 0,
+      "labels": [
+        {
+          "text": "加粗",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "斜体",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "删除线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下划线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "行内码",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "上标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "文字色",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "突出显示",
+          "width": 48,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "代码块",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        }
+      ],
+      "overlaps": []
+    },
+    {
+      "width": 1440,
+      "density": "icon",
+      "overflow": 515,
+      "overflowMode": "true",
+      "overflowX": "auto",
+      "maxScroll": 515,
+      "documentOverflow": 0,
+      "labels": [
+        {
+          "text": "加粗",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "斜体",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "删除线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下划线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "行内码",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "上标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "文字色",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "突出显示",
+          "width": 48,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "代码块",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        }
+      ],
+      "overlaps": []
+    },
+    {
+      "width": 1920,
+      "density": "icon",
+      "overflow": 35,
+      "overflowMode": "true",
+      "overflowX": "auto",
+      "maxScroll": 35,
+      "documentOverflow": 0,
+      "labels": [
+        {
+          "text": "加粗",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "斜体",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "删除线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下划线",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "行内码",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "上标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "下标",
+          "width": 24,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "文字色",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "",
+          "width": 12,
+          "height": 12,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "突出显示",
+          "width": 48,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        },
+        {
+          "text": "代码块",
+          "width": 36,
+          "height": 16,
+          "writingMode": "horizontal-tb",
+          "whiteSpace": "nowrap",
+          "wordBreak": "keep-all"
+        }
+      ],
+      "overlaps": []
+    }
+  ],
+  "swatches": {
+    "text": "rgb(0, 0, 0)",
+    "highlight": "rgb(255, 0, 0)"
+  },
+  "headerRoutes": [
+    {
+      "text": "协议",
+      "exists": true,
+      "svg": 0,
+      "className": "ribbon-tab",
+      "color": "rgb(157, 163, 175)",
+      "weight": "400"
+    },
+    {
+      "text": "帮助",
+      "exists": true,
+      "svg": 0,
+      "className": "ribbon-tab",
+      "color": "rgb(157, 163, 175)",
+      "weight": "400"
+    }
+  ],
+  "toastState": {
+    "host": "status-toast-slot",
+    "rect": {
+      "x": 649.9625244140625,
+      "y": 777.4000244140625,
+      "width": 140.0749969482422,
+      "height": 22,
+      "top": 777.4000244140625,
+      "right": 790.0375213623047,
+      "bottom": 799.4000244140625,
+      "left": 649.9625244140625
+    },
+    "left": {
+      "x": 8,
+      "y": 779.4000244140625,
+      "width": 637.9625244140625,
+      "height": 18,
+      "top": 779.4000244140625,
+      "right": 645.9625244140625,
+      "bottom": 797.4000244140625,
+      "left": 8
+    },
+    "right": {
+      "x": 794.0375366210938,
+      "y": 779.4000244140625,
+      "width": 637.9625244140625,
+      "height": 18,
+      "top": 779.4000244140625,
+      "right": 1432.0000610351562,
+      "bottom": 797.4000244140625,
+      "left": 794.0375366210938
+    },
+    "viewport": 1440
+  },
+  "focusModeToast": {
+    "host": "status-toast-slot",
+    "rect": {
+      "x": 648.9625244140625,
+      "y": 777.4000244140625,
+      "width": 142.0625,
+      "height": 22,
+      "top": 777.4000244140625,
+      "right": 791.0250244140625,
+      "bottom": 799.4000244140625,
+      "left": 648.9625244140625
+    },
+    "left": {
+      "x": 8,
+      "y": 779.4000244140625,
+      "width": 636.9625244140625,
+      "height": 18,
+      "top": 779.4000244140625,
+      "right": 644.9625244140625,
+      "bottom": 797.4000244140625,
+      "left": 8
+    },
+    "right": {
+      "x": 795.0250244140625,
+      "y": 779.4000244140625,
+      "width": 636.9750366210938,
+      "height": 18,
+      "top": 779.4000244140625,
+      "right": 1432.0000610351562,
+      "bottom": 797.4000244140625,
+      "left": 795.0250244140625
+    },
+    "viewport": 1440
+  },
+  "constructHover": {
+    "card": "rgb(200, 33, 27)",
+    "icon": "rgb(248, 240, 221)",
+    "accent": "#c8211b",
+    "accentFg": "#f8f0dd"
+  },
+  "panels": [
+    {
+      "native": {
+        "kind": "favmgr",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          781,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "favmgr",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 9,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "md",
+          "panelKind": "favmgr",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "pwmgr",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          701,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "pwmgr",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 9,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "pwmgr",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "palette",
+        "resizable": false,
+        "maximizable": false,
+        "fullscreenable": false,
+        "size": [
+          720,
+          540
+        ],
+        "minimumSize": [
+          720,
+          540
+        ],
+        "maximumSize": [
+          720,
+          540
+        ],
+        "resizeMode": "fixed"
+      },
+      "structure": {
+        "kind": "palette",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "fixed",
+        "pwinRadius": "0px",
+        "audited": 6,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "palette",
+          "panelResize": "fixed",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "shortcuts",
+        "resizable": false,
+        "maximizable": false,
+        "fullscreenable": false,
+        "size": [
+          720,
+          561
+        ],
+        "minimumSize": [
+          720,
+          560
+        ],
+        "maximumSize": [
+          720,
+          560
+        ],
+        "resizeMode": "fixed"
+      },
+      "structure": {
+        "kind": "shortcuts",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "fixed",
+        "pwinRadius": "0px",
+        "audited": 116,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "shortcuts",
+          "panelResize": "fixed",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "settings",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          760,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "settings",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 25,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "md",
+          "panelKind": "settings",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "agreement",
+        "resizable": false,
+        "maximizable": false,
+        "fullscreenable": false,
+        "size": [
+          701,
+          600
+        ],
+        "minimumSize": [
+          700,
+          600
+        ],
+        "maximumSize": [
+          700,
+          600
+        ],
+        "resizeMode": "fixed"
+      },
+      "structure": {
+        "kind": "agreement",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "fixed",
+        "pwinRadius": "0px",
+        "audited": 7,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "agreement",
+          "panelResize": "fixed",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "help",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          861,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "help",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 37,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "md",
+          "panelKind": "help",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "translate",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          701,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "translate",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 14,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "translate",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "plugins",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          741,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "plugins",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 6,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "plugins",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "recorder",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          720,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "recorder",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 8,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "recorder",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "dockfloat",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          400,
+          620
+        ],
+        "minimumSize": [
+          360,
+          420
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "dockfloat",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 18,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "xs",
+          "panelKind": "dockfloat",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "bookmark",
+        "resizable": false,
+        "maximizable": false,
+        "fullscreenable": false,
+        "size": [
+          520,
+          380
+        ],
+        "minimumSize": [
+          520,
+          380
+        ],
+        "maximumSize": [
+          520,
+          380
+        ],
+        "resizeMode": "fixed"
+      },
+      "structure": {
+        "kind": "bookmark",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "fixed",
+        "pwinRadius": "0px",
+        "audited": 12,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "bookmark",
+          "panelResize": "fixed",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "ctxmenu",
+        "resizable": false,
+        "maximizable": false,
+        "fullscreenable": false,
+        "size": [
+          240,
+          300
+        ],
+        "minimumSize": [
+          240,
+          300
+        ],
+        "maximumSize": [
+          240,
+          300
+        ],
+        "resizeMode": "fixed"
+      },
+      "structure": {
+        "kind": "ctxmenu",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "fixed",
+        "pwinRadius": "0px",
+        "audited": 1,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "xs",
+          "panelKind": "ctxmenu",
+          "panelResize": "fixed",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "sync",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          701,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "sync",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 9,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "sync",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "notif",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          520,
+          652
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "notif",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 7,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "notif",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "factorycfg",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          920,
+          721
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "factorycfg",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 68,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "md",
+          "panelKind": "factorycfg",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "newfile",
+        "resizable": false,
+        "maximizable": false,
+        "fullscreenable": false,
+        "size": [
+          701,
+          561
+        ],
+        "minimumSize": [
+          700,
+          560
+        ],
+        "maximumSize": [
+          700,
+          560
+        ],
+        "resizeMode": "fixed"
+      },
+      "structure": {
+        "kind": "newfile",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "fixed",
+        "pwinRadius": "0px",
+        "audited": 58,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "newfile",
+          "panelResize": "fixed",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "picklist",
+        "resizable": false,
+        "maximizable": false,
+        "fullscreenable": false,
+        "size": [
+          340,
+          420
+        ],
+        "minimumSize": [
+          340,
+          420
+        ],
+        "maximumSize": [
+          340,
+          420
+        ],
+        "resizeMode": "fixed"
+      },
+      "structure": {
+        "kind": "picklist",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "fixed",
+        "pwinRadius": "0px",
+        "audited": 3,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "xs",
+          "panelKind": "picklist",
+          "panelResize": "fixed",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "fpreview",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          760,
+          643
+        ],
+        "minimumSize": [
+          560,
+          420
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "fpreview",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 6,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "md",
+          "panelKind": "fpreview",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "fedit",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          823,
+          700
+        ],
+        "minimumSize": [
+          620,
+          440
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "fedit",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 9,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "md",
+          "panelKind": "fedit",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "harvest",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          880,
+          700
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "harvest",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 14,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "md",
+          "panelKind": "harvest",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    },
+    {
+      "native": {
+        "kind": "archive",
+        "resizable": true,
+        "maximizable": true,
+        "fullscreenable": true,
+        "size": [
+          701,
+          561
+        ],
+        "minimumSize": [
+          480,
+          360
+        ],
+        "maximumSize": [
+          0,
+          0
+        ],
+        "resizeMode": "workbench"
+      },
+      "structure": {
+        "kind": "archive",
+        "theme": "construct",
+        "structure": "hard-edge",
+        "resize": "workspace",
+        "pwinRadius": "0px",
+        "audited": 9,
+        "offenders": [],
+        "runtime": {
+          "rawControlIcons": [],
+          "uiSize": "sm",
+          "panelKind": "archive",
+          "panelResize": "workspace",
+          "themeStructure": "hard-edge"
+        }
+      }
+    }
+  ],
+  "packPanel": {
+    "theme": "pack:w87i-construct",
+    "structure": "hard-edge",
+    "accent": "#1359c7",
+    "outerRadius": "0px",
+    "buttonRadius": "0px"
+  },
+  "restored": {
+    "outerRadius": "12px",
+    "buttonRadius": "6px"
+  },
+  "themeRace": {
+    "packThenPaper": {
+      "theme": "paper",
+      "structure": "soft"
+    },
+    "customThenInk": {
+      "theme": "ink",
+      "structure": "soft"
+    }
+  },
+  "rendererErrors": [],
+  "screenshots": [
+    "docs/engineering/evidence/W87I_RIBBON_STATUS_PACKAGED.png",
+    "docs/engineering/evidence/W87I_CONSTRUCT_HOVER_PACKAGED.png",
+    "docs/engineering/evidence/W87I_PANEL_STRUCTURE_PACKAGED.png"
+  ]
+}

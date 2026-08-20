@@ -102,6 +102,10 @@ export function injectPack(id, pack) {
 export function applyPack(id, pack) {
   const sel = injectPack(id, pack);
   document.documentElement.dataset.theme = sel;
+  // 这是主窗/审计侧的显式结构标签；PanelWindow 的热切仍以被计算并广播的
+  // --panel-hard-edge 为准，避免只依赖这个不跨进程的 dataset。
+  const hardEdge = pack.structure === 'custom' || pack.structure === 'construct';
+  document.documentElement.dataset.themeStructure = hardEdge ? 'hard-edge' : 'soft';
   // 空变量的部分回退到基底主题变量：临时并列基底选择器再被覆盖式注入
   let base = document.getElementById('mazz-pack-base');
   if (!base) {
@@ -120,7 +124,7 @@ export function applyPack(id, pack) {
     const src = `[data-theme="${pack.structure}"]`;
     const structRules = [...document.styleSheets].flatMap(ss => {
       try { return [...ss.cssRules]; } catch { return []; }
-    }).filter(r => r.selectorText && r.selectorText.includes(src) && r.selectorText !== src);
+    }).filter(r => r.selectorText && r.selectorText.includes(src));
     base.textContent += '\n' + structRules.map(r => r.cssText.split(src).join(`[data-theme="${sel}"]`)).join('\n');
   }
   // 注入放最后保证覆盖

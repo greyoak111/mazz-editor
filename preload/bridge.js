@@ -66,7 +66,7 @@ const INVOKE_CHANNELS = new Set([
   'toolchain:detect', 'toolchain:detectAll',
   'archive:sniff', 'archive:list', 'archive:extract', 'archive:pack', 'archive:cancel',
   'slideRemote:start', 'slideRemote:stop', 'slideRemote:state', 'slideRemote:status', 'panel:push',
-  'panel:open', 'panel:close', 'panel:changed', 'panel:action', 'panel:dragStart', 'panel:move', 'panel:dragEnd', 'panel:arrange',
+  'panel:open', 'panel:close', 'panel:changed', 'panel:action', 'panel:dragStart', 'panel:move', 'panel:dragEnd', 'panel:dragCancel', 'panel:arrange',
   'update:check', 'update:getConfig', 'update:setConfig',
   'share:targets', 'share:sendFile', 'share:sendToExe',
   'dialog:openImport', 'import:external',

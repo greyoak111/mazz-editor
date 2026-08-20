@@ -12,6 +12,7 @@ const panels = read('renderer/panels/panel-shared.css');
 const icons = read('renderer/lib/svg-icons.js');
 const slide = read('renderer/modules/slide/index.js');
 const browser = read('renderer/modules/browser/index.js');
+const ribbon = read('renderer/shell/ribbon.js');
 const runner = read('tests/e2e/w87g-theme-legibility.mjs');
 
 const luminance = hex => {
@@ -35,7 +36,9 @@ describe('W87g Theme Legibility', () => {
       assert.ok(themes.includes(alias), `缺少主题别名：${alias}`);
     }
     assert.match(base, /\.draw-tool-strip \{[^}]*background:\s*var\(--card/);
-    assert.match(base, /\.ribbon-help-btn \{[^}]*color:\s*var\(--acc/);
+    assert.doesNotMatch(base, /\.ribbon-help-btn/);
+    assert.match(ribbon, /help\.className = 'ribbon-tab';[\s\S]*help\.textContent = '帮助'/,
+      '帮助与协议必须是同级中性文字入口，不能再用主题强调色 SVG 冒充活动页');
   });
 
   test('占位、禁用与播放器暗舞台都有显式可读前景，不靠低透明度裁掉信息', () => {

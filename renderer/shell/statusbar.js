@@ -7,15 +7,19 @@ export class StatusBar {
     this.el = document.createElement('div');
     this.el.className = 'statusbar';
     this.el.innerHTML = `
-      <span class="st plain" id="st-module">—</span>
-      <span class="st plain" id="st-count"></span>
-      <span class="st plain" id="st-pos"></span>
-      <span class="spacer"></span>
-      <span class="st" id="st-memory" role="button" tabindex="0" aria-label="重置内存观测基线" title="进程工作集 / 资源账本；点击重置观测基线" hidden>内存 —</span>
-      <span class="st" id="st-notif" role="button" tabindex="0" aria-label="打开通知中心" title="通知中心（被动入账，不抢焦点）">通知</span>
-      <span class="st" id="st-spell" role="button" tabindex="0" aria-label="切换拼写检查" aria-pressed="false" title="拼写检查">拼写</span>
-      <span class="st" id="st-theme" role="button" tabindex="0" aria-label="轮换主题" title="轮换主题（Ctrl+Alt+T）">主题</span>
-      <span class="st" id="st-zoom" role="button" tabindex="0" aria-label="重置缩放" title="缩放">100%</span>`;
+      <span class="statusbar-side statusbar-left">
+        <span class="st plain" id="st-module">—</span>
+        <span class="st plain" id="st-count"></span>
+        <span class="st plain" id="st-pos"></span>
+      </span>
+      <span class="statusbar-center" id="status-toast-slot" role="status" aria-live="polite" aria-atomic="true"></span>
+      <span class="statusbar-side statusbar-right">
+        <span class="st" id="st-memory" role="button" tabindex="0" aria-label="重置内存观测基线" title="进程工作集 / 资源账本；点击重置观测基线" hidden>内存 —</span>
+        <span class="st" id="st-notif" role="button" tabindex="0" aria-label="打开通知中心" title="通知中心（被动入账，不抢焦点）">通知</span>
+        <span class="st" id="st-spell" role="button" tabindex="0" aria-label="切换拼写检查" aria-pressed="false" title="拼写检查">拼写</span>
+        <span class="st" id="st-theme" role="button" tabindex="0" aria-label="轮换主题" title="轮换主题（Ctrl+Alt+T）">主题</span>
+        <span class="st" id="st-zoom" role="button" tabindex="0" aria-label="重置缩放" title="缩放">100%</span>
+      </span>`;
     root.appendChild(this.el);
     this.el.querySelector('#st-theme').addEventListener('click', () => commands.execute('view.cycleTheme'));
     this.el.querySelector('#st-notif').addEventListener('click', () => commands.execute('app.notifications'));

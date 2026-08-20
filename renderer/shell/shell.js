@@ -972,32 +972,45 @@ export class Shell {
   /** W58c 主题变量快照：主窗 computed style 单源（预设/主题包/图片自定义通吃）——
    *  广播与面板初始化共用；自定义主题下原生子窗透明裸奔的根治件 */
   _themeVarsSnapshot() {
-    const KEYS = ['bg', 'bg-elev', 'bg-hover', 'bg-active', 'bg-soft', 'fg', 'fg-dim', 'border', 'accent', 'accent-soft', 'accent-fg', 'danger', 'danger-fg', 'warn', 'warn-fg', 'ok', 'ok-fg', 'shadow', 'doc-bg', 'acc', 'bd', 'bd2', 'card', 'mut', 'faint', 'sh'];
+    const KEYS = ['bg', 'bg-elev', 'bg-hover', 'bg-active', 'bg-soft', 'fg', 'fg-dim', 'border', 'accent', 'accent-soft', 'accent-fg', 'danger', 'danger-fg', 'warn', 'warn-fg', 'ok', 'ok-fg', 'shadow', 'doc-bg', 'acc', 'bd', 'bd2', 'card', 'mut', 'faint', 'sh', 'panel-corner-radius', 'panel-window-shadow', 'panel-hard-edge'];
     const cs = getComputedStyle(document.documentElement);
     const vars = {};
     for (const k of KEYS) { const v = cs.getPropertyValue('--' + k).trim(); if (v) vars[k] = v; }
-    return { id: document.documentElement.dataset.theme || 'paper', vars };
+    return {
+      id: document.documentElement.dataset.theme || 'paper',
+      vars,
+      // panel:push 初始化会保留此字段；theme:broadcast 的旧主进程桥即使只
+      // 转 id+vars，--panel-hard-edge 仍保证已打开 Panel 的热切不丢结构。
+      structure: vars['panel-hard-edge'] === '1' ? 'hard-edge' : 'soft',
+    };
   }
 
   /** 主窗换主题 → 广播子窗口跟随（v33 外部窗格主题不同步修复；pack/图片自定义一并覆盖） */
   _broadcastThemeNow() {
     if (contextKeys.get('windowRole') === 'child') return;
-    const { id, vars } = this._themeVarsSnapshot();
-    window.mazz?.invoke('theme:broadcast', { id, vars }).catch(() => {});
+    const snapshot = this._themeVarsSnapshot();
+    window.mazz?.invoke('theme:broadcast', snapshot).catch(() => {});
   }
 
   setTheme(id) {
-    this._themeRevision += 1;
+    // Theme application is a last-intent-wins transaction.  Pack/custom
+    // restoration crosses async boundaries; without a revision gate an older
+    // request can finish after a newer built-in theme and repaint every open
+    // PanelWindow with stale colours/structure.
+    const revision = ++this._themeRevision;
     // W58c：广播必须在变量真落应用之后——旧版开口就播，子窗拿到的是上一主题的皮；
     // 自定义主题包/图片主题干脆只有 id 没有变量通道=面板无 [data-theme] 规则可匹配=透明裸奔（真机实锤）
     if (id?.startsWith('pack:')) {
       // 自定义主题包（工作区 themes/ 下的 JSON）：注入后切换
       import('../lib/theme-store.js').then(async ({ listPacks, applyPack }) => {
+        if (revision !== this._themeRevision) return;
         const packId = id.slice(5);
         const packs = await listPacks();
+        if (revision !== this._themeRevision) return;
         const pack = packs.find(p => p.id === packId);
         if (!pack) {
           document.documentElement.dataset.theme = 'paper';
+          document.documentElement.dataset.themeStructure = 'soft';
           this.statusbar.setTheme('纸白');
           toast('主题包不存在（可能已被删除）——已回退纸白');
           this._broadcastThemeNow();
@@ -1011,10 +1024,13 @@ export class Shell {
       return;
     }
     document.documentElement.dataset.theme = id;
+    document.documentElement.dataset.themeStructure = (id === 'construct' || id === 'custom') ? 'hard-edge' : 'soft';
     if (id === 'custom') {
       // 图片自定义主题：确保变量已注入（无注入则提示并退回构成）
       import('../theme-custom.js').then(async ({ restoreImageTheme }) => {
+        if (revision !== this._themeRevision) return;
         const ok = await restoreImageTheme();
+        if (revision !== this._themeRevision) return;
         if (!ok) {
           document.documentElement.dataset.theme = 'construct';
           toast('还没有图片自定义主题——请先在设置里「从图片生成主题」');
@@ -2943,7 +2959,11 @@ export class Shell {
           return;
         }
         if (pl.type === 'dockToolsQuery') {
+          // SideDock 内容通过动态 import 构建。冷启动 persisted-float 可能先发 query；
+          // 空 GROUPS 只是 owner 未就绪，绝不能推给浮窗冒充终态。
+          await this.sideDock?.whenToolsReady?.(5000);
           const groups = this.sideDock?.toolsGroups?.() || [];
+          if (!groups.some(([, items]) => items?.length)) return;
           // 图标 SVG 化（零 emoji 按钮军规——ctxmenu 正解同款：主窗 iconHtml 转换随 push 带，面板页无 iconHtml 不裸奔）
           const { iconHtml } = await import('../lib/svg-icons.js');
           const svgGroups = groups.map(([g, items]) => [g, items.map(it => ({ ...it, ico: it.ico ? iconHtml(it.ico) : '' }))]);
@@ -3028,6 +3048,21 @@ export class Shell {
               fp.setExportFormat(pl.value);
             } else if (pl.act === 'runall') {
               fp.runAllTasks();
+            } else if (pl.act === 'harnessRefresh') {
+              await fp.refreshHarnessHealth();
+              fp.pushSnapshot();
+            } else if (pl.act === 'agentSubmit') {
+              // 浮动坞只是指令台远程视图；执行/权限/台账 owner 仍在这个 FactoryPanel。
+              // 先把远窗的 adapter/model 选择同步回真实控件，复用原有 change 生命周期，不另起一套 runtime。
+              const adapter = String(pl.adapter || 'internal');
+              if ([...fp.harnessAdapterEl.options].some(option => option.value === adapter && !option.disabled)) {
+                fp.harnessAdapterEl.value = adapter;
+                fp.harnessAdapterEl.dispatchEvent(new Event('change'));
+              }
+              fp.harnessModelEl.value = String(pl.model || '');
+              fp.harnessModelEl.dispatchEvent(new Event('change'));
+              fp.agentInputEl.value = String(pl.input || '');
+              fp.submitAgent().finally(() => fp.pushSnapshot());
             } else if (pl.act === 'togglePlugin') {
               // W54 B8 增强区全桥：chips 选中态切换（renderExtras 自推快照）
               fp.pluginSel.has(pl.id) ? fp.pluginSel.delete(pl.id) : fp.pluginSel.add(pl.id);
@@ -3605,15 +3640,9 @@ export function toast(msg, actions = [], ms = 3000) {
   document.querySelectorAll('.mazz-toast').forEach(t => t.remove());
   const el = document.createElement('div');
   el.className = 'mazz-toast';
-  // W57 toast 防压（创作提示半截被视图压实锤）：活动浏览器视图覆盖左下安全区时挪顶（ribbon 下缘=视图永远够不着）
-  try {
-    const bctl = window.__activeBrowserCtl;
-    const t = bctl?.tabs?.find(x => x.id === bctl.activeId);
-    const vr = t?.host?.getBoundingClientRect?.();
-    if (vr && vr.left < 300 && vr.bottom > window.innerHeight - 120) el.classList.add('mazz-toast-top');
-  } catch {}
   const span = document.createElement('span');
   span.textContent = msg;
+  span.title = String(msg || '');
   el.appendChild(span);
   for (const a of actions) {
     const b = document.createElement('button');
@@ -3622,8 +3651,18 @@ export function toast(msg, actions = [], ms = 3000) {
     b.addEventListener('click', () => { el.remove(); a.fn(); });
     el.appendChild(b);
   }
-  // 全屏挂接：全屏时只有 fullscreenElement 子树可见——toast 挂 body 必隐身（全屏按字幕钮无反馈实锤，与 modal 同款修法）
-  (document.fullscreenElement || document.body).appendChild(el);
+  // W87i：普通提示进状态栏中央独立槽，不再在视图左下/顶部之间跳位；
+  // 中央槽是状态栏三列布局的中列，不会遮盖左右状态文字，也不会被 WebContentsView 压住。
+  // 全屏/沉浸模式没有可见状态栏，才降级为宿主内底部居中浮层。
+  const fullscreenHost = document.fullscreenElement;
+  const statusSlot = document.querySelector('#status-toast-slot');
+  // focus-mode only hides the workbench chrome; the status bar remains a
+  // visible, stable owner.  Treating it as hidden made otherwise ordinary
+  // feedback jump back into a floating layer.
+  const shellHidden = document.body.classList.contains('player-borderless');
+  const host = !fullscreenHost && statusSlot && !shellHidden ? statusSlot : (fullscreenHost || document.body);
+  if (host !== statusSlot) el.classList.add('mazz-toast-floating');
+  host.appendChild(el);
   if (ms) setTimeout(() => el.remove(), ms + actions.length * 1500);
   return el;
 }

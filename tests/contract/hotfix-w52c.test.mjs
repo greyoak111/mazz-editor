@@ -7,10 +7,15 @@ import path from 'node:path';
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
 describe('toast 挪位与 ribbon 原生菜单', () => {
-  test('toast 不盖视图区', () => {
+  test('W87i supersede：toast 固定进入状态栏几何中央独立槽，不盖视图区也不抢左右状态槽', () => {
     const css = readSrc('renderer/styles/base.css');
-    assert.ok(/\.mazz-toast \{[\s\S]{0,120}left: 12px/.test(css), 'toast 必须挪左侧（永不盖视图区）');
-    assert.ok(!/\.mazz-toast \{[\s\S]{0,120}left: 50%/.test(css), '居中旧位不得复活');
+    const status = readSrc('renderer/shell/statusbar.js');
+    const shell = readSrc('renderer/shell/shell.js');
+    assert.match(status, /class="statusbar-center" id="status-toast-slot"/);
+    assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\)\s+minmax\(0, auto\)\s+minmax\(0, 1fr\)/);
+    assert.match(css, /\.statusbar-center\s*\{[\s\S]*max-width:\s*min\(50vw, 720px\)/);
+    assert.match(shell, /const host = !fullscreenHost && statusSlot && !shellHidden \? statusSlot/);
+    assert.doesNotMatch(css, /\.mazz-toast \{[\s\S]{0,160}left:\s*12px/, 'W52 左下角 workaround 不得复活');
   });
   test('ribbon 更多切 ctxmenu 子窗格（W56 B13：回老样式血统，载体不回 DOM）', () => {
     const rb = readSrc('renderer/shell/ribbon.js');

@@ -23,9 +23,14 @@ describe('侧栏限位', () => {
 });
 
 describe('全屏字幕反馈', () => {
-  test('toast 全屏挂接', () => {
+  test('W87i toast 普通态进中央 Seat；全屏态回落到被提升的 Overlay Plane', () => {
     const src = readSrc('renderer/shell/shell.js');
-    assert.ok(src.includes('(document.fullscreenElement || document.body).appendChild(el)'), 'toast 必须挂 fullscreenElement（与 modal 同款修法——全屏按字幕有反馈实锤）');
+    const visual = readSrc('renderer/core/visual-composition.js');
+    assert.ok(src.includes('const fullscreenHost = document.fullscreenElement'), 'toast 必须识别当前全屏宿主');
+    assert.ok(src.includes('fullscreenHost || document.body'), '全屏/沉浸态必须回落到可见宿主');
+    assert.ok(src.includes("document.querySelector('#status-toast-slot')"), '普通态必须进入状态栏中央 Seat');
+    assert.ok(visual.includes('const parent = document.fullscreenElement || document.body'), '统一 Overlay Plane 必须随 Fullscreen top layer 迁移');
+    assert.ok(visual.includes("document.addEventListener('fullscreenchange', () => this.rehomePlane())"), '全屏往返必须主动重挂 Overlay Plane');
   });
 });
 

@@ -24,7 +24,10 @@ describe('真机四瑕疵修复', () => {
   });
   test('播放设置全屏可达', () => {
     const sh = readSrc('renderer/shell/shell.js');
-    assert.ok(sh.includes('document.fullscreenElement || document.body'), 'modal 必须全屏挂接（挂 body=全屏隐身实锤）');
+    const visual = readSrc('renderer/core/visual-composition.js');
+    assert.ok(sh.includes("visualComposition.mountOverlay(mask, { kind: 'modal'"), '播放设置 modal 必须交统一 Overlay Runtime');
+    assert.ok(visual.includes('const parent = document.fullscreenElement || document.body'), 'Overlay Plane 必须进入 Fullscreen top layer');
+    assert.ok(visual.includes("document.addEventListener('fullscreenchange', () => this.rehomePlane())"), '进入/退出全屏都必须重挂 Overlay Plane');
   });
   test('字幕钮无字幕明白话', () => {
     const pl = readSrc('renderer/modules/viewer/player.js');

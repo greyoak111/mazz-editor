@@ -17,9 +17,10 @@ export class Ribbon {
     this.panelEl = this.el.querySelector('.ribbon-panel');
     this.activePage = null;
     this.ribbonState = { collapsed: false, height: null };
-    // 高度监测：够高（>96px）自动换行显示，不用一直横向拉找功能
+    // 容器监测：高度决定换行，宽度决定 full -> compact -> icon 有序降级。
+    // 以 Ribbon 自身宽度为真源，不用 window 宽度猜子窗/分屏的可用空间。
     if (typeof ResizeObserver !== 'undefined') {
-      this._wrapRO = new ResizeObserver(() => this.updateWrap());
+      this._wrapRO = new ResizeObserver(() => this.updateLayout());
       this._wrapRO.observe(this.panelEl);
     }
     // 双击页签折叠
@@ -125,8 +126,10 @@ export class Ribbon {
     });
     this.tabsEl.appendChild(agree);
     const help = document.createElement('button');
-    help.className = 'ribbon-tab ribbon-help-btn';
-    help.innerHTML = `<span class="ribbon-tab-ico">${iconHtml('❓')}</span> 帮助`;
+    // Help and Agreement are peer text routes.  A coloured question-mark icon
+    // made Help look like the active page and overpowered Construct palettes.
+    help.className = 'ribbon-tab';
+    help.textContent = '帮助';
     help.title = '使用指南（F1）';
     help.addEventListener('click', () => commands.execute('help.open'));
     this.tabsEl.appendChild(help);
@@ -151,19 +154,38 @@ export class Ribbon {
     const page = this.pages.get(this.activePage);
     if (page) page.build(this.panelEl);
     this.refreshStates();
+    queueMicrotask(() => this.updateDensity());
   }
 
   /** 工具方法：按钮组（data-command 一律走注册表） */
   /** 按面板高度切换换行模式；换行态下「更多▾」折叠组自动全展开（空间已够，无需二级菜单） */
-  updateWrap() {
+  updateLayout() {
     const wrap = this.panelEl.clientHeight > 96;
     if (wrap !== this._wrapMode) {
       this._wrapMode = wrap;
       this.panelEl.classList.toggle('wrap', wrap);
       this.renderPanel(); // 重建面板：wrap 态 group() 不折叠
-    } else {
-      this.panelEl.classList.toggle('wrap', wrap);
+      return;
     }
+    this.panelEl.classList.toggle('wrap', wrap);
+    this.updateDensity();
+  }
+
+  // W87i compatibility: older integrations and contract probes still call the
+  // pre-convergence name. Keep one implementation and a stable public alias.
+  updateWrap() { return this.updateLayout(); }
+
+  updateDensity() {
+    if (!this.panelEl.isConnected || !this.panelEl.clientWidth) return;
+    const levels = this._wrapMode ? ['full'] : ['full', 'compact', 'icon'];
+    let selected = levels.at(-1);
+    for (const level of levels) {
+      this.el.dataset.ribbonDensity = level;
+      // 强制同帧布局读取：不暴露「先把中文挤成竖排，下一帧再恢复」的中间态。
+      if (this.panelEl.scrollWidth <= this.panelEl.clientWidth + 1) { selected = level; break; }
+    }
+    this.el.dataset.ribbonDensity = selected;
+    this.panelEl.dataset.ribbonOverflow = String(this.panelEl.scrollWidth > this.panelEl.clientWidth + 1);
   }
 
   makeBtn(b) {

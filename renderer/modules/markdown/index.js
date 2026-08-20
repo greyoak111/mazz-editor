@@ -804,10 +804,12 @@ export default {
     sp.input.style.width = '52px';
     const cp = new ColorPicker(panel.querySelector('#md-color-picker'), {
       label: '文字色',
+      initialValue: '#000000',
       onChange: (color) => window.MazzCommands.execute('markdown.setFontColor', { color }),
     });
     const hp = new ColorPicker(panel.querySelector('#md-highlight-picker'), {
       label: '突出显示',
+      initialValue: '#ff0000',
       onChange: (color) => window.MazzCommands.execute('markdown.setHighlight', { color }),
     });
     const lh = panel.querySelector('#md-lineheight');

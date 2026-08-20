@@ -9,6 +9,8 @@ const LS_KEY = 'mazz.sideDock';
 export class SideDock {
   constructor(shell) {
     this.shell = shell;
+    this._toolsReady = false;
+    this._toolsReadyPromise = new Promise(resolve => { this._resolveToolsReady = resolve; });
     this.state = { open: false, tab: 'factory', width: 380, height: 560, zoom: 1, float: null, collapsed: false }; // float: {x, y} | null = 停靠；collapsed: 折叠轨
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY)) || {};
@@ -113,23 +115,65 @@ export class SideDock {
       // 此前拦 .sd-btn/.sd-tab 类，而页签按钮几乎占满标题栏，用户根本找不到可拖点=「工具坞拖不出去」实锤
       if (e.target.closest('button')) return;
       if (!this.state.float && window.mazz?.isElectron) {
-        // 停靠态拽出：超阈值即浮（dockfloat 子窗格），鼠标跟手（自绘拖拽同源：e.screenX/Y → 主进程 setBounds）
+        e.preventDefault();
+        try { bar.setPointerCapture(e.pointerId); } catch {}
+        // 停靠态拽出：超阈值即浮（dockfloat 子窗格），子窗先落在原工具坞的抓手位，再交给主进程跟手。
+        // 旧路径只 open 不传 x/y，Electron 把窗居中；首个 move 又以“居中后 bounds”补建 offset，
+        // 数学上等于永远停在屏幕中央。这里必须把原坞位置+抓手偏移一起交给 panel owner。
         let floated = false;
+        let ended = false;
+        let latest = { sx: e.screenX, sy: e.screenY };
+        let floatReady = null;
+        const dockRect = this.el.getBoundingClientRect();
+        const grabX = e.clientX - dockRect.left;
+        const grabY = e.clientY - dockRect.top;
         const move = (ev) => {
+          latest = { sx: ev.screenX, sy: ev.screenY };
           if (!floated) {
             if (Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) < 8) return;
             floated = true;
-            this.toggleFloat(); // W53 版：开 dockfloat + 坞收（跟手会话由主进程 move 容错补建）
+            floatReady = Promise.resolve(this.toggleFloat({
+              anchor: {
+                x: Math.round(ev.screenX - grabX),
+                y: Math.round(ev.screenY - grabY),
+                sx: ev.screenX,
+                sy: ev.screenY,
+              },
+              width: Math.round(dockRect.width),
+              height: Math.round(dockRect.height),
+            }));
           }
-          window.mazz.invoke('panel:move', { kind: 'dockfloat', sx: ev.screenX, sy: ev.screenY }).catch(() => {});
+          // open/dragStart 未就绪时只保留最新指针；就绪后立即追上，不把中间过期坐标排队。
+          floatReady?.then(() => {
+            if (!ended) return window.mazz.invoke('panel:move', { kind: 'dockfloat', origin: 'host', ...latest });
+          }).catch(() => {});
         };
-        const up = (ev) => {
+        const cleanup = () => {
           window.removeEventListener('pointermove', move);
           window.removeEventListener('pointerup', up);
-          if (floated) window.mazz.invoke('panel:dragEnd', { kind: 'dockfloat' }).catch(() => {}); // 拽回热区=自动停靠
+          window.removeEventListener('pointercancel', cancel);
+          window.removeEventListener('blur', cancel);
+          try { if (bar.hasPointerCapture(e.pointerId)) bar.releasePointerCapture(e.pointerId); } catch {}
         };
+        const finish = (cancelled) => {
+          if (ended) return;
+          ended = true;
+          cleanup();
+          if (floated) floatReady?.then(async () => {
+            if (cancelled) {
+              await window.mazz.invoke('panel:dragCancel', { kind: 'dockfloat', origin: 'host' }).catch(() => {});
+              return;
+            }
+            await window.mazz.invoke('panel:move', { kind: 'dockfloat', origin: 'host', ...latest }).catch(() => {});
+            await window.mazz.invoke('panel:dragEnd', { kind: 'dockfloat', origin: 'host' }).catch(() => {}); // 拽回热区=自动停靠
+          }).catch(() => {});
+        };
+        const up = () => finish(false);
+        const cancel = () => finish(true);
         window.addEventListener('pointermove', move);
         window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', cancel);
+        window.addEventListener('blur', cancel);
         return;
       }
       // 非 Electron 预览/已浮动态：老 body 浮层拖拽兜底
@@ -176,7 +220,17 @@ export class SideDock {
       this.toolsEl.style.display = 'none';
       this.buildTools();
       this.body.appendChild(this.toolsEl);
+      this._toolsReady = true;
+      this._resolveToolsReady?.(true);
+      this._resolveToolsReady = null;
+      // persisted-float 冷启动时，面板的第一次 query 可能早于本动态 import。
+      // owner 构建完成必须主动补推，不能指望用户再切一次页签。
+      this.pushToolsSnapshot();
       this.showTab(this.state.tab);
+    }).catch(error => {
+      console.error('[side-dock] 内容 owner 初始化失败:', error?.message || error);
+      this._resolveToolsReady?.(false);
+      this._resolveToolsReady = null;
     });
   }
 
@@ -294,11 +348,11 @@ export class SideDock {
     this.persist();
   }
 
-  toggleFloat() {
+  async toggleFloat({ anchor = null, width = null, height = null } = {}) {
     if (this.state.float) {
       // 浮 → 停：关 dockfloat 子窗格，坞回 workspace
       this.state.float = null;
-      if (window.mazz?.isElectron) window.mazz.invoke('panel:close', { kind: 'dockfloat' }).catch(() => {});
+      if (window.mazz?.isElectron) await window.mazz.invoke('panel:close', { kind: 'dockfloat' }).catch(() => {});
     } else {
       // 停 → 浮（W53：纯原生圆角独立子窗格——body 浮层时代退役，再重也迁移）
       if (window.mazz?.isElectron) {
@@ -306,7 +360,17 @@ export class SideDock {
         this.state.open = false;
         this.mount();
         this.el.style.display = 'none';
-        window.mazz.invoke('panel:open', { kind: 'dockfloat' }).catch(() => {});
+        const opts = anchor ? {
+          x: anchor.x,
+          y: anchor.y,
+          w: Math.max(360, Number(width) || this.state.width || 400),
+          h: Math.max(420, Number(height) || this.state.height || 620),
+        } : undefined;
+        await window.mazz.invoke('panel:open', opts ? { kind: 'dockfloat', opts } : { kind: 'dockfloat' }).catch(() => {});
+        if (anchor) {
+          // 明确开启拖拽会话；不再让 panel:move 在一个未定位的居中窗上猜 offset。
+          await window.mazz.invoke('panel:dragStart', { kind: 'dockfloat', origin: 'host', sx: anchor.sx, sy: anchor.sy }).catch(() => {});
+        }
         this.persist();
         return;
       }
@@ -328,7 +392,27 @@ export class SideDock {
   }
 
   /** 工具页卡片数据出口（dockfloat 子窗格镜像用——GROUPS 单源不复制） */
-  toolsGroups() { return this._toolsGroups || []; }
+  toolsGroups() { return this._toolsReady ? (this._toolsGroups || []) : null; }
+
+  async whenToolsReady(timeoutMs = 5000) {
+    if (this._toolsReady) return true;
+    let timer = 0;
+    const timeout = new Promise(resolve => { timer = setTimeout(() => resolve(false), timeoutMs); });
+    const ready = await Promise.race([this._toolsReadyPromise, timeout]);
+    clearTimeout(timer);
+    return !!ready && this._toolsReady;
+  }
+
+  pushToolsSnapshot() {
+    const groups = this.toolsGroups();
+    if (!groups?.some(([, items]) => items?.length) || !window.mazz?.isElectron) return false;
+    const svgGroups = groups.map(([group, items]) => [group, items.map(item => ({
+      ...item,
+      ico: item.ico ? iconHtml(item.ico) : '',
+    }))]);
+    window.mazz.invoke('panel:push', { kind: 'dockfloat', payload: { type: 'dockTools', groups: svgGroups } }).catch(() => {});
+    return true;
+  }
 
   applyPos() {
     if (this.state.float) {

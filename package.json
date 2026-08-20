@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "node scripts/build.js && node scripts/build-sample-plugins.js",
-    "dev": "node scripts/build.js && node scripts/build-sample-plugins.js && electron . --inspect=9229",
+    "dev": "node scripts/dev.js",
     "start": "electron .",
     "test": "node tests/run.js",
     "smoke": "node tests/e2e/smoke.js",
@@ -27,6 +27,8 @@
     "test:w87:ui": "node scripts/build.js && node tests/e2e/w87-ui-convergence.mjs",
     "test:w87:ui-sweep": "node tests/e2e/ui-page-sweep.mjs",
     "test:w87:theme-legibility": "node tests/e2e/w87g-theme-legibility.mjs",
+    "test:w87i:state": "node scripts/build.js && node tests/e2e/w87i-ui-state-convergence.mjs",
+    "test:w87i:dock": "node scripts/build.js && node tests/e2e/w87i-pane-dock-continuity.mjs",
     "test:w71:ffmpeg": "node tests/e2e/w71-ffmpeg-runtime.mjs",
     "test:w71:installer": "node tests/e2e/w71-installer-cycle.mjs",
     "test:w71:factory-faults": "node tests/e2e/w71-factory-faults.mjs",

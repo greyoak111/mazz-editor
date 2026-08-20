@@ -8,6 +8,12 @@
   --mut: var(--fg-dim); --faint: var(--fg-dim); --sh: color-mix(in srgb, #000 16%, transparent);
   /* 软层是跨模块公共语义，不允许未定义后让卡片/状态丸静默透明。 */
   --bg-soft: var(--bg-hover);
+  /* 原生透明 PanelWindow 的外轮廓也属于主题结构，不再由各 HTML 写死。 */
+  --panel-corner-radius: 12px;
+  --panel-window-shadow: 0 10px 36px rgba(0,0,0,.4);
+  /* 结构令牌随主题变量快照进入已打开的 PanelWindow。0/1 避免 IPC
+   * 另造一条易丢的 pack.structure 支线。 */
+  --panel-hard-edge: 0;
 }
 
 /* 1. 纸白（light 默认） */
@@ -67,6 +73,15 @@
   /* 模块自定义变量双套对齐 */
   --acc: #c8211b; --bd: #1a1a1a; --bd2: #d8c9a6; --card: #f8f0dd;
   --mut: #6b6255; --faint: #9a8f7c; --sh: rgba(26,26,26,.18);
+  --panel-corner-radius: 0px;
+  --panel-window-shadow: 5px 5px 0 #1a1a1a;
+  --panel-hard-edge: 1;
+}
+/* 图片取色自定义主题固定采用构成主义骨架；颜色可变，硬边不能退回圆角卡片。 */
+[data-theme="custom"] {
+  --panel-corner-radius: 0px;
+  --panel-window-shadow: 5px 5px 0 var(--border);
+  --panel-hard-edge: 1;
 }
 /* 构成主义：全局硬边 */
 [data-theme="construct"] .ribbon , [data-theme="custom"] .ribbon { background: linear-gradient(135deg, var(--bg) 0%, var(--bg-hover) 72%, var(--bg-active) 100%); border-bottom: 2px solid var(--border); }
@@ -76,7 +91,6 @@
   color: var(--card); background: var(--accent); border: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
   clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
 }
-[data-theme="construct"] .ribbon-help-btn , [data-theme="custom"] .ribbon-help-btn { color: var(--accent); }
 [data-theme="construct"] .titlebar , [data-theme="custom"] .titlebar { background: linear-gradient(100deg, var(--border) 0%, var(--border) 62%, var(--accent) 62.2%, color-mix(in srgb, var(--accent) 82%, #000) 100%); color: var(--bg); border-bottom: 2px solid var(--border); }
 [data-theme="construct"] .titlebar .tb-title, [data-theme="custom"] .titlebar .tb-title, [data-theme="construct"] .titlebar .tb-btn, [data-theme="custom"] .titlebar .tb-btn, [data-theme="construct"] .titlebar .tb-logo , [data-theme="custom"] .titlebar .tb-logo { color: var(--bg); }
 [data-theme="construct"] .sidebar , [data-theme="custom"] .sidebar { background: var(--bg); border-right: 2px solid var(--border); }
@@ -109,6 +123,8 @@
 }
 [data-theme="construct"] .w-card:hover , [data-theme="custom"] .w-card:hover { background: var(--accent); color: var(--card); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--border); }
 [data-theme="construct"] .w-card:hover .d , [data-theme="custom"] .w-card:hover .d { color: var(--accent-soft); }
+/* 欢迎卡图标平时显式用 accent；hover 背景也是 accent 时必须切换到配对前景，禁止同色隐身。 */
+[data-theme="construct"] .w-card:hover .mz-ico , [data-theme="custom"] .w-card:hover .mz-ico { color: var(--accent-fg); }
 /* 输入件 */
 [data-theme="construct"] input, [data-theme="custom"] input, [data-theme="construct"] .rb-input, [data-theme="custom"] .rb-input, [data-theme="construct"] .rb-select, [data-theme="custom"] .rb-select, [data-theme="construct"] textarea , [data-theme="custom"] textarea {
   border: 1.5px solid var(--border) !important; border-radius: 0 !important; background: var(--card); color: var(--border);
@@ -136,7 +152,6 @@
 [data-theme="genshin"] .ribbon { background: linear-gradient(180deg, var(--bg-elev), var(--bg)); border-bottom: 1px solid var(--border); }
 [data-theme="genshin"] .ribbon-tab.on { color: var(--accent); border-bottom-color: var(--accent); }
 [data-theme="genshin"] .ribbon-tab.on::before { content: '✦ '; font-size: 10px; }
-[data-theme="genshin"] .ribbon-help-btn { color: var(--accent); }
 [data-theme="genshin"] .sidebar { background: var(--bg); border-right: 1px solid var(--border); }
 [data-theme="genshin"] .sidebar-head { color: var(--accent); font-weight: 700; letter-spacing: 2px; }
 [data-theme="genshin"] .sidebar-head::before { content: '❖ '; }

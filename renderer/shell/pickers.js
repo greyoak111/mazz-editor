@@ -146,9 +146,9 @@ const PALETTE = [
 ];
 
 export class ColorPicker {
-  constructor(root, { onChange, label = '颜色', swatch = true }) {
+  constructor(root, { onChange, label = '颜色', swatch = true, initialValue = '#000000' }) {
     this.onChange = onChange;
-    this.value = '#000000';
+    this.value = initialValue;
     this.el = document.createElement('div');
     this.el.className = 'pk-color';
     this.el.innerHTML = `
@@ -159,6 +159,7 @@ export class ColorPicker {
     root.appendChild(this.el);
     this.btn = this.el.querySelector('.pk-color-btn');
     this.drop = this.el.querySelector('.pk-drop');
+    this.set(initialValue);
     this.btn.addEventListener('click', () => this.toggle());
     document.addEventListener('mousedown', (e) => { if (!this.el.contains(e.target)) this.hide(); });
   }

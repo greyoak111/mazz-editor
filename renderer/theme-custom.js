@@ -179,8 +179,11 @@ export async function applyImageTheme() {
   document.documentElement.dataset.theme = 'custom';
   await window.mazz.invoke('settings:set', { key: 'theme', value: 'custom' }).catch(() => {});
   await window.mazz.invoke('settings:set', { key: 'ui.customThemeVars', value: vars }).catch(() => {});
-  // 广播外部窗格跟随（子窗 setTheme('custom') → restoreImageTheme 读 settings 注入）——此前漏广播，旧窗格停留在旧主题
-  window.mazz?.invoke('theme:broadcast', { id: 'custom' }).catch(() => {});
+  // 广播外部窗格跟随。这里只发 id 会让已打开的 PanelWindow 先切到 custom
+  // 结构、却继续沿用上一主题的颜色变量；统一复用 Shell 的 computed snapshot，
+  // 连同 panel corner/shadow 等结构令牌一次送达。
+  if (window.MazzShell?._broadcastThemeNow) window.MazzShell._broadcastThemeNow();
+  else window.mazz?.invoke('theme:broadcast', { id: 'custom' }).catch(() => {});
   // 落盘到工作区 themes/（用户可命名，此后出现在主题包列表里）——v42 需求
   try {
     const { inputModal } = await import('./shell/shell.js');

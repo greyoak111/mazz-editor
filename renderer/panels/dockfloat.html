@@ -20,7 +20,7 @@
   .head .tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
   .head .dock-back { margin-left:auto; border:1px solid var(--border); background:var(--bg); color:var(--fg-dim); border-radius:7px; padding:4px 10px; font-size:11.5px; cursor:pointer; font-family:var(--font-ui); }
   .head .dock-back:hover { color:var(--accent); border-color:var(--accent); }
-  main { flex:1; min-height:0; overflow-y:auto; padding:12px 14px; }
+  main { flex:1; min-width:0; min-height:0; overflow-y:auto; overflow-x:hidden; padding:12px 14px; }
   /* 打开方式页 */
   .w-drop { border:2px dashed color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius:12px; padding:22px 12px; text-align:center; cursor:pointer; transition:all .15s; background:color-mix(in srgb, var(--accent) 4%, transparent); color:var(--fg-dim); }
   .w-drop.on, .w-drop:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); transform:scale(1.015); }
@@ -57,7 +57,7 @@
   .fc-dump-text { width:100%; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:8px; padding:8px 10px; font-size:12.5px; font-family:var(--font-ui); resize:vertical; }
   .fc-mini { border:1px solid var(--border); background:var(--bg); color:var(--fg-dim); border-radius:6px; padding:2px 9px; font-size:11px; cursor:pointer; font-family:var(--font-ui); }
   .fc-mini:hover { color:var(--accent); border-color:var(--accent); }
-  .fc-actions { display:flex; gap:7px; margin-top:12px; }
+  .fc-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
   .fc-btn { flex:1; border:1px solid var(--border); background:var(--bg-elev); color:var(--fg); border-radius:8px; padding:8px 10px; font-size:12.5px; cursor:pointer; font-family:var(--font-ui); }
   .fc-btn:hover { border-color:var(--accent); }
   .fc-btn.fc-accent { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
@@ -73,6 +73,41 @@
   .chip { display:inline-block; border:1px solid var(--border); border-radius:99px; padding:2px 10px; font-size:11px; margin:2px 3px 2px 0; cursor:pointer; }
   .chip.on { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
   .note { font-size:11px; color:var(--fg-dim); margin-top:6px; line-height:1.6; }
+  .fc-actions > .note { flex:1 0 100%; margin-top:0; text-align:right; }
+  /* W87i：浮动坞追平停靠坞指令台。窗只是远程视图，执行 owner 仍在主窗 FactoryPanel。 */
+  .df-command { min-width:0; margin-top:12px; border:1px solid color-mix(in srgb,var(--accent) 32%,var(--border)); border-radius:10px; padding:9px; background:color-mix(in srgb,var(--accent) 4%,var(--bg-elev)); display:flex; flex-direction:column; gap:7px; }
+  .df-command-head { min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .df-command-head > span:first-child { min-width:0; display:flex; flex-direction:column; }
+  .df-command-head b { font-size:12.5px; }
+  .df-command-status { color:var(--fg-dim); font-size:10.5px; overflow-wrap:anywhere; }
+  .df-permission { flex:none; color:var(--fg-dim); font-size:10px; }
+  .df-harness { min-width:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.8fr) auto; gap:6px; align-items:end; }
+  .df-harness label { min-width:0; display:flex; flex-direction:column; gap:2px; color:var(--fg-dim); font-size:9.5px; }
+  .df-harness select, .df-harness input { min-width:0; width:100%; height:28px; border:1px solid var(--border); border-radius:6px; padding:3px 6px; background:var(--bg); color:var(--fg); font:11px var(--font-ui); }
+  .df-health { grid-column:1 / -1; min-width:0; color:var(--fg-dim); font-size:9.5px; overflow-wrap:anywhere; }
+  .df-feed { max-height:180px; overflow:auto; display:flex; flex-direction:column; gap:5px; }
+  .df-card { min-width:0; border:1px solid var(--border); border-left:3px solid var(--fg-dim); border-radius:7px; padding:6px 7px; background:var(--bg); }
+  .df-card.user { border-left-color:var(--accent); }
+  .df-card.result, .df-card.finish { border-left-color:var(--ok); }
+  .df-card.error, .df-card.confirm { border-left-color:var(--danger); }
+  .df-card.clarify { border-left-color:var(--warn); }
+  .df-card b { display:block; font-size:11px; }
+  .df-card p { margin:2px 0 0; color:var(--fg-dim); font-size:10.5px; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .df-chips { display:flex; flex-wrap:wrap; gap:4px; }
+  .df-chip { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border:1px solid var(--border); border-radius:999px; padding:2px 7px; background:var(--bg); color:var(--fg-dim); font:10px var(--font-ui); cursor:pointer; }
+  .df-inputrow { min-width:0; display:flex; align-items:stretch; gap:6px; }
+  .df-inputrow textarea { flex:1; min-width:0; resize:vertical; border:1px solid var(--border); border-radius:7px; padding:6px 7px; background:var(--bg); color:var(--fg); font:11.5px/1.5 var(--font-ui); }
+  .df-inputrow .fc-btn { flex:none; width:56px; padding:5px; }
+  .df-foot { min-width:0; display:flex; flex-wrap:wrap; justify-content:space-between; gap:3px 8px; color:var(--fg-dim); font-size:9.5px; }
+  @media (max-width:430px) {
+    .head { padding-left:8px; padding-right:8px; }
+    .head .tab { padding-left:7px; padding-right:7px; }
+    .head .dock-back { padding-left:7px; padding-right:7px; }
+    main { padding:10px; }
+    .tg-grid, .w-ow-grid { grid-template-columns:1fr; }
+    .df-harness { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    .df-harness .fc-mini { width:100%; }
+  }
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
   <div class="p-drag"></div>
@@ -96,15 +131,28 @@ const $ = (s) => document.querySelector(s);
     if (e.target.closest('button')) return;
     e.preventDefault();
     try { dz.setPointerCapture(e.pointerId); } catch {}
-    window.mazz.invoke('panel:dragStart', { kind: 'dockfloat', sx: e.screenX, sy: e.screenY }).catch(() => {});
-    const move = (ev) => window.mazz.invoke('panel:move', { kind: 'dockfloat', sx: ev.screenX, sy: ev.screenY }).catch(() => {});
-    const up = (ev) => {
+    window.mazz.invoke('panel:dragStart', { kind: 'dockfloat', origin: 'float', sx: e.screenX, sy: e.screenY }).catch(() => {});
+    const move = (ev) => window.mazz.invoke('panel:move', { kind: 'dockfloat', origin: 'float', sx: ev.screenX, sy: ev.screenY }).catch(() => {});
+    let settled = false;
+    const cleanup = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      window.mazz.invoke('panel:dragEnd', { kind: 'dockfloat' }).catch(() => {}); // 拽回热区=自动停靠（三态之拽回）
+      window.removeEventListener('pointercancel', cancel);
+      window.removeEventListener('blur', cancel);
+      try { if (dz.hasPointerCapture(e.pointerId)) dz.releasePointerCapture(e.pointerId); } catch {}
     };
+    const finish = (cancelled) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      window.mazz.invoke(cancelled ? 'panel:dragCancel' : 'panel:dragEnd', { kind: 'dockfloat', origin: 'float' }).catch(() => {}); // 拽回热区=自动停靠（三态之拽回）
+    };
+    const up = () => finish(false);
+    const cancel = () => finish(true);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', cancel);
+    window.addEventListener('blur', cancel);
   });
 }
 const pwb = (a) => window.mazz.invoke('window:' + a).catch(() => {});
@@ -118,7 +166,22 @@ window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
 let tab = 'factory', snapshot = null, toolsData = null, localValues = {};
+let toolsRequestTimer = 0, toolsRequestAttempt = 0;
+const commandLocal = { initialized: false, draft: '', adapter: '', model: '' };
 function act(type, extra = {}) { window.mazz.invoke('panel:action', { type, ...extra }).catch(() => {}); }
+
+function requestToolsSnapshot({ reset = false } = {}) {
+  if (toolsData?.some?.(([, items]) => items?.length)) return;
+  if (reset) toolsRequestAttempt = 0;
+  clearTimeout(toolsRequestTimer);
+  act('dockToolsQuery', { attempt: toolsRequestAttempt });
+  // 冷启动时 SideDock 的动态 import 可能尚未建立 GROUPS。空数组只是“未就绪”，
+  // 不是终态；本页做有界重试，owner 构建完成后还会主动 push 一次最终清单。
+  if (toolsRequestAttempt < 20) {
+    toolsRequestAttempt += 1;
+    toolsRequestTimer = setTimeout(() => requestToolsSnapshot(), 250);
+  }
+}
 
 // —— 回停靠：关子窗+坞回 workspace（主窗 panel:changed 联动） ——
 $('#dock-back').addEventListener('click', () => { act('dockFloatBack'); pwb('close'); });
@@ -127,7 +190,7 @@ function setTab(t) {
   tab = t;
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   render();
-  if (t === 'tools' && !toolsData) act('dockToolsQuery');
+  if (t === 'tools' && !toolsData) requestToolsSnapshot({ reset: true });
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
 
@@ -155,10 +218,10 @@ function renderOpenWith() {
 
 // ==================== 工具页 ====================
 function renderTools() {
-  if (!toolsData) { $('#m').innerHTML = '<div class="note">加载工具清单…</div>'; return; }
+  if (!toolsData?.some?.(([, items]) => items?.length)) { $('#m').innerHTML = '<div class="note">加载工具清单…</div>'; return; }
   $('#m').innerHTML = toolsData.map(([g, items]) => `
     <div class="tg"><div class="tg-t">${esc(g)}</div><div class="tg-grid">
-      ${items.map(it => `<button class="tg-card" data-cmd="${esc(it.cmd)}"><span class="i">${iconHtml(it.ico || '')}</span><span><span class="t">${esc(it.t)}</span><div class="d">${esc(it.d)}</div></span></button>`).join('')}
+      ${items.map(it => { const ico = String(it.ico || '').trim(); return `<button class="tg-card" data-cmd="${esc(it.cmd)}"><span class="i">${ico.startsWith('<svg') ? ico : iconHtml(ico)}</span><span><span class="t">${esc(it.t)}</span><div class="d">${esc(it.d)}</div></span></button>`; }).join('')}
     </div></div>`).join('');
   document.querySelectorAll('.tg-card').forEach(b => b.addEventListener('click', () => act('dockRun', { cmd: b.dataset.cmd })));
 }
@@ -171,17 +234,89 @@ function fieldHtml(f) {
   if (f.type === 'select') return `<div class="fc-field"><label>${esc(f.label)}${req}</label><select data-f="${esc(f.id)}">${(f.options || []).map(o => `<option value="${esc(o)}" ${o === (localValues[f.id] ?? f.default) ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
   return `<div class="fc-field"><label>${esc(f.label)}${req}</label><input data-f="${esc(f.id)}" value="${val}" placeholder="${esc(f.placeholder || '')}"></div>`;
 }
+function captureCommandLocal() {
+  const draft = $('#df-agent-input');
+  const model = $('#df-model');
+  const adapter = $('#df-adapter');
+  if (draft) commandLocal.draft = draft.value;
+  if (model) commandLocal.model = model.value;
+  if (adapter) commandLocal.adapter = adapter.value;
+  const active = document.activeElement;
+  const id = active?.id || '';
+  return {
+    id,
+    start: typeof active?.selectionStart === 'number' ? active.selectionStart : null,
+    end: typeof active?.selectionEnd === 'number' ? active.selectionEnd : null,
+    direction: active?.selectionDirection || 'none',
+    scrollTop: $('#m')?.scrollTop || 0,
+  };
+}
+function restoreCommandLocal(view) {
+  const draft = $('#df-agent-input');
+  const model = $('#df-model');
+  const adapter = $('#df-adapter');
+  if (draft) draft.value = commandLocal.draft;
+  if (model) model.value = commandLocal.model;
+  if (adapter && [...adapter.options].some(option => option.value === commandLocal.adapter && !option.disabled)) adapter.value = commandLocal.adapter;
+  const main = $('#m');
+  if (main) main.scrollTop = view?.scrollTop || 0;
+  const active = view?.id ? document.getElementById(view.id) : null;
+  if (!active) return;
+  active.focus({ preventScroll: true });
+  if (view.start != null && typeof active.setSelectionRange === 'function') {
+    try { active.setSelectionRange(view.start, view.end, view.direction); } catch {}
+  }
+}
 function renderFactory() {
   if (!snapshot) { $('#m').innerHTML = '<div class="note">同步创作面板状态…</div>'; return; }
+  const localView = captureCommandLocal();
   const s = snapshot;
+  const d = s.commandDesk || {};
+  if (!commandLocal.initialized) {
+    commandLocal.initialized = true;
+    commandLocal.adapter = d.adapter || 'internal';
+    commandLocal.model = d.model || '';
+  }
   $('#m').innerHTML = `
     <div class="fc-provider-hint ${s.providerConfigured ? 'ok' : ''}">${esc(s.providerHint || '')}</div>
     <div class="fc-task" style="margin-top:8px"><div class="tt"><span>智能创作执行台</span><button class="fc-mini" id="fc-project">${iconHtml('＋')} 新建立项</button></div><div class="ts">立项表单只在独立向导出现；这里保留任务、进度与日常执行。</div></div>
     <div class="fc-actions"><button class="fc-btn fc-accent" id="fc-runall">${iconHtml('▶▶')} 全部启动</button><button class="fc-btn" id="fc-autopreview">${iconHtml(s.autoPreview !== false ? '●' : '○')} 自动预览</button><span class="note">并发 ${s.runningCount || 0}/${s.concurrency || 1}</span></div>
-    <div class="fc-tasks" id="fc-tasks">${renderTasksHtml(s.tasks)}</div>`;
+    <div class="fc-tasks" id="fc-tasks">${renderTasksHtml(s.tasks)}</div>
+    <section class="df-command" aria-label="指令台">
+      <div class="df-command-head"><span><b>指令台</b><span class="df-command-status">${esc(d.status || '命令闭集待命')}</span></span><span class="df-permission">${esc(d.permission || '受限权限')}</span></div>
+      <div class="df-harness">
+        <label>执行器<select id="df-adapter">${(d.adapters?.length ? d.adapters : [{ id: 'internal', label: '内置指令台' }]).map(row => `<option value="${esc(row.id)}" ${row.id === commandLocal.adapter ? 'selected' : ''} ${row.disabled ? 'disabled' : ''}>${esc(row.label)}</option>`).join('')}</select></label>
+        <label>模型<input id="df-model" value="${esc(commandLocal.model)}" placeholder="默认模型" spellcheck="false"></label>
+        <button class="fc-mini" id="df-health" type="button">检测</button>
+        <span class="df-health">${esc(d.health || '等待检测')}</span>
+      </div>
+      ${d.chips?.length ? `<div class="df-chips">${d.chips.map(value => `<button class="df-chip" type="button" data-command="${esc(value)}" title="回填常用指令">${esc(value)}</button>`).join('')}</div>` : ''}
+      ${d.cards?.length ? `<div class="df-feed">${d.cards.map(card => `<div class="df-card ${/^(user|tool|result|finish|clarify|confirm|error)$/.test(card.kind) ? card.kind : 'result'}"><b>${esc(card.title)}</b><p>${esc(card.body)}</p></div>`).join('')}</div>` : ''}
+      <div class="df-inputrow"><textarea id="df-agent-input" rows="2" placeholder="下达一项指令；Ctrl+Enter 执行。" spellcheck="false"></textarea><button class="fc-btn fc-accent" id="df-agent-submit" ${d.busy ? 'disabled' : ''}>执行</button></div>
+      <div class="df-foot"><span>${esc(d.toolCount || '')}</span><span>${esc(d.ledgerHint || '')}</span></div>
+    </section>`;
   $('#fc-project')?.addEventListener('click', () => act('factoryAction', { act: 'project' }));
   $('#fc-runall')?.addEventListener('click', () => act('factoryAction', { act: 'runall' }));
   $('#fc-autopreview')?.addEventListener('click', () => act('factoryAction', { act: 'setAutoPreview', value: s.autoPreview === false }));
+  $('#df-health')?.addEventListener('click', () => act('factoryAction', { act: 'harnessRefresh' }));
+  document.querySelectorAll('.df-chip').forEach(button => button.addEventListener('click', () => {
+    const input = $('#df-agent-input');
+    if (input) { input.value = button.dataset.command || ''; input.focus(); }
+  }));
+  const submitAgent = () => {
+    const input = $('#df-agent-input');
+    const value = input?.value.trim() || '';
+    if (!value) { input?.focus(); return; }
+    const button = $('#df-agent-submit');
+    if (button) button.disabled = true;
+    act('factoryAction', { act: 'agentSubmit', input: value, adapter: $('#df-adapter')?.value || 'internal', model: $('#df-model')?.value.trim() || '' });
+  };
+  $('#df-agent-submit')?.addEventListener('click', submitAgent);
+  $('#df-agent-input')?.addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); submitAgent(); } });
+  $('#df-agent-input')?.addEventListener('input', event => { commandLocal.draft = event.currentTarget.value; });
+  $('#df-adapter')?.addEventListener('change', event => { commandLocal.adapter = event.currentTarget.value; });
+  $('#df-model')?.addEventListener('input', event => { commandLocal.model = event.currentTarget.value; });
+  restoreCommandLocal(localView);
 }
 function renderTasksHtml(tasks) {
   if (!tasks?.length) return '';
@@ -212,9 +347,21 @@ window.mazz.on('panel:push', (p) => {
     if (el) el.innerHTML = renderTasksHtml(p.tasks);
     return;
   }
-  if (p?.type === 'dockTools') { toolsData = p.groups; if (tab === 'tools') renderTools(); return; }
+  if (p?.type === 'dockTools') {
+    if (p.groups?.some?.(([, items]) => items?.length)) {
+      toolsData = p.groups;
+      clearTimeout(toolsRequestTimer);
+      toolsRequestTimer = 0;
+      if (tab === 'tools') renderTools();
+    } else {
+      toolsData = null;
+      requestToolsSnapshot();
+    }
+    return;
+  }
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
-act('dockFloatInit'); // 面板就绪信号：主窗推首发快照+工具清单
+act('dockFloatInit'); // 面板就绪信号：主窗推首发 Factory 快照
+requestToolsSnapshot({ reset: true }); // 与快照并行预取；冷启动空响应会重试，owner ready 后再主动推送
 </script>
 </body></html>

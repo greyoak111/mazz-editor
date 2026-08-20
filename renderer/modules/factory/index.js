@@ -236,6 +236,29 @@ export class FactoryPanel {
       unitName: getSnapshotSchema(this.genre || {}).unitName,
       exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
       exportFormats: FACTORY_EXPORT_FORMATS.map(id => ({ id, ext: factoryExportSpec(id).ext })),
+      // 浮动坞是停靠坞的远程视图，不能只镜像“任务摘要”而把新增的指令台留在主窗。
+      // 只传可展示的纯数据；AgentRuntime/权限/执行 owner 仍然唯一留在主窗 FactoryPanel。
+      commandDesk: {
+        status: this.agentStatusEl?.textContent || '命令闭集待命',
+        toolCount: this.el.querySelector('.fc-agent-toolcount')?.textContent || '',
+        ledgerHint: this.el.querySelector('.fc-agent-foot span:last-child')?.textContent || '台账同步进工作区全文索引',
+        adapter: this.harnessAdapterEl?.value || 'internal',
+        model: this.harnessModelEl?.value || '',
+        health: this.harnessHealthEl?.textContent || '等待检测',
+        permission: this.el.querySelector('.fc-harness-permission')?.textContent || '受限权限',
+        busy: !!(this.agentSubmitEl?.disabled || this.harnessTurnRunning),
+        adapters: [...(this.harnessAdapterEl?.options || [])].map(option => ({
+          id: option.value,
+          label: option.textContent || option.value,
+          disabled: !!option.disabled,
+        })),
+        chips: [...(this.el.querySelectorAll('.fc-agent-chip') || [])].map(button => button.textContent || '').filter(Boolean),
+        cards: [...(this.agentFeedEl?.children || [])].slice(-12).map(card => ({
+          kind: [...card.classList].find(name => name !== 'fc-agent-card') || 'result',
+          title: card.querySelector('.fc-agent-card-head')?.textContent || '',
+          body: card.querySelector('.fc-agent-card-body')?.textContent || '',
+        })),
+      },
       extras: {
         plugins: (this.genre?.supportsPlugins ? NOVEL_PLUGINS.map(p => ({ id: p.id, name: p.name, on: this.pluginSel.has(p.id) })) : []),
         styles: (this.styles || []).map(st => ({ id: st.id, name: st.label, on: this.styleIds.has(st.id) })),
@@ -665,6 +688,7 @@ export class FactoryPanel {
       this.addAgentCard('error', '未执行', event.message);
       this.agentSubmitEl.disabled = false;
     }
+    queueMicrotask(() => this.pushSnapshot());
   }
 
   async submitAgent() {
@@ -699,6 +723,7 @@ export class FactoryPanel {
     this.harnessAdapterEl.value = [...this.harnessAdapterEl.options].some(option => option.value === previous && !option.disabled) ? previous : 'internal';
     const ready = (health || []).filter(row => row.status === 'ready').length;
     this.harnessHealthEl.textContent = activation?.ready ? `${ready}/3 执行器通过本机探测；规则包已装载` : `规则包未就绪：${activation?.reason || 'RULE_PACK_REQUIRED'}`;
+    this.pushSnapshot();
   }
 
   renderHarnessEvent(event) {
@@ -708,6 +733,7 @@ export class FactoryPanel {
     else if (event.type === 'approval') this.addAgentCard('confirm', '权限请求', '外部执行器请求额外权限；当前受限档默认拒绝，需在授权桥中显式批准。');
     else if (event.type === 'error') this.addAgentCard('error', event.payload?.code || '执行失败', event.payload?.message || '未知错误');
     else if (event.type === 'usage') this.harnessHealthEl.textContent = `本回合 ${event.payload?.inputTokens || 0} 输入 / ${event.payload?.outputTokens || 0} 输出 token`;
+    this.pushSnapshot();
   }
 
   async ensureHarnessSession() {

@@ -55,6 +55,49 @@ button svg, [role="button"] svg { stroke-width: 2; }
 .winbtns button:hover { background: var(--danger) !important; color: var(--danger-fg) !important; }
 .btn.stop { background: var(--danger) !important; color: var(--danger-fg) !important; border-color: var(--danger) !important; }
 .pwin, main, section, .body, .content, .list { min-width: 0; min-height: 0; }
+/* Native PanelWindow content owns the visible corner.  Geometry is a theme
+ * token because a transparent frameless BrowserWindow otherwise keeps the
+ * old 12 px module-local radius even under the hard-edge Construct skeleton. */
+.pwin {
+  border-radius: var(--panel-corner-radius, 12px) !important;
+  box-shadow: var(--panel-window-shadow, 0 10px 36px rgba(0,0,0,.4)) !important;
+}
+html[data-panel-resize="fixed"] #p-max { display: none !important; }
+
+/* Construct is a structural theme, not merely a square outer BrowserWindow.
+ * Apply its hard-edge grammar to rectangular interaction/content surfaces.
+ * This list is intentionally semantic and bounded: never use `* { radius:0 }`,
+ * because status dots, avatars, progress knobs and categorical pills carry
+ * meaning through their circular geometry. */
+html[data-theme-structure="hard-edge"] :where(
+  .pwin, .p-drag, .head, .bar, .foot, .tabs, .tab,
+  .btn, .rb-btn, .act, .dock-back, .fc-btn, .fc-mini, .editbtn,
+  .inp, .sel, .ta, .q, .codebox, .manager-reason,
+  .submenu, .mi, .row, .item, .folder, .plg, .pw, .nft, .rec-src,
+  .w-drop, .w-ow-card, .tg-card, .fc-task, .df-card,
+  .project-card, .length-card, .advanced, .research-source,
+  .feed-summary, .feed-cluster, .provider-card, .route-row,
+  .tr-col, .cfg, .dev, .pair, .add, .boundary, .manager-empty,
+  .manager-row, .toc-item, .preview, .kind, kbd, pre, code,
+  dialog, [role="dialog"]
+) { border-radius: 0 !important; }
+
+html[data-theme-structure="hard-edge"] button,
+html[data-theme-structure="hard-edge"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+html[data-theme-structure="hard-edge"] select,
+html[data-theme-structure="hard-edge"] textarea {
+  border-radius: 0 !important;
+}
+
+/* Deliberate circular/capsule semantics survive the hard-edge sweep. */
+html[data-theme-structure="hard-edge"] :where(
+  .choice-chip, .provider-chip, .df-chip, .status-pill, .role, .state,
+  .word-chips > button
+) { border-radius: 999px !important; }
+html[data-theme-structure="hard-edge"] :where(
+  .dot, .key-dot, .dirty, .c, .avatar, .user-avatar, .agent-avatar
+) { border-radius: 50% !important; }
+
 [data-ui-size="xs"] .set-row { align-items: stretch; flex-direction: column; gap: 6px; }
 [data-ui-size="xs"] .set-row > label { width: auto !important; }
 [data-ui-size="xs"] .inp, [data-ui-size="xs"] .sel, [data-ui-size="xs"] input, [data-ui-size="xs"] select { max-width: 100%; }

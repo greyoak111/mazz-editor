@@ -22,6 +22,8 @@ button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 :where(button, [role="button"])[aria-disabled="true"] { opacity: .58; cursor: not-allowed !important; filter: saturate(.72); }
 .mz-ico { display: inline-block; flex: 0 0 auto; vertical-align: -.14em; overflow: visible; color: inherit; opacity: 1; }
 button svg, [role="button"] svg { stroke-width: 2; }
+/* Windows caption glyphs are optical 12px primitives, not generic 24px action icons. */
+.titlebar .tb-caption-icon { stroke-width: 1.15; }
 button > .mz-ico:only-child, [role="button"] > .mz-ico:only-child { margin: auto; }
 
 #mazz-overlay-plane {
@@ -44,11 +46,32 @@ button > .mz-ico:only-child, [role="button"] > .mz-ico:only-child { margin: auto
 
 .app-shell, .workspace, .main-area, .content-area, .pane-tree, .pane, .pane-content,
 [class$="-root"], [class$="-view"], [class$="-body"] { min-width: 0; min-height: 0; }
-.ribbon, .ribbon-body, .ribbon-groups, .tabbar { min-width: 0; }
-.ribbon-groups { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-.ribbon-groups::-webkit-scrollbar { height: 0; }
+.ribbon, .ribbon-body, .ribbon-groups, .ribbon-panel, .tabbar { min-width: 0; }
+.ribbon-groups, .ribbon-panel { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.ribbon-groups::-webkit-scrollbar, .ribbon-panel::-webkit-scrollbar { height: 0; }
 .tabbar { overflow-x: auto; overflow-y: hidden; }
 .titlebar .tb-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* W87i Ribbon 容器级有序降级：只减间距/已有 SVG 的标签，不压缩成中文竖排。 */
+.ribbon-panel .rb-group, .ribbon-panel .rb-btn { flex: 0 0 auto; min-width: 0; }
+.ribbon-panel .rb-btn, .ribbon-panel .rb-btn > span {
+  writing-mode: horizontal-tb !important; text-orientation: mixed; word-break: keep-all; white-space: nowrap;
+}
+.ribbon[data-ribbon-density="compact"] .rb-group { padding-inline: 6px; }
+.ribbon[data-ribbon-density="compact"] .rb-btn { min-width: 34px; padding-inline: 6px; gap: 2px; }
+.ribbon[data-ribbon-density="compact"] .rb-btn > span { max-width: 62px; }
+.ribbon[data-ribbon-density="icon"] .rb-group { padding-inline: 3px; gap: 1px; }
+.ribbon[data-ribbon-density="icon"] .rb-btn:has(.mz-ico) {
+  min-width: 30px; width: 30px; padding-inline: 5px; gap: 0; overflow: hidden; font-size: 0;
+}
+.ribbon[data-ribbon-density="icon"] .rb-btn:has(.mz-ico) .ico,
+.ribbon[data-ribbon-density="icon"] .rb-btn:has(.mz-ico) .mz-ico,
+.ribbon[data-ribbon-density="icon"] .rb-btn:has(.mz-ico) [data-ui-icon-text] { font-size: 13px; }
+.ribbon[data-ribbon-density="icon"] .rb-btn:has(.mz-ico) > span:not(.pk-swatch):not([data-ui-icon-text]) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.ribbon-panel[data-ribbon-overflow="true"] { scroll-snap-type: x proximity; }
+.ribbon-panel[data-ribbon-overflow="true"] .rb-group { scroll-snap-align: start; }
 
 [data-ui-size="sm"] .ribbon-groups,
 [data-ui-size="xs"] .ribbon-groups { scroll-snap-type: x proximity; }
@@ -57,6 +80,10 @@ button > .mz-ico:only-child, [role="button"] > .mz-ico:only-child { margin: auto
 [data-ui-size="xs"] .ribbon { max-height: 96px; }
 [data-ui-size="xs"] .rb-btn { min-width: var(--ui-hit); padding-inline: 6px; }
 [data-ui-size="xs"] .sidebar { width: min(82vw, 280px); }
+[data-ui-size="xs"] .statusbar #st-count,
+[data-ui-size="xs"] .statusbar #st-pos,
+[data-ui-size="xs"] .statusbar #st-memory,
+[data-ui-size="xs"] .statusbar #st-theme { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

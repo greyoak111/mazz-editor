@@ -4,18 +4,21 @@ export async function scenes43({ app, win, human, WS, scenario }) {
   const evaluate = (fn, arg) => win.evaluate(fn, arg);
   const wait = (ms) => win.waitForTimeout(ms);
 
-  // ==================== 1：toast 挪位 ====================
-  await scenario('浮层·toast挪位', async () => {
+  // ==================== 1：toast 状态栏中央 Seat ====================
+  await scenario('浮层·toast状态栏中央Seat', async () => {
     const r = await evaluate(async () => {
       const { toast } = await import('./shell/shell.js');
       toast('挪位探针', [], 400);
       const el = document.querySelector('.mazz-toast');
-      const cs = getComputedStyle(el);
-      return { left: cs.left, transform: cs.transform, exists: !!el };
+      const rect = el?.getBoundingClientRect();
+      const left = document.querySelector('.statusbar-left')?.getBoundingClientRect();
+      const right = document.querySelector('.statusbar-right')?.getBoundingClientRect();
+      return { exists: !!el, host: el?.parentElement?.id, rect, left, right, viewport: innerWidth };
     });
     human.log('toast:', JSON.stringify(r));
-    await human.assert(r.exists && r.left === '12px', `toast 必须挪左侧（${r.left}——永不盖视图区）`);
-    await human.assert(!r.transform.includes('translateX'), '居中变换必须退');
+    await human.assert(r.exists && r.host === 'status-toast-slot', '普通 toast 必须进入状态栏中央 Seat');
+    await human.assert(Math.abs((r.rect.left + r.rect.width / 2) - r.viewport / 2) <= 2, 'toast 必须对齐窗口几何中心');
+    await human.assert(r.rect.left >= r.left.right && r.rect.right <= r.right.left, 'toast 不得与左右状态槽相交');
     await wait(500);
   });
 
