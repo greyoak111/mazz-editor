@@ -25,7 +25,7 @@ export function openPluginManager() {
     }
     m.body.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:12px;color:#83817a">插件默认隔离；只运行已按内容哈希授权的版本</span>
+        <span style="font-size:12px;color:var(--fg-dim)">插件默认隔离；只运行已按内容哈希授权的版本</span>
         <button id="plg-install" class="rb-btn" style="flex-direction:row">＋ 安装插件</button>
       </div>
       <div style="max-height:50vh;overflow-y:auto">
@@ -33,9 +33,9 @@ export function openPluginManager() {
           <div class="plg-item" data-id="${r.manifest.id}" style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--bd,#e0ded8)">
             <span style="font-size:20px">${iconHtml(r.error ? '⚠' : '🧩')}</span>
             <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:13px">${esc(r.manifest.name)} <small style="color:#83817a">v${esc(r.manifest.version)}</small></div>
-              <div style="font-size:11.5px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.error || r.manifest.description || r.manifest.id)}</div>
-              ${r.error ? '' : `<div style="font-size:10.5px;color:#83817a;margin-top:3px">${r.trustStatus === 'changed' ? '内容已变化 · 旧授权失效' : r.trustStatus === 'trusted' ? (r.enabled ? '已授权' : '已授权 · 已禁用') : '隔离中 · 未授权'} · SHA-256 ${esc(r.packageHash.slice(0, 12))}…</div>`}
+              <div style="font-weight:600;font-size:13px">${esc(r.manifest.name)} <small style="color:var(--fg-dim)">v${esc(r.manifest.version)}</small></div>
+              <div style="font-size:11.5px;color:var(--fg-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.error || r.manifest.description || r.manifest.id)}</div>
+              ${r.error ? '' : `<div style="font-size:10.5px;color:var(--fg-dim);margin-top:3px">${r.trustStatus === 'changed' ? '内容已变化 · 旧授权失效' : r.trustStatus === 'trusted' ? (r.enabled ? '已授权' : '已授权 · 已禁用') : '隔离中 · 未授权'} · SHA-256 ${esc(r.packageHash.slice(0, 12))}…</div>`}
             </div>
             ${r.error ? '' : `
               <button class="rb-btn plg-open" style="flex-direction:row" ${r.enabled && r.loaded ? '' : 'disabled'}>打开</button>
@@ -44,7 +44,7 @@ export function openPluginManager() {
                 : '<button class="rb-btn plg-trust" style="flex-direction:row">审查并授权</button>'}`}
             <button class="rb-btn plg-del" style="flex-direction:row">删除</button>
           </div>`).join('')
-        : '<div style="text-align:center;color:#83817a;padding:30px 0">还没有安装插件——点「安装插件」选择 .maz 文件<br><small>交付包 samples/ 目录自带两个示例插件</small></div>'}
+        : '<div style="text-align:center;color:var(--fg-dim);padding:30px 0">还没有安装插件——点「安装插件」选择 .maz 文件<br><small>交付包 samples/ 目录自带两个示例插件</small></div>'}
       </div>`;
     m.body.querySelector('#plg-install').addEventListener('click', async () => {
       if (!window.mazz?.isElectron) { toast('安装插件需要桌面版'); return; }

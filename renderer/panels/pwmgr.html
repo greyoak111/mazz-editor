@@ -71,7 +71,7 @@ function render() {
     + '<span class="note">' + esc(e.note || '') + '</span>'
     + '<span class="acts"><button data-a="show">显示</button> <button data-a="fill">填充</button> <button data-a="del">删除</button></span>'
     + '</div>').join('')
-    : '<div class="empty">还没有保存的账号——上面表单添加<br><small style="opacity:.7">在网页登录时也会询问保存（Edge 同款）</small></div>';
+    : '<div class="empty">还没有保存的账号——上面表单添加<br><small>在网页登录时也会询问保存（Edge 同款）</small></div>';
 }
 $('#list').addEventListener('click', async (e) => {
   const a = e.target.dataset && e.target.dataset.a;

@@ -60,7 +60,7 @@ async function shareDesktop(filePath) {
     ? '<span style="color:#16a34a;font-size:11.5px">运行中</span>'
     : t.installed
       ? `<span style="color:#b45309;font-size:11.5px">${t.hasCustomPath ? '自选路径' : '未运行'}</span>`
-      : '<span style="color:#a3a19a;font-size:11.5px">未安装</span>';
+      : '<span style="color:var(--fg-dim);font-size:11.5px">未安装</span>';
   const { listCustomApps, editCustomAppDialog, appIconHtml } = await import('./custom-apps.js');
   const renderRows = async () => {
     // 自定义发送目标（手动寻路 + 自定义命名，chat 类别）
@@ -78,7 +78,7 @@ async function shareDesktop(filePath) {
       <div class="share-target" data-id="${t.id}" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--bd,#e0ded8);border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:13.5px">
         <span style="flex:1">${t.name}</span>${chip(t)}
         <button class="rb-btn share-browse" data-id="${t.id}" title="手动选择 ${t.name} 的 exe 路径" style="flex-direction:row;padding:3px 9px;font-size:11.5px">选exe…</button>
-      </div>`).join('') || '<div style="font-size:12.5px;color:#a3a19a">未检测到可用客户端（浏览器预览无桌面客户端可唤起；移动端请用系统分享）</div>') + customRows + addRow;
+      </div>`).join('') || '<div style="font-size:12.5px;color:var(--fg-dim)">未检测到可用客户端（浏览器预览无桌面客户端可唤起；移动端请用系统分享）</div>') + customRows + addRow;
     m.body.querySelector('#share-add-custom')?.addEventListener('click', (e) => {
       e.stopPropagation();
       editCustomAppDialog({ category: 'chat', onSaved: () => renderRows() });
@@ -132,9 +132,9 @@ async function shareDesktop(filePath) {
   };
   m.body.innerHTML = `
     <div style="min-width:400px">
-      <div style="font-size:12.5px;color:#83817a;margin-bottom:10px">发送「${name}」：文件会复制到剪贴板并唤起客户端，到聊天窗口 <b>Ctrl+V</b> 即发送</div>
+      <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:10px">发送「${name}」：文件会复制到剪贴板并唤起客户端，到聊天窗口 <b>Ctrl+V</b> 即发送</div>
       <div class="share-rows"></div>
-      <div class="share-status" style="font-size:12.5px;color:#83817a;margin-top:6px"></div>
+      <div class="share-status" style="font-size:12.5px;color:var(--fg-dim);margin-top:6px"></div>
     </div>`;
   await renderRows();
   m.body.querySelectorAll('.share-target').forEach(el => el.addEventListener('click', async () => {

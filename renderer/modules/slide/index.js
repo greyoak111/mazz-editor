@@ -1089,7 +1089,7 @@ export default {
       <button class="rb-btn" data-command="slide.add"><i class="ico">＋</i><span>新页</span></button>
     </div>
     <div class="rb-group" data-label="主题">
-      ${SLIDE_THEMES.map(t => `<button class="rb-btn" data-command="slide.theme" data-theme="${t.id}" title="主题：${t.name}"><i class="ico" style="color:${t.accent}">●</i><span>${t.name}</span></button>`).join('')}
+      ${SLIDE_THEMES.map(t => `<button class="rb-btn" data-command="slide.theme" data-slide-theme="${t.id}" title="主题：${t.name}"><i class="ico" style="color:${t.accent}">●</i><span>${t.name}</span></button>`).join('')}
     </div>
     <div class="rb-group" data-label="画布">
       <button class="rb-btn" data-command="slide.canvasMode"><i class="ico">${iconHtml('✏')}</i><span>画布</span></button>
@@ -1108,7 +1108,7 @@ export default {
     </div>`,
   bindToolbar(panel) {
     panel.querySelectorAll('[data-command]').forEach(btn => {
-      btn.addEventListener('click', () => window.MazzCommands.execute(btn.dataset.command, { theme: btn.dataset.theme }));
+      btn.addEventListener('click', () => window.MazzCommands.execute(btn.dataset.command, { theme: btn.dataset.slideTheme }));
     });
     new ColorPicker(panel.querySelector('#sl-bg-picker'), {
       label: '背景',

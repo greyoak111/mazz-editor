@@ -1,13 +1,14 @@
 # W87 Unified Visual Composition / 全软件 UI 封板
 
-> 状态：**W87a–f EXECUTED SCOPE SEALED；W71 COMPLETE WAVE 5A OPEN**
-> 日期：2026-08-19（2026-08-20 W87e 修订）
+> 状态：**W87a–g EXECUTED SCOPE SEALED；W71 COMPLETE WAVE 5A OPEN**
+> 日期：2026-08-19（2026-08-20 W87e–g 修订）
 > 起始坐标：`main@c125454`
 > 原始修正材料：`C:\Users\Administrator\.codex\attachments\a4eebcc8-a823-4edd-8853-c512143d9092\pasted-text.txt`
 > 来源 SHA-256：`ED8AF6DA040EEA93A04ECA93939BCB7941D2A5A11C6DAA0E922BC4EDCB4331B6`
 > 实施检查点：[W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md](../engineering/W87_UI_CONVERGENCE_CHECKPOINT_2026-08-19.md)
 > Player 响应式增量：[W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md](../engineering/W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md)
 > Sidebar / Player 几何增量：[W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md](../engineering/W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md)
+> Paper / Ink 可辨识度增量：[W87G_THEME_LEGIBILITY_CHECKPOINT_2026-08-20.md](../engineering/W87G_THEME_LEGIBILITY_CHECKPOINT_2026-08-20.md)
 
 ## 1. 决策
 
@@ -26,7 +27,7 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 
 本地 owner 继续创建、迁移和销毁真实资源；统一运行时只持有视觉注册、宿主关系、遮挡令牌、几何快照和焦点仲裁。这样既消除各模块私自 cloak 的分叉，又不冒险一次性重构成熟生命周期。
 
-2026-08-20 的 Player 窄分屏复核又暴露了另一类此前未纳入 W87a–d 复合矩阵的布局债：DOM 控制条在组件容器内的渐进收缩。W87e 采用 Player stage-local owner 关闭第一参考切片，并已完成 source/packaged Electron 复封。随后 W87f 又关闭 Workspace Sidebar 八页签窄栏溢出与空 Player 收栏残余右偏移。两者都不是新的全局 Surface kind，也不改写 W87a–d 已通过的 Browser/Panel 合成结论；W71 完整 Wave 5A 仍为 OPEN。
+2026-08-20 的 Player 窄分屏复核又暴露了另一类此前未纳入 W87a–d 复合矩阵的布局债：DOM 控制条在组件容器内的渐进收缩。W87e 采用 Player stage-local owner 关闭第一参考切片，并已完成 source/packaged Electron 复封。随后 W87f 又关闭 Workspace Sidebar 八页签窄栏溢出与空 Player 收栏残余右偏移。W87g 再以 computed contrast 穷举主界面、Panel 和 QuickNote，关闭 Paper/Ink 下字体、placeholder、disabled 与 SVG 控件的系统性可辨识债。三者都不是新的全局 Surface kind，也不改写 W87a–d 已通过的 Browser/Panel 合成结论；W71 完整 Wave 5A 仍为 OPEN。
 
 ## 2. 不变量
 
@@ -60,6 +61,7 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 | W87b–d 复开 | 复杂 Browser/child/Panel 复合矩阵、无框渐隐、跨渲染面代理帧交接 | 六组 source/packaged × hardware/compatibility/light 全 PASS；三块同时 Surface、实际 topology/owner、pointer-through 和恢复账通过 |
 | W87e Player Control Surface | Player stage-local L/M/S/XS、同节点 More、侧栏 preferred/effective、焦点/锁定/ARIA/lifecycle | Node `13/13`、lifecycle `4/4`、P1 加固后 source/packaged Electron、12 宽度档与 20× ownership 全 PASS |
 | W87f Sidebar / empty Player geometry | Sidebar `4×2` + container density；空 Player 与 controls 共用 side-open 真值 | source/packaged：`180/232/320px`、开关侧栏 20×、fatal/error 0；全 PASS |
+| W87g Theme Legibility | 主题 token/旧别名、文字与 placeholder、disabled、SVG currentColor/线宽、局部主题命名空间 | source/packaged 各 `82/82` scope；contrast failure 0、renderer error 0；人工回看双主题接触表 |
 
 ## 4. 支持矩阵
 
@@ -77,6 +79,8 @@ WindowManager / PanelWindows / BrowserViews / DOM Overlay
 
 W87e 的目标组件宽度矩阵为 `1200 / 960 / 959 / 900 / 720 / 600 / 599 / 560 / 440 / 439 / 420 / 320 px`，现已在 P1 加固后的 source 与 packaged Electron 中通过；8 张图与两个 JSON 已由最终代码重新生成。W87f 另覆盖 Workspace Sidebar `180 / 232 / 320px` 与空 Player 侧栏 20 轮开关。
 
+W87g 逐页覆盖 16 个主界面状态、24 类 PanelWindow 与 QuickNote，共 `82` 个 Paper/Ink page/theme scope；源码态和 `release/win-unpacked` 均为 contrast failure `0`、renderer error `0`。普通文字门为 `4.5:1`，大字、disabled 与交互 SVG 门为 `3:1`。
+
 ## 5. 保留项
 
 下列机制继续 `KEEP`：`invalidate`、±1px 双帧振荡、`backgroundThrottling:false`、local recompose convergence、drag cloak、pane move resync、native context menu、host-aware destroy、per-session protocol、safe graphics。W87 统一的是治理面，不以“架构更整齐”为由删除已实证平台药方；Pane/Window 迁移不得以网络 reload 求收敛。W87d 追加限制：drag cloak 前必须由 main sender-host `captureVisibleHost` 完成瞬时集合/身份/几何精确校验，并为全部可见 WCV 完成代理帧解码、双帧预绘和 relayout；Overlay 激活门复核身份全集后才可 cloak。恢复后必须以 native visible/bounds Gate 再撤代理；直接 cloak 不再是合法路径。
@@ -85,6 +89,8 @@ W87e 的目标组件宽度矩阵为 `1200 / 960 / 959 / 900 / 720 / 600 / 599 / 
 
 - 支持矩阵中已知 P0/P1 UI 缺陷为 0；
 - 主模块与面板无 raw control emoji、无无名图标按钮、无主文档横向溢出；
+- 16 个主界面状态、24 类 PanelWindow 与 QuickNote 的 Paper/Ink computed contrast 在 source/packaged 均通过；
+- 普通文字不低于 `4.5:1`，大字、disabled 与交互 SVG 不低于 `3:1`；placeholder 与 SVG 必须继承主题前景色；
 - Paper/Ink 的 `--bg` 分别精确收敛为 `#f7f6f3` / `#16181d`；
 - DOM Overlay 与 WebContentsView 嵌套遮挡引用计数通过，恢复后有真实 capture bytes；
 - Browser 六组 source/packaged × hardware/compatibility/light 矩阵全部通过；
@@ -95,11 +101,11 @@ W87e 的目标组件宽度矩阵为 `1200 / 960 / 959 / 900 / 720 / 600 / 599 / 
 - 主进程 fatal log 与 renderer error 均为 0；
 - 20 WebContentsView + 20 PanelWindow 全关后 ResourceLedger 回基线，工作集回落率均不低于 90%；
 - 源码与 packaged UI E2E 均通过，packaged 至少连续两轮无竞态；
-- 全量测试 `222/222` 个文件通过；
+- 全量测试 `223/223` 个文件通过；
 - 发布审计与 OSS provenance 为 CURRENT；
 - 截图由施工方人工回看，不以测试生成文件存在冒充视觉验收。
 
-上列 DoD 记录的是 W87a–f 已执行范围。W87e/W87f 的附加 DoD 以独立检查点为准：20 轮 resize/ownership 或侧栏开关 convergence 不得写成真实媒体打开关闭、内存回落或媒体 soak；Player 与 Workspace Sidebar 完成也不替代 Shell、Sheet、Browser、Factory、Library 的完整 Wave 5A 推广。
+上列 DoD 记录的是 W87a–g 已执行范围。W87e/W87f 的附加 DoD 以独立检查点为准：20 轮 resize/ownership 或侧栏开关 convergence 不得写成真实媒体打开关闭、内存回落或媒体 soak；W87g 只背书一方 UI 字体、状态文字和交互 SVG，不背书任意网页/文档或第三方插件自绘内容。Player、Workspace Sidebar 与可辨识度矩阵完成也不替代完整 W71 Wave 5A 推广。
 
 ## 7. 条件边界
 

@@ -22,13 +22,13 @@ async function openHostDialog() {
       <div style="line-height:2;font-size:13.5px">
         <div>本机标识：<b>${deviceId}</b></div>
         <div>证书指纹：<code style="background:var(--bg-hover,#f0efe9);padding:2px 8px;border-radius:5px">${fingerprint}</code></div>
-        <div style="margin:14px 0 4px;color:#83817a;font-size:12.5px">在另一台设备上「加入同步」，输入下面信息：</div>
+        <div style="margin:14px 0 4px;color:var(--fg-dim);font-size:12.5px">在另一台设备上「加入同步」，输入下面信息：</div>
         <div style="font-size:15px">桌面端端口：<b>${port}</b></div>
         ${wsPort ? `<div style="font-size:15px">手机/平板端口：<b>${wsPort}</b>（移动端 App 填这个）</div>` : ''}
-        <div style="font-size:12px;color:#a3a19a">IP 均填本机局域网地址</div>
+        <div style="font-size:12px;color:var(--fg-dim)">IP 均填本机局域网地址</div>
         <div style="font-size:15px">配对码：<b style="font-size:26px;letter-spacing:6px;color:var(--acc,#4f46e5)">${pairCode}</b></div>
-        <div style="font-size:12px;color:#a3a19a;margin-top:12px">同步范围：整个工作区（.mazz 临时区除外）· TLS 加密通道 · 冲突时双方文件都保留</div>
-        <div class="sync-host-status" style="margin-top:14px;font-size:12.5px;color:#83817a">等待对端接入…（此窗口可关闭，共享保持）</div>
+        <div style="font-size:12px;color:var(--fg-dim);margin-top:12px">同步范围：整个工作区（.mazz 临时区除外）· TLS 加密通道 · 冲突时双方文件都保留</div>
+        <div class="sync-host-status" style="margin-top:14px;font-size:12.5px;color:var(--fg-dim)">等待对端接入…（此窗口可关闭，共享保持）</div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="sync-stop" class="rb-btn" style="flex-direction:row">停止共享</button></div>
       </div>`;
     m.body.querySelector('#sync-stop').addEventListener('click', async () => {
@@ -80,12 +80,12 @@ async function openMobileHostDialog() {
     m.body.innerHTML = `
       <div style="line-height:2;font-size:13.5px">
         <div>本机标识：<b>${host.deviceId || 'mazz-mobile'}</b></div>
-        <div style="margin:14px 0 4px;color:#83817a;font-size:12.5px">在另一台设备上「加入同步」，输入下面信息：</div>
+        <div style="margin:14px 0 4px;color:var(--fg-dim);font-size:12.5px">在另一台设备上「加入同步」，输入下面信息：</div>
         <div style="font-size:15px">本机 IP：<b>${host.addresses.length ? host.addresses.join(' / ') : '（设置→WLAN 里查看）'}</b></div>
         <div style="font-size:15px">端口：<b>${host.port}</b></div>
         <div style="font-size:15px">配对码：<b style="font-size:26px;letter-spacing:6px;color:var(--acc,#4f46e5)">${host.pairCode}</b></div>
-        <div style="font-size:12px;color:#a3a19a;margin-top:12px">加密通道：配对码派生 AES-GCM-256 会话密钥 · 冲突时双方文件都保留<br>对端可以是：手机 / 平板 / 电脑（桌面版加入时端口填 ${host.port}）</div>
-        <div class="sync-host-status" style="margin-top:14px;font-size:12.5px;color:#83817a">等待对端接入…（此窗口可关闭，共享保持）</div>
+        <div style="font-size:12px;color:var(--fg-dim);margin-top:12px">加密通道：配对码派生 AES-GCM-256 会话密钥 · 冲突时双方文件都保留<br>对端可以是：手机 / 平板 / 电脑（桌面版加入时端口填 ${host.port}）</div>
+        <div class="sync-host-status" style="margin-top:14px;font-size:12.5px;color:var(--fg-dim)">等待对端接入…（此窗口可关闭，共享保持）</div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="sync-stop" class="rb-btn" style="flex-direction:row">停止共享</button></div>
       </div>`;
     m.body.querySelector('#sync-stop').addEventListener('click', async () => {
@@ -121,9 +121,9 @@ async function openJoinDialog() {
   try { discovered = await window.mazz.invoke('sync:discover'); } catch {}
   m.body.innerHTML = `
     <div style="min-width:400px">
-      ${discovered.length ? `<div style="font-size:12px;color:#83817a;margin-bottom:6px">局域网内发现：</div>` +
-        discovered.map(d => `<div class="sync-peer" data-host="${d.host}" data-port="${d.port}" style="padding:6px 8px;border:1px solid var(--bd,#e0ded8);border-radius:7px;margin-bottom:6px;cursor:pointer;font-size:12.5px">📡 ${d.name} <small style="color:#83817a">${d.host}:${d.port}</small></div>`).join('')
-      : '<div style="font-size:12px;color:#a3a19a;margin-bottom:8px">（mDNS 未发现设备——可手动输入主机信息；也可让对端先「发起共享」）</div>'}
+      ${discovered.length ? `<div style="font-size:12px;color:var(--fg-dim);margin-bottom:6px">局域网内发现：</div>` +
+        discovered.map(d => `<div class="sync-peer" data-host="${d.host}" data-port="${d.port}" style="padding:6px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;cursor:pointer;font-size:12.5px">📡 ${d.name} <small style="color:var(--fg-dim)">${d.host}:${d.port}</small></div>`).join('')
+      : '<div style="font-size:12px;color:var(--fg-dim);margin-bottom:8px">（mDNS 未发现设备——可手动输入主机信息；也可让对端先「发起共享」）</div>'}
       <div class="set-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
         <label style="width:52px">主机</label>
         <input id="sj-host" class="rb-input" style="flex:1" placeholder="192.168.1.100" spellcheck="false">
@@ -136,7 +136,7 @@ async function openJoinDialog() {
       <div style="display:flex;justify-content:flex-end;gap:8px">
         <button id="sj-go" class="rb-btn" style="flex-direction:row">开始同步</button>
       </div>
-      <div class="sj-status" style="margin-top:10px;font-size:12.5px;color:#83817a"></div>
+      <div class="sj-status" style="margin-top:10px;font-size:12.5px;color:var(--fg-dim)"></div>
     </div>`;
   m.body.querySelectorAll('.sync-peer').forEach(el => el.addEventListener('click', () => {
     m.body.querySelector('#sj-host').value = el.dataset.host;
@@ -200,8 +200,8 @@ export function registerSyncCommands(commands) {
           <div>当前版本：<b>${r.current}</b></div>
           ${r.latest ? `<div>最新版本：<b>${r.latest}</b></div>` : ''}
           <div style="margin:8px 0;color:${r.hasUpdate ? 'var(--acc,#4f46e5)' : '#16a34a'};font-weight:600">${r.message}</div>
-          ${r.notes ? `<div style="font-size:12.5px;color:#83817a;white-space:pre-wrap;max-height:200px;overflow-y:auto;border:1px solid var(--bd,#e0ded8);border-radius:8px;padding:10px">${r.notes}</div>` : ''}
-          <div style="margin-top:12px;font-size:12px;color:#a3a19a">更新源：${(r.ok ? '已配置' : '未配置（可在下方设置）')}</div>
+          ${r.notes ? `<div style="font-size:12.5px;color:var(--fg-dim);white-space:pre-wrap;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px">${r.notes}</div>` : ''}
+          <div style="margin-top:12px;font-size:12px;color:var(--fg-dim)">更新源：${(r.ok ? '已配置' : '未配置（可在下方设置）')}</div>
           <div class="set-row" style="display:flex;gap:8px;align-items:center;margin-top:8px">
             <input id="upd-url" class="rb-input" style="flex:1" placeholder="更新清单地址（version.json URL）" spellcheck="false">
             <button id="upd-save" class="rb-btn" style="flex-direction:row">保存</button>

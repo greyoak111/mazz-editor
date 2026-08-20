@@ -15,7 +15,7 @@
     }
     .bar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; font-size: 12px; opacity: .82; border-bottom: 1px solid var(--border);
+      padding: 8px 12px; font-size: 12px; color: var(--fg-dim); border-bottom: 1px solid var(--border);
       -webkit-app-region: drag; user-select: none;
     }
     .bar b { color: var(--accent); }
@@ -24,7 +24,8 @@
       background: transparent; color: inherit; font-size: 14px; line-height: 1.65;
       font-family: inherit;
     }
-    .hint { padding: 6px 12px; font-size: 11px; opacity: .55; display: flex; justify-content: space-between; user-select: none; }
+    textarea::placeholder { color: var(--fg-dim); opacity: 1; }
+    .hint { padding: 6px 12px; font-size: 11px; color: var(--fg-dim); display: flex; justify-content: space-between; user-select: none; }
     .saved { color: var(--ok); opacity: 0; transition: opacity .3s; }
     .saved.show { opacity: 1; }
   </style>

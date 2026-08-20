@@ -2,7 +2,7 @@
 
 > 日期：2026-08-19
 > 起始坐标：`main@c125454`
-> 结论：**W87a–f EXECUTED SCOPE RESEALED；W71 COMPLETE WAVE 5A OPEN**
+> 结论：**W87a–g EXECUTED SCOPE RESEALED；W71 COMPLETE WAVE 5A OPEN**
 > 协议：`mazz.visual-composition/v1`
 
 > 2026-08-19 修订：原封板遗漏“主窗多 Browser + 工作台 child + 主/子窗盖顶 + 已有分屏再次拖拽 + child Panel 盖顶”的复合矩阵，后被 W87b RED 证伪。该组合根因已关闭，并完成 source/packaged × hardware/compatibility 复验；详见 [`W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md`](./W87B_BROWSER_COMPOSITION_CHECKPOINT_2026-08-19.md)。原报告的单轴证据保留，但不再单独承担复合场景封板结论。
@@ -11,13 +11,15 @@
 
 > 2026-08-20 W87e/f 修订：Player 底栏在窄 Pane/侧栏组合下仍会被 W58c `max-content` 药方裁切；Workspace Sidebar 八页签与空 Player 又暴露组件级宽度和状态几何缺口。W87e/f 已在最终代码上完成 source/packaged Electron 复封；详见 [`W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md`](./W87E_PLAYER_CONTROL_SURFACE_CHECKPOINT_2026-08-20.md) 与 [`W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md`](./W87F_SIDEBAR_PLAYER_LAYOUT_CHECKPOINT_2026-08-20.md)。这仍不等于 W71 全部 Wave 5A 已推广。
 
+> 2026-08-20 W87g 修订：旧矩阵能证明主题分化和页面不溢出，却没有逐元素计算文字、placeholder、disabled 和 SVG 控件对比度。W87g 在 source/packaged 下穷举 `82` 个 Paper/Ink scope 并关闭全部一方 UI 可辨识失败；详见 [`W87G_THEME_LEGIBILITY_CHECKPOINT_2026-08-20.md`](./W87G_THEME_LEGIBILITY_CHECKPOINT_2026-08-20.md)。
+
 ## 1. 结果
 
 本轮没有把 Browser 局部即时 cloak 当成视觉解决方案。Main Window、PanelWindow、WebContentsView 和 DOM Overlay 已进入同一视觉注册与仲裁面；local owner 继续持有真实资源，统一运行时持有 host、geometry、focus、occlusion 和视觉生命周期。W87d 保留 drag cloak 作为 Windows 命中药方，但把它严格放在 sender-host 捕获、代理预绘、relayout 和 Overlay 身份门之后。
 
 同时对主应用、24 个独立 Panel HTML、QuickNote、主题、图标、焦点、禁用态、最小窗口和瞬时菜单执行了全量收敛。原单轴支持矩阵与 W87b Browser 复合矩阵中没有已知未关闭 P0/P1；外部硬件与第三方内容边界单列，不冒充已验。
 
-这里的“全量”现在指 W87a–f 明列且已有运行证据的执行范围；它仍不代表 W71 Wave 5A 已在 Shell、Sheet、Browser、Factory、Library 全面推广。
+这里的“全量”现在指 W87a–g 明列且已有运行证据的执行范围；它仍不代表 W71 Wave 5A 已在 Shell、Sheet、Browser、Factory、Library 全面推广。
 
 ## 2. 落地件
 
@@ -34,6 +36,7 @@
 | Browser drag continuity | main 按 IPC sender-host 执行 `captureVisibleHost`；捕获瞬间精确校验可见集合、`tabId/webContentsId` 与 bounds；代理预绘后 relayout，Overlay 激活复核身份全集，再 cloak；恢复通过 native visible/bounds Gate |
 | Player Control Surface | stage-local L/M/S/XS；同一真实控件 inline ↔ Control Center；侧栏 preferred/effective、焦点/锁定/ARIA 与 lifecycle 闭环 |
 | Sidebar / empty Player layout | Workspace Sidebar `4×2` + container density；空 Player 只在真实 push-side open 时让位，收栏与底栏同步铺满 |
+| Theme legibility | Paper/Ink token 与旧别名收敛；一方文字/placeholder/disabled 和交互 SVG 以 computed contrast 穷举；Slide 内容主题与应用主题命名空间分离 |
 
 ## 3. 本轮抓到并关闭的真实缺陷
 
@@ -51,6 +54,7 @@
 12. **迟到 HOME 假绿**：异步 `document.write` 可在真网页加载后覆盖画面，而 Window JS 标记仍存活。现将 HOME 写入串进导航队列，并用 WCV 原生像素抓取而非只看状态探针验收。
 13. **Player `max-content` 裁切**：W58c 的“控件不缩”药方在窄 Pane 中变成静默裁切。W87e 改为按 control seat 容器宽度分档并把同一真实节点有序迁入 More。
 14. **Sidebar 文字竖排 / 空 Player 假侧栏**：八页签单行 flex 挤压标签；空画面永久 inline right 在收栏后仍占位。W87f 分别改为 `4×2` container grid 与 class-driven side geometry。
+15. **双主题低对比与局部主题串扰**：低对比 `--fg-dim` 叠加 opacity、旧别名缺失、细 SVG stroke 与 Slide `data-theme` 同名使部分页面在 Paper/Ink 下难以辨认。W87g 统一 token/别名/状态色和 SVG 线宽，并以逐元素 computed contrast 反钉。
 
 ## 4. 机器与视觉证据
 
@@ -70,6 +74,7 @@
 | [`W87D_BROWSER_CDP_POINTER_AFTER_DROP_HARDWARE.json`](./evidence/W87D_BROWSER_CDP_POINTER_AFTER_DROP_HARDWARE.json)、[`DURING_DRAG`](./evidence/W87D_BROWSER_CDP_POINTER_DURING_DRAG_HARDWARE.png)、[`AFTER_DROP`](./evidence/W87D_BROWSER_CDP_POINTER_AFTER_DROP_HARDWARE.png) | Playwright CDP pointer：pointer-through、drop 后 topology/owner 与清理通过；明确不是 Win32 `SendInput` |
 | [`W87E_PLAYER_CONTROL_SURFACE_SOURCE.json`](./evidence/W87E_PLAYER_CONTROL_SURFACE_SOURCE.json)、[`PACKAGED`](./evidence/W87E_PLAYER_CONTROL_SURFACE_PACKAGED.json) 与 8 张 Player 图 | **CURRENT / PASS**：P1 加固后 source/packaged；12 宽度档、真实分屏/侧栏、焦点/锁定/ARIA、20× ownership；fatal/error 0 |
 | [`W87F_SIDEBAR_PLAYER_LAYOUT_SOURCE.json`](./evidence/W87F_SIDEBAR_PLAYER_LAYOUT_SOURCE.json)、[`PACKAGED`](./evidence/W87F_SIDEBAR_PLAYER_LAYOUT_PACKAGED.json) 与 4 张图 | **CURRENT / PASS**：Sidebar `180/232/320px` 与空 Player 侧栏开关 20×；fatal/error 0 |
+| [`W87G_THEME_LEGIBILITY_SOURCE.json`](./evidence/W87G_THEME_LEGIBILITY_SOURCE.json)、[`PACKAGED`](./evidence/W87G_THEME_LEGIBILITY_PACKAGED.json) 与 12 张接触表/QuickNote 图 | **CURRENT / PASS**：16 主界面 + 24 Panel + QuickNote × Paper/Ink = 每种运行态 82 scopes；contrast failure 0、renderer error 0 |
 
 截图已逐张回看：Paper/Ink 确实分化；Organization、Browser host、Panel 空态已同盘；最低窗口没有横向裁切；Overlay 下方 native 页面不穿透；面板矩阵没有新的黑闪或未主题化孤岛。
 
@@ -99,7 +104,7 @@ OSS provenance                             CURRENT
 full suite at W87d coordinate              221 / 221 test files PASS
 ```
 
-上表是 W87d 封板坐标的历史验证账。W87e/f 的最终增量账如下：
+上表是 W87d 封板坐标的历史验证账。W87e–g 的最终增量账如下：
 
 ```text
 W87e Player Node contract                 PASS 13 / 13
@@ -108,7 +113,10 @@ P1-hardened source Electron               PASS / CURRENT
 P1-hardened packaged Electron             PASS / CURRENT
 W87f Sidebar/empty Player source          PASS / CURRENT
 W87f Sidebar/empty Player packaged        PASS / CURRENT
-final full suite                          PASS 222 / 222 test files
+W87g source legibility matrix             PASS 82 / 82 scopes
+W87g packaged legibility matrix           PASS 82 / 82 scopes
+W87g contrast failures / renderer errors  0 / 0
+final full suite                          PASS 223 / 223 test files
 release audit / OSS provenance            PASS / CURRENT
 W71 complete Wave 5A                      OPEN
 ```
@@ -132,4 +140,4 @@ W67 本轮数据：baseline `351.2 MiB`；WCV peak/after `2039.6/356.0 MiB`；Pa
 
 ## 7. 封板边界
 
-“已知 P0/P1 = 0”只针对计划文件中的 W87a–f 已执行范围，不覆盖完整 W71 Wave 5A。Player Control Center 是 stage-local DOM owner，不是 `mazz.visual-composition/v1` 新 kind。确定性 Browser 主矩阵使用 renderer `DragEvent`；Playwright CDP pointer 路径虽已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 在 W87f 按维护者要求禁用，本轮不以该工具作证；此前 GPU `0xC0000135` 阻断已由后续 clean rerun 解除。多显示器与多 DPI 全排列、真实 Win32 物理拖放、真实屏幕阅读器/触摸设备、第三方插件 UI、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 和任意外部网页仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。
+“已知 P0/P1 = 0”只针对计划文件中的 W87a–g 已执行范围，不覆盖完整 W71 Wave 5A。Player Control Center 是 stage-local DOM owner，不是 `mazz.visual-composition/v1` 新 kind。确定性 Browser 主矩阵使用 renderer `DragEvent`；Playwright CDP pointer 路径虽已通过，但 CDP 不是 Win32 `SendInput`。Computer Use 在 W87f/g 按维护者要求禁用，本轮不以该工具作证；此前 GPU `0xC0000135` 阻断已由后续 clean rerun 解除。W87g 背书 Mazz 一方 UI，不把任意外部网页、用户文档或第三方插件自绘界面冒充已验。多显示器与多 DPI 全排列、真实 Win32 物理拖放、真实屏幕阅读器/触摸设备、摄像头/麦克风许可、RDP/spacedesk/异机 GPU 仍是条件矩阵。它们出现新证据时必须进入 W87 协议和回归账，不允许以“封板”名义拒绝修复，也不允许现在伪报已通过。

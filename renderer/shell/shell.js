@@ -333,7 +333,7 @@ export class Shell {
     const picked = new Set(sources[0] ? [sources[0].id] : []);
     m.body.innerHTML = `
       <div style="min-width:560px;max-width:720px">
-        <div style="font-size:12.5px;color:#83817a;margin-bottom:8px">选择录制源（可多选平铺合成）：</div>
+        <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:8px">选择录制源（可多选平铺合成）：</div>
         <div class="rec-srcs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;max-height:280px;overflow-y:auto">
           ${sources.map(s => `
             <div class="rec-src ${picked.has(s.id) ? 'on' : ''}" data-id="${s.id}" style="border:2px solid ${picked.has(s.id) ? 'var(--acc,#4f46e5)' : 'var(--bd,#e0ded8)'};border-radius:8px;padding:5px;cursor:pointer;text-align:center">
@@ -350,7 +350,7 @@ export class Shell {
           <span style="flex:1"></span>
           <button id="rec-go" class="rb-btn" style="flex-direction:row;background:var(--acc,#4f46e5);color:#fff">● 开始录制</button>
         </div>
-        <div style="font-size:11.5px;color:#a3a19a;margin-top:8px">默认保存到工作区「录制/」；mp4 经本地转码产出真 H.264（首次需加载转码内核）</div>
+        <div style="font-size:11.5px;color:var(--fg-dim);margin-top:8px">默认保存到工作区「录制/」；mp4 经本地转码产出真 H.264（首次需加载转码内核）</div>
       </div>`;
     m.body.querySelectorAll('.rec-src').forEach(el => el.addEventListener('click', () => {
       const id = el.dataset.id;

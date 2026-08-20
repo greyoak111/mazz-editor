@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-19T12:04:56.830Z",
+  "generatedAt": "2026-08-20T06:38:56.560Z",
   "protocol": "mazz.visual-composition/v1",
   "runtimeMode": "source",
   "modules": {
@@ -78,7 +78,7 @@
       "lastRecomposeReason": null
     },
     "nestedOverlayReferenceCounting": true,
-    "captureBytes": 35346
+    "captureBytes": 35369
   },
   "minimumWindow": {
     "width": 960,

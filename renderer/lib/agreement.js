@@ -103,7 +103,7 @@ export async function showAgreement() {
   m.body.innerHTML = `
     <div class="agree-body" style="max-width:640px;max-height:56vh;overflow-y:auto;font-size:13px;line-height:1.85;padding-right:6px"></div>
     <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#83817a;cursor:pointer;flex:1">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--fg-dim);cursor:pointer;flex:1">
         <input type="checkbox" id="agree-nomore"> ${c.noMore}
       </label>
       <button id="agree-close" class="rb-btn" style="flex-direction:row;padding:6px 18px">${c.close}</button>

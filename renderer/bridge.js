@@ -38,7 +38,7 @@ async function pickBridgeTarget(tabId, ext, defaultName) {
     const m = modal('桥接目标文件');
     m.body.innerHTML = `
       <div style="min-width:420px;max-width:560px">
-        <div style="font-size:12.5px;color:#83817a;margin-bottom:10px">本窗格后续桥接内容将持续更新到同一文件（关闭窗格后失效）。选择目标：</div>
+        <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:10px">本窗格后续桥接内容将持续更新到同一文件（关闭窗格后失效）。选择目标：</div>
         <div class="bt-opt" data-v="__auto__" style="padding:9px 12px;border:1px solid var(--acc,#4f46e5);border-radius:8px;margin-bottom:8px;cursor:pointer;background:color-mix(in srgb, var(--acc,#4f46e5) 6%, transparent)">
           ✨ 自动新建到「桥接/」（推荐）：桥接/${defaultName}${ext}</div>
         ${existing.slice(0, 12).map(f => `

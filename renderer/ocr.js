@@ -42,7 +42,7 @@ export function registerOcrCommands(commands) {
               <button class="rb-btn ocr-go" style="flex-direction:row;margin-left:8px">开始识别</button>
               <button class="rb-btn ocr-cancel" style="display:none;flex-direction:row;margin-left:4px">取消</button>
             </div>
-            <div class="ocr-status" style="font-size:12px;color:#83817a">首次使用需下载识别模型（约 15MB，之后离线可用）</div>
+            <div class="ocr-status" style="font-size:12px;color:var(--fg-dim)">首次使用需下载识别模型（约 15MB，之后离线可用）</div>
             <textarea class="ocr-out rb-input" rows="10" readonly spellcheck="false" placeholder="识别结果…"></textarea>
             <div style="display:flex;gap:8px;justify-content:flex-end">
               <button class="rb-btn ocr-copy" style="flex-direction:row" disabled>复制</button>

@@ -18,7 +18,7 @@
   .head .t { font-size:15px; font-weight:600; flex:1; }
   .btn { border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:6px; padding:6px 8px; font-size:12px; cursor:pointer; font-family:var(--font-ui); display:inline-flex; align-items:center; gap:4px; }
   .btn:hover { border-color:var(--accent); color:var(--accent); }
-  .btn:disabled { opacity:.4; cursor:default; }
+  .btn:disabled { opacity:.58; cursor:default; }
   .head .note { font-size:11px; color:var(--fg-dim); }
   main { flex:1; min-height:0; padding:10px 16px; overflow-y:auto; }
   .plg { display:flex; align-items:center; gap:10px; padding:9px 6px; border-bottom:1px solid var(--border); }
@@ -31,10 +31,10 @@
   .plg .meta { display:flex; flex-wrap:wrap; gap:5px 10px; margin-top:3px; color:var(--fg-dim); font-size:10.5px; }
   .plg .hash { font-family:ui-monospace,Consolas,monospace; }
   .state { border:1px solid var(--border); border-radius:999px; padding:1px 6px; }
-  .state.warn { border-color:#d97706; color:#b45309; }
+  .state.warn { border-color:var(--warn); color:var(--warn); }
   .state.ok { border-color:#16865a; color:#16865a; }
   .empty { color:var(--fg-dim); text-align:center; padding:40px 0; line-height:2; }
-  .boundary { margin:0 16px 8px; padding:7px 9px; border:1px solid #d97706; border-radius:7px; color:#b45309; font-size:11px; background:color-mix(in srgb,#d97706 8%,transparent); }
+  .boundary { margin:0 16px 8px; padding:7px 9px; border:1px solid var(--warn); border-radius:7px; color:var(--warn); font-size:11px; background:color-mix(in srgb,var(--warn) 8%,transparent); }
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
   <div class="p-drag"></div>

@@ -3,22 +3,25 @@
   --font-ui: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", Consolas, "Sarasa Mono SC", monospace;
   --font-doc: "Charter", "Source Han Serif SC", "Noto Serif CJK SC", Georgia, serif;
+  /* 模块旧别名统一回接主题真源，禁止在 Ink 下回落到 #fff/#4f46e5 等 Paper 常量。 */
+  --acc: var(--accent); --bd: var(--border); --bd2: var(--bg-active); --card: var(--bg-elev);
+  --mut: var(--fg-dim); --faint: var(--fg-dim); --sh: color-mix(in srgb, #000 16%, transparent);
 }
 
 /* 1. 纸白（light 默认） */
 [data-theme="paper"] {
   --bg: #f7f6f3; --bg-elev: #ffffff; --bg-hover: #ecebe6; --bg-active: #e3e1da;
-  --fg: #2c2c2a; --fg-dim: #83817a; --border: #e0ded8;
+  --fg: #2c2c2a; --fg-dim: #66645e; --border: #e0ded8;
   --accent: #4f46e5; --accent-soft: #e0e7ff; --accent-fg: #ffffff;
-  --danger: #dc2626; --warn: #d97706; --ok: #16a34a;
+  --danger: #dc2626; --warn: #b45309; --ok: #15803d;
   --shadow: 0 8px 30px rgba(0,0,0,.10);
   --doc-bg: #ffffff;
 }
 /* 2. 墨黑（dark 默认） */
 [data-theme="ink"] {
   --bg: #16181d; --bg-elev: #1e2128; --bg-hover: #262a33; --bg-active: #2e3340;
-  --fg: #e2e4e9; --fg-dim: #7d828e; --border: #2c313c;
-  --accent: #818cf8; --accent-soft: #312e5f; --accent-fg: #ffffff;
+  --fg: #e2e4e9; --fg-dim: #9da3af; --border: #2c313c;
+  --accent: #a5b4fc; --accent-soft: #312e5f; --accent-fg: #111827;
   --danger: #f87171; --warn: #fbbf24; --ok: #4ade80;
   --shadow: 0 8px 30px rgba(0,0,0,.45);
   --doc-bg: #1b1e24;

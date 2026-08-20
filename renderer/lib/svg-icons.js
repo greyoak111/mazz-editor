@@ -1,7 +1,7 @@
 // renderer/lib/svg-icons.js —— 单色 SVG 图标库（思源风线条图标）
 // 核心原则：stroke=currentColor —— 图标颜色跟随按钮文字色，天然适配全部主题
 // （七套预置 + 图片自定义），hover/激活态随 accent 变。未映射的 emoji 原样回落。
-const S = (inner) => `<svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`; // 1em 内联尺寸（无尺寸=默认 300×150 或被压 0×0——dockfloat 工具栏 0×0 缺失实锤；em 随容器字号全场景自适应）
+const S = (inner) => `<svg class="mz-ico" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`; // 2px 线宽 + currentColor：Paper/Ink 小尺寸控件仍保持可辨识轮廓；em 随容器字号全场景自适应
 
 const MAP = {
   // —— 新建类 ——

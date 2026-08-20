@@ -22,7 +22,7 @@
 .rb-btn { border: 0; background: transparent; color: var(--fg); cursor: pointer; border-radius: 6px; padding: 6px 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; min-width: 40px; font-family: var(--font-ui); }
 .rb-btn:hover:not(:disabled) { background: var(--bg-hover); }
 .rb-btn:active:not(:disabled), .rb-btn.on { background: var(--accent-soft); color: var(--accent); }
-.rb-btn:disabled { opacity: .38; cursor: default; }
+.rb-btn:disabled { opacity: .58; cursor: default; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 12.5px; }
 
 /* 文本截断提示：裁切必须带省略号，不许生吞 */
@@ -38,14 +38,16 @@
 html, body { min-width: 0; min-height: 0; }
 *, *::before, *::after { box-sizing: border-box; }
 button, input, select, textarea { font: inherit; }
+::placeholder { color: var(--fg-dim); opacity: 1; }
 :where(button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--accent) !important;
   outline-offset: 2px;
   box-shadow: var(--ui-focus);
 }
 :where(button, [role="button"], input, select, textarea):disabled,
-:where(button, [role="button"])[aria-disabled="true"] { opacity: .46; cursor: not-allowed !important; filter: saturate(.65); }
-.mz-ico { display: inline-block; width: 1em; height: 1em; flex: 0 0 auto; vertical-align: -.14em; }
+:where(button, [role="button"])[aria-disabled="true"] { opacity: .58; cursor: not-allowed !important; filter: saturate(.72); }
+.mz-ico { display: inline-block; width: 1em; height: 1em; flex: 0 0 auto; vertical-align: -.14em; color: inherit; opacity: 1; }
+button svg, [role="button"] svg { stroke-width: 2; }
 .pwin, main, section, .body, .content, .list { min-width: 0; min-height: 0; }
 [data-ui-size="xs"] .set-row { align-items: stretch; flex-direction: column; gap: 6px; }
 [data-ui-size="xs"] .set-row > label { width: auto !important; }

@@ -32,7 +32,7 @@ export function selectProxy(sel, { items, btnClass = 'rb-btn' } = {}) {
   const label = document.createElement('span');
   label.className = 'selmenu-label';
   btn.appendChild(label);
-  btn.insertAdjacentHTML('beforeend', '<i class="ico" style="font-style:normal;opacity:.65;margin-left:4px">▾</i>');
+  btn.insertAdjacentHTML('beforeend', '<i class="ico" style="font-style:normal;color:var(--fg-dim);margin-left:4px">▾</i>');
   sel.style.display = 'none';
   sel.insertAdjacentElement('afterend', btn);
 

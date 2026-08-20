@@ -435,7 +435,7 @@ function createBrowser(container) {
       body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f7f6f3;color:#2c2c2a;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
       .box{max-width:460px;text-align:center;padding:32px}
       h2{font-size:20px;margin:0 0 10px;color:#c2410c}
-      p{color:#83817a;font-size:13px;line-height:1.8;margin:6px 0}
+      p{color:#66645e;font-size:13px;line-height:1.8;margin:6px 0}
       code{background:#e3e1da;padding:2px 7px;border-radius:5px;font-size:12px}
       button{margin-top:18px;border:0;background:#4f46e5;color:#fff;padding:9px 26px;border-radius:8px;font-size:14px;cursor:pointer}
     </style></head><body><div class="box">
@@ -1174,7 +1174,7 @@ function createBrowser(container) {
       m.body.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px">
           <button id="pw-add" class="rb-btn" style="flex-direction:row">＋ 添加账号</button>
-          <span style="font-size:11.5px;color:#83817a">${encAvail ? '🔒 系统级加密存储（safeStorage）' : '⚠ 系统加密不可用，密码以编码形式保存'}</span>
+          <span style="font-size:11.5px;color:var(--fg-dim)">${encAvail ? '🔒 系统级加密存储（safeStorage）' : '⚠ 系统加密不可用，密码以编码形式保存'}</span>
         </div>
         <div id="pw-form" style="display:none;border:1px solid var(--bd,#e0ded8);border-radius:8px;padding:10px 12px;margin-bottom:10px">
           <input id="pwf-id" type="hidden">
@@ -1194,7 +1194,7 @@ function createBrowser(container) {
             <div class="pw-item" data-id="${escapeAttr(e.id)}" style="${rowStyle}">
               <div style="flex:1;min-width:0">
                 <div style="font-weight:600;font-size:13px">${escapeHtml(e.site || '（未命名站点）')}</div>
-                <div style="font-size:12px;color:#83817a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>
+                <div style="font-size:12px;color:var(--fg-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(e.username || '')}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>
               </div>
               <span class="pw-secret" data-shown="0" style="font-family:monospace;font-size:12px;min-width:76px;text-align:right">••••••</span>
               <button data-a="show" style="${btnStyle}" title="显示/隐藏">👁</button>
@@ -1202,7 +1202,7 @@ function createBrowser(container) {
               <button data-a="edit" style="${btnStyle}" title="编辑">✎</button>
               <button data-a="del" style="${btnStyle}" title="删除">✕</button>
             </div>`).join('')
-          : '<div style="color:#83817a;font-size:12.5px;padding:18px 0;text-align:center">还没有保存的账号——点「添加账号」开始</div>'}
+          : '<div style="color:var(--fg-dim);font-size:12.5px;padding:18px 0;text-align:center">还没有保存的账号——点「添加账号」开始</div>'}
         </div>`;
       // 新增/编辑表单
       const form = m.body.querySelector('#pw-form');
@@ -1526,7 +1526,7 @@ export default {
               });
             } else {
               const m = modal('局域网临时分享');
-              m.body.innerHTML = `<div style="min-width:440px;max-width:620px"><p style="margin:0 0 10px">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class="rb-input" style="width:100%;padding:7px 9px" readonly value="${escapeAttr(share.url)}"><div style="font-size:12px;color:#83817a;margin-top:8px">到期：${new Date(share.expiresAt).toLocaleString('zh-CN')} · 不经过云端</div></div>`;
+              m.body.innerHTML = `<div style="min-width:440px;max-width:620px"><p style="margin:0 0 10px">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class="rb-input" style="width:100%;padding:7px 9px" readonly value="${escapeAttr(share.url)}"><div style="font-size:12px;color:var(--fg-dim);margin-top:8px">到期：${new Date(share.expiresAt).toLocaleString('zh-CN')} · 不经过云端</div></div>`;
             }
             toast('局域网临时链接已复制');
           } catch (error) { toast('分享失败：' + (error?.message || error)); }

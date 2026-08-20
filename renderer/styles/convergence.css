@@ -19,8 +19,9 @@ button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   box-shadow: var(--ui-focus);
 }
 :where(button, [role="button"], input, select, textarea):disabled,
-:where(button, [role="button"])[aria-disabled="true"] { opacity: .46; cursor: not-allowed !important; filter: saturate(.65); }
-.mz-ico { display: inline-block; flex: 0 0 auto; vertical-align: -.14em; overflow: visible; }
+:where(button, [role="button"])[aria-disabled="true"] { opacity: .58; cursor: not-allowed !important; filter: saturate(.72); }
+.mz-ico { display: inline-block; flex: 0 0 auto; vertical-align: -.14em; overflow: visible; color: inherit; opacity: 1; }
+button svg, [role="button"] svg { stroke-width: 2; }
 button > .mz-ico:only-child, [role="button"] > .mz-ico:only-child { margin: auto; }
 
 #mazz-overlay-plane {

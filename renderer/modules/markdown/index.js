@@ -412,9 +412,9 @@ async function openStyleMapDialog() {
   ];
   const m = modal('Word 样式映射表');
   m.body.innerHTML = `
-    <div style="font-size:12px;color:#83817a;margin-bottom:10px">控制导出 docx 时的默认样式（字号单位：磅；颜色为十六进制，留空继承 Word 默认）</div>
+    <div style="font-size:12px;color:var(--fg-dim);margin-bottom:10px">控制导出 docx 时的默认样式（字号单位：磅；颜色为十六进制，留空继承 Word 默认）</div>
     <table class="sm-table" style="width:100%;border-collapse:collapse;font-size:12.5px">
-      <tr style="text-align:left;color:#83817a"><th style="padding:4px">元素</th><th>字号</th><th>加粗</th><th>斜体</th><th>颜色</th><th>字体</th></tr>
+      <tr style="text-align:left;color:var(--fg-dim)"><th style="padding:4px">元素</th><th>字号</th><th>加粗</th><th>斜体</th><th>颜色</th><th>字体</th></tr>
       ${ROWS.map(([k, name]) => `
         <tr data-k="${k}">
           <td style="padding:4px">${name}</td>
