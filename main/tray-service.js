@@ -2,6 +2,7 @@
 'use strict';
 const { Tray, Menu, nativeTheme, app } = require('electron');
 const path = require('path');
+const { trayAssetName } = require('./system-ui-theme');
 
 class TrayService {
   constructor({ windowManager, store, onCommand }) {
@@ -9,11 +10,14 @@ class TrayService {
     this.store = store;
     this.onCommand = onCommand; // (commandId, payload) => void  转发给渲染进程命令注册表
     this.tray = null;
+    this.themeListenerAttached = false;
+    this.onNativeThemeUpdated = () => {
+      if (this.tray) this.tray.setImage(this.iconForTheme());
+    };
   }
 
   iconForTheme() {
-    const dark = nativeTheme.shouldUseDarkColors;
-    const name = dark ? 'tray-light.png' : 'tray-dark.png';
+    const name = trayAssetName(nativeTheme, process.platform);
     return path.join(__dirname, '..', 'resources', 'icons', name);
   }
 
@@ -22,7 +26,10 @@ class TrayService {
     this.tray = new Tray(this.iconForTheme());
     this.tray.setToolTip('Mazz Editor — 一站式超级编辑器');
     this.tray.on('click', () => this.wm.toggleMain());
-    nativeTheme.on('updated', () => { if (this.tray) this.tray.setImage(this.iconForTheme()); });
+    if (!this.themeListenerAttached) {
+      nativeTheme.on('updated', this.onNativeThemeUpdated);
+      this.themeListenerAttached = true;
+    }
     this.refreshMenu();
   }
 
@@ -44,6 +51,12 @@ class TrayService {
     this.tray.setContextMenu(menu);
   }
 
-  destroy() { if (this.tray) { this.tray.destroy(); this.tray = null; } }
+  destroy() {
+    if (this.themeListenerAttached) {
+      nativeTheme.removeListener('updated', this.onNativeThemeUpdated);
+      this.themeListenerAttached = false;
+    }
+    if (this.tray) { this.tray.destroy(); this.tray = null; }
+  }
 }
 module.exports = TrayService;

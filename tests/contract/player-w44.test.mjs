@@ -9,9 +9,10 @@ const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 describe('播放器四修', () => {
   test('缩略图切源失效', () => {
     const src = readSrc('renderer/modules/viewer/player.js');
-    assert.ok(src.includes('previewVideo._src !== url'), '切源必须判旧（previewVideo 一建不换 src 的根因闸）');
-    assert.ok(src.includes('previewVideo._src = url'), '新源必须记档');
-    assert.ok(/previewVideo = null;[\s\S]{0,200}previewVideo = document.createElement/.test(src), '旧预览必须销毁重建');
+    assert.ok(src.includes('previewVideo._src !== curUrl'), '预览 owner 必须跟随活动源，而非构造时 url');
+    assert.ok(src.includes('previewVideo._src = curUrl'), '新预览必须记录活动源');
+    assert.ok(src.includes('disposePreviewVideo(); // 旧解码器立即退役'), 'setSource 必须先释放旧预览解码器');
+    assert.ok(src.includes('pv !== previewVideo || pv._src !== curUrl'), '旧源迟到 seeked 不得重绘缩略图');
   });
   test('保存路径明白话', () => {
     const src = readSrc('renderer/modules/viewer/player.js');

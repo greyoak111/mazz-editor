@@ -50,7 +50,7 @@ describe('W65b 页面增量、RSS 与 Mikan 目录纯契约', () => {
       bangumiId: '3979', title: '番组', url: 'https://mikanime.tv/Home/Bangumi/3979',
       imageUrl: 'https://mikanime.tv/cover.webp', updatedAt: '2026/08/18 更新', dayOfWeek: 2, dayLabel: '星期二',
     });
-    assert.deepEqual(catalog.seasons[0], { year: '2026', season: '夏', label: '夏季番组' });
+    assert.deepEqual(catalog.seasons[0], { year: '2026', season: '夏', label: '2026 · 夏季番组' });
   });
 });
 

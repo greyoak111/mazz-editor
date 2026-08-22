@@ -8,13 +8,13 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 697,
+    "totalFindings": 701,
     "filesWithFindings": 71,
     "byRule": {
-      "fixed-width-px": 200,
-      "white-space-nowrap": 133,
-      "position-absolute": 160,
-      "fixed-min-width": 87,
+      "fixed-width-px": 199,
+      "white-space-nowrap": 134,
+      "position-absolute": 161,
+      "fixed-min-width": 90,
       "sidebar-pixel-coupling": 12,
       "fixed-left-right": 31,
       "width-100vw": 8,
@@ -25,7 +25,7 @@
     "topFiles": [
       {
         "file": "renderer/styles/base.css",
-        "count": 376
+        "count": 380
       },
       {
         "file": "renderer/base.css",
@@ -145,9 +145,9 @@
       }
     ],
     "byProvisionalClass": {
-      "D": 320,
-      "A": 192,
-      "B": 87,
+      "D": 322,
+      "A": 191,
+      "B": 90,
       "E": 67,
       "C": 31
     }
@@ -1004,147 +1004,147 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 359,
+      "line": 367,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 842,
+      "line": 850,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 923,
+      "line": 931,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\">"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1756,
+      "line": 1810,
       "sample": ".lib-flow-wrap::after{content:'';position:absolute;z-index:3;pointer-events:none;top:0;bottom:0;left:50%;width:var(--reader-spread-gutter,0px);transform:translateX(-50%);opacity:0;background:linear-gradient(90deg,color-mix(in srgb,var(--reader-ink) 8%,transparent),transparent 36%,transparent 64%,color-mix(in srgb,var(-"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 1764,
+      "line": 1818,
       "sample": ".lib-flow :where(img,svg){display:block;margin:.65em auto;max-height:calc(100% - 1.3em);object-fit:contain;}"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 1769,
+      "line": 1823,
       "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1775,
+      "line": 1829,
       "sample": ".lib-text-slot.is-loading::after{content:'正在排版…';position:absolute;top:32px;left:50%;transform:translateX(-50%);opacity:.5;font-size:12px;}"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1776,
+      "line": 1830,
       "sample": ".lib-text-slot.is-error::after{content:'本节加载失败';position:absolute;top:32px;left:50%;transform:translateX(-50%);color:#b42318;font-size:12px;}"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2289,
+      "line": 2343,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2291,
+      "line": 2345,
       "sample": "ctl._flowRO = new ResizeObserver(() => {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2416,
+      "line": 2470,
       "sample": "// ResizeObserver fires after Chromium has already committed the changed"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2663,
+      "line": 2717,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2665,
+      "line": 2719,
       "sample": "ctl._flowRO = new ResizeObserver(() => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 2814,
+      "line": 2868,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:320px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3258,
+      "line": 3312,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3332,
+      "line": 3386,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\"><b>${selectedIds.size} 本移到分类</b>"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/library/index.js",
-      "line": 3534,
+      "line": 3588,
       "sample": "<span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"${escapeHtml(r.pattern || '')}\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3564,
+      "line": 3618,
       "sample": "<div style=\"min-width:480px;max-width:620px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3567,
+      "line": 3621,
       "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3568,
+      "line": 3622,
       "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3571,
+      "line": 3625,
       "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
     },
     {
@@ -1410,7 +1410,7 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1378,
+      "line": 1426,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {
@@ -2258,2673 +2258,2701 @@
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 29,
-      "sample": "width: 46px; height: 100%; border: 0; background: transparent; color: var(--fg-dim);"
+      "sample": "width: 46px; height: 36px; border: 0; background: transparent; color: var(--tb-caption-fg, var(--fg));"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 32,
-      "sample": ".titlebar .tb-caption-icon { display: block; width: 12px; height: 12px; overflow: visible; pointer-events: none; }"
+      "line": 33,
+      "sample": ".titlebar .tb-caption-icon { display: block; width: 12px; height: 12px; overflow: visible; pointer-events: none; shape-rendering: geometricPrecision; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 51,
+      "line": 55,
       "sample": ".rb-group::after { content: attr(data-label); position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 9.5px; color: var(--fg-dim); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 51,
+      "line": 55,
       "sample": ".rb-group::after { content: attr(data-label); position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 9.5px; color: var(--fg-dim); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 55,
+      "line": 59,
       "sample": "min-width: 40px; font-family: var(--font-ui);"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 70,
+      "line": 74,
       "sample": ".fd-brand { display:flex; align-items:baseline; gap:7px; white-space:nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 73,
+      "line": 77,
       "sample": ".fd-task-select { min-width:140px; max-width:230px; height:30px; border:1px solid var(--border); border-radius:7px; padding:0 8px; background:var(--bg); color:var(--fg); font:inherit; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 77,
+      "line": 81,
       "sample": ".fd-search { min-width:150px; flex:1; height:30px; display:flex; align-items:center; gap:5px; padding:0 8px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--fg-dim); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 79,
+      "line": 83,
       "sample": ".fd-search span { min-width:16px; text-align:right; color:var(--accent); font-size:10px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 81,
+      "line": 85,
       "sample": ".fd-pin, .fd-stat { min-width:112px; display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; gap:2px 7px; align-items:center; padding:6px 9px; border:1px solid var(--border); border-radius:9px; background:var(--bg); color:var(--fg); text-align:left; font:inherit; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 87,
+      "line": 91,
       "sample": ".fd-pin b, .fd-stat b { font-size:12px; line-height:1.2; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 88,
+      "line": 92,
       "sample": ".fd-pin span, .fd-stat span { color:var(--fg-dim); font-size:9px; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 101,
+      "line": 105,
       "sample": ".fd-health-metric i { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--fg-dim); font-style:normal; font-size:9px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 117,
+      "line": 121,
       "sample": ".fd-dir-event { min-width:0; font-size:10px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 118,
+      "line": 122,
       "sample": ".fd-dir-event i { flex:none; min-width:28px; font-style:normal; color:var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 122,
+      "line": 126,
       "sample": ".fd-empty { position:absolute; inset:0; display:grid; place-items:center; color:var(--fg-dim); font-size:12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 126,
+      "line": 130,
       "sample": ".fd-card.collapsed > b, .fd-card header > b { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 128,
+      "line": 132,
       "sample": ".fd-fold { flex:none; width:23px; height:23px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:16px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 155,
+      "line": 159,
       "sample": ".fd-table-wrap table { border-collapse:collapse; min-width:100%; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 155,
+      "line": 159,
       "sample": ".fd-table-wrap table { border-collapse:collapse; min-width:100%; white-space:nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 159,
+      "line": 163,
       "sample": ".fd-progress span { position:absolute; right:4px; top:-14px; color:var(--fg-dim); font-size:8px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 174,
+      "line": 178,
       "sample": ".fd-files button { width:100%; display:flex; align-items:center; gap:6px; border:0; border-radius:5px; padding:5px 7px 5px calc(7px + var(--depth, 0) * 9px); background:transparent; color:var(--fg); text-align:left; cursor:pointer; font:inherit; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowra"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 178,
+      "line": 182,
       "sample": ".fd-preview > header b { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 190,
+      "line": 194,
       "sample": ".fd-directory,.fd-compare { position:absolute; z-index:5; top:0; bottom:0; width:min(80%,280px); box-shadow:0 8px 30px #0004; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 192,
+      "line": 196,
       "sample": ".fd-compare { right:0; transform:translateX(calc(100% - 34px)); transition:transform .18s; }.fd-compare:hover,.fd-compare:focus-within { transform:none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 193,
+      "line": 197,
       "sample": ".fd-center { height:100%; padding:0 34px; }.fd-pins { min-height:52px; }.fd-pin,.fd-stat { min-width:102px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 200,
+      "line": 204,
       "sample": ".factory-desk.narrow .fd-directory,.factory-desk.narrow .fd-compare { position:absolute; z-index:5; top:0; bottom:0; width:min(80%,280px); box-shadow:0 8px 30px #0004; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 203,
+      "line": 207,
       "sample": ".factory-desk.narrow .fd-compare { right:0; transform:translateX(calc(100% - 34px)); transition:transform .18s; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 207,
+      "line": 211,
       "sample": ".factory-desk.narrow .fd-pin,.factory-desk.narrow .fd-stat { min-width:102px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 213,
+      "line": 217,
       "sample": "width: 232px; max-width: 32vw; flex: none; background: var(--bg-elev); border-right: 1px solid var(--border);"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 216,
+      "line": 220,
       "sample": ".sidebar.hidden { margin-left: -232px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 217,
+      "line": 221,
       "sample": ".sidebar-head { padding: 8px 10px; font-size: 11px; color: var(--fg-dim); display: flex; justify-content: space-between; align-items: center; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 221,
+      "line": 225,
       "sample": ".ft-node { display: flex; align-items: center; gap: 5px; padding: 3px 6px; border-radius: 5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 224,
+      "line": 228,
       "sample": ".ft-node .ft-ico { width: 15px; text-align: center; flex: none; font-size: 11px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 242,
+      "line": 246,
       "sample": ".tab .t-name { display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 244,
+      "line": 248,
       "sample": ".tab .t-icon .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 245,
+      "line": 249,
       "sample": ".tab .t-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 247,
+      "line": 251,
       "sample": ".tab .t-close { border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 4px; width: 17px; height: 17px; font-size: 11px; line-height: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 250,
+      "line": 254,
       "sample": ".module-view { position: absolute; inset: 0; display: none; overflow: auto; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 282,
+      "line": 286,
       "sample": ".statusbar .st { padding: 1px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 290,
+      "line": 294,
       "sample": "position: fixed; z-index: 9000; min-width: 210px; padding: 5px;"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 298,
+      "line": 302,
       "sample": ".mazz-menu-icon { width: 17px; text-align: center; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 316,
+      "line": 320,
       "sample": ".pi-icon { width: 16px; text-align: center; flex: none; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 317,
+      "line": 321,
       "sample": ".pi-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 318,
+      "line": 322,
       "sample": ".pi-detail { color: var(--fg-dim); font-size: 11px; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 331,
+      "line": 335,
       "sample": ".mazz-toast > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 334,
+      "line": 338,
       "sample": "max-width: min(720px, calc(100vw - 32px)); transform: translateX(-50%); padding: 4px 10px;"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 342,
+      "line": 346,
       "sample": "position: absolute; top: 0; left: 0; right: 0; z-index: 500; display: flex; gap: 10px; align-items: center;"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 380,
+      "line": 384,
       "sample": "position: absolute; top: 10px; right: 16px; z-index: 400;"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 380,
+      "line": 384,
       "sample": "position: absolute; top: 10px; right: 16px; z-index: 400;"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 383,
+      "line": 387,
       "sample": ".findbar input { background: var(--bg); border: 1px solid var(--border); color: var(--fg); border-radius: 6px; padding: 5px 9px; font-size: 12.5px; width: 168px; outline: none; font-family: var(--font-ui); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 385,
+      "line": 389,
       "sample": ".findbar .f-count { font-size: 11px; color: var(--fg-dim); min-width: 48px; text-align: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 394,
+      "line": 398,
       "sample": "position: absolute; z-index: 600; display: flex; gap: 4px; align-items: center;"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 397,
+      "line": 401,
       "sample": ".link-bubble a { color: var(--accent); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 424,
+      "line": 428,
       "sample": ".sg-root { position: absolute; inset: 0; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 425,
+      "line": 429,
       "sample": ".sg-scroll { position: absolute; left: 46px; top: 26px; right: 0; bottom: 0; overflow: scroll; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 425,
+      "line": 429,
       "sample": ".sg-scroll { position: absolute; left: 46px; top: 26px; right: 0; bottom: 0; overflow: scroll; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 428,
+      "line": 432,
       "sample": "position: absolute; padding: 3px 6px; font-size: 12.5px; overflow: hidden; white-space: nowrap;"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 428,
+      "line": 432,
       "sample": "position: absolute; padding: 3px 6px; font-size: 12.5px; overflow: hidden; white-space: nowrap;"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 434,
+      "line": 438,
       "sample": ".sg-corner { position: absolute; left: 0; top: 0; width: 46px; height: 26px; background: var(--bg-elev); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 30; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 434,
+      "line": 438,
       "sample": ".sg-corner { position: absolute; left: 0; top: 0; width: 46px; height: 26px; background: var(--bg-elev); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 30; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 435,
+      "line": 439,
       "sample": ".sg-colhead { position: absolute; left: 46px; top: 0; right: 0; height: 26px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-bottom: 1px solid var(--border); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 435,
+      "line": 439,
       "sample": ".sg-colhead { position: absolute; left: 46px; top: 0; right: 0; height: 26px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-bottom: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 437,
+      "line": 441,
       "sample": ".sg-rowhead { position: absolute; left: 0; top: 26px; bottom: 0; width: 46px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-right: 1px solid var(--border); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 437,
+      "line": 441,
       "sample": ".sg-rowhead { position: absolute; left: 0; top: 26px; bottom: 0; width: 46px; overflow: hidden; z-index: 20; background: var(--bg-elev); border-right: 1px solid var(--border); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 440,
+      "line": 444,
       "sample": "position: absolute; display: flex; align-items: center; justify-content: center;"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 445,
+      "line": 449,
       "sample": ".sg-rowhead .sg-hcell { left: 0; width: 46px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 447,
+      "line": 451,
       "sample": ".sg-sel { position: absolute; display: none; background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); z-index: 10; pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 448,
+      "line": 452,
       "sample": ".sg-active { position: absolute; display: none; border: 2px solid var(--accent); z-index: 11; pointer-events: none; box-shadow: 0 0 0 1px var(--bg); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 449,
+      "line": 453,
       "sample": ".sg-fillhandle { position: absolute; display: none; width: 8px; height: 8px; background: var(--accent); border: 1px solid var(--bg); z-index: 12; cursor: crosshair; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 450,
+      "line": 454,
       "sample": ".sg-fzrow { position: absolute; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-bottom: 2px solid var(--accent); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 452,
+      "line": 456,
       "sample": ".sg-fzcol { position: absolute; left: 46px; bottom: 0; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-right: 2px solid var(--accent); }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 452,
-      "sample": ".sg-fzcol { position: absolute; left: 46px; bottom: 0; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-right: 2px solid var(--accent); }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 454,
-      "sample": ".sg-fzcorner { position: absolute; display: none; overflow: hidden; z-index: 25; background: var(--bg); border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 456,
+      "sample": ".sg-fzcol { position: absolute; left: 46px; bottom: 0; display: none; overflow: hidden; z-index: 15; background: var(--bg); border-right: 2px solid var(--accent); }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 458,
+      "sample": ".sg-fzcorner { position: absolute; display: none; overflow: hidden; z-index: 25; background: var(--bg); border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 460,
       "sample": "position: absolute; z-index: 40; border: 2px solid var(--accent); outline: none;"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 461,
+      "line": 465,
       "sample": ".sg-tab { padding: 4px 14px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; color: var(--fg-dim); border: 1px solid transparent; border-bottom: 0; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 466,
+      "line": 470,
       "sample": ".sg-chart { position: absolute; left: 60px; top: 50px; width: 480px; height: 340px; z-index: 50; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 466,
+      "line": 470,
       "sample": ".sg-chart { position: absolute; left: 60px; top: 50px; width: 480px; height: 340px; z-index: 50; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 466,
+      "line": 470,
       "sample": ".sg-chart { position: absolute; left: 60px; top: 50px; width: 480px; height: 340px; z-index: 50; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 469,
-      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 469,
-      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 473,
+      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 473,
+      "sample": ".sg-capture { position: absolute; width: 40px; height: 24px; opacity: 0.01; border: 0; resize: none; z-index: 1; pointer-events: none; font-size: 13px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 477,
       "sample": ".sl-editor { width: 340px; flex: none; border-right: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 478,
+      "line": 482,
       "sample": ".sl-v2-side { width: 220px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--bg-elev); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 484,
+      "line": 488,
       "sample": ".sl-v2-page .no { flex: none; width: 18px; text-align: center; font-size: 10.5px; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 485,
+      "line": 489,
       "sample": ".sl-v2-page .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 504,
+      "line": 508,
       "sample": ".sl-v2-props input[type=number] { width: 58px; background: var(--bg); border: 1px solid var(--border); color: var(--fg); border-radius: 6px; padding: 2px 6px; font-size: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 523,
+      "line": 527,
       "sample": ".sl-thumb { width: 148px; flex: none; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; position: relative; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 524,
+      "line": 528,
       "sample": ".sl-thumb .sl-slide { width: 800px; transform: scale(.185) !important; transform-origin: top left !important; pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 526,
+      "line": 530,
       "sample": ".sl-elements .sl-el { position: absolute; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 530,
+      "line": 534,
       "sample": ".sl-handle { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: var(--accent); border-radius: 2px; cursor: nwse-resize; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 530,
+      "line": 534,
       "sample": ".sl-handle { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: var(--accent); border-radius: 2px; cursor: nwse-resize; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 531,
+      "line": 535,
       "sample": ".sl-ghost { position: absolute; border: 2px dashed var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); z-index: 5; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 535,
+      "line": 539,
       "sample": ".sl-stage { width: 100vw; height: 100vh; display: grid; place-items: center; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 536,
+      "line": 540,
       "sample": ".sl-stage .sl-slide { width: 100vw; height: 100vh; border-radius: 0; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 537,
+      "line": 541,
       "sample": ".sl-pageno { position: fixed; right: 18px; bottom: 14px; color: #94a3b8; font-size: 12px; z-index: 9600; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 538,
+      "line": 542,
       "sample": ".sl-pv-bar { position: fixed; left: 14px; bottom: 12px; display: flex; gap: 8px; z-index: 9600; opacity: .25; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 541,
+      "line": 545,
       "sample": ".sl-pv { display: flex; width: 100vw; height: 100vh; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 550,
+      "line": 554,
       "sample": ".sl-pv2-wrap { display: flex; width: 100vw; height: 100vh; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 554,
+      "line": 558,
       "sample": ".sl-pv2-layer { position: absolute; inset: 0; will-change: transform, opacity; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 558,
+      "line": 562,
       "sample": ".sl-remote-card { position: fixed; right: 18px; bottom: 18px; z-index: 8800; width: 220px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--fg-dim); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 558,
+      "line": 562,
       "sample": ".sl-remote-card { position: fixed; right: 18px; bottom: 18px; z-index: 8800; width: 220px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--fg-dim); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 587,
+      "line": 591,
       "sample": ".toc-panel { width: 210px; flex: none; overflow-y: auto; background: var(--bg-elev); border-left: 1px solid var(--border); padding: 10px 8px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 589,
+      "line": 593,
       "sample": ".toc-item { padding: 3px 8px; font-size: 12.5px; cursor: pointer; border-radius: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 599,
+      "line": 603,
       "sample": ".pm-page td, .pm-page th { min-width: 60px; vertical-align: top; position: relative; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 600,
+      "line": 604,
       "sample": ".pm-page .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: var(--accent); cursor: col-resize; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 629,
+      "line": 633,
       "sample": ".pane-empty { position: absolute; inset: 0; top: 34px; display: none; place-items: center; color: var(--fg-dim); font-size: 12.5px; z-index: 5; pointer-events: none; text-align: center; padding: 20px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 631,
+      "line": 635,
       "sample": ".pane-close { margin-left: 0; align-self: center; border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 4px; width: 22px; height: 22px; font-size: 11px; line-height: 1; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 637,
+      "line": 641,
       "sample": ".br-nav { border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 5px; width: 28px; height: 26px; font-size: 13px; flex: none; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 650,
+      "line": 654,
       "sample": ".br-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 651,
+      "line": 655,
       "sample": ".br-tab-close { border: 0; background: none; color: var(--fg-dim); cursor: pointer; border-radius: 3px; font-size: 10px; width: 15px; height: 15px; line-height: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 655,
+      "line": 659,
       "sample": ".br-view-wrap { position: absolute; inset: 0; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 660,
+      "line": 664,
       "sample": ".browser-root.panel-open .br-panel { width: 360px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 684,
+      "line": 688,
       "sample": ".code-term-grip::before { content:\"\"; position:absolute; left:calc(50% - 28px); top:2px; width:56px; height:3px; border-radius:3px; background:var(--border); transition:background .12s,width .12s,left .12s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 684,
+      "line": 688,
       "sample": ".code-term-grip::before { content:\"\"; position:absolute; left:calc(50% - 28px); top:2px; width:56px; height:3px; border-radius:3px; background:var(--border); transition:background .12s,width .12s,left .12s; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 685,
+      "line": 689,
       "sample": ".code-term-grip:hover::before, .code-root.term-resizing .code-term-grip::before { left:calc(50% - 42px); width:84px; background:var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 701,
+      "line": 705,
       "sample": ".term-view { position: absolute; inset: 0; padding: 4px 8px; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 710,
+      "line": 714,
       "sample": ".math-role { flex: none; width: 20px; text-align: right; color: var(--accent); font-weight: 700; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 726,
+      "line": 730,
       "sample": ".debug-bp { width: 10px; height: 10px; border-radius: 50%; background: #f87171; margin-left: 5px; margin-top: 4px; cursor: pointer; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 729,
+      "line": 733,
       "sample": ".debug-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 0; overflow: hidden; background: var(--bg-elev); border-left: 1px solid var(--border); display: flex; flex-direction: column; transition: width .15s; z-index: 20; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 730,
+      "line": 734,
       "sample": ".debug-panel.on { width: 320px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 732,
+      "line": 736,
       "sample": ".debug-controls button { border: 0; background: var(--bg-active); color: var(--fg); border-radius: 6px; width: 34px; height: 26px; cursor: pointer; font-size: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 758,
+      "line": 762,
       "sample": ".pk-size-input { width: 52px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 759,
+      "line": 763,
       "sample": ".pk-drop { display: none; position: absolute; top: 28px; left: 0; z-index: 8000; min-width: 180px; max-height: 280px; overflow-y: auto; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); padding: 4px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 759,
+      "line": 763,
       "sample": ".pk-drop { display: none; position: absolute; top: 28px; left: 0; z-index: 8000; min-width: 180px; max-height: 280px; overflow-y: auto; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px; box-shadow: var(--shadow); padding: 4px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 760,
+      "line": 764,
       "sample": ".pk-item { padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12.5px; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 764,
+      "line": 768,
       "sample": ".pk-swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--border); border-radius: 2px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 765,
+      "line": 769,
       "sample": ".pk-palette { min-width: 230px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 767,
+      "line": 771,
       "sample": ".pk-cell { width: 20px; height: 20px; border-radius: 3px; cursor: pointer; border: 1px solid rgba(0,0,0,.1); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 770,
+      "line": 774,
       "sample": ".pk-native { width: 40px; height: 24px; border: 0; background: none; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 781,
+      "line": 785,
       "sample": ".bm-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 799,
+      "line": 803,
       "sample": ".notes-side { width: 240px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; overflow: hidden; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 799,
+      "line": 803,
       "sample": ".notes-side { width: 240px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; overflow: hidden; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 806,
+      "line": 810,
       "sample": ".notes-item .n-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 807,
+      "line": 811,
       "sample": ".notes-item .n-date { font-size: 10.5px; color: var(--fg-dim, #a3a19a); flex-shrink: 0; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 811,
+      "line": 815,
       "sample": ".notes-backlinks { border-top: 1px solid var(--bd, #e0ded8); max-height: 180px; overflow-y: auto; padding: 8px 12px; flex-shrink: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 815,
+      "line": 819,
       "sample": ".notes-bl-ctx { font-size: 11px; color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 14px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 819,
+      "line": 823,
       "sample": ".sb-context-item .sb-item-t b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 820,
+      "line": 824,
       "sample": ".sb-context-item .sb-item-t small { color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 824,
+      "line": 828,
       "sample": ".sb-relation-row > div { padding-right: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 826,
+      "line": 830,
       "sample": ".sb-relation-actions { position: absolute; right: 5px; top: 5px; display: flex; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 827,
+      "line": 831,
       "sample": ".sb-history-toggle { flex: 1; font-size: 11px; color: var(--fg-dim, #a3a19a); white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 837,
+      "line": 841,
       "sample": ".sb-history-event em { font-style: normal; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 844,
+      "line": 848,
       "sample": ".sb-cognition-row small, .sb-cognition-row em { font-size: 10px; color: var(--fg-dim, #a3a19a); font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 852,
+      "line": 856,
       "sample": ".notes-graph-legend { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 852,
+      "line": 856,
       "sample": ".notes-graph-legend { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 857,
+      "line": 861,
       "sample": ".gs-input { flex: 1; min-width: 220px; border: 1.5px solid var(--bd, #e0ded8); background: var(--bg, #fff); color: var(--fg, #2c2c2a); border-radius: 8px; padding: 9px 14px; font-size: 14px; outline: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 863,
+      "line": 867,
       "sample": ".gs-research-topic { min-width: 180px; flex: 1; border: 1px solid var(--bd, #e0ded8); border-radius: 7px; padding: 7px 9px; color: var(--fg, #2c2c2a); background: var(--bg, #fff); outline: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 869,
+      "line": 873,
       "sample": ".gs-research-source b, .gs-research-source small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 878,
+      "line": 882,
       "sample": ".gs-file-path { font-size: 11px; color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 879,
+      "line": 883,
       "sample": ".gs-hit { padding: 3px 6px 3px 18px; font-size: 12.5px; color: var(--fg, #2c2c2a); cursor: pointer; border-radius: 5px; font-family: var(--font-mono, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 888,
+      "line": 892,
       "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
-    },
-    {
-      "rule": "calc-viewport-or-container",
-      "provisionalClass": "E",
-      "file": "renderer/styles/base.css",
-      "line": 888,
-      "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 888,
-      "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 890,
-      "sample": ".mm-source-hook-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
       "line": 892,
+      "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 892,
+      "sample": ".mm-source-hook { position: absolute; z-index: 8; left: 12px; top: 12px; display: inline-flex; align-items: center; gap: 7px; max-width: min(420px, calc(100% - 24px)); padding: 7px 11px; border: 1px solid var(--bd, #d8d6cf); border-radius: 9px; background: color-mix(in srgb, var(--bg, #fff) 92%, var(--accent, #6d5dfc) "
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 894,
+      "sample": ".mm-source-hook-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
+    },
+    {
+      "rule": "calc-viewport-or-container",
+      "provisionalClass": "E",
+      "file": "renderer/styles/base.css",
+      "line": 896,
       "sample": ".distill-preview-modal .mazz-palette { width: min(760px, calc(100vw - 40px)); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 900,
+      "line": 904,
       "sample": ".distill-action { min-width: 84px; height: 34px; padding: 0 13px; border: 1px solid var(--bd, #d8d6cf); border-radius: 7px; background: var(--bg, #fff); color: var(--fg, #2d2b29); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 906,
+      "line": 910,
       "sample": ".mm-editor { position: absolute; z-index: 10; border: 1.5px solid var(--acc, #4f46e5); border-radius: 8px; padding: 3px 8px; font-size: 13px; outline: none; box-shadow: 0 4px 16px rgba(0,0,0,.12); background: var(--card, #fff); color: var(--fg, #2c2c2a); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 907,
+      "line": 911,
       "sample": ".mm-hint { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 907,
+      "line": 911,
       "sample": ".mm-hint { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--fg-dim, #a3a19a); pointer-events: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 913,
+      "line": 917,
       "sample": ".draw-canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 914,
+      "line": 918,
       "sample": ".draw-tool-strip { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; gap: 5px; background: var(--card, #fff); border: 1px solid var(--bd, #e0ded8); border-radius: 10px; padding: 7px 10px; box-shadow: 0 4px 16px rgba(0,0,0,.10); z-index"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 918,
+      "line": 922,
       "sample": ".draw-tool-strip input[type=color] { width: 28px; height: 28px; border: 1px solid var(--bd, #e0ded8); border-radius: 6px; padding: 1px; background: none; cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 919,
+      "line": 923,
       "sample": ".draw-tool-strip input[type=range] { width: 90px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 920,
+      "line": 924,
       "sample": ".draw-size-v { font-size: 11.5px; color: var(--fg-dim, #a3a19a); min-width: 18px; text-align: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 922,
+      "line": 926,
       "sample": ".draw-palette i { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.15); cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 924,
+      "line": 928,
       "sample": ".draw-side { width: 190px; flex-shrink: 0; border-left: 1px solid var(--bd, #e0ded8); overflow-y: auto; background: var(--bg, #fff); }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 924,
+      "line": 928,
       "sample": ".draw-side { width: 190px; flex-shrink: 0; border-left: 1px solid var(--bd, #e0ded8); overflow-y: auto; background: var(--bg, #fff); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 932,
+      "line": 936,
       "sample": ".draw-layer .lv-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 940,
+      "line": 944,
       "sample": ".draw-frames { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-top: 1px solid var(--bd, #e0ded8); background: var(--bg, #fff); flex-shrink: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 943,
+      "line": 947,
       "sample": ".draw-frame { min-width: 34px; height: 28px; border: 1px solid var(--bd, #e0ded8); background: var(--card, #fff); border-radius: 6px; cursor: pointer; font-size: 12px; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 952,
+      "line": 956,
       "sample": ".lib-shelf-head > * { flex-shrink: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 956,
+      "line": 960,
       "sample": ".lib-shelf-query-wrap { flex: 1 1 260px; min-width: 180px; max-width: 460px; display: flex; align-items: center; gap: 7px; color: var(--fg-dim); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 957,
+      "line": 961,
       "sample": ".lib-shelf-query-wrap > svg { flex: none; width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 961,
+      "line": 965,
       "sample": ".lib-shelf-rail { position: relative; min-width: 100%; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 962,
+      "line": 966,
       "sample": ".lib-shelf-grid { position: absolute; inset-inline-start: 20px; display: grid; grid-template-columns: repeat(var(--lib-shelf-columns, 1), 128px); grid-auto-rows: 226px; gap: 16px; align-items: start; will-change: transform; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 963,
+      "line": 967,
       "sample": ".lib-card { box-sizing: border-box; width: 128px; height: 226px; cursor: pointer; border-radius: 10px; padding: 10px; transition: background .15s, box-shadow .15s; contain: layout paint style; outline: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 966,
+      "line": 970,
       "sample": ".lib-cover { width: 108px; height: 150px; border-radius: 8px; overflow: hidden; background: color-mix(in srgb, var(--acc, #4f46e5) 10%, #fff); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,.12); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 969,
+      "line": 973,
       "sample": ".lib-cover-fallback svg { width: 36px; height: 36px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 970,
+      "line": 974,
       "sample": ".lib-card-title { margin-top: 8px; font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 971,
+      "line": 975,
       "sample": ".lib-card-author { font-size: 11px; color: var(--fg-dim, #a3a19a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 973,
+      "line": 977,
       "sample": ".lib-card-favorite { position: absolute; right: 7px; top: 7px; width: 22px; height: 22px; display: grid; place-items: center; color: var(--warn-fg, #8a5200); background: color-mix(in srgb, var(--warn, #d97706) 20%, var(--bg-elev, #fff)); border: 1px solid color-mix(in srgb, var(--warn, #d97706) 48%, var(--border)); bor"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 973,
+      "line": 977,
       "sample": ".lib-card-favorite { position: absolute; right: 7px; top: 7px; width: 22px; height: 22px; display: grid; place-items: center; color: var(--warn-fg, #8a5200); background: color-mix(in srgb, var(--warn, #d97706) 20%, var(--bg-elev, #fff)); border: 1px solid color-mix(in srgb, var(--warn, #d97706) 48%, var(--border)); bor"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 974,
+      "line": 978,
       "sample": ".lib-card-favorite svg { width: 13px; height: 13px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 975,
+      "line": 979,
       "sample": ".lib-card-missing { position: absolute; left: 6px; top: 137px; max-width: 116px; padding: 2px 5px; background: var(--danger, #c2413b); color: var(--danger-fg, #fff); font-size: 9.5px; line-height: 1.3; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 975,
+      "line": 979,
       "sample": ".lib-card-missing { position: absolute; left: 6px; top: 137px; max-width: 116px; padding: 2px 5px; background: var(--danger, #c2413b); color: var(--danger-fg, #fff); font-size: 9.5px; line-height: 1.3; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 976,
+      "line": 980,
       "sample": ".lib-card-progress { position: absolute; left: 10px; right: 10px; bottom: 5px; height: 3px; border-radius: 2px; overflow: hidden; background: var(--bg-active, color-mix(in srgb, var(--fg) 12%, transparent)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 976,
+      "line": 980,
       "sample": ".lib-card-progress { position: absolute; left: 10px; right: 10px; bottom: 5px; height: 3px; border-radius: 2px; overflow: hidden; background: var(--bg-active, color-mix(in srgb, var(--fg) 12%, transparent)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 979,
+      "line": 983,
       "sample": ".lib-empty { position: absolute; inset: 0; width: 100%; min-height: 220px; display: grid; place-items: center; text-align: center; color: var(--fg-dim, #a3a19a); padding: 60px 20px; font-size: 13.5px; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 985,
+      "line": 989,
       "sample": ".lib-reader-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--bd, #e0ded8); flex-shrink: 0; overflow-x: auto; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 986,
+      "line": 990,
       "sample": ".lib-reader-bar > :not(.lib-book-title) { flex-shrink: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 987,
+      "line": 991,
       "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 987,
-      "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 988,
-      "sample": ".lib-pos { font-size: 12px; color: var(--fg-dim, #a3a19a); min-width: 52px; text-align: center; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 990,
-      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
-    },
-    {
-      "rule": "flex-shrink-zero",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 990,
-      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 991,
+      "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 992,
+      "sample": ".lib-pos { font-size: 12px; color: var(--fg-dim, #a3a19a); min-width: 52px; text-align: center; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 994,
+      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
+    },
+    {
+      "rule": "flex-shrink-zero",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 994,
+      "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 995,
       "sample": ".lib-toc-item { padding: 6px 10px; border-radius: 6px; font-size: 12.5px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1019,
+      "line": 1023,
       "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1019,
+      "line": 1023,
       "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1022,
+      "line": 1026,
       "sample": ".cm-item .cm-quote { color: var(--fg-dim, #a3a19a); font-size: 11.5px; border-left: 3px solid #eab308; padding-left: 6px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1031,
+      "line": 1035,
       "sample": ".help-side { width: 250px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1031,
+      "line": 1035,
       "sample": ".help-side { width: 250px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1037,
+      "line": 1041,
       "sample": ".help-toc-item { padding: 7px 10px; border-radius: 7px; font-size: 12.5px; cursor: pointer; color: var(--fg, #2c2c2a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1042,
+      "line": 1046,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1042,
+      "line": 1046,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1042,
+      "line": 1046,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1061,
+      "line": 1065,
       "sample": ".sidebar.floating { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: 10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1061,
+      "line": 1065,
       "sample": ".sidebar.floating { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: 10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1062,
+      "line": 1066,
       "sample": ".sidebar-grip { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 6; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1064,
+      "line": 1068,
       "sample": ".sidebar-rail { width: 30px; flex: none; border: 0; border-right: 1px solid var(--border, #e0ded8); background: var(--bg-elev, #f7f6f3); color: var(--fg-dim, #a3a19a); font-size: 15px; padding-top: 12px; cursor: pointer; align-items: flex-start; justify-content: center; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1064,
+      "line": 1068,
       "sample": ".sidebar-rail { width: 30px; flex: none; border: 0; border-right: 1px solid var(--border, #e0ded8); background: var(--bg-elev, #f7f6f3); color: var(--fg-dim, #a3a19a); font-size: 15px; padding-top: 12px; cursor: pointer; align-items: flex-start; justify-content: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1070,
+      "line": 1074,
       "sample": ".ribbon-grip { position: absolute; left: 0; right: 0; bottom: -3px; height: 7px; cursor: row-resize; z-index: 6; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1076,
+      "line": 1080,
       "sample": "[dir=\"rtl\"] .sidebar.floating { box-shadow: -10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1080,
+      "line": 1084,
       "sample": "[dir=\"rtl\"] .help-close { right: auto; left: 12px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1085,
+      "line": 1089,
       "sample": "[dir=\"rtl\"] .mm-hint { left: auto; right: 12px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1086,
+      "line": 1090,
       "sample": "[dir=\"rtl\"] .notes-graph-legend { left: auto; right: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1096,
+      "line": 1100,
       "sample": ".ft-more { display: block; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--fg-dim); font-size: 14px; width: 22px; height: 22px; border-radius: 5px; cursor: pointer; padding: 0; opacity: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1096,
+      "line": 1100,
       "sample": ".ft-more { display: block; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--fg-dim); font-size: 14px; width: 22px; height: 22px; border-radius: 5px; cursor: pointer; padding: 0; opacity: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1108,
+      "line": 1112,
       "sample": ".ft-rename-input { flex: 1; min-width: 40px; border: 1px solid var(--accent, #4f46e5); border-radius: 4px; padding: 2px 6px; font-size: 12.5px; font-family: inherit; background: var(--bg, #fff); color: var(--fg, #2c2c2a); outline: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1125,
+      "line": 1129,
       "sample": ".sg-hcell .sg-rz { position: absolute; z-index: 5; opacity: 0; transition: opacity .1s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1130,
+      "line": 1134,
       "sample": ".sg-hcell { position: absolute; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1133,
+      "line": 1137,
       "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: var(--accent-fg, #fff); border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1133,
+      "line": 1137,
       "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: var(--accent-fg, #fff); border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
-    },
-    {
-      "rule": "white-space-nowrap",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1138,
-      "sample": ".rb-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 84px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 1142,
+      "sample": ".rb-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 84px; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1146,
       "sample": ".sidebar .ft-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1153,
+      "line": 1157,
       "sample": ".mm-sb-color { width: 26px; height: 24px; padding: 0; border: 1px solid var(--bd, #e0ded8); border-radius: 5px; background: none; cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1161,
+      "line": 1165,
       "sample": ".draw-tool-row2 input[type=range] { width: 76px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1166,
+      "line": 1170,
       "sample": ".draw-collapse-ts { position: absolute; top: 8px; right: 8px; z-index: 12; border: 1px solid var(--bd,#e0ded8); background: var(--bg-elev,#fff); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; color: var(--fg-dim); padding: 0; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1166,
+      "line": 1170,
       "sample": ".draw-collapse-ts { position: absolute; top: 8px; right: 8px; z-index: 12; border: 1px solid var(--bd,#e0ded8); background: var(--bg-elev,#fff); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; color: var(--fg-dim); padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1170,
+      "line": 1174,
       "sample": ".draw-side.collapsed { width: 22px !important; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1180,
+      "line": 1184,
       "sample": ".viewer-pct { min-width: 44px; text-align: center; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1181,
+      "line": 1185,
       "sample": ".viewer-name { margin-left: auto; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1189,
+      "line": 1193,
       "sample": "body.tab-dragging .editor-area::after { content: ''; position: absolute; inset: 0; z-index: 40; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1195,
+      "line": 1199,
       "sample": ".sl-zoomctl { position: absolute; right: 14px; bottom: 12px; z-index: 30; display: flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1195,
+      "line": 1199,
       "sample": ".sl-zoomctl { position: absolute; right: 14px; bottom: 12px; z-index: 30; display: flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1198,
+      "line": 1202,
       "sample": ".sl-zoomctl span { min-width: 38px; text-align: center; color: var(--fg-dim); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1202,
+      "line": 1206,
       "sample": ".appwin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 18px 60px rgba(0, 0, 0, .28); overflow: hidden; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1203,
+      "line": 1207,
       "sample": ".appwin.max { left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; transform: none; border-radius: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1206,
+      "line": 1210,
       "sample": ".appwin-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1208,
+      "line": 1212,
       "sample": ".appwin-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; width: 28px; height: 24px; cursor: pointer; font-size: 12px; line-height: 1; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1211,
+      "line": 1215,
       "sample": ".appwin-resize { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; z-index: 5; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 65%, transparent 65%, transparent 72%, var(--fg-dim, #a3a19a) 72%, var(--fg-dim, #a3a19a) 82%, tra"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1211,
+      "line": 1215,
       "sample": ".appwin-resize { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; z-index: 5; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 65%, transparent 65%, transparent 72%, var(--fg-dim, #a3a19a) 72%, var(--fg-dim, #a3a19a) 82%, tra"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1216,
+      "line": 1220,
       "sample": ".viewer-audio-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 30px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; min-width: 340px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1226,
+      "line": 1230,
       "sample": ".w-openwith { flex: none; width: 300px; background: color-mix(in srgb, var(--accent) 6%, var(--bg-elev)); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border)); border-radius: 14px; padding: 16px 16px 14px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1253,
+      "line": 1257,
       "sample": ".fc-daily-hint { color: var(--fg-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1256,
+      "line": 1260,
       "sample": ".fc-role-pickers .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1275,
+      "line": 1279,
       "sample": ".fc-agent-role .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1290,
+      "line": 1294,
       "sample": ".fc-agent-inputrow .fc-btn { flex: none; width: 58px; padding: 5px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1292,
+      "line": 1296,
       "sample": ".fc-agent-chip { border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg-dim); padding: 2px 7px; font: 10.5px var(--font-ui); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1330,
+      "line": 1334,
       "sample": ".fc-task-label, .fc-his-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1353,
+      "line": 1357,
       "sample": ".side-dock.collapsed { width: 36px !important; min-width: 36px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1353,
+      "line": 1357,
       "sample": ".side-dock.collapsed { width: 36px !important; min-width: 36px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1355,
+      "line": 1359,
       "sample": ".sd-rail { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 36px; border: 0; background: var(--bg-elev); color: var(--fg-dim); cursor: pointer; border-radius: 12px 0 0 12px; align-items: center; justify-content: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1355,
+      "line": 1359,
       "sample": ".sd-rail { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 36px; border: 0; background: var(--bg-elev); color: var(--fg-dim); cursor: pointer; border-radius: 12px 0 0 12px; align-items: center; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1368,
+      "line": 1372,
       "sample": ".sd-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg-dim); border-radius: 5px; width: 22px; height: 20px; cursor: pointer; font-size: 11px; line-height: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1370,
+      "line": 1374,
       "sample": ".sd-zoom { font-size: 11px; color: var(--fg-dim); min-width: 32px; text-align: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1372,
+      "line": 1376,
       "sample": ".sd-grip { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1390,
+      "line": 1394,
       "sample": ".sd-tool-text b { font-size: 12px; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1391,
+      "line": 1395,
       "sample": ".sd-tool-text i { font-size: 10.5px; color: var(--fg-dim); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1399,
+      "line": 1403,
       "sample": ".annotate-canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; pointer-events: auto; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1404,
+      "line": 1408,
       "sample": ".an-fold { border: 0; background: none; color: var(--fg-dim); cursor: pointer; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1406,
+      "line": 1410,
       "sample": ".an-c { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1409,
+      "line": 1413,
       "sample": ".an-size { width: 80px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1418,
+      "line": 1422,
       "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; max-width: 86px; background: var(--accent); color: var(--accent-fg); font-size: 10px; border-radius: 4px; padding: 1px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1418,
+      "line": 1422,
       "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; max-width: 86px; background: var(--accent); color: var(--accent-fg); font-size: 10px; border-radius: 4px; padding: 1px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1422,
+      "line": 1426,
       "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1422,
+      "line": 1426,
       "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1428,
-      "sample": ".lib-pos { flex: none; font-size: 12px; color: var(--fg-dim); min-width: 130px; text-align: right; }"
+      "line": 1434,
+      "sample": ".lib-progress .rb-btn { flex: none; min-width: 32px; min-height: 30px; padding: 4px 7px; flex-direction: row; justify-content: center; gap: 4px; }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 1436,
+      "sample": "position: relative; flex: 1 1 120px; min-width: 48px; height: 20px; cursor: pointer; border-radius: 10px;"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1435,
+      "line": 1441,
+      "sample": ".lib-prog-fill { position: absolute; inset-inline-start: 0; top: 7px; height: 6px; width: 0%; background: var(--accent); border-radius: 3px; transition: width .2s; pointer-events: none; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1442,
+      "sample": ".lib-pos { flex: 0 1 180px; min-width: 0; display: flex; align-items: baseline; justify-content: flex-end; font-size: 12px; color: var(--fg-dim); white-space: nowrap; text-align: right; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1453,
       "sample": ".lib-search-bar { position: absolute; right: 8px; top: 100%; z-index: 30; display: flex; gap: 6px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1452,
+      "line": 1470,
       "sample": ".mz-empty { position: absolute; inset: 0; display: grid; place-items: center; background: #101014; z-index: 3; transition: right .15s ease; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1453,
+      "line": 1471,
       "sample": ".mz-empty-in { max-width: min(420px, calc(100% - 40px)); padding: 20px; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.6; background: none; border: 0; box-shadow: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1455,
+      "line": 1473,
       "sample": ".mz-empty-ico .mz-ico { width: 32px; height: 32px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1463,
+      "line": 1481,
       "sample": ".mz-spectrum { position: absolute; inset: auto 0 0 0; bottom: 0; width: 100%; height: 42%; opacity: .85; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1464,
+      "line": 1482,
       "sample": ".mz-audio-disc { position: relative; z-index: 1; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; background: conic-gradient(var(--bg-active), var(--bg), var(--bg-active), var(--bg), var(--bg-active)); border: 2px solid var(--border); box-shadow: var(--shadow), inset"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1467,
+      "line": 1485,
       "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px 24px; background: linear-gradient(180deg, rgba(10,12,18,.82) 0%, rgba(10,12,18,.48) 58%, transparent 100%); transition: opacity .3s; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1470,
+      "line": 1488,
       "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--mz-overlay-fg); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1471,
+      "line": 1489,
       "sample": ".mz-meta { font-size: 11px; color: var(--mz-overlay-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1474,
+      "line": 1492,
       "sample": ".mz-controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; min-width: 0; padding: 6px 14px 10px; background: transparent; transition: opacity .3s; container: player-controls / inline-size; } /* W87e：按真实 control seat 宽度退化，不再让 max-content 越过窗格 */"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1483,
+      "line": 1501,
       "sample": ".mz-seek-track::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1487,
+      "line": 1505,
       "sample": ".mz-seek-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000 10%)); border-radius: 3px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1488,
+      "line": 1506,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1488,
+      "line": 1506,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
-    },
-    {
-      "rule": "position-absolute",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1490,
-      "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1501,
-      "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/styles/base.css",
-      "line": 1502,
-      "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/styles/base.css",
-      "line": 1503,
-      "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1508,
+      "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1519,
+      "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1520,
+      "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 1521,
+      "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1526,
       "sample": ".ie-crop { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; z-index: 4; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1509,
+      "line": 1527,
       "sample": ".ie-crop .ie-ch { position: absolute; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1521,
+      "line": 1539,
       "sample": ".mz-bar > .mz-btn { width: 32px; height: 32px; padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1522,
+      "line": 1540,
       "sample": ".mz-bar > .mz-btn.mz-play { width: 38px; height: 34px; padding: 0; font-size: 18px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1523,
+      "line": 1541,
       "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1523,
+      "line": 1541,
       "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1524,
+      "line": 1542,
       "sample": ".mz-vol { width: 74px; height: 20px; margin: 0; vertical-align: middle; accent-color: var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1527,
+      "line": 1545,
       "sample": ".mz-more-dot { position: absolute; right: 4px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--mz-overlay-bg); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1531,
+      "line": 1549,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1531,
+      "line": 1549,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1531,
+      "line": 1549,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1536,
+      "line": 1554,
       "sample": ".mz-control-density { font-size: 10.5px; color: var(--fg-dim); white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1537,
+      "line": 1555,
       "sample": ".mz-control-center > header button { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--fg-dim); cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1549,
+      "line": 1567,
       "sample": ".mz-control-center .mz-overflow-item.mz-btn > .mz-control-glyph { width: 20px; display: inline-flex; align-items: center; justify-content: center; color: currentColor; font: 700 10px/1 var(--font-ui); letter-spacing: -.03em; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1550,
+      "line": 1568,
       "sample": ".mz-control-center .mz-overflow-item.mz-btn::after { content: attr(data-player-label); grid-column: 2; grid-row: 1; align-self: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; line-height: 1.2; text-align: left; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1556,
+      "line": 1574,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-control-center { right: calc(var(--mz-side-w) + 14px); width: min(360px, calc(100% - var(--mz-side-w) - 28px)); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1565,
+      "line": 1583,
       "sample": ".mz-bar > .mz-btn { width: 30px; padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1566,
+      "line": 1584,
       "sample": ".mz-bar > .mz-btn.mz-play { width: 34px; padding: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1578,
+      "line": 1596,
       "sample": ".mz-bar .mz-btn { min-width: 40px; min-height: 40px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1581,
+      "line": 1599,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1581,
+      "line": 1599,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1585,
+      "line": 1603,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-media, .mz-stage.side-open:not(.side-overlay) .mz-audio-wrap, .mz-stage.side-open:not(.side-overlay) .mz-sub-host { width: calc(100% - var(--mz-side-w)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1588,
+      "line": 1606,
       "sample": ".mz-side-grip { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 9; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1591,
+      "line": 1609,
       "sample": ".mz-stream-err { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 12%; text-align: center; background: color-mix(in srgb, #000 72%, transparent); color: #eee; pointer-events: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1596,
+      "line": 1614,
       "sample": ".mz-decode-actions .rb-btn { min-width: 112px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1606,
+      "line": 1624,
       "sample": ".mz-ml-caret { flex: none; width: 14px; text-align: center; opacity: .7; font-size: 10px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1607,
+      "line": 1625,
       "sample": ".mz-ml-dname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1612,
+      "line": 1630,
       "sample": ".mz-li { padding: 6px 9px; font-size: 12px; color: var(--fg-dim); border-radius: 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1641,
+      "line": 1659,
       "sample": ".fc-feed-cluster-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1647,
+      "line": 1665,
       "sample": ".fc-hit-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1663,
-      "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
+      "line": 1682,
+      "sample": ".lib-progress.collapsed .lib-progress-toggle { min-width: 68px; color: var(--accent); background: var(--accent-soft); }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 1688,
+      "sample": ".lib-progress:not(.collapsed) .lib-progress-toggle { min-width: 32px; }"
     },
     {
       "rule": "position-absolute",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1663,
-      "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
-    },
-    {
-      "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1680,
+      "line": 1706,
       "sample": ".lib-comic-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fg-dim); font: 600 12px/1 system-ui; opacity: .55; background: color-mix(in srgb, var(--card) 72%, transparent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1682,
+      "line": 1708,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1682,
+      "line": 1708,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1683,
+      "line": 1709,
       "sample": ".lib-comic-slot.is-error::after { content: '本页解码失败'; position: absolute; top: 50%; color: var(--danger-fg, var(--danger)); font-size: 12px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1697,
+      "line": 1723,
       "sample": ".sd-grip-b { position: absolute; left: 0; right: 0; bottom: -4px; height: 8px; cursor: ns-resize; z-index: 5; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1698,
+      "line": 1724,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1698,
+      "line": 1724,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1717,
+      "line": 1743,
       "sample": ".mz-ico { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1718,
+      "line": 1744,
       "sample": ".rb-btn .mz-ico { width: 17px; height: 17px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1719,
+      "line": 1745,
       "sample": ".mazz-menu-icon .mz-ico { width: 15px; height: 15px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1723,
+      "line": 1749,
       "sample": ".w-card .mz-ico { width: 20px; height: 20px; color: var(--accent); vertical-align: -4px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1727,
+      "line": 1753,
       "sample": ".ribbon-tab-ico .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1729,
+      "line": 1755,
       "sample": ".tab-pin .mz-ico { width: 12px; height: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1732,
+      "line": 1758,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1732,
+      "line": 1758,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1740,
+      "line": 1766,
       "sample": ".sb-tab { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; border: 0; background: none; color: var(--fg-dim); font-size: 11.5px; padding: 5px 2px; cursor: pointer; border-radius: 6px; font-family: var(--font-ui); white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1741,
+      "line": 1767,
       "sample": ".sb-tab > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1744,
+      "line": 1770,
       "sample": ".sb-tab-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1745,
+      "line": 1771,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1746,
+      "line": 1772,
       "sample": "@container workspace-sidebar (max-width: 260px) {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1754,
+      "line": 1780,
       "sample": ".sb-tbtn .mz-ico { width: 13px; height: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1761,
+      "line": 1787,
       "sample": ".sb-item .mz-ico { width: 14px; height: 14px; flex: none; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1762,
+      "line": 1788,
       "sample": ".sb-item-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1768,
+      "line": 1794,
       "sample": ".sb-ol-arrow { font-style: normal; color: var(--fg-dim); width: 14px; text-align: center; cursor: pointer; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1775,
+      "line": 1801,
       "sample": ".sb-tag-head .mz-ico { width: 14px; height: 14px; color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1789,
+      "line": 1815,
       "sample": ".ft-dir { margin-left: auto; padding-left: 6px; padding-right: 26px; font-size: 10px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; direction: rtl; text-align: right; flex: none; pointer-events: none; position: relative; z-index: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1798,
+      "line": 1824,
       "sample": ".mz-bright { width: 56px; accent-color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1818,
+      "line": 1844,
       "sample": ".selmenu-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1822,
+      "line": 1848,
       "sample": ".sb-ws-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1837,
+      "line": 1863,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1837,
+      "line": 1863,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1842,
+      "line": 1868,
       "sample": ".fs-exit { position: fixed; right: 18px; bottom: 18px; z-index: 9999; border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); color: var(--fg); border-radius: 999px; padding: 8px 18px; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1848,
+      "line": 1874,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1848,
+      "line": 1874,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1848,
+      "line": 1874,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1863,
+      "line": 1889,
       "sample": ".mz-companion-compose .mz-companion-send { flex:none; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; padding:0; border:0; border-radius:7px; background:var(--accent); color:var(--accent-fg); cursor:pointer; transition:filter .15s ease, transform .15s ease; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1864,
+      "line": 1890,
       "sample": ".mz-companion-compose .mz-companion-send .mz-ico { width:17px; height:17px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1868,
+      "line": 1894,
       "sample": ".mz-danmaku-canvas { position:absolute; inset:0; z-index:6; pointer-events:none; width:100%; height:100%; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1869,
+      "line": 1895,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1869,
+      "line": 1895,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1872,
+      "line": 1898,
       "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1873,
+      "line": 1899,
       "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1874,
+      "line": 1900,
       "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1875,
+      "line": 1901,
       "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1876,
+      "line": 1902,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1878,
+      "line": 1904,
       "sample": ".ft-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1880,
+      "line": 1906,
       "sample": ".sd-tool-ico { display: inline-flex; align-items: center; justify-content: center; width: 18px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1889,
+      "line": 1915,
       "sample": ".mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: var(--fg-dim); font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1895,
+      "line": 1921,
       "sample": ".mz-ml-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1912,
+      "line": 1938,
       "sample": ".mz-mikan-season { min-width: 116px; max-width: 170px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1918,
+      "line": 1944,
       "sample": ".mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1919,
+      "line": 1945,
       "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1923,
+      "line": 1949,
       "sample": ".mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1927,
-      "sample": ".mz-catalog-cover { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 16px; font-weight: 650; }"
+      "line": 1953,
+      "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1954,
+      "sample": ".mz-catalog-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg-soft); opacity: 0; transition: opacity .12s ease; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1928,
+      "line": 1958,
       "sample": ".mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1934,
+      "line": 1964,
       "sample": ".mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1940,
+      "line": 1970,
       "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/convergence.css",
-      "line": 53,
+      "line": 65,
       "sample": ".titlebar .tb-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/convergence.css",
-      "line": 58,
+      "line": 70,
       "sample": "writing-mode: horizontal-tb !important; text-orientation: mixed; word-break: keep-all; white-space: nowrap;"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/convergence.css",
-      "line": 61,
+      "line": 73,
       "sample": ".ribbon[data-ribbon-density=\"compact\"] .rb-btn { min-width: 34px; padding-inline: 6px; gap: 2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/convergence.css",
-      "line": 65,
+      "line": 77,
       "sample": "min-width: 30px; width: 30px; padding-inline: 5px; gap: 0; overflow: hidden; font-size: 0;"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/convergence.css",
-      "line": 65,
+      "line": 77,
       "sample": "min-width: 30px; width: 30px; padding-inline: 5px; gap: 0; overflow: hidden; font-size: 0;"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/convergence.css",
-      "line": 71,
+      "line": 83,
       "sample": "position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/convergence.css",
-      "line": 71,
+      "line": 83,
       "sample": "position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/convergence.css",
-      "line": 82,
+      "line": 94,
       "sample": "[data-ui-size=\"xs\"] .sidebar { width: min(82vw, 280px); }"
     },
     {

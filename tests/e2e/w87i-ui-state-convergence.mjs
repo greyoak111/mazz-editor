@@ -167,6 +167,7 @@ try {
         rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
         svg: svg ? { x: svg.x, y: svg.y, width: svg.width, height: svg.height } : null,
         strokeWidth: svg ? Number.parseFloat(getComputedStyle(button.querySelector('svg')).strokeWidth) : null,
+        color: getComputedStyle(button).color,
         centerDelta: svg ? {
           x: Math.abs((rect.x + rect.width / 2) - (svg.x + svg.width / 2)),
           y: Math.abs((rect.y + rect.height / 2) - (svg.y + svg.height / 2)),
@@ -176,9 +177,10 @@ try {
     }),
   }));
   assert(titlebar.buttons.length === 3, `caption count=${titlebar.buttons.length}`);
-  assert(titlebar.buttons.every(row => Math.abs(row.rect.width - 46) <= .5 && row.svg && Math.abs(row.svg.width - 12) <= .5 && Math.abs(row.svg.height - 12) <= .5), `caption geometry unhealthy: ${JSON.stringify(titlebar)}`);
+  assert(titlebar.buttons.every(row => Math.abs(row.rect.width - 46) <= .5 && Math.abs(row.rect.height - 36) <= .5 && row.svg && Math.abs(row.svg.width - 12) <= .5 && Math.abs(row.svg.height - 12) <= .5), `caption geometry unhealthy: ${JSON.stringify(titlebar)}`);
   assert(titlebar.buttons.every(row => row.centerDelta.x <= .75 && row.centerDelta.y <= .75), `caption optical center drift: ${JSON.stringify(titlebar)}`);
-  assert(titlebar.buttons.every(row => Math.abs(row.strokeWidth - 1.15) <= .01), `caption optical stroke was overridden: ${JSON.stringify(titlebar)}`);
+  assert(titlebar.buttons.every(row => Math.abs(row.strokeWidth - 1) <= .01), `caption optical stroke was overridden: ${JSON.stringify(titlebar)}`);
+  assert(titlebar.buttons.every(row => /^rgba?\(/.test(row.color) && row.color !== 'rgba(0, 0, 0, 0)'), `caption contrast token missing: ${JSON.stringify(titlebar)}`);
   assert(new Set(titlebar.buttons.map(row => row.markup)).size === 3, 'caption primitives must be distinct');
 
   // 2) Markdown Ribbon 按自身容器降级，不再把中文压成竖排；颜色块有确定默认值。

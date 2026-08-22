@@ -92,7 +92,7 @@ const EVENT_CHANNELS = new Set([
   'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role', 'window:durability-failed',
   'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'factory:aiUsage', 'library:download',
   'harness:event',
-  'workspace:changed', 'window:fullscreen', 'bv:event', 'bv:frame', 'slideRemote:cmd', 'slideRemote:client',
+  'workspace:changed', 'window:fullscreen', 'window:maximize-state', 'bv:event', 'bv:frame', 'slideRemote:cmd', 'slideRemote:client',
   'panel:changed', 'panel:action', 'panel:push', 'dock:snapHint',
   'archive:progress', 'archive:done', 'sync:positionChanged', 'sync:completed', 'sync:failed',
 ]);

@@ -9,6 +9,7 @@ const fs = require('fs');
 const { Readable } = require('stream'); // mazz-res media/ 分支：range 流式响应（GB 级不整读）
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { CATALOG_IMAGE_MAX_BYTES, allowedCatalogImageUrl } = require('./catalog-image-policy');
 
 // 应用级服务各自拥有独立 before-quit 收尸钩；显式容量覆盖当前正式服务数，避免 Node 默认 10 个把合法治理误报为泄漏。
 app.setMaxListeners(32);
@@ -1449,6 +1450,64 @@ function registerChannels() {
       const u = new URL(req.url);
       const rel = decodeURIComponent(u.host + u.pathname).replace(/^\/+/, '');
       if (rel === 'fonts/fallback') return serveFont();
+      // Mikan catalog covers: native <img loading=lazy> owns request lifetime.
+      // Every redirect is revalidated, bytes/MIME are bounded, and renderer
+      // removal aborts net.fetch through the protocol Request signal.
+      if (rel.startsWith('catalog/')) {
+        let target = allowedCatalogImageUrl(rel.slice('catalog/'.length));
+        if (!target) return new Response('forbidden catalog image', { status: 403 });
+        let resp = null;
+        for (let hop = 0; hop < 4; hop += 1) {
+          resp = await net.fetch(target.href, {
+            redirect: 'manual',
+            signal: req.signal,
+            headers: { Accept: 'image/avif,image/webp,image/png,image/jpeg,image/gif' },
+          });
+          if (![301, 302, 303, 307, 308].includes(resp.status)) break;
+          const redirectTarget = allowedCatalogImageUrl(new URL(resp.headers.get('location') || '', target).href);
+          try { await resp.body?.cancel?.(); } catch {}
+          target = redirectTarget;
+          if (!target) return new Response('forbidden catalog redirect', { status: 403 });
+          resp = null;
+        }
+        if (!resp) return new Response('too many catalog redirects', { status: 508 });
+        if (!resp.ok) {
+          try { await resp.body?.cancel?.(); } catch {}
+          return new Response('catalog image unavailable', { status: resp.status });
+        }
+        const mime = String(resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+        if (!['image/avif', 'image/webp', 'image/png', 'image/jpeg', 'image/gif'].includes(mime)) {
+          try { await resp.body?.cancel?.(); } catch {}
+          return new Response('unsupported catalog image', { status: 415 });
+        }
+        const announced = Number(resp.headers.get('content-length') || 0);
+        if (announced > CATALOG_IMAGE_MAX_BYTES) {
+          try { await resp.body?.cancel?.(); } catch {}
+          return new Response('catalog image too large', { status: 413 });
+        }
+        const reader = resp.body?.getReader();
+        if (!reader) return new Response('catalog image unavailable', { status: 502 });
+        const chunks = [];
+        let total = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          total += value.byteLength;
+          if (total > CATALOG_IMAGE_MAX_BYTES) {
+            await reader.cancel('catalog image byte limit').catch(() => {});
+            return new Response('catalog image too large', { status: 413 });
+          }
+          chunks.push(Buffer.from(value));
+        }
+        const body = Buffer.concat(chunks, total);
+        return new Response(body, { headers: {
+          'Content-Type': mime,
+          'Content-Length': String(body.length),
+          'Cache-Control': 'public, max-age=86400',
+          'Access-Control-Allow-Origin': '*',
+          'Cross-Origin-Resource-Policy': 'cross-origin',
+        } });
+      }
       // P2P 流代理：mazz-res://tor/127.0.0.1:{port}/{path} → webtorrent range 流端点
       // （播放器 CSP 不用动——mazz-res 已在白名单，页面对本地 HTTP 流全走这一口）
       if (rel.startsWith('tor/')) {
@@ -1961,6 +2020,11 @@ app.whenReady().then(() => {
   hookDisplayMedia(); // getDisplayMedia 许可（全局内录）
   hookCertificateErrors();
   tray.create();
+  // before-quit still precedes the renderer durability veto.  Destroying the
+  // tray there would leave a live app without its tray if a dirty/failed save
+  // keeps the window open.  will-quit only runs after every window close gate
+  // has committed.
+  app.on('will-quit', () => tray.destroy());
   globalShortcuts.registerAll();
 
   // —— 隐私浏览器：独立会话 + 搜索服务（主进程专属，实例凭据不出主进程）——

@@ -459,13 +459,35 @@ describe('W89b Library reader · product decisions', () => {
     assert.equal(normalizeReaderMode('double'), 'double');
   });
 
-  test('collapsed progress remains in layout instead of changing reader viewport height', () => {
+  test('collapsed progress remains an in-flow compact seek surface', () => {
     const css = readFileSync(new URL('../../renderer/styles/base.css', import.meta.url), 'utf8');
+    const source = readFileSync(new URL('../../renderer/modules/library/index.js', import.meta.url), 'utf8');
+    const base = css.match(/\.lib-progress\s*\{([^}]+)\}/)?.[1] || '';
     const rule = css.match(/\.lib-progress\.collapsed\s*\{([^}]+)\}/)?.[1] || '';
     assert.ok(rule, 'missing collapsed progress rule');
+    assert.match(base, /flex\s*:\s*0 0 43px/);
+    assert.match(base, /height\s*:\s*43px/);
+    assert.match(base, /min-height\s*:\s*43px/);
+    assert.match(base, /max-height\s*:\s*43px/);
     assert.ok(!/display\s*:\s*none/i.test(rule), 'collapsed progress must retain its flex slot');
-    assert.ok(/visibility\s*:\s*hidden/i.test(rule) && /opacity\s*:\s*0/i.test(rule),
-      'collapsed progress should hide visually while preserving geometry');
+    assert.doesNotMatch(rule, /visibility\s*:\s*hidden|opacity\s*:\s*0|translateY|pointer-events\s*:\s*none/);
+    assert.match(css, /\.lib-progress\.collapsed \.lib-progress-nav\s*\{\s*display:\s*none/);
+    assert.match(css, /\.lib-progress\.collapsed \.lib-progress-toggle[^}]*min-width:\s*68px/);
+    assert.match(css, /\.lib-prog-track[^}]*min-width:\s*48px/);
+    assert.ok(source.includes('role="slider" tabindex="0"'));
+    assert.ok(source.includes('lib-pos-location') && source.includes('lib-pos-percent'));
+    assert.ok(source.includes("aria-expanded', String(!collapsed)"));
+    assert.ok(!source.includes('lib-progress-peek'));
+  });
+
+  test('paged seek maps whole-book percentage to a stable section locator', () => {
+    const source = readFileSync(new URL('../../renderer/modules/library/index.js', import.meta.url), 'utf8');
+    assert.ok(source.includes("ctl._pendingAnchor = { kind: 'dom-text', m: section, r: within }"));
+    assert.ok(source.includes('const scaled = targetRatio * total'));
+    assert.ok(source.includes('const anchor = ctl._captureStableAnchor?.() || captureAnchor()'));
+    assert.ok(source.includes('commitProgress(Math.round((section + within) / total * 100)'));
+    assert.ok(!source.includes('Math.round(targetRatio * (screens - 1)) * step'),
+      'temporary chapter rail screen count must never masquerade as whole-book seek');
   });
 
   test('tall comic fit changes both DOM axis caps between 50% and 100%', () => {

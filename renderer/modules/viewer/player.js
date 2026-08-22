@@ -609,6 +609,21 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+  const CATALOG_IMAGE_HOSTS = new Set(['mikanime.tv', 'www.mikanime.tv', 'mikanani.me', 'www.mikanani.me']);
+  const catalogImageSrc = (value) => {
+    try {
+      const remote = new URL(String(value || ''));
+      if (remote.protocol !== 'https:' || remote.username || remote.password || (remote.port && remote.port !== '443')
+        || !CATALOG_IMAGE_HOSTS.has(remote.hostname.toLowerCase())) return '';
+      // The <img loading="lazy"> element remains the request owner.  The
+      // mazz-res branch merely gives the CSP-safe request a bounded,
+      // allow-listed path and inherits cancellation when the row is removed.
+      return window.mazz?.isElectron
+        ? `mazz-res://catalog/${encodeURIComponent(remote.href)}`
+        : remote.href;
+    } catch { return ''; }
+  };
+
   // —— 网络资源：四站多选聚合 + 有界自动翻页 + Mikan 周历/季度目录 ——
   let webInited = false;
   let webAggregates = [];
@@ -676,10 +691,30 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       const rowsEl = webEl.querySelector('.mz-web-rows');
       rowsEl.className = 'mz-web-rows mz-catalog-rows';
       root.querySelector('.mz-side-count').textContent = `（${catalog.items?.length || 0}）`;
-      rowsEl.innerHTML = (catalog.items || []).map((item, index) => `<button class="mz-catalog-item" data-i="${index}" type="button">
-        <span class="mz-catalog-cover" aria-hidden="true">${escapeSiteText(item.title.slice(0, 1))}</span>
-        <span><b>${escapeSiteText(item.title)}</b><small>${escapeSiteText(item.dayLabel)} · ${escapeSiteText(item.updatedAt)}</small></span>
-      </button>`).join('') || '<div class="mz-dim">本季度目录为空。</div>';
+      rowsEl.innerHTML = (catalog.items || []).map((item, index) => {
+        const imageSrc = catalogImageSrc(item.imageUrl);
+        const fallback = escapeSiteText(item.title.slice(0, 1));
+        return `<button class="mz-catalog-item" data-i="${index}" type="button">
+          <span class="mz-catalog-cover" aria-hidden="true">
+            <span class="mz-catalog-fallback">${fallback}</span>
+            ${imageSrc ? `<img src="${escapeSiteText(imageSrc)}" alt="" width="34" height="46" loading="lazy" decoding="async" fetchpriority="low" referrerpolicy="no-referrer">` : ''}
+          </span>
+          <span><b>${escapeSiteText(item.title)}</b><small>${escapeSiteText(item.dayLabel)} · ${escapeSiteText(item.updatedAt)}</small></span>
+        </button>`;
+      }).join('') || '<div class="mz-dim">本季度目录为空。</div>';
+      rowsEl.querySelectorAll('.mz-catalog-cover img').forEach((image) => {
+        const cover = image.closest('.mz-catalog-cover');
+        const loaded = () => cover?.classList.add('has-image');
+        const failed = () => {
+          cover?.classList.remove('has-image');
+          image.removeAttribute('src');
+        };
+        if (image.complete && image.naturalWidth > 0) loaded();
+        else {
+          image.addEventListener('load', loaded, { once: true });
+          image.addEventListener('error', failed, { once: true });
+        }
+      });
       rowsEl.querySelectorAll('.mz-catalog-item').forEach(item => item.addEventListener('click', () => {
         const selected = catalog.items[+item.dataset.i];
         webEl.querySelector('.mz-web-kw').value = selected.title;
@@ -1127,18 +1162,28 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   // ---------- 悬停缩略图 ----------
   let hoverTimer = null, previewVideo = null;
+  function disposePreviewVideo() {
+    clearTimeout(hoverTimer);
+    thumb.style.display = 'none';
+    thumbLabel.textContent = '';
+    thumbCanvas.width = 0;
+    thumbCanvas.height = 0;
+    if (!previewVideo) return;
+    try {
+      previewVideo.pause();
+      previewVideo.removeAttribute('src');
+      previewVideo.load();
+    } catch {}
+    previewVideo = null;
+  }
   function ensurePreviewVideo() {
-    if (isVideo && previewVideo && previewVideo._src !== url) {
-      // 切源即失效（本地换网络资源后小窗画还是上一个视频的实锤根因：previewVideo 一建不换 src）
-      try { previewVideo.removeAttribute('src'); previewVideo.load(); } catch {}
-      previewVideo = null;
-    }
+    if (isVideo && previewVideo && previewVideo._src !== curUrl) disposePreviewVideo();
     if (!previewVideo && isVideo) {
       previewVideo = document.createElement('video');
       previewVideo.muted = true;
       previewVideo.preload = 'auto';
-      previewVideo.src = url;
-      previewVideo._src = url;
+      previewVideo.src = curUrl;
+      previewVideo._src = curUrl;
     }
     return previewVideo;
   }
@@ -1157,6 +1202,9 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       const pv = ensurePreviewVideo();
       if (!pv) return;
       const draw = () => {
+        // A seeked event queued by the previous source can arrive after
+        // setSource().  Only the current preview owner may paint the canvas.
+        if (pv !== previewVideo || pv._src !== curUrl) return;
         // 按视频实际宽高比等比缩放（宽≤160 高≤120），不再固定 16:9 拉伸变形
         const vw = pv.videoWidth || 16, vh = pv.videoHeight || 9;
         const scale = Math.min(160 / vw, 120 / vh);
@@ -1551,6 +1599,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     removeDecodeFailure();
     decodedFrameSignals = 0;
     saveProgMem(); // 旧片先存进度（用旧 curPath）
+    disposePreviewVideo(); // 旧解码器立即退役；下一次悬停只能从新 curUrl 建预览 owner。
     // 同片 setSource（activate 重载/刷新）不得卸载字幕——detach+重挂的竞态杀 in-flight 是总根（三连实锤）
     const pathChanged = newPath !== curPath;
     curUrl = newUrl; curName = newName; curPath = newPath;
@@ -1639,11 +1688,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         try { rec.onstop = null; if (rec.state !== 'inactive') rec.stop(); } catch {}
         try { stream.getTracks().forEach(t => t.stop()); } catch {}
       }
-      if (previewVideo) {
-        previewVideo.pause(); previewVideo.removeAttribute('src');
-        try { previewVideo.load(); } catch {}
-        previewVideo = null;
-      }
+      disposePreviewVideo();
       try {
         // close() 在已关闭上下文上返回 rejected promise（同步 try 接不住）——二次销毁时 pageerror 的真凶
         const contexts = new Set([ctl._actx, ctl._chain?.ctx].filter(Boolean));

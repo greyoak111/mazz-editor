@@ -220,6 +220,7 @@ try {
       const ctl = window.__activeLibraryCtl;
       return {
         frameHeight: ctl._frame.getBoundingClientRect().height,
+        barHeight: ctl.root.querySelector('.lib-progress').getBoundingClientRect().height,
         offset: ctl._flowOffset,
         anchor: ctl.captureProgress()?.anchor,
       };
@@ -228,18 +229,30 @@ try {
     await win.waitForTimeout(320);
     const folded = await win.evaluate(() => ({
       frameHeight: window.__activeLibraryCtl._frame.getBoundingClientRect().height,
+      barHeight: window.__activeLibraryCtl.root.querySelector('.lib-progress').getBoundingClientRect().height,
       offset: window.__activeLibraryCtl._flowOffset,
       display: getComputedStyle(window.__activeLibraryCtl.root.querySelector('.lib-progress')).display,
+      visibility: getComputedStyle(window.__activeLibraryCtl.root.querySelector('.lib-progress')).visibility,
+      opacity: Number(getComputedStyle(window.__activeLibraryCtl.root.querySelector('.lib-progress')).opacity),
+      trackWidth: window.__activeLibraryCtl.root.querySelector('.lib-prog-track').getBoundingClientRect().width,
+      position: window.__activeLibraryCtl.root.querySelector('.lib-pos').textContent,
+      toggleExpanded: window.__activeLibraryCtl.root.querySelector('[data-a="prog-fold"]').getAttribute('aria-expanded'),
     }));
-    await win.locator('.lib-reader:visible .lib-progress-peek').click();
+    await win.locator('.lib-reader:visible [data-a="prog-fold"]').click();
     await win.waitForTimeout(320);
     const expanded = await win.evaluate(() => ({
       frameHeight: window.__activeLibraryCtl._frame.getBoundingClientRect().height,
+      barHeight: window.__activeLibraryCtl.root.querySelector('.lib-progress').getBoundingClientRect().height,
       offset: window.__activeLibraryCtl._flowOffset,
       anchor: window.__activeLibraryCtl.captureProgress()?.anchor,
     }));
     assert(folded.display === 'flex', `collapsed bar left layout: ${JSON.stringify(folded)}`, 'W89_PROGRESS_SLOT');
-    assert(Math.abs(before.frameHeight - folded.frameHeight) < 1 && Math.abs(before.frameHeight - expanded.frameHeight) < 1,
+    assert(folded.visibility === 'visible' && folded.opacity > .99 && folded.trackWidth >= 48
+      && /\d+\s*\/\s*\d+/.test(folded.position) && /\d+%/.test(folded.position)
+      && folded.toggleExpanded === 'false',
+    `collapsed bar lost compact progress controls: ${JSON.stringify(folded)}`, 'W89_PROGRESS_COMPACT');
+    assert(Math.abs(before.frameHeight - folded.frameHeight) < .01 && Math.abs(before.frameHeight - expanded.frameHeight) < .01
+      && Math.abs(before.barHeight - folded.barHeight) < .01 && Math.abs(before.barHeight - expanded.barHeight) < .01,
       `progress bar resized page grid: ${JSON.stringify({ before, folded, expanded })}`, 'W89_PROGRESS_REFLOW');
     assert(Math.abs(before.offset - folded.offset) < 1 && Math.abs(before.offset - expanded.offset) < 1,
       `progress bar moved reading point: ${JSON.stringify({ before, folded, expanded })}`, 'W89_PROGRESS_LOCATOR');

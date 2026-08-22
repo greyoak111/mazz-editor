@@ -117,13 +117,33 @@ describe('W89b Reader · retired half-finished preferences', () => {
 });
 
 describe('W89b Reader · stable chrome and paper surfaces', () => {
-  test('collapsed progress retains its flex slot and cannot resize the iframe', () => {
+  test('collapsed progress retains an exact slot while its compact essentials remain visible', () => {
     const css = read('renderer/styles/base.css');
+    const base = css.match(/\.lib-progress\s*\{([^}]*)\}/)?.[1] || '';
     const rule = css.match(/\.lib-progress\.collapsed\s*\{([^}]*)\}/)?.[1] || '';
-    assert.ok(rule.includes('visibility: hidden'));
-    assert.ok(rule.includes('opacity: 0'));
-    assert.ok(rule.includes('transform: translateY(100%)'));
+    assert.match(base, /flex:\s*0 0 43px/);
+    assert.match(base, /height:\s*43px/);
+    assert.match(base, /min-height:\s*43px/);
+    assert.match(base, /max-height:\s*43px/);
     assert.ok(!/display\s*:\s*none/.test(rule));
+    assert.doesNotMatch(rule, /visibility\s*:\s*hidden|opacity\s*:\s*0|translateY|pointer-events\s*:\s*none/);
+    assert.match(css, /\.lib-progress\.collapsed \.lib-progress-nav\s*\{\s*display:\s*none/);
+    assert.match(css, /\.lib-progress\.collapsed \.lib-progress-toggle[^}]*min-width:\s*68px/);
+    assert.match(css, /\.lib-prog-track[^}]*min-width:\s*48px/);
+    assert.ok(!css.includes('.lib-progress-peek'), 'the orphan arrow affordance must be retired');
+  });
+
+  test('compact seek and expand affordances are native keyboard/ARIA controls', () => {
+    const source = read('renderer/modules/library/index.js');
+    assert.match(source, /class="lib-prog-track" role="slider" tabindex="0"/);
+    assert.match(source, /data-a="prog-fold" aria-expanded="true" aria-label="\u6536\u8d77\u9605\u8bfb\u8fdb\u5ea6\u680f"/);
+    assert.ok(source.includes("progTrack.setAttribute('aria-valuenow'"));
+    assert.ok(source.includes("progTrack.setAttribute('aria-valuetext'"));
+    assert.ok(source.includes("event.key === 'Home'") && source.includes("event.key === 'End'"));
+    assert.ok(source.includes("event.key === 'ArrowLeft'") && source.includes("event.key === 'ArrowRight'"));
+    assert.ok(source.includes("ctl._pendingAnchor = { kind: 'dom-text', m: section, r: within }"),
+      'paged seek must use a semantic whole-book locator, not the temporary chapter rail pixels');
+    assert.ok(!source.includes('lib-progress-peek'));
   });
 
   test('continuous text and all comic modes consume the width preference', () => {

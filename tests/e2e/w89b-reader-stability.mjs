@@ -232,8 +232,8 @@ async function pagedProbe() {
 async function revealProgress() {
   await win.evaluate(() => {
     const root = window.__activeLibraryCtl?.root;
-    const peek = root?.querySelector('.lib-progress-peek');
-    if (peek && getComputedStyle(peek).display !== 'none') peek.click();
+    const bar = root?.querySelector('.lib-progress');
+    if (bar?.classList.contains('collapsed')) root?.querySelector('[data-a="prog-fold"]')?.click();
     else root?.querySelector('.lib-content')?.dispatchEvent(new PointerEvent('pointermove', { bubbles: true }));
   });
   await win.waitForFunction(() => !window.__activeLibraryCtl?.root?.querySelector('.lib-progress')?.classList.contains('collapsed'));
@@ -242,12 +242,80 @@ async function revealProgress() {
 
 async function collapseProgress({ manual = true } = {}) {
   if (manual) {
-    await win.evaluate(() => window.__activeLibraryCtl?.root?.querySelector('[data-a="prog-fold"]')?.click());
+    await win.evaluate(() => {
+      const root = window.__activeLibraryCtl?.root;
+      if (!root?.querySelector('.lib-progress')?.classList.contains('collapsed')) {
+        root.querySelector('[data-a="prog-fold"]')?.click();
+      }
+    });
   } else {
     await win.waitForFunction(() => window.__activeLibraryCtl?.root?.querySelector('.lib-progress')?.classList.contains('collapsed'), null, { timeout: 5000 });
   }
   await win.waitForFunction(() => window.__activeLibraryCtl?.root?.querySelector('.lib-progress')?.classList.contains('collapsed'));
   await win.waitForTimeout(360);
+}
+
+async function progressChromeProbe() {
+  return win.evaluate(() => {
+    const root = window.__activeLibraryCtl?.root;
+    const bar = root?.querySelector('.lib-progress');
+    const track = root?.querySelector('.lib-prog-track');
+    const pos = root?.querySelector('.lib-pos');
+    const toggle = root?.querySelector('[data-a="prog-fold"]');
+    const previous = root?.querySelector('[data-a="prev"]');
+    const next = root?.querySelector('[data-a="next"]');
+    const rectOf = element => {
+      const rect = element?.getBoundingClientRect();
+      return rect ? { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height } : null;
+    };
+    const styleOf = element => {
+      const style = element && getComputedStyle(element);
+      return style ? { display: style.display, visibility: style.visibility, opacity: Number(style.opacity), transform: style.transform } : null;
+    };
+    return {
+      mode: window.__activeLibraryCtl?.mode,
+      collapsed: bar?.classList.contains('collapsed') || false,
+      bar: rectOf(bar),
+      barStyle: styleOf(bar),
+      barClientWidth: bar?.clientWidth || 0,
+      barScrollWidth: bar?.scrollWidth || 0,
+      track: rectOf(track),
+      trackStyle: styleOf(track),
+      trackRole: track?.getAttribute('role'),
+      trackTabIndex: track?.tabIndex,
+      trackNow: Number(track?.getAttribute('aria-valuenow')),
+      trackText: track?.getAttribute('aria-valuetext') || '',
+      position: rectOf(pos),
+      positionText: pos?.textContent?.replace(/\s+/g, ' ').trim() || '',
+      toggle: rectOf(toggle),
+      toggleStyle: styleOf(toggle),
+      toggleExpanded: toggle?.getAttribute('aria-expanded'),
+      toggleLabel: toggle?.getAttribute('aria-label') || '',
+      previousDisplay: previous ? getComputedStyle(previous).display : null,
+      nextDisplay: next ? getComputedStyle(next).display : null,
+      frameHeight: root?.querySelector('iframe.lib-book-frame')?.getBoundingClientRect().height || null,
+    };
+  });
+}
+
+function assertCompactProgress(probe, context) {
+  assert(probe?.collapsed, `${context}: ${JSON.stringify(probe)}`, 'W89B_PROGRESS_COMPACT_STATE');
+  assert(probe.barStyle?.display === 'flex' && probe.barStyle.visibility === 'visible'
+    && probe.barStyle.opacity > .99 && probe.barStyle.transform === 'none',
+  `${context}: compact bar is not visibly in-flow: ${JSON.stringify(probe)}`, 'W89B_PROGRESS_COMPACT_VISIBLE');
+  assert(near(probe.bar?.height, 43, .01) && probe.track?.width >= 48 && probe.track?.height >= 18,
+    `${context}: compact geometry is not usable: ${JSON.stringify(probe)}`, 'W89B_PROGRESS_COMPACT_GEOMETRY');
+  assert(/\d+\s*\/\s*\d+/.test(probe.positionText) && /\d+%/.test(probe.positionText),
+    `${context}: compact position lost location or percent: ${JSON.stringify(probe)}`, 'W89B_PROGRESS_COMPACT_TEXT');
+  assert(probe.trackRole === 'slider' && probe.trackTabIndex === 0
+    && Number.isFinite(probe.trackNow) && probe.trackText.includes('%'),
+  `${context}: seek track is not keyboard/ARIA reachable: ${JSON.stringify(probe)}`, 'W89B_PROGRESS_COMPACT_SEEK_A11Y');
+  assert(probe.toggleExpanded === 'false' && /\u5c55\u5f00/.test(probe.toggleLabel)
+    && probe.toggleStyle?.display !== 'none' && probe.toggle?.width >= 60,
+  `${context}: expand affordance is unclear: ${JSON.stringify(probe)}`, 'W89B_PROGRESS_COMPACT_TOGGLE');
+  assert(probe.previousDisplay === 'none' && probe.nextDisplay === 'none'
+    && probe.barScrollWidth <= probe.barClientWidth + 1,
+  `${context}: compact bar overflows or retains secondary controls: ${JSON.stringify(probe)}`, 'W89B_PROGRESS_COMPACT_OVERFLOW');
 }
 
 async function imageProbe() {
@@ -369,39 +437,84 @@ try {
   await mainWindowSize(1440, 900);
   await win.waitForFunction(() => window.__activeLibraryCtl?.shelf?.records?.length === 2, null, { timeout: 30000 });
 
-  await gate('progress collapsed/expanded reserves one invariant reader viewport, including first open', async () => {
+  await gate('compact progress stays useful while collapsed/expanded geometry remains invariant', async () => {
     // Force the exact delayed-shelf ordering that made first open random in the
     // old implementation: the 3 s timer could collapse this hidden control.
     await win.evaluate(() => window.__activeLibraryCtl?.root?.querySelector('[data-a="prog-fold"]')?.click());
     await openBook('w89b-text');
     await waitPaged('single');
     const hiddenFirstOpen = await pagedProbe();
+    const hiddenChrome = await progressChromeProbe();
     assert(hiddenFirstOpen?.progressCollapsed, JSON.stringify(hiddenFirstOpen), 'W89B_PROGRESS_PRECONDITION');
+    assertCompactProgress(hiddenChrome, 'single first-open');
 
     await revealProgress();
     const expanded = await pagedProbe();
-    assert(near(expanded.frameHeight, hiddenFirstOpen.frameHeight, 1)
-      && near(expanded.viewportHeight, hiddenFirstOpen.viewportHeight, 1),
+    const expandedChrome = await progressChromeProbe();
+    assert(near(expanded.frameHeight, hiddenFirstOpen.frameHeight, .01)
+      && near(expanded.viewportHeight, hiddenFirstOpen.viewportHeight, .01)
+      && near(expandedChrome.bar?.height, hiddenChrome.bar?.height, .01),
     `progress reveal changed pagination height: ${JSON.stringify({ hiddenFirstOpen, expanded })}`, 'W89B_PROGRESS_HEIGHT');
+    assert(expandedChrome.toggleExpanded === 'true' && /\u6536\u8d77/.test(expandedChrome.toggleLabel)
+      && expandedChrome.previousDisplay !== 'none' && expandedChrome.nextDisplay !== 'none',
+    `expanded progress controls are incomplete: ${JSON.stringify(expandedChrome)}`, 'W89B_PROGRESS_EXPANDED_CONTROLS');
     assert(expanded.physicalPage === hiddenFirstOpen.physicalPage
       && expanded.chapter === hiddenFirstOpen.chapter
       && expanded.charOffset === hiddenFirstOpen.charOffset,
     `progress reveal changed reading point: ${JSON.stringify({ hiddenFirstOpen, expanded })}`, 'W89B_PROGRESS_LOCATOR');
 
+    // A focused control must never disappear underneath a keyboard user.
+    // Move focus outside the progress group before testing idle auto-collapse.
+    await win.locator('.lib-reader:visible [data-a="back"]').focus();
     await collapseProgress({ manual: false });
     const autoHidden = await pagedProbe();
-    assert(near(autoHidden.frameHeight, expanded.frameHeight, 1)
-      && near(autoHidden.viewportHeight, expanded.viewportHeight, 1),
+    const autoChrome = await progressChromeProbe();
+    assertCompactProgress(autoChrome, 'single auto-collapse');
+    assert(near(autoHidden.frameHeight, expanded.frameHeight, .01)
+      && near(autoHidden.viewportHeight, expanded.viewportHeight, .01),
     `auto-hide changed pagination height: ${JSON.stringify({ expanded, autoHidden })}`, 'W89B_PROGRESS_AUTO_HIDE');
     assert(autoHidden.physicalPage === expanded.physicalPage && autoHidden.charOffset === expanded.charOffset,
       `auto-hide moved page grid: ${JSON.stringify({ expanded, autoHidden })}`, 'W89B_PROGRESS_GRID');
-    return { hiddenFirstOpen, expanded, autoHidden };
+
+    await mainWindowSize(800, 720);
+    await waitPaged('single');
+    const narrowCollapsed = await progressChromeProbe();
+    assertCompactProgress(narrowCollapsed, 'single narrow-window');
+    const seek = win.locator('.lib-reader:visible .lib-prog-track');
+    await seek.focus();
+    await win.keyboard.press('End');
+    await win.waitForFunction(() => Number(window.__activeLibraryCtl?.root
+      ?.querySelector('.lib-prog-track')?.getAttribute('aria-valuenow')) === 100);
+    const keyboardSeekEnd = await progressChromeProbe();
+    assertCompactProgress(keyboardSeekEnd, 'single narrow keyboard-seek end');
+    await win.keyboard.press('Home');
+    await win.waitForFunction(() => Number(window.__activeLibraryCtl?.root
+      ?.querySelector('.lib-prog-track')?.getAttribute('aria-valuenow')) === 0);
+    const keyboardSeekHome = await progressChromeProbe();
+    assertCompactProgress(keyboardSeekHome, 'single narrow keyboard-seek home');
+
+    await revealProgress();
+    const narrowExpanded = await progressChromeProbe();
+    assert(near(narrowExpanded.frameHeight, keyboardSeekHome.frameHeight, .01)
+      && near(narrowExpanded.bar?.height, keyboardSeekHome.bar?.height, .01),
+    `narrow expand changed the real iframe slot: ${JSON.stringify({ keyboardSeekHome, narrowExpanded })}`,
+    'W89B_PROGRESS_NARROW_HEIGHT');
+    await mainWindowSize(1440, 900);
+    await waitPaged('single');
+    return {
+      hiddenFirstOpen, hiddenChrome, expanded, expandedChrome, autoHidden, autoChrome,
+      narrowCollapsed, keyboardSeekEnd, keyboardSeekHome, narrowExpanded,
+    };
   });
 
   await gate('double mode advances one physical page per action (overlapping spread)', async () => {
     await revealProgress();
     await setReaderSelect('.lib-mode', 'double', 'mode');
     await waitPaged('double');
+    await collapseProgress();
+    const doubleCompact = await progressChromeProbe();
+    assertCompactProgress(doubleCompact, 'double');
+    await revealProgress();
     await win.evaluate(() => window.__activeLibraryCtl?._applyOffset?.(0));
     const before = await pagedProbe();
     assert(before.effectiveMode === 'double', JSON.stringify(before), 'W89B_DOUBLE_PRECONDITION');
@@ -474,7 +587,7 @@ try {
       && (bridgeBackward.stableAnchor?.kind === 'chapter-edge' || bridgeBackward.stableVisible),
     `backward chapter overlap skipped a physical page: ${JSON.stringify({ bridge, bridgeForward, bridgeRestored, bridgeBackward })}`,
     'W89B_DOUBLE_CHAPTER_BACKWARD');
-    return { before, afterOne, afterTwo, chapterEnd, bridge, bridgeForward, bridgeCompact, bridgeRestored, bridgeBackward };
+    return { doubleCompact, before, afterOne, afterTwo, chapterEnd, bridge, bridgeForward, bridgeCompact, bridgeRestored, bridgeBackward };
   });
 
   await gate('single mode crosses chapter edges in one command without a bridge repeat', async () => {
@@ -626,7 +739,11 @@ try {
       && Math.abs(restored.locator.ratio - beforeResize.locator.ratio) <= 0.02,
     `scroll text window resize drifted locator: ${JSON.stringify({ beforeResize, compact, restored })}`,
     'W89B_SCROLL_TEXT_RESIZE_LOCATOR');
-    return { narrow, wide, narrowAgain, compact, restored };
+    await collapseProgress();
+    const scrollTextCompact = await progressChromeProbe();
+    assertCompactProgress(scrollTextCompact, 'scroll text');
+    await revealProgress();
+    return { narrow, wide, narrowAgain, compact, restored, scrollTextCompact };
   });
 
   await backToShelf();
@@ -643,6 +760,10 @@ try {
     assert(singleWide.visibleHeight > singleNarrow.visibleHeight + singleWide.hostHeight * 0.2,
       `single portrait visible pixels ignored pageWidth: ${JSON.stringify({ singleNarrow, singleWide })}`,
       'W89B_COMIC_SINGLE_VISIBLE_SCALE');
+    await collapseProgress();
+    const comicSingleCompact = await progressChromeProbe();
+    assertCompactProgress(comicSingleCompact, 'comic single');
+    await revealProgress();
 
     await setReaderSelect('.lib-mode', 'double', 'mode');
     await win.waitForFunction(() => !!window.__activeLibraryCtl?.root
@@ -654,6 +775,10 @@ try {
     assert(doubleWide.visibleHeight > doubleNarrow.visibleHeight + doubleWide.hostHeight * 0.15,
       `double portrait visible pixels ignored pageWidth: ${JSON.stringify({ doubleNarrow, doubleWide })}`,
       'W89B_COMIC_DOUBLE_VISIBLE_SCALE');
+    await collapseProgress();
+    const comicDoubleCompact = await progressChromeProbe();
+    assertCompactProgress(comicDoubleCompact, 'comic double');
+    await revealProgress();
 
     await setReaderSelect('.lib-mode', 'scroll', 'mode');
     await win.waitForFunction(() => !!window.__activeLibraryCtl?.book?._comicViewport
@@ -661,6 +786,10 @@ try {
     await win.evaluate(async () => window.__activeLibraryCtl.book._comicViewport.goTo(7));
     await win.waitForFunction(() => window.__activeLibraryCtl?.book?._comicViewport?.activePage === 7);
     await win.waitForTimeout(360);
+    await collapseProgress();
+    const comicScrollCompact = await progressChromeProbe();
+    assertCompactProgress(comicScrollCompact, 'comic scroll');
+    await revealProgress();
 
     await setReaderSelect('.lib-pagew', '0.5', 'pageWidth');
     const narrow = await imageProbe();
@@ -695,6 +824,7 @@ try {
       `comic resize did not pin active slot: ${JSON.stringify({ beforeResize, afterResize })}`, 'W89B_COMIC_PIN');
     return {
       singleNarrow, singleWide, doubleNarrow, doubleWide,
+      comicSingleCompact, comicDoubleCompact, comicScrollCompact,
       narrow, wide, beforeWidthResize, compactWidth, restoredWidth, beforeResize, afterResize,
     };
   });

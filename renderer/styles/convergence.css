@@ -22,8 +22,20 @@ button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 :where(button, [role="button"])[aria-disabled="true"] { opacity: .58; cursor: not-allowed !important; filter: saturate(.72); }
 .mz-ico { display: inline-block; flex: 0 0 auto; vertical-align: -.14em; overflow: visible; color: inherit; opacity: 1; }
 button svg, [role="button"] svg { stroke-width: 2; }
-/* Windows caption glyphs are optical 12px primitives, not generic 24px action icons. */
-.titlebar .tb-caption-icon { stroke-width: 1.15; }
+/* Windows caption glyphs are optical 12px primitives, not generic 24px action icons.
+ * Their color follows the actual CSS titlebar surface, never nativeTheme (the
+ * renderer theme and the Windows taskbar theme are independent). Theme packs
+ * inherit their own --fg; hard-edge/Construct titlebars intentionally use the
+ * pack's paper/background colour over their dark border/accent surface. */
+.titlebar { --tb-caption-fg: var(--fg); }
+[data-theme="paper"] .titlebar, [data-theme="sand"] .titlebar { --tb-caption-fg: #1f2937; }
+[data-theme="ink"] .titlebar, [data-theme="indigo"] .titlebar, [data-theme="moss"] .titlebar,
+[data-theme="genshin"] .titlebar { --tb-caption-fg: #fff; }
+[data-theme="construct"] .titlebar, [data-theme="custom"] .titlebar,
+[data-theme-structure="hard-edge"] .titlebar { --tb-caption-fg: var(--bg); }
+.titlebar .tb-btn { color: var(--tb-caption-fg) !important; }
+.titlebar .tb-btn.close:hover, .titlebar .tb-btn.close:active { color: #fff !important; }
+.titlebar .tb-caption-icon { stroke-width: 1; }
 button > .mz-ico:only-child, [role="button"] > .mz-ico:only-child { margin: auto; }
 
 #mazz-overlay-plane {

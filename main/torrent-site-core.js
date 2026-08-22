@@ -270,7 +270,13 @@ function parseMikanCatalog(html, { baseUrl = 'https://mikanime.tv/', year = '', 
     const key = `${itemYear}\0${itemSeason}`;
     if (seasonKeys.has(key)) continue;
     seasonKeys.add(key);
-    seasons.push({ year: itemYear, season: itemSeason, label: stripTags(match[2]) || `${itemYear} ${itemSeason}季番组` });
+    const rawLabel = stripTags(match[2]);
+    const seasonLabel = (rawLabel || `${itemSeason}季番组`)
+      .replace(new RegExp(`^${itemYear}\\s*[·・|/-]?\\s*`), '')
+      .trim();
+    // The source menu reuses identical seasonal names across years.  Keep the
+    // full year in our compact label so a long native select is unambiguous.
+    seasons.push({ year: itemYear, season: itemSeason, label: `${itemYear} · ${seasonLabel}` });
   }
 
   const starts = [...source.matchAll(/<div\b[^>]*class\s*=\s*["'][^"']*\bsk-bangumi\b[^"']*["'][^>]*>/gi)];
@@ -286,7 +292,7 @@ function parseMikanCatalog(html, { baseUrl = 'https://mikanime.tv/', year = '', 
       if (itemKeys.has(bangumiId)) continue;
       itemKeys.add(bangumiId);
       const before = block.slice(Math.max(0, link.index - 700), link.index);
-      const imageMatches = [...before.matchAll(/\bdata-src\s*=\s*["']([^"']+)["']/gi)];
+      const imageMatches = [...before.matchAll(/\b(?:data-src|data-original|src)\s*=\s*["']([^"']+)["']/gi)];
       const dateMatches = [...before.matchAll(/<div\b[^>]*class\s*=\s*["'][^"']*\bdate-text\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi)];
       items.push({
         bangumiId,

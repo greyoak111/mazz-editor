@@ -1,6 +1,6 @@
 {
   "protocol": "mazz.w87i-ui-state-convergence/v1",
-  "createdAt": "2026-08-20T17:30:44.332Z",
+  "createdAt": "2026-08-22T07:33:18.857Z",
   "mode": "PACKAGED",
   "executable": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
   "ok": true,
@@ -14,20 +14,21 @@
           "x": 1302,
           "y": 0,
           "width": 46,
-          "height": 35.20000076293945
+          "height": 36
         },
         "svg": {
           "x": 1319,
-          "y": 11.600000381469727,
+          "y": 12,
           "width": 12,
           "height": 12
         },
-        "strokeWidth": 1.15,
+        "strokeWidth": 1,
+        "color": "rgb(255, 255, 255)",
         "centerDelta": {
           "x": 0,
           "y": 0
         },
-        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.15\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M2 8.5h8\"></path></svg>"
+        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M2 8.5h8\"></path></svg>"
       },
       {
         "action": "max",
@@ -35,20 +36,21 @@
           "x": 1348,
           "y": 0,
           "width": 46,
-          "height": 35.20000076293945
+          "height": 36
         },
         "svg": {
           "x": 1365,
-          "y": 11.600000381469727,
+          "y": 12,
           "width": 12,
           "height": 12
         },
-        "strokeWidth": 1.15,
+        "strokeWidth": 1,
+        "color": "rgb(255, 255, 255)",
         "centerDelta": {
           "x": 0,
           "y": 0
         },
-        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.15\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><rect x=\"2.25\" y=\"2.25\" width=\"7.5\" height=\"7.5\"></rect></svg>"
+        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><rect x=\"2.5\" y=\"2.5\" width=\"7\" height=\"7\"></rect></svg>"
       },
       {
         "action": "close",
@@ -56,20 +58,21 @@
           "x": 1394,
           "y": 0,
           "width": 46,
-          "height": 35.20000076293945
+          "height": 36
         },
         "svg": {
           "x": 1411,
-          "y": 11.600000381469727,
+          "y": 12,
           "width": 12,
           "height": 12
         },
-        "strokeWidth": 1.15,
+        "strokeWidth": 1,
+        "color": "rgb(255, 255, 255)",
         "centerDelta": {
           "x": 0,
           "y": 0
         },
-        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.15\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M2.5 2.5l7 7M9.5 2.5l-7 7\"></path></svg>"
+        "markup": "<svg class=\"tb-caption-icon\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M2.75 2.75l6.5 6.5M9.25 2.75l-6.5 6.5\"></path></svg>"
       }
     ]
   },
@@ -1121,7 +1124,7 @@
         "fullscreenable": false,
         "size": [
           701,
-          600
+          601
         ],
         "minimumSize": [
           700,
@@ -1435,7 +1438,7 @@
         "structure": "hard-edge",
         "resize": "workspace",
         "pwinRadius": "0px",
-        "audited": 9,
+        "audited": 7,
         "offenders": [],
         "runtime": {
           "rawControlIcons": [],

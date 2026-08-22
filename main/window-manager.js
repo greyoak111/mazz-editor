@@ -53,8 +53,16 @@ class WindowManager {
     const emit = on => {
       if (!win?.isDestroyed()) win.webContents.send('mazz:event', { channel: 'window:fullscreen', payload: { on } });
     };
+    const emitMaximizeState = () => {
+      if (!win?.isDestroyed() && !win.webContents.isDestroyed()) {
+        win.webContents.send('mazz:event', { channel: 'window:maximize-state', payload: { maximized: win.isMaximized() } });
+      }
+    };
     win.on('enter-full-screen', () => emit(true));
     win.on('leave-full-screen', () => emit(false));
+    win.on('maximize', emitMaximizeState);
+    win.on('unmaximize', emitMaximizeState);
+    win.on('restore', emitMaximizeState);
   }
 
   /**
@@ -176,8 +184,10 @@ class WindowManager {
       icon: this.iconPath,
       backgroundColor: this.themeBg(), // 主题底色（不再 nativeTheme 二值）
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
-      titleBarOverlay: process.platform === 'win32'
-        ? { color: '#00000000', symbolColor: '#94a3b8', height: 36 } : false,
+      // Windows caption has one owner: renderer/shell/titlebar.js. Enabling
+      // titleBarOverlay here paints a second native glyph at the exact same
+      // 3 × 46px coordinates, producing the doubled/calendar-like screenshot.
+      titleBarOverlay: false,
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false,
@@ -256,8 +266,8 @@ class WindowManager {
       icon: this.iconPath,
       backgroundColor: this.themeBg(), // 主题底色（不再 nativeTheme 二值）
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
-      titleBarOverlay: (process.platform === 'win32')
-        ? { color: '#00000000', symbolColor: '#94a3b8', height: 36 } : false,
+      // Child workbenches use the same single renderer-owned SVG caption.
+      titleBarOverlay: false,
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'bridge.js'),
         contextIsolation: true, sandbox: false, nodeIntegration: false,

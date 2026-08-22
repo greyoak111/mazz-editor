@@ -248,14 +248,19 @@ function createLibrary(container) {
         <div class="lib-toc" style="display:none"></div>
         <div class="lib-content"><div class="lib-page"></div></div>
       </div>
-      <div class="lib-progress">
-        <button class="rb-btn" data-a="prev">‹</button>
-        <div class="lib-prog-track"><div class="lib-prog-fill"></div></div>
-        <span class="lib-pos"></span>
-        <button class="rb-btn" data-a="next">›</button>
-        <button class="rb-btn" data-a="prog-fold" title="收起进度条" style="padding:2px 6px">${iconHtml('▾')}</button>
+      <div class="lib-progress" role="group" aria-label="阅读进度">
+        <button class="rb-btn lib-progress-nav" type="button" data-a="prev" aria-label="上一页" title="上一页">‹</button>
+        <div class="lib-prog-track" role="slider" tabindex="0" title="点击或使用方向键跳转" aria-label="跳转阅读进度" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="尚未开始">
+          <div class="lib-prog-fill"></div>
+        </div>
+        <span class="lib-pos"><span class="lib-pos-location"></span><span class="lib-pos-separator" aria-hidden="true"> · </span><span class="lib-pos-percent"></span></span>
+        <button class="rb-btn lib-progress-nav" type="button" data-a="next" aria-label="下一页" title="下一页">›</button>
+        <button class="rb-btn lib-progress-toggle" type="button" data-a="prog-fold" aria-expanded="true" aria-label="收起阅读进度栏" title="收起阅读进度栏">
+          <span class="lib-progress-toggle-icon" aria-hidden="true">${iconHtml('▾')}</span>
+          <span class="lib-progress-toggle-label lib-progress-toggle-label--expanded">收起</span>
+          <span class="lib-progress-toggle-label lib-progress-toggle-label--collapsed">展开</span>
+        </button>
       </div>
-      <div class="lib-progress-peek" style="display:none" title="展开进度条">▴</div>
     </div>`;
   container.appendChild(root);
 
@@ -265,6 +270,9 @@ function createLibrary(container) {
   const tocEl = root.querySelector('.lib-toc');
   const pageEl = root.querySelector('.lib-page');
   const posEl = root.querySelector('.lib-pos');
+  const posLocationEl = root.querySelector('.lib-pos-location');
+  const posPercentEl = root.querySelector('.lib-pos-percent');
+  const progTrack = root.querySelector('.lib-prog-track');
   const progFill = root.querySelector('.lib-prog-fill');
   const contentEl = root.querySelector('.lib-content');
 
@@ -1631,6 +1639,17 @@ function createLibrary(container) {
   }
   function currentPos() { return ctl.book?.meta.format === 'epub' ? ctl.chapterIdx : ctl.pageIdx; }
 
+  function commitProgress(pct, location) {
+    const value = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+    const label = `${location} · ${value}%`;
+    posLocationEl.textContent = location;
+    posPercentEl.textContent = value + '%';
+    posEl.setAttribute('aria-label', label);
+    progFill.style.width = value + '%';
+    progTrack.setAttribute('aria-valuenow', String(value));
+    progTrack.setAttribute('aria-valuetext', label);
+  }
+
   function updateProgressBar() {
     const b = ctl.book;
     // 滚动模式（文本类）：按帧内滚动位置百分比报（沙箱帧后滚动发生在帧内，不再读壳 contentEl）
@@ -1641,29 +1660,64 @@ function createLibrary(container) {
       const cur = currentPos() + 1;
       const total = totalPages();
       const unit = b.meta.format === 'epub' ? '章' : '页';
-      posEl.textContent = `第 ${cur}/${total} ${unit} · ${pct}%`;
-      progFill.style.width = pct + '%';
+      commitProgress(pct, `第 ${cur}/${total} ${unit}`);
       return;
     }
-    // 切片横排：按屏数报进度（一屏=一页，百分比精确；分母与翻页步进同一把尺——stepOf）
+    // 分页文本：临时 rail 只装当前章与邻章，不能冒充全书进度。
+    // 用已有稳定 locator 的「章/源页 + 章内比例」表达全书进度，不绑字号后的像素屏位。
     if (ctl._flowWrap && ctl.mode !== 'scroll' && b && b.meta.format !== 'cbz' && b.meta.format !== 'manga-folder' && b.meta.format !== 'pdf'
         && ctl._flowWrap.clientWidth > 0 && (ctl._flowWrap.querySelector('.lib-flow')?.scrollWidth || 0) > 0) {
-      const w = ctl._flowWrap;
-      const flow = w.querySelector('.lib-flow');
-      const step = ctl._stepOf?.() || w.clientWidth || 1;
-      const cols = Math.max(1, Math.ceil(flow.scrollWidth / step));
-      const cur = Math.min(cols, Math.round((ctl._flowOffset || 0) / step) + 1);
-      const pct = Math.round(cur / cols * 100);
-      posEl.textContent = `第 ${cur}/${cols} 页 · ${pct}%`;
-      progFill.style.width = pct + '%';
+      const total = Math.max(1, totalPages());
+      const anchor = ctl._captureStableAnchor?.() || captureAnchor();
+      const section = Math.max(0, Math.min(total - 1, Number.isFinite(Number(anchor?.m)) ? Number(anchor.m) : currentPos()));
+      const within = Math.max(0, Math.min(1, Number(anchor?.r) || 0));
+      const unit = b.meta.format === 'epub' ? '章' : '页';
+      commitProgress(Math.round((section + within) / total * 100), `第 ${section + 1}/${total} ${unit}`);
       return;
     }
     const total = totalPages();
     const cur = currentPos() + 1;
     const pct = Math.round(cur / total * 100);
     const unit = b?.meta.format === 'epub' ? '章' : '页';
-    posEl.textContent = `第 ${cur}/${total} ${unit} · ${pct}%`;
-    progFill.style.width = pct + '%';
+    commitProgress(pct, `第 ${cur}/${total} ${unit}`);
+  }
+
+  async function seekProgress(ratio) {
+    const b = ctl.book;
+    if (!b || b.meta.format === 'pdf') return;
+    const targetRatio = Math.max(0, Math.min(1, Number(ratio) || 0));
+    const total = Math.max(1, totalPages());
+    const isImage = b.meta.format === 'cbz' || b.meta.format === 'manga-folder';
+    if (ctl.mode === 'scroll') {
+      if (isImage && b._comicViewport?.goTo) {
+        await b._comicViewport.goTo(Math.round(targetRatio * (total - 1)));
+      } else if (!isImage && b._textViewport?.goTo) {
+        const scaled = targetRatio * total;
+        const section = Math.min(total - 1, Math.floor(scaled));
+        const within = targetRatio >= 1 ? 1 : scaled - section;
+        await b._textViewport.goTo(section, { ratio: within });
+      } else {
+        const scrollHost = ctl._textScrollHost || contentEl;
+        scrollHost.scrollTop = targetRatio * Math.max(0, scrollHost.scrollHeight - scrollHost.clientHeight);
+      }
+      updateProgressBar();
+      return;
+    }
+    if (ctl._flowWrap && !isImage) {
+      const scaled = targetRatio * total;
+      const section = Math.min(total - 1, Math.floor(scaled));
+      const within = targetRatio >= 1 ? 1 : scaled - section;
+      if (b.meta.format === 'epub') ctl.chapterIdx = section;
+      else ctl.pageIdx = section;
+      ctl._pendingRatio = null;
+      ctl._pendingAnchor = { kind: 'dom-text', m: section, r: within };
+      await showCurrent();
+      return;
+    }
+    const target = Math.round(targetRatio * (total - 1));
+    if (b.meta.format === 'epub') ctl.chapterIdx = target;
+    else ctl.pageIdx = target;
+    await showCurrent();
   }
 
   // ==================== 大纲（侧栏） ====================
@@ -3650,27 +3704,62 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     void scheduleReaderAction(() => nav(e.deltaY > 0 ? 1 : -1));
   }
   contentEl.addEventListener('wheel', (e) => onReaderWheel(e, false), { passive: false });
-  // 进度条：3 秒无操作自动收起（可折叠）；peek/底部热区展开，交互重置计时
+  // 进度栏：3 秒无操作收为同高紧凑态。不卸载栏本身，分页视口高度始终不变。
   const progBar = root.querySelector('.lib-progress');
-  const progPeek = root.querySelector('.lib-progress-peek');
+  const progToggle = root.querySelector('[data-a=prog-fold]');
   let progTimer = null, progManualFold = false;
+  function syncProgressChrome(collapsed) {
+    progBar.classList.toggle('collapsed', collapsed);
+    progToggle.setAttribute('aria-expanded', String(!collapsed));
+    progToggle.setAttribute('aria-label', collapsed ? '展开阅读进度栏' : '收起阅读进度栏');
+    progToggle.title = collapsed ? '展开阅读进度栏' : '收起阅读进度栏';
+  }
   function progShow(sticky = false) {
-    progBar.classList.remove('collapsed');
-    progPeek.style.display = 'none';
+    syncProgressChrome(false);
     clearTimeout(progTimer);
     if (!sticky) progTimer = setTimeout(progHide, 3000);
   }
   function progHide(manual = false) {
+    if (!manual && progBar.matches(':focus-within')) { progShow(); return; }
     if (manual) progManualFold = true; // 手动收起=粘滞：别再用鼠标一晃就顶出来挡字
-    progBar.classList.add('collapsed');
-    progPeek.style.display = 'block';
+    clearTimeout(progTimer);
+    syncProgressChrome(true);
   }
-  progPeek.addEventListener('click', () => { progManualFold = false; progShow(); });
-  root.querySelector('[data-a=prog-fold]').addEventListener('click', () => progHide(true));
+  progToggle.addEventListener('click', () => {
+    if (progBar.classList.contains('collapsed')) {
+      progManualFold = false;
+      progShow();
+    } else {
+      progHide(true);
+    }
+  });
+  const seekFromPointer = (event) => {
+    const rect = progTrack.getBoundingClientRect();
+    if (!(rect.width > 0)) return;
+    void scheduleReaderAction(() => seekProgress((event.clientX - rect.left) / rect.width));
+  };
+  progTrack.addEventListener('click', seekFromPointer);
+  progTrack.addEventListener('keydown', (event) => {
+    const current = Math.max(0, Math.min(100, Number(progTrack.getAttribute('aria-valuenow')) || 0));
+    const step = event.shiftKey ? 10 : 5;
+    const next = event.key === 'Home' ? 0
+      : event.key === 'End' ? 100
+      : event.key === 'ArrowLeft' || event.key === 'ArrowDown' ? current - step
+      : event.key === 'ArrowRight' || event.key === 'ArrowUp' ? current + step
+      : null;
+    if (next == null) return;
+    event.preventDefault();
+    void scheduleReaderAction(() => seekProgress(next / 100));
+  });
   contentEl.addEventListener('pointermove', () => { if (!progManualFold) progShow(); });
   contentEl.addEventListener('wheel', () => { if (!progManualFold) progShow(); }, { passive: true });
   progBar.addEventListener('pointerenter', () => { if (!progManualFold) progShow(true); }); // 手动折叠态：鼠标压上来也不顶回（此前无条件 progShow 抵消手动折叠）
   progBar.addEventListener('pointerleave', () => { if (!progManualFold) progShow(); }); // 同上：离开也不许把刚折叠的进度栏拉回来
+  progBar.addEventListener('focusin', () => {
+    clearTimeout(progTimer);
+    if (!progManualFold && !progBar.classList.contains('collapsed')) progShow(true);
+  });
+  progBar.addEventListener('focusout', () => { if (!progManualFold) progShow(); });
   progShow();
 
   // 阅读页右键：摘录/复制/字号/返回（壳页与沙箱帧内共用——帧内坐标系需换算到壳）
