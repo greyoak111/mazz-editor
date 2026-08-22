@@ -1926,14 +1926,22 @@ body.player-borderless .sidebar { display: none !important; }
 .mz-web-sites { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 8px 10px 2px; }
 .mz-web-sites label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--fg-dim); cursor: pointer; }
 .mz-web-sites input { margin: 0; accent-color: var(--accent); }
-.mz-site-health { display: flex; flex-wrap: wrap; gap: 4px; padding: 1px 10px 6px; border-bottom: 1px solid var(--border); }
+.mz-site-health { padding: 1px 10px 6px; border-bottom: 1px solid var(--border); }
+.mz-site-health-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; width: 100%; }
 .mz-site-health button { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 6px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--fg-dim); font-size: 10px; cursor: pointer; }
 .mz-site-health button:hover { color: var(--fg); border-color: var(--accent); }
-.mz-site-health i { width: 6px; height: 6px; border-radius: 50%; background: var(--fg-dim); }
+.mz-site-health button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mz-site-health button[aria-disabled="true"] { cursor: progress; opacity: .72; }
+.mz-site-health .mz-site-check { min-width: 0; white-space: nowrap; }
+.mz-site-health .mz-site-check-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mz-site-health i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--fg-dim); }
+.mz-site-health [data-status="checking"] i { background: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent); }
 .mz-site-health [data-status="healthy"] i { background: var(--ok); }
 .mz-site-health [data-status="degraded"] i { background: var(--warn); }
 .mz-site-health [data-status="failed"] i, .mz-site-health [data-status="challenge"] i { background: var(--danger); }
-.mz-site-health small { opacity: .72; }
+.mz-site-health small { flex: none; white-space: nowrap; opacity: .72; }
+.mz-site-health .mz-site-health-reset { margin-inline-start: auto; border-style: dashed; color: var(--fg); }
+.mz-site-health-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .mz-web-catalog-bar { display: flex; align-items: center; gap: 7px; padding: 5px 10px; color: var(--fg-dim); font-size: 10.5px; }
 .mz-mikan-season { min-width: 116px; max-width: 170px; }
 .mz-web-rows { overflow-y: auto; }

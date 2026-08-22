@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 244,
-    "scannedLines": 75944
+    "scannedLines": 76060
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -23,12 +23,12 @@
   },
   "visual": {
     "summary": {
-      "totalFindings": 1759,
+      "totalFindings": 1760,
       "filesWithFindings": 103,
       "byRule": {
         "inline-style-attribute": 558,
         "loading-state-term": 64,
-        "native-form-control": 1095,
+        "native-form-control": 1096,
         "inline-css-text": 40,
         "tooltip-or-title": 2
       },
@@ -55,7 +55,7 @@
         },
         {
           "file": "renderer/modules/viewer/player.js",
-          "count": 87
+          "count": 88
         },
         {
           "file": "renderer/modules/draw/index.js",
@@ -6495,523 +6495,529 @@
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 39,
+        "line": 41,
         "sample": "<button class=\"mz-x\" data-a=\"close\" title=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 45,
+        "line": 47,
         "sample": "<button class=\"mz-src-tab on\" data-src=\"playlist\" title=\"同目录播放列表（原有）\">播放列表</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 46,
+        "line": 48,
         "sample": "<button class=\"mz-src-tab\" data-src=\"medialib\" title=\"工作区媒体库（随工作区切换）\">媒体库</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 47,
+        "line": 49,
         "sample": "<button class=\"mz-src-tab\" data-src=\"web\" title=\"网络资源（种子站搜索，边下边播）\">网络资源</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 48,
+        "line": 50,
         "sample": "<button class=\"mz-src-tab\" data-src=\"downloads\" title=\"下载队列（关掉播放器标签仍继续）\">下载</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 51,
+        "line": 53,
         "sample": "<button class=\"mz-side-x\" data-a=\"side-close\" title=\"收起列表栏（视频区铺满）\">${iconHtml('›')}</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 54,
+        "line": 56,
         "sample": "<div class=\"mz-medialib\" style=\"display:none\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 55,
+        "line": 57,
         "sample": "<div class=\"mz-web\" style=\"display:none\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 56,
+        "line": 58,
         "sample": "<div class=\"mz-downloads\" style=\"display:none\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 61,
+        "line": 63,
         "sample": "<div class=\"mz-thumb\" style=\"display:none\"><canvas></canvas><span></span></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 64,
+        "line": 66,
         "sample": "<button class=\"mz-btn\" data-a=\"prev\" data-player-min=\"440\" data-player-group=\"transport\" data-player-label=\"上一个\" title=\"上一个\">${iconHtml('⏮')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 65,
+        "line": 67,
         "sample": "<button class=\"mz-btn mz-play\" data-a=\"play\" title=\"播放/暂停（空格）\">${iconHtml('▶')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 66,
+        "line": 68,
         "sample": "<button class=\"mz-btn\" data-a=\"next\" data-player-min=\"440\" data-player-group=\"transport\" data-player-label=\"下一个\" title=\"下一个\">${iconHtml('⏭')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 69,
+        "line": 71,
         "sample": "<button class=\"mz-btn\" data-a=\"mute\" data-player-min=\"280\" data-player-group=\"sound\" data-player-label=\"静音\" aria-pressed=\"false\" title=\"静音（M）\">${iconHtml('🔊')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 70,
+        "line": 72,
         "sample": "<span class=\"mz-control-slot\" data-player-min=\"960\" data-player-group=\"sound\" data-player-label=\"音量\"><input class=\"mz-vol\" type=\"range\" min=\"0\" max=\"1\" step=\"0.05\" value=\"1\" title=\"音量（↑↓）\"></span>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 71,
+        "line": 73,
         "sample": "<span class=\"mz-control-slot mz-bright-wrap\" data-player-min=\"never\" data-player-group=\"picture\" data-player-label=\"画面亮度\" data-player-video-only=\"1\" title=\"画面亮度\">${iconHtml('☀')}<input class=\"mz-bright\" type=\"range\" min=\"0.4\" max=\"1.6\" step=\"0.05\" value=\"1\"></span>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 72,
+        "line": 74,
         "sample": "<span class=\"mz-control-slot mz-speed-wrap\" data-player-min=\"600\" data-player-group=\"sound\" data-player-label=\"倍速\"><select class=\"mz-speed\" title=\"倍速\">${[0.5, 0.8, 1, 1.2, 1.5, 2].map(v => `<option value=\"${v}\" ${v === 1 ? 'selected' : ''}>${v}×</option>`).join('')}</select></span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 73,
+        "line": 75,
         "sample": "<span class=\"mz-control-slot mz-track-wrap\" data-player-min=\"960\" data-player-group=\"sound\" data-player-label=\"音轨\" style=\"display:none\"></span>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 74,
+        "line": 76,
         "sample": "<button class=\"mz-btn\" data-a=\"pip\" data-player-min=\"960\" data-player-group=\"picture\" data-player-label=\"画中画\" data-player-video-only=\"1\" title=\"画中画（PiP）\">${iconHtml('🗔')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 75,
+        "line": 77,
         "sample": "<button class=\"mz-btn\" data-a=\"loop\" data-player-min=\"960\" data-player-group=\"transport\" data-player-label=\"循环模式\" aria-pressed=\"true\" title=\"循环（L）：列表循环\">${iconHtml('🔁')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 76,
+        "line": 78,
         "sample": "<button class=\"mz-btn\" data-a=\"snap\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"截图\" data-player-video-only=\"1\" title=\"截图（S）\">${iconHtml('📷')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 77,
+        "line": 79,
         "sample": "${canExportGif ? `<button class=\"mz-btn\" data-a=\"gif\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"录制 GIF\" data-player-video-only=\"1\" aria-label=\"录制 GIF\" title=\"录制 GIF（G）：再按停止并转码\">${iconHtml('🎞')}</button>` : ''}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 78,
+        "line": 80,
         "sample": "<button class=\"mz-btn\" data-a=\"progmem\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"进度记忆\" aria-pressed=\"true\" title=\"进度记忆（可开关）：记住本片播放位置，下次接着看\">${iconHtml('🕐')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 79,
+        "line": 81,
         "sample": "<button class=\"mz-btn\" data-a=\"sub\" data-player-min=\"600\" data-player-group=\"sound\" data-player-label=\"字幕\" aria-pressed=\"false\" title=\"字幕（ASS/SRT 特效字幕，自动探测同名字幕）\">${iconHtml('💬')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 80,
+        "line": 82,
         "sample": "<button class=\"mz-btn\" data-a=\"companion\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"陪看\" title=\"陪看：防剧透的人格对话与本地观剧档\">${iconHtml('✨')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 81,
+        "line": 83,
         "sample": "<button class=\"mz-btn\" data-a=\"danmaku\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"弹幕\" aria-pressed=\"false\" title=\"弹幕：导入本地 XML / ASS / JSON 时间轨\"><span class=\"mz-control-glyph\" aria-hidden=\"true\">弹</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 82,
+        "line": 84,
         "sample": "<button class=\"mz-btn\" data-a=\"pset\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"播放设置\" title=\"播放设置（字幕/连播/片源）\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 83,
+        "line": 85,
         "sample": "<button class=\"mz-btn\" data-a=\"list\" data-player-min=\"600\" data-player-group=\"tools\" data-player-label=\"播放列表\" title=\"播放列表\">${iconHtml('☰')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 84,
+        "line": 86,
         "sample": "<button class=\"mz-btn\" data-a=\"zoom-reset\" data-player-min=\"never\" data-player-group=\"picture\" data-player-label=\"画面复位\" data-player-video-only=\"1\" title=\"画面复位（缩放/亮度一键还原）\"><span class=\"mz-control-glyph\" aria-hidden=\"true\">1:1</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 85,
+        "line": 87,
         "sample": "<button class=\"mz-btn\" data-a=\"lock\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"锁定控制\" aria-pressed=\"false\" title=\"窗口锁定（沉浸观影防误触，一键开关）\">${iconHtml('🔓')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 86,
+        "line": 88,
         "sample": "<button class=\"mz-btn\" data-a=\"borderless\" data-player-min=\"never\" data-player-group=\"picture\" data-player-label=\"无边框\" aria-pressed=\"false\" title=\"无边框（B）\">${iconHtml('▢')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 87,
+        "line": 89,
         "sample": "<button class=\"mz-btn mz-more\" data-a=\"more-controls\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" title=\"更多播放控制\">${iconHtml('⋯')}<span class=\"mz-more-dot\" aria-hidden=\"true\" hidden></span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 88,
+        "line": 90,
         "sample": "<button class=\"mz-btn\" data-a=\"fullscreen\" data-player-min=\"280\" data-player-group=\"picture\" data-player-label=\"全屏\" title=\"全屏（F）\">${iconHtml('⛶')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 92,
+        "line": 94,
         "sample": "<header><div><b>播放控制</b><span class=\"mz-control-density\"></span></div><button type=\"button\" data-a=\"more-close\" aria-label=\"关闭播放控制\">${iconHtml('✕')}</button></header>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 107,
+        "line": 109,
         "sample": "<button class=\"mz-empty-btn\" type=\"button\" aria-label=\"导入视频或音频\" title=\"导入视频或音频\">${iconHtml('＋')}<span>导入视频</span></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 241,
+        "line": 243,
         "sample": "<div style=\"min-width:420px;font-size:12.5px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 243,
+        "line": 245,
         "sample": "<label style=\"display:flex;gap:6px;align-items:center;margin:6px 0\"><input type=\"checkbox\" class=\"ps-sub-sw\" ${subEnabled ? 'checked' : ''}> 自动探测同名字幕（.ass/.srt/.ssa）</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 243,
+        "line": 245,
         "sample": "<label style=\"display:flex;gap:6px;align-items:center;margin:6px 0\"><input type=\"checkbox\" class=\"ps-sub-sw\" ${subEnabled ? 'checked' : ''}> 自动探测同名字幕（.ass/.srt/.ssa）</label>"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 244,
-        "sample": "<div style=\"display:flex;gap:8px;align-items:center\">"
-      },
-      {
-        "rule": "inline-style-attribute",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 245,
-        "sample": "<button class=\"rb-btn ps-sub-load\" style=\"flex-direction:row\">外挂字幕文件…</button>"
-      },
-      {
-        "rule": "native-form-control",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 245,
-        "sample": "<button class=\"rb-btn ps-sub-load\" style=\"flex-direction:row\">外挂字幕文件…</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
         "line": 246,
+        "sample": "<div style=\"display:flex;gap:8px;align-items:center\">"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 247,
+        "sample": "<button class=\"rb-btn ps-sub-load\" style=\"flex-direction:row\">外挂字幕文件…</button>"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 247,
+        "sample": "<button class=\"rb-btn ps-sub-load\" style=\"flex-direction:row\">外挂字幕文件…</button>"
+      },
+      {
+        "rule": "inline-style-attribute",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 248,
         "sample": "<span style=\"color:var(--fg-dim);font-size:11px\">${subtitleAttached() ? '已挂载' : '未挂载'} · 渲染：JASSUB（libass wasm）</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 249,
+        "line": 251,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('⏭')} 连播</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 250,
+        "line": 252,
         "sample": "<label style=\"display:flex;gap:6px;align-items:center;margin:6px 0\"><input type=\"checkbox\" class=\"ps-next-sw\" ${autoNext ? 'checked' : ''}> 播完自动接下一集（同目录剧集嗅探，3s 倒计时可取消）</label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 250,
+        "line": 252,
         "sample": "<label style=\"display:flex;gap:6px;align-items:center;margin:6px 0\"><input type=\"checkbox\" class=\"ps-next-sw\" ${autoNext ? 'checked' : ''}> 播完自动接下一集（同目录剧集嗅探，3s 倒计时可取消）</label>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 252,
+        "line": 254,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('🔊')} 音频增益</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 253,
+        "line": 255,
         "sample": "<div style=\"display:flex;gap:6px;align-items:center;margin:6px 0\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 254,
+        "line": 256,
         "sample": "<select class=\"rb-select ps-gain\" title=\"音量增益（WebAudio 共享链，超出硬件 100%）\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 257,
+        "line": 259,
         "sample": "<span style=\"color:var(--fg-dim);font-size:11px\">主媒体与外挂音轨同一增益节点（静音片源救星）</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 260,
+        "line": 262,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('🎬')} 解码能力（本机实测）</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 261,
+        "line": 263,
         "sample": "<div class=\"ps-codec\" style=\"font-size:11.5px;line-height:1.85;margin-top:6px;color:var(--fg-dim)\">探测中…</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 263,
+        "line": 265,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('⬇')} 找片源（浏览器投稿会话打开，登录一次长期有效）</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 264,
+        "line": 266,
         "sample": "<div style=\"display:flex;flex-wrap:wrap;gap:6px;margin-top:6px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 265,
+        "line": 267,
         "sample": "${seedSites.map(([n, u]) => `<button class=\"rb-btn ps-site\" data-u=\"${u}\" style=\"flex-direction:row\">${n}</button>`).join('')}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 265,
+        "line": 267,
         "sample": "${seedSites.map(([n, u]) => `<button class=\"rb-btn ps-site\" data-u=\"${u}\" style=\"flex-direction:row\">${n}</button>`).join('')}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 275,
+        "line": 277,
         "sample": "box.innerHTML = rows.map(r => `<div>${r.ok ? '<span style=\"color:var(--ok,#16a34a)\">✓</span>' : '<span style=\"color:var(--danger,#dc2626)\">✗</span>'} ${r.name}<span style=\"opacity:.55\">（${r.verdict}）</span></div>`).join('');"
       },
       {
         "rule": "inline-css-text",
         "file": "renderer/modules/viewer/player.js",
-        "line": 280,
+        "line": 282,
         "sample": "guide.style.cssText = 'margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:11px;line-height:1.8';"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 387,
+        "line": 389,
         "sample": "<button class=\"rb-btn\" data-a=\"decode-retry\">重试画面</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 388,
+        "line": 390,
         "sample": "<button class=\"rb-btn\" data-a=\"decode-open\">用系统播放器打开</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 544,
+        "line": 546,
         "sample": "<span class=\"mz-ml-caret\">${iconHtml(open ? '▾' : '▸')}</span><span class=\"mz-ml-dname\" style=\"padding-left:${n.depth * 14}px\">${iconHtml('📂')} ${escH(n.dir.name)}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 545,
+        "line": 547,
         "sample": "</div><div class=\"mz-ml-kids\" data-k=\"${escH(n.dir.path)}\" style=\"display:${open ? '' : 'none'}\">${renderNodes(n.kids)}</div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 548,
+        "line": 550,
         "sample": "<span class=\"mz-ml-name\" style=\"padding-left:${n.depth * 14 + 14}px\">${iconHtml('🎞')}<span>${escH(n.file.name)}</span></span><span class=\"mz-ml-size\">${(n.file.size / 1048576).toFixed(1)}MB</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 555,
+        "line": 557,
         "sample": "<button class=\"rb-btn\" data-ml=\"import\" style=\"flex-direction:row\">${iconHtml('＋')} 导入视频</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 555,
+        "line": 557,
         "sample": "<button class=\"rb-btn\" data-ml=\"import\" style=\"flex-direction:row\">${iconHtml('＋')} 导入视频</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 556,
+        "line": 558,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 556,
+        "line": 558,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/viewer/player.js",
-        "line": 618,
+        "line": 620,
         "sample": "// The <img loading=\"lazy\"> element remains the request owner.  The"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 640,
+        "line": 648,
         "sample": "${sites.map(site => `<label><input type=\"checkbox\" value=\"${site.id}\" checked> ${escapeSiteText(site.name)}</label>`).join('')}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 643,
+        "line": 651,
         "sample": "<input class=\"mz-web-kw rb-input\" placeholder=\"搜索番名/关键词，回车搜…\" spellcheck=\"false\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 644,
+        "line": 652,
         "sample": "<button class=\"rb-btn mz-web-go\" style=\"flex-direction:row\">聚合检索</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 644,
+        "line": 652,
         "sample": "<button class=\"rb-btn mz-web-go\" style=\"flex-direction:row\">聚合检索</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 647,
+        "line": 655,
         "sample": "<input class=\"mz-web-magnet rb-input\" placeholder=\"直接粘贴 magnet:? 链接，回车加入下载\" spellcheck=\"false\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 648,
+        "line": 656,
         "sample": "<button class=\"rb-btn mz-web-add\" style=\"flex-direction:row\">加入下载</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 648,
+        "line": 656,
         "sample": "<button class=\"rb-btn mz-web-add\" style=\"flex-direction:row\">加入下载</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 651,
+        "line": 659,
         "sample": "<div class=\"mz-web-catalog-bar\"><select class=\"mz-mikan-season rb-select\" title=\"Mikan 季度目录\"></select><span>选择番组可直接带入检索词</span></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 678,
+        "line": 686,
         "sample": "<button class=\"mz-wr-add\" type=\"button\">加入</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 681,
+        "line": 689,
         "sample": "}).join('') + (Object.keys(webNextPages).length ? '<button class=\"rb-btn mz-web-more\" type=\"button\">继续加载后续页</button>' : '');"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 697,
+        "line": 705,
         "sample": "return `<button class=\"mz-catalog-item\" data-i=\"${index}\" type=\"button\">"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/viewer/player.js",
-        "line": 700,
+        "line": 708,
         "sample": "${imageSrc ? `<img src=\"${escapeSiteText(imageSrc)}\" alt=\"\" width=\"34\" height=\"46\" loading=\"lazy\" decoding=\"async\" fetchpriority=\"low\" referrerpolicy=\"no-referrer\">` : ''}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 800,
-        "sample": "return `<button type=\"button\" data-site=\"${siteId}\" data-status=\"${status}\" title=\"${escapeSiteText(result?.error || health.lastError || '点击清除缓存并重置站点会话状态')}\"><i></i>${escapeSiteText(siteNames[siteId])}<small>${escapeSiteText(mode)}</small></button>`;"
+        "line": 845,
+        "sample": "return `<button class=\"mz-site-check\" data-a=\"site-check\" type=\"button\" data-site=\"${siteId}\" data-status=\"${status}\" aria-label=\"立即检测 ${escapeSiteText(siteNames[siteId])}，当前${label}\" aria-busy=\"${pending}\" aria-disabled=\"${unavailable}\" title=\"${escapeSiteText(`点击立即检测；${detail}`)}\"><i></i><span class=\"mz-site-check-na"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 854,
+        "line": 846,
+        "sample": "}).join('') + `<button class=\"mz-site-health-reset\" data-a=\"site-health-reset\" type=\"button\" aria-disabled=\"${checksBusy || resetBusy}\" aria-label=\"重置全部站点缓存、会话与检测状态\" title=\"清除四站检测结果、缓存与站点会话\">全部重置</button>`;"
+      },
+      {
+        "rule": "native-form-control",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 956,
         "sample": "? '<button data-da=\"retry\">重试</button><button data-da=\"remove\">移除</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 856,
+        "line": 958,
         "sample": "? '<button data-da=\"resume\">继续</button><button data-da=\"discard\">删除</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 858,
+        "line": 960,
         "sample": "? '<button data-da=\"play\">播放</button><button data-da=\"keep\">存入媒体库</button><button data-da=\"discard\">删除</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 860,
+        "line": 962,
         "sample": "? '<button data-da=\"play\">边下边播</button><button data-da=\"pause\">暂停</button><button data-da=\"discard\">取消</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 861,
+        "line": 963,
         "sample": ": '<button data-da=\"pause\">暂停</button><button data-da=\"discard\">取消</button>';"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 864,
+        "line": 966,
         "sample": "<div class=\"mz-watch-bar\"><div class=\"mz-watch-fill\" style=\"width:${progress}%\"></div></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 961,
+        "line": 1063,
         "sample": "wrap.innerHTML = `<select class=\"mz-track rb-select\" title=\"音轨（多轨片源切轨换音道；FLAC/Vorbis/AAC/Opus 自封装直通，其他编码探测仅展示）\">"
       },
       {
@@ -17410,439 +17416,439 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 33,
+        "line": 35,
         "sample": "<div class=\"mz-audio-disc\"><span>${iconHtml('🎵')}</span></div>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 33,
+        "line": 35,
         "sample": "<div class=\"mz-audio-disc\"><span>${iconHtml('🎵')}</span></div>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 39,
+        "line": 41,
         "sample": "<button class=\"mz-x\" data-a=\"close\" title=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 39,
+        "line": 41,
         "sample": "<button class=\"mz-x\" data-a=\"close\" title=\"关闭\">${iconHtml('✕')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 51,
+        "line": 53,
         "sample": "<button class=\"mz-side-x\" data-a=\"side-close\" title=\"收起列表栏（视频区铺满）\">${iconHtml('›')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 64,
+        "line": 66,
         "sample": "<button class=\"mz-btn\" data-a=\"prev\" data-player-min=\"440\" data-player-group=\"transport\" data-player-label=\"上一个\" title=\"上一个\">${iconHtml('⏮')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 65,
+        "line": 67,
         "sample": "<button class=\"mz-btn mz-play\" data-a=\"play\" title=\"播放/暂停（空格）\">${iconHtml('▶')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 66,
+        "line": 68,
         "sample": "<button class=\"mz-btn\" data-a=\"next\" data-player-min=\"440\" data-player-group=\"transport\" data-player-label=\"下一个\" title=\"下一个\">${iconHtml('⏭')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 69,
+        "line": 71,
         "sample": "<button class=\"mz-btn\" data-a=\"mute\" data-player-min=\"280\" data-player-group=\"sound\" data-player-label=\"静音\" aria-pressed=\"false\" title=\"静音（M）\">${iconHtml('🔊')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 69,
+        "line": 71,
         "sample": "<button class=\"mz-btn\" data-a=\"mute\" data-player-min=\"280\" data-player-group=\"sound\" data-player-label=\"静音\" aria-pressed=\"false\" title=\"静音（M）\">${iconHtml('🔊')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 71,
+        "line": 73,
         "sample": "<span class=\"mz-control-slot mz-bright-wrap\" data-player-min=\"never\" data-player-group=\"picture\" data-player-label=\"画面亮度\" data-player-video-only=\"1\" title=\"画面亮度\">${iconHtml('☀')}<input class=\"mz-bright\" type=\"range\" min=\"0.4\" max=\"1.6\" step=\"0.05\" value=\"1\"></span>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 71,
+        "line": 73,
         "sample": "<span class=\"mz-control-slot mz-bright-wrap\" data-player-min=\"never\" data-player-group=\"picture\" data-player-label=\"画面亮度\" data-player-video-only=\"1\" title=\"画面亮度\">${iconHtml('☀')}<input class=\"mz-bright\" type=\"range\" min=\"0.4\" max=\"1.6\" step=\"0.05\" value=\"1\"></span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 74,
+        "line": 76,
         "sample": "<button class=\"mz-btn\" data-a=\"pip\" data-player-min=\"960\" data-player-group=\"picture\" data-player-label=\"画中画\" data-player-video-only=\"1\" title=\"画中画（PiP）\">${iconHtml('🗔')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 74,
+        "line": 76,
         "sample": "<button class=\"mz-btn\" data-a=\"pip\" data-player-min=\"960\" data-player-group=\"picture\" data-player-label=\"画中画\" data-player-video-only=\"1\" title=\"画中画（PiP）\">${iconHtml('🗔')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 75,
+        "line": 77,
         "sample": "<button class=\"mz-btn\" data-a=\"loop\" data-player-min=\"960\" data-player-group=\"transport\" data-player-label=\"循环模式\" aria-pressed=\"true\" title=\"循环（L）：列表循环\">${iconHtml('🔁')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 75,
+        "line": 77,
         "sample": "<button class=\"mz-btn\" data-a=\"loop\" data-player-min=\"960\" data-player-group=\"transport\" data-player-label=\"循环模式\" aria-pressed=\"true\" title=\"循环（L）：列表循环\">${iconHtml('🔁')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 76,
+        "line": 78,
         "sample": "<button class=\"mz-btn\" data-a=\"snap\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"截图\" data-player-video-only=\"1\" title=\"截图（S）\">${iconHtml('📷')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 76,
+        "line": 78,
         "sample": "<button class=\"mz-btn\" data-a=\"snap\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"截图\" data-player-video-only=\"1\" title=\"截图（S）\">${iconHtml('📷')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 77,
+        "line": 79,
         "sample": "${canExportGif ? `<button class=\"mz-btn\" data-a=\"gif\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"录制 GIF\" data-player-video-only=\"1\" aria-label=\"录制 GIF\" title=\"录制 GIF（G）：再按停止并转码\">${iconHtml('🎞')}</button>` : ''}"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 77,
+        "line": 79,
         "sample": "${canExportGif ? `<button class=\"mz-btn\" data-a=\"gif\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"录制 GIF\" data-player-video-only=\"1\" aria-label=\"录制 GIF\" title=\"录制 GIF（G）：再按停止并转码\">${iconHtml('🎞')}</button>` : ''}"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 78,
+        "line": 80,
         "sample": "<button class=\"mz-btn\" data-a=\"progmem\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"进度记忆\" aria-pressed=\"true\" title=\"进度记忆（可开关）：记住本片播放位置，下次接着看\">${iconHtml('🕐')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 78,
+        "line": 80,
         "sample": "<button class=\"mz-btn\" data-a=\"progmem\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"进度记忆\" aria-pressed=\"true\" title=\"进度记忆（可开关）：记住本片播放位置，下次接着看\">${iconHtml('🕐')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 79,
+        "line": 81,
         "sample": "<button class=\"mz-btn\" data-a=\"sub\" data-player-min=\"600\" data-player-group=\"sound\" data-player-label=\"字幕\" aria-pressed=\"false\" title=\"字幕（ASS/SRT 特效字幕，自动探测同名字幕）\">${iconHtml('💬')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 79,
+        "line": 81,
         "sample": "<button class=\"mz-btn\" data-a=\"sub\" data-player-min=\"600\" data-player-group=\"sound\" data-player-label=\"字幕\" aria-pressed=\"false\" title=\"字幕（ASS/SRT 特效字幕，自动探测同名字幕）\">${iconHtml('💬')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 80,
+        "line": 82,
         "sample": "<button class=\"mz-btn\" data-a=\"companion\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"陪看\" title=\"陪看：防剧透的人格对话与本地观剧档\">${iconHtml('✨')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 80,
+        "line": 82,
         "sample": "<button class=\"mz-btn\" data-a=\"companion\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"陪看\" title=\"陪看：防剧透的人格对话与本地观剧档\">${iconHtml('✨')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 82,
+        "line": 84,
         "sample": "<button class=\"mz-btn\" data-a=\"pset\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"播放设置\" title=\"播放设置（字幕/连播/片源）\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 82,
+        "line": 84,
         "sample": "<button class=\"mz-btn\" data-a=\"pset\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"播放设置\" title=\"播放设置（字幕/连播/片源）\">${iconHtml('⚙')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 83,
+        "line": 85,
         "sample": "<button class=\"mz-btn\" data-a=\"list\" data-player-min=\"600\" data-player-group=\"tools\" data-player-label=\"播放列表\" title=\"播放列表\">${iconHtml('☰')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 83,
+        "line": 85,
         "sample": "<button class=\"mz-btn\" data-a=\"list\" data-player-min=\"600\" data-player-group=\"tools\" data-player-label=\"播放列表\" title=\"播放列表\">${iconHtml('☰')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 85,
+        "line": 87,
         "sample": "<button class=\"mz-btn\" data-a=\"lock\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"锁定控制\" aria-pressed=\"false\" title=\"窗口锁定（沉浸观影防误触，一键开关）\">${iconHtml('🔓')}</button>"
-      },
-      {
-        "rule": "icon-html-adapter",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 85,
-        "sample": "<button class=\"mz-btn\" data-a=\"lock\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"锁定控制\" aria-pressed=\"false\" title=\"窗口锁定（沉浸观影防误触，一键开关）\">${iconHtml('🔓')}</button>"
-      },
-      {
-        "rule": "icon-html-adapter",
-        "file": "renderer/modules/viewer/player.js",
-        "line": 86,
-        "sample": "<button class=\"mz-btn\" data-a=\"borderless\" data-player-min=\"never\" data-player-group=\"picture\" data-player-label=\"无边框\" aria-pressed=\"false\" title=\"无边框（B）\">${iconHtml('▢')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
         "line": 87,
+        "sample": "<button class=\"mz-btn\" data-a=\"lock\" data-player-min=\"never\" data-player-group=\"tools\" data-player-label=\"锁定控制\" aria-pressed=\"false\" title=\"窗口锁定（沉浸观影防误触，一键开关）\">${iconHtml('🔓')}</button>"
+      },
+      {
+        "rule": "icon-html-adapter",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 88,
+        "sample": "<button class=\"mz-btn\" data-a=\"borderless\" data-player-min=\"never\" data-player-group=\"picture\" data-player-label=\"无边框\" aria-pressed=\"false\" title=\"无边框（B）\">${iconHtml('▢')}</button>"
+      },
+      {
+        "rule": "icon-html-adapter",
+        "file": "renderer/modules/viewer/player.js",
+        "line": 89,
         "sample": "<button class=\"mz-btn mz-more\" data-a=\"more-controls\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" title=\"更多播放控制\">${iconHtml('⋯')}<span class=\"mz-more-dot\" aria-hidden=\"true\" hidden></span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 88,
+        "line": 90,
         "sample": "<button class=\"mz-btn\" data-a=\"fullscreen\" data-player-min=\"280\" data-player-group=\"picture\" data-player-label=\"全屏\" title=\"全屏（F）\">${iconHtml('⛶')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 88,
+        "line": 90,
         "sample": "<button class=\"mz-btn\" data-a=\"fullscreen\" data-player-min=\"280\" data-player-group=\"picture\" data-player-label=\"全屏\" title=\"全屏（F）\">${iconHtml('⛶')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 92,
+        "line": 94,
         "sample": "<header><div><b>播放控制</b><span class=\"mz-control-density\"></span></div><button type=\"button\" data-a=\"more-close\" aria-label=\"关闭播放控制\">${iconHtml('✕')}</button></header>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 92,
+        "line": 94,
         "sample": "<header><div><b>播放控制</b><span class=\"mz-control-density\"></span></div><button type=\"button\" data-a=\"more-close\" aria-label=\"关闭播放控制\">${iconHtml('✕')}</button></header>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 104,
+        "line": 106,
         "sample": "<div class=\"mz-empty-ico\">${iconHtml('🎬')}</div>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 104,
+        "line": 106,
         "sample": "<div class=\"mz-empty-ico\">${iconHtml('🎬')}</div>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 107,
+        "line": 109,
         "sample": "<button class=\"mz-empty-btn\" type=\"button\" aria-label=\"导入视频或音频\" title=\"导入视频或音频\">${iconHtml('＋')}<span>导入视频</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 242,
+        "line": 244,
         "sample": "<div class=\"ps-sec\"><b>${iconHtml('💬')} 字幕</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 242,
+        "line": 244,
         "sample": "<div class=\"ps-sec\"><b>${iconHtml('💬')} 字幕</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 249,
+        "line": 251,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('⏭')} 连播</b>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 252,
+        "line": 254,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('🔊')} 音频增益</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 252,
+        "line": 254,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('🔊')} 音频增益</b>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 260,
+        "line": 262,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('🎬')} 解码能力（本机实测）</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 260,
+        "line": 262,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('🎬')} 解码能力（本机实测）</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 263,
+        "line": 265,
         "sample": "<div class=\"ps-sec\" style=\"margin-top:12px\"><b>${iconHtml('⬇')} 找片源（浏览器投稿会话打开，登录一次长期有效）</b>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 275,
+        "line": 277,
         "sample": "box.innerHTML = rows.map(r => `<div>${r.ok ? '<span style=\"color:var(--ok,#16a34a)\">✓</span>' : '<span style=\"color:var(--danger,#dc2626)\">✗</span>'} ${r.name}<span style=\"opacity:.55\">（${r.verdict}）</span></div>`).join('');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 384,
+        "line": 386,
         "sample": "overlay.innerHTML = `<b>${iconHtml('⚠')} 视频未解出画面，已停止假播放</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 384,
+        "line": 386,
         "sample": "overlay.innerHTML = `<b>${iconHtml('⚠')} 视频未解出画面，已停止假播放</b>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 544,
+        "line": 546,
         "sample": "<span class=\"mz-ml-caret\">${iconHtml(open ? '▾' : '▸')}</span><span class=\"mz-ml-dname\" style=\"padding-left:${n.depth * 14}px\">${iconHtml('📂')} ${escH(n.dir.name)}</span>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 544,
+        "line": 546,
         "sample": "<span class=\"mz-ml-caret\">${iconHtml(open ? '▾' : '▸')}</span><span class=\"mz-ml-dname\" style=\"padding-left:${n.depth * 14}px\">${iconHtml('📂')} ${escH(n.dir.name)}</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 548,
+        "line": 550,
         "sample": "<span class=\"mz-ml-name\" style=\"padding-left:${n.depth * 14 + 14}px\">${iconHtml('🎞')}<span>${escH(n.file.name)}</span></span><span class=\"mz-ml-size\">${(n.file.size / 1048576).toFixed(1)}MB</span>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 548,
+        "line": 550,
         "sample": "<span class=\"mz-ml-name\" style=\"padding-left:${n.depth * 14 + 14}px\">${iconHtml('🎞')}<span>${escH(n.file.name)}</span></span><span class=\"mz-ml-size\">${(n.file.size / 1048576).toFixed(1)}MB</span>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 555,
+        "line": 557,
         "sample": "<button class=\"rb-btn\" data-ml=\"import\" style=\"flex-direction:row\">${iconHtml('＋')} 导入视频</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 556,
+        "line": 558,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 556,
+        "line": 558,
         "sample": "<button class=\"rb-btn\" data-ml=\"open\" style=\"flex-direction:row\" title=\"在文件管理器打开媒体库目录\">${iconHtml('🗂')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 591,
+        "line": 593,
         "sample": "el.querySelector('.mz-ml-caret').innerHTML = iconHtml(open ? '▸' : '▾');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1075,
+        "line": 1177,
         "sample": "media.addEventListener('play', () => { playBtn.innerHTML = iconHtml('⏸'); root.querySelector('.mz-audio-disc')?.classList.add('spin'); });"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1078,
+        "line": 1180,
         "sample": "media.addEventListener('pause', () => { clearDecodeWatch(); playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1237,
+        "line": 1339,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1237,
+        "line": 1339,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1281,
+        "line": 1383,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); btn.setAttribute('aria-label', '录制 GIF'); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1281,
+        "line": 1383,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); btn.setAttribute('aria-label', '录制 GIF'); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1285,
+        "line": 1387,
         "sample": "btn.innerHTML = `${iconHtml('■')}<span>停止</span>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1326,
+        "line": 1428,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1326,
+        "line": 1428,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1363,
+        "line": 1465,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1363,
+        "line": 1465,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1389,
+        "line": 1491,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1389,
+        "line": 1491,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
@@ -21233,21 +21239,21 @@
   },
   "theme": {
     "summary": {
-      "totalFindings": 3504,
+      "totalFindings": 3508,
       "filesWithFindings": 98,
       "byRule": {
         "hardcoded-hex-color": 567,
         "font-family": 157,
-        "semantic-token-use": 1868,
+        "semantic-token-use": 1871,
         "border-radius": 527,
-        "box-shadow": 133,
+        "box-shadow": 134,
         "hardcoded-rgb-hsl": 121,
         "theme-selector": 131
       },
       "topFiles": [
         {
           "file": "renderer/styles/base.css",
-          "count": 1483
+          "count": 1487
         },
         {
           "file": "renderer/base.css",
@@ -26489,49 +26495,49 @@
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/player.js",
-        "line": 246,
+        "line": 248,
         "sample": "<span style=\"color:var(--fg-dim);font-size:11px\">${subtitleAttached() ? '已挂载' : '未挂载'} · 渲染：JASSUB（libass wasm）</span>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/player.js",
-        "line": 257,
+        "line": 259,
         "sample": "<span style=\"color:var(--fg-dim);font-size:11px\">主媒体与外挂音轨同一增益节点（静音片源救星）</span>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/player.js",
-        "line": 261,
+        "line": 263,
         "sample": "<div class=\"ps-codec\" style=\"font-size:11.5px;line-height:1.85;margin-top:6px;color:var(--fg-dim)\">探测中…</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/player.js",
-        "line": 275,
+        "line": 277,
         "sample": "box.innerHTML = rows.map(r => `<div>${r.ok ? '<span style=\"color:var(--ok,#16a34a)\">✓</span>' : '<span style=\"color:var(--danger,#dc2626)\">✗</span>'} ${r.name}<span style=\"opacity:.55\">（${r.verdict}）</span></div>`).join('');"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/viewer/player.js",
-        "line": 275,
+        "line": 277,
         "sample": "box.innerHTML = rows.map(r => `<div>${r.ok ? '<span style=\"color:var(--ok,#16a34a)\">✓</span>' : '<span style=\"color:var(--danger,#dc2626)\">✗</span>'} ${r.name}<span style=\"opacity:.55\">（${r.verdict}）</span></div>`).join('');"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/viewer/player.js",
-        "line": 280,
+        "line": 282,
         "sample": "guide.style.cssText = 'margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:11px;line-height:1.8';"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/viewer/player.js",
-        "line": 280,
+        "line": 282,
         "sample": "guide.style.cssText = 'margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:11px;line-height:1.8';"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1552,
+        "line": 1654,
         "sample": "grad.addColorStop(0, getComputedStyle(root).getPropertyValue('--accent') || '#e3b341');"
       },
       {
@@ -40686,246 +40692,270 @@
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1929,
-        "sample": ".mz-site-health { display: flex; flex-wrap: wrap; gap: 4px; padding: 1px 10px 6px; border-bottom: 1px solid var(--border); }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1930,
-        "sample": ".mz-site-health button { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 6px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--fg-dim); font-size: 10px; cursor: pointer; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1930,
-        "sample": ".mz-site-health button { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 6px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--fg-dim); font-size: 10px; cursor: pointer; }"
+        "sample": ".mz-site-health { padding: 1px 10px 6px; border-bottom: 1px solid var(--border); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1931,
+        "sample": ".mz-site-health button { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 6px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--fg-dim); font-size: 10px; cursor: pointer; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1931,
+        "sample": ".mz-site-health button { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 6px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--fg-dim); font-size: 10px; cursor: pointer; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1932,
         "sample": ".mz-site-health button:hover { color: var(--fg); border-color: var(--accent); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
-        "line": 1932,
-        "sample": ".mz-site-health i { width: 6px; height: 6px; border-radius: 50%; background: var(--fg-dim); }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1932,
-        "sample": ".mz-site-health i { width: 6px; height: 6px; border-radius: 50%; background: var(--fg-dim); }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
         "line": 1933,
-        "sample": ".mz-site-health [data-status=\"healthy\"] i { background: var(--ok); }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1934,
-        "sample": ".mz-site-health [data-status=\"degraded\"] i { background: var(--warn); }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1935,
-        "sample": ".mz-site-health [data-status=\"failed\"] i, .mz-site-health [data-status=\"challenge\"] i { background: var(--danger); }"
+        "sample": ".mz-site-health button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1937,
-        "sample": ".mz-web-catalog-bar { display: flex; align-items: center; gap: 7px; padding: 5px 10px; color: var(--fg-dim); font-size: 10.5px; }"
+        "sample": ".mz-site-health i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--fg-dim); }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1937,
+        "sample": ".mz-site-health i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--fg-dim); }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1938,
+        "sample": ".mz-site-health [data-status=\"checking\"] i { background: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent); }"
+      },
+      {
+        "rule": "box-shadow",
+        "file": "renderer/styles/base.css",
+        "line": 1938,
+        "sample": ".mz-site-health [data-status=\"checking\"] i { background: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent); }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1939,
+        "sample": ".mz-site-health [data-status=\"healthy\"] i { background: var(--ok); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1940,
-        "sample": ".mz-web-row { display: grid; grid-template-columns: 64px 42px minmax(140px,1fr) auto auto; gap: 6px; align-items: center; padding: 6px 10px; border-top: 1px solid var(--border); font-size: 12px; }"
+        "sample": ".mz-site-health [data-status=\"degraded\"] i { background: var(--warn); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1941,
-        "sample": ".mz-web-row:hover { background: var(--bg-hover); }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1942,
-        "sample": ".mz-wr-date { color: var(--fg-dim); font-size: 11px; }"
+        "sample": ".mz-site-health [data-status=\"failed\"] i, .mz-site-health [data-status=\"challenge\"] i { background: var(--danger); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1943,
-        "sample": ".mz-wr-type { color: var(--accent); font-size: 10.5px; border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); border-radius: 999px; padding: 0 5px; text-align: center; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1943,
-        "sample": ".mz-wr-type { color: var(--accent); font-size: 10.5px; border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); border-radius: 999px; padding: 0 5px; text-align: center; }"
+        "sample": ".mz-site-health .mz-site-health-reset { margin-inline-start: auto; border-style: dashed; color: var(--fg); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1945,
-        "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1947,
-        "sample": ".mz-wr-add { border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); background: var(--accent-soft); color: var(--accent); border-radius: 5px; padding: 2px 7px; cursor: pointer; font-size: 11px; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1947,
-        "sample": ".mz-wr-add { border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); background: var(--accent-soft); color: var(--accent); border-radius: 5px; padding: 2px 7px; cursor: pointer; font-size: 11px; }"
+        "sample": ".mz-web-catalog-bar { display: flex; align-items: center; gap: 7px; padding: 5px 10px; color: var(--fg-dim); font-size: 10.5px; }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1948,
+        "sample": ".mz-web-row { display: grid; grid-template-columns: 64px 42px minmax(140px,1fr) auto auto; gap: 6px; align-items: center; padding: 6px 10px; border-top: 1px solid var(--border); font-size: 12px; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1949,
+        "sample": ".mz-web-row:hover { background: var(--bg-hover); }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1950,
+        "sample": ".mz-wr-date { color: var(--fg-dim); font-size: 11px; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1951,
+        "sample": ".mz-wr-type { color: var(--accent); font-size: 10.5px; border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); border-radius: 999px; padding: 0 5px; text-align: center; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1951,
+        "sample": ".mz-wr-type { color: var(--accent); font-size: 10.5px; border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); border-radius: 999px; padding: 0 5px; text-align: center; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1953,
+        "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1955,
+        "sample": ".mz-wr-add { border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); background: var(--accent-soft); color: var(--accent); border-radius: 5px; padding: 2px 7px; cursor: pointer; font-size: 11px; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1955,
+        "sample": ".mz-wr-add { border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border)); background: var(--accent-soft); color: var(--accent); border-radius: 5px; padding: 2px 7px; cursor: pointer; font-size: 11px; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1956,
         "sample": ".mz-wr-add:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
-        "line": 1951,
+        "line": 1959,
         "sample": ".mz-catalog-item { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 6px; align-items: center; min-height: 52px; padding: 3px 4px; border: 1px solid var(--border); border-radius: 7px; background: transparent; color: var(--fg); text-align: left; cursor: pointer; }"
       },
       {
         "rule": "border-radius",
         "file": "renderer/styles/base.css",
-        "line": 1951,
+        "line": 1959,
         "sample": ".mz-catalog-item { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 6px; align-items: center; min-height: 52px; padding: 3px 4px; border: 1px solid var(--border); border-radius: 7px; background: transparent; color: var(--fg); text-align: left; cursor: pointer; }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1952,
-        "sample": ".mz-catalog-item:hover { border-color: var(--accent); background: var(--bg-hover); }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1953,
-        "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1953,
-        "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1954,
-        "sample": ".mz-catalog-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg-soft); opacity: 0; transition: opacity .12s ease; }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1960,
-        "sample": ".mz-catalog-item small { margin-top: 3px; color: var(--fg-dim); font-size: 10px; }"
+        "sample": ".mz-catalog-item:hover { border-color: var(--accent); background: var(--bg-hover); }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1961,
+        "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1961,
+        "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1962,
-        "sample": ".mz-download { border-bottom: 1px solid var(--border); padding: 9px 10px; }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1965,
-        "sample": ".mz-download header span { flex: none; padding: 1px 6px; border-radius: 999px; background: var(--bg-soft); color: var(--fg-dim); font-size: 10px; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1965,
-        "sample": ".mz-download header span { flex: none; padding: 1px 6px; border-radius: 999px; background: var(--bg-soft); color: var(--fg-dim); font-size: 10px; }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1966,
-        "sample": ".mz-download[data-state=\"completed\"] header span { background: var(--ok); color: var(--ok-fg); }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1967,
-        "sample": ".mz-download[data-state=\"failed\"] header span { background: var(--danger); color: var(--danger-fg); }"
+        "sample": ".mz-catalog-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg-soft); opacity: 0; transition: opacity .12s ease; }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1968,
-        "sample": ".mz-download[data-state=\"paused\"] header span { background: var(--warn); color: var(--warn-fg); }"
+        "sample": ".mz-catalog-item small { margin-top: 3px; color: var(--fg-dim); font-size: 10px; }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
-        "line": 1969,
-        "sample": ".mz-watch { border-top: 1px solid var(--border); padding: 8px 10px; }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1971,
-        "sample": ".mz-watch-bar { height: 5px; background: var(--bg-active); border-radius: 3px; margin: 6px 0 4px; overflow: hidden; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1971,
-        "sample": ".mz-watch-bar { height: 5px; background: var(--bg-active); border-radius: 3px; margin: 6px 0 4px; overflow: hidden; }"
-      },
-      {
-        "rule": "semantic-token-use",
-        "file": "renderer/styles/base.css",
-        "line": 1972,
-        "sample": ".mz-watch-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1972,
-        "sample": ".mz-watch-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }"
+        "line": 1970,
+        "sample": ".mz-download { border-bottom: 1px solid var(--border); padding: 9px 10px; }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1973,
-        "sample": ".mz-watch-meta { color: var(--fg-dim); font-size: 11px; }"
+        "sample": ".mz-download header span { flex: none; padding: 1px 6px; border-radius: 999px; background: var(--bg-soft); color: var(--fg-dim); font-size: 10px; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1973,
+        "sample": ".mz-download header span { flex: none; padding: 1px 6px; border-radius: 999px; background: var(--bg-soft); color: var(--fg-dim); font-size: 10px; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1974,
+        "sample": ".mz-download[data-state=\"completed\"] header span { background: var(--ok); color: var(--ok-fg); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1975,
-        "sample": ".mz-watch-acts button { border: 1px solid var(--border); background: transparent; color: var(--fg); border-radius: 5px; padding: 1px 7px; cursor: pointer; font-size: 12px; }"
-      },
-      {
-        "rule": "border-radius",
-        "file": "renderer/styles/base.css",
-        "line": 1975,
-        "sample": ".mz-watch-acts button { border: 1px solid var(--border); background: transparent; color: var(--fg); border-radius: 5px; padding: 1px 7px; cursor: pointer; font-size: 12px; }"
+        "sample": ".mz-download[data-state=\"failed\"] header span { background: var(--danger); color: var(--danger-fg); }"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/styles/base.css",
         "line": 1976,
+        "sample": ".mz-download[data-state=\"paused\"] header span { background: var(--warn); color: var(--warn-fg); }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1977,
+        "sample": ".mz-watch { border-top: 1px solid var(--border); padding: 8px 10px; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1979,
+        "sample": ".mz-watch-bar { height: 5px; background: var(--bg-active); border-radius: 3px; margin: 6px 0 4px; overflow: hidden; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1979,
+        "sample": ".mz-watch-bar { height: 5px; background: var(--bg-active); border-radius: 3px; margin: 6px 0 4px; overflow: hidden; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1980,
+        "sample": ".mz-watch-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1980,
+        "sample": ".mz-watch-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1981,
+        "sample": ".mz-watch-meta { color: var(--fg-dim); font-size: 11px; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1983,
+        "sample": ".mz-watch-acts button { border: 1px solid var(--border); background: transparent; color: var(--fg); border-radius: 5px; padding: 1px 7px; cursor: pointer; font-size: 12px; }"
+      },
+      {
+        "rule": "border-radius",
+        "file": "renderer/styles/base.css",
+        "line": 1983,
+        "sample": ".mz-watch-acts button { border: 1px solid var(--border); background: transparent; color: var(--fg); border-radius: 5px; padding: 1px 7px; cursor: pointer; font-size: 12px; }"
+      },
+      {
+        "rule": "semantic-token-use",
+        "file": "renderer/styles/base.css",
+        "line": 1984,
         "sample": ".mz-watch-acts button:hover { background: var(--bg-hover); border-color: var(--accent); }"
       },
       {
@@ -42396,12 +42426,12 @@
   },
   "layout": {
     "summary": {
-      "totalFindings": 701,
+      "totalFindings": 705,
       "filesWithFindings": 71,
       "byRule": {
         "fixed-width-px": 199,
-        "white-space-nowrap": 134,
-        "position-absolute": 161,
+        "white-space-nowrap": 137,
+        "position-absolute": 162,
         "fixed-min-width": 90,
         "sidebar-pixel-coupling": 12,
         "fixed-left-right": 31,
@@ -42413,7 +42443,7 @@
       "topFiles": [
         {
           "file": "renderer/styles/base.css",
-          "count": 380
+          "count": 384
         },
         {
           "file": "renderer/base.css",
@@ -42533,7 +42563,7 @@
         }
       ],
       "byProvisionalClass": {
-        "D": 322,
+        "D": 326,
         "A": 191,
         "B": 90,
         "E": 67,
@@ -43791,14 +43821,14 @@
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/viewer/player.js",
-        "line": 241,
+        "line": 243,
         "sample": "<div style=\"min-width:420px;font-size:12.5px\">"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1429,
+        "line": 1531,
         "sample": "window.addEventListener('resize', applySide);"
       },
       {
@@ -47225,66 +47255,94 @@
         "sample": ".mz-ml-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
       },
       {
+        "rule": "white-space-nowrap",
+        "provisionalClass": "D",
+        "file": "renderer/styles/base.css",
+        "line": 1935,
+        "sample": ".mz-site-health .mz-site-check { min-width: 0; white-space: nowrap; }"
+      },
+      {
+        "rule": "white-space-nowrap",
+        "provisionalClass": "D",
+        "file": "renderer/styles/base.css",
+        "line": 1942,
+        "sample": ".mz-site-health small { flex: none; white-space: nowrap; opacity: .72; }"
+      },
+      {
+        "rule": "position-absolute",
+        "provisionalClass": "D",
+        "file": "renderer/styles/base.css",
+        "line": 1944,
+        "sample": ".mz-site-health-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }"
+      },
+      {
+        "rule": "white-space-nowrap",
+        "provisionalClass": "D",
+        "file": "renderer/styles/base.css",
+        "line": 1944,
+        "sample": ".mz-site-health-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }"
+      },
+      {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/styles/base.css",
-        "line": 1938,
+        "line": 1946,
         "sample": ".mz-mikan-season { min-width: 116px; max-width: 170px; }"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/styles/base.css",
-        "line": 1944,
+        "line": 1952,
         "sample": ".mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "D",
         "file": "renderer/styles/base.css",
-        "line": 1945,
+        "line": 1953,
         "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
       },
       {
         "rule": "calc-viewport-or-container",
         "provisionalClass": "E",
         "file": "renderer/styles/base.css",
-        "line": 1949,
+        "line": 1957,
         "sample": ".mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }"
       },
       {
         "rule": "fixed-width-px",
         "provisionalClass": "D",
         "file": "renderer/styles/base.css",
-        "line": 1953,
+        "line": 1961,
         "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
       },
       {
         "rule": "position-absolute",
         "provisionalClass": "D",
         "file": "renderer/styles/base.css",
-        "line": 1954,
+        "line": 1962,
         "sample": ".mz-catalog-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg-soft); opacity: 0; transition: opacity .12s ease; }"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/styles/base.css",
-        "line": 1958,
+        "line": 1966,
         "sample": ".mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/styles/base.css",
-        "line": 1964,
+        "line": 1972,
         "sample": ".mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/styles/base.css",
-        "line": 1970,
+        "line": 1978,
         "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
       },
       {

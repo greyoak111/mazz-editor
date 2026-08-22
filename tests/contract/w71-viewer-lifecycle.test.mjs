@@ -145,7 +145,7 @@ describe('W71 Player：全局监听与定时器必须对称退役', () => {
       // 再盘点真正长住的 Player 资源，不把测试环境实现细节误报成泄漏。
       await new Promise(resolve => requestAnimationFrame(resolve));
       await new Promise(resolve => setTimeout(resolve, 80));
-      assert.equal(activeIntervals.size, 2, '进度记忆与陪看观察 interval 都应纳入生命周期');
+      assert.equal(activeIntervals.size, 3, '进度记忆、陪看观察与每小时站点检测 interval 都应纳入生命周期');
 
       const media = root.querySelector('.mz-media');
       media.setAttribute('src', 'mazz-res://media/test.mp4');

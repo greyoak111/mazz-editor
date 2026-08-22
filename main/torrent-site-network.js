@@ -57,15 +57,22 @@ class PoliteSiteTransport {
     this.lastStartedAt = new Map();
     this.blockedSites = new Map();
     this.health = new Map();
+    this.siteGenerations = new Map();
     this.activeGlobal = 0;
     this.globalWaiters = [];
   }
 
   clearSite(siteId) {
+    this.siteGenerations.set(siteId, this.siteGeneration(siteId) + 1);
     this.blockedSites.delete(siteId);
-    this.lastStartedAt.delete(siteId);
+    // A reset clears state, not the politeness clock.  Keeping the last start
+    // prevents a manual reset from bypassing the per-site request interval.
     for (const key of this.cache.keys()) if (key.startsWith(`${siteId}\0`)) this.cache.delete(key);
     this.health.set(siteId, this.#emptyHealth(siteId));
+  }
+
+  siteGeneration(siteId) {
+    return this.siteGenerations.get(siteId) || 0;
   }
 
   snapshot(siteId) {
@@ -75,6 +82,11 @@ class PoliteSiteTransport {
 
   async request(siteId, request, { kind = 'list', cache = true, bypassCache = false, staleIfError = true } = {}) {
     if (!siteId) throw new TypeError('siteId required');
+    // Capture at invocation time, before this request can wait in the site
+    // queue.  clearSite() advances the generation so every older queued or
+    // in-flight request becomes read-only: it may finish for its caller, but
+    // it cannot resurrect reset health, cache, or challenge state.
+    const generation = this.siteGeneration(siteId);
     const blocked = this.blockedSites.get(siteId);
     if (blocked) throw new SiteRequestError('W65_CHALLENGE_REQUIRED', `站点 ${siteId} 需要人工验证，自动访问已停止`, blocked);
     const spec = typeof request === 'string' ? { url: request, method: 'GET' } : { method: 'GET', ...request };
@@ -87,12 +99,12 @@ class PoliteSiteTransport {
     }
     const cached = this.cache.get(cacheKey);
     if (cache && !bypassCache && cached && cached.expiresAt > this.now()) {
-      this.#record(siteId, { status: 'healthy', sourceMode: 'cache', lastSuccessAt: new Date(this.now()).toISOString(), lastError: '' });
+      this.#record(siteId, { status: 'healthy', sourceMode: 'cache', lastSuccessAt: new Date(this.now()).toISOString(), lastError: '' }, generation);
       return { ...cached.response, cached: true, stale: false };
     }
 
     const previous = this.siteQueues.get(siteId) || Promise.resolve();
-    const task = previous.then(() => this.#perform(siteId, spec), () => this.#perform(siteId, spec));
+    const task = previous.then(() => this.#perform(siteId, spec, generation), () => this.#perform(siteId, spec, generation));
     const queued = task.then(
       () => { if (this.siteQueues.get(siteId) === queued) this.siteQueues.delete(siteId); },
       () => { if (this.siteQueues.get(siteId) === queued) this.siteQueues.delete(siteId); },
@@ -102,13 +114,13 @@ class PoliteSiteTransport {
     try {
       response = await task;
     } catch (error) {
-      if (cache && staleIfError && cached?.response && error?.transient) {
-        this.#record(siteId, { status: 'degraded', sourceMode: 'stale-cache', lastError: error.message || String(error) });
+      if (this.#isCurrent(siteId, generation) && cache && staleIfError && cached?.response && error?.transient) {
+        this.#record(siteId, { status: 'degraded', sourceMode: 'stale-cache', lastError: error.message || String(error) }, generation);
         return { ...cached.response, cached: true, stale: true };
       }
       throw error;
     }
-    if (cache && !isDeterministicVisitorGate(response.body)) {
+    if (this.#isCurrent(siteId, generation) && cache && !isDeterministicVisitorGate(response.body)) {
       const ttl = kind === 'detail' ? this.detailTtlMs : this.listTtlMs;
       this.cache.set(cacheKey, { expiresAt: this.now() + ttl, response });
       while (this.cache.size > this.maxCacheEntries) this.cache.delete(this.cache.keys().next().value);
@@ -116,13 +128,13 @@ class PoliteSiteTransport {
     return response;
   }
 
-  async #perform(siteId, spec) {
+  async #perform(siteId, spec, generation) {
     let lastError;
     for (let attempt = 0; attempt <= this.retryDelaysMs.length; attempt += 1) {
       const elapsed = this.now() - (this.lastStartedAt.get(siteId) ?? -Infinity);
       if (elapsed < this.minIntervalMs) await this.wait(this.minIntervalMs - elapsed);
       this.lastStartedAt.set(siteId, this.now());
-      this.#record(siteId, { lastAttemptAt: new Date(this.now()).toISOString() });
+      this.#record(siteId, { lastAttemptAt: new Date(this.now()).toISOString() }, generation);
       try {
         const response = await this.#withGlobalSlot(() => this.requestImpl({ ...spec, siteId, attempt }));
         const statusCode = Number(response?.statusCode || 0);
@@ -135,11 +147,11 @@ class PoliteSiteTransport {
         const normalized = { statusCode, url: response.url || spec.url, headers: response.headers || {}, body: String(response.body || ''), cached: false };
         if (hasInteractiveChallenge(normalized.body)) {
           const evidence = { siteId, url: normalized.url, detectedAt: new Date(this.now()).toISOString() };
-          this.blockedSites.set(siteId, evidence);
-          this.#record(siteId, { status: 'challenge', sourceMode: 'blocked', lastFailureAt: evidence.detectedAt, lastError: '需要人工验证', consecutiveFailures: (this.health.get(siteId)?.consecutiveFailures || 0) + 1 });
+          if (this.#isCurrent(siteId, generation)) this.blockedSites.set(siteId, evidence);
+          this.#record(siteId, { status: 'challenge', sourceMode: 'blocked', lastFailureAt: evidence.detectedAt, lastError: '需要人工验证', consecutiveFailures: (this.health.get(siteId)?.consecutiveFailures || 0) + 1 }, generation);
           throw new SiteRequestError('W65_CHALLENGE_REQUIRED', `站点 ${siteId} 出现交互式验证，自动访问已停止`, evidence);
         }
-        this.#record(siteId, { status: 'healthy', sourceMode: 'network', lastSuccessAt: new Date(this.now()).toISOString(), lastError: '', consecutiveFailures: 0 });
+        this.#record(siteId, { status: 'healthy', sourceMode: 'network', lastSuccessAt: new Date(this.now()).toISOString(), lastError: '', consecutiveFailures: 0 }, generation);
         return normalized;
       } catch (error) {
         const normalizedError = isTransientNetworkError(error)
@@ -153,7 +165,7 @@ class PoliteSiteTransport {
             lastFailureAt: new Date(this.now()).toISOString(),
             lastError: normalizedError?.message || String(normalizedError),
             consecutiveFailures: (this.health.get(siteId)?.consecutiveFailures || 0) + 1,
-          });
+          }, generation);
         }
         if (normalizedError?.code === 'W65_CHALLENGE_REQUIRED' || !normalizedError?.transient || attempt >= this.retryDelaysMs.length) throw normalizedError;
         await this.wait(this.retryDelaysMs[attempt]);
@@ -166,8 +178,14 @@ class PoliteSiteTransport {
     return { siteId, status: 'unknown', sourceMode: 'none', lastAttemptAt: '', lastSuccessAt: '', lastFailureAt: '', consecutiveFailures: 0, lastError: '' };
   }
 
-  #record(siteId, patch) {
+  #isCurrent(siteId, generation) {
+    return this.siteGeneration(siteId) === generation;
+  }
+
+  #record(siteId, patch, generation = this.siteGeneration(siteId)) {
+    if (!this.#isCurrent(siteId, generation)) return false;
     this.health.set(siteId, { ...(this.health.get(siteId) || this.#emptyHealth(siteId)), ...patch, siteId });
+    return true;
   }
 
   async #withGlobalSlot(fn) {

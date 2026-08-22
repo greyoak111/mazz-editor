@@ -79,7 +79,7 @@ const INVOKE_CHANNELS = new Set([
   'tor:add', 'tor:addBuffer', 'tor:queue', 'tor:pause', 'tor:resume', 'tor:retry',
   'tor:stats', 'tor:list', 'tor:streamUrl', 'tor:filePath', 'tor:remove', 'tor:fileBytes',
   'sites:list', 'sites:search', 'sites:searchPage', 'sites:searchMany', 'sites:magnet', 'sites:home',
-  'sites:catalog', 'sites:health', 'sites:reset',
+  'sites:catalog', 'sites:health', 'sites:check', 'sites:reset',
   'mkv:tracks', 'mkv:extractFlac', 'mkv:extractTrack',
   'bv:create', 'bv:destroy', 'bv:bounds', 'bv:recompose', 'bv:focus', 'bv:nav', 'bv:js', 'bv:zoom', 'bv:find', 'bv:navHistory', 'bv:state', 'bv:emitTest', 'bv:ctxMenu', 'bv:devtools', 'bv:dtProbe', 'bv:capture', 'bv:captureVisibleHost',
   'window:childAt', 'window:toChild', 'window:listChildren', 'theme:broadcast',

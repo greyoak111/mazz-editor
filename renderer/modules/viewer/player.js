@@ -11,6 +11,8 @@ import { mountPlayerControlSurface } from './player-controls.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
+export const SITE_HEALTH_POLL_MS = 60 * 60 * 1000;
+const SITE_HEALTH_FRESH_MS = SITE_HEALTH_POLL_MS - 5 * 60 * 1000;
 
 function fmtTime(s) {
   if (!isFinite(s) || s < 0) return '--:--';
@@ -630,10 +632,16 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   let webNextPages = {};
   let webKeyword = '';
   let siteNames = {};
+  let siteHealthPollT = null;
+  let siteHealthAllTask = null;
+  let siteHealthResetTask = null;
+  const siteHealthSiteTasks = new Map();
+  let siteHealthRenderGen = 0;
   async function renderWeb() {
     if (webInited) { renderSiteHealth(); return; }
     webInited = true;
     const sites = await window.mazz.invoke('sites:list').catch(() => []);
+    if (destroyed) return;
     siteNames = Object.fromEntries(sites.map(site => [site.id, site.name]));
     webEl.innerHTML = `
       <div class="mz-web-sites" aria-label="检索站点">
@@ -647,7 +655,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         <input class="mz-web-magnet rb-input" placeholder="直接粘贴 magnet:? 链接，回车加入下载" spellcheck="false">
         <button class="rb-btn mz-web-add" style="flex-direction:row">加入下载</button>
       </div>
-      <div class="mz-site-health"></div>
+      <div class="mz-site-health" role="group" aria-label="资源站点可用性"><div class="mz-site-health-actions"></div><span class="mz-site-health-live" role="status" aria-live="polite"></span></div>
       <div class="mz-web-catalog-bar"><select class="mz-mikan-season rb-select" title="Mikan 季度目录"></select><span>选择番组可直接带入检索词</span></div>
       <div class="mz-web-rows mz-dim">载入 Mikan 本周番组目录…</div>`;
 
@@ -731,6 +739,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       rowsEl.textContent = '载入 Mikan 周历与季度目录…';
       try {
         const catalog = await window.mazz.invoke('sites:catalog', { site: 'mikan', year, season });
+        if (destroyed || !rowsEl.isConnected) return;
         const select = webEl.querySelector('.mz-mikan-season');
         if (!select.options.length && catalog.seasons?.length) {
           select.innerHTML = catalog.seasons.map(entry => `<option value="${escapeSiteText(entry.year)}\t${escapeSiteText(entry.season)}">${escapeSiteText(entry.label)}</option>`).join('');
@@ -741,8 +750,11 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         }
         renderCatalog(catalog);
       } catch (error) {
+        if (destroyed || !rowsEl.isConnected) return;
         rowsEl.className = 'mz-web-rows mz-dim';
         rowsEl.textContent = '番组目录载入失败：' + (error.message || error);
+      } finally {
+        renderSiteHealth();
       }
     };
 
@@ -759,14 +771,17 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
         const result = await window.mazz.invoke('sites:searchMany', {
           sites: selected, kw, pageMap: reset ? {} : webNextPages, maxPages: 2,
         });
+        if (destroyed || !rowsEl.isConnected) return;
         webKeyword = kw;
         webNextPages = result.nextPages || {};
         mergeAggregates(result.aggregates, reset);
         renderAggregates();
-        renderSiteHealth(result.perSite);
       } catch (error) {
+        if (destroyed || !rowsEl.isConnected) return;
         rowsEl.className = 'mz-web-rows mz-dim';
         rowsEl.textContent = '搜索失败：' + (error.message || error);
+      } finally {
+        renderSiteHealth();
       }
     };
 
@@ -789,20 +804,107 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   async function renderSiteHealth(perSite = null) {
     const box = webEl.querySelector('.mz-site-health');
-    if (!box) return;
+    const actions = box?.querySelector('.mz-site-health-actions');
+    const live = box?.querySelector('.mz-site-health-live');
+    if (!box || !actions || !live || destroyed) return;
+    const renderGen = ++siteHealthRenderGen;
     const snapshots = await window.mazz.invoke('sites:health', {}).catch(() => []);
+    if (destroyed || renderGen !== siteHealthRenderGen || !box.isConnected || !actions.isConnected || !live.isConnected) return;
+    // Decide focus ownership at commit time, not before the asynchronous
+    // health read.  If the user tabs from Mikan to DMHY while IPC is pending,
+    // the refreshed controls follow DMHY instead of stealing focus backward.
+    const activeAtCommit = document.activeElement;
+    const focusKey = actions.contains(activeAtCommit)
+      ? (activeAtCommit?.dataset?.site ? `site:${activeAtCommit.dataset.site}` : activeAtCommit?.classList?.contains('mz-site-health-reset') ? 'reset' : '')
+      : '';
+    const restoreFocus = !!focusKey;
     const bySite = Object.fromEntries((Array.isArray(snapshots) ? snapshots : []).map(item => [item.siteId, item]));
-    box.innerHTML = Object.keys(siteNames).map(siteId => {
+    const allBusy = !!siteHealthAllTask;
+    const checksBusy = allBusy || siteHealthSiteTasks.size > 0;
+    const resetBusy = !!siteHealthResetTask;
+    const statusLabel = (status, mode) => {
+      if (status === 'checking') return '检测中';
+      if (status === 'healthy') return mode === 'cache' ? '缓存可用' : '正常';
+      if (status === 'degraded') return '降级';
+      if (status === 'challenge') return '需验证';
+      if (status === 'failed') return '不可用';
+      return '未检测';
+    };
+    const statusEntries = Object.keys(siteNames).map(siteId => {
       const result = perSite?.[siteId];
       const health = bySite[siteId] || {};
-      const status = result?.error ? 'failed' : health.status || 'unknown';
-      const mode = result?.sourceMode || health.sourceMode || '待检';
-      return `<button type="button" data-site="${siteId}" data-status="${status}" title="${escapeSiteText(result?.error || health.lastError || '点击清除缓存并重置站点会话状态')}"><i></i>${escapeSiteText(siteNames[siteId])}<small>${escapeSiteText(mode)}</small></button>`;
-    }).join('');
-    box.querySelectorAll('button').forEach(button => button.addEventListener('click', async () => {
-      await window.mazz.invoke('sites:reset', { site: button.dataset.site }).catch(() => null);
-      renderSiteHealth();
+      const pending = allBusy || siteHealthSiteTasks.has(siteId);
+      const status = pending ? 'checking' : result?.error ? 'failed' : health.status || 'unknown';
+      const mode = result?.sourceMode || health.sourceMode || 'none';
+      const detail = result?.error || health.lastError || (health.lastAttemptAt ? `上次检测：${health.lastAttemptAt}` : '尚未检测');
+      const label = statusLabel(status, mode);
+      return { siteId, pending, status, label, detail };
+    });
+    actions.innerHTML = statusEntries.map(({ siteId, pending, status, label, detail }) => {
+      const unavailable = resetBusy || pending;
+      return `<button class="mz-site-check" data-a="site-check" type="button" data-site="${siteId}" data-status="${status}" aria-label="立即检测 ${escapeSiteText(siteNames[siteId])}，当前${label}" aria-busy="${pending}" aria-disabled="${unavailable}" title="${escapeSiteText(`点击立即检测；${detail}`)}"><i></i><span class="mz-site-check-name">${escapeSiteText(siteNames[siteId])}</span><small>${label}</small></button>`;
+    }).join('') + `<button class="mz-site-health-reset" data-a="site-health-reset" type="button" aria-disabled="${checksBusy || resetBusy}" aria-label="重置全部站点缓存、会话与检测状态" title="清除四站检测结果、缓存与站点会话">全部重置</button>`;
+    actions.querySelectorAll('.mz-site-check').forEach(button => button.addEventListener('click', () => {
+      if (button.getAttribute('aria-disabled') === 'true') return;
+      checkSiteHealth(button.dataset.site);
     }));
+    actions.querySelector('.mz-site-health-reset')?.addEventListener('click', () => {
+      if (destroyed || siteHealthResetTask || checksBusy) return;
+      const task = window.mazz.invoke('sites:reset', {}).catch(() => null).finally(() => {
+        if (siteHealthResetTask === task) siteHealthResetTask = null;
+        if (!destroyed) renderSiteHealth();
+      });
+      siteHealthResetTask = task;
+      renderSiteHealth();
+    });
+    const pendingNames = statusEntries.filter(entry => entry.pending).map(entry => siteNames[entry.siteId]);
+    const announcement = resetBusy
+      ? '正在重置全部站点'
+      : pendingNames.length
+        ? `正在检测：${pendingNames.join('、')}`
+        : statusEntries.map(entry => `${siteNames[entry.siteId]}：${entry.label}`).join('；');
+    if (live.textContent !== announcement) live.textContent = announcement;
+    if (restoreFocus) {
+      const next = focusKey === 'reset'
+        ? actions.querySelector('.mz-site-health-reset')
+        : [...actions.querySelectorAll('.mz-site-check')].find(button => button.dataset.site === focusKey.slice(5));
+      next?.focus({ preventScroll: true });
+    }
+  }
+
+  function checkSiteHealth(site = '') {
+    if (destroyed) return Promise.resolve(null);
+    if (siteHealthResetTask) return siteHealthResetTask;
+    if (!site && siteHealthAllTask) return siteHealthAllTask;
+    if (site && siteHealthAllTask) return siteHealthAllTask;
+    if (site && siteHealthSiteTasks.has(site)) return siteHealthSiteTasks.get(site);
+    const visibleChecks = site
+      ? [...webEl.querySelectorAll('.mz-site-check')].filter(button => button.dataset.site === site)
+      : [...webEl.querySelectorAll('.mz-site-check')];
+    for (const button of visibleChecks) {
+      button.setAttribute('aria-disabled', 'true');
+      button.dataset.status = 'checking';
+      button.setAttribute('aria-busy', 'true');
+      const state = button.querySelector('small');
+      if (state) state.textContent = '检测中';
+    }
+    const reset = webEl.querySelector('.mz-site-health-reset');
+    if (reset) reset.setAttribute('aria-disabled', 'true');
+    renderSiteHealth();
+    const task = window.mazz.invoke('sites:check', site
+      ? { site, force: true }
+      : { maxAgeMs: SITE_HEALTH_FRESH_MS }).catch(() => null).finally(() => {
+      if (site) {
+        if (siteHealthSiteTasks.get(site) === task) siteHealthSiteTasks.delete(site);
+      } else if (siteHealthAllTask === task) siteHealthAllTask = null;
+      if (!destroyed) renderSiteHealth();
+    });
+    if (site) siteHealthSiteTasks.set(site, task);
+    else siteHealthAllTask = task;
+    // Re-render after ownership is registered so the pressed station exposes
+    // a real busy state instead of briefly looking idle.
+    renderSiteHealth();
+    return task;
   }
 
   async function enqueueResource(group, element) {
@@ -1592,6 +1694,10 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   root.querySelector('[data-a=close]').addEventListener('click', () => onClose?.());
 
+  // Health belongs to the live Player owner, not to opening the network tab:
+  // check immediately, then at a deliberately quiet one-hour cadence.
+  checkSiteHealth();
+  siteHealthPollT = setInterval(() => { checkSiteHealth(); }, SITE_HEALTH_POLL_MS);
   media.play().catch(() => {});
   scheduleHide();
 
@@ -1682,6 +1788,8 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       clearDecodeWatch();
       clearInterval(watchPollT); // 种子状态轮询必清（泄漏会后台持续打 tor:stats）
       clearInterval(progMemTimer); // 进度记忆定时器必清（泄漏会持续写 settings）
+      clearInterval(siteHealthPollT); // 站点检测只属于存活播放器，关签后不得每小时复活网络请求。
+      siteHealthPollT = null;
       if (waveRaf != null) { cancelAnimationFrame(waveRaf); waveRaf = null; }
       saveProgMem(); // 销毁前终存一次（关签/切歌时位置不丢）
       if (gifRec) {

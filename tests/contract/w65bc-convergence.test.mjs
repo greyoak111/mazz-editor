@@ -187,7 +187,7 @@ describe('W65c 主进程五态下载队列', () => {
   test('桥与播放器暴露多站、健康、季度目录和五态干预，不再用 renderer watching Map', () => {
     const bridge = fs.readFileSync(path.resolve('preload/bridge.js'), 'utf8');
     const player = fs.readFileSync(path.resolve('renderer/modules/viewer/player.js'), 'utf8');
-    for (const channel of ['sites:searchMany', 'sites:catalog', 'sites:health', 'sites:reset', 'tor:addBuffer', 'tor:queue', 'tor:pause', 'tor:resume', 'tor:retry']) {
+    for (const channel of ['sites:searchMany', 'sites:catalog', 'sites:health', 'sites:check', 'sites:reset', 'tor:addBuffer', 'tor:queue', 'tor:pause', 'tor:resume', 'tor:retry']) {
       assert.ok(bridge.includes(`'${channel}'`), `preload 缺 ${channel}`);
       assert.ok((player + fs.readFileSync(path.resolve('main/torrent-daemon.js'), 'utf8') + fs.readFileSync(path.resolve('main/torrent-sites.js'), 'utf8')).includes(`'${channel}'`), `运行链缺 ${channel}`);
     }
