@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 94,
-    "scannedLines": 22502
+    "scannedLines": 22552
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -103,67 +103,67 @@
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 348,
+      "line": 352,
       "sample": "sender.on('render-process-gone', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 1078,
+      "line": 1082,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1120,
+      "line": 1124,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1137,
+      "line": 1141,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1150,
+      "line": 1154,
       "sample": "try { record.target.webContents.removeListener('render-process-gone', record.onTargetGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1152,
+      "line": 1156,
       "sample": "try { record.source?.removeListener('render-process-gone', record.onSourceGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1230,
+      "line": 1234,
       "sample": "target.webContents.once('render-process-gone', record.onTargetGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1232,
+      "line": 1236,
       "sample": "source?.once('render-process-gone', record.onSourceGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1680,
+      "line": 1684,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2031,
+      "line": 2035,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2122,
+      "line": 2126,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -467,17 +467,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1868,
+          "line": 1872,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1961,
+          "line": 1965,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1990,
+          "line": 1994,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -515,7 +515,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 2033,
+          "line": 2037,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
@@ -529,17 +529,17 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 56,
-          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
-        },
-        {
-          "file": "main/main.js",
           "line": 60,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
         },
         {
           "file": "main/main.js",
-          "line": 61,
+          "line": 64,
+          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
+        },
+        {
+          "file": "main/main.js",
+          "line": 65,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition-video-overlays');"
         }
       ]

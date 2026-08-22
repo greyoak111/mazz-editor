@@ -14,7 +14,7 @@
       ".svg"
     ],
     "scannedFiles": 244,
-    "scannedLines": 75941
+    "scannedLines": 75944
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -6969,49 +6969,49 @@
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 797,
+        "line": 800,
         "sample": "return `<button type=\"button\" data-site=\"${siteId}\" data-status=\"${status}\" title=\"${escapeSiteText(result?.error || health.lastError || '点击清除缓存并重置站点会话状态')}\"><i></i>${escapeSiteText(siteNames[siteId])}<small>${escapeSiteText(mode)}</small></button>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 851,
+        "line": 854,
         "sample": "? '<button data-da=\"retry\">重试</button><button data-da=\"remove\">移除</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 853,
+        "line": 856,
         "sample": "? '<button data-da=\"resume\">继续</button><button data-da=\"discard\">删除</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 855,
+        "line": 858,
         "sample": "? '<button data-da=\"play\">播放</button><button data-da=\"keep\">存入媒体库</button><button data-da=\"discard\">删除</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 857,
+        "line": 860,
         "sample": "? '<button data-da=\"play\">边下边播</button><button data-da=\"pause\">暂停</button><button data-da=\"discard\">取消</button>'"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 858,
+        "line": 861,
         "sample": ": '<button data-da=\"pause\">暂停</button><button data-da=\"discard\">取消</button>';"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/viewer/player.js",
-        "line": 861,
+        "line": 864,
         "sample": "<div class=\"mz-watch-bar\"><div class=\"mz-watch-fill\" style=\"width:${progress}%\"></div></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/viewer/player.js",
-        "line": 958,
+        "line": 961,
         "sample": "wrap.innerHTML = `<select class=\"mz-track rb-select\" title=\"音轨（多轨片源切轨换音道；FLAC/Vorbis/AAC/Opus 自封装直通，其他编码探测仅展示）\">"
       },
       {
@@ -17770,79 +17770,79 @@
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1072,
+        "line": 1075,
         "sample": "media.addEventListener('play', () => { playBtn.innerHTML = iconHtml('⏸'); root.querySelector('.mz-audio-disc')?.classList.add('spin'); });"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1075,
+        "line": 1078,
         "sample": "media.addEventListener('pause', () => { clearDecodeWatch(); playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1234,
+        "line": 1237,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1234,
+        "line": 1237,
         "sample": "btn.innerHTML = iconHtml('🎞');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1278,
+        "line": 1281,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); btn.setAttribute('aria-label', '录制 GIF'); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1278,
+        "line": 1281,
         "sample": "finally { btn.disabled = false; btn.innerHTML = iconHtml('🎞'); btn.setAttribute('aria-label', '录制 GIF'); }"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1282,
+        "line": 1285,
         "sample": "btn.innerHTML = `${iconHtml('■')}<span>停止</span>`;"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1323,
+        "line": 1326,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1323,
+        "line": 1326,
         "sample": "lockBtn.innerHTML = iconHtml(v ? '🔒' : '🔓');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1360,
+        "line": 1363,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1360,
+        "line": 1363,
         "sample": "muteBtn.innerHTML = iconHtml(media.muted || media.volume === 0 ? '🔇' : media.volume < 0.5 ? '🔉' : '🔊');"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1386,
+        "line": 1389,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1386,
+        "line": 1389,
         "sample": "loopBtn.innerHTML = iconHtml({ list: '🔁', single: '🔂', sequential: '⏭', off: '🔁' }[ctl.loop]);"
       },
       {
@@ -26531,7 +26531,7 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1549,
+        "line": 1552,
         "sample": "grad.addColorStop(0, getComputedStyle(root).getPropertyValue('--accent') || '#e3b341');"
       },
       {
@@ -43798,7 +43798,7 @@
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/viewer/player.js",
-        "line": 1426,
+        "line": 1429,
         "sample": "window.addEventListener('resize', applySide);"
       },
       {

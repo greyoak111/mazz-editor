@@ -9,7 +9,11 @@ const fs = require('fs');
 const { Readable } = require('stream'); // mazz-res media/ 分支：range 流式响应（GB 级不整读）
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { CATALOG_IMAGE_MAX_BYTES, allowedCatalogImageUrl } = require('./catalog-image-policy');
+const {
+  CATALOG_IMAGE_MAX_BYTES,
+  canonicalCatalogImageUrl,
+  resolvedCatalogImageRedirect,
+} = require('./catalog-image-policy');
 
 // 应用级服务各自拥有独立 before-quit 收尸钩；显式容量覆盖当前正式服务数，避免 Node 默认 10 个把合法治理误报为泄漏。
 app.setMaxListeners(32);
@@ -1454,7 +1458,7 @@ function registerChannels() {
       // Every redirect is revalidated, bytes/MIME are bounded, and renderer
       // removal aborts net.fetch through the protocol Request signal.
       if (rel.startsWith('catalog/')) {
-        let target = allowedCatalogImageUrl(rel.slice('catalog/'.length));
+        let target = canonicalCatalogImageUrl(rel.slice('catalog/'.length));
         if (!target) return new Response('forbidden catalog image', { status: 403 });
         let resp = null;
         for (let hop = 0; hop < 4; hop += 1) {
@@ -1464,7 +1468,7 @@ function registerChannels() {
             headers: { Accept: 'image/avif,image/webp,image/png,image/jpeg,image/gif' },
           });
           if (![301, 302, 303, 307, 308].includes(resp.status)) break;
-          const redirectTarget = allowedCatalogImageUrl(new URL(resp.headers.get('location') || '', target).href);
+          const redirectTarget = resolvedCatalogImageRedirect(target, resp.headers.get('location'));
           try { await resp.body?.cancel?.(); } catch {}
           target = redirectTarget;
           if (!target) return new Response('forbidden catalog redirect', { status: 403 });

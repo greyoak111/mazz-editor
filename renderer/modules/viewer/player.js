@@ -704,10 +704,13 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       }).join('') || '<div class="mz-dim">本季度目录为空。</div>';
       rowsEl.querySelectorAll('.mz-catalog-cover img').forEach((image) => {
         const cover = image.closest('.mz-catalog-cover');
-        const loaded = () => cover?.classList.add('has-image');
         const failed = () => {
           cover?.classList.remove('has-image');
           image.removeAttribute('src');
+        };
+        const loaded = () => {
+          if (image.naturalWidth > 0 && image.naturalHeight > 0) cover?.classList.add('has-image');
+          else failed();
         };
         if (image.complete && image.naturalWidth > 0) loaded();
         else {

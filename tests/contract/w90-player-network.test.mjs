@@ -127,6 +127,29 @@ describe('W90 Mikan catalog identity and covers', () => {
     assert.equal(new Set(catalog.seasons.map(item => item.label)).size, catalog.seasons.length);
   });
 
+  test('live Mikan card shape keeps its cover and repairs the legacy-host casing redirect', () => {
+    const html = `<div class="sk-bangumi" data-dayofweek="6"><div class="an-box"><ul><li>
+      <span data-src="/images/Bangumi/202604/edeef072.jpg?width=400&amp;height=400&amp;format=webp" class="b-lazy"></span>
+      <div class="date-text">2026/08/20 更新</div>
+      <a href="/Home/Bangumi/3920" class="an-text" title="摩绪">摩绪</a>
+    </li></ul></div></div>`;
+    const catalog = coreModule.parseMikanCatalog(html, { baseUrl: 'https://mikanime.tv/' });
+    assert.equal(catalog.items.length, 1);
+    assert.equal(catalog.items[0].imageUrl, 'https://mikanime.tv/images/Bangumi/202604/edeef072.jpg?width=400&height=400&format=webp');
+    assert.equal(
+      imagePolicy.canonicalCatalogImageUrl(catalog.items[0].imageUrl)?.href,
+      'https://mikanani.me/images/Bangumi/202604/edeef072.jpg?width=400&height=400&format=webp',
+      'legacy Mikan cover hosts must be canonicalized before Electron net.fetch sees the broken redirect',
+    );
+
+    const repaired = imagePolicy.resolvedCatalogImageRedirect(
+      catalog.items[0].imageUrl,
+      'https://mikanani.me/images/bangumi/202604/edeef072.jpg?width=400&height=400&format=webp',
+    );
+    assert.equal(repaired?.href, 'https://mikanani.me/images/Bangumi/202604/edeef072.jpg?width=400&height=400&format=webp');
+    assert.equal(imagePolicy.resolvedCatalogImageRedirect(catalog.items[0].imageUrl, 'https://evil.invalid/cover.webp'), null);
+  });
+
   test('catalog uses portrait lazy thumbnails, sanitizes URLs, and exposes a stable failure fallback', async () => {
     const catalog = {
       seasons: [
@@ -137,6 +160,7 @@ describe('W90 Mikan catalog identity and covers', () => {
         // Official Mikan fixture verified as a 1200×1697 portrait source; the
         // UI intentionally downsamples it into a compact 34×46 owner box.
         { title: '允许封面', imageUrl: 'https://mikanani.me/images/Bangumi/202604/25dac229.jpg', dayLabel: '星期一', updatedAt: '2026/08/22 更新' },
+        { title: '零尺寸封面', imageUrl: 'https://mikanani.me/images/Bangumi/202604/edeef072.jpg', dayLabel: '星期一', updatedAt: '2026/08/22 更新' },
         { title: '拒绝封面', imageUrl: 'https://evil.invalid/track.png', dayLabel: '星期二', updatedAt: '2026/08/21 更新' },
       ],
     };
@@ -154,9 +178,9 @@ describe('W90 Mikan catalog identity and covers', () => {
       const labels = [...root.querySelectorAll('.mz-mikan-season option')].map(option => option.textContent);
       assert.deepEqual(labels, ['2026 · 夏季番组', '2025 · 夏季番组']);
       const items = root.querySelectorAll('.mz-catalog-item');
-      assert.equal(items.length, 2);
+      assert.equal(items.length, 3);
       const images = root.querySelectorAll('.mz-catalog-cover img');
-      assert.equal(images.length, 1, 'non-official hosts must remain on the local fallback and never create a request owner');
+      assert.equal(images.length, 2, 'non-official hosts must remain on the local fallback and never create a request owner');
       const image = images[0];
       assert.match(image.getAttribute('src'), /^mazz-res:\/\/catalog\/https%3A%2F%2Fmikanani\.me%2F/i);
       assert.equal(image.getAttribute('loading'), 'lazy');
@@ -164,12 +188,17 @@ describe('W90 Mikan catalog identity and covers', () => {
       assert.equal(image.getAttribute('width'), '34');
       assert.equal(image.getAttribute('height'), '46');
       assert.ok(+image.getAttribute('height') > +image.getAttribute('width'), 'cover box must preserve the portrait poster treatment');
+      Object.defineProperty(image, 'naturalWidth', { configurable: true, value: 1200 });
+      Object.defineProperty(image, 'naturalHeight', { configurable: true, value: 1697 });
       image.dispatchEvent(new window.Event('load'));
-      assert.equal(items[0].querySelector('.mz-catalog-cover').classList.contains('has-image'), true, 'fallback hides only after a real load event');
+      assert.equal(items[0].querySelector('.mz-catalog-cover').classList.contains('has-image'), true, 'fallback hides only after decoded pixels have a real natural size');
       image.dispatchEvent(new window.Event('error'));
       assert.equal(image.hasAttribute('src'), false, 'failed image owner must be released rather than retried forever');
       assert.equal(items[0].querySelector('.mz-catalog-fallback').textContent, '允');
       assert.equal(items[0].querySelector('.mz-catalog-cover').classList.contains('has-image'), false);
+      images[1].dispatchEvent(new window.Event('load'));
+      assert.equal(items[1].querySelector('.mz-catalog-cover').classList.contains('has-image'), false, 'a synthetic load without decoded pixels must not create a false success state');
+      assert.equal(images[1].hasAttribute('src'), false, 'zero-sized load owners are retired like ordinary image failures');
     } finally {
       player?.destroy();
       root.remove();
