@@ -19,8 +19,8 @@
       {
         "path": "docs/engineering/OSS_PROVENANCE_MANUAL.json",
         "present": true,
-        "bytes": 5229,
-        "sha256": "32462B99F54EC9CFE457B3CB6D7C23A22B78001AA23BCDEF187F32FA9B45EFF4"
+        "bytes": 5487,
+        "sha256": "74F036158586013590F808F2EDBD322DA7A110B937FD92712C8BBC8863BF04A3"
       },
       {
         "path": "KNOWN_LIMITATIONS.md",
@@ -33,6 +33,13 @@
         "present": true,
         "bytes": 1081,
         "sha256": "B08007EA26AEE1D95CADBE2AB503C2D693852DCDBC74864F6EC28E9F01706230"
+      },
+      {
+        "path": "node_modules/chokidar/package.json",
+        "present": true,
+        "bytes": 1648,
+        "sha256": "24C7EDF8C0127EB1BD257DA726983A9AED172A0A1CD5454607A040021675F50E",
+        "role": "INSTALLED_PACKAGE_METADATA"
       },
       {
         "path": "node_modules/electron/dist/LICENSE",
@@ -105,8 +112,14 @@
       {
         "path": "package.json",
         "present": true,
-        "bytes": 7045,
-        "sha256": "1A1BE348E127C2F3CB631088A7BA6F2295CD62A5BA92A8F7A3B39E18834848B1"
+        "bytes": 7674,
+        "sha256": "91D5CF05C9DCD563AF692D30A05412F8E0D4A20D05A65AD77E3BD4679D2A0AE5"
+      },
+      {
+        "path": "patches/chokidar+3.6.0.patch",
+        "present": true,
+        "bytes": 1218,
+        "sha256": "0960B165FD49A72924EBAC3B7343BD8861CE5150AC746F6A6EA34FD238CD3CCB"
       },
       {
         "path": "patches/webtorrent+2.8.5.patch",
@@ -5246,9 +5259,28 @@
           "reviewState": "DECLARED_NOT_LEGALLY_REVIEWED",
           "repository": ""
         },
-        "modifications": [],
-        "requiredEvidence": [],
-        "noticeStatus": "PACKAGE_METADATA_ONLY_VERIFY_AT_RELEASE",
+        "modifications": [
+          {
+            "kind": "PATCH_PACKAGE",
+            "reason": "guard the close/dispose readdir race before dereferencing a released directory child snapshot",
+            "patch": {
+              "path": "patches/chokidar+3.6.0.patch",
+              "present": true,
+              "bytes": 1218,
+              "sha256": "0960B165FD49A72924EBAC3B7343BD8861CE5150AC746F6A6EA34FD238CD3CCB"
+            }
+          }
+        ],
+        "requiredEvidence": [
+          {
+            "path": "node_modules/chokidar/package.json",
+            "present": true,
+            "bytes": 1648,
+            "sha256": "24C7EDF8C0127EB1BD257DA726983A9AED172A0A1CD5454607A040021675F50E",
+            "role": "INSTALLED_PACKAGE_METADATA"
+          }
+        ],
+        "noticeStatus": "REQUIRED_EVIDENCE_RECORDED",
         "updateStatus": "LOCKED_NOT_CHECKED_LATEST",
         "vulnerabilityStatus": "NOT_ASSESSED_OFFLINE"
       },
@@ -20518,7 +20550,7 @@
     "runtimeGraphCandidates": 380,
     "developmentPackages": 421,
     "directRuntimeDependencies": 22,
-    "packagesWithDeclaredModifications": 1,
+    "packagesWithDeclaredModifications": 2,
     "manualLicenseOverridesApplied": 1,
     "missingLicense": 0,
     "missingSourceOrIntegrity": 0,

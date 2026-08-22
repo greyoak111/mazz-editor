@@ -157,8 +157,12 @@ export class Shell {
     });
     this.fileTree.defaults = { NEW_FILE_TYPES, NEW_FILE_DEFAULTS, BINARY_EXTS, makeBinaryDoc };
     // 右侧工具坞（智能创作/打开方式集中地；Ribbon 启动，可拖拽/拉伸/缩放）
-    import('./side-dock.js').then(({ SideDock }) => {
+    this._sideDockReadyPromise = import('./side-dock.js').then(({ SideDock }) => {
       this.sideDock = new SideDock(this);
+      return this.sideDock;
+    }).catch(error => {
+      console.error('[shell] 侧坞初始化失败:', error?.message || error);
+      return null;
     });
     this.sidebarCtl = new SidebarCtl(this.sidebar);
     this.sidebarCtl.init();
@@ -239,6 +243,17 @@ export class Shell {
     }, { once: true });
     registerCommandSource();
     this.registerFileSource();
+  }
+
+  async whenFactoryPanelReady(timeoutMs = 10000) {
+    let timer = 0;
+    const timeout = new Promise(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); });
+    const dock = this.sideDock || await Promise.race([this._sideDockReadyPromise || Promise.resolve(null), timeout]);
+    clearTimeout(timer);
+    if (!dock) throw new Error('智能创作侧坞初始化超时');
+    const ready = await dock.whenFactoryReady?.(timeoutMs);
+    if (!ready || !dock.factoryPanel) throw new Error('智能创作执行台尚未就绪');
+    return dock.factoryPanel;
   }
 
   /**
@@ -3569,9 +3584,18 @@ export class Shell {
           return;
         }
         if (pl.type === 'factoryAction') {
-          const fp = this.sideDock?.factoryPanel;
-          if (!fp) return;
+          const requestId = String(pl.requestId || pl.draft?.requestId || '').trim();
+          const resultKind = pl.kind || 'factorycfg';
+          const pushResult = (ok, message = '', receipt = null) => {
+            if (!requestId) return Promise.resolve(false);
+            return window.mazz.invoke('panel:push', {
+              kind: resultKind, instanceId: pl.instanceId,
+              payload: { type: 'factoryActionResult', requestId, ok: !!ok, message: String(message || ''), receipt },
+            }).catch(() => false);
+          };
           try {
+            const fp = await this.whenFactoryPanelReady(10000);
+            let actionReceipt = null;
             if (pl.act === 'selectGenre') {
               const g = (fp.genres || []).find(x => x.id === pl.id);
               if (g) { fp.genre = g; fp.values = {}; fp.lengthPlan = (await import('../modules/factory/engine.js')).resolveFactoryLengthPlan({ preset: 'short' }); fp.renderForm(); fp.syncLengthControls(); }
@@ -3599,12 +3623,20 @@ export class Shell {
             } else if (pl.act === 'copy') {
               await fp.copyMantra();
             } else if (pl.act === 'generate') {
-              fp.generateNow();
+              actionReceipt = await fp.generateNow({ requestId });
+              if (!actionReceipt) throw new Error('立项未通过，请检查必填项与 AI 服务');
             } else if (pl.act === 'addtask') {
-              fp.addTask();
+              actionReceipt = fp.addTask({ requestId });
+              if (!actionReceipt) throw new Error('入队未完成，请检查必填项');
             } else if (pl.act === 'projectSubmit') {
               const draft = pl.draft || {};
-              fp.values = { ...fp.values, ...(draft.values || {}) };
+              const genreId = String(draft.genreId || pl.genreId || '').trim();
+              if (genreId) {
+                const genre = (fp.genres || []).find(row => row.id === genreId);
+                if (!genre) throw new Error('所选创作模板不存在或尚未载入');
+                if (fp.genre?.id !== genre.id) { fp.genre = genre; fp.values = {}; }
+              }
+              fp.values = { ...(draft.values || {}) };
               fp.lengthPlan = (await import('../modules/factory/engine.js')).resolveFactoryLengthPlan({
                 preset: draft.preset, totalWords: draft.totalWords, wordsPerUnit: draft.wordsPerUnit,
               });
@@ -3618,9 +3650,15 @@ export class Shell {
               fp.setAutoPreview(draft.autoPreview !== false);
               fp.setConcurrency(draft.concurrency);
               fp.setExportFormat(draft.exportFmt);
-              if (draft.batchTitles?.length) await fp.addBatchTitles(draft.batchTitles);
-              else if (pl.mode === 'generate') await fp.generateNow();
-              else fp.addTask();
+              if (draft.batchTitles?.length) {
+                if (pl.mode === 'generate') actionReceipt = await fp.generateBatchNow(draft.batchTitles, { requestId });
+                else {
+                  const tasks = await fp.addBatchTitles(draft.batchTitles, { requestId });
+                  actionReceipt = tasks.length ? { batch: true, requestId, accepted: true, queued: true, tasks: tasks.map(task => fp.taskReceipt(task, { accepted: true, queued: true })) } : null;
+                }
+              } else if (pl.mode === 'generate') actionReceipt = await fp.generateNow({ requestId });
+              else actionReceipt = fp.addTask({ requestId });
+              if (!actionReceipt) throw new Error(pl.mode === 'generate' ? '立项未开工，请检查必填项与 AI 服务' : '项目未加入队列，请检查必填项');
             } else if (pl.act === 'project') {
               await fp.openProjectWizard();
             } else if (pl.act === 'setLengthPreset') {
@@ -3689,7 +3727,11 @@ export class Shell {
               await fp.decideFeed('reject');
               fp.pushSnapshot();
             }
-          } catch (e) { toast('创作面板动作失败：' + e.message); }
+            await pushResult(true, actionReceipt ? (pl.mode === 'generate' || pl.act === 'generate' ? '项目收据已建立，后台开始生成' : '项目已加入队列') : '操作完成', actionReceipt);
+          } catch (e) {
+            await pushResult(false, e.message || String(e), e.receipt || null);
+            toast('创作面板动作失败：' + (e.message || e));
+          }
           return;
         }
         // W55 右键菜单子窗格桥：菜单项单源在 menu-service._ctxItems（全软件右键并行化）
@@ -3793,7 +3835,10 @@ export class Shell {
           return;
         }
         if (pl.type === 'factoryProjectQuery') {
-          this.sideDock?.factoryPanel?.pushSnapshot();
+          try { (await this.whenFactoryPanelReady(10000)).pushSnapshot(); }
+          catch (error) {
+            window.mazz.invoke('panel:push', { kind: pl.kind || 'factorycfg', payload: { type: 'factoryActionResult', requestId: '', ok: false, message: error.message, receipt: null } }).catch(() => {});
+          }
           return;
         }
         if (pl.type === 'factoryStashTab') { this._factoryInitTab = pl.tab || 'provider'; return; }
@@ -3872,6 +3917,24 @@ export class Shell {
         try { const { invalidateSharedSearchIndex } = await import('../modules/search/shared-index.js'); invalidateSharedSearchIndex(); } catch {}
       });
       window.mazz.on('window:role', ({ role }) => { contextKeys.set('windowRole', role); });
+      window.mazz.on('file:watch-error', ({ code, at } = {}) => {
+        const now = Number(at) || Date.now();
+        if (now - (this._lastFileWatchWarningAt || 0) < 5000) return;
+        this._lastFileWatchWarningAt = now;
+        const safeCode = String(code || 'WATCH_ERROR').toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 24);
+        toast(`工作区外部改动监视已降级（${safeCode}）；为避免覆盖磁盘上的新版本，请先重新挂载。`, [{
+          label: '重新挂载',
+          fn: async () => {
+            try {
+              const restarted = await window.mazz.invoke('fs:restartWatch');
+              if (restarted?.ok !== true) throw new Error(restarted?.reason || 'restart-failed');
+              toast('工作区文件监视已重新挂载');
+            } catch {
+              toast('重新挂载失败；请检查工作区权限或重启应用', [], 6000);
+            }
+          },
+        }], 12000);
+      });
       // 单一外部变化状态机：索引、转换回传、删除、clean reload、dirty conflict 与 self-write echo 共用此入口。
       window.mazz.on('file:changed', payload => { this.handleExternalFileChanged(payload); });
     }

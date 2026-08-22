@@ -393,8 +393,32 @@ class PanelWindows {
       ...dockAnchor,
       ...((kind === 'ctxmenu' || kind === 'picklist') ? (() => {
         const cb = (parent || (typeof this.win === 'function' ? this.win() : this.win))?.getContentBounds?.() || { x: 0, y: 0, width: 1440, height: 900 };
-        let x = Math.round(cb.x + (opts.x || 0)), y = Math.round(cb.y + (opts.y || 0));
         const w = opts.w || (kind === 'picklist' ? 340 : 240), h = opts.h || (kind === 'picklist' ? 420 : 300);
+        const anchor = opts.anchor && Number.isFinite(Number(opts.anchor.screenX)) && Number.isFinite(Number(opts.anchor.screenY))
+          ? {
+              x: Math.round(Number(opts.anchor.screenX)),
+              y: Math.round(Number(opts.anchor.screenY)),
+              width: Math.max(0, Math.round(Number(opts.anchor.width) || 0)),
+              height: Math.max(0, Math.round(Number(opts.anchor.height) || 0)),
+            }
+          : null;
+        // Project/role pickers can originate in a detached PanelWindow.  Its
+        // DOM coordinates are already screen coordinates, so adding the main
+        // host's content origin would pin the menu to the desktop's top-left.
+        // Keep the legacy host-relative x/y contract for older callers while
+        // accepting an explicit screen anchor for cross-window controls.
+        if (anchor) {
+          const gap = 4;
+          const area = screen.getDisplayNearestPoint({ x: anchor.x, y: anchor.y }).workArea;
+          let x = anchor.x;
+          let y = anchor.y + gap;
+          if (x + w > area.x + area.width) x = anchor.x + anchor.width - w;
+          if (y + h > area.y + area.height) y = anchor.y - anchor.height - h - gap;
+          x = Math.max(area.x + gap, Math.min(x, area.x + area.width - w - gap));
+          y = Math.max(area.y + gap, Math.min(y, area.y + area.height - h - gap));
+          return { x: Math.round(x), y: Math.round(y) };
+        }
+        let x = Math.round(cb.x + (opts.x || 0)), y = Math.round(cb.y + (opts.y || 0));
         if (x + w > cb.x + cb.width) x = cb.x + cb.width - w - 4; // 右出屏左翻
         if (y + h > cb.y + cb.height) y = cb.y + cb.height - h - 4; // 下出屏上翻
         return { x, y };

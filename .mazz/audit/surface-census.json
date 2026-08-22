@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 94,
-    "scannedLines": 22659
+    "scannedFiles": 95,
+    "scannedLines": 23585
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -103,67 +103,67 @@
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 352,
+      "line": 360,
       "sample": "sender.on('render-process-gone', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 1082,
+      "line": 1128,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1124,
+      "line": 1170,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1141,
+      "line": 1187,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1154,
+      "line": 1200,
       "sample": "try { record.target.webContents.removeListener('render-process-gone', record.onTargetGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1156,
+      "line": 1202,
       "sample": "try { record.source?.removeListener('render-process-gone', record.onSourceGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1234,
+      "line": 1280,
       "sample": "target.webContents.once('render-process-gone', record.onTargetGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1236,
+      "line": 1282,
       "sample": "source?.once('render-process-gone', record.onSourceGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1684,
+      "line": 1734,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2035,
+      "line": 2085,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2126,
+      "line": 2176,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -211,7 +211,7 @@
     {
       "rule": "window-close-hook",
       "file": "main/panel-windows.js",
-      "line": 449,
+      "line": 473,
       "sample": "win.on('closed', () => {"
     },
     {
@@ -409,22 +409,22 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 596,
+          "line": 611,
           "sample": "const packet = await withDeadline(window.mazz.invoke('bv:captureVisibleHost', {}), 1200, 'browser surface capture');"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 737,
+          "line": 752,
           "sample": "try { dragCloak(false); } catch (error) { console.warn('[split-preview] uncloak retry:', error?.message || error); }"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 786,
+          "line": 801,
           "sample": "dragCloak(true);"
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 801,
+          "line": 816,
           "sample": "try { dragCloak(false); } catch {}"
         }
       ]
@@ -448,7 +448,7 @@
         },
         {
           "file": "renderer/shell/shell.js",
-          "line": 3081,
+          "line": 3096,
           "sample": "bus.on('pane:tabMoved', ({ tabId }) => {"
         }
       ]
@@ -467,17 +467,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1872,
+          "line": 1922,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 1965,
+          "line": 2015,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 1994,
+          "line": 2044,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -515,7 +515,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 2037,
+          "line": 2087,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
@@ -529,17 +529,17 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 60,
-          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
-        },
-        {
-          "file": "main/main.js",
-          "line": 64,
+          "line": 61,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
         },
         {
           "file": "main/main.js",
           "line": 65,
+          "sample": "app.commandLine.appendSwitch('disable-direct-composition');"
+        },
+        {
+          "file": "main/main.js",
+          "line": 66,
           "sample": "app.commandLine.appendSwitch('disable-direct-composition-video-overlays');"
         }
       ]

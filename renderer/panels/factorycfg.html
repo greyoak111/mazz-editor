@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
-<title>AI 服务 · 创作模板</title>
+<title>新项目立项</title>
 <link rel="stylesheet" href="../styles/themes.css">
 <link rel="stylesheet" href="panel-shared.css">
 <style>
@@ -14,9 +14,14 @@
   .p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }
   .p-winbtns button:hover { background:var(--bg-hover); color:var(--fg); }
   .p-winbtns button.x:hover { background:#e81123; color:#fff; }
-  .head { display:flex; align-items:center; gap:4px; padding:8px 14px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; }
-  .head .tab { border:0; background:none; color:var(--fg-dim); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:var(--font-ui); }
-  .head .tab.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .head { min-height:48px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:7px 104px 7px 14px; border-bottom:1px solid var(--border); background:var(--bg-elev); flex:none; }
+  .head-primary, .head-actions { display:flex; align-items:center; gap:9px; min-width:0; }
+  .head-title { margin:0; overflow:hidden; color:var(--fg); font-size:15px; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
+  .head-subtitle { overflow:hidden; color:var(--fg-dim); font-size:11.5px; text-overflow:ellipsis; white-space:nowrap; }
+  .head-back, .head-settings { min-height:32px; flex:none; }
+  .head-settings { border-color:color-mix(in srgb,var(--accent) 58%,var(--border)); background:var(--bg); font-weight:600; }
+  .service-status { display:inline-flex; align-items:center; gap:6px; min-width:0; color:var(--fg-dim); font-size:11.5px; white-space:nowrap; }
+  .service-status .key-dot { margin:0; }
   main { flex:1; min-height:0; padding:14px 20px; overflow-y:auto; }
   .set-row { display:flex; align-items:center; gap:10px; padding:7px 0; }
   .set-row label { width:88px; flex:none; font-size:12.5px; font-weight:600; }
@@ -30,25 +35,37 @@
   .hint { font-size:12px; color:var(--fg-dim); margin-top:8px; }
   .sec { font-size:12.5px; margin:10px 0 4px; }
   .acts { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+  .sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
   .project-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px; }
   .project-head h2 { margin:0; font-size:17px; }
   .project-head p { margin:3px 0 0; color:var(--fg-dim); font-size:12px; }
-  .project-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,.75fr); gap:18px; align-items:start; }
+  .project-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,.76fr); grid-template-areas:"material plan" "dump plan"; gap:12px 18px; align-items:start; }
+  .project-material { grid-area:material; }
+  .project-dump { grid-area:dump; }
+  .project-plan { grid-area:plan; position:sticky; top:0; min-width:0; }
   .project-card { border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--bg-elev); }
-  .project-card + .project-card { margin-top:10px; }
   .project-title { font-size:12.5px; font-weight:700; margin-bottom:8px; }
   .project-field { margin-bottom:9px; }
   .project-field label { display:block; font-size:11.5px; color:var(--fg-dim); margin-bottom:3px; }
   .project-field input, .project-field textarea, .project-field select { width:100%; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:7px; padding:6px 8px; font:12.5px var(--font-ui); }
+  .project-field-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:8px; }
+  .project-field-row .project-field { margin-bottom:0; }
+  .project-field-row .btn { min-height:32px; margin-bottom:1px; }
+  .length-fieldset { min-width:0; margin:0; padding:0; border:0; }
+  .length-fieldset > legend { width:100%; padding:0; }
   .length-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
-  .length-card { border:1px solid var(--border); border-radius:9px; background:var(--bg); color:var(--fg); padding:9px 7px; cursor:pointer; text-align:left; font-family:var(--font-ui); }
+  .length-card { min-width:0; min-height:56px; border:1px solid var(--border); border-radius:9px; background:var(--bg); color:var(--fg); padding:8px 7px; cursor:pointer; text-align:left; font-family:var(--font-ui); }
   .length-card b, .length-card span { display:block; }
   .length-card span { color:var(--fg-dim); font-size:10.5px; margin-top:2px; }
   .length-card.on { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+  .length-card:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .length-card:disabled { opacity:.58; cursor:not-allowed; }
+  .length-custom { min-height:18px; margin-top:5px; color:var(--fg-dim); font-size:11px; }
+  .length-custom.on { color:var(--accent); font-weight:600; }
   .smart-row { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:end; gap:7px; margin-top:10px; color:var(--fg-dim); }
-  .smart-row label { font-size:11px; }
+  .smart-row label, .smart-label { display:block; font-size:11px; }
   .smart-row input { width:100%; display:block; margin-top:3px; }
+  .smart-output { min-height:31px; display:flex; align-items:center; margin-top:3px; border:1px solid var(--border); border-radius:7px; padding:6px 8px; background:var(--bg); color:var(--fg); font:12.5px var(--font-ui); }
   .word-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
   .word-chips button, .choice-chip { border:1px solid var(--border); border-radius:999px; padding:3px 9px; background:var(--bg); color:var(--fg-dim); font:11px var(--font-ui); cursor:pointer; }
   .word-chips button.on, .choice-chip.on { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
@@ -71,8 +88,12 @@
   .feed-cluster-head b { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .feed-cluster-head span { flex:none; color:var(--accent); font-variant-numeric:tabular-nums; }
   .feed-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:7px; }
-  .project-actions { display:flex; gap:8px; margin-top:12px; }
+  .project-actions { position:sticky; bottom:-14px; z-index:4; display:flex; gap:8px; margin:12px -12px 0; padding:10px 12px; border-top:1px solid var(--border); background:color-mix(in srgb,var(--bg-elev) 94%,transparent); box-shadow:0 -8px 18px rgba(0,0,0,.10); backdrop-filter:blur(8px); }
   .project-actions .btn { flex:1; justify-content:center; }
+  .project-status { min-height:20px; margin-top:7px; color:var(--fg-dim); font-size:11.5px; }
+  .project-status.err { color:var(--danger); }
+  .project-status.ok { color:var(--ok); }
+  #pj-form[aria-busy="true"] .project-card { cursor:progress; }
   .provider-layout { display:grid; grid-template-columns:minmax(300px,.9fr) minmax(360px,1.1fr); gap:14px; align-items:start; }
   .provider-card { border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--bg-elev); }
   .provider-card h2 { margin:0 0 4px; font-size:15px; }
@@ -88,17 +109,41 @@
   .route-name { font-size:12px; }
   .route-name small { display:block; color:var(--fg-dim); font-size:10px; }
   .route-pick { width:100%; justify-content:flex-start; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  @media (max-width:760px) { .project-grid { grid-template-columns:1fr; } }
-  @media (max-width:760px) { .provider-layout { grid-template-columns:1fr; } }
+  @media (max-width:760px) {
+    .head { padding-left:10px; }
+    .head-subtitle { display:none; }
+    main { padding:10px 14px; }
+    .project-head { margin-bottom:8px; }
+    .project-head p { display:none; }
+    .project-grid { grid-template-columns:minmax(0,1fr); grid-template-areas:"plan" "material" "dump"; gap:10px; }
+    .project-plan { position:static; }
+    .project-actions { bottom:-10px; margin-left:-12px; margin-right:-12px; }
+    .provider-layout { grid-template-columns:1fr; }
+  }
+  @media (max-width:520px) {
+    .head { min-height:44px; gap:7px; padding-right:98px; }
+    .head-title { font-size:13.5px; }
+    .service-status { display:none; }
+    .head-settings { padding-inline:8px; }
+    .project-head { display:none; }
+    .length-cards { gap:5px; }
+    .project-plan { padding:10px; }
+    .length-card { min-height:48px; padding:5px; text-align:center; }
+    .length-custom { min-height:14px; margin-top:2px; }
+    .smart-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); gap:6px; margin-top:6px; }
+    .smart-row > .equation { display:none; }
+    .smart-row label { min-width:0; }
+    .project-plan > .hint { margin-top:4px; }
+    .word-chips { flex-wrap:nowrap; overflow-x:auto; margin-top:4px; padding-bottom:2px; }
+    .word-chips button { flex:none; }
+    .project-actions { bottom:0; gap:5px; margin-top:7px; padding-block:8px; }
+    .project-actions .btn { min-width:0; padding-inline:5px; }
+  }
 </style></head><body><script type="module" src="panel-runtime.js"></script>
 <div class="pwin">
   <div class="p-drag"></div>
   <div class="p-winbtns"><button id="p-min" title="最小化"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><button id="p-max" title="最大化/还原"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg></button><button class="x" id="p-close" title="关闭"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <div class="head">
-    <button class="tab" data-t="project">项目立项</button>
-    <button class="tab on" data-t="provider">AI 服务</button>
-    <button class="tab" data-t="genre">新建创作模板</button>
-  </div>
+  <header class="head" id="panel-head"></header>
   <main id="m" class="ps-scroll-y"></main>
 </div>
 <script>
@@ -115,18 +160,60 @@ window.mazz.on('panel:push', (p) => { if (p?.type === 'themeInit') applyTheme(p.
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const attr = (s) => esc(s).replace(/"/g, '&quot;');
 
-let tab = 'provider', PRESETS = [], providerState = null, projectSnapshot = null, projectValues = {}, projectBatch = '';
-function setTab(t) { tab = t; document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t)); render(); }
-document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
+let tab = 'provider', PRESETS = [], providerState = null, projectSnapshot = null;
+let projectValues = {}, projectBatch = '', projectDump = '', projectSubmitTxn = null;
+
+function providerStatusInfo() {
+  const count = providerState?.connected?.length || 0;
+  const hint = String(projectSnapshot?.providerHint || '');
+  const ready = count > 0 || (!!hint && /已|就绪|可用/.test(hint) && !/未|无|失败/.test(hint));
+  return { ready, text: ready ? (count ? `${count} 个 AI 连接可用` : 'AI 服务已就绪') : 'AI 服务待配置' };
+}
+
+function renderHead() {
+  const head = $('#panel-head');
+  const status = providerStatusInfo();
+  if (tab === 'project') {
+    head.innerHTML = `
+      <div class="head-primary"><h1 class="head-title">新项目立项</h1><span class="head-subtitle">先定材料与篇幅，再进入智能创作执行台</span></div>
+      <div class="head-actions"><span class="service-status" role="status"><i class="key-dot ${status.ready ? 'on' : ''}"></i>${esc(status.text)}</span><button type="button" class="btn head-settings" id="head-provider" data-t="provider" ${projectSubmitTxn ? 'disabled' : ''}>AI 服务设置</button></div>`;
+  } else {
+    const title = tab === 'provider' ? 'AI 服务设置' : '新建创作模板';
+    head.innerHTML = `
+      <div class="head-primary"><button type="button" class="btn head-back" data-t="project" aria-label="返回新项目立项">← 返回立项</button><h1 class="head-title">${title}</h1></div>
+      ${tab === 'provider' ? `<span class="service-status" role="status"><i class="key-dot ${status.ready ? 'on' : ''}"></i>${esc(status.text)}</span>` : ''}`;
+  }
+  head.querySelectorAll('[data-t]').forEach(button => button.addEventListener('click', () => setTab(button.dataset.t)));
+}
+
+function setTab(next) {
+  if (!['project', 'provider', 'genre'].includes(next)) return;
+  tab = next;
+  document.title = next === 'project' ? '新项目立项' : next === 'provider' ? 'AI 服务设置' : '新建创作模板';
+  renderHead();
+  render();
+  if (next === 'project') window.mazz.invoke('panel:action', { type: 'factoryProjectQuery' }).catch(error => showProjectStatus('读取立项草稿失败：' + (error?.message || error), 'err'));
+}
+
 window.mazz.on('panel:push', (p) => {
   if (p?.type === 'factoryPresets') { PRESETS = p.presets || []; if (tab === 'provider') renderProvider(); return; }
-  if (p?.type === 'factoryProviderState') { providerState = p.state || null; if (tab === 'provider') renderProvider(); return; }
-  if (p?.type === 'factoryProviderError' && tab === 'provider') { const el = $('#pv-status'); if (el) { el.textContent = '✗ ' + (p.message || '操作失败'); el.classList.add('err'); } return; }
+  if (p?.type === 'factoryProviderState') { providerState = p.state || null; renderHead(); if (tab === 'provider') renderProvider(); return; }
+  if (p?.type === 'factoryProviderError') {
+    if (tab === 'provider') { const el = $('#pv-status'); if (el) { el.textContent = '✗ ' + (p.message || '操作失败'); el.classList.add('err'); } }
+    else if (tab === 'project') showProjectStatus('AI 服务设置失败：' + (p.message || '操作失败'), 'err');
+    return;
+  }
+  if (p?.type === 'factoryActionResult') { finishProjectSubmit(p); return; }
   if (p?.type === 'factoryInit' && p.tab) setTab(p.tab);
   if (p?.type === 'factoryProjectSnapshot') {
-    projectSnapshot = p.snapshot || null;
+    const previous = projectSnapshot;
+    const next = p.snapshot || null;
+    const lengthOnly = tab === 'project' && isLengthOnlySnapshot(previous, next);
+    projectSnapshot = next;
     projectValues = { ...(projectSnapshot?.values || {}) };
-    if (tab === 'project') renderProject();
+    projectDump = String(projectSnapshot?.dump ?? projectDump);
+    renderHead();
+    if (tab === 'project') lengthOnly ? updateProjectLengthState(projectSnapshot) : renderProject();
   }
 });
 // PRESETS 桥取（单源在 provider.js，面板不复制）
@@ -138,82 +225,304 @@ window.mazz.invoke('panel:action', { type: 'factoryProjectQuery' }).catch(() => 
 function render() { tab === 'project' ? renderProject() : tab === 'provider' ? renderProvider() : renderGenre(); }
 
 // ==================== W60b 一次性项目立项 ====================
-const projectAct = (act, extra = {}) => window.mazz.invoke('panel:action', { type: 'factoryAction', act, ...extra }).catch(() => {});
-function projectFieldHtml(f) {
+const projectAct = (act, extra = {}) => window.mazz.invoke('panel:action', { type: 'factoryAction', act, ...extra }).catch(error => {
+  showProjectStatus('操作失败：' + (error?.message || error), 'err');
+  return null;
+});
+function projectFieldHtml(f, index) {
+  const id = `pj-field-${index}`;
   const required = f.required ? '<b class="required-mark"> *</b>' : '';
+  const requiredAttrs = f.required ? 'required aria-required="true"' : '';
   const value = projectValues[f.id] ?? f.default ?? '';
-  if (f.type === 'textarea') return `<div class="project-field"><label>${esc(f.label)}${required}</label><textarea data-p-field="${attr(f.id)}" rows="3" placeholder="${attr(f.placeholder || '')}">${esc(value)}</textarea></div>`;
-  if (f.type === 'select') return `<div class="project-field"><label>${esc(f.label)}${required}</label><select data-p-field="${attr(f.id)}">${(f.options || []).map(o => `<option value="${attr(o)}" ${o === value ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
-  return `<div class="project-field"><label>${esc(f.label)}${required}</label><input data-p-field="${attr(f.id)}" value="${attr(value)}" placeholder="${attr(f.placeholder || '')}" spellcheck="false"></div>`;
+  if (f.type === 'textarea') return `<div class="project-field"><label for="${id}">${esc(f.label)}${required}</label><textarea id="${id}" data-p-field="${attr(f.id)}" rows="3" placeholder="${attr(f.placeholder || '')}" ${requiredAttrs}>${esc(value)}</textarea></div>`;
+  if (f.type === 'select') return `<div class="project-field"><label for="${id}">${esc(f.label)}${required}</label><select id="${id}" data-p-field="${attr(f.id)}" ${requiredAttrs}>${(f.options || []).map(o => `<option value="${attr(o)}" ${o === value ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
+  return `<div class="project-field"><label for="${id}">${esc(f.label)}${required}</label><input id="${id}" data-p-field="${attr(f.id)}" value="${attr(value)}" placeholder="${attr(f.placeholder || '')}" spellcheck="false" ${requiredAttrs}></div>`;
+}
+
+function snapshotWithoutLength(snapshot) {
+  if (!snapshot) return '';
+  const copy = { ...snapshot };
+  delete copy.lengthPlan;
+  return JSON.stringify(copy);
+}
+
+function isLengthOnlySnapshot(previous, next) {
+  return !!previous && !!next && previous.genreId === next.genreId && snapshotWithoutLength(previous) === snapshotWithoutLength(next);
+}
+
+function matchingPreset(plan, presets) {
+  return (presets || []).find(p => p.id === plan.preset
+    && Number(p.totalWords || 0) === Number(plan.totalWords || 0)
+    && Number(p.wordsPerUnit || 0) === Number(plan.wordsPerUnit || 0)) || null;
+}
+
+function formatPresetTotal(preset) {
+  if (preset.id === 'unlimited' || !Number(preset.totalWords)) return '不限';
+  const total = Number(preset.totalWords);
+  return total % 10000 === 0 ? `${total / 10000}万字` : `${total.toLocaleString('zh-CN')}字`;
+}
+
+function chapterText(plan, unitName) {
+  return Number(plan.totalWords) > 0 ? `${Math.ceil(Number(plan.totalWords) / Math.max(1, Number(plan.wordsPerUnit) || 1))}${unitName}` : '不限';
+}
+
+function captureProjectView() {
+  const m = $('#m');
+  const active = document.activeElement;
+  return {
+    scrollTop: m?.scrollTop || 0,
+    advancedOpen: m?.querySelector('details.advanced')?.open === true,
+    activeId: active?.id || '',
+    activeField: active?.dataset?.pField || '',
+    selectionStart: typeof active?.selectionStart === 'number' ? active.selectionStart : null,
+    selectionEnd: typeof active?.selectionEnd === 'number' ? active.selectionEnd : null,
+  };
+}
+
+function restoreProjectView(view) {
+  const m = $('#m');
+  if (!m || !view) return;
+  m.scrollTop = view.scrollTop;
+  const active = view.activeId ? document.getElementById(view.activeId)
+    : [...m.querySelectorAll('[data-p-field]')].find(el => el.dataset.pField === view.activeField);
+  if (!active || active.disabled) return;
+  active.focus({ preventScroll: true });
+  if (view.selectionStart !== null && typeof active.setSelectionRange === 'function') {
+    active.setSelectionRange(view.selectionStart, view.selectionEnd ?? view.selectionStart);
+  }
+  m.scrollTop = view.scrollTop;
+}
+
+function showProjectStatus(message = '', tone = '') {
+  projectNotice = { message: String(message || ''), tone };
+  const el = $('#pj-status');
+  if (!el) return;
+  el.textContent = projectNotice.message;
+  el.className = `project-status ${projectNotice.tone || ''}`.trim();
+}
+
+let projectNotice = { message: '', tone: '' };
+function setProjectBusy(busy, message = '') {
+  const form = $('#pj-form');
+  if (form) form.setAttribute('aria-busy', busy ? 'true' : 'false');
+  ['pj-copy', 'pj-add', 'pj-generate'].forEach(id => { const button = document.getElementById(id); if (button) button.disabled = busy; });
+  if (message) showProjectStatus(message);
+  renderHead();
+}
+
+function finishProjectSubmit(result) {
+  if (!projectSubmitTxn || result?.requestId !== projectSubmitTxn.requestId) return;
+  clearTimeout(projectSubmitTxn.timer);
+  if (!result.ok) {
+    const receiptTasks = result?.receipt?.batch && Array.isArray(result.receipt.tasks)
+      ? result.receipt.tasks
+      : (result?.receipt?.taskId ? [result.receipt] : []);
+    const registered = receiptTasks.filter(item => item?.taskId);
+    const accepted = registered.filter(item => item?.accepted);
+    if (registered.length) {
+      // Some rows already own durable folders/receipts.  Releasing this UUID
+      // would let a second submit duplicate those accepted rows.  Keep the
+      // transaction in a retryable in-doubt state: the next click replays the
+      // same requestId and the registry fills only the missing receipts.
+      projectSubmitTxn.timer = null;
+      projectSubmitTxn.retryable = true;
+      setProjectBusy(false);
+      const prefix = result.message ? `${result.message}；` : '';
+      const progress = accepted.length
+        ? `已有 ${accepted.length}/${registered.length} 个项目建立持久收据`
+        : `${registered.length} 个项目已登记，持久收据尚未写完`;
+      showProjectStatus(`${prefix}${progress}；点击重试将沿用同一请求，只补齐未完成项目。`, 'err');
+      return;
+    }
+    projectSubmitTxn = null;
+    setProjectBusy(false);
+    showProjectStatus(result.message || '立项未完成，请检查后重试。', 'err');
+    return;
+  }
+  projectSubmitTxn = null;
+  const receipt = result.receipt?.id || result.receipt?.taskId || (typeof result.receipt === 'string' ? result.receipt : '');
+  setProjectBusy(false);
+  showProjectStatus(result.message || (receipt ? `立项完成 · ${receipt}` : '立项完成'), 'ok');
+  pwb('close');
+}
+
+function noteProjectSubmitDelay(requestId) {
+  if (!projectSubmitTxn || requestId !== projectSubmitTxn.requestId) return;
+  projectSubmitTxn.timer = null;
+  showProjectStatus('仍在等待主窗口确认或建立持久收据；为避免重复立项，本次请求保持锁定。', 'wait');
+}
+
+function makeRequestId() {
+  return globalThis.crypto?.randomUUID?.() || `factory-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function submitProject(mode) {
+  const m = $('#m');
+  const form = $('#pj-form');
+  const plan = projectSnapshot?.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000 };
+  const retryTxn = projectSubmitTxn?.retryable ? projectSubmitTxn : null;
+  if (!form || (projectSubmitTxn && !retryTxn)) return;
+  const submitMode = retryTxn?.mode || mode;
+  if (!form.reportValidity()) {
+    showProjectStatus('请补齐必填项，并检查字数范围。', 'err');
+    return;
+  }
+  const values = { ...projectValues };
+  m.querySelectorAll('[data-p-field]').forEach(el => { values[el.dataset.pField] = el.value; });
+  const total = $('#pj-total').disabled ? 0 : Math.max(1, +$('#pj-total').value || plan.totalWords || 1);
+  const words = Math.max(100, +$('#pj-words').value || plan.wordsPerUnit || 100);
+  const draft = {
+    values, dump: $('#pj-dump').value,
+    preset: plan.preset,
+    totalWords: total,
+    wordsPerUnit: words,
+    dualLoop: $('#pj-dual').checked, maxMode: $('#pj-max').checked,
+    reviewRitual: $('#pj-review-ritual').value,
+    reviewBudgetCap: Math.max(0, +$('#pj-review-budget').value || 32000),
+    autoPreview: $('#pj-autopreview').checked,
+    concurrency: +$('#pj-concurrency').value || 1,
+    exportFmt: $('#pj-format').value,
+    batchTitles: projectBatch.split(/\r?\n/).map(x => x.trim()).filter(Boolean),
+  };
+  const requestId = retryTxn?.requestId || makeRequestId();
+  projectSubmitTxn = { requestId, mode: submitMode, retryable: false, timer: null };
+  // 批量“立刻开工”可能停在主窗的人工作品数确认上。超时只能提示等待，
+  // 不能释放 requestId 后让用户以新 UUID 重试，否则迟到收据会造成整批重复。
+  projectSubmitTxn.timer = setTimeout(() => noteProjectSubmitDelay(requestId), 45000);
+  setProjectBusy(true, submitMode === 'generate' ? '正在提交并启动项目…' : '正在加入队列…');
+  window.mazz.invoke('panel:action', {
+    type: 'factoryAction', act: 'projectSubmit', requestId,
+    genreId: $('#pj-genre').value || projectSnapshot?.genreId || '', mode: submitMode, draft,
+  }).catch(error => finishProjectSubmit({ requestId, ok: false, message: '立项提交失败：' + (error?.message || error) }));
+}
+
+function updateLengthPreview(clearPreset = true) {
+  const s = projectSnapshot;
+  const total = $('#pj-total')?.disabled ? 0 : Math.max(0, +$('#pj-total')?.value || 0);
+  const words = Math.max(1, +$('#pj-words')?.value || 1);
+  const output = $('#pj-chapters');
+  if (output) output.textContent = total > 0 ? `${Math.ceil(total / words)}${s?.unitName || '章'}` : '不限';
+  if (clearPreset) {
+    document.querySelectorAll('[data-preset]').forEach(button => { button.classList.remove('on'); button.setAttribute('aria-pressed', 'false'); });
+    $('#pj-length-custom')?.classList.add('on');
+    if ($('#pj-length-custom')) $('#pj-length-custom').textContent = '自定义篇幅';
+  }
+  document.querySelectorAll('[data-words]').forEach(button => button.classList.toggle('on', +button.dataset.words === words));
+}
+
+function updateProjectLengthState(snapshot) {
+  if (!$('#pj-form')) { renderProject(); return; }
+  const plan = snapshot.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000, maxChapters: 5 };
+  const presets = snapshot.lengthPresets || [];
+  const activePreset = matchingPreset(plan, presets);
+  const total = $('#pj-total');
+  const words = $('#pj-words');
+  const unlimited = plan.preset === 'unlimited' && Number(plan.totalWords) === 0;
+  if (total && document.activeElement !== total) total.value = unlimited ? '' : String(plan.totalWords || '');
+  if (total) total.disabled = unlimited;
+  if (words && document.activeElement !== words) words.value = String(plan.wordsPerUnit || '');
+  document.querySelectorAll('[data-preset]').forEach(button => {
+    const on = button.dataset.preset === activePreset?.id;
+    button.classList.toggle('on', on);
+    button.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  const custom = $('#pj-length-custom');
+  if (custom) { custom.classList.toggle('on', !activePreset); custom.textContent = activePreset ? '选择预设后仍可微调' : '自定义篇幅'; }
+  const output = $('#pj-chapters');
+  if (output) output.textContent = chapterText(plan, snapshot.unitName || '章');
+  document.querySelectorAll('[data-words]').forEach(button => button.classList.toggle('on', +button.dataset.words === Number(plan.wordsPerUnit)));
 }
 
 function renderProject() {
   const m = $('#m');
   const s = projectSnapshot;
-  if (!s) { m.innerHTML = '<div class="hint">正在读取智能创作立项状态…</div>'; return; }
-  const advancedOpen = m.querySelector('details.advanced')?.open === true;
+  if (!s) { m.innerHTML = '<div class="hint" role="status">正在读取智能创作立项状态…</div>'; return; }
+  const view = captureProjectView();
+  const advancedOpen = view.advancedOpen;
   const plan = s.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000, maxChapters: 5 };
   const presets = s.lengthPresets || [];
+  const activePreset = matchingPreset(plan, presets);
+  const visibleFields = (s.fields || []).filter(field => field.uiOwner !== 'lengthPlan');
+  const unitName = s.unitName || '章';
+  const unlimited = plan.preset === 'unlimited' && Number(plan.totalWords) === 0;
+  const busy = !!projectSubmitTxn;
   m.innerHTML = `
-    <div class="project-head"><div><h2>新项目立项</h2><p>本向导只在建项目时出现一次；入队后回到智能创作执行台。</p></div><div class="hint">${esc(s.providerHint || '')}</div></div>
-    <div class="project-grid">
-      <div>
-        <div class="project-card">
-          <div class="project-title">一、文体与项目材料</div>
-          <div class="project-field"><label>文体</label><select id="pj-genre">${(s.genres || []).map(g => `<option value="${attr(g.id)}" ${g.id === s.genreId ? 'selected' : ''}>${esc(g.name)}${g.custom ? '（自定义）' : ''} — ${esc(g.description || '')}</option>`).join('')}</select></div>
-          ${(s.fields || []).map(projectFieldHtml).join('')}
-          <div class="hint">${esc(s.genreDesc || '')}</div>
-        </div>
-        <div class="project-card">
-          <div class="project-title">二、竹筒倒豆子</div>
-          <textarea id="pj-dump" class="inp" rows="5" placeholder="把想法、要求、限制条件一次倒进来…">${esc(s.dump || '')}</textarea>
-          <div class="acts"><button class="btn" id="pj-fill">智能填充到字段</button></div>
-        </div>
-      </div>
-      <div>
-        <div class="project-card">
-          <div class="project-title">三、篇幅与内容单元</div>
-          <div class="length-cards">${presets.map(p => `<button class="length-card ${p.id === plan.preset ? 'on' : ''}" data-preset="${attr(p.id)}" ${p.id === 'unlimited' && !s.unlimitedAllowed ? 'disabled title="说明类文体不可无限连写"' : ''}><b>${esc(p.label)}</b><span>${p.id === 'unlimited' ? '写到手动终止' : (p.totalWords / 10000) + ' 万字'}</span></button>`).join('')}</div>
-          <div class="smart-row">
-            <label>总字数<input id="pj-total" class="inp" type="number" min="1" step="1000" value="${plan.totalWords || ''}" ${plan.preset === 'unlimited' ? 'disabled' : ''}></label><span>÷</span>
-            <label>每${esc(s.unitName || '章')}字数<input id="pj-words" class="inp" type="number" min="100" step="100" value="${plan.wordsPerUnit}"></label><span>=</span>
-            <label>${esc(s.unitName || '章')}数<input class="inp" value="${plan.maxChapters || '不限'}" readonly></label>
+    <form id="pj-form" aria-busy="${busy ? 'true' : 'false'}">
+      <div class="project-head"><div><h2>项目材料与生产规格</h2><p>本向导只在建项目时出现一次；入队后回到智能创作执行台。</p></div><div class="hint">${esc(s.providerHint || '')}</div></div>
+      <div class="project-grid">
+        <section class="project-card project-material" aria-labelledby="pj-material-title">
+          <div class="project-title" id="pj-material-title">文体与项目材料</div>
+          <div class="project-field-row">
+            <div class="project-field"><label for="pj-genre">文体 <b class="required-mark">*</b></label><select id="pj-genre" required aria-required="true">${(s.genres || []).map(g => `<option value="${attr(g.id)}" ${g.id === s.genreId ? 'selected' : ''}>${esc(g.name)}${g.custom ? '（自定义）' : ''} — ${esc(g.description || '')}</option>`).join('')}</select></div>
+            <button type="button" class="btn" id="pj-new-template" data-t="genre">新建创作模板</button>
           </div>
-          <div class="word-chips">${(s.wordsPerUnitChips || []).map(n => `<button class="${n === plan.wordsPerUnit ? 'on' : ''}" data-words="${n}">${n} 字/${esc(s.unitName || '章')}</button>`).join('')}</div>
-          <label class="lbl" style="margin-top:14px">批量书名名单（可选；一行一本，共用本表设置）</label>
+          ${visibleFields.map(projectFieldHtml).join('')}
+          <div class="hint">${esc(s.genreDesc || '')}</div>
+        </section>
+        <section class="project-card project-dump" aria-labelledby="pj-dump-title">
+          <div class="project-title" id="pj-dump-title">自由描述</div>
+          <label class="lbl" for="pj-dump">想法、要求与限制条件</label>
+          <textarea id="pj-dump" class="ta" rows="5" placeholder="把想法、要求、限制条件一次倒进来…">${esc(projectDump)}</textarea>
+          <div class="acts"><button type="button" class="btn" id="pj-fill">智能填充到字段</button></div>
+        </section>
+        <aside class="project-card project-plan" aria-labelledby="pj-length-title">
+          <fieldset class="length-fieldset"><legend class="project-title" id="pj-length-title">篇幅与内容单元</legend>
+            <div class="length-cards">${presets.map(p => {
+              const on = p.id === activePreset?.id;
+              const disabled = p.id === 'unlimited' && !s.unlimitedAllowed;
+              return `<button type="button" class="length-card ${on ? 'on' : ''}" data-preset="${attr(p.id)}" aria-pressed="${on ? 'true' : 'false'}" aria-label="${attr(`${p.label}，${formatPresetTotal(p)}`)}" ${disabled ? 'disabled title="当前文体不可无限连写"' : ''}><b>${esc(p.label)}</b><span>${esc(formatPresetTotal(p))}</span></button>`;
+            }).join('')}</div>
+          </fieldset>
+          <div class="length-custom ${activePreset ? '' : 'on'}" id="pj-length-custom" aria-live="polite">${activePreset ? '选择预设后仍可微调' : '自定义篇幅'}</div>
+          <div class="smart-row">
+            <label for="pj-total">目标总字数<input id="pj-total" class="inp" type="number" min="1" step="1" value="${unlimited ? '' : plan.totalWords || ''}" ${unlimited ? 'disabled' : 'required aria-required="true"'}></label><span class="equation" aria-hidden="true">÷</span>
+            <label for="pj-words">每${esc(unitName)}目标<input id="pj-words" class="inp" type="number" min="100" step="1" value="${plan.wordsPerUnit}" required aria-required="true"></label><span class="equation" aria-hidden="true">=</span>
+            <div class="smart-cell"><span class="smart-label" id="pj-chapters-label">预计${esc(unitName)}数</span><output id="pj-chapters" class="smart-output" aria-labelledby="pj-chapters-label" aria-describedby="pj-chapter-rule" aria-live="polite">${esc(chapterText(plan, unitName))}</output></div>
+          </div>
+          <div class="hint" id="pj-chapter-rule">向上取整，末${esc(unitName)}按剩余字数安排。</div>
+          <div class="word-chips" aria-label="每${esc(unitName)}目标字数快捷值">${(s.wordsPerUnitChips || []).map(n => `<button type="button" class="${n === plan.wordsPerUnit ? 'on' : ''}" data-words="${n}">${n} 字/${esc(unitName)}</button>`).join('')}</div>
+          <div class="project-actions"><button type="button" class="btn" id="pj-copy" ${busy ? 'disabled' : ''}>复制模板母版</button><button type="button" class="btn" id="pj-add" ${busy ? 'disabled' : ''}>加入队列</button><button type="submit" class="btn pri" id="pj-generate" ${busy ? 'disabled' : ''}>立刻开工</button></div>
+          <div class="project-status ${projectNotice.tone}" id="pj-status" role="status" aria-live="polite">${esc(projectNotice.message)}</div>
+          <label class="lbl" for="pj-batch" style="margin-top:10px">批量书名名单（可选；一行一本，共用本表设置）</label>
           <textarea id="pj-batch" class="ta" rows="3" placeholder="星海回声\n月面来信\n北向洋流">${esc(projectBatch)}</textarea>
           <div class="hint">31～100 本会先给出软提示；超过 100 本拒绝入队。</div>
           <details class="advanced" ${advancedOpen ? 'open' : ''}>
             <summary>高级设置</summary>
             <div class="advanced-body">
               <div class="inline-row"><label><input id="pj-dual" type="checkbox" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id="pj-max" type="checkbox" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>交叉审校 <select id="pj-review-ritual" class="sel"><option value="light" ${(s.reviewRitual || 'light') === 'light' ? 'selected' : ''}>标准流程</option><option value="full" ${s.reviewRitual === 'full' ? 'selected' : ''}>完整流程</option></select></label><label>审校预算 <input id="pj-review-budget" class="inp" type="number" min="8000" step="1000" value="${s.reviewBudgetCap || 32000}" style="width:90px"> token</label><label><input id="pj-autopreview" type="checkbox" ${s.autoPreview !== false ? 'checked' : ''}> 生成自动开预览</label><label>并发 <select id="pj-concurrency" class="sel" title="同时运行的独立任务数；默认 1">${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === (s.concurrency || 1) ? 'selected' : ''}>${n} 路</option>`).join('')}</select></label><label>导出 <select id="pj-format" class="sel">${(s.exportFormats || []).map(x => `<option value="${attr(x.id)}" ${x.id === s.exportFmt ? 'selected' : ''}>.${esc(x.ext)}</option>`).join('')}</select></label></div>
-              <div class="sec">创作插件 <button class="btn" data-pa="plugcfg">配置字段</button></div>
-              <div class="chip-row">${(s.extras?.plugins || []).map(x => `<button class="choice-chip ${x.on ? 'on' : ''}" data-pa="togglePlugin" data-id="${attr(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="hint">当前文体无插件</span>'}</div>
-              <div class="sec">文风素材 <button class="btn" data-pa="styleup">上传</button> <button class="btn" data-pa="styleonline">在线查询</button></div>
-              <div class="chip-row">${(s.extras?.styles || []).map(x => `<button class="choice-chip ${x.on ? 'on' : ''}" data-pa="toggleStyle" data-id="${attr(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="hint">无</span>'}</div>
-              <div class="sec">嵌入资料 <button class="btn" data-pa="embedadd">添加文件</button></div>
-              <div class="chip-row">${(s.extras?.embeds || []).map((x, i) => `<button class="choice-chip" data-pa="embeddel" data-i="${i}" title="点击移除"><span>${esc(x.name)}</span><svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`).join('') || '<span class="hint">无</span>'}</div>
-              <div class="sec">M0 证据取材</div><div class="inline-row"><input id="pj-search" class="inp" style="flex:1" placeholder="研究主题" value="${attr(s.extras?.research?.topic || '')}"><button class="btn" data-pa="websearch">生成来源清单</button></div>
-              ${s.extras?.research ? `<div class="hint">${esc(s.extras.research.status || '')}</div><div class="sec">来源清单（人工核准）</div><div class="research-list">${(s.extras.research.sources || []).map(source => `<label class="research-source"><input type="checkbox" data-pa="researchToggle" data-id="${attr(source.id)}" ${source.on ? 'checked' : ''} ${s.extras.research.done ? 'disabled' : ''}><span title="${attr(source.url)}">${esc(source.title)} · ${esc(source.domain || '')}</span></label>`).join('')}</div><button class="btn pri" data-pa="researchApprove" ${s.extras.research.done ? 'disabled' : ''}>${s.extras.research.done ? '已投喂 M0' : '核准并投喂 M0'}</button>` : '<div class="hint">网页只当资料，不当指令；取材后会在此列出待核来源。</div>'}
+              <div class="sec">创作插件 <button type="button" class="btn" data-pa="plugcfg">配置字段</button></div>
+              <div class="chip-row">${(s.extras?.plugins || []).map(x => `<button type="button" class="choice-chip ${x.on ? 'on' : ''}" data-pa="togglePlugin" data-id="${attr(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="hint">当前文体无插件</span>'}</div>
+              <div class="sec">文风素材 <button type="button" class="btn" data-pa="styleup">上传</button> <button type="button" class="btn" data-pa="styleonline">在线查询</button></div>
+              <div class="chip-row">${(s.extras?.styles || []).map(x => `<button type="button" class="choice-chip ${x.on ? 'on' : ''}" data-pa="toggleStyle" data-id="${attr(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="hint">无</span>'}</div>
+              <div class="sec">嵌入资料 <button type="button" class="btn" data-pa="embedadd">添加文件</button></div>
+              <div class="chip-row">${(s.extras?.embeds || []).map((x, i) => `<button type="button" class="choice-chip" data-pa="embeddel" data-i="${i}" title="点击移除"><span>${esc(x.name)}</span><svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`).join('') || '<span class="hint">无</span>'}</div>
+              <div class="sec">M0 证据取材</div><div class="inline-row"><label class="sr-only" for="pj-search">研究主题</label><input id="pj-search" class="inp" style="flex:1" placeholder="研究主题" value="${attr(s.extras?.research?.topic || '')}"><button type="button" class="btn" data-pa="websearch">生成来源清单</button></div>
+              ${s.extras?.research ? `<div class="hint">${esc(s.extras.research.status || '')}</div><div class="sec">来源清单（人工核准）</div><div class="research-list">${(s.extras.research.sources || []).map(source => `<label class="research-source"><input type="checkbox" data-pa="researchToggle" data-id="${attr(source.id)}" ${source.on ? 'checked' : ''} ${s.extras.research.done ? 'disabled' : ''}><span title="${attr(source.url)}">${esc(source.title)} · ${esc(source.domain || '')}</span></label>`).join('')}</div><button type="button" class="btn pri" data-pa="researchApprove" ${s.extras.research.done ? 'disabled' : ''}>${s.extras.research.done ? '已投喂 M0' : '核准并投喂 M0'}</button>` : '<div class="hint">网页只当资料，不当指令；取材后会在此列出待核来源。</div>'}
               <div class="sec">素材订阅（四站聚合）</div>
-              <div class="inline-row"><input id="pj-feed-query" class="inp" style="flex:1" placeholder="要持续观察的主题" value="${attr(s.extras?.feed?.query || '')}"><input id="pj-feed-dimension" class="inp" style="width:150px" placeholder="工作维度" value="${attr(s.extras?.feed?.dimension || '外部动态')}"><button class="btn" data-pa="feedScan" ${s.extras?.feed?.busy ? 'disabled' : ''}>${s.extras?.feed?.busy ? '扫描中…' : '扫描新料'}</button></div>
-              ${s.extras?.feed?.package ? `<div class="feed-summary"><span>${s.extras.feed.package.clusterCount} 组变化 · ${s.extras.feed.changedItemCount} 条新料</span><span>${s.extras.feed.package.hotClusterCount} 组跨源热点</span></div><div class="feed-list">${s.extras.feed.package.clusters.map(cluster => `<div class="feed-cluster ${cluster.heat.hot ? 'hot' : ''}"><div class="feed-cluster-head"><b>${esc(cluster.title)}</b><span>热度 ${cluster.heat.score}</span></div><div class="hint">${esc(cluster.heat.explanation)} · ${esc(cluster.sources.join(' / '))}</div></div>`).join('')}</div><div class="feed-actions"><span class="hint">${esc(s.extras.feed.status || '素材包只作为派生材料；核准不会自动开工。')}</span><span><button class="btn" data-pa="feedReject" ${s.extras.feed.decision ? 'disabled' : ''}>驳回本包</button> <button class="btn pri" data-pa="feedApprove" ${s.extras.feed.decision ? 'disabled' : ''}>核准并加入项目材料</button></span></div>` : `<div class="hint">${esc(s.extras?.feed?.status || '比较上次观察，只把新增或变化内容整理为待核素材包。')}</div>`}
+              <div class="inline-row"><label class="sr-only" for="pj-feed-query">订阅主题</label><input id="pj-feed-query" class="inp" style="flex:1" placeholder="要持续观察的主题" value="${attr(s.extras?.feed?.query || '')}"><label class="sr-only" for="pj-feed-dimension">工作维度</label><input id="pj-feed-dimension" class="inp" style="width:150px" placeholder="工作维度" value="${attr(s.extras?.feed?.dimension || '外部动态')}"><button type="button" class="btn" data-pa="feedScan" ${s.extras?.feed?.busy ? 'disabled' : ''}>${s.extras?.feed?.busy ? '扫描中…' : '扫描新料'}</button></div>
+              ${s.extras?.feed?.package ? `<div class="feed-summary"><span>${s.extras.feed.package.clusterCount} 组变化 · ${s.extras.feed.changedItemCount} 条新料</span><span>${s.extras.feed.package.hotClusterCount} 组跨源热点</span></div><div class="feed-list">${s.extras.feed.package.clusters.map(cluster => `<div class="feed-cluster ${cluster.heat.hot ? 'hot' : ''}"><div class="feed-cluster-head"><b>${esc(cluster.title)}</b><span>热度 ${cluster.heat.score}</span></div><div class="hint">${esc(cluster.heat.explanation)} · ${esc(cluster.sources.join(' / '))}</div></div>`).join('')}</div><div class="feed-actions"><span class="hint">${esc(s.extras.feed.status || '素材包只作为派生材料；核准不会自动开工。')}</span><span><button type="button" class="btn" data-pa="feedReject" ${s.extras.feed.decision ? 'disabled' : ''}>驳回本包</button> <button type="button" class="btn pri" data-pa="feedApprove" ${s.extras.feed.decision ? 'disabled' : ''}>核准并加入项目材料</button></span></div>` : `<div class="hint">${esc(s.extras?.feed?.status || '比较上次观察，只把新增或变化内容整理为待核素材包。')}</div>`}
             </div>
           </details>
-          <div class="project-actions"><button class="btn" id="pj-copy">复制模板母版</button><button class="btn" id="pj-add">加入队列</button><button class="btn pri" id="pj-generate">立刻开工</button></div>
-        </div>
+        </aside>
       </div>
-    </div>`;
+    </form>`;
+  $('#pj-new-template').addEventListener('click', () => setTab('genre'));
   $('#pj-genre').addEventListener('change', e => projectAct('selectGenre', { id: e.target.value }));
   m.querySelectorAll('[data-p-field]').forEach(el => {
     const sync = () => { projectValues[el.dataset.pField] = el.value; projectAct('setValue', { f: el.dataset.pField, v: el.value }); };
     el.addEventListener('input', sync); el.addEventListener('change', sync);
   });
-  $('#pj-dump').addEventListener('input', e => projectAct('setDump', { v: e.target.value }));
+  $('#pj-dump').addEventListener('input', e => { projectDump = e.target.value; projectAct('setDump', { v: e.target.value }); });
   $('#pj-batch').addEventListener('input', e => { projectBatch = e.target.value; });
   $('#pj-fill').addEventListener('click', () => projectAct('fill'));
-  m.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => projectAct('setLengthPreset', { preset: b.dataset.preset })));
-  m.querySelectorAll('[data-words]').forEach(b => b.addEventListener('click', () => projectAct('setWordsPerUnit', { value: +b.dataset.words })));
+  m.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => projectAct('setLengthPreset', { preset: button.dataset.preset })));
+  m.querySelectorAll('[data-words]').forEach(button => button.addEventListener('click', () => {
+    $('#pj-words').value = button.dataset.words;
+    updateLengthPreview(true);
+    projectAct('setWordsPerUnit', { value: +button.dataset.words });
+  }));
+  $('#pj-total').addEventListener('input', () => updateLengthPreview(true));
+  $('#pj-words').addEventListener('input', () => updateLengthPreview(true));
   $('#pj-total').addEventListener('change', e => projectAct('setTotalWords', { value: +e.target.value }));
   $('#pj-words').addEventListener('change', e => projectAct('setWordsPerUnit', { value: +e.target.value }));
   $('#pj-dual').addEventListener('change', e => projectAct('setFlag', { k: 'dualLoop', v: e.target.checked }));
@@ -224,27 +533,8 @@ function renderProject() {
   $('#pj-concurrency').addEventListener('change', e => projectAct('setConcurrency', { value: +e.target.value }));
   $('#pj-format').addEventListener('change', e => projectAct('setExportFmt', { value: e.target.value }));
   $('#pj-copy').addEventListener('click', () => projectAct('copy'));
-  const submit = async mode => {
-    const values = {};
-    m.querySelectorAll('[data-p-field]').forEach(el => { values[el.dataset.pField] = el.value; });
-    const draft = {
-      values, dump: $('#pj-dump').value,
-      preset: m.querySelector('[data-preset].on')?.dataset.preset || plan.preset,
-      totalWords: +$('#pj-total').value || plan.totalWords,
-      wordsPerUnit: +$('#pj-words').value || plan.wordsPerUnit,
-      dualLoop: $('#pj-dual').checked, maxMode: $('#pj-max').checked,
-      reviewRitual: $('#pj-review-ritual').value,
-      reviewBudgetCap: Math.max(0, +$('#pj-review-budget').value || 32000),
-      autoPreview: $('#pj-autopreview').checked,
-      concurrency: +$('#pj-concurrency').value || 1,
-      exportFmt: $('#pj-format').value,
-      batchTitles: projectBatch.split(/\r?\n/).map(x => x.trim()).filter(Boolean),
-    };
-    await projectAct('projectSubmit', { mode, draft });
-    pwb('close');
-  };
-  $('#pj-add').addEventListener('click', () => submit('queue'));
-  $('#pj-generate').addEventListener('click', () => submit('generate'));
+  $('#pj-add').addEventListener('click', () => submitProject('queue'));
+  $('#pj-form').addEventListener('submit', event => { event.preventDefault(); submitProject('generate'); });
   m.querySelectorAll('[data-pa]').forEach(el => el.addEventListener('click', () => {
     const act = el.dataset.pa;
     if (act === 'togglePlugin' || act === 'toggleStyle') projectAct(act, { id: el.dataset.id });
@@ -255,10 +545,10 @@ function renderProject() {
     else if (act === 'feedScan') {
       const button = el; button.disabled = true; button.textContent = '扫描中…';
       projectAct(act, { q: $('#pj-feed-query').value.trim(), dimension: $('#pj-feed-dimension').value.trim() });
-    }
-    else if (act === 'feedApprove' || act === 'feedReject') projectAct(act);
+    } else if (act === 'feedApprove' || act === 'feedReject') projectAct(act);
     else projectAct(act);
   }));
+  restoreProjectView(view);
 }
 
 // ==================== AI 服务 ====================
@@ -338,7 +628,18 @@ async function renderProvider() {
     } }).catch(e => { g('#pv-status').textContent = '✗ ' + e.message; });
   });
   m.querySelectorAll('[data-ai-route]').forEach(b => b.addEventListener('click', () => {
-    window.mazz.invoke('panel:action', { type: 'factoryRolePickOpen', role: b.dataset.aiRoute }).catch(() => {});
+    const rect = b.getBoundingClientRect();
+    const anchor = {
+      screenX: window.screenX + rect.left,
+      screenY: window.screenY + rect.bottom,
+      width: rect.width,
+      height: rect.height,
+      devicePixelRatio: window.devicePixelRatio || 1,
+    };
+    window.mazz.invoke('panel:action', { type: 'factoryRolePickOpen', role: b.dataset.aiRoute, anchor }).catch(error => {
+      const status = $('#pv-status');
+      if (status) { status.textContent = '✗ 打开岗位选择失败：' + (error?.message || error); status.classList.add('err'); }
+    });
   }));
   // W57 旧契约检索哨兵：secret:get / secret:set 已迁到 provider.js 的 factory.keys 加密分仓，配置窗不再直读密钥。
 }
@@ -347,19 +648,20 @@ async function renderProvider() {
 function renderGenre() {
   const m = $('#m');
   m.innerHTML = `
-    <div class="set-row"><label>名称</label><input id="ge-name" class="inp" placeholder="护理记录"></div>
-    <div class="set-row"><label>描述</label><input id="ge-desc" class="inp" placeholder="简短说明"></div>
-    <div class="sec">输入字段（每行一个：标签|类型|必填。类型：text/textarea/select）</div>
+    <section aria-labelledby="genre-editor-title"><h2 id="genre-editor-title" style="margin:0 0 6px;font-size:15px">新建创作模板</h2><p class="hint" style="margin:0 0 10px">保存后返回立项页，即可从文体选单使用。</p>
+    <div class="set-row"><label for="ge-name">名称 <b class="required-mark">*</b></label><input id="ge-name" class="inp" placeholder="护理记录" required></div>
+    <div class="set-row"><label for="ge-desc">描述</label><input id="ge-desc" class="inp" placeholder="简短说明"></div>
+    <label class="sec" for="ge-fields">输入字段（每行一个：标签|类型|必填。类型：text/textarea/select）</label>
     <textarea id="ge-fields" rows="4" class="inp" spellcheck="false">患者姓名|text|必填
 护理要点|textarea|必填
 记录类型|text|选填</textarea>
-    <div class="sec">系统提示词（角色与文风要求）</div>
+    <label class="sec" for="ge-sys">系统提示词（角色与文风要求）</label>
     <textarea id="ge-sys" rows="3" class="inp" spellcheck="false">你是一名资深…</textarea>
-    <div class="sec">质量校验（每行一条：描述|规则:值，如 不少于500字|minLength:500）</div>
+    <label class="sec" for="ge-checks">质量校验（每行一条：描述|规则:值，如 不少于500字|minLength:500）</label>
     <textarea id="ge-checks" rows="3" class="inp" spellcheck="false">不少于 500 字|minLength:500
 必须包含签名|contains:签名</textarea>
-    <div class="acts"><button class="btn pri" id="ge-save">保存到工作区</button></div>
-    <div id="ge-status" class="hint"></div>`;
+    <div class="acts"><button type="button" class="btn pri" id="ge-save">保存到工作区</button></div>
+    <div id="ge-status" class="hint" role="status" aria-live="polite"></div></section>`;
   const g = (id) => m.querySelector(id);
   g('#ge-save').addEventListener('click', async () => {
     const name = g('#ge-name').value.trim();
@@ -384,7 +686,25 @@ function renderGenre() {
     g('#ge-status').textContent = '已保存到工作区（智能创作面板刷新）';
   });
 }
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pwb('close'); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (projectSubmitTxn) {
+    e.preventDefault();
+    showProjectStatus('立项确认尚未结束；为避免重复项目，收到持久收据前不能关闭本窗口。', 'wait');
+    return;
+  }
+  pwb('close');
+});
+window.addEventListener('beforeunload', event => {
+  if (projectSubmitTxn) {
+    event.preventDefault();
+    event.returnValue = '';
+    showProjectStatus('立项确认尚未结束；为避免重复项目，收到持久收据前不能关闭本窗口。', 'wait');
+    return;
+  }
+  if (projectSubmitTxn?.timer) clearTimeout(projectSubmitTxn.timer);
+});
+renderHead();
 renderProvider();
 </script>
 </body></html>

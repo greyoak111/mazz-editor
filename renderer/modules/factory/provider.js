@@ -19,12 +19,12 @@ export const AI_ROLES = Object.freeze([
   { id: 'blueprint', label: '智能创作·蓝图', card: 'reasoning' },
   { id: 'chapter', label: '智能创作·章节', card: 'long-context' },
   { id: 'snapshot', label: '智能创作·快照', card: 'fast' },
-  { id: 'factory_skeleton', label: '专业流程·总纲席 M1', card: 'reasoning' },
-  { id: 'factory_writer', label: '专业流程·执笔席 M3', card: 'long-context' },
-  { id: 'factory_point', label: '专业流程·节点验收席 M2', card: 'reasoning' },
-  { id: 'factory_review_a', label: '专业流程·审校席 M4', card: 'long-context' },
-  { id: 'factory_review_b', label: '专业流程·反向核查席 M5', card: 'reasoning' },
-  { id: 'factory_arbiter', label: '专业流程·仲裁席 M6', card: 'reasoning' },
+  { id: 'factory_skeleton', label: '专业流程·总纲席', card: 'reasoning' },
+  { id: 'factory_writer', label: '专业流程·执笔席', card: 'long-context' },
+  { id: 'factory_point', label: '专业流程·节点验收席', card: 'reasoning' },
+  { id: 'factory_review_a', label: '专业流程·审校席', card: 'long-context' },
+  { id: 'factory_review_b', label: '专业流程·反向核查席', card: 'reasoning' },
+  { id: 'factory_arbiter', label: '专业流程·仲裁席', card: 'reasoning' },
   { id: 'factory_polish', label: '专业流程·润色席', card: 'long-context' },
   { id: 'translation', label: '翻译', card: 'fast' },
   { id: 'style', label: '文风分析', card: 'long-context' },
@@ -237,9 +237,106 @@ export async function saveProviderRoute(role, target) {
   return await getProviderAdminSnapshot();
 }
 
+/** OpenAI-compatible endpoint join without duplicating a version already owned by the provider base. */
+export function joinProviderAiEndpoint(baseURL, endpoint = 'chat/completions') {
+  const base = String(baseURL || '').trim().replace(/\/+$/, '');
+  const suffix = String(endpoint || '').trim().replace(/^\/+/, '');
+  if (!base) return '';
+  if (!suffix) return base;
+  const escapedSuffix = suffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (new RegExp(`/${escapedSuffix}$`, 'i').test(base)) return base;
+  if (/\/v(?:\d+|1beta)(?:\/openai)?$/i.test(base)) return `${base}/${suffix}`;
+  return `${base}/v1/${suffix}`;
+}
+
+/** Accept legacy arrays plus OpenAI/Gemini-style list envelopes and return stable model ids. */
+export function normalizeProviderModelsResponse(raw) {
+  const rows = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.models)
+        ? raw.models
+        : [];
+  return [...new Set(rows.map(row => {
+    const rawId = typeof row === 'string' ? row : (row?.id ?? row?.name ?? row?.model);
+    return String(rawId || '').trim().replace(/^models\//i, '');
+  }).filter(Boolean))];
+}
+
+/** Provider completion metadata is classified locally again; renderer never trusts a boolean alone. */
+export function classifyFactoryCompletion({ finishReason = null, completionKind = '', interrupted = false } = {}) {
+  const reason = finishReason == null ? null : (String(finishReason).trim() || null);
+  const kind = String(completionKind || '').trim().toLowerCase();
+  if (interrupted || kind === 'interrupted' || kind === 'transport-end') {
+    return { safeToCommit: false, reason: 'interrupted' };
+  }
+  if (reason != null) {
+    if (reason.toLowerCase() === 'stop') return { safeToCommit: true, reason: 'stop' };
+    return { safeToCommit: false, reason: reason.toLowerCase() };
+  }
+  if (kind.includes('null-finish-reason')) return { safeToCommit: false, reason: 'null-finish-reason' };
+  if (kind === 'done-marker') return { safeToCommit: true, reason: 'done-marker' };
+  return { safeToCommit: false, reason: 'missing-finish-reason' };
+}
+
+// DeepSeek v4 defaults to thinking mode.  Governed Factory seats need the
+// bounded token allowance for their final manuscript/JSON artifact; otherwise
+// reasoning_content can consume it completely and produce a length stop with
+// no committable content.  This never promotes reasoning_content—the request is
+// made direct-output instead, and the existing completion gate stays closed on
+// every non-stop or empty response.
+export const FACTORY_DIRECT_OUTPUT_ROLES = Object.freeze([
+  'factory_skeleton',
+  'factory_writer',
+  'factory_point',
+  'factory_review_a',
+  'factory_review_b',
+  'factory_arbiter',
+  'factory_polish',
+]);
+
+export function factoryProviderGenerationOptions({ providerId = '', baseURL = '', model = '', role = '' } = {}) {
+  if (!FACTORY_DIRECT_OUTPUT_ROLES.includes(String(role || '').trim())) return {};
+  const provider = String(providerId || '').trim().toLowerCase();
+  const url = String(baseURL || '').trim().toLowerCase();
+  const modelId = String(model || '').trim().toLowerCase();
+  let officialOrigin = false;
+  try { officialOrigin = new URL(url).origin === 'https://api.deepseek.com'; } catch {}
+  const deepSeekV4 = provider === 'deepseek'
+    && officialOrigin
+    && /^deepseek-v4(?:-|$)/.test(modelId);
+  return deepSeekV4 ? { thinking: { type: 'disabled' } } : {};
+}
+
+/** Only provider final-content strings are eligible for artifact normalization. */
+export function extractFactoryContentText(message) {
+  const content = message?.content;
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content.map(part => {
+    if (typeof part === 'string') return part;
+    return typeof part?.text === 'string' ? part.text : '';
+  }).join('');
+}
+
+function detailedCompletion(text, metadata = {}) {
+  const normalizedText = typeof text === 'string' ? text.trim() : '';
+  const finishReason = metadata.finishReason == null ? null : (String(metadata.finishReason).trim() || null);
+  const completionKind = String(metadata.completionKind || '');
+  const classified = classifyFactoryCompletion({ finishReason, completionKind, interrupted: metadata.interrupted });
+  return {
+    text: normalizedText,
+    finishReason,
+    completionKind,
+    usage: metadata.usage && typeof metadata.usage === 'object' ? metadata.usage : null,
+    safeToCommit: !!normalizedText && classified.safeToCommit && metadata.safeToCommit !== false,
+  };
+}
+
 /** 拉取端点模型列表（GET /v1/models；失败返回 null 走预置选单） */
 export async function fetchModels(cfg) {
-  const url = String(cfg.baseURL || '').replace(/\/+$/, '') + '/models';
+  const url = joinProviderAiEndpoint(cfg.baseURL, 'models');
   try {
     let resp;
     if (window.mazz?.isElectron) {
@@ -249,7 +346,7 @@ export async function fetchModels(cfg) {
       if (!r.ok) return null;
       resp = await r.json();
     }
-    const ids = (resp?.data || []).map(m => m.id).filter(Boolean);
+    const ids = normalizeProviderModelsResponse(resp);
     return ids.length ? ids : null;
   } catch { return null; }
 }
@@ -334,22 +431,39 @@ function createAbortScope({ signal, timeoutMs, shouldStop } = {}) {
   };
 }
 
-export async function chat({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, signal }) {
+/** Backward-compatible string API. Transactional callers must use chatDetailed. */
+export async function chat(options) {
+  return (await chatDetailed(options)).text;
+}
+
+/**
+ * Non-streaming Chat Completions with provider-native termination metadata.
+ * Revisions and review decisions must require safeToCommit before they replace
+ * an artifact or open a seal gate.
+ */
+export async function chatDetailed({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, signal }) {
   cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
     const requestId = aiRequestId('chat');
-    return await invokeCancelable('factory:aiChat', {
+    const result = await invokeCancelable('factory:aiChat', {
       requestId,
+      providerId: cfg.providerId || cfg.id || '', role,
       baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
-      system, user, temperature, maxTokens,
+      system, user, temperature, maxTokens, detailed: true,
     }, signal);
+    if (!result || typeof result !== 'object') {
+      return detailedCompletion(typeof result === 'string' ? result : '', {
+        completionKind: 'response-without-finish-reason', safeToCommit: false,
+      });
+    }
+    return detailedCompletion(result.text, result);
   }
-  return await chatDirect({ cfg, system, user, temperature, maxTokens, signal });
+  return await chatDirectDetailed({ cfg, role, system, user, temperature, maxTokens, signal });
 }
 
 /** 网页预览直连（受目标 API CORS 限制，桌面端不走这里） */
-async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 8192, signal }) {
-  const url = cfg.baseURL.replace(/\/+$/, '') + '/v1/chat/completions';
+async function chatDirectDetailed({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, signal }) {
+  const url = joinProviderAiEndpoint(cfg.baseURL, 'chat/completions');
   const scope = createAbortScope({ signal, timeoutMs: 180000 });
   try {
     const resp = await fetch(url, {
@@ -364,6 +478,7 @@ async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 81
         temperature,
         max_tokens: maxTokens,
         stream: false,
+        ...factoryProviderGenerationOptions({ ...cfg, role }),
       }),
       signal: scope.signal,
     });
@@ -373,24 +488,46 @@ async function chatDirect({ cfg, system, user, temperature = 0.7, maxTokens = 81
     }
     const data = await resp.json();
     if (data.error) throw new Error('API 报错：' + String(data.error.message || JSON.stringify(data.error)).slice(0, 300));
-    const m = data.choices?.[0]?.message || {};
-    let content = typeof m.content === 'string' && m.content.trim() ? m.content
-      : Array.isArray(m.content) ? m.content.map((p) => (typeof p === 'string' ? p : (p?.text || ''))).join('')
-      : (m.reasoning_content || m.content || '');
+    const choice = data.choices?.[0] || {};
+    const m = choice.message || {};
+    const content = extractFactoryContentText(m);
     if (!content || !String(content).trim()) {
-      throw new Error(`AI 返回为空（finish_reason=${data.choices?.[0]?.finish_reason || '未知'}；原始片段：${JSON.stringify(data).slice(0, 200)}）`);
+      // Do not stringify the raw response: reasoning-only providers may place
+      // private reasoning_content there even though no final artifact exists.
+      throw new Error(`AI 返回为空（finish_reason=${data.choices?.[0]?.finish_reason || '未知'}；未收到可提交的最终 content）`);
     }
-    return String(content).trim();
+    const hasFinishReason = Object.prototype.hasOwnProperty.call(choice, 'finish_reason');
+    const finishReason = hasFinishReason && choice.finish_reason != null
+      ? (String(choice.finish_reason).trim() || null)
+      : null;
+    return detailedCompletion(content, {
+      finishReason,
+      completionKind: hasFinishReason
+        ? (finishReason == null ? 'null-finish-reason' : 'finish-reason')
+        : 'response-without-finish-reason',
+      usage: normalizedStreamUsage(data.usage),
+    });
   } finally {
     scope.cleanup();
   }
 }
 
-/** Chat Completions 流式（SSE）：onChunk 逐 token 回调，返回全文；shouldStop() 返回 true 时中止 */
-export async function chatStream({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
+/** Backward-compatible string API. New transactional callers must use chatStreamDetailed. */
+export async function chatStream(options) {
+  return (await chatStreamDetailed(options)).text;
+}
+
+/**
+ * Chat Completions 流式（SSE）详细结果。
+ * The caller receives provider-native termination metadata and must commit only
+ * when safeToCommit is true; interruption deliberately returns a partial, unsafe result.
+ */
+export async function chatStreamDetailed({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
   cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
-    if (signal?.aborted || shouldStop?.()) return '';
+    if (signal?.aborted || shouldStop?.()) {
+      return detailedCompletion('', { completionKind: 'interrupted', interrupted: true, safeToCommit: false });
+    }
     // 主进程代理流式：factory:aiChunk 事件逐 delta 推流
     const requestId = aiRequestId('stream');
     return await new Promise((resolve, reject) => {
@@ -411,7 +548,12 @@ export async function chatStream({ cfg, role = '', system, user, temperature = 0
       };
       const stop = reason => {
         cancelRemote(requestId, reason);
-        finish(resolve, full.trim());
+        finish(resolve, detailedCompletion(full, {
+          finishReason: null,
+          completionKind: 'interrupted',
+          interrupted: true,
+          safeToCommit: false,
+        }));
       };
       const onAbort = () => stop('renderer-abort');
       signal?.addEventListener?.('abort', onAbort, { once: true });
@@ -421,10 +563,10 @@ export async function chatStream({ cfg, role = '', system, user, temperature = 0
         if (payload.error) { finish(reject, new Error(payload.error)); return; }
         if (payload.done) {
           if (!full) finish(reject, new Error('AI 返回为空'));
-          else finish(resolve, full.trim());
+          else finish(resolve, detailedCompletion(full, payload));
           return;
         }
-        if (payload.delta) {
+        if (typeof payload.delta === 'string' && payload.delta) {
           if (signal?.aborted || shouldStop?.()) { stop('task-stop'); return; }
           full += payload.delta;
           onChunk?.(payload.delta, full);
@@ -435,22 +577,44 @@ export async function chatStream({ cfg, role = '', system, user, temperature = 0
         system, user, temperature, maxTokens,
       }).then(result => {
         if (!settled && result?.ok === false) {
-          if (result.cancelled && result.reason !== 'timeout') finish(resolve, full.trim());
+          if (result.cancelled && result.reason !== 'timeout') finish(resolve, detailedCompletion(full, {
+            ...result,
+            completionKind: 'interrupted',
+            interrupted: true,
+            safeToCommit: false,
+          }));
           else if (result.reason === 'timeout') finish(reject, new Error('AI 流式请求超时'));
           else finish(reject, new Error('AI 流式请求失败'));
         }
       }).catch(error => finish(reject, error));
     });
   }
-  return await chatStreamDirect({ cfg, system, user, temperature, maxTokens, onChunk, shouldStop, signal });
+  return await chatStreamDirectDetailed({ cfg, system, user, temperature, maxTokens, onChunk, shouldStop, signal });
 }
 
-/** 网页预览直连流式 */
-async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
-  const url = cfg.baseURL.replace(/\/+$/, '') + '/v1/chat/completions';
+function streamDeltaText(message) {
+  return extractFactoryContentText(message);
+}
+
+function normalizedStreamUsage(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const inputTokens = Math.max(0, Number(raw.prompt_tokens ?? raw.input_tokens) || 0);
+  const outputTokens = Math.max(0, Number(raw.completion_tokens ?? raw.output_tokens) || 0);
+  const totalTokens = Math.max(0, Number(raw.total_tokens) || inputTokens + outputTokens);
+  return (inputTokens || outputTokens || totalTokens) ? { inputTokens, outputTokens, totalTokens } : null;
+}
+
+/** 网页预览直连流式；EOF without a native completion marker is returned unsafe. */
+export async function chatStreamDirectDetailed({ cfg, system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
+  const url = joinProviderAiEndpoint(cfg.baseURL, 'chat/completions');
   const scope = createAbortScope({ signal, timeoutMs: 300000, shouldStop });
   let reader = null;
   let full = '';
+  let finishReason = null;
+  let unsafeFinishReason = null;
+  let sawFinishReasonField = false;
+  let sawDoneMarker = false;
+  let usage = null;
   try {
     const resp = await fetch(url, {
       method: 'POST',
@@ -472,29 +636,69 @@ async function chatStreamDirect({ cfg, system, user, temperature = 0.7, maxToken
     reader = resp.body.getReader();
     const dec = new TextDecoder('utf-8');
     let buf = '';
+    const processLine = (line) => {
+      const text = String(line || '').trim();
+      if (!text || text.startsWith(':') || !text.startsWith('data:')) return;
+      const payload = text.slice(5).trim();
+      if (!payload) return;
+      if (payload === '[DONE]') {
+        sawDoneMarker = true;
+        return;
+      }
+      let data;
+      try { data = JSON.parse(payload); }
+      catch { throw new Error('AI 流式响应包含损坏的 SSE JSON'); }
+      if (data?.error) throw new Error('API 报错：' + String(data.error.message || data.error.type || '未知错误').slice(0, 300));
+      if (data?.usage) usage = normalizedStreamUsage(data.usage) || usage;
+      const choice = data?.choices?.[0];
+      if (choice && Object.prototype.hasOwnProperty.call(choice, 'finish_reason')) {
+        sawFinishReasonField = true;
+        const reason = choice.finish_reason == null ? null : (String(choice.finish_reason).trim() || null);
+        if (reason != null) {
+          if (reason.toLowerCase() !== 'stop' && unsafeFinishReason == null) unsafeFinishReason = reason;
+          finishReason = unsafeFinishReason || reason;
+        }
+      }
+      const delta = streamDeltaText(choice?.delta);
+      if (delta) {
+        full += delta;
+        onChunk?.(delta, full);
+      }
+    };
     for (;;) {
       if (scope.signal.aborted) break;
       const { done, value } = await reader.read();
       if (done) break;
       buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        const t = line.trim();
-        if (!t.startsWith('data:')) continue;
-        const data = t.slice(5).trim();
-        if (data === '[DONE]') break;
-        try {
-          const delta = JSON.parse(data).choices?.[0]?.delta?.content;
-          if (delta) { full += delta; onChunk?.(delta, full); }
-        } catch { /* 半行 JSON 留到下轮 */ }
-      }
+      const lines = buf.split(/\r?\n/);
+      buf = lines.pop() || '';
+      for (const line of lines) processLine(line);
     }
-    if (scope.stopped) return full.trim();
+    buf += dec.decode();
+    if (buf.trim()) processLine(buf);
+    if (scope.stopped) return detailedCompletion(full, {
+      finishReason: null,
+      completionKind: 'interrupted',
+      usage,
+      interrupted: true,
+      safeToCommit: false,
+    });
     if (!full) throw new Error('AI 返回为空');
-    return full.trim();
+    finishReason = unsafeFinishReason || finishReason;
+    const completionKind = finishReason != null
+      ? (sawDoneMarker ? 'finish-reason+done-marker' : 'finish-reason')
+      : sawDoneMarker
+        ? (sawFinishReasonField ? 'null-finish-reason+done-marker' : 'done-marker')
+        : 'transport-end';
+    return detailedCompletion(full, { finishReason, completionKind, usage });
   } catch (error) {
-    if (scope.stopped) return full.trim();
+    if (scope.stopped) return detailedCompletion(full, {
+      finishReason: null,
+      completionKind: 'interrupted',
+      usage,
+      interrupted: true,
+      safeToCommit: false,
+    });
     throw error;
   } finally {
     if (scope.signal.aborted) { try { await reader?.cancel?.(); } catch {} }
@@ -522,7 +726,7 @@ export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, t
     }, signal);
   }
   // 网页桥直连
-  const url = cfg.baseURL.replace(/\/+$/, '') + '/v1/chat/completions';
+  const url = joinProviderAiEndpoint(cfg.baseURL, 'chat/completions');
   const scope = createAbortScope({ signal, timeoutMs: 180000 });
   try {
     const resp = await fetch(url, {
@@ -533,7 +737,7 @@ export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, t
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}：${(await resp.text().catch(() => '')).slice(0, 300)}`);
     const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = extractFactoryContentText(data.choices?.[0]?.message);
     if (!content) throw new Error('AI 返回为空');
     return content.trim();
   } finally { scope.cleanup(); }

@@ -711,19 +711,52 @@ export function stripTokenDeclaration(text) {
   return String(text || '').trim().replace(TOKEN_DECLARATION_RE, '').trimEnd();
 }
 
+/** Legacy migration helper only; new executions must validate a model-native declaration. */
 export function ensureTokenDeclaration(text) {
   const src = String(text || '').trim();
   if (tokenDeclarationOf(src) != null) return src;
   return `${src}\n[本次续写字数：${stripTokenDeclaration(src).length}]`.trim();
 }
 
-/** 声明是续写终止信号；未声明时才继续走去重合并。 */
+/**
+ * Validate the provider-safe result and the declaration actually emitted by the
+ * model. This helper never repairs or synthesizes evidence.
+ */
+export function validateNativeContinuationDeclaration(text, completion = {}) {
+  const rawText = String(text || '').trim();
+  const declared = tokenDeclarationOf(rawText);
+  const body = stripTokenDeclaration(rawText);
+  const actualCharacters = body.length;
+  const declarationPresent = declared != null;
+  const declarationMatches = declarationPresent && declared === actualCharacters;
+  const completionSafe = completion?.safeToCommit === true;
+  let reason = 'ok';
+  if (!completionSafe) reason = 'provider-unsafe';
+  else if (!body.trim()) reason = 'empty-body';
+  else if (!declarationPresent) reason = 'missing-native-declaration';
+  else if (!declarationMatches) reason = 'declaration-length-mismatch';
+  return {
+    text: body,
+    rawText,
+    declared,
+    actualCharacters,
+    declarationPresent,
+    declarationMatches,
+    completionSafe,
+    safeToCommit: reason === 'ok',
+    reason,
+  };
+}
+
+/** 声明是续写终止信号；兼容旧任务读取，但不改写模型原生声明。 */
 export function mergeDeclaredContinuation(prev, next = '') {
   const prevCount = tokenDeclarationOf(prev);
-  if (prevCount != null) return { text: ensureTokenDeclaration(prev), declared: prevCount, complete: true };
+  if (prevCount != null) return { text: String(prev || '').trim(), declared: prevCount, complete: true };
   const nextCount = tokenDeclarationOf(next);
   const merged = dedupMerge(stripTokenDeclaration(prev), stripTokenDeclaration(next));
-  return { text: nextCount == null ? merged : ensureTokenDeclaration(merged), declared: nextCount, complete: nextCount != null };
+  if (nextCount == null) return { text: merged, declared: null, complete: false };
+  const declaration = TOKEN_DECLARATION_RE.exec(String(next || '').trim())[0].trim();
+  return { text: `${merged}\n${declaration}`.trim(), declared: nextCount, complete: true };
 }
 
 /** 六层章节引导：恒定锚 / N±3 窗口 / 滚动快照 / 累计台账 / 本章+TOKEN / 纠偏。 */
@@ -803,13 +836,20 @@ export function dedupMerge(prev, next) {
 // ==================== 任务状态持久化（W60b 新协议 + 旧名兼容） ====================
 /** 写任务状态到产出目录（供启动扫描恢复） */
 export async function writeTaskState(folder, state) {
+  const filename = /(^|[\\/])Output([\\/]|$)/i.test(String(folder || '')) ? '任务状态.json' : 'task_state.json';
   try {
-    const filename = /(^|[\\/])Output([\\/]|$)/i.test(String(folder || '')) ? '任务状态.json' : 'task_state.json';
-    await window.mazz.invoke('fs:writeFile', {
+    const result = await window.mazz.invoke('fs:writeFile', {
       path: `${folder}/${filename}`,
       content: JSON.stringify({ ...state, updatedAt: new Date().toISOString() }, null, 2),
     });
-  } catch {}
+    return result ?? { ok: true, filename };
+  } catch (error) {
+    const failure = new Error(`任务状态写入失败（${filename}）：${error?.message || error || '未知错误'}`);
+    failure.name = 'FactoryTaskStateWriteError';
+    failure.code = 'FACTORY_TASK_STATE_WRITE_FAILED';
+    failure.cause = error;
+    throw failure;
+  }
 }
 
 /** 扫描工作区可恢复任务（新任务状态.json / 旧 task_state.json）。 */

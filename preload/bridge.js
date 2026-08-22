@@ -20,7 +20,7 @@ const INVOKE_CHANNELS = new Set([
   'mazAsset:inspect', 'mazAsset:migrateStyle',
   'physicalSimulation:threatModel', 'physicalSimulation:sampleI', 'physicalSimulation:normalizeRecording', 'physicalSimulation:shadowPlan', 'physicalSimulation:safetyReviewGate',
   'companion:archive', 'companion:memory',
-  'fs:watch', 'fs:unwatch',
+  'fs:watch', 'fs:unwatch', 'fs:restartWatch',
   'dialog:openFile', 'dialog:saveFile', 'dialog:openFolder', 'dialog:confirm',
   'recent:list', 'recent:add', 'recent:clear',
   'settings:get', 'settings:set', 'settings:compareAndSet', 'workspace:get',
@@ -88,7 +88,7 @@ const INVOKE_CHANNELS = new Set([
 
 // 白名单：主进程 -> 渲染进程 事件
 const EVENT_CHANNELS = new Set([
-  'file:open', 'file:changed', 'file:import', 'command:invoke', 'menu:clicked',
+  'file:open', 'file:changed', 'file:watch-error', 'file:import', 'command:invoke', 'menu:clicked',
   'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role', 'window:durability-failed',
   'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'factory:aiUsage', 'library:download',
   'harness:event',

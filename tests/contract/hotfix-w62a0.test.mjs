@@ -103,7 +103,10 @@ describe('W62a-0 中央登记与就地指派', () => {
   });
 
   test('chat/chatStream 保留零破坏 cfg 形参并新增 role 穿针', () => {
-    assert(providerSrc.includes("chat({ cfg, role = ''") && providerSrc.includes("chatStream({ cfg, role = ''"), 'chat 双入口未增 role');
+    assert(providerSrc.includes('export async function chat(options)')
+      && providerSrc.includes('export async function chatStream(options)')
+      && providerSrc.includes("chatDetailed({ cfg, role = ''")
+      && providerSrc.includes("chatStreamDetailed({ cfg, role = ''"), 'chat 双入口未保留兼容包装或 detailed 入口未增 role');
     assert(providerSrc.includes('role ? await getProviderConfig(role) : (cfg || await getProviderConfig())'), '旧 cfg 调用兼容门缺失');
     assert(providerSrc.includes('请到「AI 服务 → AI 分工」'), '无路由没有人话管理入口');
     for (const role of ['blueprint', 'chapter', 'snapshot', 'style']) assert(factorySrc.includes(`role: '${role}'`), `工厂缺 ${role} 穿针`);

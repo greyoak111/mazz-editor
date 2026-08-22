@@ -8,24 +8,24 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 705,
+    "totalFindings": 715,
     "filesWithFindings": 71,
     "byRule": {
-      "fixed-width-px": 199,
-      "white-space-nowrap": 137,
-      "position-absolute": 162,
-      "fixed-min-width": 90,
+      "fixed-width-px": 198,
+      "white-space-nowrap": 141,
+      "position-absolute": 167,
+      "fixed-min-width": 91,
       "sidebar-pixel-coupling": 12,
       "fixed-left-right": 31,
       "width-100vw": 8,
       "resize-js-layout": 40,
-      "calc-viewport-or-container": 15,
+      "calc-viewport-or-container": 16,
       "flex-shrink-zero": 11
     },
     "topFiles": [
       {
         "file": "renderer/styles/base.css",
-        "count": 384
+        "count": 388
       },
       {
         "file": "renderer/base.css",
@@ -36,16 +36,16 @@
         "count": 21
       },
       {
+        "file": "renderer/panels/factorycfg.html",
+        "count": 13
+      },
+      {
         "file": "renderer/modules/browser/index.js",
         "count": 10
       },
       {
         "file": "renderer/styles/mobile.css",
         "count": 10
-      },
-      {
-        "file": "renderer/panels/factorycfg.html",
-        "count": 8
       },
       {
         "file": "renderer/styles/convergence.css",
@@ -145,10 +145,10 @@
       }
     ],
     "byProvisionalClass": {
-      "D": 326,
-      "A": 191,
-      "B": 90,
-      "E": 67,
+      "D": 332,
+      "A": 193,
+      "B": 91,
+      "E": 68,
       "C": 31
     }
   },
@@ -934,63 +934,70 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/desk.js",
-      "line": 386,
+      "line": 117,
+      "sample": "<div class=\"fd-stat fd-pipeline-status\" style=\"min-width:440px;flex:2\" title=\"只展示已由当前项目事件证明的流程状态；没有冒充尚未执行的编译预览\"><i>智能创作专业流程</i><b data-flow-current>等待项目</b><span data-flow-chain>自动校验 → 节点验收 → 交叉审校 → 复核与仲裁 → 人工最终审定</span></div>"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/modules/factory/desk.js",
+      "line": 413,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;display:grid;gap:10px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/factory/desk.js",
-      "line": 623,
+      "line": 654,
       "sample": "ctl.resizeObserver = new ResizeObserver(entries => {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 379,
+      "line": 549,
       "sample": "<label class=\"fc-check\" title=\"每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停\">预算 <input type=\"number\" class=\"fc-review-budget\" min=\"8000\" step=\"1000\" value=\"32000\" style=\"width:72px\"> token</label>"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 382,
+      "line": 552,
       "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 832,
+      "line": 1002,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-height:60vh;overflow:auto\">${ids.map(id => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 888,
+      "line": 1058,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;max-height:55vh;overflow:auto\">${this.styles.length ? this.styles.map(s => `"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 3428,
+      "line": 3922,
       "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 3538,
+      "line": 4037,
       "sample": "<div style=\"min-width:420px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 3609,
+      "line": 4108,
       "sample": "<div style=\"min-width:460px\">"
     },
     {
@@ -1403,14 +1410,14 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/viewer/player.js",
-      "line": 243,
+      "line": 247,
       "sample": "<div style=\"min-width:420px;font-size:12.5px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1531,
+      "line": 1535,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {
@@ -1596,46 +1603,81 @@
       "sample": ".p-winbtns button { display:inline-flex; align-items:center; justify-content:center; -webkit-app-region:no-drag; width:30px; height:22px; border:0; border-radius:6px; background:transparent; color:var(--fg-dim); cursor:pointer; font-size:12px; }"
     },
     {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 22,
-      "sample": ".set-row label { width:88px; flex:none; font-size:12.5px; font-weight:600; }"
+      "line": 19,
+      "sample": ".head-title { margin:0; overflow:hidden; color:var(--fg); font-size:15px; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 65,
+      "line": 20,
+      "sample": ".head-subtitle { overflow:hidden; color:var(--fg-dim); font-size:11.5px; text-overflow:ellipsis; white-space:nowrap; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "D",
+      "file": "renderer/panels/factorycfg.html",
+      "line": 23,
+      "sample": ".service-status { display:inline-flex; align-items:center; gap:6px; min-width:0; color:var(--fg-dim); font-size:11.5px; white-space:nowrap; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/panels/factorycfg.html",
+      "line": 27,
+      "sample": ".set-row label { width:88px; flex:none; font-size:12.5px; font-weight:600; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/panels/factorycfg.html",
+      "line": 38,
+      "sample": ".sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "D",
+      "file": "renderer/panels/factorycfg.html",
+      "line": 38,
+      "sample": ".sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "A",
+      "file": "renderer/panels/factorycfg.html",
+      "line": 82,
       "sample": ".research-source span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 71,
+      "line": 88,
       "sample": ".feed-cluster-head b { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 90,
+      "line": 111,
       "sample": ".route-pick { width:100%; justify-content:flex-start; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 189,
+      "line": 492,
       "sample": "<div class=\"inline-row\"><label><input id=\"pj-dual\" type=\"checkbox\" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id=\"pj-max\" type=\"checkbox\" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>交叉审校 <select id=\"pj-review-ritual\" class=\"sel\"><option value=\"light\" ${(s.reviewRitual || 'light') === 'light' ? '"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/panels/factorycfg.html",
-      "line": 199,
-      "sample": "<div class=\"inline-row\"><input id=\"pj-feed-query\" class=\"inp\" style=\"flex:1\" placeholder=\"要持续观察的主题\" value=\"${attr(s.extras?.feed?.query || '')}\"><input id=\"pj-feed-dimension\" class=\"inp\" style=\"width:150px\" placeholder=\"工作维度\" value=\"${attr(s.extras?.feed?.dimension || '外部动态')}\"><button class=\"btn\" data-pa=\"feedScan\" ${"
+      "line": 502,
+      "sample": "<div class=\"inline-row\"><label class=\"sr-only\" for=\"pj-feed-query\">订阅主题</label><input id=\"pj-feed-query\" class=\"inp\" style=\"flex:1\" placeholder=\"要持续观察的主题\" value=\"${attr(s.extras?.feed?.query || '')}\"><label class=\"sr-only\" for=\"pj-feed-dimension\">工作维度</label><input id=\"pj-feed-dimension\" class=\"inp\" style=\"width:150px\""
     },
     {
       "rule": "position-absolute",
@@ -2194,35 +2236,35 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 465,
+      "line": 480,
       "sample": "<div style=\"min-width:560px;max-width:720px\">"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/shell/shell.js",
-      "line": 471,
+      "line": 486,
       "sample": "<div style=\"font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${s.name}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 4264,
+      "line": 4327,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 4280,
+      "line": 4343,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 4302,
+      "line": 4365,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
@@ -4179,752 +4221,780 @@
       "sample": ".mz-spectrum { position: absolute; inset: auto 0 0 0; bottom: 0; width: 100%; height: 42%; opacity: .85; }"
     },
     {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
+      "rule": "calc-viewport-or-container",
+      "provisionalClass": "E",
       "file": "renderer/styles/base.css",
       "line": 1482,
-      "sample": ".mz-audio-disc { position: relative; z-index: 1; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; background: conic-gradient(var(--bg-active), var(--bg), var(--bg-active), var(--bg), var(--bg-active)); border: 2px solid var(--border); box-shadow: var(--shadow), inset"
+      "sample": ".mz-audio-art { position: relative; z-index: 1; width: clamp(168px, 24vmin, 272px); max-width: calc(100% - 48px); aspect-ratio: 1 / 1; overflow: hidden; isolation: isolate; color: color-mix(in srgb, var(--accent) 82%, var(--fg)); background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 17%, var(--bg-elev)) "
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1483,
+      "sample": ".mz-audio-art::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.12), transparent 42%), radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 36%); }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1484,
+      "sample": ".mz-audio-art-fallback { position: absolute; inset: 0; display: grid; place-items: center; opacity: 1; transition: opacity 200ms ease; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
       "line": 1485,
+      "sample": ".mz-audio-art-fallback::before { content: ''; position: absolute; inset: 12%; border: 1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius: 12px; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1487,
+      "sample": ".mz-audio-art > img { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 200ms ease; }"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1493,
       "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px 24px; background: linear-gradient(180deg, rgba(10,12,18,.82) 0%, rgba(10,12,18,.48) 58%, transparent 100%); transition: opacity .3s; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1488,
+      "line": 1496,
       "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--mz-overlay-fg); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1489,
+      "line": 1497,
       "sample": ".mz-meta { font-size: 11px; color: var(--mz-overlay-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1492,
+      "line": 1500,
       "sample": ".mz-controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; min-width: 0; padding: 6px 14px 10px; background: transparent; transition: opacity .3s; container: player-controls / inline-size; } /* W87e：按真实 control seat 宽度退化，不再让 max-content 越过窗格 */"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1501,
+      "line": 1509,
       "sample": ".mz-seek-track::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1505,
+      "line": 1513,
       "sample": ".mz-seek-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000 10%)); border-radius: 3px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1506,
+      "line": 1514,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1506,
+      "line": 1514,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1508,
+      "line": 1516,
       "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1519,
+      "line": 1527,
       "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1520,
+      "line": 1528,
       "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1521,
+      "line": 1529,
       "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1526,
+      "line": 1534,
       "sample": ".ie-crop { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; z-index: 4; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1527,
+      "line": 1535,
       "sample": ".ie-crop .ie-ch { position: absolute; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1539,
+      "line": 1547,
       "sample": ".mz-bar > .mz-btn { width: 32px; height: 32px; padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1540,
+      "line": 1548,
       "sample": ".mz-bar > .mz-btn.mz-play { width: 38px; height: 34px; padding: 0; font-size: 18px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1541,
+      "line": 1549,
       "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1541,
+      "line": 1549,
       "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1542,
+      "line": 1550,
       "sample": ".mz-vol { width: 74px; height: 20px; margin: 0; vertical-align: middle; accent-color: var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1545,
+      "line": 1553,
       "sample": ".mz-more-dot { position: absolute; right: 4px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--mz-overlay-bg); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1549,
+      "line": 1557,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1549,
+      "line": 1557,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1549,
+      "line": 1557,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1554,
+      "line": 1562,
       "sample": ".mz-control-density { font-size: 10.5px; color: var(--fg-dim); white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1555,
+      "line": 1563,
       "sample": ".mz-control-center > header button { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--fg-dim); cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1567,
+      "line": 1575,
       "sample": ".mz-control-center .mz-overflow-item.mz-btn > .mz-control-glyph { width: 20px; display: inline-flex; align-items: center; justify-content: center; color: currentColor; font: 700 10px/1 var(--font-ui); letter-spacing: -.03em; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1568,
+      "line": 1576,
       "sample": ".mz-control-center .mz-overflow-item.mz-btn::after { content: attr(data-player-label); grid-column: 2; grid-row: 1; align-self: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; line-height: 1.2; text-align: left; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1574,
+      "line": 1582,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-control-center { right: calc(var(--mz-side-w) + 14px); width: min(360px, calc(100% - var(--mz-side-w) - 28px)); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1583,
+      "line": 1591,
       "sample": ".mz-bar > .mz-btn { width: 30px; padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1584,
+      "line": 1592,
       "sample": ".mz-bar > .mz-btn.mz-play { width: 34px; padding: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1596,
+      "line": 1604,
       "sample": ".mz-bar .mz-btn { min-width: 40px; min-height: 40px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1599,
+      "line": 1607,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1599,
+      "line": 1607,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1603,
+      "line": 1611,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-media, .mz-stage.side-open:not(.side-overlay) .mz-audio-wrap, .mz-stage.side-open:not(.side-overlay) .mz-sub-host { width: calc(100% - var(--mz-side-w)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1606,
+      "line": 1614,
       "sample": ".mz-side-grip { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 9; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1609,
+      "line": 1617,
       "sample": ".mz-stream-err { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 12%; text-align: center; background: color-mix(in srgb, #000 72%, transparent); color: #eee; pointer-events: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1614,
+      "line": 1622,
       "sample": ".mz-decode-actions .rb-btn { min-width: 112px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1624,
+      "line": 1632,
       "sample": ".mz-ml-caret { flex: none; width: 14px; text-align: center; opacity: .7; font-size: 10px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1625,
+      "line": 1633,
       "sample": ".mz-ml-dname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1630,
+      "line": 1638,
       "sample": ".mz-li { padding: 6px 9px; font-size: 12px; color: var(--fg-dim); border-radius: 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1659,
+      "line": 1667,
       "sample": ".fc-feed-cluster-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1665,
+      "line": 1673,
       "sample": ".fc-hit-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1682,
+      "line": 1690,
       "sample": ".lib-progress.collapsed .lib-progress-toggle { min-width: 68px; color: var(--accent); background: var(--accent-soft); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1688,
+      "line": 1696,
       "sample": ".lib-progress:not(.collapsed) .lib-progress-toggle { min-width: 32px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1706,
+      "line": 1714,
       "sample": ".lib-comic-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fg-dim); font: 600 12px/1 system-ui; opacity: .55; background: color-mix(in srgb, var(--card) 72%, transparent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1708,
+      "line": 1716,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1708,
+      "line": 1716,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1709,
+      "line": 1717,
       "sample": ".lib-comic-slot.is-error::after { content: '本页解码失败'; position: absolute; top: 50%; color: var(--danger-fg, var(--danger)); font-size: 12px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1723,
+      "line": 1731,
       "sample": ".sd-grip-b { position: absolute; left: 0; right: 0; bottom: -4px; height: 8px; cursor: ns-resize; z-index: 5; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1724,
+      "line": 1732,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1724,
+      "line": 1732,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1743,
+      "line": 1751,
       "sample": ".mz-ico { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1744,
+      "line": 1752,
       "sample": ".rb-btn .mz-ico { width: 17px; height: 17px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1745,
+      "line": 1753,
       "sample": ".mazz-menu-icon .mz-ico { width: 15px; height: 15px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1749,
+      "line": 1757,
       "sample": ".w-card .mz-ico { width: 20px; height: 20px; color: var(--accent); vertical-align: -4px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1753,
+      "line": 1761,
       "sample": ".ribbon-tab-ico .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1755,
+      "line": 1763,
       "sample": ".tab-pin .mz-ico { width: 12px; height: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1758,
+      "line": 1766,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1758,
+      "line": 1766,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1766,
+      "line": 1774,
       "sample": ".sb-tab { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; border: 0; background: none; color: var(--fg-dim); font-size: 11.5px; padding: 5px 2px; cursor: pointer; border-radius: 6px; font-family: var(--font-ui); white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1767,
+      "line": 1775,
       "sample": ".sb-tab > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1770,
+      "line": 1778,
       "sample": ".sb-tab-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1771,
+      "line": 1779,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1772,
+      "line": 1780,
       "sample": "@container workspace-sidebar (max-width: 260px) {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1780,
+      "line": 1788,
       "sample": ".sb-tbtn .mz-ico { width: 13px; height: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1787,
+      "line": 1795,
       "sample": ".sb-item .mz-ico { width: 14px; height: 14px; flex: none; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1788,
+      "line": 1796,
       "sample": ".sb-item-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1794,
+      "line": 1802,
       "sample": ".sb-ol-arrow { font-style: normal; color: var(--fg-dim); width: 14px; text-align: center; cursor: pointer; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1801,
+      "line": 1809,
       "sample": ".sb-tag-head .mz-ico { width: 14px; height: 14px; color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1815,
+      "line": 1823,
       "sample": ".ft-dir { margin-left: auto; padding-left: 6px; padding-right: 26px; font-size: 10px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; direction: rtl; text-align: right; flex: none; pointer-events: none; position: relative; z-index: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1824,
+      "line": 1832,
       "sample": ".mz-bright { width: 56px; accent-color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1844,
+      "line": 1852,
       "sample": ".selmenu-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1848,
+      "line": 1856,
       "sample": ".sb-ws-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1863,
+      "line": 1871,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1863,
+      "line": 1871,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1868,
+      "line": 1876,
       "sample": ".fs-exit { position: fixed; right: 18px; bottom: 18px; z-index: 9999; border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); color: var(--fg); border-radius: 999px; padding: 8px 18px; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1874,
+      "line": 1882,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1874,
+      "line": 1882,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1874,
+      "line": 1882,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1889,
+      "line": 1897,
       "sample": ".mz-companion-compose .mz-companion-send { flex:none; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; padding:0; border:0; border-radius:7px; background:var(--accent); color:var(--accent-fg); cursor:pointer; transition:filter .15s ease, transform .15s ease; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1890,
+      "line": 1898,
       "sample": ".mz-companion-compose .mz-companion-send .mz-ico { width:17px; height:17px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1894,
+      "line": 1902,
       "sample": ".mz-danmaku-canvas { position:absolute; inset:0; z-index:6; pointer-events:none; width:100%; height:100%; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1895,
+      "line": 1903,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1895,
+      "line": 1903,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1898,
-      "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1899,
-      "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1900,
-      "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1901,
-      "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1902,
-      "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1904,
-      "sample": ".ft-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 1906,
+      "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1907,
+      "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1908,
+      "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1909,
+      "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1910,
+      "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1912,
+      "sample": ".ft-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; flex: none; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1914,
       "sample": ".sd-tool-ico { display: inline-flex; align-items: center; justify-content: center; width: 18px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1915,
+      "line": 1923,
       "sample": ".mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: var(--fg-dim); font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1921,
+      "line": 1929,
       "sample": ".mz-ml-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1935,
+      "line": 1943,
       "sample": ".mz-site-health .mz-site-check { min-width: 0; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1942,
+      "line": 1950,
       "sample": ".mz-site-health small { flex: none; white-space: nowrap; opacity: .72; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1944,
+      "line": 1952,
       "sample": ".mz-site-health-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1944,
+      "line": 1952,
       "sample": ".mz-site-health-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1946,
+      "line": 1954,
       "sample": ".mz-mikan-season { min-width: 116px; max-width: 170px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1952,
+      "line": 1960,
       "sample": ".mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1953,
+      "line": 1961,
       "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1957,
+      "line": 1965,
       "sample": ".mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1961,
+      "line": 1969,
       "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1962,
+      "line": 1970,
       "sample": ".mz-catalog-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg-soft); opacity: 0; transition: opacity .12s ease; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1966,
+      "line": 1974,
       "sample": ".mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1972,
+      "line": 1980,
       "sample": ".mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1978,
+      "line": 1986,
       "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {

@@ -48,10 +48,16 @@ export const TLC_RULES = Object.freeze([
 ]);
 
 const asText = value => String(value ?? '').trim();
+const strictText = value => typeof value === 'string' ? value.trim() : '';
 const list = value => Array.isArray(value) ? value : [];
 const slug = value => asText(value).replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-|-$/g, '') || 'item';
 const escRx = value => asText(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const line = (label, value) => `- ${label}：${asText(value) || '无'}`;
+const rawAuditSummary = value => strictText(value)
+  .replace(/\bBearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
+  .replace(/\b(?:sk|key)-[A-Za-z0-9_-]{12,}\b/gi, '[REDACTED]')
+  .replace(/\s+/g, ' ')
+  .slice(0, 512);
 
 function parseMarkerBody(body) {
   const parts = asText(body).split('::').map(x => x.trim()).filter(Boolean);
@@ -345,6 +351,454 @@ export function parseReviewPacket(raw, fallback = {}) {
   catch { return { ...fallback, raw: asText(raw), parseWarning: true }; }
 }
 
+function parseStrictReviewPacket(raw) {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) return { ...raw };
+  try {
+    const parsed = JSON.parse(stripFence(raw));
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+  } catch {}
+  return { raw: asText(raw), parseWarning: true };
+}
+
+export function normalizeExternalReviewPacket(packet) {
+  const source = packet && typeof packet === 'object' && !Array.isArray(packet) ? packet : {};
+  const objections = Array.isArray(source.objections) ? source.objections : [];
+  const invalidRow = objections.findIndex(row => {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return true;
+    return !strictText(row.id)
+      || !['critical', 'major', 'minor'].includes(strictText(row.severity))
+      || !strictText(row.claim || row.message)
+      || !isArtifactEvidenceRef(row.artifactRef)
+      || !strictText(row.ruleRef);
+  });
+  const invalidReason = source.parseWarning
+    ? 'review-packet-unparseable'
+    : !Object.prototype.hasOwnProperty.call(source, 'objections')
+      ? 'review-objections-missing'
+      : !Array.isArray(source.objections)
+        ? 'review-objections-not-array'
+        : invalidRow >= 0
+          ? `review-objection-${invalidRow + 1}-invalid`
+        : '';
+  return {
+    ...source,
+    objections: invalidReason ? [] : objections,
+    objectionCount: objections.length,
+    invalidObjectionIndex: invalidRow,
+    valid: !invalidReason,
+    invalidReason,
+  };
+}
+
+export function normalizeHearingPacket(packet) {
+  const source = packet && typeof packet === 'object' && !Array.isArray(packet) ? packet : {};
+  const requestedDecision = strictText(source.decision).toLowerCase();
+  const reason = strictText(source.reason);
+  const ruleRef = strictText(source.ruleRef);
+  const invalidReason = source.parseWarning
+    ? 'hearing-packet-unparseable'
+    : !['overrule', 'sustain'].includes(requestedDecision)
+      ? 'hearing-decision-invalid'
+      : !reason || !ruleRef
+        ? 'hearing-citation-missing'
+        : '';
+  return {
+    ...source,
+    requestedDecision,
+    reason,
+    ruleRef,
+    decision: invalidReason ? 'sustain' : requestedDecision,
+    valid: !invalidReason,
+    invalidReason,
+    normalization: invalidReason ? 'fail-closed' : 'none',
+    parseWarning: source.parseWarning === true,
+    rawSummary: source.parseWarning ? rawAuditSummary(source.raw) : '',
+  };
+}
+
+function isArtifactEvidenceRef(value) {
+  return /^(?:draft|skeleton|artifact|review|machine|point|objection|answer|bible):\S[\s\S]*$/.test(strictText(value));
+}
+
+export function normalizeAnswerPacket(packet, { evidenceRefs = [] } = {}) {
+  const source = packet && typeof packet === 'object' && !Array.isArray(packet) ? packet : {};
+  const answer = strictText(source.answer);
+  const evidenceRef = strictText(source.evidenceRef);
+  const requestedOutcome = strictText(source.outcome).toLowerCase();
+  const catalog = new Set(list(evidenceRefs).map(strictText).filter(Boolean));
+  const invalidReason = source.parseWarning
+    ? 'answer-packet-unparseable'
+    : !answer
+      ? 'answer-text-missing'
+      : !isArtifactEvidenceRef(evidenceRef)
+        ? 'answer-evidence-ref-invalid'
+        : !catalog.has(evidenceRef)
+          ? 'answer-evidence-ref-unresolved'
+        : '';
+  return {
+    ...source,
+    answer,
+    evidenceRef,
+    requestedOutcome,
+    resolvedEvidenceRef: invalidReason ? '' : evidenceRef,
+    evidenceSource: invalidReason ? '' : evidenceRef.split(':', 1)[0],
+    valid: !invalidReason,
+    invalidReason,
+    normalization: invalidReason ? 'fail-closed' : requestedOutcome ? 'answer-outcome-ignored' : 'none',
+    parseWarning: source.parseWarning === true,
+    rawSummary: source.parseWarning ? rawAuditSummary(source.raw) : '',
+  };
+}
+
+export function normalizeReconsiderPacket(packet) {
+  const source = packet && typeof packet === 'object' && !Array.isArray(packet) ? packet : {};
+  const requestedOutcome = strictText(source.outcome).toLowerCase();
+  const reason = strictText(source.reason);
+  const invalidReason = source.parseWarning
+    ? 'reconsider-packet-unparseable'
+    : !['withdraw', 'hold'].includes(requestedOutcome)
+      ? 'reconsider-outcome-invalid'
+      : !reason
+        ? 'reconsider-reason-missing'
+        : '';
+  return {
+    ...source,
+    requestedOutcome,
+    reason,
+    outcome: invalidReason ? 'hold' : requestedOutcome,
+    valid: !invalidReason,
+    invalidReason,
+    normalization: invalidReason ? 'fail-closed' : 'none',
+    parseWarning: source.parseWarning === true,
+    rawSummary: source.parseWarning ? rawAuditSummary(source.raw) : '',
+  };
+}
+
+export function buildAnswerEvidenceCatalog({ schema = {}, machine = {}, point = {}, reviews = [], objections = [] } = {}) {
+  const refs = new Set();
+  const add = value => {
+    const ref = strictText(value);
+    if (isArtifactEvidenceRef(ref)) refs.add(ref);
+  };
+  for (const group of ['requiredBeats', 'plantedSeeds', 'lockedFacts', 'forbiddenBoundaries']) {
+    for (const row of list(schema?.[group])) {
+      const id = strictText(row?.id);
+      if (id) refs.add(`skeleton:${id}`);
+    }
+  }
+  for (const row of [...list(machine?.findings), ...list(machine?.blocking), ...list(point?.findings), ...list(point?.advisoryFindings)]) add(row?.artifactRef);
+  for (const review of list(reviews)) for (const row of list(review?.packet?.objections)) add(row?.artifactRef);
+  for (const objection of list(objections)) {
+    add(objection?.artifactRef);
+    const id = strictText(objection?.id);
+    if (id) refs.add(`objection:${id}`);
+  }
+  return [...refs].sort();
+}
+
+function pointSchemaEntry(schema, artifactRef) {
+  const match = /^skeleton:([^\s#]+)$/.exec(asText(artifactRef));
+  if (!match) return null;
+  const id = match[1];
+  const groups = ['requiredBeats', 'plantedSeeds', 'lockedFacts', 'forbiddenBoundaries'];
+  for (const group of groups) {
+    const entry = list(schema?.[group]).find(item => asText(item?.id) === id);
+    if (entry) return { group, entry };
+  }
+  return null;
+}
+
+function pointItemArtifactRef(value) {
+  const row = value && typeof value === 'object' ? value : {};
+  return asText(row.artifactRef || row.position);
+}
+
+function isOptionalOutlineAnchorItem(value, schema) {
+  const row = value && typeof value === 'object' ? value : {};
+  const resolved = pointSchemaEntry(schema, pointItemArtifactRef(row));
+  if (resolved?.group !== 'requiredBeats') return false;
+  return resolved.entry.required === false && asText(resolved.entry.id) === 'outline-anchor';
+}
+
+function isCitedPointFinding(value) {
+  const row = value && typeof value === 'object' ? value : {};
+  return !!(asText(row.message || row.claim || row.error) && asText(row.artifactRef) && asText(row.ruleRef));
+}
+
+function isExecutablePointRepair(value) {
+  const row = value && typeof value === 'object' ? value : {};
+  return !!(
+    asText(row.error || row.message)
+    && asText(row.change)
+    && asText(row.position || row.artifactRef)
+    && asText(row.reason || row.ruleRef)
+  );
+}
+
+function isRequiredContractFailure(value, schema) {
+  const row = value && typeof value === 'object' ? value : {};
+  const reasonCode = asText(row.reasonCode).toUpperCase();
+  if (!['REQUIRED_CONTRACT_CONFLICT', 'REQUIRED_CONTRACT_UNSATISFIABLE'].includes(reasonCode)) return false;
+  const resolved = pointSchemaEntry(schema, row.artifactRef);
+  return resolved?.entry?.required === true && isCitedPointFinding(row);
+}
+
+/**
+ * Normalize M2's semantic decision against typed acceptance-schema ownership.
+ * This deliberately uses schema ids/reason codes/citations instead of guessing
+ * from prose.  Invalid adjustment packets block the unit; they never create an
+ * empty repair order or consume all three main-loop rounds.
+ */
+export function normalizePointReviewPacket(packet, schema = {}) {
+  const source = packet && typeof packet === 'object' ? packet : {};
+  const requestedDecision = asText(source.decision).toLowerCase();
+  const findings = list(source.findings);
+  const repairItems = list(source.repairItems);
+  const base = { ...source, requestedDecision, findings, repairItems };
+  // Resolve schema ownership before interpreting prose or severity.  In
+  // particular, the synthetic outline anchor is advisory even if M2 repeats it
+  // or mistakenly emits an executable-looking repair for it.
+  const findingKinds = findings.map(row => ({
+    row,
+    optionalOutlineAnchor: isOptionalOutlineAnchorItem(row, schema),
+    cited: isCitedPointFinding(row),
+    severity: asText(row?.severity).toLowerCase(),
+  }));
+  const repairKinds = repairItems.map(row => ({
+    row,
+    optionalOutlineAnchor: isOptionalOutlineAnchorItem(row, schema),
+    executable: isExecutablePointRepair(row),
+  }));
+  const itemCount = findingKinds.length + repairKinds.length;
+  const optionalOnly = itemCount > 0
+    && findingKinds.every(item => item.optionalOutlineAnchor)
+    && repairKinds.every(item => item.optionalOutlineAnchor);
+  const independentFindings = findingKinds.filter(item => !item.optionalOutlineAnchor && item.cited);
+  const independentRepairs = repairKinds.filter(item => !item.optionalOutlineAnchor && item.executable);
+  const invalid = invalidReason => ({
+    ...base,
+    decision: 'invalid',
+    valid: false,
+    invalidReason,
+    normalization: 'fail-closed',
+  });
+
+  if (source.parseWarning) return invalid('point-packet-unparseable');
+  if (requestedDecision === 'pass') {
+    const empty = itemCount === 0;
+    if (empty || optionalOnly) {
+      return {
+        ...base,
+        decision: 'pass',
+        valid: true,
+        invalidReason: '',
+        normalization: empty ? 'none' : 'optional-outline-anchor-advisory',
+      };
+    }
+    if (independentFindings.some(item => ['critical', 'major'].includes(item.severity))) {
+      return invalid('pass-with-blocking-finding');
+    }
+    if (independentRepairs.length) return invalid('pass-with-actionable-repair');
+    return invalid('pass-with-non-advisory-items');
+  }
+
+  if (requestedDecision === 'adjust') {
+    if (optionalOnly) {
+      return {
+        ...base,
+        decision: 'pass',
+        valid: true,
+        invalidReason: '',
+        normalization: 'optional-outline-anchor-advisory',
+      };
+    }
+    const approvedConsultation = source.consultation?.approved === true
+      && !!asText(source.consultation?.proposal)
+      && !!asText(source.consultation?.skeletonPatch || source.consultation?.biblePatch);
+    // An approved consultation is a separate schema-change transaction, not an
+    // empty draft adjustment. M1 must first materialize a required schema ref;
+    // only then may the runtime synthesize a cited M3 repair authorization.
+    if (!independentFindings.length && !independentRepairs.length && approvedConsultation) {
+      return { ...base, decision: 'consult_schema', valid: true, invalidReason: '', normalization: 'approved-consultation' };
+    }
+    if (!independentFindings.length && !independentRepairs.length) return invalid('adjust-without-actionable-cited-item');
+    return {
+      ...base,
+      // Advisory anchor rows remain auditable but never enter M3's repair
+      // order.  This also prevents an optional repair from shadowing a real
+      // independent finding in the order-building fallback below.
+      findings: independentFindings.map(item => item.row),
+      repairItems: independentRepairs.map(item => item.row),
+      advisoryFindings: findingKinds.filter(item => item.optionalOutlineAnchor).map(item => item.row),
+      advisoryRepairItems: repairKinds.filter(item => item.optionalOutlineAnchor).map(item => item.row),
+      decision: 'adjust',
+      valid: true,
+      invalidReason: '',
+      normalization: findingKinds.some(item => item.optionalOutlineAnchor)
+        || repairKinds.some(item => item.optionalOutlineAnchor)
+        ? 'optional-outline-anchor-filtered'
+        : 'none',
+    };
+  }
+
+  if (requestedDecision === 'return_skeleton') {
+    if (!findings.some(row => isRequiredContractFailure(row, schema))) {
+      return invalid('return-skeleton-without-required-contract-failure');
+    }
+    return { ...base, decision: 'return_skeleton', valid: true, invalidReason: '', normalization: 'none' };
+  }
+  return invalid('unknown-point-decision');
+}
+
+/**
+ * Build the compact, cited evidence packet owned by the final arbitration
+ * seat.  It deliberately contains conclusions and references, never the
+ * creative body, so the arbiter cannot invent a fifth review gate or mistake
+ * an initial unit's absent bible for missing review evidence.
+ */
+export function buildFinalArbitrationEvidence({
+  gates = {}, machine = {}, point = {}, reviews = [], objections = [],
+  openCritical = [], evidenceConflicts = [], bible = '', initialUnit = false, budget = {},
+} = {}) {
+  const gateRows = Object.entries(gates).map(([id, open]) => ({ ref: `gate:${id}`, open: open === true }));
+  const closedGateRefs = gateRows.filter(row => !row.open).map(row => row.ref);
+  const unresolvedObjections = list(openCritical).map((row, index) => ({
+    ref: `objection:${asText(row?.id) || index + 1}`,
+    severity: asText(row?.severity) || 'critical',
+    status: asText(row?.status) || 'open',
+    artifactRef: asText(row?.artifactRef),
+    ruleRef: asText(row?.ruleRef),
+  }));
+  const reviewRows = list(reviews).map(row => ({
+    seat: asText(row?.seat),
+    sampled: row?.sampled === true,
+    objectionCount: list(row?.packet?.objections).length,
+    parseWarning: row?.packet?.parseWarning === true,
+  }));
+  const conflictRows = list(evidenceConflicts).map((row, index) => ({
+    ref: asText(row?.ref || row?.artifactRef) || `conflict:${index + 1}`,
+    artifactRef: asText(row?.artifactRef),
+    ruleRef: asText(row?.ruleRef),
+  }));
+  const bibleAudit = asText(bible)
+    ? { state: 'available', blocking: false, ref: 'artifact:bible', coverage: 'supplied-project-bible' }
+    : initialUnit
+      ? { state: 'not-applicable-initial-unit', blocking: false, ref: 'artifact:bible', coverage: 'current-schema-machine-point-reviewed' }
+      : { state: 'missing-required-project-bible', blocking: true, ref: 'artifact:bible', coverage: 'none' };
+  const integrityBlockers = bibleAudit.blocking ? [bibleAudit.ref] : [];
+  return {
+    protocol: W68_PROTOCOL,
+    authority: 'procedural-arbitration-only',
+    gates: gateRows,
+    closedGateRefs,
+    machine: {
+      pass: machine?.pass === true,
+      blockingCount: list(machine?.blocking).length,
+      blockingRefs: list(machine?.blocking).map(row => asText(row?.artifactRef || row?.id)).filter(Boolean),
+    },
+    point: {
+      valid: point?.valid !== false,
+      decision: asText(point?.decision),
+      requestedDecision: asText(point?.requestedDecision || point?.decision),
+      normalization: asText(point?.normalization) || 'none',
+      findingRefs: list(point?.findings).map(row => asText(row?.artifactRef)).filter(Boolean),
+    },
+    reviews: reviewRows,
+    objections: list(objections).map(row => ({
+      ref: `objection:${asText(row?.id)}`,
+      severity: asText(row?.severity),
+      status: asText(row?.status),
+      artifactRef: asText(row?.artifactRef),
+      ruleRef: asText(row?.ruleRef),
+    })),
+    unresolvedObjections,
+    evidenceConflicts: conflictRows,
+    evidenceConflictCount: conflictRows.length,
+    integrityBlockers,
+    unresolvedBlockers: [
+      ...closedGateRefs,
+      ...unresolvedObjections.map(row => row.ref),
+      ...conflictRows.map(row => row.ref),
+      ...integrityBlockers,
+    ],
+    bibleAudit,
+    budget,
+  };
+}
+
+/**
+ * Enforce M6's frozen authority: it may confirm a clean four-gate handoff or
+ * block on an actually closed gate / unresolved cited objection.  An
+ * unsupported generic block is retained for audit.  With no arbitration
+ * subject the four gates remain authoritative and the packet is normalized to
+ * a procedural pass; with real blockers an uncited or contradictory packet is
+ * invalid and cannot open the gate.
+ */
+export function normalizeFinalArbitrationPacket(packet, evidence = {}) {
+  const source = packet && typeof packet === 'object' && !Array.isArray(packet) ? packet : {};
+  const requestedDecision = strictText(source.decision).toLowerCase();
+  const closedGateRefs = new Set(list(evidence.closedGateRefs).map(asText).filter(Boolean));
+  const unresolvedRefs = new Set(list(evidence.unresolvedObjections).map(row => asText(row?.ref)).filter(Boolean));
+  const conflictRefs = new Set(list(evidence.evidenceConflicts).map(row => asText(row?.ref)).filter(Boolean));
+  const integrityRefs = new Set(list(evidence.integrityBlockers).map(asText).filter(Boolean));
+  const blockers = list(evidence.unresolvedBlockers).map(asText).filter(Boolean);
+  const base = {
+    ...source,
+    requestedDecision,
+    rawReason: strictText(source.reason),
+    reason: strictText(source.reason),
+    reasonCode: strictText(source.reasonCode).toUpperCase(),
+    gateRef: strictText(source.gateRef),
+    artifactRef: strictText(source.artifactRef),
+    ruleRef: strictText(source.ruleRef),
+  };
+  const invalid = invalidReason => ({
+    ...base,
+    decision: 'invalid',
+    valid: false,
+    invalidReason,
+    normalization: 'fail-closed',
+    authorizedBlockers: blockers,
+  });
+  // A clean handoff contains no arbitration subject. Its outcome belongs to
+  // the four deterministic gates; a free-form M6 opinion cannot become a
+  // hidden fifth gate. The raw decision remains in requestedDecision.
+  if (!blockers.length) {
+    return {
+      ...base,
+      decision: 'pass',
+      valid: true,
+      reason: '四闸全开，且无未决质询、证据冲突或工件完整性阻断',
+      invalidReason: '',
+      normalization: requestedDecision === 'pass' && !source.parseWarning
+        ? 'none'
+        : 'quiet-path-deterministic',
+      authorizedBlockers: [],
+    };
+  }
+  if (source.parseWarning) return invalid('final-packet-unparseable');
+  if (requestedDecision === 'pass') {
+    return invalid('pass-with-unresolved-gate-or-conflict');
+  }
+  if (requestedDecision === 'block') {
+    if (!base.reason || !base.ruleRef) return invalid('block-citation-details-missing');
+    const citesClosedGate = base.reasonCode === 'CLOSED_GATE' && closedGateRefs.has(base.gateRef);
+    const citesUnresolved = base.reasonCode === 'UNRESOLVED_OBJECTION' && unresolvedRefs.has(base.artifactRef);
+    const citesConflict = base.reasonCode === 'EVIDENCE_CONFLICT' && conflictRefs.has(base.artifactRef);
+    const citesIntegrity = base.reasonCode === 'ARTIFACT_INTEGRITY' && integrityRefs.has(base.artifactRef);
+    if (!citesClosedGate && !citesUnresolved && !citesConflict && !citesIntegrity) return invalid('block-without-authorized-reference');
+    return {
+      ...base,
+      decision: 'block',
+      valid: true,
+      invalidReason: '',
+      normalization: 'none',
+      authorizedBlockers: blockers,
+    };
+  }
+  return invalid('unknown-final-decision');
+}
+
 export function normalizeObjection(value, index = 0) {
   const obj = value && typeof value === 'object' ? value : {};
   return {
@@ -356,6 +810,19 @@ export function normalizeObjection(value, index = 0) {
     status: 'open',
     reviewer: asText(obj.reviewer),
   };
+}
+
+function assignCanonicalObjectionId(objection, usedIds) {
+  const sourceId = strictText(objection?.id) || 'O';
+  const seat = strictText(objection?.reviewer) || 'review';
+  const base = `${slug(seat)}-${slug(sourceId)}`;
+  let id = base;
+  let suffix = 2;
+  while (usedIds.has(id)) id = `${base}-${suffix++}`;
+  usedIds.add(id);
+  objection.sourceId = sourceId;
+  objection.id = id;
+  return objection;
 }
 
 export function validateObjection(objection) {
@@ -397,8 +864,46 @@ export function planReviewRitual(requested = 'light', capTokens = 32000) {
   return { requested: ritual, effective: ritual, downgraded: false, stopped: false, reason: '' };
 }
 
+function pointFindingMarkdown(row, index, prefix = 'P') {
+  const item = row && typeof row === 'object' ? row : { message: row };
+  return `- ${prefix}${index + 1}｜级别=${asText(item.severity) || '未标注'}｜代码=${asText(item.reasonCode) || '未标注'}｜说明=${asText(item.message || item.claim || item) || '未说明'}｜工件=${asText(item.artifactRef) || '未引用'}｜规则=${asText(item.ruleRef) || '未引用'}`;
+}
+
+function pointRepairMarkdown(row, index, prefix = 'R') {
+  const item = row && typeof row === 'object' ? row : { error: row };
+  return `- ${prefix}${index + 1}｜问题=${asText(item.error || item.message || item) || '未说明'}｜修改=${asText(item.change) || '未说明'}｜位置=${asText(item.position || item.artifactRef) || '未引用'}｜理由=${asText(item.reason || item.ruleRef) || '未引用'}`;
+}
+
 function pointReportMarkdown(packet, round) {
-  return ['# 对点报告', '', line('主环轮次', round), line('决定', packet.decision), line('解析降级', packet.parseWarning ? '是' : '否'), '', '## 判断', '', ...(list(packet.findings).length ? list(packet.findings).map((x, i) => `- P${i + 1}｜${asText(x.message || x)}`) : ['- 未提出调整项'])].join('\n');
+  const normalizedAdvisory = packet.normalization === 'optional-outline-anchor-advisory';
+  const findings = normalizedAdvisory ? [] : list(packet.findings);
+  const repairs = normalizedAdvisory ? [] : list(packet.repairItems);
+  const advisoryFindings = [
+    ...(normalizedAdvisory ? list(packet.findings) : []),
+    ...list(packet.advisoryFindings),
+  ];
+  const advisoryRepairs = [
+    ...(normalizedAdvisory ? list(packet.repairItems) : []),
+    ...list(packet.advisoryRepairItems),
+  ];
+  return [
+    '# 对点报告', '',
+    line('主环轮次', round),
+    line('节点验收席原始决定', packet.requestedDecision || packet.decision),
+    line('系统归一决定', packet.decision),
+    line('归一规则', packet.normalization || 'none'),
+    line('包有效性', packet.valid === false ? '无效' : '有效'),
+    line('无效原因', packet.invalidReason || '无'),
+    line('解析降级', packet.parseWarning ? '是' : '否'),
+    '', '## 正式判断', '',
+    ...(findings.length ? findings.map((x, i) => pointFindingMarkdown(x, i)) : ['- 无']),
+    '', '## 正式修订项', '',
+    ...(repairs.length ? repairs.map((x, i) => pointRepairMarkdown(x, i)) : ['- 无']),
+    '', '## 非阻断建议', '',
+    ...(advisoryFindings.length ? advisoryFindings.map((x, i) => pointFindingMarkdown(x, i, 'A')) : ['- 无']),
+    '', '## 已过滤的建议修订', '',
+    ...(advisoryRepairs.length ? advisoryRepairs.map((x, i) => pointRepairMarkdown(x, i, 'AR')) : ['- 无']),
+  ].join('\n');
 }
 
 function polishRecordMarkdown(record) {
@@ -411,19 +916,85 @@ function consultationMarkdown(packet) {
 }
 
 function reviewMarkdown(reviews) {
-  return ['# 背靠背审理表', '', line('规则', '审理席只提问题，不直接改稿'), '', ...reviews.flatMap(row => [`## ${row.seat}`, '', line('抽样/全审', row.sampled ? '抽样' : '全审'), line('解析降级', row.packet.parseWarning ? '是' : '否'), ...(list(row.packet.objections).length ? list(row.packet.objections).map((x, i) => `- ${asText(x.id) || `O${i + 1}`}｜${asText(x.claim || x.message)}｜${asText(x.artifactRef)}｜${asText(x.ruleRef)}`) : ['- 无质询'])])].join('\n');
+  return ['# 背靠背审理表', '', line('规则', '审理席只提问题，不直接改稿'), '', ...reviews.flatMap(row => [`## ${row.seat}`, '', line('抽样/全审', row.sampled ? '抽样' : '全审'), line('包有效性', row.packet.valid === false ? '无效' : '有效'), line('无效原因', row.packet.invalidReason || '无'), line('解析降级', row.packet.parseWarning ? '是' : '否'), line('原始质询数', row.packet.objectionCount ?? list(row.packet.objections).length), ...(list(row.packet.objections).length ? list(row.packet.objections).map((x, i) => `- ${strictText(x?.id) || `O${i + 1}`}｜${strictText(x?.claim || x?.message)}｜${strictText(x?.artifactRef)}｜${strictText(x?.ruleRef)}`) : ['- 无可执行质询'])])].join('\n');
 }
 
 function objectionMarkdown(objections) {
-  return ['# 质询单', '', ...objections.flatMap(x => [`## ${x.id}`, '', line('审理席', x.reviewer), line('级别', x.severity), line('主张', x.claim), line('工件引用', x.artifactRef), line('规则引用', x.ruleRef), line('状态', x.status)])].join('\n');
+  return ['# 质询单', '', ...objections.flatMap(x => {
+    const hearing = x.hearing && typeof x.hearing === 'object' ? x.hearing : null;
+    return [
+      `## ${x.id}`, '',
+      line('审理席', x.reviewer),
+      line('模型原始 ID', x.sourceId || x.id),
+      line('原始级别', x.originalSeverity || x.severity),
+      line('系统级别', x.severity),
+      line('主张', x.claim),
+      line('工件引用', x.artifactRef),
+      line('规则引用', x.ruleRef),
+      line('状态', x.status),
+      line('庭审原始决定', hearing ? (hearing.requestedDecision || '未形成') : '未执行'),
+      line('庭审系统决定', hearing ? hearing.decision : '未执行'),
+      line('庭审包有效性', !hearing ? '未执行' : hearing.valid === false ? '无效' : '有效'),
+      line('庭审归一规则', hearing ? (hearing.normalization || 'none') : '未执行'),
+      line('庭审无效原因', hearing ? (hearing.invalidReason || '无') : '未执行'),
+      line('庭审理由', hearing ? (hearing.reason || '未提供') : '未执行'),
+      line('庭审规则引用', hearing ? (hearing.ruleRef || '未引用') : '未执行'),
+    ];
+  })].join('\n');
 }
 
 function answerMarkdown(answers) {
-  return ['# 答辩书', '', ...answers.flatMap(x => [`## ${x.objectionId}`, '', line('答辩', x.answer), line('证据引用', x.evidenceRef), line('审理结果', x.outcome), line('轮次', x.round)])].join('\n');
+  return ['# 答辩书', '', ...answers.flatMap(x => {
+    const packet = x.answerPacket && typeof x.answerPacket === 'object' ? x.answerPacket : x;
+    const reconsider = x.reconsider && typeof x.reconsider === 'object' ? x.reconsider : null;
+    return [
+      `## ${x.objectionId}`, '',
+      line('答辩', packet.answer || '未形成'),
+      line('模型原始撤回请求', packet.requestedOutcome || '未声明'),
+      line('答辩系统权限结果', packet.valid === true ? '可进入原席复议；答辩席无撤回权' : '保持质询，不进入原席复议'),
+      line('证据原始引用', packet.evidenceRef || '未引用'),
+      line('证据解析引用', packet.resolvedEvidenceRef || '未解析'),
+      line('证据来源', packet.evidenceSource || '未解析'),
+      line('答辩包有效性', packet.valid === false ? '无效' : '有效'),
+      line('答辩无效原因', packet.invalidReason || '无'),
+      line('答辩归一规则', packet.normalization || 'none'),
+      line('答辩解析降级', packet.parseWarning ? '是' : '否'),
+      line('答辩原始摘要', packet.rawSummary || '结构化字段已分项留痕'),
+      line('原席原始决定', reconsider ? (reconsider.requestedOutcome || '未形成') : '未执行'),
+      line('原席系统决定', reconsider ? reconsider.outcome : '未执行'),
+      line('复议包有效性', !reconsider ? '未执行' : reconsider.valid === false ? '无效' : '有效'),
+      line('复议无效原因', reconsider ? (reconsider.invalidReason || '无') : '未执行'),
+      line('复议归一规则', reconsider ? (reconsider.normalization || 'none') : '未执行'),
+      line('复议解析降级', reconsider ? (reconsider.parseWarning ? '是' : '否') : '未执行'),
+      line('复议原始摘要', reconsider ? (reconsider.rawSummary || '结构化字段已分项留痕') : '未执行'),
+      line('复议理由', reconsider ? (reconsider.reason || '未提供') : '未执行'),
+      line('审理结果', x.outcome),
+      line('轮次', x.round),
+    ];
+  })].join('\n');
 }
 
 function verdictMarkdown(result) {
-  return ['# 裁决书', '', line('最终裁决', result.verdict), line('封存', result.sealed ? '是；原件只读，后续更正另立补遗' : '否'), line('机检闸', result.gates.machine ? '开' : '关'), line('对点闸', result.gates.point ? '开' : '关'), line('审理闸', result.gates.review ? '开' : '关'), line('质询闸', result.gates.objection ? '开' : '关'), line('理由', result.reason), line('协议', W68_PROTOCOL)].join('\n');
+  const finalPresent = !!(result.finalArbitration && typeof result.finalArbitration === 'object');
+  const final = finalPresent ? result.finalArbitration : {};
+  return [
+    '# 裁决书', '',
+    line('最终裁决', result.verdict),
+    line('封存', result.sealed ? '是；原件只读，后续更正另立补遗' : '否'),
+    line('仲裁席原始决定', finalPresent ? (final.requestedDecision || '未形成') : '未执行'),
+    line('仲裁席原始理由', finalPresent ? (final.rawReason || '无') : '未执行'),
+    line('系统归一决定', finalPresent ? (final.decision || result.verdict) : '未执行'),
+    line('裁决包有效性', !finalPresent ? '未执行' : final.valid === false ? '无效' : '有效'),
+    line('归一规则', finalPresent ? (final.normalization || 'none') : '未执行'),
+    line('无效原因', finalPresent ? (final.invalidReason || '无') : '未执行'),
+    line('阻断引用', list(final.authorizedBlockers).join(' / ') || '无'),
+    line('机检闸', result.gates.machine ? '开' : '关'),
+    line('对点闸', result.gates.point ? '开' : '关'),
+    line('审理闸', result.gates.review ? '开' : '关'),
+    line('质询闸', result.gates.objection ? '开' : '关'),
+    line('理由', result.reason),
+    line('协议', W68_PROTOCOL),
+  ].join('\n');
 }
 
 function precedentMarkdown({ unitRef, objections, verdict }) {
@@ -432,17 +1003,25 @@ function precedentMarkdown({ unitRef, objections, verdict }) {
 }
 
 /**
- * 执行 W68a。ask 入参为 { role, system, user, temperature, maxTokens }，返回文本。
+ * 执行 W68a。生产调用的 ask 应返回
+ * { text, finishReason, completionKind, usage, safeToCommit }；字符串返回只为旧合同兼容。
  * 返回 sealed=false 时调用方不得写入正典正文，只可保存工件与任务状态。
  */
 export async function runW68Review({
   draft = '', blueprint = '', outline = '', bible = '', unitRef = '第001单元',
+  unitIndex = null,
   ritual = 'light', budgetCap = 32000, ask, previousText = '', protectionList = [],
-  additionalMachineChecks = null, precedents = '',
+  additionalMachineChecks = null, precedents = '', requireCompletionMetadata = false,
 } = {}) {
   if (typeof ask !== 'function') throw new Error('W68a 缺少审理调用器');
   const ritualPlan = planReviewRitual(ritual, budgetCap);
   const ledger = new ReviewBudgetLedger(budgetCap);
+  const explicitUnitIndex = Number(unitIndex);
+  const inferredUnitIndex = Number(/^第0*(\d+)/.exec(asText(unitRef))?.[1] || 0);
+  const resolvedUnitIndex = Number.isInteger(explicitUnitIndex) && explicitUnitIndex > 0
+    ? explicitUnitIndex
+    : inferredUnitIndex;
+  const initialUnit = resolvedUnitIndex === 1;
   const transitions = ['skeleton'];
   if (asText(precedents)) transitions.push('precedent:loaded');
   let schema = buildAcceptanceSchema({ blueprint, outline });
@@ -459,6 +1038,7 @@ export async function runW68Review({
   const reviews = [];
   const objections = [];
   const answers = [];
+  const usedObjectionIds = new Set();
   const inspectText = current => {
     const base = runDeterministicInspection(current, schema, { previousText, repairOrder: repairs.at(-1) });
     if (typeof additionalMachineChecks !== 'function') return base;
@@ -486,9 +1066,23 @@ export async function runW68Review({
       error.code = 'W68_BUDGET_STOP';
       throw error;
     }
-    const output = await ask({ role, system, user, temperature, maxTokens: Math.max(64, Math.min(maxTokens, outputAllowance)) });
+    const response = await ask({ role, system, user, temperature, maxTokens: Math.max(64, Math.min(maxTokens, outputAllowance)) });
+    const detailed = response && typeof response === 'object' && !Array.isArray(response);
+    const output = detailed ? asText(response.text) : asText(response);
+    const finishReason = detailed && response.finishReason != null ? asText(response.finishReason).toLowerCase() : '';
+    const trustedCompletion = detailed && response.safeToCommit === true && finishReason === 'stop' && !!output;
+    if ((requireCompletionMetadata && !detailed) || (detailed && !trustedCompletion)) {
+      const error = new Error(`W68a Provider 完成门关闭：${asText(response?.finishReason || response?.completionKind) || (output ? '缺少可信终态' : '空响应')}`);
+      error.code = 'W68_COMPLETION_UNSAFE';
+      error.completion = detailed ? {
+        finishReason: response.finishReason ?? null,
+        completionKind: asText(response.completionKind),
+        safeToCommit: response.safeToCommit === true,
+      } : { finishReason: null, completionKind: 'legacy-string', safeToCommit: false };
+      throw error;
+    }
     ledger.charge({ seat, phase, input: `${system}\n${user}`, output, estimatedTokens: expected });
-    return asText(output);
+    return output;
   };
   try {
     // 主环：确定性机检 → M2 对点 → 修订；最多三轮，仍不收敛则推定骨架问题。
@@ -539,16 +1133,27 @@ export async function runW68Review({
       transitions.push(`point:${round}`);
       const pointRaw = await invoke({
         seat: 'M2', role: 'factory_point', phase: `point-${round}`, expected: 1600,
-        system: 'MAZZ_W68_POINT\n你是 M2 对点席，与 M3 分离。只返回 JSON：{"decision":"pass|adjust|return_skeleton","findings":[{"message":"...","artifactRef":"...","ruleRef":"..."}],"repairItems":[],"consultation":{"proposal":"","reason":"","approved":false,"skeletonPatch":"","biblePatch":""}}。不得直接改稿。',
+        system: 'MAZZ_W68_POINT\n你是 M2 对点席，与 M3 分离。不得直接改稿。只返回 JSON：{"decision":"pass|adjust|return_skeleton","findings":[{"severity":"critical|major|warning","reasonCode":"SEMANTIC_MISMATCH|OPTIONAL_ANCHOR_MISSING|REQUIRED_CONTRACT_CONFLICT|REQUIRED_CONTRACT_UNSATISFIABLE","message":"...","artifactRef":"draft:位置或skeleton:id","ruleRef":"规则编号"}],"repairItems":[{"error":"...","change":"可执行改法","position":"draft:位置","reason":"规则编号"}],"consultation":{"proposal":"","reason":"","approved":false,"skeletonPatch":"","biblePatch":""}}。规则：[建议]（required:false）缺失本身不得成为 adjust 或 return_skeleton 的唯一理由；adjust 必须至少带一项可执行且可引用的独立 finding/repairItem；return_skeleton 只用于显式 [必达]/锁定契约互相矛盾或不可满足，并以 REQUIRED_CONTRACT_CONFLICT/REQUIRED_CONTRACT_UNSATISFIABLE 和 skeleton:id 引用声明。',
         user: `【验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【正文】\n${text}\n\n【机检】\n${machineReportMarkdown(machine)}\n\n【既有判例（同规则优先复用）】\n${precedents || '无'}`,
       });
-      point = parseReviewPacket(pointRaw, { decision: 'pass', findings: [], repairItems: [], consultation: null });
-      if (!['pass', 'adjust', 'return_skeleton'].includes(point.decision)) point.decision = 'adjust';
+      point = normalizePointReviewPacket(
+        parseStrictReviewPacket(pointRaw),
+        schema,
+      );
       pointReports.push({ round, ...point });
+      if (!point.valid) {
+        transitions.push(`point-invalid:${round}`);
+        break;
+      }
+      let consultationChangedSchema = false;
       if (point.consultation?.proposal) {
         consultation = { ...point.consultation };
         if (consultation.approved) {
           transitions.push(`consultation-approved:${round}`);
+          const priorRequiredIds = new Set([
+            ...list(schema.requiredBeats), ...list(schema.plantedSeeds),
+            ...list(schema.lockedFacts), ...list(schema.forbiddenBoundaries),
+          ].filter(item => item?.required === true).map(item => asText(item.id)));
           const skeletonRaw = await invoke({
             seat: 'M1', role: 'factory_skeleton', phase: `consultation-${round}`, expected: 1200,
             system: 'MAZZ_W68_CONSULTATION\n你是骨架席。请把已批准请示先合并进骨架；只输出追加的显式 [必达]/[必埋]/[锁定]/[禁越] 行，不写正文。',
@@ -557,12 +1162,47 @@ export async function runW68Review({
           blueprint = `${blueprint}\n\n## W68a 已批准变更\n${skeletonRaw}`;
           bible = `${bible}\n\n## ${unitRef} 已批准请示\n${consultation.biblePatch || consultation.proposal}`;
           schema = buildAcceptanceSchema({ blueprint, outline });
-          point.decision = 'adjust';
+          consultationChangedSchema = true;
+          const addedRequired = [
+            ...list(schema.requiredBeats), ...list(schema.plantedSeeds),
+            ...list(schema.lockedFacts), ...list(schema.forbiddenBoundaries),
+          ].find(item => item?.required === true && !priorRequiredIds.has(asText(item.id)));
+          if (!addedRequired) {
+            point = {
+              ...point, decision: 'invalid', valid: false,
+              invalidReason: 'approved-consultation-without-required-schema-change',
+              normalization: 'fail-closed',
+            };
+            pointReports[pointReports.length - 1] = { round, ...point };
+            transitions.push(`point-invalid:${round}`);
+            break;
+          }
+          point = {
+            ...point,
+            decision: 'adjust',
+            repairItems: [...list(point.repairItems), {
+              id: `C${round}`,
+              error: `正文尚未对齐已批准的新增必达契约：${asText(addedRequired.label)}`,
+              change: `仅补齐已批准契约「${asText(addedRequired.label)}」，不得扩写其他内容`,
+              position: `skeleton:${asText(addedRequired.id)}`,
+              reason: REVIEW_RULES.locksAreGlobal,
+            }],
+          };
+          pointReports[pointReports.length - 1] = { round, ...point };
         }
       }
+      if (!point.valid) break;
       if (point.decision === 'pass') break;
       if (point.decision === 'return_skeleton') {
         transitions.push('nonconvergence:skeleton');
+        break;
+      }
+      // 咨询分支只能凭刚落入 schema 的 required:true 引用授权修订；
+      // 它绝不把原来的空 adjust 包直接交给 M3。
+      if (consultationChangedSchema && !list(point.repairItems).some(isExecutablePointRepair)) {
+        point = { ...point, decision: 'invalid', valid: false, invalidReason: 'consultation-repair-not-actionable', normalization: 'fail-closed' };
+        pointReports[pointReports.length - 1] = { round, ...point };
+        transitions.push(`point-invalid:${round}`);
         break;
       }
       const order = {
@@ -588,6 +1228,26 @@ export async function runW68Review({
     }
     machine = inspectText(text);
     machineHistory.push({ round: 'final', report: machine });
+    if (point?.valid === false) {
+      transitions.push('point-invalid');
+      const result = {
+        protocol: W68_PROTOCOL, sealed: false, verdict: 'point-invalid',
+        reason: `M2 对点包无效：${point.invalidReason || '缺少可执行且可引用的判断'}`,
+        ritual: ritualPlan, gates: { machine: machine.pass, point: false, review: false, objection: false },
+        text, schema, machine, machineHistory, polishRecord, point, repairs, reworkHistory, pointReports,
+        reviews, objections, answers, transitions, budget: ledger.summary(), bible,
+      };
+      result.artifacts = {
+        skeleton: acceptanceSchemaMarkdown(schema), draft: text,
+        polish: polishRecordMarkdown(polishRecord),
+        machine: machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n'),
+        point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n---\n\n'),
+        repair: repairs.length ? repairs.map(repairOrderMarkdown).join('\n\n---\n\n') : '# 修订单\n\n- 无',
+        consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无',
+        verdict: verdictMarkdown(result),
+      };
+      return result;
+    }
     const mainConverged = machine.pass && point?.decision === 'pass';
     if (!mainConverged) {
       transitions.push('nonconvergence:skeleton');
@@ -607,10 +1267,20 @@ export async function runW68Review({
         system: `MAZZ_W68_REVIEW\n你是 ${reviewer.seat} 外部审理席，与执笔席分离。不得改稿。只返回 JSON：{"objections":[{"id":"O1","severity":"critical|major|minor","claim":"...","artifactRef":"draft:段落/句子或skeleton:id","ruleRef":"规则编号"}]}。每项必须同时引用工件与规则。`,
         user: `【验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【正文】\n${text}\n\n【M2 对点】\n${pointReportMarkdown(point, pointReports.length)}\n\n【既有判例】\n${precedents || '无'}`,
       });
-      const packet = parseReviewPacket(raw, { objections: [] });
+      const packet = normalizeExternalReviewPacket(parseStrictReviewPacket(raw));
       reviews.push({ ...reviewer, packet });
+      if (!packet.valid) {
+        const error = new Error(`${reviewer.seat} 审理包无效：${packet.invalidReason}`);
+        error.code = 'W68_REVIEW_PACKET_INVALID';
+        error.reviewPacket = packet;
+        error.reviewer = reviewer;
+        throw error;
+      }
       for (const [index, rawObj] of list(packet.objections).entries()) {
-        const obj = normalizeObjection({ ...rawObj, reviewer: reviewer.seat }, objections.length + index);
+        const obj = assignCanonicalObjectionId(
+          normalizeObjection({ ...rawObj, reviewer: reviewer.seat }, objections.length + index),
+          usedObjectionIds,
+        );
         const citation = validateObjection(obj);
         if (!citation.valid) {
           obj.severity = 'critical';
@@ -628,62 +1298,116 @@ export async function runW68Review({
     }
 
     // 质询由 M2 据证答辩；未撤回的关键质询最多两轮，随后强制 M6 开庭。
+    const answerEvidenceRefs = buildAnswerEvidenceCatalog({ schema, machine, point, reviews, objections });
     transitions.push('objection-loop');
     for (const objection of objections) {
       for (let round = 1; round <= 2 && objection.status === 'open'; round++) {
         const raw = await invoke({
           seat: 'M2', role: 'factory_point', phase: `answer-${objection.id}-${round}`, expected: 900,
-          system: 'MAZZ_W68_ANSWER\n你是 M2 答辩席。只返回 JSON：{"answer":"...","evidenceRef":"工件:位置","outcome":"withdraw|hold"}。没有证据不得把置信语气当证据。',
+          system: 'MAZZ_W68_ANSWER\n你是 M2 答辩席。只返回 JSON：{"answer":"...","evidenceRef":"工件:位置"}。没有证据不得把置信语气当证据；答辩席无权请求撤回或维持质询。',
           user: `【质询】\n${JSON.stringify(objection)}\n\n【正文】\n${text}\n\n【验收点】\n${acceptanceSchemaMarkdown(schema)}`,
         });
-        const answer = parseReviewPacket(raw, { answer: '未形成有效答辩', evidenceRef: '' });
+        const answer = normalizeAnswerPacket(parseStrictReviewPacket(raw), { evidenceRefs: answerEvidenceRefs });
         let outcome = 'hold';
-        if (answer.evidenceRef) {
+        let reconsider = null;
+        if (answer.valid) {
           const reviewerRole = objection.reviewer === 'M5' ? 'factory_review_b' : 'factory_review_a';
+          const reconsiderEvidence = {
+            answer: answer.answer,
+            evidenceRef: answer.resolvedEvidenceRef,
+            valid: true,
+          };
           const reconsiderRaw = await invoke({
             seat: objection.reviewer || 'M4', role: reviewerRole, phase: `reconsider-${objection.id}-${round}`, expected: 700,
             system: 'MAZZ_W68_RECONSIDER\n你是原质询审理席。根据答辩证据只返回 JSON：{"outcome":"withdraw|hold","reason":"..."}。撤回权属于质询席，不属于答辩席。',
-            user: `【原质询】\n${JSON.stringify(objection)}\n\n【答辩】\n${JSON.stringify(answer)}`,
+            user: `【原质询】\n${JSON.stringify(objection)}\n\n【已解析答辩证据】\n${JSON.stringify(reconsiderEvidence)}`,
           });
-          const reconsider = parseReviewPacket(reconsiderRaw, { outcome: 'hold', reason: '复议输出不可解析' });
-          outcome = reconsider.outcome === 'withdraw' ? 'withdraw' : 'hold';
+          reconsider = normalizeReconsiderPacket(parseStrictReviewPacket(reconsiderRaw));
+          outcome = reconsider.valid && reconsider.outcome === 'withdraw' ? 'withdraw' : 'hold';
         }
-        answers.push({ objectionId: objection.id, answer: answer.answer, evidenceRef: answer.evidenceRef, outcome, round });
+        answers.push({
+          objectionId: objection.id,
+          answer: answer.answer,
+          evidenceRef: answer.evidenceRef,
+          answerValid: answer.valid,
+          answerInvalidReason: answer.invalidReason,
+          answerPacket: answer,
+          reconsider,
+          outcome,
+          round,
+        });
         if (outcome === 'withdraw') objection.status = 'closed';
       }
       if (objection.status === 'open') {
         transitions.push(`hearing:${objection.id}`);
+        const hearingAnswers = answers.filter(x => x.objectionId === objection.id).map(x => ({
+          objectionId: x.objectionId,
+          round: x.round,
+          answer: strictText(x.answer),
+          evidenceRef: strictText(x.answerPacket?.resolvedEvidenceRef || x.evidenceRef),
+          answerValid: x.answerValid === true,
+          answerInvalidReason: strictText(x.answerInvalidReason),
+          reconsiderRequestedOutcome: strictText(x.reconsider?.requestedOutcome),
+          reconsiderOutcome: strictText(x.reconsider?.outcome),
+          reconsiderReason: strictText(x.reconsider?.reason),
+          reconsiderValid: x.reconsider?.valid === true,
+          reconsiderInvalidReason: strictText(x.reconsider?.invalidReason),
+          systemOutcome: strictText(x.outcome),
+        }));
         const raw = await invoke({
           seat: 'M6', role: 'factory_arbiter', phase: `hearing-${objection.id}`, expected: 1200,
           system: 'MAZZ_W68_HEARING\n你是 M6 庭审席。只返回 JSON：{"decision":"overrule|sustain","reason":"...","ruleRef":"..."}。证据优先，不得直接改稿。',
-          user: `【质询】\n${JSON.stringify(objection)}\n\n【两轮答辩】\n${JSON.stringify(answers.filter(x => x.objectionId === objection.id))}`,
+          user: `【质询】\n${JSON.stringify(objection)}\n\n【两轮答辩】\n${JSON.stringify(hearingAnswers)}`,
         });
-        const hearing = parseReviewPacket(raw, { decision: objection.severity === 'critical' ? 'sustain' : 'overrule', reason: '庭审输出不可解析' });
+        const hearing = normalizeHearingPacket(parseStrictReviewPacket(raw));
+        objection.originalSeverity ||= objection.severity;
+        if (!hearing.valid) objection.severity = 'critical';
         objection.status = hearing.decision === 'overrule' ? 'overruled' : 'sustained';
         objection.hearing = hearing;
       }
     }
-    const openCritical = objections.filter(x => x.severity === 'critical' && !['closed', 'overruled'].includes(x.status));
+    const unresolvedObjections = objections.filter(x => !['closed', 'overruled'].includes(x.status));
     const gates = {
       machine: machine.pass,
       point: point.decision === 'pass',
-      review: reviews.length >= 1 && reviews.some(x => x.seat !== 'M3'),
-      objection: openCritical.length === 0 && objections.every(x => x.status !== 'open'),
+      review: reviews.length >= 1 && reviews.every(x => x.packet?.valid === true) && reviews.some(x => x.seat !== 'M3'),
+      objection: unresolvedObjections.length === 0,
     };
-    transitions.push('final');
-    const finalRaw = await invoke({
-      seat: 'M6', role: 'factory_arbiter', phase: 'final', expected: 1200,
-      system: 'MAZZ_W68_FINAL\n你是 M6 终审席。只返回 JSON：{"decision":"pass|block","reason":"..."}。四闸任一关闭必须 block；不得改稿。',
-      user: `【四闸】\n${JSON.stringify(gates)}\n\n【未决关键质询】\n${JSON.stringify(openCritical)}\n\n【圣经审计】\n${bible || '未建圣经'}\n\n【预算】\n${JSON.stringify(ledger.summary())}`,
+    const finalEvidence = buildFinalArbitrationEvidence({
+      gates, machine, point, reviews, objections, openCritical: unresolvedObjections, bible,
+      initialUnit,
+      budget: ledger.summary(),
     });
-    const final = parseReviewPacket(finalRaw, { decision: Object.values(gates).every(Boolean) ? 'pass' : 'block', reason: '按四闸确定性结果裁决' });
-    const sealed = Object.values(gates).every(Boolean) && final.decision === 'pass';
+    let finalParsed;
+    if (!finalEvidence.unresolvedBlockers.length) {
+      transitions.push('final:not-required');
+      finalParsed = {
+        decision: 'not-invoked',
+        reasonCode: 'PASS_ALL_GATES',
+        reason: '无仲裁事项；由四闸形成程序性通过',
+        ruleRef: 'W68-GATE',
+      };
+    } else {
+      transitions.push('final:arbitration');
+      const finalRaw = await invoke({
+        seat: 'M6', role: 'factory_arbiter', phase: 'final', expected: 1200,
+        system: 'MAZZ_W68_FINAL\n你是流程仲裁席，不是第二个内容审查席，不得重做自动校验、节点验收或交叉审校。只返回 JSON：{"decision":"block","reasonCode":"CLOSED_GATE|UNRESOLVED_OBJECTION|EVIDENCE_CONFLICT|ARTIFACT_INTEGRITY","reason":"...","gateRef":"gate:machine|gate:point|gate:review|gate:objection 或空","artifactRef":"objection:<id>|conflict:<id>|artifact:bible 或空","ruleRef":"W68-GATE|W68-OBJECTION|W68-EVIDENCE|W68-INTEGRITY"}。你只能对证据包中明确列出的 unresolvedBlockers 作程序性裁决，必须逐字引用对应 gateRef 或 artifactRef；不得另造第五闸，不得以泛化的“依据不足”阻断，不得改稿。',
+        user: `【程序性仲裁证据包】\n${JSON.stringify(finalEvidence)}`,
+      });
+      finalParsed = parseStrictReviewPacket(finalRaw);
+    }
+    const final = normalizeFinalArbitrationPacket(finalParsed, finalEvidence);
+    const sealed = Object.values(gates).every(Boolean) && final.valid === true && final.decision === 'pass';
     transitions.push(sealed ? 'sealed' : 'blocked');
+    const verdict = sealed ? 'pass' : final.valid && final.decision === 'block' ? 'block' : 'arbiter-invalid';
+    const finalReason = final.valid
+      ? (final.reason || (sealed ? '四闸全开且无未决关键质询' : '四闸或质询闸未关闭'))
+      : `最终裁决包无效：${final.invalidReason || '无授权依据'}`;
     const result = {
-      protocol: W68_PROTOCOL, sealed, verdict: sealed ? 'pass' : 'block', reason: final.reason || (sealed ? '四闸全开' : '四闸未全开'),
+      protocol: W68_PROTOCOL, sealed, verdict, reason: finalReason,
       ritual: ritualPlan, gates, text, schema, machine, machineHistory, polishRecord, point, consultation, repairs, reworkHistory, pointReports, reviews, objections, answers,
-      transitions, budget: ledger.summary(), bible,
-      precedent: precedentMarkdown({ unitRef, objections, verdict: sealed ? 'pass' : 'block' }),
+      transitions, budget: ledger.summary(), bible, finalEvidence, finalArbitration: final,
+      precedent: precedentMarkdown({ unitRef, objections, verdict }),
     };
     result.artifacts = {
       skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n'),
@@ -694,8 +1418,11 @@ export async function runW68Review({
     };
     return result;
   } catch (error) {
-    if (error?.code !== 'W68_BUDGET_STOP') throw error;
-    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: error.message, ritual: ritualPlan, gates: { machine: !!machine?.pass, point: point?.decision === 'pass', review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, repairs, reworkHistory, pointReports, reviews, objections, answers, transitions: [...transitions, 'budget-stop'], budget: ledger.summary(), bible };
+    if (!['W68_BUDGET_STOP', 'W68_COMPLETION_UNSAFE', 'W68_REVIEW_PACKET_INVALID'].includes(error?.code)) throw error;
+    const unsafe = error.code === 'W68_COMPLETION_UNSAFE';
+    const invalidReview = error.code === 'W68_REVIEW_PACKET_INVALID';
+    const terminal = unsafe ? 'provider-unsafe' : invalidReview ? 'review-invalid' : 'budget-stop';
+    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: terminal, reason: error.message, ritual: ritualPlan, gates: { machine: !!machine?.pass, point: point?.decision === 'pass', review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, repairs, reworkHistory, pointReports, reviews, objections, answers, transitions: [...transitions, terminal], budget: ledger.summary(), bible, unsafeCompletion: unsafe ? error.completion : null };
     result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.length ? machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n') : '# 机检报告\n\n- 未执行', point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n') || '# 对点报告\n\n- 未执行', repair: repairs.map(repairOrderMarkdown).join('\n\n') || '# 修订单\n\n- 无', consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', review: reviewMarkdown(reviews), objection: objectionMarkdown(objections), answer: answerMarkdown(answers), verdict: verdictMarkdown(result) };
     return result;
   }

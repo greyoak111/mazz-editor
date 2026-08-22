@@ -93,7 +93,7 @@ describe('W68a 双环、开庭与四闸', () => {
   test('质询必须引用工件与规则；两轮不撤回自动开庭并可形成判例', async () => {
     let reviewCount = 0;
     const result = await runW68Review({
-      draft: '舰队在黎明启航。', blueprint: '- [必达] b1::启航::启航', ritual: 'full', budgetCap: 40000, unitRef: '第七章',
+      draft: '舰队在黎明启航。', blueprint: '- [必达] b1::启航::启航', bible: '# 项目设定集', ritual: 'full', budgetCap: 40000, unitRef: '第七章',
       ask: async req => {
         if (req.system.includes('MAZZ_W68_POINT') && !req.system.includes('ANSWER')) return JSON.stringify({ decision: 'pass' });
         if (req.system.includes('MAZZ_W68_REVIEW')) {
@@ -108,7 +108,7 @@ describe('W68a 双环、开庭与四闸', () => {
     });
     assert.equal(validateObjection(result.objections[0]).valid, true);
     assert.equal(result.answers.length, 2);
-    assert(result.transitions.includes('hearing:O7'));
+    assert(result.transitions.includes('hearing:M4-O7'));
     assert.equal(result.objections[0].status, 'overruled');
     assert(result.precedent.includes('W68-E4'));
     assert.equal(result.sealed, true);

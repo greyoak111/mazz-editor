@@ -1,0 +1,30 @@
+diff --git a/node_modules/chokidar/lib/nodefs-handler.js b/node_modules/chokidar/lib/nodefs-handler.js
+index 3d06e7d..72b8b65 100644
+--- a/node_modules/chokidar/lib/nodefs-handler.js
++++ b/node_modules/chokidar/lib/nodefs-handler.js
+@@ -510,10 +510,23 @@ class NodeFsHandler {
+       const wasThrottled = throttler ? throttler.clear() : false;
+ 
+       resolve();
++
++      // close() disposes the watched DirEntry objects after setting `closed`.
++      // A readdir stream can pass the earlier closed check and then resume
++      // here after disposal, so re-check before dereferencing its children.
++      if (this.fsw.closed) {
++        stream = undefined;
++        return;
++      }
++      const previousChildren = previous.getChildren();
++      if (!Array.isArray(previousChildren)) {
++        stream = undefined;
++        return;
++      }
+ 
+       // Files that absent in current directory snapshot
+       // but present in previous emit `remove` event
+       // and are removed from @watched[directory].
+-      previous.getChildren().filter((item) => {
++      previousChildren.filter((item) => {
+         return item !== directory &&
+           !current.has(item) &&
+           // in case of intersecting globs;

@@ -11,6 +11,8 @@ export class SideDock {
     this.shell = shell;
     this._toolsReady = false;
     this._toolsReadyPromise = new Promise(resolve => { this._resolveToolsReady = resolve; });
+    this._factoryReady = false;
+    this._factoryReadyPromise = new Promise(resolve => { this._resolveFactoryReady = resolve; });
     this.state = { open: false, tab: 'factory', width: 380, height: 560, zoom: 1, float: null, collapsed: false }; // float: {x, y} | null = 停靠；collapsed: 折叠轨
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY)) || {};
@@ -210,6 +212,15 @@ export class SideDock {
       this.factoryWrap.className = 'sd-factory-wrap';
       this.body.appendChild(this.factoryWrap);
       this.factoryPanel = new FactoryPanel(this.factoryWrap, { shell: this.shell });
+      Promise.resolve(this.factoryPanel.ready).then(() => {
+        this._factoryReady = true;
+        this._resolveFactoryReady?.(true);
+        this._resolveFactoryReady = null;
+      }).catch(error => {
+        console.error('[side-dock] 智能创作 owner 初始化失败:', error?.message || error);
+        this._resolveFactoryReady?.(false);
+        this._resolveFactoryReady = null;
+      });
       this.openWithEl = document.createElement('div');
       this.openWithEl.className = 'sd-openwith';
       this.openWithEl.style.display = 'none';
@@ -229,6 +240,8 @@ export class SideDock {
       this.showTab(this.state.tab);
     }).catch(error => {
       console.error('[side-dock] 内容 owner 初始化失败:', error?.message || error);
+      this._resolveFactoryReady?.(false);
+      this._resolveFactoryReady = null;
       this._resolveToolsReady?.(false);
       this._resolveToolsReady = null;
     });
@@ -403,6 +416,15 @@ export class SideDock {
     return !!ready && this._toolsReady;
   }
 
+  async whenFactoryReady(timeoutMs = 10000) {
+    if (this._factoryReady && this.factoryPanel) return true;
+    let timer = 0;
+    const timeout = new Promise(resolve => { timer = setTimeout(() => resolve(false), timeoutMs); });
+    const ready = await Promise.race([this._factoryReadyPromise, timeout]);
+    clearTimeout(timer);
+    return !!ready && this._factoryReady && !!this.factoryPanel;
+  }
+
   pushToolsSnapshot() {
     const groups = this.toolsGroups();
     if (!groups?.some(([, items]) => items?.length) || !window.mazz?.isElectron) return false;
@@ -438,7 +460,7 @@ export class SideDock {
     if (this.factoryWrap) this.factoryWrap.style.display = tab === 'factory' ? '' : 'none';
     if (this.openWithEl) this.openWithEl.style.display = tab === 'openwith' ? '' : 'none';
     if (this.toolsEl) this.toolsEl.style.display = tab === 'tools' ? '' : 'none';
-    if (tab === 'factory') this.factoryPanel?.reload();
+    if (tab === 'factory' && this._factoryReady) this.factoryPanel?.reload();
     this.persist();
   }
 

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-22T16:18:22.771Z",
+  "runtime": "source",
+  "provider": {
+    "providerId": "deepseek",
+    "model": "deepseek-v4-pro",
+    "responseChars": 4,
+    "credentialSource": "isolated-encrypted-factory-profile",
+    "secretDisclosed": false
+  },
+  "elapsedMs": 3171,
+  "resources": {
+    "baseline": {
+      "activeCount": 3,
+      "byType": {
+        "browser-window": 1,
+        "file-watcher": 1,
+        "agent-cli-process": 1
+      }
+    },
+    "final": {
+      "activeCount": 2,
+      "byType": {
+        "browser-window": 1,
+        "file-watcher": 1
+      }
+    },
+    "retiredCount": 1,
+    "stableNoGrowth": true,
+    "resourceBoundaryPassed": true,
+    "watcherHealth": {
+      "initial": {
+        "count": 1,
+        "state": "watching",
+        "rootsCount": 1,
+        "reason": "watch"
+      },
+      "final": {
+        "count": 1,
+        "state": "watching",
+        "rootsCount": 1,
+        "reason": "watch"
+      }
+    }
+  },
+  "runtimeErrors": [],
+  "artifacts": {
+    "sourceBundle": {
+      "path": "renderer/dist/app.js",
+      "bytes": 2374971,
+      "sha256": "13e293c2e2d79d2b7389e9e314d3c3cf165caf61fee476e3f1b960362153ed94"
+    },
+    "sourceFiles": {
+      "renderer/dist/app.js": {
+        "path": "renderer/dist/app.js",
+        "bytes": 2374971,
+        "sha256": "13e293c2e2d79d2b7389e9e314d3c3cf165caf61fee476e3f1b960362153ed94"
+      },
+      "renderer/panels/factorycfg.html": {
+        "path": "renderer/panels/factorycfg.html",
+        "bytes": 55517,
+        "sha256": "eaff9f17cafbc2908c8ac8aaf06e44526f8002e564a290ef27211dec3d42d289"
+      },
+      "main/main.js": {
+        "path": "main/main.js",
+        "bytes": 132274,
+        "sha256": "f2ee6ecf2c0e024ddab4cef0b287783d034f45f776fe4924d4bec942d6bfaaf9"
+      },
+      "main/factory-sse.js": {
+        "path": "main/factory-sse.js",
+        "bytes": 9433,
+        "sha256": "ab18e5f20055f940be8499779a3d7d6e738d39927fdd9728bc8cee6ba8ad71cf"
+      },
+      "main/panel-windows.js": {
+        "path": "main/panel-windows.js",
+        "bytes": 28247,
+        "sha256": "efcc039f975597dfd42fac755d87f52b976f18ebddad7c399661a33c19c30311"
+      },
+      "main/file-watcher.js": {
+        "path": "main/file-watcher.js",
+        "bytes": 11954,
+        "sha256": "7429733d179a5ab8a084cd3079e556f47c78c65c4e9067ae86c58073887d7324"
+      },
+      "main/audio-artwork.js": {
+        "path": "main/audio-artwork.js",
+        "bytes": 20737,
+        "sha256": "c653bfa4918ff81b92a3d6e53c566f90f48574ced3fb101214a4b7dbff636133"
+      },
+      "preload/bridge.js": {
+        "path": "preload/bridge.js",
+        "bytes": 8443,
+        "sha256": "23369c1941fe1c2e91503af4630a5564dff98fd2ad9a0e83fa9d534a6a9f967a"
+      },
+      "node_modules/chokidar/lib/nodefs-handler.js": {
+        "path": "node_modules/chokidar/lib/nodefs-handler.js",
+        "bytes": 20528,
+        "sha256": "61657c4e8aebb60e8a07ea262718ddac0e23f30fdcfb43b61711a0d7c15d32e2"
+      }
+    },
+    "sourcePackage": {
+      "path": "package.json",
+      "bytes": 7674,
+      "sha256": "91d5cf05c9dcd563af692d30a05412f8e0d4a20d05a65ad77e3bd4679d2a0ae5"
+    },
+    "screenshot": null,
+    "sourcePatches": {
+      "chokidar": {
+        "path": "patches/chokidar+3.6.0.patch",
+        "bytes": 1218,
+        "sha256": "0960b165fd49a72924ebac3b7343bd8861ce5150ac746f6a6ea34fd238cd3ccb"
+      }
+    }
+  }
+}

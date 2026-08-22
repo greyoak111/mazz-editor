@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import {
   HARVEST_ADAPTERS, buildHarvestMarkdown, harvestScript, normalizeHarvestMessages, resolveHarvestAdapter,
 } from '../../renderer/modules/browser/harvester.js';
-import { productFileName, productText } from '../../renderer/modules/factory/terms.js';
+import { productDisplayText, productFileName, productProtocolText, productText } from '../../renderer/modules/factory/terms.js';
 
 const src = rel => fs.readFileSync(new URL('../../' + rel, import.meta.url), 'utf8');
 
@@ -83,6 +83,9 @@ describe('W62f 面板、回喂与正式术语接线', () => {
   test('内部旧文件名保持兼容，所有展示词统一为产品术语', () => {
     assert.equal(productText('Factory Desk 活稿车间 · 圣经 · 判例库 · 机检打回率 · 开庭率'), '智能创作台 · 设定集 · 先例库 · 自动校验退回率 · 仲裁率');
     assert.equal(productText('骨架进入双审，红队提出质询'), '总纲进入交叉审校，反向核查提出复核');
+    assert.equal(productProtocolText('W68c · M2 对点席'), '智能创作专业流程 · 节点验收席');
+    assert.equal(productDisplayText('过程协议 · W68 双环审理 · Director 与 M2 对点席'), '过程协议 · 智能创作专业流程 · 流程导演 与 节点验收席');
+    assert.equal(productDisplayText('过程协议 · W68c 专业流程交叉审校'), '过程协议 · 智能创作专业流程');
     assert.equal(productFileName('圣经.md'), '设定集.md');
     assert.equal(productFileName('判例库.md'), '先例库.md');
     const shell = src('renderer/shell/shell.js');

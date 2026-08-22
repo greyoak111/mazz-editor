@@ -54,6 +54,41 @@ export function productText(value) {
   return output;
 }
 
+// 创作流卡片会引用底层兼容协议 ID。这里只翻译不可能属于作品正文的
+// opaque seat/workflow token，避免把小说里正常出现的“工厂/审理”等词误改。
+const PROTOCOL_REPLACEMENTS = Object.freeze([
+  [/Director table/gi, '流程导演表'],
+  [/Director/gi, '流程导演'],
+  // Some persisted W68 event titles already contain the old public-facing
+  // workflow description. Consume the compound before the opaque protocol ID
+  // so the display cannot become "智能创作专业流程 专业流程…".
+  [/\bW68(?:[a-z][a-z0-9]*)?\s*(?:双环(?:流水线)?(?:审理)?|专业流程(?:交叉审校)?)/gi, '智能创作专业流程'],
+  // Exact compound labels must win before their component IDs. Otherwise a
+  // label such as "M2 对点席" becomes the duplicated "节点验收席 对点席".
+  [/\bM2\s*(?:对点|节点验收)席/g, '节点验收席'],
+  [/\bW68(?:[a-z][a-z0-9]*)?\b/gi, '智能创作专业流程'],
+  [/M0\b/g, '素材编排席'],
+  [/M1\b/g, '总纲席'],
+  [/M2\b/g, '节点验收席'],
+  [/M3\b/g, '执笔席'],
+  [/M4\b/g, '正向审校席'],
+  [/M5\b/g, '反向审校席'],
+  [/M6\b/g, '仲裁席'],
+]);
+
+export function productProtocolText(value) {
+  let output = String(value ?? '');
+  for (const [pattern, replacement] of PROTOCOL_REPLACEMENTS) output = output.replace(pattern, replacement);
+  return output;
+}
+
+// Known UI labels may contain both ordinary legacy product terms and opaque
+// protocol IDs. Artifact/body text deliberately does not use this broader
+// conversion, so authored prose is never rewritten merely for display.
+export function productDisplayText(value) {
+  return productText(productProtocolText(value));
+}
+
 const FILE_LABELS = Object.freeze({
   '圣经.md': '设定集.md',
   '判例库.md': '先例库.md',

@@ -1,6 +1,7 @@
 // tests/contract/hotfix-w60b.test.mjs —— W60b 表单与产出波契约
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
+import fs from 'node:fs';
 
 const WS = '/mock-ws';
 const fsStore = new Map();
@@ -33,6 +34,8 @@ window.mazz = {
 };
 
 const eng = await import('../../renderer/modules/factory/engine.js');
+const projectPanelSrc = fs.readFileSync(new URL('../../renderer/panels/factorycfg.html', import.meta.url), 'utf8');
+const novelGenreSrc = fs.readFileSync(new URL('../../renderer/modules/factory/genres/xiaoshuo.js', import.meta.url), 'utf8');
 
 describe('W60b Output 目录协议', () => {
   test('按文体/作品类型/书名_时间尾5构造且清洗 Windows 非法字符', () => {
@@ -86,6 +89,66 @@ describe('W60b 篇幅联动与批量闸', () => {
     let msg = '';
     try { eng.parseCsvTasks(csv100 + '\n书101', tpl); } catch (e) { msg = e.message; }
     assert(msg.includes('100') && msg.includes('拒绝'), '101 行未硬拒绝：' + msg);
+  });
+});
+
+describe('项目立项 UI 单一规格与确认事务', () => {
+  test('设置与模板退出伪页签，项目态有明确标题和可见入口', () => {
+    assert(projectPanelSrc.includes('class="head-title">新项目立项'), '项目态头部必须明确命名');
+    assert(projectPanelSrc.includes('id="head-provider"') && projectPanelSrc.includes('AI 服务设置'), 'AI 服务设置必须是有文字的独立按钮');
+    assert(projectPanelSrc.includes('id="pj-new-template"') && projectPanelSrc.includes('id="pj-genre"'), '新建模板动作必须靠近文体选择');
+    assert(projectPanelSrc.includes('class="btn head-back"') && projectPanelSrc.includes('返回立项'), '设置/模板页必须可返回立项');
+    assert(!projectPanelSrc.includes('class="tab" data-t="genre"'), '新建创作模板不得再伪装成同级页签');
+  });
+
+  test('旧长度字段仅保留兼容元数据，新项目表单只渲染 lengthPlan', () => {
+    for (const id of ["id: 'length'", "id: '篇幅长短'", "id: '每章字数'"]) {
+      const row = novelGenreSrc.split('\n').find(line => line.includes(id));
+      assert(row?.includes("uiOwner: 'lengthPlan'"), `${id} 未交给 lengthPlan 单一所有者`);
+    }
+    assert(projectPanelSrc.includes("filter(field => field.uiOwner !== 'lengthPlan')"), '项目表单未隐藏旧长度字段');
+    for (const pin of ['formatPresetTotal', '1万字', '10万字', '50万字', '自定义篇幅']) {
+      assert(projectPanelSrc.includes(pin) || (pin.endsWith('万字') && projectPanelSrc.includes('total / 10000')), `篇幅卡契约缺 ${pin}`);
+    }
+    assert(projectPanelSrc.includes('aria-pressed=') && projectPanelSrc.includes('id="pj-chapters"') && projectPanelSrc.includes('aria-live="polite"'), '篇幅选择或预计章数缺可访问状态');
+    assert(projectPanelSrc.includes('向上取整，末') && projectPanelSrc.includes('按剩余字数安排'), '预计章数规则必须明示');
+  });
+
+  test('提交按 requestId 等结果，人工确认超时保持同一事务，失败保窗、成功才关闭', () => {
+    for (const pin of ["act: 'projectSubmit'", 'requestId', 'genreId:', "p?.type === 'factoryActionResult'", 'result?.requestId !== projectSubmitTxn.requestId', 'noteProjectSubmitDelay', '为避免重复立项，本次请求保持锁定']) {
+      assert(projectPanelSrc.includes(pin), `提交确认合同缺 ${pin}`);
+    }
+    const delayStart = projectPanelSrc.indexOf('function noteProjectSubmitDelay');
+    const delayEnd = projectPanelSrc.indexOf('function makeRequestId', delayStart);
+    const delayBody = projectPanelSrc.slice(delayStart, delayEnd);
+    assert(!delayBody.includes('projectSubmitTxn = null') && !delayBody.includes('setProjectBusy(false)'), '等待人工确认不得解锁并产生新 requestId');
+    assert(projectPanelSrc.includes('setTimeout(() => noteProjectSubmitDelay(requestId), 45000)'), '45 秒只允许进入 in-doubt 等待态');
+    assert(projectPanelSrc.includes("if (projectSubmitTxn) {") && projectPanelSrc.includes("event.returnValue = ''") && projectPanelSrc.includes('收到持久收据前不能关闭本窗口'), 'in-doubt 事务必须拦截 Escape 与窗口关闭');
+    const finishStart = projectPanelSrc.indexOf('function finishProjectSubmit');
+    const finishEnd = projectPanelSrc.indexOf('function makeRequestId', finishStart);
+    const finishBody = projectPanelSrc.slice(finishStart, finishEnd);
+    assert(finishBody.indexOf('if (!result.ok)') < finishBody.indexOf("pwb('close')"), '失败分支必须先返回，不能提前关窗');
+    assert(finishBody.includes("showProjectStatus(result.message") && finishBody.includes("'err'"), '失败必须在原窗给出明确错误');
+    for (const pin of [
+      'result?.receipt?.batch', '(result?.receipt?.taskId ? [result.receipt] : [])',
+      'receiptTasks.filter(item => item?.taskId)', 'registered.filter(item => item?.accepted)',
+      'projectSubmitTxn.retryable = true', 'const retryTxn = projectSubmitTxn?.retryable',
+      'const requestId = retryTxn?.requestId || makeRequestId()', 'mode: submitMode',
+    ]) assert(projectPanelSrc.includes(pin), `部分批量收据 exactly-once 合同缺 ${pin}`);
+    assert(finishBody.indexOf('projectSubmitTxn.retryable = true') < finishBody.indexOf('projectSubmitTxn = null'), '部分成功必须保留原 requestId，不能先清事务');
+  });
+
+  test('岗位 picklist 发送屏幕锚点，主进程独占翻边与钳制', () => {
+    for (const pin of ['window.screenX + rect.left', 'window.screenY + rect.bottom', 'width: rect.width', 'height: rect.height', 'devicePixelRatio: window.devicePixelRatio']) {
+      assert(projectPanelSrc.includes(pin), `岗位锚点合同缺 ${pin}`);
+    }
+    assert(!projectPanelSrc.includes('window.screenY + rect.bottom + 4'), 'UI 不得重复叠加主进程负责的 4px 间距');
+  });
+
+  test('窄窗无 760 断崖，并保留标签、必填与 sticky 主操作', () => {
+    for (const pin of ['grid-template-areas:"material plan" "dump plan"', 'grid-template-areas:"plan" "material" "dump"', 'position:sticky', 'bottom:0', 'for="pj-genre"', 'aria-required="true"', '<output id="pj-chapters"']) {
+      assert(projectPanelSrc.includes(pin), `响应式/可访问性合同缺 ${pin}`);
+    }
   });
 });
 

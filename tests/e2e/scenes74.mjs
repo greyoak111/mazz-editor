@@ -37,15 +37,64 @@ export async function scenes74({ app, win, human, WS, scenario, shotDir }) {
     });
     await project.waitForTimeout(500);
     await project.waitForSelector('[data-preset=short]');
+    const geometry = [];
+    for (const [width, height] of [[920, 720], [761, 720], [760, 600], [520, 480], [480, 360]]) {
+      await project.setViewportSize({ width, height });
+      await project.waitForTimeout(80);
+      const state = await project.evaluate(() => {
+        const box = selector => {
+          const rect = document.querySelector(selector)?.getBoundingClientRect();
+          return rect ? { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, width: rect.width, height: rect.height } : null;
+        };
+        const settings = document.querySelector('#head-provider');
+        const style = settings ? getComputedStyle(settings) : null;
+        return {
+          width: innerWidth, height: innerHeight,
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          plan: box('.project-plan'), actions: box('.project-actions'), settings: box('#head-provider'),
+          settingsBorder: style ? parseFloat(style.borderTopWidth) : 0,
+        };
+      });
+      geometry.push(state);
+      await human.assert(state.overflow <= 1, `${width}×${height} 立项窗不得横向溢出（${state.overflow}px）`);
+      await human.assert(state.plan?.top < 170, `${width}×${height} 篇幅计划必须首屏可达（top=${state.plan?.top}）`);
+      await human.assert(state.actions?.top < state.height && state.actions?.bottom <= state.height + 2,
+        `${width}×${height} 主操作必须首屏/吸底可达（${JSON.stringify(state.actions)}）`);
+      await human.assert(state.settingsBorder >= 1 && state.settings?.right <= state.width - 90,
+        `${width}×${height} AI 服务设置须有边框且避开窗控（border=${state.settingsBorder}, right=${state.settings?.right}）`);
+    }
+    await human.assert(Math.abs(geometry[1].plan.top - geometry[2].plan.top) < 120,
+      `761→760 不得发生布局断崖（${geometry[1].plan.top}→${geometry[2].plan.top}）`);
+    await project.setViewportSize({ width: 920, height: 720 });
+    await project.focus('#pj-genre');
+    await project.keyboard.press('Tab');
+    await human.assert(await project.evaluate(() => document.activeElement?.id === 'pj-new-template'), '文体后应键盘直达新建创作模板');
+    const lengthShape = await project.evaluate(() => ({
+      legacy: [...document.querySelectorAll('[data-p-field]')].filter(el => ['length', '篇幅长短', '每章字数'].includes(el.dataset.pField)).length,
+      labels: [...document.querySelectorAll('#pj-form input,#pj-form select,#pj-form textarea')]
+        .filter(el => !el.labels?.length && !el.getAttribute('aria-label') && !el.getAttribute('aria-labelledby')).map(el => el.id),
+      cards: [...document.querySelectorAll('[data-preset]')].map(el => el.textContent.replace(/\s/g, '')),
+    }));
+    await human.assert(lengthShape.legacy === 0, '小说三个旧篇幅字段不得在新立项表单重复出现');
+    await human.assert(lengthShape.labels.length === 0, `立项控件必须全部具名（${lengthShape.labels.join(',')}）`);
+    for (const label of ['1万字', '10万字', '50万字', '不限']) await human.assert(lengthShape.cards.some(text => text.includes(label)), `篇幅卡缺 ${label}`);
     const cardCount = await project.locator('.length-card').count();
     await human.assert(cardCount === 4, '立项向导必须有短/中/长/无限四卡');
+    await project.fill('#pj-total', '100000');
+    await project.fill('#pj-words', '8000');
+    await human.assert((await project.textContent('#pj-chapters')).trim() === '13章', '100000÷8000 必须显示预计 13 章');
+    await human.assert(await project.locator('[data-preset][aria-pressed=true]').count() === 0, '自定义总字数/每章目标不得继续冒充固定预设');
+    await project.focus('#pj-words');
+    await project.dispatchEvent('#pj-words', 'change');
+    await project.waitForTimeout(350);
+    await human.assert(await project.evaluate(() => document.activeElement?.id === 'pj-words'), '篇幅联动快照不得夺走当前键盘焦点');
     await project.fill('#pj-total', '2000');
     await project.dispatchEvent('#pj-total', 'change');
     await project.waitForTimeout(300);
     await project.click('[data-words="2000"]');
     await project.waitForTimeout(300);
-    const linked = await project.inputValue('.smart-row label:last-child input');
-    await human.assert(linked === '1', '总字数÷每章字数必须联动为 1 章');
+    const linked = (await project.textContent('#pj-chapters')).trim();
+    await human.assert(linked === '1章', '总字数÷每章字数必须联动为 1 章');
     await project.fill('#pj-batch', 'W60b实证书\nW60b批量二\nW60b批量三');
     const put = async (id, value) => {
       const sel = `[data-p-field="${id}"]`;

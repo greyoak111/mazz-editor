@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-22T16:19:43.132Z",
+  "coordinate": "PACKAGED",
+  "provider": {
+    "providerId": "deepseek",
+    "model": "deepseek-v4-pro",
+    "credentialSource": "isolated-encrypted-factory-profile",
+    "secretDisclosed": false
+  },
+  "task": {
+    "taskId": "tmt4l2ls1kh3",
+    "mode": "single",
+    "maxMode": false,
+    "dualLoop": false,
+    "autoPreview": false,
+    "reviewRitual": "light",
+    "reviewBudgetCap": 12000,
+    "totalWords": 121,
+    "wordsPerUnit": 121,
+    "maxChapters": 1,
+    "terminalCoordinates": {
+      "mode": "single",
+      "maxMode": false,
+      "dualLoop": false,
+      "autoPreview": false,
+      "totalWords": 121,
+      "wordsPerUnit": 121,
+      "maxChapters": 1,
+      "reviewRitual": "light",
+      "reviewBudgetCap": 12000
+    },
+    "terminalStatus": "done",
+    "folderName": "W92真实链路验收_56033",
+    "artifactCount": 42,
+    "finalChars": 121
+  },
+  "workflow": {
+    "businessReceipt": true,
+    "nativeCompletionEvidence": true,
+    "professionalArtifactsComplete": true,
+    "requiredProfessionalArtifacts": [
+      "01-骨架与验收点.md",
+      "02-扩写稿.md",
+      "02b-润色记录.md",
+      "03-机检报告.md",
+      "04-对点报告.md",
+      "05-修订单.md",
+      "06-请示单.md",
+      "07-审理表.md",
+      "08-质询单.md",
+      "09-答辩书.md",
+      "10-裁决书.md",
+      "工件清单.json"
+    ],
+    "presentProfessionalArtifacts": [
+      "01-骨架与验收点.md",
+      "02-扩写稿.md",
+      "02b-润色记录.md",
+      "03-机检报告.md",
+      "04-对点报告.md",
+      "05-修订单.md",
+      "06-请示单.md",
+      "07-审理表.md",
+      "08-质询单.md",
+      "09-答辩书.md",
+      "10-裁决书.md",
+      "工件清单.json"
+    ],
+    "professionalGates": {
+      "machine": true,
+      "point": true,
+      "review": true,
+      "objection": true,
+      "sealed": true
+    },
+    "providerMaxBlueprintExpected": false,
+    "providerMaxBlueprintInvoked": false,
+    "singleRunnerInvocations": 1,
+    "projectMantraArtifactPresent": true,
+    "singleUnitOutlineArtifactPresent": true,
+    "singleUnitOutlineMatchesReceipt": true,
+    "deskVisible": true,
+    "isolatedWorkspace": true,
+    "watcherHealth": {
+      "initial": {
+        "count": 1,
+        "state": "watching",
+        "rootsCount": 1,
+        "reason": "watch"
+      },
+      "final": {
+        "count": 1,
+        "state": "watching",
+        "rootsCount": 1,
+        "reason": "resume-ready"
+      }
+    },
+    "runtimeErrors": []
+  },
+  "elapsedMs": 29400,
+  "resources": {
+    "baseline": {
+      "activeCount": 3,
+      "byType": {
+        "browser-window": 1,
+        "file-watcher": 1,
+        "agent-cli-process": 1
+      }
+    },
+    "final": {
+      "activeCount": 2,
+      "byType": {
+        "browser-window": 1,
+        "file-watcher": 1
+      }
+    },
+    "retiredCount": 1,
+    "stableNoGrowth": true,
+    "resourceBoundaryPassed": true
+  },
+  "screenshot": "docs/engineering/evidence/W92_FACTORY_LIVE_WORKFLOW_PACKAGED.png",
+  "artifacts": {
+    "sourceBundle": {
+      "path": "renderer/dist/app.js",
+      "bytes": 2374971,
+      "sha256": "13e293c2e2d79d2b7389e9e314d3c3cf165caf61fee476e3f1b960362153ed94"
+    },
+    "sourceFiles": {
+      "renderer/dist/app.js": {
+        "path": "renderer/dist/app.js",
+        "bytes": 2374971,
+        "sha256": "13e293c2e2d79d2b7389e9e314d3c3cf165caf61fee476e3f1b960362153ed94"
+      },
+      "renderer/panels/factorycfg.html": {
+        "path": "renderer/panels/factorycfg.html",
+        "bytes": 55517,
+        "sha256": "eaff9f17cafbc2908c8ac8aaf06e44526f8002e564a290ef27211dec3d42d289"
+      },
+      "main/main.js": {
+        "path": "main/main.js",
+        "bytes": 132274,
+        "sha256": "f2ee6ecf2c0e024ddab4cef0b287783d034f45f776fe4924d4bec942d6bfaaf9"
+      },
+      "main/factory-sse.js": {
+        "path": "main/factory-sse.js",
+        "bytes": 9433,
+        "sha256": "ab18e5f20055f940be8499779a3d7d6e738d39927fdd9728bc8cee6ba8ad71cf"
+      },
+      "main/panel-windows.js": {
+        "path": "main/panel-windows.js",
+        "bytes": 28247,
+        "sha256": "efcc039f975597dfd42fac755d87f52b976f18ebddad7c399661a33c19c30311"
+      },
+      "main/file-watcher.js": {
+        "path": "main/file-watcher.js",
+        "bytes": 11954,
+        "sha256": "7429733d179a5ab8a084cd3079e556f47c78c65c4e9067ae86c58073887d7324"
+      },
+      "main/audio-artwork.js": {
+        "path": "main/audio-artwork.js",
+        "bytes": 20737,
+        "sha256": "c653bfa4918ff81b92a3d6e53c566f90f48574ced3fb101214a4b7dbff636133"
+      },
+      "preload/bridge.js": {
+        "path": "preload/bridge.js",
+        "bytes": 8443,
+        "sha256": "23369c1941fe1c2e91503af4630a5564dff98fd2ad9a0e83fa9d534a6a9f967a"
+      },
+      "node_modules/chokidar/lib/nodefs-handler.js": {
+        "path": "node_modules/chokidar/lib/nodefs-handler.js",
+        "bytes": 20528,
+        "sha256": "61657c4e8aebb60e8a07ea262718ddac0e23f30fdcfb43b61711a0d7c15d32e2"
+      }
+    },
+    "sourcePackage": {
+      "path": "package.json",
+      "bytes": 7674,
+      "sha256": "91d5cf05c9dcd563af692d30a05412f8e0d4a20d05a65ad77e3bd4679d2a0ae5",
+      "coordinate": {
+        "name": "mazz-editor",
+        "version": "0.2.0",
+        "main": "main/main.js",
+        "productName": "Mazz Editor",
+        "description": "榨干 Electron 的一站式超级编辑器 —— 文档/代码/创作 全闭环",
+        "author": "Mazz Editor contributors",
+        "license": "MIT",
+        "dependencies": {
+          "@lingo-reader/mobi-parser": "^0.4.6",
+          "@xterm/addon-fit": "^0.11.0",
+          "@xterm/xterm": "^6.0.0",
+          "bonjour-service": "^1.4.3",
+          "chokidar": "^3.6.0",
+          "docx": "^9.7.1",
+          "echarts": "^6.1.0",
+          "exceljs": "^4.4.0",
+          "fix-webm-duration": "^1.0.6",
+          "jszip": "^3.10.1",
+          "libass-wasm": "^4.1.0",
+          "mammoth": "^1.12.0",
+          "monaco-editor": "^0.55.1",
+          "node-forge": "^1.4.0",
+          "node-pty": "^1.1.0",
+          "perfect-freehand": "^1.2.3",
+          "pptxgenjs": "^4.0.1",
+          "prosemirror-tables": "^1.8.5",
+          "qrcode": "^1.5.4",
+          "tesseract.js": "^7.0.0",
+          "webtorrent": "2.8.5",
+          "xlsx": "^0.18.5"
+        },
+        "overrides": {
+          "exceljs": {
+            "unzipper": "0.12.3"
+          }
+        }
+      }
+    },
+    "screenshot": {
+      "path": "docs/engineering/evidence/W92_FACTORY_LIVE_WORKFLOW_PACKAGED.png",
+      "bytes": 183290,
+      "sha256": "bafe021a897983120eda9c618249174317014650df78e3ec80291d9043f9d095"
+    },
+    "sourcePatches": {
+      "chokidar": {
+        "path": "patches/chokidar+3.6.0.patch",
+        "bytes": 1218,
+        "sha256": "0960b165fd49a72924ebac3b7343bd8861ce5150ac746f6a6ea34fd238cd3ccb"
+      }
+    },
+    "executable": {
+      "path": "release/win-unpacked/Mazz Editor.exe",
+      "bytes": 188784128,
+      "sha256": "8ac85b69d8ad9761d66704dbebff6537e9bb8837f5884aecb8ba6944cfe67619"
+    },
+    "appAsar": {
+      "path": "release/win-unpacked/resources/app.asar",
+      "bytes": 260894506,
+      "sha256": "b54c2bf3f860218d401374003e27f67c78afeab137551b4382fe9ba2264e2457"
+    },
+    "embeddedBundle": {
+      "path": "renderer/dist/app.js (inside app.asar)",
+      "bytes": 2374971,
+      "sha256": "13e293c2e2d79d2b7389e9e314d3c3cf165caf61fee476e3f1b960362153ed94"
+    },
+    "embeddedFiles": {
+      "renderer/dist/app.js": {
+        "path": "renderer/dist/app.js (inside app.asar)",
+        "bytes": 2374971,
+        "sha256": "13e293c2e2d79d2b7389e9e314d3c3cf165caf61fee476e3f1b960362153ed94"
+      },
+      "renderer/panels/factorycfg.html": {
+        "path": "renderer/panels/factorycfg.html (inside app.asar)",
+        "bytes": 55517,
+        "sha256": "eaff9f17cafbc2908c8ac8aaf06e44526f8002e564a290ef27211dec3d42d289"
+      },
+      "main/main.js": {
+        "path": "main/main.js (inside app.asar)",
+        "bytes": 132274,
+        "sha256": "f2ee6ecf2c0e024ddab4cef0b287783d034f45f776fe4924d4bec942d6bfaaf9"
+      },
+      "main/factory-sse.js": {
+        "path": "main/factory-sse.js (inside app.asar)",
+        "bytes": 9433,
+        "sha256": "ab18e5f20055f940be8499779a3d7d6e738d39927fdd9728bc8cee6ba8ad71cf"
+      },
+      "main/panel-windows.js": {
+        "path": "main/panel-windows.js (inside app.asar)",
+        "bytes": 28247,
+        "sha256": "efcc039f975597dfd42fac755d87f52b976f18ebddad7c399661a33c19c30311"
+      },
+      "main/file-watcher.js": {
+        "path": "main/file-watcher.js (inside app.asar)",
+        "bytes": 11954,
+        "sha256": "7429733d179a5ab8a084cd3079e556f47c78c65c4e9067ae86c58073887d7324"
+      },
+      "main/audio-artwork.js": {
+        "path": "main/audio-artwork.js (inside app.asar)",
+        "bytes": 20737,
+        "sha256": "c653bfa4918ff81b92a3d6e53c566f90f48574ced3fb101214a4b7dbff636133"
+      },
+      "preload/bridge.js": {
+        "path": "preload/bridge.js (inside app.asar)",
+        "bytes": 8443,
+        "sha256": "23369c1941fe1c2e91503af4630a5564dff98fd2ad9a0e83fa9d534a6a9f967a"
+      },
+      "node_modules/chokidar/lib/nodefs-handler.js": {
+        "path": "node_modules/chokidar/lib/nodefs-handler.js (inside app.asar)",
+        "bytes": 20528,
+        "sha256": "61657c4e8aebb60e8a07ea262718ddac0e23f30fdcfb43b61711a0d7c15d32e2"
+      }
+    },
+    "embeddedPackage": {
+      "path": "package.json (inside app.asar)",
+      "bytes": 1005,
+      "sha256": "b5eeaf6fe4dd9dbe9cf00e401c71a74bcaa4bd75eda91ee508b1a25ef016c225",
+      "coordinate": {
+        "name": "mazz-editor",
+        "version": "0.2.0",
+        "main": "main/main.js",
+        "productName": "Mazz Editor",
+        "description": "榨干 Electron 的一站式超级编辑器 —— 文档/代码/创作 全闭环",
+        "author": "Mazz Editor contributors",
+        "license": "MIT",
+        "dependencies": {
+          "@lingo-reader/mobi-parser": "^0.4.6",
+          "@xterm/addon-fit": "^0.11.0",
+          "@xterm/xterm": "^6.0.0",
+          "bonjour-service": "^1.4.3",
+          "chokidar": "^3.6.0",
+          "docx": "^9.7.1",
+          "echarts": "^6.1.0",
+          "exceljs": "^4.4.0",
+          "fix-webm-duration": "^1.0.6",
+          "jszip": "^3.10.1",
+          "libass-wasm": "^4.1.0",
+          "mammoth": "^1.12.0",
+          "monaco-editor": "^0.55.1",
+          "node-forge": "^1.4.0",
+          "node-pty": "^1.1.0",
+          "perfect-freehand": "^1.2.3",
+          "pptxgenjs": "^4.0.1",
+          "prosemirror-tables": "^1.8.5",
+          "qrcode": "^1.5.4",
+          "tesseract.js": "^7.0.0",
+          "webtorrent": "2.8.5",
+          "xlsx": "^0.18.5"
+        },
+        "overrides": {
+          "exceljs": {
+            "unzipper": "0.12.3"
+          }
+        }
+      }
+    }
+  },
+  "bundleSha256": "13e293c2e2d79d2b7389e9e314d3c3cf165caf61fee476e3f1b960362153ed94",
+  "executableSha256": "8ac85b69d8ad9761d66704dbebff6537e9bb8837f5884aecb8ba6944cfe67619"
+}

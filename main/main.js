@@ -14,6 +14,7 @@ const {
   canonicalCatalogImageUrl,
   resolvedCatalogImageRedirect,
 } = require('./catalog-image-policy');
+const { audioArtworkPathFromResourceUrl, serveAudioArtwork } = require('./audio-artwork');
 
 // 应用级服务各自拥有独立 before-quit 收尸钩；显式容量覆盖当前正式服务数，避免 Node 默认 10 个把合法治理误报为泄漏。
 app.setMaxListeners(32);
@@ -150,7 +151,14 @@ const { IngestionPipeline } = require('./ingestion-pipeline');
 const { FeedPipeline, normalizeW65FeedRequest } = require('./feed-pipeline');
 const { ContinuousFeedService } = require('./continuous-feed-service');
 const { PromotionLedger } = require('./promotion-ledger');
-const { FactorySseDecoder } = require('./factory-sse');
+const {
+  FactorySseDecoder,
+  classifyFactoryCompletion,
+  extractText: extractFactoryContentText,
+  factoryProviderGenerationOptions,
+  joinFactoryAiEndpoint,
+  normalizeFactoryModelsResponse,
+} = require('./factory-sse');
 const { AddressableEvidenceService } = require('./addressable-evidence-service');
 const { ContextRelationService } = require('./context-relation-service');
 const { WorkspaceEventService } = require('./workspace-event-service');
@@ -623,25 +631,16 @@ function registerChannels() {
     'Content-Type': 'application/json',
     ...(apiKey ? { Authorization: 'Bearer ' + apiKey } : {}),
   });
-  const aiUrl = (baseURL) => String(baseURL || '').replace(/\/+$/, '') + '/v1/chat/completions';
+  const aiUrl = (baseURL) => joinFactoryAiEndpoint(baseURL, 'chat/completions');
+  const aiModelsUrl = (baseURL) => joinFactoryAiEndpoint(baseURL, 'models');
   const aiReadError = async (resp) => {
     const text = await resp.text().catch(() => '');
     let msg = text.slice(0, 400);
     try { msg = JSON.parse(text).error?.message || msg; } catch {}
     return `HTTP ${resp.status}：${msg}`;
   };
-  // 响应文本提取：兼容字符串 content / 分段数组 content / 推理模型 reasoning_content 兜底
-  const aiExtractText = (m) => {
-    if (!m) return '';
-    const c = m.content;
-    if (typeof c === 'string' && c.trim()) return c;
-    if (Array.isArray(c)) {
-      const t = c.map((p) => (typeof p === 'string' ? p : (p?.text || ''))).join('');
-      if (t.trim()) return t;
-    }
-    if (typeof m.reasoning_content === 'string' && m.reasoning_content.trim()) return m.reasoning_content;
-    return typeof c === 'string' ? c : '';
-  };
+  // 响应文本只接收 Provider 最终 content；reasoning_content 不是正式工件。
+  const aiExtractText = extractFactoryContentText;
   const factoryMockEnabled = process.env.NODE_ENV === 'test' && process.env.MAZZ_E2E_FACTORY_MOCK === '1';
   const factoryTimeout = (envName, normalMs) => {
     if (process.env.NODE_ENV !== 'test' || !process.env[envName]) return normalMs;
@@ -649,6 +648,10 @@ function registerChannels() {
     return Number.isFinite(value) ? Math.max(50, Math.min(normalMs, Math.round(value))) : normalMs;
   };
   const factoryMock = { blueprintAttempts: 0, unitNo: 0, w68Repair: 0, w68Point: 0 };
+  const factoryMockDeclared = (body) => {
+    const text = String(body || '').trim();
+    return `${text}\n[本次续写字数：${text.length}]`;
+  };
   const factoryMockReply = ({ system = '', user = '', stream = false }) => {
     if (!factoryMockEnabled) return null;
     // W62d：第一次故意破坏块守恒，逼出“解析失败只重试一次”；纠错轮再按原块 ID 全量回供。
@@ -721,7 +724,8 @@ function registerChannels() {
     }
     if (stream) {
       factoryMock.unitNo++;
-      return `本节记录实验报告第 ${factoryMock.unitNo} 个结构单元。测量值 ${100 + factoryMock.unitNo}，术语口径沿用既定定义，论据来自模拟台架。${'这一段用于验证正文在缺少声明时仍能自动收口并可靠落盘。'.repeat(6)}`;
+      const body = `本节记录实验报告第 ${factoryMock.unitNo} 个结构单元。测量值 ${100 + factoryMock.unitNo}，术语口径沿用既定定义，论据来自模拟台架。${'这一段用于验证模型原生声明经过核验后才能可靠落盘。'.repeat(6)}`;
+      return factoryMockDeclared(body);
     }
     if (system.includes('一致性校验员')) return '纠偏：下一节继续沿用统一单位与实验口径，补明论据来源；既有正文不重写。';
     if (system.includes('状态记录员')) {
@@ -729,7 +733,7 @@ function registerChannels() {
     }
     return '测试响应';
   };
-  bus.handle('factory:aiChat', async ({ requestId, baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192 }, event) => {
+  bus.handle('factory:aiChat', async ({ requestId, providerId, role, baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192, detailed = false }, event) => {
     const req = factoryAiRequests.begin(requestId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, {
       kind: 'chat', timeoutMs: factoryTimeout('MAZZ_E2E_FACTORY_CHAT_TIMEOUT_MS', 180000), model,
       ownerId: bindFactoryOwner(event?.sender),
@@ -737,21 +741,31 @@ function registerChannels() {
     let outcome = 'completed';
     try {
       const mocked = factoryMockReply({ system, user, stream: false });
-      if (mocked != null) return mocked;
+      if (mocked != null) return detailed ? {
+        text: String(mocked).trim(), finishReason: 'stop', completionKind: 'finish-reason',
+        usage: null, safeToCommit: true,
+      } : mocked;
       // messages 直通（多模态：content 数组含 image_url）；否则 system/user 组装
       const msgs = messages || [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }];
       const resp = await net.fetch(aiUrl(baseURL), {
         method: 'POST', headers: aiHeaders(apiKey),
-        body: JSON.stringify({ model, messages: msgs, temperature, max_tokens: maxTokens, stream: false }),
+        body: JSON.stringify({
+          model, messages: msgs, temperature, max_tokens: maxTokens, stream: false,
+          ...factoryProviderGenerationOptions({ providerId, baseURL, model, role }),
+        }),
         signal: req.signal,
       });
       if (!resp.ok) throw new Error(await aiReadError(resp));
       const data = await resp.json();
       if (data.error) throw new Error('API 报错：' + String(data.error.message || JSON.stringify(data.error)).slice(0, 300));
-      const text = aiExtractText(data.choices?.[0]?.message);
+      const choice = data.choices?.[0] || {};
+      const text = aiExtractText(choice.message);
       if (!text || !text.trim()) {
         const fr = data.choices?.[0]?.finish_reason || '未知';
-        throw new Error(`AI 返回为空（finish_reason=${fr}；原始片段：${JSON.stringify(data).slice(0, 200)}）`);
+        // Never echo the provider payload here.  Some reasoning models return
+        // private chain-of-thought in reasoning_content while final content is
+        // empty; serialising the raw response would leak it into UI/logs.
+        throw new Error(`AI 返回为空（finish_reason=${fr}；未收到可提交的最终 content）`);
       }
       const usage = data?.usage || {};
       const inputTokens = Math.max(0, Number(usage.prompt_tokens ?? usage.input_tokens) || 0);
@@ -763,10 +777,24 @@ function registerChannels() {
           observedAt: new Date().toISOString(), sourceRef: `provider-response:${req.id}`,
         });
       }
-      return text.trim();
+      if (!detailed) return text.trim();
+      const hasFinishReason = Object.prototype.hasOwnProperty.call(choice, 'finish_reason');
+      const finishReason = hasFinishReason && choice.finish_reason != null
+        ? (String(choice.finish_reason).trim() || null)
+        : null;
+      const completionKind = hasFinishReason
+        ? (finishReason == null ? 'null-finish-reason' : 'finish-reason')
+        : 'response-without-finish-reason';
+      return {
+        text: text.trim(), finishReason, completionKind,
+        usage: totalTokens ? { inputTokens, outputTokens, totalTokens } : null,
+        safeToCommit: classifyFactoryCompletion({ finishReason, completionKind }).safeToCommit,
+      };
     } catch (error) {
       outcome = req.cancelled ? req.cancelReason : 'failed';
-      if (req.cancelled && req.cancelReason !== 'timeout') return null;
+      if (req.cancelled && req.cancelReason !== 'timeout') return detailed ? {
+        text: '', finishReason: null, completionKind: 'interrupted', usage: null, safeToCommit: false,
+      } : null;
       if (req.cancelled && req.cancelReason === 'timeout') throw new Error('AI 请求超时（180 秒）');
       throw error;
     } finally {
@@ -775,10 +803,10 @@ function registerChannels() {
   });
   // 模型列表：GET /v1/models（渲染层拉取会被 CORS 拦，主进程代理）
   bus.handle('factory:aiModels', async ({ baseURL, apiKey }) => {
-    const url = String(baseURL || '').replace(/\/+$/, '') + '/models';
+    const url = aiModelsUrl(baseURL);
     const resp = await net.fetch(url, { headers: apiKey ? { Authorization: 'Bearer ' + apiKey } : {} });
     if (!resp.ok) throw new Error(await aiReadError(resp));
-    return await resp.json();
+    return normalizeFactoryModelsResponse(await resp.json());
   });
   bus.handle('factory:aiCancel', async ({ requestId, reason = 'renderer-cancel' }, event) => ({
     cancelled: await factoryAiRequests.cancel(requestId, reason, { ownerId: String(event?.sender?.id || '') }),
@@ -896,8 +924,11 @@ function registerChannels() {
           push({ delta: mocked.slice(i, i + 120) });
           if (mockDelay) await new Promise(resolve => setTimeout(resolve, mockDelay));
         }
-        if (!req.cancelled) push({ done: true });
-        return { ok: !req.cancelled, cancelled: req.cancelled, reason: req.cancelReason };
+        const completion = req.cancelled
+          ? { finishReason: null, completionKind: 'interrupted', usage: null, safeToCommit: false }
+          : { finishReason: 'stop', completionKind: 'mock-stop', usage: null, safeToCommit: true };
+        if (!req.cancelled) push({ done: true, ...completion });
+        return { ok: !req.cancelled, cancelled: req.cancelled, reason: req.cancelReason, ...completion };
       }
       const resp = await net.fetch(aiUrl(baseURL), {
         method: 'POST', headers: aiHeaders(apiKey),
@@ -918,19 +949,34 @@ function registerChannels() {
         if (done) break;
         sse.push(value);
       }
-      sse.finish();
+      const completion = sse.finish();
       if (reportedUsage && wm.main && !wm.main.isDestroyed()) {
         bus.send(wm.main, 'factory:aiUsage', {
           requestId, model: String(model || ''), ...reportedUsage,
           observedAt: new Date().toISOString(), sourceRef: `provider-stream:${requestId}`,
         });
       }
-      push({ done: true });
-      return { ok: true, completionKind: sse.completionKind, deltaCount: sse.deltaCount };
+      const classified = classifyFactoryCompletion(completion);
+      const final = {
+        finishReason: completion.finishReason,
+        completionKind: completion.completionKind,
+        usage: completion.usage,
+        safeToCommit: completion.safeToCommit === true && classified.safeToCommit,
+      };
+      push({ done: true, ...final });
+      return { ok: true, ...final, deltaCount: completion.deltaCount };
     } catch (e) {
       outcome = req.cancelled ? req.cancelReason : 'failed';
       if (!req.cancelled) push({ error: e.message || String(e) });
-      return { ok: false, cancelled: req.cancelled, reason: req.cancelReason };
+      return {
+        ok: false,
+        cancelled: req.cancelled,
+        reason: req.cancelReason,
+        finishReason: null,
+        completionKind: req.cancelled ? 'interrupted' : 'error',
+        usage: null,
+        safeToCommit: false,
+      };
     } finally {
       await req.close({ reason: outcome });
     }
@@ -1452,6 +1498,10 @@ function registerChannels() {
     try {
       // 自定义协议 URL 首段是 host 不是 path：mazz-res://lib/x → host=lib（丢段 404 实锤）——host+pathname 拼回全路径
       const u = new URL(req.url);
+      if (u.host === 'audio-artwork') {
+        const artworkPath = audioArtworkPathFromResourceUrl(u);
+        return serveAudioArtwork(artworkPath, { method: req.method, signal: req.signal });
+      }
       const rel = decodeURIComponent(u.host + u.pathname).replace(/^\/+/, '');
       if (rel === 'fonts/fallback') return serveFont();
       // Mikan catalog covers: native <img loading=lazy> owns request lifetime.

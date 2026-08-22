@@ -2,6 +2,7 @@
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import {
   ExternalChangeService,
   externalChangeDecision,
@@ -57,9 +58,11 @@ describe('W71 外部文件变化状态机', () => {
     const source = fs.readFileSync(new URL('../../main/file-watcher.js', import.meta.url), 'utf8');
     const manager = fs.readFileSync(new URL('../../main/window-manager.js', import.meta.url), 'utf8');
     const main = fs.readFileSync(new URL('../../main/main.js', import.meta.url), 'utf8');
-    assert.ok(source.includes("watcher.once('ready', finish)"), '必须以真实 ready 事件形成确认点');
+    assert.ok(source.includes("watcher.once('ready', () => finish('ready'))"), '必须区分真实 ready 与 timeout/closed 结算');
     assert.ok((source.match(/await this\.readyPromise/g) || []).length >= 3, '新建、重复根和追加根都必须等待初始 ready');
-    assert.ok(source.includes('this._finishReady?.();'), 'ready 前关闭必须立即结算等待状态');
+    assert.ok(source.includes("this._finishReady?.('closed')"), 'ready 前关闭必须以 closed 结果立即结算等待状态');
+    assert.ok(source.includes("this.watchState = 'starting'"), '新 watcher 在真实 ready 前不得登记为 watching');
+    assert.ok(source.includes('this._assertHealthy(created)'), 'restart/resume 返回成功前必须校验实例归属与健康状态');
     assert.ok(source.includes('if (this._readyTimer) clearTimeout(this._readyTimer)'), 'ready/close 后不得残留十秒兜底 timer');
     assert.ok(manager.includes('broadcastShells(channel, payload)'), '工作台壳必须有主窗+分窗定向广播协议');
     assert.ok(manager.includes("win.on('enter-full-screen'") && manager.includes("win.on('leave-full-screen'"), '主窗与分窗必须各自回传全屏状态');
@@ -69,6 +72,67 @@ describe('W71 外部文件变化状态机', () => {
       const start = main.indexOf(`bus.handle('${channel}'`);
       assert.ok(start >= 0 && main.slice(start, start + 260).includes('callerWin(event)'), `${channel} 必须按 IPC 调用者归属`);
     }
+  });
+
+  test('Chokidar 3.6.0 close/readdir 竞态补丁可由原版源码确定性复算', () => {
+    const normalize = value => String(value).replace(/\r\n/g, '\n');
+    const sha256 = value => createHash('sha256').update(value).digest('hex');
+    const installed = normalize(fs.readFileSync(new URL('../../node_modules/chokidar/lib/nodefs-handler.js', import.meta.url), 'utf8'));
+    const manifest = JSON.parse(fs.readFileSync(new URL('../../node_modules/chokidar/package.json', import.meta.url), 'utf8'));
+    const patch = normalize(fs.readFileSync(new URL('../../patches/chokidar+3.6.0.patch', import.meta.url), 'utf8'));
+
+    const pristineBlock = [
+      '      resolve();',
+      '',
+      '      // Files that absent in current directory snapshot',
+      '      // but present in previous emit `remove` event',
+      '      // and are removed from @watched[directory].',
+      '      previous.getChildren().filter((item) => {',
+    ].join('\n');
+    const patchedBlock = [
+      '      resolve();',
+      '',
+      '      // close() disposes the watched DirEntry objects after setting `closed`.',
+      '      // A readdir stream can pass the earlier closed check and then resume',
+      '      // here after disposal, so re-check before dereferencing its children.',
+      '      if (this.fsw.closed) {',
+      '        stream = undefined;',
+      '        return;',
+      '      }',
+      '      const previousChildren = previous.getChildren();',
+      '      if (!Array.isArray(previousChildren)) {',
+      '        stream = undefined;',
+      '        return;',
+      '      }',
+      '',
+      '      // Files that absent in current directory snapshot',
+      '      // but present in previous emit `remove` event',
+      '      // and are removed from @watched[directory].',
+      '      previousChildren.filter((item) => {',
+    ].join('\n');
+
+    assert.equal(manifest.version, '3.6.0', '补丁只绑定经验证的 Chokidar 3.6.0');
+    assert.equal(installed.split(patchedBlock).length, 2, '安装态必须且只能包含一次 close-race 防护块');
+    const pristine = installed.replace(patchedBlock, pristineBlock);
+    assert.equal(
+      sha256(pristine),
+      '60be035e7ea64858a0144230d5073b18a69f3b0eefba62a9b032c6d2f179d807',
+      '逆算结果必须等于 npm 发布的 Chokidar 3.6.0 原版 nodefs-handler.js',
+    );
+    assert.equal(pristine.split(pristineBlock).length, 2, '原版应用点必须唯一，避免错位打补丁');
+    assert.equal(pristine.replace(pristineBlock, patchedBlock), installed, '原版源码应用防护块后必须逐字等于安装态');
+    assert.equal(
+      sha256(installed),
+      '61657c4e8aebb60e8a07ea262718ddac0e23f30fdcfb43b61711a0d7c15d32e2',
+      '安装态源码必须等于已审计补丁结果',
+    );
+    for (const marker of [
+      'if (this.fsw.closed)',
+      'const previousChildren = previous.getChildren()',
+      'if (!Array.isArray(previousChildren))',
+      'previousChildren.filter((item) => {',
+    ]) assert.ok(patch.includes(`+      ${marker}`), `patch-package 缺少关键防护：${marker}`);
+    assert.ok(patch.includes('-      previous.getChildren().filter((item) => {'), '补丁必须替换原始易竞态解引用');
   });
 
   test('Shell 只有一条 file:changed 决策入口，另存为成功后才换路径', () => {

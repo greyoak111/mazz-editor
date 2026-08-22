@@ -2,8 +2,8 @@
 // 任务队列中心（原版 PySide 思路）：创作模板 → 需求澄清 → 任务队列 → 主控台日志 → 连写快照/断点续写
 import { toast, modal, inputModal } from '../../shell/shell.js';
 import { menus } from '../../core/menu-service.js';
-import { listGenres, saveCustomGenre, buildMantra, runQualityChecks, parseCsvTasks, fieldValue, buildStateSummaryPrompt, readMaxTaskProgress, renderPluginPrompt, buildEmbedBlocks, buildBlueprintPrompt, blueprintFamily, blueprintStructureOk, getSnapshotSchema, canUseUnlimited, buildFallbackBlueprint, parseChapterOutlines, extractBlueprintCore, extractWritingDirective, buildConstantAnchor, extractLedgerFromSnapshot, stripMdFence, buildChapterPromptV2, writeTaskState, scanResumableTasks, mergeDeclaredContinuation, ensureTokenDeclaration, stripTokenDeclaration, FACTORY_LENGTH_PRESETS, resolveFactoryLengthPlan, factoryBatchGate, buildFactoryOutputFolder, buildFactoryUnitStem, factoryExportSpec, serializeFactoryText } from './engine.js';
-import { getProviderConfig, saveProviderConfig, providerReady, chat, chatStream, extractFields, PRESETS } from './provider.js';
+import { listGenres, saveCustomGenre, buildMantra, runQualityChecks, parseCsvTasks, fieldValue, buildStateSummaryPrompt, readMaxTaskProgress, renderPluginPrompt, buildEmbedBlocks, buildBlueprintPrompt, blueprintFamily, blueprintStructureOk, getSnapshotSchema, canUseUnlimited, buildFallbackBlueprint, parseChapterOutlines, extractBlueprintCore, extractWritingDirective, buildConstantAnchor, extractLedgerFromSnapshot, stripMdFence, buildChapterPromptV2, writeTaskState, scanResumableTasks, mergeDeclaredContinuation, stripTokenDeclaration, validateNativeContinuationDeclaration, FACTORY_LENGTH_PRESETS, resolveFactoryLengthPlan, factoryBatchGate, buildFactoryOutputFolder, buildFactoryUnitStem, factoryExportSpec, serializeFactoryText } from './engine.js';
+import { getProviderConfig, saveProviderConfig, providerReady, chat, chatDetailed, chatStreamDetailed, extractFields, PRESETS } from './provider.js';
 import { NOVEL_PLUGINS } from './plugins.js';
 import { listStyles, uploadStyleFile, queryOnlineStyle, deleteStyle, assembleStylePackage } from './style-studio.js';
 import { exportMaz, importMaz } from './maz.js';
@@ -42,8 +42,14 @@ import {
   createArtifactRevision, createFactoryFeedEnvelope, normalizeFactoryUsageRecord,
 } from './bridge-runtime.js';
 import { finishWebResearch, prepareWebResearch } from '../search/research-runtime.js';
+import {
+  FACTORY_TASKS_KEY, FACTORY_RESUMABLE_DISMISSALS_KEY,
+  dismissFactoryResumables, factoryTaskState, makeRecoveredFactoryTask, mergeFactoryResumables,
+  normalizeFactoryFolder, pruneFactoryResumableDismissals, resumableRecoveryKey,
+  visibleFactoryResumables,
+} from './task-registry.js';
 
-const TASKS_KEY = 'mazz.factory.tasks';
+const TASKS_KEY = FACTORY_TASKS_KEY;
 const HISTORY_KEY = 'mazz.factory.history';
 const AUTO_PREVIEW_KEY = 'mazz.factory.autoPreview';
 const CONCURRENCY_KEY = 'mazz.factory.concurrency';
@@ -51,6 +57,13 @@ const PROVIDER_USAGE_KEY = 'mazz.factory.providerUsage.v0';
 const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const W74A_INGESTION_REQUEST_SCHEMA = 'mazz.ingestion-request/v0';
+
+export function resolveReviewBudgetCap(value, fallback = 32000) {
+  const fallbackValue = Number.isFinite(Number(fallback)) ? Math.max(0, Number(fallback)) : 32000;
+  if (value === undefined || value === null || value === '') return fallbackValue;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallbackValue;
+}
 
 function createMaterialAssetId() {
   const uuid = globalThis.crypto?.randomUUID?.();
@@ -63,10 +76,100 @@ function materialLayerForPath(filePath = '') {
 }
 
 // 首次生成前探测蓝图/大纲/快照/checkpoint 属于正常分支；先 stat，避免用异常充当流程控制并污染主进程错误账。
-async function readOptionalFile(filePath) {
-  const stat = await window.mazz.invoke('fs:stat', { path: filePath }).catch(() => ({ exists: false }));
-  if (!stat?.exists || stat.isDir) return '';
+export async function readOptionalFile(filePath) {
+  let stat;
+  try {
+    stat = await window.mazz.invoke('fs:stat', { path: filePath });
+  } catch (error) {
+    const code = String(error?.code || '').toUpperCase();
+    if (code === 'ENOENT' || code === 'ENOTDIR') return '';
+    throw error;
+  }
+  if (!stat?.exists) {
+    const code = String(stat?.code || '').toUpperCase();
+    if (!code || code === 'ENOENT' || code === 'ENOTDIR') return '';
+    throw Object.assign(new Error(`无法确认既有智能创作工件状态（${code}）`), { code, path: filePath });
+  }
+  if (stat.isDir) return '';
   return await window.mazz.invoke('fs:readFile', { path: filePath });
+}
+
+/**
+ * Registry recovery is broader than the resume prompt: a durable correlated
+ * transaction remains a project fact even after it quickly reaches a terminal
+ * state.  The legacy engine scanner intentionally returns only resumables, so
+ * this companion scan collects every state carrying requestId/batchRequestId.
+ */
+export async function scanFactoryRegistryStates() {
+  const results = [];
+  const workspace = await window.mazz.invoke('workspace:get');
+  if (!workspace) return results;
+  const seen = new Set();
+  const walk = async (root, depth) => {
+    const dirs = await window.mazz.invoke('fs:listDir', { path: root });
+    for (const entry of dirs || []) {
+      if (!entry?.isDir) continue;
+      let stateFileFound = false;
+      for (const filename of ['任务状态.json', 'task_state.json']) {
+        const statePath = `${entry.path}/${filename}`;
+        const stateText = await readOptionalFile(statePath);
+        if (!stateText) continue;
+        const state = JSON.parse(stateText);
+        const correlated = String(state.requestId || '').trim() || String(state.batchRequestId || '').trim();
+        if (correlated && !seen.has(entry.path)) {
+          seen.add(entry.path);
+          results.push({ ...state, outDir: entry.path });
+        }
+        stateFileFound = true;
+        break;
+      }
+      if (!stateFileFound && depth > 1) await walk(entry.path, depth - 1);
+    }
+  };
+  await walk(`${workspace}/Output`, 3);
+  await walk(`${workspace}/创作产出`, 1);
+  return results.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+}
+
+function combineFactoryDiskStates(...collections) {
+  const byProject = new Map();
+  for (const state of collections.flat()) {
+    if (!state) continue;
+    const key = resumableRecoveryKey(state);
+    const previous = byProject.get(key);
+    if (!previous || String(state.updatedAt || '').localeCompare(String(previous.updatedAt || '')) >= 0) {
+      byProject.set(key, state);
+    }
+  }
+  return [...byProject.values()].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+}
+
+function factoryErrorWithReceipt(error, receipt, code = '') {
+  let failure = error instanceof Error ? error : new Error(String(error || 'Factory 事务失败'));
+  try {
+    failure.receipt = receipt;
+    if (code) failure.factoryCode = code;
+    if (code && !failure.code) failure.code = code;
+  } catch {
+    failure = Object.assign(new Error(failure.message || String(error)), { cause: error, receipt, code, factoryCode: code });
+  }
+  return failure;
+}
+
+async function chatForArtifactCommit(options, phase = '正式工件') {
+  const result = await chatDetailed(options);
+  if (result.safeToCommit !== true || !String(result.text || '').trim()) {
+    const evidence = result.finishReason || result.completionKind || 'unknown';
+    const error = new Error(`${phase}未通过 Provider 完成门（${evidence}），保留原工件`);
+    error.code = 'FACTORY_COMPLETION_UNSAFE';
+    error.completion = {
+      finishReason: result.finishReason ?? null,
+      completionKind: result.completionKind || '',
+      safeToCommit: false,
+    };
+    throw error;
+  }
+  return result.text;
 }
 
 export class FactoryPanel {
@@ -117,6 +220,11 @@ export class FactoryPanel {
     this.feedStatus = '';
     this.feedBusy = false;
     this.resumables = [];         // 启动扫描到的可恢复任务
+    this.resumableDismissals = this.loadJSON(FACTORY_RESUMABLE_DISMISSALS_KEY, {});
+    this.resumableMergePromise = null;
+    this.backgroundRunQueue = [];
+    this.backgroundQueuedIds = new Set();
+    this.backgroundDrainPromise = null;
     this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
     this.agentLedger = normalizeLedger(this.loadJSON(AGENT_LEDGER_KEY, null));
     this.agentRuntime = null;
@@ -134,7 +242,7 @@ export class FactoryPanel {
     window.addEventListener('mazz:factory-task-updated', this.taskUpdateListener);
     window.addEventListener('beforeunload', this.beforeUnloadListener, { once: true });
     this.render();
-    this.reload();
+    this.ready = this.reload();
   }
 
   loadJSON(k, dft) { try { return JSON.parse(localStorage.getItem(k)) ?? dft; } catch { return dft; } }
@@ -157,19 +265,27 @@ export class FactoryPanel {
 
   requestStopAll(reason = 'batch-stop') {
     this.stopRequested = true;
-    for (const taskId of this.runningTasks) this.abortTask(taskId, reason);
+    const queued = this.backgroundRunQueue?.splice?.(0) || [];
+    for (const task of queued) {
+      this.backgroundQueuedIds?.delete?.(task.id);
+      if (task.status === 'pending') task.status = 'paused';
+    }
+    for (const taskId of (this.runningTasks || [])) this.abortTask(taskId, reason);
+    if (queued.length) this.persistTasks();
     this.log('用户请求停止当前执行批次…');
   }
 
   dispose() {
     if (this.disposePromise) return this.disposePromise;
     this.disposed = true;
+    if (this.backgroundRunQueue) this.backgroundRunQueue.length = 0;
+    this.backgroundQueuedIds?.clear?.();
     this.requestStopAll('factory-dispose');
     window.removeEventListener('mazz:factory-task-updated', this.taskUpdateListener);
     window.removeEventListener('beforeunload', this.beforeUnloadListener);
     this.aiUsageOff?.();
     this.aiUsageOff = null;
-    const pendingTasks = [...this.taskSettlements.values()];
+    const pendingTasks = [...this.taskSettlements.values(), ...(this.backgroundDrainPromise ? [this.backgroundDrainPromise] : [])];
     this.disposePromise = (async () => {
       const cleanupErrors = [];
       const attempt = async (label, operation) => {
@@ -215,7 +331,19 @@ export class FactoryPanel {
     return {
       genres: (this.genres || []).map(g => ({ id: g.id, name: g.name, custom: !!g.custom, description: g.description || '' })),
       genreId: this.genre?.id || '',
-      fields: (this.genre?.input_fields || []).map(f => ({ id: f.id, label: f.label, type: f.type, required: !!f.required, placeholder: f.placeholder || '', default: f.default ?? '', options: f.options || null })),
+      fields: (this.genre?.input_fields || []).map(f => ({
+        id: f.id,
+        label: f.label,
+        type: f.type,
+        required: !!f.required,
+        placeholder: f.placeholder || '',
+        default: f.default ?? '',
+        options: f.options || null,
+        // Keep the canonical UI owner across the detached project-window snapshot.
+        // Legacy length fields remain part of persisted task compatibility, but the
+        // project panel must not render them beside the authoritative length plan.
+        uiOwner: f.uiOwner || '',
+      })),
       values: { ...(this.values || {}) },
       genreDesc: this.genre?.description || '',
       providerConfigured: providerReady(this.cfg),
@@ -315,7 +443,23 @@ export class FactoryPanel {
     window.mazz.invoke('panel:push', { kind: 'dockfloat', payload: { type: 'factoryTasks', tasks: this.tasksSnapshot() } }).catch(() => {});
   }
   saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
-  persistTasks() { this.saveJSON(TASKS_KEY, this.tasks); this.renderTasks(); this.pushTasks(); }
+  persistTaskRegistry() {
+    // This is the durable commit boundary.  Callers may roll back memory only
+    // when this operation throws; view updates must never blur that distinction.
+    this.saveJSON(TASKS_KEY, this.tasks);
+    return true;
+  }
+  syncTaskViews() {
+    try { this.renderTasks(); }
+    catch (error) { console.error('[factory] 任务列表渲染失败:', error?.message || error); }
+    try { this.pushTasks(); }
+    catch (error) { console.error('[factory] 任务列表广播失败:', error?.message || error); }
+  }
+  persistTasks() {
+    this.persistTaskRegistry();
+    this.syncTaskViews();
+    return true;
+  }
 
   async reload() {
     this.cfg = await getProviderConfig();
@@ -328,10 +472,36 @@ export class FactoryPanel {
     this.renderForm();
     this.renderTasks();
     this.updateProviderBadge();
-    // 启动扫描可恢复任务（原版启动恢复列表）
-    this.resumables = await scanResumableTasks();
-    this.renderResumables();
+    // 磁盘状态与任务注册表必须先收敛；执行台和恢复条只读同一份项目事实。
+    await this.reconcileResumableTasks();
     this.pushSnapshot(); // W53 坞浮动镜像
+  }
+
+  async reconcileResumableTasks() {
+    if (this.resumableMergePromise) return this.resumableMergePromise;
+    this.resumableMergePromise = (async () => {
+      const [resumableScanned, registryScanned] = await Promise.all([
+        scanResumableTasks(),
+        scanFactoryRegistryStates(),
+      ]);
+      const scanned = combineFactoryDiskStates(resumableScanned, registryScanned);
+      const merged = mergeFactoryResumables(this.tasks, scanned, {
+        activeTaskIds: new Set([...this.runningTasks, ...this.backgroundQueuedIds]),
+        fallbackGenreId: this.genre?.id || '',
+      });
+      this.tasks = merged.tasks;
+      const dismissals = pruneFactoryResumableDismissals(resumableScanned, this.resumableDismissals);
+      const dismissalsChanged = JSON.stringify(dismissals) !== JSON.stringify(this.resumableDismissals);
+      this.resumableDismissals = dismissals;
+      if (dismissalsChanged) this.saveJSON(FACTORY_RESUMABLE_DISMISSALS_KEY, dismissals);
+      this.resumables = visibleFactoryResumables(resumableScanned, dismissals);
+      if (merged.changed) this.persistTasks();
+      else this.renderTasks();
+      this.renderResumables();
+      return { ...merged, scanned, resumableScanned, registryScanned, visible: this.resumables };
+    })();
+    try { return await this.resumableMergePromise; }
+    finally { this.resumableMergePromise = null; }
   }
 
   // ==================== 骨架 ====================
@@ -374,8 +544,8 @@ export class FactoryPanel {
         <details class="fc-extra">
           <summary>高级设置 <span class="fc-extra-badge"></span></summary>
           <div class="fc-sec fc-advanced-row">
-            <label class="fc-check" title="双循环勘误：生成后自检+修订一轮"><input type="checkbox" class="fc-dualloop"> 双循环勘误</label>
-            <label class="fc-check" title="交叉审校流程">审校 <select class="fc-review-ritual"><option value="light">标准流程</option><option value="full">完整流程</option></select></label>
+            <label class="fc-check" title="二次校验：生成后自检并修订一轮"><input type="checkbox" class="fc-dualloop"> 二次校验</label>
+            <label class="fc-check" title="智能创作专业流程">审校 <select class="fc-review-ritual"><option value="light">标准版</option><option value="full">专业版</option></select></label>
             <label class="fc-check" title="每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停">预算 <input type="number" class="fc-review-budget" min="8000" step="1000" value="32000" style="width:72px"> token</label>
             <label class="fc-check" title="由篇幅档决定是否连写"><input type="checkbox" class="fc-maxmode" checked> 连写模式</label>
             <label class="fc-check" title="每个任务自动打开独立只读预览窗"><input type="checkbox" class="fc-autopreview" ${this.autoPreview ? 'checked' : ''}> 生成自动开预览</label>
@@ -400,7 +570,7 @@ export class FactoryPanel {
             <div class="fc-embeds"></div>
           </div>
           <div class="fc-sec">
-            <div class="fc-label">M0 证据取材（SearXNG · 人工核准后投喂创作链）</div>
+            <div class="fc-label">证据取材（SearXNG · 人工核准后投喂创作链）</div>
             <div class="fc-searchrow">
               <input class="fc-search" placeholder="关键词，回车检索…" spellcheck="false">
               <button class="fc-mini" data-a="websearch">生成来源清单</button>
@@ -414,7 +584,7 @@ export class FactoryPanel {
               <input class="fc-feed-query" placeholder="要持续观察的主题" spellcheck="false">
               <input class="fc-feed-location" placeholder="订阅 URL 或项目内路径；检索可留空" spellcheck="false">
               <input class="fc-feed-dimension" value="外部动态" placeholder="工作维度" spellcheck="false">
-              <select class="fc-feed-automation" title="投喂自动化"><option value="approval">M0 人工核准</option><option value="ingest">M1 自动入料</option><option value="queue">M2 加入待启动队列</option></select>
+              <select class="fc-feed-automation" title="投喂自动化"><option value="approval">人工核准</option><option value="ingest">自动入料</option><option value="queue">加入待启动队列</option></select>
               <label class="fc-dim"><input type="checkbox" class="fc-feed-queueauth"> 授权加入 Factory 待启动队列</label>
               <button class="fc-mini" data-a="feedscan">保存来源并扫描</button>
               <button class="fc-mini" data-a="feedw65">四站聚合扫描</button>
@@ -536,7 +706,7 @@ export class FactoryPanel {
     this.el.querySelector('[data-a=newgenre]').addEventListener('click', () => this.openGenreEditor());
     this.el.querySelector('[data-a=fill]').addEventListener('click', () => this.smartFill());
     this.el.querySelector('[data-a=copy]').addEventListener('click', () => this.copyMantra());
-    this.el.querySelector('[data-a=generate]').addEventListener('click', () => this.generateNow());
+    this.el.querySelector('[data-a=generate]').addEventListener('click', () => this.generateNow().catch(error => toast(error.message || String(error))));
     this.el.querySelector('[data-a=addtask]').addEventListener('click', () => this.addTask());
     this.el.querySelector('[data-a=startsel]').addEventListener('click', () => this.startSelected());
     this.el.querySelector('[data-a=runall]').addEventListener('click', () => this.runAllTasks());
@@ -964,7 +1134,8 @@ export class FactoryPanel {
     if (task?.folder) {
       const costPath = `${String(task.folder).replace(/\\/g, '/')}/成本台账.json`;
       let costs = { protocol: W68_PROTOCOL, units: [], usageRecords: [] };
-      try { costs = JSON.parse(await readOptionalFile(costPath)) || costs; } catch {}
+      const existingCosts = await readOptionalFile(costPath);
+      if (existingCosts.trim()) costs = JSON.parse(existingCosts);
       if (!Array.isArray(costs.usageRecords)) costs.usageRecords = [];
       if (!costs.usageRecords.some(row => row.usageId === record.usageId)) costs.usageRecords.push(record);
       await window.mazz.invoke('fs:writeFile', { path: costPath, content: JSON.stringify(costs, null, 2) });
@@ -998,7 +1169,7 @@ export class FactoryPanel {
           <input type="checkbox" data-research-source="${escapeHtml(source.id)}" ${this.researchSelected.has(source.id) ? 'checked' : ''} ${this.researchResultPath ? 'disabled' : ''}>
           <span class="fc-hit-t" title="${escapeHtml(source.url)}">${escapeHtml(source.title)} · ${escapeHtml(source.domain)}</span>
         </label>`).join('')}
-      <div class="fc-searchrow"><span class="fc-dim">${escapeHtml(this.researchStatus || '等待人工核准')}</span><button class="fc-mini" data-research-approve ${this.researchResultPath ? 'disabled' : ''}>${this.researchResultPath ? '已投喂 M0' : '核准并投喂 M0'}</button></div>`;
+      <div class="fc-searchrow"><span class="fc-dim">${escapeHtml(this.researchStatus || '等待人工核准')}</span><button class="fc-mini" data-research-approve ${this.researchResultPath ? 'disabled' : ''}>${this.researchResultPath ? '已投喂证据报告' : '核准并投喂'}</button></div>`;
     box.querySelectorAll('[data-research-source]').forEach(input => input.addEventListener('change', () => {
       this.setResearchSelected(input.dataset.researchSource, input.checked);
     }));
@@ -1020,12 +1191,12 @@ export class FactoryPanel {
     this.researchPrepared = null;
     this.researchSelected.clear();
     this.researchResultPath = '';
-    this.researchStatus = 'M0 正在扩写检索式…';
-    box.innerHTML = '<div class="fc-dim">M0 正在扩写检索式…</div>';
+    this.researchStatus = '正在扩写检索式…';
+    box.innerHTML = '<div class="fc-dim">正在扩写检索式…</div>';
     this.pushSnapshot();
     try {
       this.researchPrepared = await prepareWebResearch(q, { onStage: row => {
-        this.researchStatus = `M0 · ${row.label || row.stage}`;
+        this.researchStatus = `证据取材 · ${row.label || row.stage}`;
         box.innerHTML = `<div class="fc-dim">${escapeHtml(this.researchStatus)}…</div>`;
       } });
       this.researchSelected = new Set(this.researchPrepared.sources.map(source => source.id));
@@ -1041,33 +1212,33 @@ export class FactoryPanel {
 
   async approveResearch() {
     if (!this.researchPrepared) return;
-    if (this.researchResultPath) { toast('本轮 M0 报告已经投喂；重新检索可开启新一轮'); return; }
+    if (this.researchResultPath) { toast('本轮证据报告已经投喂；重新检索可开启新一轮'); return; }
     if (!this.researchSelected.size) { toast('至少核准一个来源'); return; }
-    this.researchStatus = 'M0 · 带引文合成';
+    this.researchStatus = '证据取材 · 带引文合成';
     this.renderResearchSources();
     this.pushSnapshot();
     try {
       const done = await finishWebResearch(this.researchPrepared, {
         selectedIds: [...this.researchSelected],
-        onStage: row => { this.researchStatus = `M0 · ${row.label || row.stage}`; this.pushSnapshot(); },
+        onStage: row => { this.researchStatus = `证据取材 · ${row.label || row.stage}`; this.pushSnapshot(); },
       });
       this.embeds.push({
-        assetId: createMaterialAssetId(), name: `M0检索：${this.researchPrepared.topic}`,
+        assetId: createMaterialAssetId(), name: `证据检索：${this.researchPrepared.topic}`,
         text: done.report.slice(0, 20_000), note: done.path, sourcePath: done.path,
         sourceKind: 'approved-local-report', provenanceSource: 'factory.research',
         layer: 'derived', importedAt: new Date().toISOString(),
       });
       this.researchResultPath = done.path;
-      this.researchStatus = `已核准、落盘并投喂 M0：${done.path}`;
+      this.researchStatus = `已核准、落盘并投喂：${done.path}`;
       this.renderEmbeds();
       this.updateExtraBadge();
       this.renderResearchSources();
-      this.log(`M0 证据报告已入库并投喂：${done.path}`);
+      this.log(`证据报告已入库并投喂：${done.path}`);
       this.pushSnapshot();
-      toast('M0 证据报告已投喂创作链');
+      toast('证据报告已投喂创作链');
       return done;
     } catch (error) {
-      this.researchStatus = `M0 合成失败：${error.message || error}`;
+      this.researchStatus = `证据合成失败：${error.message || error}`;
       this.renderResearchSources();
       this.pushSnapshot();
       toast(this.researchStatus);
@@ -1121,7 +1292,7 @@ export class FactoryPanel {
     const automation = this.el.querySelector('.fc-feed-automation')?.value || 'approval';
     const factoryQueueAuthorized = !!this.el.querySelector('.fc-feed-queueauth')?.checked;
     if (kind !== 'search' && !location) { toast('订阅或本地来源必须填写 URL / 项目内路径'); this.feedBusy = false; return; }
-    if (automation === 'queue' && !factoryQueueAuthorized) { toast('M2 必须明确勾选 Factory 待启动队列授权'); this.feedBusy = false; return; }
+    if (automation === 'queue' && !factoryQueueAuthorized) { toast('加入待启动队列前必须明确勾选授权'); this.feedBusy = false; return; }
     this.feedStatus = '正在保存来源、执行扫描并比较上次观察…';
     this.renderFeed();
     const button = this.el.querySelector('[data-a=feedscan]');
@@ -1165,7 +1336,7 @@ export class FactoryPanel {
     if (!query || !dimension) { toast('先填写观察主题和工作维度'); return; }
     this.feedBusy = true;
     this.feedPrepared = null;
-    this.feedStatus = '正在调用 W65 四站适配器并比较上次观察…';
+    this.feedStatus = '正在调用四站适配器并比较上次观察…';
     this.renderFeed();
     try {
       const projectPath = String(await window.mazz.invoke('workspace:get') || '').trim();
@@ -1224,10 +1395,10 @@ export class FactoryPanel {
         this.feedStatus = '已核准为派生材料并加入项目材料；智能创作仍须由用户手动立项或启动。';
         this.renderEmbeds();
         this.updateExtraBadge();
-        this.log(`W74b 投喂包已核准：${prepared.package.dimension}`);
+        this.log(`素材投喂包已核准：${prepared.package.dimension}`);
       } else {
         this.feedStatus = '本素材包已驳回；来源 KPI 已从裁决账派生更新。';
-        this.log(`W74b 投喂包已驳回：${prepared.package.dimension}`);
+        this.log(`素材投喂包已驳回：${prepared.package.dimension}`);
       }
       this.renderFeed();
       this.pushSnapshot();
@@ -1282,8 +1453,10 @@ export class FactoryPanel {
       ${this.resumables.map((r, i) => `<button class="fc-mini" data-res="${i}" title="${r.outDir}">${iconHtml('↻')}<span>${r.title || '未命名'}（第${(r.currentChapter || 0) + 1}章续）</span></button>`).join('')}
       <button class="fc-mini" data-resclear>忽略全部</button></span></div>`;
     box.querySelectorAll('[data-res]').forEach(b => b.addEventListener('click', () => this.resumeFromState(this.resumables[+b.dataset.res])));
-    box.querySelector('[data-resclear]').addEventListener('click', async () => {
-      for (const r of this.resumables) await writeTaskState(r.outDir, { ...r, status: 'done' }).catch(() => {});
+    box.querySelector('[data-resclear]').addEventListener('click', () => {
+      // “忽略”只收起本次恢复提示，绝不能把未完成磁盘状态伪写成 done。
+      this.resumableDismissals = dismissFactoryResumables(this.resumableDismissals, this.resumables);
+      this.saveJSON(FACTORY_RESUMABLE_DISMISSALS_KEY, this.resumableDismissals);
       this.resumables = [];
       this.renderResumables();
     });
@@ -1292,44 +1465,68 @@ export class FactoryPanel {
   async resumeFromState(st) {
     if (!providerReady(this.cfg)) { toast('先配置 AI 服务'); return; }
     const tpl = this.genres.find(g => g.id === st.genreId) || this.genres.find(g => g.supportsPlugins) || this.genre;
-    const task = {
-      id: st.id || ('t' + Date.now().toString(36)),
-      label: st.title || '未命名',
+    if (!tpl) { toast('没有可用于恢复的创作模板'); return; }
+    const folder = normalizeFactoryFolder(st.outDir || st.folder);
+    const recovered = makeRecoveredFactoryTask(st, { fallbackGenreId: tpl.id });
+    let task = this.tasks.find(row => normalizeFactoryFolder(row.folder).toLocaleLowerCase() === folder.toLocaleLowerCase())
+      || this.tasks.find(row => row.id === recovered.id);
+    if (!task) { task = recovered; this.tasks.push(task); }
+    const recoveredMode = recovered.recoveryModeExplicit ? recovered.mode : (task.mode || recovered.mode);
+    const recoveredMaxChapters = st.maxChapters !== undefined && st.maxChapters !== null && st.maxChapters !== ''
+      ? recovered.maxChapters
+      : (task.maxChapters ?? recovered.maxChapters);
+    Object.assign(task, {
       genreId: tpl.id,
-      values: st.values || {}, dump: st.dump || '',
-      mode: 'max', maxChapters: st.maxChapters || 0,
-      status: 'running', doneChapters: st.currentChapter || 0,
-      folder: st.outDir, blueprintReady: true,
-      embeds: st.embeds || [], pluginSel: st.pluginSel || [], pluginValues: st.pluginValues || {},
-      styleIds: st.styleIds || [], exportFmt: st.exportFmt || 'md',
-      createdAt: st.createdAt, outputProtocol: st.outputProtocol,
-      totalWords: st.totalWords, wordsPerUnit: st.wordsPerUnit, lengthPreset: st.lengthPreset,
-      reviewProtocol: st.reviewProtocol,
-      reviewRitual: st.reviewRitual,
-      reviewBudgetCap: st.reviewBudgetCap,
-      reviewState: st.reviewState,
-      manualRevision: st.manualRevision,
-    };
-    this.tasks.push(task);
+      values: st.values || task.values || {}, dump: st.dump || task.dump || '',
+      mode: recoveredMode, maxChapters: recoveredMaxChapters,
+      totalWords: recovered.totalWords ?? task.totalWords,
+      wordsPerUnit: recovered.wordsPerUnit ?? task.wordsPerUnit,
+      lengthPreset: recovered.lengthPreset || task.lengthPreset,
+      outputProtocol: recovered.outputProtocol || task.outputProtocol,
+      reviewProtocol: recovered.reviewProtocol || task.reviewProtocol,
+      reviewRitual: recovered.reviewRitual || task.reviewRitual,
+      reviewBudgetCap: recovered.reviewBudgetCap ?? task.reviewBudgetCap,
+      dualLoop: typeof recovered.dualLoop === 'boolean' ? recovered.dualLoop : task.dualLoop,
+      autoPreview: typeof recovered.autoPreview === 'boolean' ? recovered.autoPreview : task.autoPreview,
+      status: 'running', doneChapters: st.currentChapter ?? task.doneChapters ?? 0,
+      folder, blueprintReady: recovered.blueprintReady,
+      embeds: st.embeds || task.embeds || [], pluginSel: st.pluginSel || task.pluginSel || [], pluginValues: st.pluginValues || task.pluginValues || {},
+      styleIds: st.styleIds || task.styleIds || [], exportFmt: st.exportFmt || task.exportFmt || 'md',
+      requestId: recovered.requestId || task.requestId || '', receiptAt: recovered.receiptAt || task.receiptAt || 0,
+      batchRequestId: recovered.batchRequestId || task.batchRequestId || '',
+      createdAt: recovered.createdAt || task.createdAt || 0,
+      recoveredFromDisk: true, recoveryStateUpdatedAt: st.updatedAt || task.recoveryStateUpdatedAt || '',
+    });
+    delete this.resumableDismissals[resumableRecoveryKey(st)];
+    this.saveJSON(FACTORY_RESUMABLE_DISMISSALS_KEY, this.resumableDismissals);
     this.persistTasks();
     if (!this.claimTask(task)) {
-      this.tasks = this.tasks.filter(t => t !== task);
+      task.status = 'paused';
       this.persistTasks();
       return;
     }
-    this.log(`恢复中断任务：「${task.label}」从第 ${task.doneChapters + 1} 章续写`);
-    await writeTaskState(st.outDir, { ...st, status: 'running' });
+    this.log(task.mode === 'single'
+      ? `恢复中断单次任务：「${task.label}」`
+      : `恢复中断任务：「${task.label}」从第 ${task.doneChapters + 1} 章续写`);
+    const dual = typeof task.dualLoop === 'boolean'
+      ? task.dualLoop
+      : !!this.el.querySelector('.fc-dualloop')?.checked;
+    if (typeof task.dualLoop !== 'boolean') task.dualLoop = dual;
     try {
-      const progress = await readMaxTaskProgress(st.outDir, tpl);
-      await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, progress);
+      await writeTaskState(folder, factoryTaskState(task, { ...st, status: 'running' }));
+      if (task.mode === 'single') {
+        await this.runSingleTask(task, tpl, dual);
+      } else {
+        const progress = await readMaxTaskProgress(folder, tpl);
+        await this.runMaxTask(task, tpl, dual, progress);
+      }
       if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
     } catch (e) {
       if (this.taskShouldStop(task) || e?.name === 'AbortError') { task.status = 'paused'; this.log('⏹ 恢复任务已停止并保留断点'); }
       else { task.status = 'failed'; this.log(`✗ 恢复失败：${e.message}`); await this.finishTaskPreview(task, e.message).catch(() => {}); }
     } finally {
       this.releaseTask(task);
-      this.resumables = await scanResumableTasks();
-      this.renderResumables();
+      await this.reconcileResumableTasks();
     }
   }
 
@@ -1342,7 +1539,8 @@ export class FactoryPanel {
     this.logEl.scrollTop = this.logEl.scrollHeight;
   }
 
-  openFactoryDesk(task = null) {
+  async openFactoryDesk(task = null) {
+    await this.reconcileResumableTasks();
     const target = task || [...this.tasks].reverse().find(row => row.folder) || null;
     commands.execute('factory.openDesk', { taskId: target?.id || '', folder: target?.folder || '', title: target ? `${target.label} · 智能创作台` : '智能创作台' });
   }
@@ -1727,7 +1925,7 @@ export class FactoryPanel {
           taskId: task.id, projectId: task.id, title: task.label,
           domain: 'content-production', taskType: 'factory.single.w68',
           workflowRef: 'W68', workflowVersion: 'W68a', governanceProfile: task.reviewRitual || 'light',
-          budgetProfile: { capTokens: Number(task.reviewBudgetCap) || 32000 }, previousRunId,
+          budgetProfile: { capTokens: resolveReviewBudgetCap(task.reviewBudgetCap) }, previousRunId,
           inputArtifactRefs: Array.isArray(task.materialRefs) ? task.materialRefs : [],
           provenance: { source: 'mazz.factory', protocol: 'W73b' },
         });
@@ -2278,14 +2476,143 @@ export class FactoryPanel {
     } catch {}
   }
 
-  async generateNow() {
-    if (!this.validateRequired()) return;
-    if (!providerReady(this.cfg)) { toast('先点 ⚙ 配置 AI 服务（或先「复制模板母版」去别的 AI 用）'); return; }
+  taskReceipt(task, extra = {}) {
+    if (!task) return null;
+    return {
+      taskId: task.id,
+      requestId: task.requestId || task.batchRequestId || '',
+      batchRequestId: task.batchRequestId || '',
+      label: task.label,
+      folder: task.folder || '',
+      status: task.status || 'pending',
+      createdAt: task.createdAt,
+      receiptAt: task.receiptAt || 0,
+      ...extra,
+    };
+  }
+
+  transactionTask(requestId = '') {
+    const key = String(requestId || '').trim();
+    return key ? this.tasks.find(task => task.requestId === key || task.batchRequestId === key) || null : null;
+  }
+
+  registerTask(task) {
+    if (!task) throw new Error('任务为空，无法建立项目事务');
+    const existing = this.tasks.find(row => row.id === task.id)
+      || (task.requestId && this.tasks.find(row => row.requestId === task.requestId));
+    if (existing) return existing;
+    this.tasks.push(task);
+    try {
+      this.persistTaskRegistry();
+    } catch (error) {
+      const index = this.tasks.indexOf(task);
+      if (index >= 0) this.tasks.splice(index, 1);
+      this.syncTaskViews();
+      throw factoryErrorWithReceipt(error, this.taskReceipt(task, {
+        accepted: false, registered: false, registryPersisted: false, rolledBack: true,
+      }), 'FACTORY_TASK_REGISTRY_PERSIST_FAILED');
+    }
+    this.syncTaskViews();
+    return task;
+  }
+
+  async establishTaskReceipt(task) {
+    const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
+    if (!tpl) throw new Error('创作模板尚未就绪');
+    try {
+      await this.ensureTaskFolder(task, tpl);
+      task.receiptAt ||= Date.now();
+      task.status = ['done', 'done-warn', 'cancelled'].includes(task.status) ? task.status : 'pending';
+      const state = factoryTaskState(task, {
+        // 磁盘收据先记 paused：即使在后台真正 claim 前进程退出，恢复扫描仍能找到项目。
+        status: 'paused', currentChapter: task.doneChapters || 0,
+        values: task.values, dump: task.dump, pluginSel: task.pluginSel, pluginValues: task.pluginValues,
+        styleIds: task.styleIds, embeds: task.embeds,
+        outputProtocol: task.outputProtocol || 'W60b', totalWords: task.totalWords,
+        wordsPerUnit: task.wordsPerUnit, lengthPreset: task.lengthPreset, exportFmt: task.exportFmt || 'md',
+        reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual,
+        reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState,
+      });
+      await writeTaskState(task.folder, state);
+    } catch (error) {
+      task.status = 'failed';
+      task.receiptError = String(error?.message || error);
+      const failure = factoryErrorWithReceipt(error, this.taskReceipt(task, {
+        accepted: false, registered: true, durable: false, registryPersisted: false,
+      }), 'FACTORY_TASK_RECEIPT_WRITE_FAILED');
+      try { this.persistTaskRegistry(); }
+      catch (persistError) { failure.registryPersistError = String(persistError?.message || persistError); }
+      this.syncTaskViews();
+      throw failure;
+    }
+
+    // From here on the disk receipt is the durable transaction owner.  A quota
+    // or UI failure must never downgrade it to a failed receipt or lose its ID.
+    delete task.receiptError;
+    const durableReceipt = this.taskReceipt(task, { accepted: true, registered: true, durable: true });
+    try {
+      this.persistTaskRegistry();
+    } catch (error) {
+      this.syncTaskViews();
+      throw factoryErrorWithReceipt(error, {
+        ...durableReceipt, registryPersisted: false,
+      }, 'FACTORY_TASK_REGISTRY_PERSIST_FAILED_AFTER_RECEIPT');
+    }
+    this.syncTaskViews();
+    return { ...durableReceipt, registryPersisted: true };
+  }
+
+  scheduleBackgroundTasks(tasks = []) {
+    // 明确的新开工动作可以启动新批次；旧任务仍由各自已 abort 的 signal 收口。
+    if (!this.disposed && tasks.length) this.stopRequested = false;
+    for (const task of tasks) {
+      if (!task || this.backgroundQueuedIds.has(task.id) || this.runningTasks.has(task.id)) continue;
+      if (['done', 'done-warn', 'cancelled'].includes(task.status)) continue;
+      this.backgroundQueuedIds.add(task.id);
+      this.backgroundRunQueue.push(task);
+    }
+    if (this.backgroundDrainPromise || !this.backgroundRunQueue.length) return this.backgroundDrainPromise;
+    this.backgroundDrainPromise = (async () => {
+      while (!this.disposed && !this.stopRequested && this.backgroundRunQueue.length) {
+        const slots = Math.max(0, this.concurrency - this.runningTasks.size);
+        if (!slots) {
+          const active = [...this.taskSettlements.values()];
+          if (!active.length) break;
+          await Promise.race(active);
+          continue;
+        }
+        const batch = this.backgroundRunQueue.splice(0, slots);
+        for (const task of batch) this.backgroundQueuedIds.delete(task.id);
+        await Promise.all(batch.map(task => this.runTask(task, { scheduled: true })));
+      }
+    })().catch(error => {
+      console.error('[factory] 后台任务调度失败:', error?.message || error);
+    }).finally(() => {
+      this.backgroundDrainPromise = null;
+      if (!this.disposed && !this.stopRequested && this.backgroundRunQueue.length) this.scheduleBackgroundTasks([]);
+    });
+    return this.backgroundDrainPromise;
+  }
+
+  async generateNow({ requestId = '' } = {}) {
+    const key = String(requestId || '').trim();
+    const duplicate = this.transactionTask(key);
+    if (duplicate) {
+      if (!duplicate.folder || !duplicate.receiptAt || duplicate.receiptError) await this.establishTaskReceipt(duplicate);
+      if (duplicate.status === 'pending') this.scheduleBackgroundTasks([duplicate]);
+      return this.taskReceipt(duplicate, { accepted: true, deduplicated: true });
+    }
+    if (!this.validateRequired()) return null;
+    if (!providerReady(this.cfg)) { toast('先点 ⚙ 配置 AI 服务（或先「复制模板母版」去别的 AI 用）'); return null; }
     const maxMode = this.el.querySelector('.fc-maxmode').checked;
     const maxChapters = +this.el.querySelector('.fc-maxchapters').value || 0;
     const task = this.makeTask(maxMode, maxChapters);
-    task.status = 'running';
-    await this.runTask(task);
+    if (key) task.requestId = key;
+    this.registerTask(task); // 注册表 durable commit 失败会原子回滚；成功后同 requestId 始终拥有同一任务。
+    const receipt = await this.establishTaskReceipt(task);
+    this.scheduleBackgroundTasks([task]); // 不等待整次生成；收据建立即把控制权交回立项窗。
+    this.log(`已开工：「${task.label}」；项目收据已落盘，生成在后台继续`);
+    return receipt;
   }
 
   makeTask(maxMode, maxChapters, valueOverrides = null) {
@@ -2303,7 +2630,7 @@ export class FactoryPanel {
       values,
       dump: this.dumpEl.value,
       mode: maxMode ? 'max' : 'single',
-      maxChapters,
+      maxChapters: maxMode ? maxChapters : 1,
       totalWords: this.lengthPlan.totalWords,
       wordsPerUnit: this.lengthPlan.wordsPerUnit,
       lengthPreset: this.lengthPlan.preset,
@@ -2317,6 +2644,7 @@ export class FactoryPanel {
       reviewProtocol: W68_PROTOCOL,
       reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
       reviewBudgetCap: Math.max(0, +(this.el.querySelector('.fc-review-budget')?.value || 32000)),
+      dualLoop: !!this.el.querySelector('.fc-dualloop')?.checked,
       exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
       autoPreview: this.autoPreview,
     };
@@ -2529,7 +2857,7 @@ export class FactoryPanel {
     if (!target || !text.trim()) { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '文件路径或内容无效' }); return false; }
     if (task.status === 'running') { this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '任务生成中，暂不允许回写' }); return false; }
     const originalTarget = target;
-    const beforeText = await readOptionalFile(target).catch(() => '');
+    const beforeText = await readOptionalFile(target);
     if (task.reviewProtocol === W68_PROTOCOL && /\/工件\//.test(target.replace(/\\/g, '/'))) {
       this.editorPush(instanceId || taskId, { type: 'factoryEditError', message: '交叉审校产物已封存为只读；更正请对正文另立补遗' });
       return false;
@@ -2547,7 +2875,7 @@ export class FactoryPanel {
     });
     if (revision.changed) {
       const revisionPath = `${task.folder}/工件修订台账.ndjson`;
-      const ledger = await readOptionalFile(revisionPath).catch(() => '');
+      const ledger = await readOptionalFile(revisionPath);
       await window.mazz.invoke('fs:writeFile', { path: revisionPath, content: `${String(ledger).trimEnd()}${ledger ? '\n' : ''}${JSON.stringify({ ...revision, sourcePath: originalTarget })}\n` });
       task.reviewState = { ...(task.reviewState || {}), finalStatus: revision.nextReviewStatus, revisionId: revision.revisionId };
       task.finalDecision = 're-review-required';
@@ -2563,8 +2891,9 @@ export class FactoryPanel {
     task.revised = true;
     const statePath = `${task.folder}/${task.outputProtocol === 'W60b' || /(^|[\\/])Output([\\/]|$)/i.test(task.folder) ? '任务状态.json' : 'task_state.json'}`;
     let state = {};
-    try { state = JSON.parse(await window.mazz.invoke('fs:readFile', { path: statePath })); } catch {}
-    await writeTaskState(task.folder, { ...state, id: task.id, title: task.label, genreId: task.genreId, status: state.status || task.status || 'done', values: task.values, manualRevision: task.manualRevision, reviewState: task.reviewState, finalDecision: task.finalDecision });
+    const stateText = await readOptionalFile(statePath);
+    if (stateText.trim()) state = JSON.parse(stateText);
+    await writeTaskState(task.folder, factoryTaskState(task, { ...state, status: state.status || task.status || 'done', values: task.values, manualRevision: task.manualRevision, reviewState: task.reviewState, finalDecision: task.finalDecision }));
     this.persistTasks();
     const files = await this.previewFiles(task.folder, target, 'done');
     this.previewPush(task.id, { type: 'factoryPreviewSynced', path: target, content: text, files, revisionCount: task.manualRevision.count });
@@ -2618,9 +2947,12 @@ export class FactoryPanel {
     let scheduleDispatch = null;
     const tpl = this.genres.find(g => g.id === task.genreId) || this.genre;
     task.status = 'running';
-    this.renderTasks();
+    this.persistTasks();
     this.pushSnapshot();
-    const dual = this.el.querySelector('.fc-dualloop').checked;
+    const dual = typeof task.dualLoop === 'boolean'
+      ? task.dualLoop
+      : !!this.el.querySelector('.fc-dualloop')?.checked;
+    if (typeof task.dualLoop !== 'boolean') task.dualLoop = dual;
     this.log(`开始任务：「${task.label}」（${tpl.name} · ${task.mode === 'max' ? '连写' : '单次'}模式）`);
     try {
       await this.ensureTaskFolder(task, tpl);
@@ -2633,13 +2965,13 @@ export class FactoryPanel {
         });
         if (scheduleDispatch?.status === 'blocked') {
           task.status = 'paused';
-          if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
+          if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
           this.log(`⚠ 任务「${task.label}」调度阻断：${scheduleDispatch.code}`);
           await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '联合调度已阻断', content: `BLOCKED: ${scheduleDispatch.code}\n\n没有暗降到任意模型或执行器。`, stage: 'scheduler-blocked', progress: 100 })).catch(() => {});
           return false;
         }
       }
-      await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务开工', content: `「${task.label}」进入生产线。\n\n- 模式：${task.mode === 'max' ? '连写' : '单次'}\n- 审理：${task.reviewRitual === 'full' ? '全仪式' : '轻仪式'}\n- 预算：${task.reviewBudgetCap || 32000} token`, stage: 'start', progress: 0 }));
+      await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务开工', content: `「${task.label}」进入智能创作专业流程。\n\n- 模式：${task.mode === 'max' ? '连写' : '单次'}\n- 档位：${task.reviewRitual === 'full' ? '专业版' : '标准版'}\n- 预算：${resolveReviewBudgetCap(task.reviewBudgetCap)} token`, stage: 'start', progress: 0 }));
       if (task.mode === 'max') await this.runMaxTask(task, tpl, dual);
       else await this.runSingleTask(task, tpl, dual);
       if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
@@ -2651,12 +2983,12 @@ export class FactoryPanel {
     } catch (e) {
       if (e?.code === 'W74A_INGESTION_CONFLICT') {
         task.status = 'paused';
-        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, materialConflictPath: e.conflictPath || '', ...this.productionRunState(task) }).catch(() => {});
+        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'blocked', values: task.values, materialConflictPath: e.conflictPath || '', ...this.productionRunState(task) })).catch(() => {});
         this.log(`⚠ 任务「${task.label}」因材料身份冲突保持阻断：${e.message}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '项目材料需要人工裁决', content: `${e.message}${e.conflictPath ? `\n\n冲突证据：${e.conflictPath}` : ''}`, stage: 'material-conflict', progress: 100 })).catch(() => {});
       } else if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED', 'W73E_SCHEDULER_RECOVERY_REQUIRED', 'W73F_ECONOMICS_RECOVERY_REQUIRED', 'W73_RUNTIME_RECOVERY_REQUIRED', 'RUN_OWNER_ACTIVE'].includes(e?.code)) {
         task.status = 'paused';
-        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
+        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
         this.log(`⚠ 任务「${task.label}」因事实账恢复要求保持阻断：${e.message}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '事实账需要人工恢复', content: e.message, stage: 'ledger-recovery-required', progress: 100 })).catch(() => {});
       } else if (this.taskShouldStop(task) || e?.name === 'AbortError') {
@@ -2666,13 +2998,13 @@ export class FactoryPanel {
           ? { type: 'run-cancelled', toStatus: 'cancelled', reasonCode: 'TASK_DELETED', message: '任务由维护者删除；现有工件保持不变' }
           : { type: 'run-paused', toStatus: 'paused', reasonCode: 'TASK_STOPPED', message: '任务暂停；现有工件保持不变' }
         ).catch(error => this.log(`⚠ Production Run ${cancelled ? '取消' : '暂停'}记账失败：${error.message}`));
-        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: cancelled ? 'cancelled' : 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
+        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: cancelled ? 'cancelled' : 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
         this.log(`${cancelled ? '✕' : '⏹'} 任务「${task.label}」已${cancelled ? '取消' : '停止并保留断点'}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: cancelled ? '任务已取消' : '任务已暂停', content: cancelled ? '执行已取消；现有工件保持不变。' : '请求已取消；现有断点与工件保持不变。', stage: cancelled ? 'cancelled' : 'stopped', progress: 100 })).catch(() => {});
       } else {
         task.status = 'failed';
         await this.appendProductionRun(task, { type: 'run-failed', toStatus: 'failed', reasonCode: e.code || 'TASK_FAILED', message: this.redactProductionRunMessage(e.message) }).catch(error => this.log(`⚠ Production Run 失败记账失败：${error.message}`));
-        if (task.folder) await writeTaskState(task.folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) }).catch(() => {});
+        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
         this.log(`✗ 任务「${task.label}」失败：${e.message}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务中断', content: e.message, stage: 'failed', progress: 100 })).catch(() => {});
         await this.finishTaskPreview(task, e.message).catch(() => {});
@@ -2736,25 +3068,30 @@ export class FactoryPanel {
     const manifest = reviewArtifactManifest(result, { unitRef });
     await window.mazz.invoke('fs:writeFile', { path: `${artifactDir}/${REVIEW_ARTIFACT_NAMES.manifest}`, content: JSON.stringify(manifest, null, 2) });
 
-    const locked = (result.schema?.lockedFacts || []).map(x => `- ${x.label}＝${x.value}｜来源：${(x.sources || []).join(' / ') || '未登记'}｜口径：${x.basis || '未登记'}`).join('\n');
-    const bibleText = String(result.bible || '').trim() || `# 圣经\n\n## 锁定事实\n\n${locked || '- 暂无锁定事实'}\n`;
-    await window.mazz.invoke('fs:writeFile', { path: `${folder}/圣经.md`, content: bibleText.startsWith('#') ? bibleText : `# 圣经\n\n${bibleText}` });
+    // A blocked/unsafe review may persist its per-unit evidence and cost entry,
+    // but it must never create or overwrite canonical project context.
+    if (result.sealed === true) {
+      const locked = (result.schema?.lockedFacts || []).map(x => `- ${x.label}＝${x.value}｜来源：${(x.sources || []).join(' / ') || '未登记'}｜口径：${x.basis || '未登记'}`).join('\n');
+      const bibleText = String(result.bible || '').trim() || `# 圣经\n\n## 锁定事实\n\n${locked || '- 暂无锁定事实'}\n`;
+      await window.mazz.invoke('fs:writeFile', { path: `${folder}/圣经.md`, content: bibleText.startsWith('#') ? bibleText : `# 圣经\n\n${bibleText}` });
 
-    if (result.precedent) {
-      const precedentPath = `${folder}/判例库.md`;
-      const old = await readOptionalFile(precedentPath);
-      const next = old.trim() ? `${old.trim()}\n\n---\n\n${result.precedent}\n` : `# 判例库\n\n${result.precedent}\n`;
-      await window.mazz.invoke('fs:writeFile', { path: precedentPath, content: next });
+      if (result.precedent) {
+        const precedentPath = `${folder}/判例库.md`;
+        const old = await readOptionalFile(precedentPath);
+        const next = old.trim() ? `${old.trim()}\n\n---\n\n${result.precedent}\n` : `# 判例库\n\n${result.precedent}\n`;
+        await window.mazz.invoke('fs:writeFile', { path: precedentPath, content: next });
+      }
     }
     const costPath = `${folder}/成本台账.json`;
     let costs = { protocol: W68_PROTOCOL, units: [] };
-    try { costs = JSON.parse(await readOptionalFile(costPath)) || costs; } catch {}
+    const existingCosts = await readOptionalFile(costPath);
+    if (existingCosts.trim()) costs = JSON.parse(existingCosts);
     if (!Array.isArray(costs.units)) costs.units = [];
     costs.units = costs.units.filter(x => x.unitNo !== unitNo);
     costs.units.push({ unitNo, unitName, outline, ritual: result.ritual, verdict: result.verdict, sealed: result.sealed, budget: result.budget, at: new Date().toISOString() });
     costs.totalTokens = costs.units.reduce((sum, x) => sum + (Number(x.budget?.usedTokens) || 0), 0);
     await window.mazz.invoke('fs:writeFile', { path: costPath, content: JSON.stringify(costs, null, 2) });
-    const budgetGate = evaluateBudgetCap({ capTokens: result.budget?.capTokens || task.reviewBudgetCap || 32000, usedTokens: result.budget?.usedTokens || 0, requestedRitual: result.ritual?.requested || task.reviewRitual || 'light' });
+    const budgetGate = evaluateBudgetCap({ capTokens: resolveReviewBudgetCap(result.budget?.capTokens, resolveReviewBudgetCap(task.reviewBudgetCap)), usedTokens: result.budget?.usedTokens || 0, requestedRitual: result.ritual?.requested || task.reviewRitual || 'light' });
     if (result.ritual?.downgraded || result.verdict === 'budget-stop' || budgetGate.status !== 'ok') {
       workshopEvents.push(normalizeFactoryEvent({
         id: `w68c-budget-${task.id}-${unitNo}`, type: 'help', title: `${budgetGate.label} · 人工选择`,
@@ -2785,7 +3122,7 @@ export class FactoryPanel {
       eventDay: /事件日/.test(task.label || '') || !!task.values?.['事件日'],
     });
     const content = [
-      card.eventDay ? '> **事件日必审：本卡不得静默越过。**' : '> 四闸已完成，等待人工终审。',
+      card.eventDay ? '> **事件日必审：本卡不得静默越过。**' : '> 自动校验、节点验收、交叉审校与复核仲裁已完成，等待人工最终审定。',
       '', '## 全文', '', result.text || result.artifacts?.draft || '- 无',
       '', '## 双审意见', '', result.artifacts?.review || '- 无',
       '', '## 机检报告', '', result.artifacts?.machine || '- 无',
@@ -2803,13 +3140,14 @@ export class FactoryPanel {
     if (task.reviewProtocol !== W68_PROTOCOL) return { sealed: true, text, legacy: true };
     const bible = await readOptionalFile(`${task.folder}/圣经.md`);
     const precedents = await readOptionalFile(`${task.folder}/判例库.md`);
-    this.log(`⚖ ${unitName} ${unitNo} 进入 W68a ${task.reviewRitual === 'full' ? '全仪式' : '轻仪式'}双环审理…`);
+    this.log(`⚖ ${unitName} ${unitNo} 进入智能创作专业流程 · ${task.reviewRitual === 'full' ? '专业版' : '标准版'}…`);
     const result = await runW68Review({
-      draft: text, blueprint, outline, bible, unitRef: `第${String(unitNo).padStart(3, '0')}${unitName}`,
-      ritual: task.reviewRitual || 'light', budgetCap: Number(task.reviewBudgetCap) || 32000, precedents,
+      draft: text, blueprint, outline, bible, unitRef: `第${String(unitNo).padStart(3, '0')}${unitName}`, unitIndex: unitNo,
+      ritual: task.reviewRitual || 'light', budgetCap: resolveReviewBudgetCap(task.reviewBudgetCap), precedents,
       protectionList: [task.label, ...(task.values?.['主要人物'] ? [task.values['主要人物']] : [])].filter(Boolean),
       additionalMachineChecks: current => runQualityChecks(tpl, current),
-      ask: req => chat({ cfg: this.cfg, signal: this.taskSignal(task), ...req }),
+      requireCompletionMetadata: true,
+      ask: req => chatDetailed({ cfg: this.cfg, signal: this.taskSignal(task), ...req }),
     });
     const artifactDir = await this.writeW68Artifacts(task, result, { unitNo, unitName, outline });
     task.reviewState = {
@@ -2833,20 +3171,21 @@ export class FactoryPanel {
     });
     await this.ensureW73gProtocolAssets(task, this.productionRunLedgers.get(task.id));
     if (!result.sealed) {
-      const error = new Error(`W68a 未准落盘：${result.reason || result.verdict}；中间工件已保存`);
+      const error = new Error(`专业流程未准落盘：${result.reason || result.verdict}；中间工件已保存`);
       error.code = 'W68_REVIEW_BLOCK';
       throw error;
     }
-    this.log(`✓ ${unitName} ${unitNo} 四闸全开并封存（审理 ${result.budget?.usedTokens || 0} token）`);
-    await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: `${unitName} ${unitNo} 已封存`, content: `四闸全开；审理使用 ${result.budget?.usedTokens || 0} token。`, unitNo, unitName, stage: 'sealed', progress: 100 }));
+    this.log(`✓ ${unitName} ${unitNo} 已通过自动校验、节点验收、交叉审校与复核仲裁（${result.budget?.usedTokens || 0} token）`);
+    await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: `${unitName} ${unitNo} 已封存`, content: `自动校验 → 节点验收 → 交叉审校 → 复核与仲裁已通过；等待人工最终审定。交叉审校使用 ${result.budget?.usedTokens || 0} token。`, unitNo, unitName, stage: 'sealed', progress: 100 }));
     return result;
   }
 
   async runSingleTask(task, tpl, dual) {
+    dual = typeof task.dualLoop === 'boolean' ? task.dualLoop : !!dual;
     const folder = await this.ensureTaskFolder(task, tpl);
     const m = buildMantra(tpl, task.values, task.dump);
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/创作蓝图.md`, content: m.doc });
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'running', currentChapter: 0, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) });
+    await writeTaskState(folder, factoryTaskState(task, { status: 'running', currentChapter: 0, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) }));
     await this.openTaskPreview(task, tpl, folder);
     // 创作增强注入：嵌入资料（最高优先级）+ 插件规则 + 文风包
     const embedBlocks = buildEmbedBlocks(task.embeds || []);
@@ -2861,29 +3200,52 @@ export class FactoryPanel {
     const extra = [embedBlocks, plugBlocks && `## 创作插件规则\n${plugBlocks}`,
       stylePkg.includes('未提供') ? '' : `## 文风参考素材\n${stylePkg}`].filter(Boolean).join('\n\n');
     if (extra) m.user += `\n\n${extra}`;
+    m.system += '\n\n【完成证据】正文末尾必须由你原样输出 [本次续写字数：N]，其中 N 必须严格等于声明行之前正文的 JavaScript 字符长度；不得估算或省略。';
     if (task.reviewProtocol === W68_PROTOCOL) m.system += '\n\n【W68a 防偷懒协议】动笔前通读全部锁定材料；每个内容单元达到项目配额；本单元重新读取验收点，不得凭上单元惯性续写。';
     this.log('⚡ AI 生成中…');
     // 单次模式同样走流式直播（此前用非流式 chat 干等全文=「没办法实时看到进度」总根）
     this.liveStart(task, 1, '');
+    const unitName = getSnapshotSchema(tpl).unitName;
+    const outline = `第1${unitName}：${task.label}`;
+    const stem = buildFactoryUnitStem(1, unitName, outline);
+    const ckptPath = `${folder}/${stem}.checkpoint`;
     let full = '';
     let text = '';
+    let completion = null;
     try {
-      text = await chatStream({
+      completion = await chatStreamDetailed({
         cfg: this.cfg, role: 'chapter', system: m.system, user: m.user, temperature: 0.8, maxTokens: 8192,
         signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
         onChunk: (_, f) => { full = f; this.liveUpdate(task, full); },
       });
-      full = text;
-    } catch (e) { this.liveWrapEl && (this.liveWrapEl.style.display = 'none'); throw e; }
+      full = completion.text;
+    } catch (e) {
+      const checkpointText = stripTokenDeclaration(full);
+      if (checkpointText.trim()) await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: checkpointText }).catch(() => {});
+      this.liveWrapEl && (this.liveWrapEl.style.display = 'none');
+      throw e;
+    }
     if (this.taskShouldStop(task)) {
+      const checkpointText = stripTokenDeclaration(full);
+      if (checkpointText.trim()) await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: checkpointText }).catch(() => {});
       task.status = 'paused';
       await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'STREAM_STOPPED', message: '流式生成停止，半稿未成为正式产物' });
-      await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'stopped', currentChapter: 0, maxChapters: 1, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState, ...this.productionRunState(task) });
+      await writeTaskState(folder, factoryTaskState(task, { status: 'stopped', currentChapter: 0, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState, ...this.productionRunState(task) }));
       this.log(`⏹ 任务「${task.label}」已终止，未把流式半稿冒充成正式成稿`);
       return;
     }
-    const unitName = getSnapshotSchema(tpl).unitName;
-    const outline = `第1${unitName}：${task.label}`;
+    const nativeDeclaration = validateNativeContinuationDeclaration(completion?.text, completion || {});
+    if (nativeDeclaration.safeToCommit !== true) {
+      const checkpointText = nativeDeclaration.text || stripTokenDeclaration(full);
+      if (checkpointText.trim()) await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: checkpointText }).catch(() => {});
+      task.status = 'paused';
+      await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'UNSAFE_STREAM_COMPLETION', message: `Provider 终态与模型原生字数声明未同时通过（${nativeDeclaration.reason}）；半稿只存断点` });
+      await writeTaskState(folder, factoryTaskState(task, { status: 'stopped', currentChapter: 0, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState, unsafeCompletion: { finishReason: completion?.finishReason || null, completionKind: completion?.completionKind || '' }, ...this.productionRunState(task) }));
+      this.log(`⏸ 任务「${task.label}」未通过双证据完成门（${nativeDeclaration.reason}），半稿已保留为断点，未进入审校或正式落盘`);
+      return;
+    }
+    const originalBody = nativeDeclaration.text;
+    text = originalBody;
     let reviewedResult = null;
     if (task.reviewProtocol === W68_PROTOCOL) {
       reviewedResult = await this.runW68UnitReview(task, tpl, { blueprint: m.doc, outline, text, unitNo: 1, unitName });
@@ -2893,18 +3255,29 @@ export class FactoryPanel {
     if (dual && task.reviewProtocol !== W68_PROTOCOL) {
       const failed = checks.filter(c => !c.pass);
       if (failed.length) {
-        this.log('🔁 双循环勘误：自检未过，修订中…');
+        this.log('🔁 二次校验：自检未过，修订中…');
         const fixSys = m.system + '\n\n【勘误】你将收到初稿与未通过的校验项，请输出修订后的完整正文（不要解释）。';
         const fixUser = `【初稿】\n${text}\n\n【未通过校验项】\n${failed.map(f => '- ' + f.label + (f.detail ? '（' + f.detail + '）' : '')).join('\n')}`;
-        text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: fixUser, signal: this.taskSignal(task) });
+        text = await chatForArtifactCommit({ cfg: this.cfg, role: 'chapter', system: fixSys, user: fixUser, signal: this.taskSignal(task) }, '单次勘误正文');
         checks = runQualityChecks(tpl, text);
       }
     }
+    if (text.trim().length < 10) {
+      if (originalBody.trim()) await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: originalBody }).catch(() => {});
+      task.status = 'paused';
+      await this.appendProductionRun(task, {
+        type: 'run-paused', toStatus: 'paused', reasonCode: 'POST_REVIEW_BODY_TOO_SHORT',
+        message: `审校/勘误后的正文仅 ${text.trim().length} 字，拒绝作为正式内容单元`,
+      }).catch(() => {});
+      await writeTaskState(folder, factoryTaskState(task, { status: 'stopped', currentChapter: 0, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState, ...this.productionRunState(task) }));
+      this.log(`⏸ 任务「${task.label}」审校后正文过短，保留原流稿断点并暂停；未生成正式正文或快照`);
+      return;
+    }
     const fails = checks.filter(c => !c.pass);
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/章节大纲.md`, content: outline });
-    const stem = buildFactoryUnitStem(1, unitName, outline);
     const mdPath = `${folder}/${stem}.md`;
     await window.mazz.invoke('fs:writeFile', { path: mdPath, content: text });
+    await window.mazz.invoke('fs:delete', { path: ckptPath }).catch(() => {});
     if (reviewedResult) await this.appendW68FinalReview(task, reviewedResult, { unitNo: 1, unitName, targetPath: mdPath });
     try { await this.exportTaskFormat(task, text, `${folder}/${stem}`); }
     catch (e) { this.log(`⚠ ${task.exportFmt} 导出跳过：${e.message}`); }
@@ -2922,12 +3295,13 @@ export class FactoryPanel {
     });
     await this.ensureW73gProtocolAssets(task, this.productionRunLedgers.get(task.id))
       .catch(error => this.log(`⚠ W73g 终态投影待重开重建：${error.message}`));
-    await writeTaskState(folder, { id: task.id, title: task.label, genreId: task.genreId, status: 'done', currentChapter: 1, maxChapters: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) });
+    await writeTaskState(folder, factoryTaskState(task, { status: 'done', currentChapter: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) }));
     task.status = fails.length ? 'done-warn' : 'done';
     this.log(fails.length ? `⚠ 完成但有 ${fails.length} 项校验未过：${fails[0].label}` : `✅ 完成，全部校验通过（${text.length} 字）`);
   }
 
   async runMaxTask(task, tpl, dual, resumeFrom = null, retryChapter = null) {
+    dual = typeof task.dualLoop === 'boolean' ? task.dualLoop : !!dual;
     const folder = await this.ensureTaskFolder(task, tpl);
     const total = task.maxChapters || (canUseUnlimited(tpl) ? 0 : 10);
     if (!task.maxChapters && total) task.maxChapters = total; // 执行层再钉：旧任务/恢复态不得绕过说明类无限连写禁令
@@ -2935,8 +3309,8 @@ export class FactoryPanel {
     const snapshotSchema = getSnapshotSchema(tpl);
     const unitName = snapshotSchema.unitName;
     await this.openTaskPreview(task, tpl, folder);
-    const stateFor = (status, ch) => writeTaskState(folder, {
-      id: task.id, title: task.label, genreId: task.genreId, status,
+    const stateFor = (status, ch) => writeTaskState(folder, factoryTaskState(task, {
+      status,
       currentChapter: ch ?? task.doneChapters ?? 0, maxChapters: total,
       values: task.values, dump: task.dump, pluginSel: task.pluginSel,
       pluginValues: task.pluginValues, styleIds: task.styleIds, embeds: task.embeds,
@@ -2948,7 +3322,7 @@ export class FactoryPanel {
       reviewState: task.reviewState,
       exportFmt: task.exportFmt || 'md',
       manualRevision: task.manualRevision,
-    });
+    }));
 
     // ══ 阶段一：全书蓝图（原版蓝图生成器：插件+文风+嵌入注入，结构校验+3次重试+兜底） ══
     let blueprint = '';
@@ -2971,25 +3345,51 @@ export class FactoryPanel {
       });
       this.log('📐 正在生成全书蓝图（流式）…');
       let ok = false;
+      let safeCompletionSeen = false;
+      let lastBlueprintDraft = '';
+      const bpCheckpointPath = `${folder}/创作蓝图.checkpoint`;
       for (let attempt = 1; attempt <= 3 && ok === false; attempt++) {
         if (this.taskShouldStop(task)) { task.status = 'paused'; await stateFor('stopped', 0); return; }
         let shown = 0;
-        blueprint = stripMdFence(await chatStream({
-          cfg: this.cfg, role: 'blueprint', user: bpUser, temperature: 0.7, maxTokens: 8192,
-          signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
-          onChunk: (_, full) => {
-            this.previewPush(task.id, { type: 'factoryPreviewStream', phase: 'blueprint', chapterNo: 0, unitName: '蓝图', path: bpPath, text: full, status: 'running' });
-            if (full.length - shown >= 600) { shown = full.length; this.log(`… 蓝图 ${full.length} 字`); }
-          },
-        }));
-        ok = blueprint.length >= 500 && blueprintStructureOk(blueprint, family);
-        this.log(ok ? `✅ 蓝图完整（${blueprint.length} 字，结构通过）` : `⚠ 蓝图不完整（长度 ${blueprint.length}），${attempt < 3 ? '重试 ' + attempt + '/3' : '启用兜底'}`);
+        let completion;
+        try {
+          completion = await chatStreamDetailed({
+            cfg: this.cfg, role: 'blueprint', user: bpUser, temperature: 0.7, maxTokens: 8192,
+            signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
+            onChunk: (_, full) => {
+              lastBlueprintDraft = full;
+              this.previewPush(task.id, { type: 'factoryPreviewStream', phase: 'blueprint', chapterNo: 0, unitName: '蓝图', path: bpPath, text: full, status: 'running' });
+              if (full.length - shown >= 600) { shown = full.length; this.log(`… 蓝图 ${full.length} 字`); }
+            },
+          });
+        } catch (error) {
+          if (lastBlueprintDraft.trim()) await window.mazz.invoke('fs:writeFile', { path: bpCheckpointPath, content: lastBlueprintDraft }).catch(() => {});
+          throw error;
+        }
+        lastBlueprintDraft = completion.text;
+        blueprint = stripMdFence(completion.text);
+        const completionSafe = completion.safeToCommit === true;
+        safeCompletionSeen ||= completionSafe;
+        ok = completionSafe && blueprint.length >= 500 && blueprintStructureOk(blueprint, family);
+        if (!ok && lastBlueprintDraft.trim()) await window.mazz.invoke('fs:writeFile', { path: bpCheckpointPath, content: lastBlueprintDraft }).catch(() => {});
+        this.log(ok
+          ? `✅ 蓝图完整（${blueprint.length} 字，结构通过）`
+          : !completionSafe
+            ? `⚠ 蓝图流未安全结束（${completion.finishReason || completion.completionKind || 'unknown'}），${attempt < 3 ? '重试 ' + attempt + '/3' : '暂停待续'}`
+            : `⚠ 蓝图结构不完整（长度 ${blueprint.length}），${attempt < 3 ? '重试 ' + attempt + '/3' : '启用本地兜底'}`);
+      }
+      if (!ok && !safeCompletionSeen) {
+        task.status = 'paused';
+        await stateFor('stopped', 0);
+        this.log('⏸ 蓝图未收到安全完成信号；半稿只保留为断点，未写入正式蓝图或章节大纲');
+        return;
       }
       if (!ok) {
         blueprint = buildFallbackBlueprint(task, total, tpl);
         this.log('🔧 已使用兜底蓝图');
       }
       await window.mazz.invoke('fs:writeFile', { path: bpPath, content: blueprint });
+      await window.mazz.invoke('fs:delete', { path: bpCheckpointPath }).catch(() => {});
       await this.refreshTaskPreview(task, bpPath);
       this.previewPush(task.id, { type: 'factoryPreviewFile', path: bpPath, content: blueprint });
       if (!this.previewEnabled(task)) this.shell.openTab('markdown', { title: '创作蓝图.md', filePath: bpPath, content: blueprint });
@@ -2998,10 +3398,8 @@ export class FactoryPanel {
 
     // ══ 大纲解析与补齐 ══
     let outlines = [];
-    try {
-      const raw = await readOptionalFile(`${folder}/章节大纲.md`);
-      outlines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-    } catch {}
+    const rawOutline = await readOptionalFile(`${folder}/章节大纲.md`);
+    outlines = rawOutline.split('\n').map(l => l.trim()).filter(Boolean);
     if (!outlines.length) {
       outlines = parseChapterOutlines(blueprint, total || 10, tpl);
       if (total) {
@@ -3046,27 +3444,33 @@ export class FactoryPanel {
 
       // 双重防线：checkpoint（崩溃续写）+ 已有章节（跳过）
       let previous = '';
-      let previousComplete = false;
       previous = await readOptionalFile(ckptPath);
       if (!previous && retryChapter !== i) {
-        try {
-          const existing = await readOptionalFile(mdPath);
-          if (existing.trim().length >= 100) { this.log(`第 ${i} ${unitName}已存在（${existing.length} 字），跳过`); continue; }
-          if (existing.trim()) previous = existing;
-        } catch {}
+        const existing = await readOptionalFile(mdPath);
+        if (existing.trim().length >= 100) {
+          task.doneChapters = Math.max(task.doneChapters || 0, i);
+          await stateFor('running', i);
+          this.log(`第 ${i} ${unitName}已存在（${existing.length} 字），跳过`);
+          continue;
+        }
+        if (existing.trim()) previous = existing;
       }
 
       let correctionDirective = '';
       if (i > 1 && (i - 1) % 10 === 0) {
         this.log(`… 第 ${i} ${unitName}开写前启动纠偏闸（只校正本${unitName}，不重写既有正文）`);
         try {
-          correctionDirective = await chat({
+          correctionDirective = await chatForArtifactCommit({
             cfg: this.cfg, role: 'snapshot',
             system: '你是长篇一致性校验员。只指出下一个结构单元需要纠正的偏差；禁止改写既有正文。',
             user: `【恒定锚】\n${constantAnchor}\n\n【滚动快照】\n${stateSummary}\n\n【下一${unitName}任务】\n${outline}`,
             temperature: 0.1, maxTokens: 1200, signal: this.taskSignal(task),
-          });
-        } catch { /* 纠偏失败不阻塞生产 */ }
+          }, `第 ${i} ${unitName}纠偏指令`);
+        } catch (error) {
+          // 纠偏是可选上下文；没有安全终态时宁可忽略，也不把半条指令污染正文提示。
+          correctionDirective = '';
+          this.log(`⚠ 第 ${i} ${unitName}纠偏未收到安全终态，已忽略：${error.message}`);
+        }
       }
       const cp = buildChapterPromptV2({
         blueprintCore: bpCore, constantAnchor, writingDirective: directive, outlines, stateSummary,
@@ -3078,12 +3482,10 @@ export class FactoryPanel {
       if (previous) {
         const declared = mergeDeclaredContinuation(previous, '');
         if (declared.complete) {
-          previousComplete = true;
           previous = stripTokenDeclaration(declared.text);
-          this.log(`✓ 第 ${i} ${unitName}断点已带 TOKEN 声明，直接收口不重复续写`);
-        } else {
-          cp.user = `你之前已经写完了本${unitName}的前半部分，内容如下：\n\n---\n${previous.slice(-800)}\n---\n\n请从断点处继续往下写，完成本${unitName}剩余部分。不要重复已有内容。直接续写正文，末尾带 [本次续写字数：N] 声明。`;
+          this.log(`⚠ 第 ${i} ${unitName}旧断点带有未验证声明；已去除声明，继续生成并重新通过双证据完成门`);
         }
+        cp.user = `你之前已经写完了本${unitName}的前半部分，内容如下：\n\n---\n${previous.slice(-800)}\n---\n\n请从断点处继续往下写，完成本${unitName}剩余部分。不要重复已有内容。直接续写正文，末尾带 [本次续写字数：N] 声明。`;
         this.log(`⚡ 防线1触发：第 ${i} ${unitName}断点续写（已有 ${previous.length} 字）`);
       } else {
         this.log(`⚡ 正在生成第 ${i} ${unitName}${total ? ' / 共 ' + total + ' ' + unitName : ''}…`);
@@ -3097,25 +3499,24 @@ export class FactoryPanel {
         lastFlush = Date.now();
         await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: full }).catch(() => {});
       };
-      let aiText = '';
-      if (previousComplete) {
-        full = previous;
-      } else {
-        try {
-          aiText = await chatStream({
-            cfg: this.cfg, role: 'chapter', system: cp.system, user: cp.user, temperature: 0.8, maxTokens: 8192,
-            signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
-            onChunk: (_, f) => {
-              full = mergeDeclaredContinuation(previous, f).text;
-              this.liveUpdate(task, stripTokenDeclaration(full));
-              if (Date.now() - lastFlush > 800) flushCkpt();
-            },
-          });
-          full = mergeDeclaredContinuation(previous, aiText).text;
-        } catch (e) {
-          await flushCkpt();
-          throw e;
-        }
+      let completion = null;
+      let nativeDeclaration = null;
+      try {
+        completion = await chatStreamDetailed({
+          cfg: this.cfg, role: 'chapter', system: cp.system, user: cp.user, temperature: 0.8, maxTokens: 8192,
+          signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
+          onChunk: (_, f) => {
+            // Provider 终态尚未验证前，checkpoint 绝不保存可能伪装完成的尾声明。
+            full = mergeDeclaredContinuation(previous, stripTokenDeclaration(f)).text;
+            this.liveUpdate(task, full);
+            if (Date.now() - lastFlush > 800) flushCkpt();
+          },
+        });
+        nativeDeclaration = validateNativeContinuationDeclaration(completion.text, completion);
+        full = mergeDeclaredContinuation(previous, nativeDeclaration.text).text;
+      } catch (e) {
+        await flushCkpt();
+        throw e;
       }
       if (this.taskShouldStop(task)) {
         await flushCkpt();
@@ -3125,8 +3526,19 @@ export class FactoryPanel {
         return;
       }
 
-      full = ensureTokenDeclaration(full);
-      let text = stripTokenDeclaration(full);
+      if (nativeDeclaration?.safeToCommit !== true) {
+        await flushCkpt();
+        task.status = 'paused';
+        await stateFor('stopped', i - 1);
+        this.log(`⏸ 第 ${i} ${unitName}未通过双证据完成门（${nativeDeclaration?.reason || completion?.finishReason || completion?.completionKind || 'unknown'}）；${full.length} 字仅保留断点，未进入审校或正式落盘`);
+        await this.appendProductionRun(task, {
+          type: 'run-paused', toStatus: 'paused', reasonCode: 'UNSAFE_CHAPTER_COMPLETION',
+          message: `Provider 终态与模型原生字数声明未同时通过：${nativeDeclaration?.reason || 'unknown'}`,
+        }).catch(() => {});
+        return;
+      }
+
+      let text = full;
       let reviewedResult = null;
       if (task.reviewProtocol === W68_PROTOCOL) {
         reviewedResult = await this.runW68UnitReview(task, tpl, { blueprint, outline, text, unitNo: i, unitName });
@@ -3138,7 +3550,7 @@ export class FactoryPanel {
         if (failed.length) {
           this.log(`🔁 第 ${i} ${unitName}自检未过，修订中…`);
           const fixSys = cp.system + '\n\n【勘误】请修订初稿使未过校验项全部通过，只输出修订后正文。';
-          text = await chat({ cfg: this.cfg, role: 'chapter', system: fixSys, user: `【初稿】\n${text}\n\n【未过项】\n${failed.map(f => '- ' + f.label).join('\n')}`, signal: this.taskSignal(task) });
+          text = await chatForArtifactCommit({ cfg: this.cfg, role: 'chapter', system: fixSys, user: `【初稿】\n${text}\n\n【未过项】\n${failed.map(f => '- ' + f.label).join('\n')}`, signal: this.taskSignal(task) }, `第 ${i} ${unitName}勘误正文`);
         }
       }
 
@@ -3162,8 +3574,15 @@ export class FactoryPanel {
           this.shell.openTab('markdown', { title: `${stem}.md`, filePath: mdPath, content: mdContent });
         }
       } else {
-        this.log(`⚠ 第 ${i} ${unitName}内容过短，保留断点待续`);
         await flushCkpt();
+        task.status = 'paused';
+        await stateFor('stopped', i - 1);
+        this.log(`⏸ 第 ${i} ${unitName}审校后正文过短，保留原稿断点并暂停；未生成快照、未推进完成数`);
+        await this.appendProductionRun(task, {
+          type: 'run-paused', toStatus: 'paused', reasonCode: 'POST_REVIEW_BODY_TOO_SHORT',
+          message: `审校/勘误后的正文仅 ${text.trim().length} 字，拒绝作为正式内容单元`,
+        }).catch(() => {});
+        return;
       }
 
       if (this.taskShouldStop(task)) { task.status = 'paused'; await stateFor('stopped', i); return; }
@@ -3172,11 +3591,17 @@ export class FactoryPanel {
       this.log(`… 正在更新${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照（第 ${i} ${unitName}后）`);
       const sp = buildStateSummaryPrompt(stateSummary, text, i, snapshotSchema);
       try {
-        stateSummary = await chat({ cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3, signal: this.taskSignal(task) });
-      } catch { /* 快照失败沿用旧快照 */ }
-      await window.mazz.invoke('fs:writeFile', {
-        path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第${String(i).padStart(3, '0')}${unitName}后.md`, content: stateSummary,
-      });
+        const nextStateSummary = await chatForArtifactCommit(
+          { cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3, signal: this.taskSignal(task) },
+          `第 ${i} ${unitName}后状态快照`,
+        );
+        await window.mazz.invoke('fs:writeFile', {
+          path: `${folder}/${snapshotSchema.type === 'narrative' ? '叙事' : '结构'}状态快照_第${String(i).padStart(3, '0')}${unitName}后.md`, content: nextStateSummary,
+        });
+        stateSummary = nextStateSummary;
+      } catch (error) {
+        this.log(`⚠ 第 ${i} ${unitName}后状态快照未收到安全终态，沿用上一份快照：${error.message}`);
+      }
       await stateFor('running', i);
       if (retryChapter > 0) break; // 单章重试只写一章
     }
@@ -3311,53 +3736,118 @@ export class FactoryPanel {
           const prevSnap = await this.loadSnapshot(folder, c.chapterNo - 1, snapshot);
           const body = edited.replace(/^#[^\n]*\n/, ''); // 去标题行
           const sp = buildStateSummaryPrompt(prevSnap, body, c.chapterNo, snapshot);
-          const snap = await chat({ cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3 });
+          const snap = await chatForArtifactCommit(
+            { cfg: this.cfg, role: 'snapshot', system: sp.system, user: sp.user, temperature: 0.3 },
+            `第 ${c.chapterNo} ${unitName}人工改稿状态快照`,
+          );
           await window.mazz.invoke('fs:writeFile', {
             path: `${folder}/${snapshot.type === 'narrative' ? '叙事' : '结构'}状态快照_第${String(c.chapterNo).padStart(3, '0')}${snapshot.unitName}后.md`, content: snap,
           });
           this.log(`✓ 第 ${c.chapterNo} ${unitName}快照已按修订重建——下游${unitName}将遵循你的改稿`);
           toast(`状态快照已重建，后续${unitName}遵循修订内容`);
-        } catch (e) { this.log(`⚠ 快照重建失败（不影响文件）：${e.message}`); }
+        } catch (e) { this.log(`⚠ 快照未收到安全终态，保留旧快照（不影响正文文件）：${e.message}`); }
       }
     });
   }
 
   // ==================== 队列操作 ====================
-  addTask() {
-    if (!this.validateRequired()) return;
+  addTask({ requestId = '' } = {}) {
+    const key = String(requestId || '').trim();
+    const duplicate = this.transactionTask(key);
+    if (duplicate) return this.taskReceipt(duplicate, { accepted: true, deduplicated: true, queued: true });
+    if (!this.validateRequired()) return null;
     const maxMode = this.el.querySelector('.fc-maxmode').checked;
     const maxChapters = +this.el.querySelector('.fc-maxchapters').value || 0;
     const task = this.makeTask(maxMode, maxChapters);
-    this.tasks.push(task);
-    this.persistTasks();
+    if (key) task.requestId = key;
+    this.registerTask(task);
     this.log(`已入队：「${task.label}」（${task.mode === 'max' ? '连写' : '单次'}）`);
     toast('已加入任务队列');
+    return this.taskReceipt(task, { accepted: true, queued: true });
   }
 
-  async addBatchTitles(names) {
+  async addBatchTitles(names, { requestId = '' } = {}) {
+    const key = String(requestId || '').trim();
+    const duplicates = key ? this.tasks.filter(task => task.batchRequestId === key) : [];
+    if (duplicates.length) return duplicates;
     const titles = (names || []).map(x => String(x || '').trim()).filter(Boolean);
     const gate = factoryBatchGate(titles.length);
-    if (!gate.allowed) { toast(gate.message); return false; }
-    if (!titles.length) { this.addTask(); return true; }
-    if (!(await this.confirmBatchImport(gate))) return false;
+    if (!gate.allowed) { toast(gate.message); return []; }
+    if (!titles.length) {
+      const receipt = this.addTask({ requestId: key });
+      return receipt ? [this.tasks.find(task => task.id === receipt.taskId)].filter(Boolean) : [];
+    }
+    if (!(await this.confirmBatchImport(gate))) return [];
+    // Confirmation yields to the event loop; a correlated replay may have
+    // committed while the dialog was open, so re-check before allocating IDs.
+    const committedDuringConfirmation = key ? this.tasks.filter(task => task.batchRequestId === key) : [];
+    if (committedDuringConfirmation.length) return committedDuringConfirmation;
     this.collectValues();
     const fields = this.genre?.input_fields || [];
     const titleField = fields.find(f => /^(书名|标题|title|subject|task|premise)$/i.test(String(f.id || '')) || /书名|标题/.test(String(f.label || '')));
-    if (!titleField) { toast('当前文体没有可批量替换的书名/标题字段'); return false; }
+    if (!titleField) { toast('当前文体没有可批量替换的书名/标题字段'); return []; }
     const missing = fields.find(f => f.required && f.id !== titleField.id && !String(this.values[f.id] ?? f.default ?? '').trim());
-    if (missing) { toast(`请填写：${missing.label || missing.id}`); return false; }
+    if (missing) { toast(`请填写：${missing.label || missing.id}`); return []; }
     const maxMode = this.el.querySelector('.fc-maxmode').checked;
     const maxChapters = +this.el.querySelector('.fc-maxchapters').value || 0;
     const now = Date.now();
+    const added = [];
     for (let i = 0; i < titles.length; i++) {
       const task = this.makeTask(maxMode, maxChapters, { [titleField.id]: titles[i] });
       task.createdAt = now + i;
-      this.tasks.push(task);
+      if (key) {
+        task.batchRequestId = key;
+        task.requestId = `${key}:${i + 1}`;
+      }
+      added.push(task);
     }
-    this.persistTasks();
+    this.tasks.push(...added);
+    try {
+      this.persistTaskRegistry();
+    } catch (error) {
+      const addedSet = new Set(added);
+      for (let i = this.tasks.length - 1; i >= 0; i--) {
+        if (addedSet.has(this.tasks[i])) this.tasks.splice(i, 1);
+      }
+      this.syncTaskViews();
+      throw factoryErrorWithReceipt(error, {
+        batch: true, requestId: key, accepted: false, registered: false,
+        registryPersisted: false, rolledBack: true,
+        tasks: added.map(task => this.taskReceipt(task, {
+          accepted: false, registered: false, registryPersisted: false, rolledBack: true,
+        })),
+      }, 'FACTORY_BATCH_REGISTRY_PERSIST_FAILED');
+    }
+    this.syncTaskViews();
     this.log(`批量名单已入队 ${titles.length} 本（共用当前立项设置）`);
     toast(`已批量加入 ${titles.length} 个任务`);
-    return true;
+    return added;
+  }
+
+  async generateBatchNow(names, { requestId = '' } = {}) {
+    if (!providerReady(this.cfg)) { toast('先配置 AI 服务'); return null; }
+    const tasks = await this.addBatchTitles(names, { requestId });
+    if (!tasks.length) return null;
+    const receipts = [];
+    try {
+      for (const task of tasks) {
+        if (!task.folder || !task.receiptAt || task.receiptError) receipts.push(await this.establishTaskReceipt(task));
+        else receipts.push(this.taskReceipt(task, { accepted: true, deduplicated: true }));
+      }
+    } catch (error) {
+      error.receipt = {
+        batch: true, requestId: String(requestId || ''), accepted: false,
+        // A later, not-yet-attempted row has no error flag, but it also has no
+        // durable receipt.  Only a folder + receiptAt pair is business acceptance.
+        tasks: tasks.map(task => this.taskReceipt(task, {
+          accepted: !!task.folder && !!task.receiptAt && !task.receiptError,
+        })),
+      };
+      throw error;
+    }
+    this.scheduleBackgroundTasks(tasks.filter(task => task.status === 'pending'));
+    this.log(`批量项目已开工 ${tasks.length} 本；项目收据已落盘，生成在后台继续`);
+    return { batch: true, requestId: String(requestId || ''), accepted: true, tasks: receipts };
   }
 
   selectedTasks() {
@@ -3401,9 +3891,13 @@ export class FactoryPanel {
       if (!this.claimTask(task)) return;
       task.status = 'running';
       this.renderTasks();
+      const dual = typeof task.dualLoop === 'boolean'
+        ? task.dualLoop
+        : !!this.el.querySelector('.fc-dualloop')?.checked;
+      if (typeof task.dualLoop !== 'boolean') task.dualLoop = dual;
       try {
         await this.ensureW74aMaterials(task);
-        await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, prog);
+        await this.runMaxTask(task, tpl, dual, prog);
         if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
         if (task.status === 'done' || task.status === 'done-warn') window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作完成：${task.label}`, detail: '续写任务已收口并落盘。', status: 'done', target: { kind: 'factory', taskId: task.id, path: task.folder } });
       } catch (e) {
@@ -3448,6 +3942,7 @@ export class FactoryPanel {
       const maxMode = this.el.querySelector('.fc-maxmode').checked;
       const maxChapters = +this.el.querySelector('.fc-maxchapters').value || 0;
       const exportFmt = this.el.querySelector('.fc-exportfmt')?.value || 'md';
+      const dualLoop = !!this.el.querySelector('.fc-dualloop')?.checked;
       for (const [i, rowValues] of rows.entries()) {
         const values = { ...rowValues, 每章字数: rowValues['每章字数'] || String(this.lengthPlan.wordsPerUnit) };
         this.tasks.push({
@@ -3455,9 +3950,9 @@ export class FactoryPanel {
           createdAt: baseTime + i,
           genreId: this.genre.id,
           label: fieldValue(this.genre, values, '书名', 'title', 'subject', 'task', 'premise') || this.genre.name,
-          values, dump: '', mode: maxMode ? 'max' : 'single', maxChapters, status: 'pending', doneChapters: 0,
+          values, dump: '', mode: maxMode ? 'max' : 'single', maxChapters: maxMode ? maxChapters : 1, status: 'pending', doneChapters: 0,
           totalWords: this.lengthPlan.totalWords, wordsPerUnit: this.lengthPlan.wordsPerUnit,
-          lengthPreset: this.lengthPlan.preset, exportFmt, autoPreview: this.autoPreview,
+          lengthPreset: this.lengthPlan.preset, exportFmt, autoPreview: this.autoPreview, dualLoop,
           reviewProtocol: W68_PROTOCOL,
           reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
           reviewBudgetCap: Math.max(0, +(this.el.querySelector('.fc-review-budget')?.value || 32000)),
@@ -3493,9 +3988,13 @@ export class FactoryPanel {
       if (!this.claimTask(task)) return;
       task.status = 'running';
       this.renderTasks();
+      const dual = typeof task.dualLoop === 'boolean'
+        ? task.dualLoop
+        : !!this.el.querySelector('.fc-dualloop')?.checked;
+      if (typeof task.dualLoop !== 'boolean') task.dualLoop = dual;
       try {
-        if (n === 0) await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, null, -1);
-        else await this.runMaxTask(task, tpl, this.el.querySelector('.fc-dualloop').checked, null, n);
+        if (n === 0) await this.runMaxTask(task, tpl, dual, null, -1);
+        else await this.runMaxTask(task, tpl, dual, null, n);
         if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
       } catch (err) {
         if (this.taskShouldStop(task) || err?.name === 'AbortError') { task.status = 'paused'; this.log('重试已停止并保留断点'); }
@@ -3667,11 +4166,11 @@ export function registerFactoryExtras(commands) {
     const tpl = genres.find(g => g.id === 'tongyong') || genres[0];
     toast(`智能${mode}中…`);
     try {
-      const out = await chat({
+      const out = await chatForArtifactCommit({
         cfg, role: 'chapter',
         system: tpl.system_prompt + `\n你现在的任务是${mode}用户选中的文字。保持原意与事实，只输出${mode}后的文字本身。`,
         user: `【待${mode}的文字】\n${selText}\n\n【要求】\n${mode === '改写' ? '更通顺、更精炼、更贴合语境；长度与原文相当。' : '在原意基础上扩写充实细节与层次，篇幅约为原文 2-3 倍；保持上下文衔接。'}`,
-      });
+      }, `智能${mode}正文`);
       const tr = mode === '改写'
         ? state.tr.replaceSelectionWith(state.schema.text(out))
         : state.tr.insertText('\n\n' + out, to);

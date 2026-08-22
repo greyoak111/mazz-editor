@@ -45,7 +45,13 @@ try {
   const page = await app.firstWindow({ timeout: 120000 });
   page.on('pageerror', error => rendererErrors.push(`pageerror: ${error.message}`));
   page.on('console', message => {
-    if (message.type() === 'error') rendererErrors.push(`console: ${message.text()}`);
+    if (message.type() === 'error') {
+      const location = message.location?.() || {};
+      rendererErrors.push(`console: ${message.text()}${location.url ? ` @ ${location.url}:${location.lineNumber || 0}` : ''}`);
+    }
+  });
+  page.on('response', response => {
+    if (response.status() >= 400) rendererErrors.push(`response: ${response.status()} ${response.url()}`);
   });
   await page.waitForLoadState('domcontentloaded');
   await page.waitForFunction(() => !!(window.MazzCommands && window.MazzShell), null, { timeout: 20000 });
@@ -69,7 +75,10 @@ try {
   assert(protocolProbe.status === 200 && /^image\//i.test(protocolProbe.type || '') && protocolProbe.bytes > 0,
     `mazz-res catalog proxy did not return an image: ${JSON.stringify(protocolProbe)}`);
 
-  await page.evaluate(file => window.MazzCommands.execute('file.openPath', { path: file }), path.join(WORKSPACE, '测试音.wav'));
+  // The catalogue is available from an empty Player.  Do not couple this gate
+  // to an intentionally coverless WAV, whose expected artwork fallback is a
+  // separate W91 contract and correctly returns 404 from the artwork protocol.
+  await page.evaluate(() => window.MazzCommands.execute('file.newViewer'));
   await page.waitForFunction(() => [...document.querySelectorAll('.mz-player')].some(node => node.getBoundingClientRect().width > 0), null, { timeout: 15000 });
   const listButton = page.locator('.mz-player:visible [data-a="list"]').last();
   await listButton.waitFor({ state: 'visible', timeout: 15000 });

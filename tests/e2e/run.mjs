@@ -340,13 +340,13 @@ async function main() {
 
   // ==================== 深度场景集（第二批 13-26） ====================
   await scenes2({ win, human, WS, WS2, scenario });
-  await scenes3({ win, human, WS, WS2, scenario });
+  await scenes3({ app, win, human, WS, WS2, scenario });
   await scenesPanes({ win, human, WS, scenario });
   await scenesIcons({ win, human, WS, scenario });
   await scenes4({ win, human, WS, scenario });
   await scenesLibrary({ win, human, WS, scenario });
   await scenesCommands({ win, human, WS, scenario });
-  await scenes5({ win, human, WS, WS2, scenario });
+  await scenes5({ app, win, human, WS, WS2, scenario });
 
   // ==================== 收尾：异常警察总账 ====================
   await scenario('异常警察·全程零渲染异常', async () => {

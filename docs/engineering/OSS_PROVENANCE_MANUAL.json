@@ -25,6 +25,13 @@
       "patch": "patches/webtorrent+2.8.5.patch",
       "kind": "PATCH_PACKAGE",
       "reason": "accept string infoHash without sending it through arr2hex"
+    },
+    {
+      "package": "chokidar",
+      "version": "3.6.0",
+      "patch": "patches/chokidar+3.6.0.patch",
+      "kind": "PATCH_PACKAGE",
+      "reason": "guard the close/dispose readdir race before dereferencing a released directory child snapshot"
     }
   ],
   "packageEvidenceRequirements": [

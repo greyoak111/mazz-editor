@@ -8,6 +8,7 @@ import { classifyVideoFrameHealth, ZERO_VIDEO_FRAMES } from '../../lib/video-fra
 import { mountCompanion } from './companion.js';
 import { mountDanmaku, parseAssDanmaku, parseBilibiliXml, parseJsonTrack } from './danmaku.js';
 import { mountPlayerControlSurface } from './player-controls.js';
+import { mountAudioArtwork } from './audio-artwork.js';
 
 const MEDIA_VIDEO = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', 'ts', 'mts', 'm2ts', 'mpg', 'mpeg', '3gp']);
 const MEDIA_AUDIO = new Set(['mp3', 'wav', 'oga', 'm4a', 'aac', 'flac', 'opus', 'ogg']);
@@ -32,7 +33,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       ${isVideo ? `<video class="mz-media" playsinline></video>` : `
         <div class="mz-audio-wrap">
           <canvas class="mz-spectrum"></canvas>
-          <div class="mz-audio-disc"><span>${iconHtml('🎵')}</span></div>
+          <div class="mz-audio-art"></div>
           <audio class="mz-media"></audio>
         </div>`}
       <div class="mz-topbar">
@@ -97,6 +98,9 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     </div>`;
 
   const media = root.querySelector('.mz-media');
+  const audioArtwork = !isVideo
+    ? mountAudioArtwork(root.querySelector('.mz-audio-art'), { path: curPath, name: curName })
+    : null;
   if (url) media.src = url;
   else {
     // 空起手（W44 无视频启动）：舞台占位——侧栏三源全可用，导入/点源即播
@@ -1174,10 +1178,10 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   playBtn.addEventListener('click', togglePlay);
   root.querySelector('[data-a=prev]').addEventListener('click', prev);
   root.querySelector('[data-a=next]').addEventListener('click', next);
-  media.addEventListener('play', () => { playBtn.innerHTML = iconHtml('⏸'); root.querySelector('.mz-audio-disc')?.classList.add('spin'); });
+  media.addEventListener('play', () => { playBtn.innerHTML = iconHtml('⏸'); });
   media.addEventListener('playing', armDecodeWatch);
   media.addEventListener('seeking', clearDecodeWatch);
-  media.addEventListener('pause', () => { clearDecodeWatch(); playBtn.innerHTML = iconHtml('▶'); root.querySelector('.mz-audio-disc')?.classList.remove('spin'); });
+  media.addEventListener('pause', () => { clearDecodeWatch(); playBtn.innerHTML = iconHtml('▶'); });
   const syncSeekUi = (time = media.currentTime) => {
     const duration = Number.isFinite(media.duration) && media.duration > 0 ? media.duration : 0;
     const current = duration ? Math.min(duration, Math.max(0, Number(time) || 0)) : 0;
@@ -1713,6 +1717,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     const pathChanged = newPath !== curPath;
     curUrl = newUrl; curName = newName; curPath = newPath;
     curSize = newSize;
+    audioArtwork?.setSource(curPath, curName);
     companion.setSource(curName, curPath);
     danmaku.load([]);
     danmaku.toggle(false);
@@ -1771,6 +1776,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       controlSurface.destroy();
       companion.destroy().catch(() => {});
       danmaku.destroy();
+      audioArtwork?.destroy();
       subLoadSeq++; // 令所有在途字幕探测/挂载失效。
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('fullscreenchange', onFullscreenChange);
