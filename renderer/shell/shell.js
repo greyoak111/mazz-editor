@@ -154,6 +154,10 @@ export class Shell {
         if (ws) this.workspace = ws;
         return this.workspace;
       },
+      shouldDeferExternalRefresh: () => {
+        const panel = this.sideDock?.factoryPanel;
+        return !!(panel?.running || panel?.runningTasks?.size || panel?.backgroundQueuedIds?.size || panel?.backgroundRunQueue?.length);
+      },
     });
     this.fileTree.defaults = { NEW_FILE_TYPES, NEW_FILE_DEFAULTS, BINARY_EXTS, makeBinaryDoc };
     // 右侧工具坞（智能创作/打开方式集中地；Ribbon 启动，可拖拽/拉伸/缩放）

@@ -16,10 +16,18 @@ const pbase = (p) => pnorm(p).split('/').pop();
 const pjoin = (a, b) => pnorm(a).replace(/\/+$/, '') + '/' + b;
 
 export class FileTree {
-  constructor(root, { onOpenFile, onNewFile, onNewFolder, getWorkspace }) {
+  constructor(root, {
+    onOpenFile, onNewFile, onNewFolder, getWorkspace,
+    shouldDeferExternalRefresh = () => false,
+    externalRefreshDelay = 350,
+    deferredRefreshPoll = 500,
+  }) {
     this.el = root;
     this.onOpenFile = onOpenFile;
     this.getWorkspace = getWorkspace;
+    this.shouldDeferExternalRefresh = shouldDeferExternalRefresh;
+    this.externalRefreshDelay = externalRefreshDelay;
+    this.deferredRefreshPoll = deferredRefreshPoll;
     this.expanded = new Set();
     this.selected = null;           // { path, isDir } —— 点击即选中（新建/粘贴的落点依据）
     this.clip = null;               // { mode:'cut'|'copy', path, isDir }
@@ -98,13 +106,9 @@ export class FileTree {
     this.sortMode = 'manual';
     this.loadSortMode();
 
-    // 磁盘变更 → 自动刷新（防抖）
+    // 磁盘变更 → 自动刷新（防抖）；批量生成落盘期间只记脏，收口后补刷一次。
     if (window.mazz?.isElectron) {
-      let deb;
-      window.mazz.on('file:changed', ({ path }) => {
-        clearTimeout(deb);
-        deb = setTimeout(() => { this.refresh(); bus.emit('filetree:externallyChanged', path); }, 350);
-      });
+      window.mazz.on('file:changed', ({ path }) => this.queueExternalRefresh(path));
     }
     // 目录自动识别：窗口重新聚焦 / 定时巡检（外部程序改动也能看到）
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this.refresh(); });
@@ -113,6 +117,23 @@ export class FileTree {
       const t = setInterval(() => { if (!document.hidden) this.refresh(); }, 10000);
       t.unref?.(); // 不阻塞进程退出（测试环境/Node）
     }
+  }
+
+  queueExternalRefresh(path = '') {
+    this._pendingExternalRefreshPath = path || this._pendingExternalRefreshPath || '';
+    clearTimeout(this._externalRefreshTimer);
+    const flush = () => {
+      this._externalRefreshTimer = null;
+      if (this.shouldDeferExternalRefresh?.()) {
+        this._externalRefreshTimer = setTimeout(flush, this.deferredRefreshPoll);
+        return;
+      }
+      const changedPath = this._pendingExternalRefreshPath;
+      this._pendingExternalRefreshPath = '';
+      this.refresh();
+      bus.emit('filetree:externallyChanged', changedPath);
+    };
+    this._externalRefreshTimer = setTimeout(flush, this.externalRefreshDelay);
   }
 
   // ==================== 排序方式（思源式） ====================

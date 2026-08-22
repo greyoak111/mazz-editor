@@ -39,6 +39,30 @@ const { FileTree } = await import('../../renderer/shell/file-tree.js');
 const { SidebarPanels } = await import('../../renderer/shell/sidebar-panels.js');
 
 describe('侧栏面板（v39）', () => {
+  test('智能创作生成期间合并文件事件，收口后目录树只补刷一次', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    let busy = true;
+    let refreshes = 0;
+    const ft = new FileTree(root, {
+      onOpenFile: () => {}, onNewFile: () => {}, onNewFolder: () => {}, getWorkspace: async () => WS,
+      shouldDeferExternalRefresh: () => busy,
+      externalRefreshDelay: 5,
+      deferredRefreshPoll: 5,
+    });
+    ft.refresh = async () => { refreshes += 1; };
+
+    ft.queueExternalRefresh(`${WS}/Output/任务状态.json`);
+    ft.queueExternalRefresh(`${WS}/Output/创作蓝图.md`);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(refreshes, 0, '生成活跃时不得重建文件树');
+
+    busy = false;
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(refreshes, 1, '生成收口后多次文件变更只能合并为一次补刷');
+    root.remove();
+  });
+
   test('FileTree 排序选单：名称/自然/时间 × 升降 + 手动', async () => {
     const root = document.createElement('div');
     root.innerHTML = '<div class="sidebar-head"></div><div class="filetree"></div>';
