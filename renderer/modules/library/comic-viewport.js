@@ -5,6 +5,32 @@
 
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
+/**
+ * Apply one physical comic scale to both viewport axes.
+ *
+ * Width-only sizing looks correct for landscape pages, but becomes a no-op for
+ * portrait/tall pages once `max-height: 100%` wins the replaced-element sizing
+ * algorithm.  The same normalized scale therefore caps both inline and block
+ * dimensions.  Scroll mode consumes the inline cap; paged modes consume both.
+ */
+export function applyComicFitVariables(element, { pageWidth = .7, zoom = 100 } = {}) {
+  if (!element?.style?.setProperty) return null;
+  const sheet = clamp(Number(pageWidth) || .7, .2, 1);
+  const zoomRatio = clamp((Number(zoom) || 100) / 100, .25, 4);
+  const renderScale = clamp(sheet * zoomRatio, .2, 1);
+  const values = {
+    scale: renderScale,
+    sheet: `${+(sheet * 100).toFixed(2)}%`,
+    render: `${+(renderScale * 100).toFixed(2)}%`,
+    zoom: `${+(zoomRatio * 100).toFixed(2)}%`,
+  };
+  element.style.setProperty('--lib-comic-sheet-width', values.sheet);
+  element.style.setProperty('--lib-comic-render-width', values.render);
+  element.style.setProperty('--lib-comic-render-block', values.render);
+  element.style.setProperty('--lib-comic-zoom', values.zoom);
+  return values;
+}
+
 export function pageWindow(center, count, before = 2, after = 3) {
   const out = new Set();
   if (!count) return out;
@@ -43,6 +69,11 @@ export function createComicViewport({
   let frame = 0;
   let loadEpoch = 0;
   let programmaticEpoch = 0;
+  let resizeEpoch = 0;
+  let resizeReleaseFrame = 0;
+  let viewportSlotHeight = 0;
+  let viewportInlineSize = 0;
+  let stablePageLocator = { page: active, ratio: 0 };
   const resident = new Map();
 
   mount.replaceChildren();
@@ -68,10 +99,77 @@ export function createComicViewport({
   mount.appendChild(rail);
 
   const alive = () => !destroyed && isAlive();
-  const setViewportHeight = () => {
+  const slotGeometry = index => {
+    const slot = slots[index];
+    if (!slot) return null;
+    const hostRect = host.getBoundingClientRect?.() || { top: 0 };
+    const slotRect = slot.getBoundingClientRect?.() || {};
+    const top = Number(slotRect.top) - (Number(hostRect.top) || 0) + (Number(host.scrollTop) || 0);
+    const height = Math.max(1, Number(slotRect.height) || viewportSlotHeight || 1);
+    return { top: Number.isFinite(top) ? top : 0, height };
+  };
+  const capturePageLocator = (page = active) => {
+    const index = clamp(Number(page) || 0, 0, Math.max(0, total - 1));
+    const geometry = slotGeometry(index);
+    if (!geometry) return { page: index, ratio: 0 };
+    // Ratio is intentionally signed. The active page is selected around the
+    // reading line and may begin slightly below the viewport top; retaining a
+    // negative ratio preserves that exact visual placement after resize.
+    const ratio = clamp(((Number(host.scrollTop) || 0) - geometry.top) / geometry.height, -1, 1);
+    return { page: index, ratio };
+  };
+  const rememberPageLocator = locator => {
+    if (!locator || !total) return;
+    stablePageLocator = {
+      page: clamp(Number(locator.page) || 0, 0, total - 1),
+      ratio: clamp(Number(locator.ratio) || 0, -1, 1),
+    };
+  };
+  const restorePageLocator = locator => {
+    if (!locator || !total) return;
+    const page = clamp(Number(locator.page) || 0, 0, total - 1);
+    const geometry = slotGeometry(page);
+    if (!geometry) return;
+    const ratio = clamp(Number(locator.ratio) || 0, -1, 1);
+    host.scrollTop = Math.max(0, geometry.top + ratio * geometry.height);
+    active = page;
+    rememberPageLocator({ page, ratio });
+  };
+  const holdPageLocator = locator => {
+    if (!locator || !alive() || !total) return false;
+    // Geometry-affecting CSS (page width, zoom or viewport height) is committed
+    // synchronously before this read. Keep scroll events muted until the
+    // locator has been replayed and Chromium has painted two stable frames.
+    void rail.offsetHeight;
+    const token = ++resizeEpoch;
+    restorePageLocator(locator);
+    if (resizeReleaseFrame) cancelAnimationFrame(resizeReleaseFrame);
+    resizeReleaseFrame = requestAnimationFrame(() => {
+      if (!alive()) { resizeReleaseFrame = 0; return; }
+      resizeReleaseFrame = requestAnimationFrame(() => {
+        if (resizeEpoch === token) resizeEpoch = 0;
+        resizeReleaseFrame = 0;
+      });
+    });
+    return true;
+  };
+  const setViewportGeometry = () => {
     if (!alive()) return;
     const h = Math.max(320, Math.round(host.clientHeight || mount.clientHeight || 720));
+    const hostRect = host.getBoundingClientRect?.() || {};
+    const w = Math.max(1, Math.round(host.clientWidth || mount.clientWidth || hostRect.width || 1));
+    if (h === viewportSlotHeight && w === viewportInlineSize) return;
+    const locator = viewportSlotHeight > 0 && viewportInlineSize > 0
+      ? { ...stablePageLocator }
+      : null;
     rail.style.setProperty('--lib-reader-vh', `${h}px`);
+    viewportSlotHeight = h;
+    viewportInlineSize = w;
+    if (!locator) return;
+    // Both axes can reflow portrait pages. Restore from the pre-resize page
+    // locator before a width-only or height resize scroll event can reinterpret
+    // the old scrollTop against the new placeholder grid.
+    holdPageLocator(locator);
   };
 
   const unloadNode = (index) => {
@@ -144,10 +242,11 @@ export function createComicViewport({
   };
 
   const onScroll = () => {
-    if (!alive() || frame || programmaticEpoch) return;
+    if (!alive() || frame || programmaticEpoch || resizeEpoch) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
       const next = closestPage();
+      rememberPageLocator(capturePageLocator(next));
       if (next === active) return;
       active = next;
       onPage(active);
@@ -155,25 +254,36 @@ export function createComicViewport({
     });
   };
   host.addEventListener('scroll', onScroll, { passive: true });
-  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(setViewportHeight) : null;
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(setViewportGeometry) : null;
   ro?.observe(host);
-  setViewportHeight();
+  setViewportGeometry();
   converge(active);
   requestAnimationFrame(() => slots[active]?.scrollIntoView?.({ block: 'start' }));
 
   return {
     get activePage() { return active; },
     get residentCount() { return resident.size; },
+    captureLocator() {
+      if (!alive() || !total) return null;
+      const locator = capturePageLocator(active);
+      rememberPageLocator(locator);
+      return { ...stablePageLocator };
+    },
+    restoreLocator(locator) {
+      return holdPageLocator(locator);
+    },
     async goTo(index, { smooth = false } = {}) {
       if (!alive() || !total) return;
       if (frame) { cancelAnimationFrame(frame); frame = 0; }
       const target = clamp(index, 0, total - 1);
       const token = ++programmaticEpoch;
       active = target;
+      rememberPageLocator({ page: target, ratio: 0 });
       await converge(target);
       if (!alive() || programmaticEpoch !== token) return;
       slots[target]?.scrollIntoView?.({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
       active = target;
+      rememberPageLocator({ page: target, ratio: 0 });
       onPage(target);
       requestAnimationFrame(() => requestAnimationFrame(() => {
         if (programmaticEpoch === token) programmaticEpoch = 0;
@@ -184,7 +294,9 @@ export function createComicViewport({
       destroyed = true;
       loadEpoch++;
       programmaticEpoch++;
+      resizeEpoch++;
       if (frame) cancelAnimationFrame(frame);
+      if (resizeReleaseFrame) cancelAnimationFrame(resizeReleaseFrame);
       host.removeEventListener('scroll', onScroll);
       ro?.disconnect();
       for (const i of [...resident.keys()]) unloadNode(i);

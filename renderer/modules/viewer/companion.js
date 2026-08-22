@@ -156,7 +156,7 @@ export function mountCompanion({ root, media, mediaName, mediaPath, sampleRms = 
     <header><b>陪看</b><span class="mz-companion-gate">静候拍点</span><button data-c="close" title="收起" aria-label="收起陪看">${iconHtml('✕')}</button></header>
     <div class="mz-companion-log" aria-live="polite"></div>
     <div class="mz-companion-status">防剧透锁：开 · 观剧档：开 · 当前不自动调用 AI</div>
-    <div class="mz-companion-compose"><input placeholder="暂停或播放时都可以聊…"><button data-c="send">说</button></div>`;
+    <div class="mz-companion-compose"><input aria-label="陪看消息" placeholder="暂停或播放时都可以聊…"><button class="mz-companion-send" type="button" data-c="send" aria-label="发送消息（Enter）" aria-keyshortcuts="Enter" title="发送（Enter）">${iconHtml('↵')}</button></div>`;
   root.querySelector('.mz-stage')?.appendChild(panel);
   const log = panel.querySelector('.mz-companion-log');
   const input = panel.querySelector('input');
@@ -254,7 +254,11 @@ export function mountCompanion({ root, media, mediaName, mediaPath, sampleRms = 
   const timer = setInterval(observe, 1_000);
   panel.querySelector('[data-c=close]').addEventListener('click', () => { panel.hidden = true; });
   panel.querySelector('[data-c=send]').addEventListener('click', send);
-  input.addEventListener('keydown', event => { if (event.key === 'Enter') send(); });
+  input.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    event.preventDefault();
+    send();
+  });
   observe();
   return {
     get session() { return session; },

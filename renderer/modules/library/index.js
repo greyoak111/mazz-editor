@@ -7,9 +7,9 @@ import { parseEpub } from './epub.js';
 import { readBookCache, writeBookCache } from './cache.js';
 import { rulesForBook, processHtmlText } from './clean.js';
 import { parseCbz, makeBytesPager } from './cbz.js';
-import { parseMobi, paginateText, textPageToHtml, extractMobiImages, imageBytesToDataUrl } from './mobi.js';
+import { parseMobi, paginateText, textPageToHtml, inspectMobiStructure, imageBytesToDataUrl } from './mobi.js';
 import { buildMangaBook, imageUrl } from './manga.js';
-import { createComicViewport } from './comic-viewport.js';
+import { applyComicFitVariables, createComicViewport } from './comic-viewport.js';
 import { createTextViewport } from './text-viewport.js';
 import { planSpread } from './spread-planner.js';
 import { COVER_LIMITS, persistCover } from './cover-cache.js';
@@ -20,6 +20,17 @@ import { createReaderPreferencesStore, appearanceForReaderController } from './r
 import { createShelfViewModel } from './shelf-model.js';
 import { createLibraryShelfView } from './shelf-view.js';
 import { exportEpubMarkdownRaw, searchEpubRaw } from './book-operations.js';
+import {
+  advancePhysicalPage,
+  chapterBridgeLocator,
+  chapterBridgeOffset,
+  computeReaderPageGeometry,
+  normalizeReaderMargin,
+  normalizeReaderMode,
+  pagedSectionWindow,
+  physicalPageOffset,
+  spreadOffsetForPhysicalPage,
+} from './reader-pagination.js';
 
 const MODULE = 'library';
 const instances = new Map();
@@ -213,17 +224,20 @@ function createLibrary(container) {
         <button class="rb-btn" data-a="direction" title="翻页方向：左到右 / 右到左（日漫习惯）">${iconHtml('⇄')}</button>
         <select class="lib-mode rb-select" title="阅读模式">
           <option value="single">单页</option><option value="double">双页</option><option value="scroll">滚动</option>
-          <option value="vertical">竖排</option>
         </select>
         <select class="lib-read-theme rb-select" title="阅读主题">
           ${Object.entries(READ_THEMES).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}
         </select>
         <button class="rb-btn" data-a="font-minus" title="字号减小"><span data-ui-icon-text>A</span>${iconHtml('―')}</button>
         <button class="rb-btn" data-a="font-plus" title="字号增大"><span data-ui-icon-text>A</span>${iconHtml('+')}</button>
-        <select class="lib-pagew rb-select" title="页宽（单页占窗格百分比，随窗格拖变——epub.js 正宗：页宽跟容器走，不写死 px）">
+        <select class="lib-pagew rb-select" title="纸张宽度（版心留白另行设置）">
           <option value="0.5">页宽 50%</option><option value="0.6">页宽 60%</option>
           <option value="0.7" selected>页宽 70%</option><option value="0.8">页宽 80%</option>
           <option value="1">全宽 100%</option>
+        </select>
+        <select class="lib-margin rb-select" title="版心留白（独立于纸张宽度）">
+          <option value="compact">版心 紧凑</option><option value="comfortable" selected>版心 舒适</option>
+          <option value="spacious">版心 宽松</option>
         </select>
         <select class="lib-zh rb-select" title="简繁转换（OpenCC 字表+高频词纠偏，随书记忆）">
           <option value="">原文</option><option value="t2s">转简体</option><option value="s2t">转繁体</option>
@@ -257,7 +271,7 @@ function createLibrary(container) {
   const ctl = {
     root, container,
     book: null, chapterIdx: 0, pageIdx: 0,
-    fontSize: 16, fontFamily: '', lineHeight: 1.8,
+    fontSize: 16, fontFamily: '', lineHeight: 1.8, pageMargin: 'comfortable', turnEffect: 'fade',
     readTheme: 'paper', mode: 'single', direction: 'ltr', // ltr 左到右 | rtl 右到左（日漫）
     catFilter: '', batchMode: false, batchSel: new Set(),
     shelf: {
@@ -481,12 +495,14 @@ function createLibrary(container) {
 
   function readerAppearanceSnapshot() {
     return {
-      mode: ctl.mode,
+      mode: normalizeReaderMode(ctl.mode),
       direction: ctl.direction,
       font: ctl.fontFamily || '',
       fontSize: ctl.fontSize,
       lineHeight: ctl.lineHeight,
       pageWidth: ctl.pageWidth ?? 0.7,
+      pageMargin: normalizeReaderMargin(ctl.pageMargin),
+      turnEffect: 'fade',
       theme: ctl.readTheme,
       zoom: ctl.mangaZoom || 100,
       spread: {
@@ -532,9 +548,10 @@ function createLibrary(container) {
 
   function syncReaderControls() {
     const values = new Map([
-      ['.lib-mode', ctl.mode],
+      ['.lib-mode', normalizeReaderMode(ctl.mode)],
       ['.lib-read-theme', ctl.readTheme],
       ['.lib-pagew', String(ctl.pageWidth ?? 0.7)],
+      ['.lib-margin', normalizeReaderMargin(ctl.pageMargin)],
     ]);
     for (const [selector, value] of values) {
       const select = root.querySelector(selector);
@@ -551,12 +568,14 @@ function createLibrary(container) {
 
   function applyReaderAppearance(appearance) {
     const fields = appearanceForReaderController(appearance);
-    ctl.mode = fields.mode;
+    ctl.mode = normalizeReaderMode(fields.mode);
     ctl.direction = fields.direction;
     ctl.fontFamily = fields.fontFamily;
     ctl.fontSize = fields.fontSize;
     ctl.lineHeight = fields.lineHeight;
     ctl.pageWidth = fields.pageWidth;
+    ctl.pageMargin = fields.pageMargin;
+    ctl.turnEffect = 'fade';
     ctl.readTheme = fields.readTheme;
     ctl.mangaZoom = fields.mangaZoom;
     ctl.spreadCoverSingle = fields.spreadCoverSingle;
@@ -589,8 +608,11 @@ function createLibrary(container) {
     const position = toEnd ? Math.max(0, totalPages() - 1) : 0;
     if (ctl.book.meta.format === 'epub') ctl.chapterIdx = position;
     else ctl.pageIdx = position;
-    ctl._pendingRatio = toEnd ? 1 : 0;
-    ctl._pendingAnchor = null;
+    const textOwner = ['epub', 'txt', 'mobi', 'azw3'].includes(ctl.book.meta.format);
+    ctl._pendingRatio = ctl.mode === 'scroll' && textOwner ? (toEnd ? 1 : 0) : null;
+    ctl._pendingAnchor = ctl.mode !== 'scroll' && textOwner
+      ? { kind: 'chapter-edge', edge: toEnd ? 'end' : 'start', m: position }
+      : null;
     await showCurrent();
   }
 
@@ -1079,12 +1101,23 @@ function createLibrary(container) {
           if (rawCover?.bytes) coverSpec = { bytes: rawCover.bytes, mime: rawCover.mime };
           meta = { title: name.replace(/\.cbz$/i, ''), author: '', cover: '' };
         } else if (ext === 'mobi' || ext === 'azw3') {
-          const mobi = await parseMobi(bytes.buffer);
-          meta = {
-            title: mobi.title !== '未命名' ? mobi.title : name.replace(/\.(mobi|azw3)$/i, ''),
-            author: mobi.author,
-            cover: '',
-          };
+          const inspection = inspectMobiStructure(bytes.buffer);
+          if (inspection.imageDominant) {
+            const firstImage = inspection.images[0];
+            if (firstImage?.bytes) coverSpec = { bytes: firstImage.bytes, mime: firstImage.mime };
+            meta = {
+              title: inspection.title !== '未命名' ? inspection.title : name.replace(/\.(mobi|azw3)$/i, ''),
+              author: inspection.author || '',
+              cover: '',
+            };
+          } else {
+            const mobi = await parseMobi(bytes.buffer);
+            meta = {
+              title: mobi.title !== '未命名' ? mobi.title : name.replace(/\.(mobi|azw3)$/i, ''),
+              author: mobi.author,
+              cover: '',
+            };
+          }
         } else if (ext === 'txt' || ext === 'pdf') {
           meta = { title: name.replace(/\.[^.]+$/, ''), author: '', cover: '' };
         } else {
@@ -1308,20 +1341,28 @@ function createLibrary(container) {
         const bytes = await readBytes();
         let parsedMobi = null;
         let mobiParseError = null;
-        // 普通电子书也常含封面和多张插图。先解析可读正文，只有正文缺失/近空且
-        // 存在连续图片记录时才进入漫画管线，不能再用“图片 >= 3”吞掉整本正文。
+        // 普通电子书也常含封面和插图：先做不解压正文的 PDB 结构探测。只有长图片序列
+        // 且图像字节占绝对主导的出版物才直达漫画管线；其余仍以可读正文为权威。
         if (book.format !== 'txt') {
-          try { parsedMobi = await parseMobi(bytes.buffer); } catch (error) {
-            if (error?.code === 'LIBRARY_MOBI_RESOURCE_LIMIT' || error?.code === 'LIBRARY_MOBI_METADATA_INVALID') throw error;
-            mobiParseError = error;
-          }
-          const imgs = extractMobiImages(bytes.buffer);
-          const readableText = String(parsedMobi?.text || '').trim();
-          if (shouldTreatMobiAsComic({ imageCount: imgs.length, text: readableText })) {
-            // blob URL + 翻页 revoke 内存纪律（与 cbz 同管线同纪律）
+          const inspection = inspectMobiStructure(bytes.buffer);
+          const imgs = inspection.images;
+          if (inspection.imageDominant) {
             candidate.cbz = makeBytesPager(imgs, async (i) => imgs[i]);
-            candidate.meta.format = 'cbz'; // 伪装 cbz 走漫画管线（单双页/进度/图宽全通）
+            candidate.meta.format = 'cbz';
+            candidate.mobiRoute = 'image-dominant';
             nextPage = Math.min(progress[id]?.page || 0, imgs.length - 1);
+          } else {
+            try { parsedMobi = await parseMobi(bytes.buffer); } catch (error) {
+              if (error?.code === 'LIBRARY_MOBI_RESOURCE_LIMIT' || error?.code === 'LIBRARY_MOBI_METADATA_INVALID') throw error;
+              mobiParseError = error;
+            }
+            const readableText = String(parsedMobi?.text || '').trim();
+            if (shouldTreatMobiAsComic({ imageCount: imgs.length, text: readableText })) {
+              candidate.cbz = makeBytesPager(imgs, async (i) => imgs[i]);
+              candidate.meta.format = 'cbz';
+              candidate.mobiRoute = 'image-fallback';
+              nextPage = Math.min(progress[id]?.page || 0, imgs.length - 1);
+            }
           }
         }
         if (!candidate.cbz) {
@@ -1380,7 +1421,11 @@ function createLibrary(container) {
         delete nextBook._appearance;
         ctl.chapterIdx = nextChapter;
         ctl.pageIdx = nextPage;
-        ctl._pendingRatio = (typeof progress[id]?.ratio === 'number') ? progress[id].ratio : null;
+        // A paged reopen is restored from its semantic DOM/text locator.  The
+        // old whole-chapter pixel ratio is retained only by continuous mode.
+        ctl._pendingRatio = ctl.mode === 'scroll' && typeof progress[id]?.ratio === 'number'
+          ? progress[id].ratio
+          : null;
         ctl._pendingAnchor = progress[id]?.anchor || null;
         ctl._procCache = {};
         ctl._chapSizes = [];
@@ -1513,7 +1558,8 @@ function createLibrary(container) {
       if (ctl.book.meta.format === 'epub') ctl.chapterIdx = textScrollLocator.section;
       else ctl.pageIdx = textScrollLocator.section;
     }
-    // 分栏比例统一存储：epub 存 chapter、文本类存 page，分栏横排一律附 ratio（屏位比例 0..1）
+    // 连续阅读保留章节内语义比例；分页阅读只存 DOM/文本锚，不再持久化
+    // 字号、页宽一变就失真的像素/屏位比例。
     const rec = ctl.book.meta.format === 'epub' ? { chapter: ctl.chapterIdx } : { page: ctl.pageIdx };
     if (textScrollLocator) {
       rec.ratio = +Math.max(0, Math.min(1, Number(textScrollLocator.ratio) || 0)).toFixed(5);
@@ -1524,7 +1570,7 @@ function createLibrary(container) {
       if (ctl.book.meta.format === 'epub' && textScrollLocator.sectionId != null) {
         rec.spineItemId = String(textScrollLocator.sectionId);
       }
-    } else if (ctl._flowWrap && typeof ctl._flowRatio === 'number') rec.ratio = +ctl._flowRatio.toFixed(5);
+    }
     if (ctl.zhMode) rec.zh = ctl.zhMode; // 简繁偏好随书记忆
     // 内容锚 + 字数加权百分比（koodo handleRecord 模型：锚内容不锚屏位，改字号/页宽/单双页后恢复不漂）
     const anch = captureAnchor();
@@ -1605,7 +1651,7 @@ function createLibrary(container) {
       const w = ctl._flowWrap;
       const flow = w.querySelector('.lib-flow');
       const step = ctl._stepOf?.() || w.clientWidth || 1;
-      const cols = Math.max(1, Math.round(flow.scrollWidth / step));
+      const cols = Math.max(1, Math.ceil(flow.scrollWidth / step));
       const cur = Math.min(cols, Math.round((ctl._flowOffset || 0) / step) + 1);
       const pct = Math.round(cur / cols * 100);
       posEl.textContent = `第 ${cur}/${cols} 页 · ${pct}%`;
@@ -1702,23 +1748,35 @@ function createLibrary(container) {
     const t = READ_THEMES[ctl.readTheme] || READ_THEMES.paper;
     const ff = ctl.fontFamily ? `font-family:${ctl.fontFamily};` : '';
     return `html,body{margin:0;padding:0;height:100%;}
-body{color:${t.fg};background:${t.bg};font-size:${ctl.fontSize}px;line-height:${ctl.lineHeight};${ff}box-sizing:border-box;overflow:hidden;}
-body.lib-scroll{overflow-y:auto;}
-img{max-width:100%;} a{color:inherit;}
-.lib-flow-wrap{height:100%;overflow:hidden;margin:0 auto;}
-.lib-flow{height:100%;box-sizing:border-box;padding:18px 0;will-change:transform;}
+html{background:color-mix(in srgb,${t.bg} 94%,${t.fg} 6%);}
+body{--reader-paper:${t.bg};--reader-ink:${t.fg};--reader-stage:color-mix(in srgb,${t.bg} 94%,${t.fg} 6%);--reader-stage-block:12px;color:${t.fg};background:var(--reader-stage);font-size:${ctl.fontSize}px;line-height:${ctl.lineHeight};${ff}box-sizing:border-box;overflow:hidden;padding:var(--reader-stage-block) 0;}
+body.lib-scroll{overflow-y:auto;padding:var(--reader-stage-block) 0 54px;background:var(--reader-stage);}
+img{max-width:100%;} a{color:inherit;text-underline-offset:.16em;}
+.lib-flow-wrap{position:relative;height:100%;overflow:hidden;margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transparent);border-radius:2px;box-shadow:0 1px 2px color-mix(in srgb,var(--reader-ink) 8%,transparent),0 12px 34px color-mix(in srgb,var(--reader-ink) 10%,transparent);isolation:isolate;}
+.lib-flow-wrap::after{content:'';position:absolute;z-index:3;pointer-events:none;top:0;bottom:0;left:50%;width:var(--reader-spread-gutter,0px);transform:translateX(-50%);opacity:0;background:linear-gradient(90deg,color-mix(in srgb,var(--reader-ink) 8%,transparent),transparent 36%,transparent 64%,color-mix(in srgb,var(--reader-ink) 8%,transparent));}
+.lib-flow-wrap[data-spread="double"]::after{opacity:1;}
+.lib-flow-wrap.is-turn-fade{animation:reader-page-fade 150ms ease-out;}
+.lib-flow{position:relative;z-index:1;height:100%;box-sizing:border-box;padding:var(--reader-pad-block,36px) var(--reader-pad-inline,44px);will-change:transform;overflow-wrap:break-word;}
+.lib-flow :where(p){margin:.12em 0 .82em;text-align:justify;text-justify:inter-ideograph;orphans:2;widows:2;}
+.lib-flow :where(h1,h2,h3,h4,h5,h6){line-height:1.38;margin:1.15em 0 .68em;break-after:avoid;}
+.lib-flow :where(blockquote){margin:1em 1.4em;padding-inline-start:1em;border-inline-start:2px solid color-mix(in srgb,var(--reader-ink) 24%,transparent);opacity:.9;}
+.lib-flow :where(pre,table){max-width:100%;overflow:auto;}
+.lib-flow :where(img,svg){display:block;margin:.65em auto;max-height:calc(100% - 1.3em);object-fit:contain;}
 .lib-flow .lib-chap-mark{display:block;break-before:column;}
 .lib-chap-sep{text-align:center;opacity:.55;font-size:.85em;margin:.6em 0;}
 .lib-scroll-page{padding:24px 32px;}
 .lib-page--text-virtual{min-height:100%;}
-.lib-text-reel{display:flex;flex-direction:column;align-items:stretch;}
+.lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transparent);border-radius:2px;box-shadow:0 1px 2px color-mix(in srgb,var(--reader-ink) 8%,transparent),0 12px 34px color-mix(in srgb,var(--reader-ink) 10%,transparent);}
 .lib-text-slot{position:relative;box-sizing:border-box;contain:layout style;}
-.lib-text-section-content{box-sizing:border-box;padding:28px clamp(24px,7vw,92px) 54px;max-width:1000px;margin:0 auto;}
+.lib-text-section-content{box-sizing:border-box;width:100%;padding:var(--reader-scroll-pad-block,36px) var(--reader-scroll-pad-inline,44px) calc(var(--reader-scroll-pad-block,36px) + 18px);margin:0 auto;overflow-wrap:break-word;}
+.lib-text-section-content :where(p){margin:.12em 0 .82em;text-align:justify;text-justify:inter-ideograph;orphans:2;widows:2;}
+.lib-text-section-content :where(h1,h2,h3,h4,h5,h6){line-height:1.38;margin:1.15em 0 .68em;}
 .lib-text-placeholder{display:block;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(127,127,127,.035),transparent);}
 .lib-text-slot.is-loading::after{content:'正在排版…';position:absolute;top:32px;left:50%;transform:translateX(-50%);opacity:.5;font-size:12px;}
 .lib-text-slot.is-error::after{content:'本节加载失败';position:absolute;top:32px;left:50%;transform:translateX(-50%);color:#b42318;font-size:12px;}
 hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
-body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
+@keyframes reader-page-fade{0%{opacity:.72}100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.lib-flow,.lib-flow-wrap{transition:none!important;animation:none!important}}`;
   }
   function applyFrameStyle() { if (ctl._fstyle) ctl._fstyle.textContent = frameCss(); }
   function retireReaderFrame() {
@@ -1731,22 +1789,26 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     ctl._fstyle = null;
   }
   function retireFlowOwner({ preservePosition = false } = {}) {
-    if (preservePosition && ctl._flowWrap?.isConnected
-        && ctl._pendingAnchor == null && typeof ctl._pendingRatio !== 'number') {
+    if (preservePosition && ctl._flowWrap?.isConnected && ctl._pendingAnchor == null) {
       ctl._pendingAnchor = captureAnchor();
-      ctl._pendingRatio = Number.isFinite(ctl._flowRatio) ? ctl._flowRatio : null;
+      ctl._pendingRatio = null;
     }
     ctl._flowRO?.disconnect?.();
     if (ctl._flowRAF != null) cancelAnimationFrame(ctl._flowRAF);
     clearTimeout(ctl._flowTimer);
+    clearTimeout(ctl._flowResizeTimer);
     clearTimeout(ctl._flowHideT);
+    clearTimeout(ctl._pageTurnTimer);
     ctl._flowRO = null;
     ctl._flowRAF = null;
     ctl._flowTimer = null;
+    ctl._flowResizeTimer = null;
     ctl._flowHideT = null;
+    ctl._pageTurnTimer = null;
     ctl._flowWrap = null;
     ctl._flowNav = null;
     ctl._flowLayout = null;
+    ctl._captureStableAnchor = null;
     ctl._applyOffset = null;
     ctl._stepOf = null;
   }
@@ -1825,7 +1887,9 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
           const id = decodeURIComponent(href.slice(1));
           const tgt = d.getElementById(id) || d.querySelector(`[name="${CSS.escape(id)}"]`);
           if (!tgt) return;
-          if (ctl._flowWrap && ctl._applyOffset) ctl._applyOffset(tgt.offsetLeft, true);
+          if (ctl._flowWrap && ctl._applyOffset) {
+            ctl._applyOffset(Math.max(0, tgt.offsetLeft - (ctl._pageGeometry?.pagePaddingInline || 0)), true);
+          }
           else tgt.scrollIntoView?.();
         }
       });
@@ -1841,6 +1905,44 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
 
   // ==================== 内容锚与字数加权进度（koodo handleRecord 模型：锚内容不锚屏位，重排免疫） ====================
   const flowEl = () => ctl._fdoc?.querySelector('.lib-flow') || null;
+  function readerMotionReduced() {
+    try { return !!ctl._frame?.contentWindow?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; }
+    catch { return false; }
+  }
+  function signalPageTurn(target) {
+    if (!target || readerMotionReduced()) return 0;
+    const classes = ['is-turn-fade'];
+    target.classList.remove(...classes);
+    // Restart the short feedback animation even when the user turns rapidly.
+    void target.offsetWidth;
+    target.classList.add('is-turn-fade');
+    clearTimeout(ctl._pageTurnTimer);
+    ctl._pageTurnTimer = setTimeout(() => {
+      target.classList?.remove?.(...classes);
+      ctl._pageTurnTimer = null;
+    }, 170);
+    return 150;
+  }
+  async function decodeReaderImage(img) {
+    if (!img) return null;
+    try {
+      if (typeof img.decode === 'function') await img.decode();
+    } catch (error) {
+      if (!img.naturalWidth && !img.complete) throw error;
+    }
+    return img;
+  }
+  function signalOuterPageTurn(target, delta) {
+    if (!target || readerMotionReduced() || typeof target.animate !== 'function') return;
+    ctl._outerTurnAnimation?.cancel?.();
+    ctl._outerTurnAnimation = target.animate([{ opacity: 0.72 }, { opacity: 1 }], {
+      duration: 150,
+      easing: 'ease-out',
+    });
+    ctl._outerTurnAnimation.finished.catch(() => {}).finally(() => {
+      ctl._outerTurnAnimation = null;
+    });
+  }
   const topOf = (node, flow) => { let n = node; while (n && n.parentElement && n.parentElement !== flow) n = n.parentElement; return n; };
   const xpathOf = (node, flow) => {
     const idx = []; let n = node;
@@ -1852,16 +1954,90 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     for (const i of String(path).split('/').map(Number)) { if (!n?.children?.[i]) return null; n = n.children[i]; }
     return n;
   };
-  /** 当前屏首个可见顶层块（列布局块的 offsetLeft 即其列起点；竖排换视觉坐标公式） */
+  const nodePathOf = (node, flow) => {
+    const parts = []; let current = node;
+    while (current && current !== flow) {
+      const parent = current.parentNode;
+      if (!parent) return '';
+      parts.unshift([...parent.childNodes].indexOf(current));
+      current = parent;
+    }
+    return current === flow ? parts.join('/') : '';
+  };
+  const resolveNodePath = (path) => {
+    let node = flowEl();
+    if (!node || typeof path !== 'string' || !path) return null;
+    for (const index of path.split('/').map(Number)) {
+      if (!Number.isInteger(index) || !node?.childNodes?.[index]) return null;
+      node = node.childNodes[index];
+    }
+    return node;
+  };
+  const rectIntersects = (rect, bounds, inset = 1) => !!(rect && bounds
+    && Number.isFinite(Number(rect.left)) && Number.isFinite(Number(rect.right))
+    && Number.isFinite(Number(rect.top)) && Number.isFinite(Number(rect.bottom))
+    && rect.right > bounds.left + inset && rect.left < bounds.right - inset
+    && rect.bottom > bounds.top + inset && rect.top < bounds.bottom - inset);
+  const caretRect = (doc, node, offset) => {
+    if (!doc?.createRange || !node) return null;
+    try {
+      const range = doc.createRange();
+      const length = node.nodeType === 3
+        ? String(node.textContent || '').length
+        : Number(node.childNodes?.length) || 0;
+      const start = Math.max(0, Math.min(length, Number(offset) || 0));
+      range.setStart(node, start);
+      if (node.nodeType === 3 && start < length) range.setEnd(node, start + 1);
+      else range.collapse(true);
+      return range.getClientRects?.()[0] || range.getBoundingClientRect?.() || null;
+    } catch { return null; }
+  };
+  const caretPoint = () => {
+    const doc = ctl._fdoc;
+    const wrap = ctl._flowWrap;
+    if (!doc || !wrap) return null;
+    const rect = wrap.getBoundingClientRect?.();
+    if (!rect?.width || !rect?.height) return null;
+    const x = rect.left + Math.min(rect.width - 8, (ctl._pageGeometry?.pagePaddingInline || 36) + 8);
+    const ys = [
+      rect.top + Math.min(rect.height - 8, (ctl._pageGeometry?.pagePaddingBlock || 32) + 8),
+      rect.top + rect.height * .32,
+      rect.top + rect.height * .5,
+    ];
+    for (const y of ys) {
+      const pos = doc.caretPositionFromPoint?.(x, y);
+      if (pos?.offsetNode) {
+        const point = { node: pos.offsetNode, offset: pos.offset };
+        if (rectIntersects(caretRect(doc, point.node, point.offset), rect)) return point;
+      }
+      const range = doc.caretRangeFromPoint?.(x, y);
+      if (range?.startContainer) {
+        const point = { node: range.startContainer, offset: range.startOffset };
+        if (rectIntersects(caretRect(doc, point.node, point.offset), rect)) return point;
+      }
+    }
+    return null;
+  };
+  const semanticBlocks = (flow = flowEl()) => flow
+    ? [...flow.children].filter(ch => !ch.classList?.contains('lib-chap-mark') && !ch.classList?.contains('lib-chap-sep'))
+    : [];
+  /** 当前物理页首个可见顶层块。 */
   function firstVisibleBlock() {
     const flow = flowEl();
     if (!flow || !ctl._flowWrap?.clientWidth) return null;
+    const wrapRect = ctl._flowWrap.getBoundingClientRect?.();
+    if (wrapRect?.width && wrapRect?.height && ctl._fdoc?.createRange) {
+      for (const block of semanticBlocks(flow)) {
+        try {
+          const range = ctl._fdoc.createRange();
+          range.selectNodeContents(block);
+          if ([...(range.getClientRects?.() || [])].some(rect => rectIntersects(rect, wrapRect))) return block;
+        } catch { /* fall back to the physical-column ledger below */ }
+      }
+    }
     const off = ctl._flowOffset || 0, wrapW = ctl._flowWrap.clientWidth;
-    const isV = ctl.mode === 'vertical';
-    const vx = (el) => isV ? el.offsetLeft + off : el.offsetLeft - off; // 视觉 x（横排负向/竖排正向平移）
-    for (const ch of flow.children) {
-      if (ch.classList?.contains('lib-chap-mark') || ch.classList?.contains('lib-chap-sep')) continue;
-      const left = vx(ch);
+    for (const ch of semanticBlocks(flow)) {
+      const left = ch.offsetLeft - off;
       if (left + (ch.offsetWidth || 1) > 2 && left < wrapW) return ch;
     }
     return null;
@@ -1873,11 +2049,31 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     return m;
   }
   function captureAnchor() {
-    const el = firstVisibleBlock();
     const flow = flowEl();
+    const caret = caretPoint();
+    const caretElement = caret?.node?.nodeType === 1 ? caret.node : caret?.node?.parentElement;
+    const el = caretElement && flow?.contains?.(caretElement) ? topOf(caretElement, flow) : firstVisibleBlock();
     if (!el || !flow) return null;
     const top = topOf(el, flow);
-    return { p: xpathOf(el, flow), t: (el.textContent || '').trim().slice(0, 80), m: chapterOfBlock(top) };
+    const blocks = semanticBlocks(flow);
+    const chapter = chapterOfBlock(top);
+    const chapterBlocks = blocks.filter(block => chapterOfBlock(block) === chapter);
+    const blockIndex = Math.max(0, chapterBlocks.indexOf(top));
+    const locator = {
+      kind: 'dom-text',
+      p: xpathOf(el, flow),
+      t: (el.textContent || '').trim().slice(0, 80),
+      m: chapter,
+      r: chapterBlocks.length > 1 ? blockIndex / (chapterBlocks.length - 1) : 0,
+    };
+    if (caret?.node && flow.contains?.(caret.node)) {
+      const text = String(caret.node.textContent || '');
+      const offset = Math.max(0, Math.min(text.length, Number(caret.offset) || 0));
+      locator.tp = nodePathOf(caret.node, flow);
+      locator.o = offset;
+      locator.q = text.slice(offset, offset + 48).trim();
+    }
+    return locator;
   }
   /** 字数加权全书百分比：Σ前序章字数/总字数 + 章内块序位占比×本章字数/总字数 */
   function weightedPct(anch) {
@@ -1905,17 +2101,83 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     return (before + (sizes[anch.m] || 0) * frac) / total;
   }
 
+  function applyScrollTextGeometry() {
+    const doc = ctl._fdoc;
+    if (!doc?.body) return null;
+    const width = doc.documentElement?.clientWidth || ctl._frame?.clientWidth || pageEl.clientWidth || 720;
+    const height = doc.documentElement?.clientHeight || ctl._frame?.clientHeight || pageEl.clientHeight || 720;
+    const geometry = computeReaderPageGeometry({
+      viewportWidth: width,
+      viewportHeight: height,
+      mode: 'single',
+      pageWidth: ctl.pageWidth,
+      margin: ctl.pageMargin,
+      fontSize: ctl.fontSize,
+      lineHeight: ctl.lineHeight,
+    });
+    ctl._pageGeometry = geometry;
+    doc.body.style.setProperty('--reader-stage-block', `${geometry.outerBlock}px`);
+    doc.body.style.setProperty('--reader-scroll-sheet', `${geometry.sheetWidth}px`);
+    doc.body.style.setProperty('--reader-scroll-pad-inline', `${geometry.pagePaddingInline}px`);
+    doc.body.style.setProperty('--reader-scroll-pad-block', `${geometry.pagePaddingBlock}px`);
+    return geometry;
+  }
+
+  function applyComicSizing() {
+    return applyComicFitVariables(pageEl, {
+      pageWidth: ctl.pageWidth,
+      zoom: ctl.mangaZoom,
+    });
+  }
+
+  function captureReaderReflowLocator() {
+    return ctl.book?._textViewport?.captureLocator?.()
+      || ctl.book?._comicViewport?.captureLocator?.()
+      || ctl._captureStableAnchor?.()
+      || null;
+  }
+
+  function reflowReaderGeometry(continuousLocator = null) {
+    const format = ctl.book?.meta?.format;
+    const isImage = format === 'cbz' || format === 'manga-folder';
+    if (isImage) {
+      const viewport = ctl.book?._comicViewport;
+      const locator = continuousLocator || viewport?.captureLocator?.() || null;
+      applyComicSizing();
+      if (locator) viewport?.restoreLocator?.(locator);
+      return;
+    }
+    if (ctl.mode === 'scroll' && ctl.book?._textViewport) {
+      const viewport = ctl.book._textViewport;
+      const locator = continuousLocator
+        || viewport.captureStableLocator?.()
+        || viewport.captureLocator?.();
+      applyScrollTextGeometry();
+      viewport.refresh?.({ locator });
+      return;
+    }
+    ctl._flowLayout?.(continuousLocator);
+  }
+
   async function showCurrent() {
-    // A mode/appearance rerender must capture the outgoing continuous-text
-    // viewport before its iframe and height ledger are retired.  Reuse the
-    // same chapter-relative ratio that paged mode already understands.
+    // Capture the outgoing continuous viewport before its height ledger is
+    // retired. Paged mode receives a semantic section/block locator; only a
+    // continuous-to-continuous rebuild is allowed to retain the section ratio.
     const outgoingTextLocator = ctl.book?._textViewport?.captureLocator?.() || null;
     if (outgoingTextLocator && Number.isInteger(outgoingTextLocator.section)) {
       if (ctl.book.meta.format === 'epub') ctl.chapterIdx = outgoingTextLocator.section;
       else ctl.pageIdx = outgoingTextLocator.section;
-      ctl._pendingRatio = Number.isFinite(Number(outgoingTextLocator.ratio))
-        ? Math.max(0, Math.min(1, Number(outgoingTextLocator.ratio)))
-        : null;
+      const sectionRatio = Number.isFinite(Number(outgoingTextLocator.ratio))
+        ? Math.max(0, Math.min(1, Number(outgoingTextLocator.ratio))) : 0;
+      if (ctl.mode === 'scroll') {
+        ctl._pendingRatio = sectionRatio;
+      } else {
+        ctl._pendingAnchor = {
+          kind: 'section-ratio', m: outgoingTextLocator.section,
+          sectionId: outgoingTextLocator.sectionId, r: sectionRatio,
+        };
+        ctl._pendingRatio = null;
+      }
     }
     retireFlowOwner({ preservePosition: true });
     const renderGen = (ctl._renderGen || 0) + 1;
@@ -1951,7 +2213,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
         const flat = b.meta.format === 'manga-folder' ? flatManga(b) : null;
         const count = flat ? flat.length : b.cbz.count;
         const loadPage = flat ? (i) => imageUrl(flat[i]?.path || '') : (i) => b.cbz.loadPage(i);
-        pageEl.style.setProperty('--lib-comic-zoom', `${ctl.mangaZoom || 100}%`);
+        applyComicSizing();
         b._comicViewport = createComicViewport({
           host: contentEl,
           mount: pageEl,
@@ -1977,8 +2239,10 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
         if (!await ensureFrame() || !renderAlive()) return;
         const total = totalPages();
         const center = Math.max(0, Math.min(currentPos(), total - 1));
+        ctl._fdoc.body.classList.remove('lib-paged');
         ctl._fdoc.body.classList.add('lib-scroll');
         applyFrameStyle();
+        applyScrollTextGeometry();
         // In a standards-mode iframe CSS overflow on body is owned by the
         // document scrolling element (normally <html>). Mount the section rail
         // in body, but read/write position and listen for scrolling on the real
@@ -1994,7 +2258,9 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
           initialLocator: {
             section: center,
             sectionId: b.meta.format === 'epub' ? (b.epub.spine[center]?.id || center) : center,
-            ratio: Number.isFinite(Number(ctl._pendingRatio)) ? Number(ctl._pendingRatio) : 0,
+            ratio: Number.isFinite(Number(ctl._pendingAnchor?.r))
+              ? Number(ctl._pendingAnchor.r)
+              : Number.isFinite(Number(ctl._pendingRatio)) ? Number(ctl._pendingRatio) : 0,
           },
           estimateHeight: Math.max(520, ctl._frame?.clientHeight || pageEl.clientHeight || 720),
           loadSection: async (i) => {
@@ -2020,6 +2286,16 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
         });
         await b._textViewport.ready;
         if (!renderAlive()) return;
+        if (typeof ResizeObserver !== 'undefined') {
+          ctl._flowRO?.disconnect?.();
+          ctl._flowRO = new ResizeObserver(() => {
+            if (!renderAlive() || ctl.book?._textViewport !== b._textViewport) return;
+            const locator = b._textViewport.captureStableLocator?.()
+              || b._textViewport.captureLocator?.();
+            reflowReaderGeometry(locator);
+          });
+          ctl._flowRO.observe(pageEl);
+        }
         ctl._pendingRatio = null;
         ctl._pendingAnchor = null;
         updateProgressBar();
@@ -2034,15 +2310,18 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       const flat = b.meta.format === 'manga-folder' ? flatManga(b) : null;
       const count = flat ? flat.length : b.cbz.count;
       ctl.pageIdx = Math.max(0, Math.min(ctl.pageIdx, count - 1));
+      applyComicSizing();
       const loadPage = flat ? (i) => imageUrl(flat[i]?.path || '') : (i) => b.cbz.loadPage(i);
       const aspect = b._pageAspect ||= new Map();
+      const coverSingle = ctl.spreadCoverSingle !== false;
       const spread = planSpread({
         count, index: ctl.pageIdx, mode: ctl.mode, direction: ctl.direction,
-        coverSingle: ctl.spreadCoverSingle !== false,
-        offset: ctl.spreadOffset || 0,
+        coverSingle,
+        offset: ctl.mode === 'double'
+          ? spreadOffsetForPhysicalPage(ctl.pageIdx, { coverSingle })
+          : ctl.spreadOffset || 0,
         aspect: (i) => aspect.get(i) || 0,
       });
-      ctl.pageIdx = spread.index ?? ctl.pageIdx;
       const makeImg = async (descriptor) => {
         if (!descriptor || descriptor.kind !== 'page') return null;
         const url = await loadPage(descriptor.index);
@@ -2050,7 +2329,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
         const img = document.createElement('img');
         img.className = 'lib-manga-page';
         img.alt = `第 ${descriptor.index + 1} 页`;
-        img.decoding = 'async'; img.src = url;
+        img.decoding = 'async';
         img.addEventListener('load', () => {
           if (!img.naturalWidth || !img.naturalHeight) return;
           const ratio = img.naturalWidth / img.naturalHeight;
@@ -2060,13 +2339,18 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
             void scheduleReaderAction(() => showCurrent());
           }
         }, { once: true });
-        return img;
+        img.src = url;
+        await decodeReaderImage(img);
+        return renderAlive() ? img : null;
       };
-      pageEl.replaceChildren();
+      // Decode the candidate page(s) off-DOM.  The currently visible page stays
+      // intact until its replacement is actually ready, so a slow image never
+      // turns into a blank flash.
+      const nextPage = document.createDocumentFragment();
       if (spread.layout === 'single' || spread.layout === 'wide') {
         const img = await makeImg(spread.pages[0]);
         if (!renderAlive()) return;
-        if (img) pageEl.appendChild(img);
+        if (img) nextPage.appendChild(img);
       } else {
         const spreadEl = document.createElement('div');
         spreadEl.className = 'lib-double lib-double-full';
@@ -2084,11 +2368,17 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
           }
           spreadEl.appendChild(slot);
         }
-        pageEl.appendChild(spreadEl);
+        nextPage.appendChild(spreadEl);
+      }
+      if (!renderAlive()) return;
+      pageEl.replaceChildren(nextPage);
+      if (ctl._pendingTurnDirection) {
+        signalOuterPageTurn(pageEl, ctl._pendingTurnDirection);
+        ctl._pendingTurnDirection = 0;
       }
       if (!flat) b.cbz.unloadOutside?.(new Set([
         ...spread.pageIndices,
-        spread.prevIndex, spread.nextIndex,
+        ctl.pageIdx - 1, ctl.pageIdx + 1,
       ].filter(Number.isInteger)));
     } else {
       // 文本类：一次只实体化当前章；章内分栏，跨章在边界原子切换。
@@ -2098,39 +2388,69 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       const htmls = [];
       if (!Array.isArray(ctl._chapSizes) || ctl._chapSizes.length !== total) ctl._chapSizes = Array(total).fill(1);
       const only = Math.max(0, Math.min(currentPos(), total - 1));
-      for (const i of [only]) {
+      // One neighbour per side makes the CSS column rail continuous across a
+      // chapter boundary. In double view this is the difference between the
+      // requested overlapping N/N+1 → N+1/N+2 motion and an atomic two-page
+      // jump to a freshly mounted chapter.
+      const sectionIndices = pagedSectionWindow(only, total, ctl._pendingAnchor);
+      for (const i of sectionIndices) {
         const h = await textPagesHtml(i);
         if (!renderAlive()) return;
         ctl._chapSizes[i] = h.replace(/<[^>]+>/g, '').length || 1;
         htmls.push(`<span class="lib-chap-mark" data-i="${i}"></span>${h}`);
       }
       if (b.meta.format === 'epub') {
-        const keep = new Set([only - 1, only, only + 1].map(i => b.epub.spine[i]?.id).filter(Boolean));
+        const keep = new Set(sectionIndices.map(i => b.epub.spine[i]?.id).filter(Boolean));
         b.epub.unloadOutside?.(keep);
-        for (const i of [only - 1, only + 1]) {
-          const item = b.epub.spine[i];
-          if (item) b.epub.loadChapter(item).catch(() => {});
-        }
       }
-      const isVert = ctl.mode === 'vertical'; // 竖排：自研无 multicol 模型（writing-mode+行距网格切片）
       ctl._fdoc.body.classList.remove('lib-scroll');
-      ctl._fdoc.body.classList.toggle('lib-vertical', isVert);
+      ctl._fdoc.body.classList.add('lib-paged');
       ctl._fdoc.body.innerHTML = `<div class="lib-flow-wrap"><div class="lib-flow">${htmls.join('')}</div></div>`;
       applyFrameStyle();
       const wrap = ctl._fdoc.querySelector('.lib-flow-wrap');
       ctl._flowWrap = wrap;
-      // 翻页方向：rtl 时列从右排起（日漫习惯；竖排 vertical-rl 天然右起）
-      wrap.style.direction = ctl.direction === 'rtl' && !isVert ? 'rtl' : '';
+      // 翻页方向：rtl 时列从右排起（日漫习惯）。
+      wrap.style.direction = ctl.direction === 'rtl' ? 'rtl' : '';
       const flow = ctl._fdoc.querySelector('.lib-flow');
 
-      // —— 切片定位：translateX(∓offset) 平移内容显示当前屏（横排负向/竖排正向——竖行从右向左生长探针实锤） ——
-      const applyOffset = (off, smooth = false) => {
+      // ResizeObserver fires after Chromium has already committed the changed
+      // iframe geometry.  The old semantic reading point therefore cannot be
+      // reconstructed inside its callback.  Keep the last stable locator in
+      // lock-step with every page/layout mutation and replay that snapshot.
+      let stableSemanticLocator = ctl._pendingAnchor && typeof ctl._pendingAnchor === 'object'
+        ? { ...ctl._pendingAnchor }
+        : null;
+      let resizeSemanticLocator = null;
+      let resizeSemanticEpoch = 0;
+      const rememberSemanticLocator = locator => {
+        if (!locator || typeof locator !== 'object') return stableSemanticLocator;
+        stableSemanticLocator = { ...locator };
+        return stableSemanticLocator;
+      };
+      ctl._captureStableAnchor = () => (resizeSemanticLocator || stableSemanticLocator)
+        ? { ...(resizeSemanticLocator || stableSemanticLocator) }
+        : (captureAnchor() || null);
+
+      // —— 切片定位：offset 始终是物理页距的整数倍。 ——
+      const applyOffset = (off, smooth = false, turnDirection = 0, semanticLocator = null) => {
         if (!renderAlive() || ctl._flowWrap !== wrap) return;
+        // A deliberate page turn supersedes an in-flight resize transaction.
+        // Reflow replay always supplies its locked semantic locator, whereas a
+        // user navigation calls applyOffset without one.
+        if (!semanticLocator && resizeSemanticLocator) {
+          resizeSemanticLocator = null;
+          resizeSemanticEpoch++;
+          clearTimeout(ctl._flowResizeTimer);
+          ctl._flowResizeTimer = null;
+        }
         const wrapW = wrap.clientWidth || 1;
-        const max = Math.max(0, flow.scrollWidth - wrapW);
-        ctl._flowOffset = Math.max(0, Math.min(off, max));
-        flow.style.transition = smooth ? 'transform .22s ease' : '';
-        flow.style.transform = `translateX(${isVert ? ctl._flowOffset : -ctl._flowOffset}px)`;
+        const pitch = Math.max(1, ctl._pageGeometry?.pagePitch || ctl._pageW || 1);
+        const rawMax = Math.max(0, flow.scrollWidth - wrapW);
+        const max = Math.max(0, Math.floor(rawMax / pitch) * pitch);
+        ctl._flowOffset = Math.max(0, Math.min(Math.round((Number(off) || 0) / pitch) * pitch, max));
+        flow.style.transition = '';
+        flow.style.transform = `translateX(${-ctl._flowOffset}px)`;
+        if (smooth && turnDirection) signalPageTurn(wrap, turnDirection);
         // 进度比例
         ctl._flowRatio = max > 0 ? ctl._flowOffset / max : 0;
         // 同步 currentPos（TOC 高亮用）：找当前屏最近的章标记
@@ -2141,91 +2461,186 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
         const layoutValid = marks.length > 1 && marks.some((m, i) => i > 0 && m.offsetLeft !== marks[0]?.offsetLeft);
         if (layoutValid) {
           let cur2 = 0;
-          // 竖排阅读序=l 递减（内容向负 x 生长）：当前章=满足 l ≥ −offset−4 的最大章序
-          for (const mk of marks) { if (isVert ? mk.offsetLeft >= -ctl._flowOffset - 4 : mk.offsetLeft <= x) cur2 = +mk.dataset.i; }
+          for (const mk of marks) { if (mk.offsetLeft <= x) cur2 = +mk.dataset.i; }
           if (ctl.book?.meta.format === 'epub') ctl.chapterIdx = cur2; else ctl.pageIdx = cur2;
+        }
+        // A reflow-safe chapter-edge locator is an explicit owner decision,
+        // not a hint to be overwritten by column-marker rounding. During a
+        // resize burst Chromium can briefly report the preceding marker as
+        // leading even though the restored physical page is the next
+        // chapter's first page. Keep controller state atomic with the
+        // semantic locator so later resizes/progress writes cannot fall back
+        // to the low chapter.
+        if (semanticLocator?.kind === 'chapter-edge' && Number.isFinite(Number(semanticLocator.m))) {
+          if (ctl.book?.meta.format === 'epub') ctl.chapterIdx = Number(semanticLocator.m);
+          else ctl.pageIdx = Number(semanticLocator.m);
+        }
+        const bridge = !semanticLocator && stableSemanticLocator?.kind === 'chapter-bridge'
+          ? stableSemanticLocator : null;
+        const highMark = bridge
+          ? flow.querySelector(`.lib-chap-mark[data-i="${Number(bridge.high)}"]`)
+          : null;
+        const highStart = highMark ? offOf(highMark) : Infinity;
+        const crossedBridge = !!bridge && ctl._flowOffset >= highStart - 1;
+        if (crossedBridge) {
+          if (ctl.book?.meta.format === 'epub') ctl.chapterIdx = Number(bridge.high);
+          else ctl.pageIdx = Number(bridge.high);
         }
         updateProgressBar();
         ctl._flowHideT && clearTimeout(ctl._flowHideT);
         ctl._flowHideT = setTimeout(saveProgress, 600);
+        const captured = semanticLocator || captureAnchor();
+        // A bridge is a temporary overlapping spread. Once its high chapter's
+        // first physical page becomes the leading page, never retain an
+        // off-screen caret from the low chapter: Chromium can return one for a
+        // transformed multicolumn rail. A chapter-edge locator is the exact,
+        // reflow-safe meaning of this position.
+        rememberSemanticLocator(crossedBridge
+          ? { kind: 'chapter-edge', edge: 'start', m: Number(bridge.high) }
+          : captured);
       };
       ctl._applyOffset = applyOffset; // 帧内锚点链接经此定位
 
-      // 步进几何（koodo 同式）：栏距 pitch=页宽+gap，屏步进=单页 pitch / 双页 2×pitch——
-      // 旧实现步进=容器宽（双页 2×页宽+gap），每翻一屏少跨一个 gap 漂移累积（「固定错位」余孽）
-      // 竖排：步进=行距网格宽（ctl._pageW 已 snap 到行距整数倍，零切行）
-      const gapOf = () => (ctl.mode === 'double' ? 48 : 0);
-      const pitchOf = () => (ctl._pageW || 0) + gapOf();
-      const stepOf = () => isVert ? (ctl._pageW || 1) : ((ctl.mode === 'double' ? 2 * pitchOf() : pitchOf()) || 1);
+      // 双页只是同时展示两个物理页；阅读游标仍按一页距推进。
+      const gapOf = () => ctl._pageGeometry?.physicalGutter ?? (ctl.mode === 'double' ? 18 : 0);
+      const pitchOf = () => ctl._pageGeometry?.pagePitch || ((ctl._pageW || 0) + gapOf());
+      const stepOf = () => pitchOf() || 1;
       ctl._stepOf = stepOf; // 进度条页数分母同基准（步进与报数同一把尺）
 
-      const layOut = () => {
+      const maxOffset = () => Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1));
+      const offOf = (node) => physicalPageOffset({
+        contentOffset: node?.offsetLeft || 0,
+        pagePaddingInline: ctl._pageGeometry?.pagePaddingInline || 0,
+        pagePitch: stepOf(),
+        maxOffset: maxOffset(),
+      });
+      const nodeForLocator = (locator) => {
+        if (!locator || locator.kind === 'chapter-edge') return null;
+        let node = locator.p ? resolveXpath(locator.p) : null;
+        const fingerprint = String(locator.t || '').trim().slice(0, 20);
+        if (node && fingerprint && !String(node.textContent || '').trim().startsWith(fingerprint)) node = null;
+        const chapter = Number.isInteger(Number(locator.m)) ? Number(locator.m) : null;
+        const candidates = semanticBlocks(flow).filter(block => chapter == null || chapterOfBlock(block) === chapter);
+        if (!node && fingerprint) {
+          node = candidates.find(block => String(block.textContent || '').trim().startsWith(fingerprint)) || null;
+        }
+        if (!node && Number.isFinite(Number(locator.r))) {
+          const index = Math.round(Math.max(0, Math.min(1, Number(locator.r))) * Math.max(0, candidates.length - 1));
+          node = candidates[index] || null;
+        }
+        return node;
+      };
+      const contentOffsetForLocator = (locator, fallbackNode) => {
+        const textNode = locator?.tp ? resolveNodePath(locator.tp) : null;
+        if (textNode && ctl._fdoc?.createRange) {
+          const text = String(textNode.textContent || '');
+          const offset = Math.max(0, Math.min(text.length, Number(locator.o) || 0));
+          const quote = String(locator.q || '').trim();
+          if (!quote || text.slice(offset).trimStart().startsWith(quote.slice(0, 20))) {
+            try {
+              const range = ctl._fdoc.createRange();
+              range.setStart(textNode, offset);
+              range.collapse(true);
+              const rect = range.getClientRects?.()[0] || range.getBoundingClientRect?.();
+              const wrapRect = wrap.getBoundingClientRect?.();
+              if (rect && wrapRect && Number.isFinite(rect.left) && Number.isFinite(wrapRect.left)) {
+                return Math.max(0, rect.left - wrapRect.left);
+              }
+            } catch {}
+          }
+        }
+        return fallbackNode?.offsetLeft || 0;
+      };
+      const restoreSemanticLocator = (locator) => {
+        if (!locator) return false;
+        if (locator.kind === 'chapter-bridge') {
+          const highMark = flow.querySelector(`.lib-chap-mark[data-i="${Number(locator.high)}"]`);
+          if (!highMark) return false;
+          applyOffset(chapterBridgeOffset({
+            highOffset: highMark.offsetLeft,
+            pagePitch: stepOf(),
+            maxOffset: maxOffset(),
+          }), false, 0, locator);
+          return true;
+        }
+        if (locator.kind === 'chapter-edge') {
+          const mark = flow.querySelector(`.lib-chap-mark[data-i="${Number(locator.m)}"]`);
+          if (!mark) return false;
+          const start = offOf(mark);
+          const end = (() => {
+            const nextMark = [...flow.querySelectorAll('.lib-chap-mark')]
+              .find(candidate => Number(candidate.dataset.i) > Number(locator.m));
+            return nextMark ? Math.max(start, offOf(nextMark) - stepOf()) : maxOffset();
+          })();
+          applyOffset(locator.edge === 'end' ? end : start, false, 0, locator);
+          return true;
+        }
+        const node = nodeForLocator(locator);
+        const fingerprint = String(locator.t || '').trim().slice(0, 20);
+        window.__restoreDbg = {
+          kind: locator.kind || 'legacy-dom', p: locator.p || '', fingerprint,
+          nodeText: String(node?.textContent || '').trim().slice(0, 20),
+          nodeOffL: node?.offsetLeft ?? null, ok: !!node,
+          max: maxOffset(), wrapW: wrap.clientWidth,
+        };
+        if (!node) return false;
+        applyOffset(physicalPageOffset({
+          contentOffset: contentOffsetForLocator(locator, node),
+          pagePaddingInline: ctl._pageGeometry?.pagePaddingInline || 0,
+          pagePitch: stepOf(),
+          maxOffset: maxOffset(),
+        }), false, 0, locator);
+        return true;
+      };
+
+      const layOut = (semanticLocator = null) => {
         if (!renderAlive() || ctl._flowWrap !== wrap) return;
         // 帧已退役（离书/换书后 RO 迟发）直接弃权——空 _fdoc 硬读必炸（异常警察实锤）
         if (!ctl._fdoc) return;
         // 可视宽回退链：innerHTML 同步读 clientWidth 常为 0/旧值（超宽总根）——RAF 后必修正
         const w = ctl._fdoc.documentElement?.clientWidth || wrap.parentElement?.clientWidth || pageEl.clientWidth || 0;
+        const h = ctl._fdoc.documentElement?.clientHeight || pageEl.clientHeight || 0;
         if (!w) return;
-        const gap = gapOf();
-        let pageW;
-        if (isVert) {
-          // 竖排：行距网格 snap——宽度=行距整数倍（每屏整数竖行零切行；行距=字号×行高）
-          const rowPitch = Math.max(18, ctl.fontSize * (ctl.lineHeight || 1.8));
-          const pct = ctl.pageWidth > 0 ? Math.min(ctl.pageWidth, 1) : 0.7;
-          pageW = Math.max(rowPitch * 4, Math.floor((w * pct) / rowPitch) * rowPitch);
-        } else if (ctl.mode === 'double') {
-          // 双页：栏宽=半屏（中轴分割）
-          pageW = Math.floor((w - gap) / 2);
-        } else {
-          // 单页：页宽=窗格宽×百分比（默认 70%——epub.js 正宗：页宽跟容器/窗格百分比走，不写死 px）
-          const pct = ctl.pageWidth > 0 ? Math.min(ctl.pageWidth, 1) : 0.7;
-          pageW = Math.floor(w * pct);
-        }
+        // Semantic locator was captured before this call. Remove the old
+        // transform while measuring the same text point in the new geometry.
+        flow.style.transition = '';
+        flow.style.transform = '';
+        const geometry = computeReaderPageGeometry({
+          viewportWidth: w,
+          viewportHeight: h,
+          mode: normalizeReaderMode(ctl.mode),
+          pageWidth: ctl.pageWidth,
+          margin: ctl.pageMargin,
+          fontSize: ctl.fontSize,
+          lineHeight: ctl.lineHeight,
+        });
+        ctl._pageGeometry = geometry;
+        const pageW = geometry.sheetWidth;
         ctl._pageW = pageW;
-        // 重排前捕内容锚：CSS 换血 DOM 不动，锚块引用存活——重排后锚回原内容（重排免疫，koodo 模型）
-        const anchorEl = firstVisibleBlock();
-        // 容器固定宽：单页=页宽，双页=2×页宽+gap（**容器永不超宽**——切片的核心，告别 overflow-x 全宽滚动）
-        // 竖排：宽度 snap 到行距整数倍（每屏整数竖行零切行），无 multicol 竖行自排（探针几何实锤）
-        const wrapW = isVert ? pageW : (ctl.mode === 'double' ? Math.min(pageW * 2 + gap, w) : Math.min(pageW, w));
+        // 容器固定宽：单页=页宽，双页=2×页宽+实体中缝。
+        const wrapW = Math.min(geometry?.wrapWidth || pageW, w);
         wrap.style.width = wrapW + 'px';
         wrap.style.margin = '0 auto';
         wrap.style.overflow = 'hidden';
-        if (isVert) {
-          flow.style.columnWidth = ''; flow.style.columnGap = ''; flow.style.columnFill = '';
-        } else {
-          // 内容分栏：栏宽=页宽（双页栏宽=半屏），高=容器高；column-fill:auto 逐栏填满（分页多栏必要条件）
-          flow.style.columnWidth = pageW + 'px';
-          flow.style.columnGap = gap + 'px';
-          flow.style.columnFill = 'auto';
-        }
+        wrap.dataset.spread = geometry?.effectiveMode === 'double' ? 'double' : 'single';
+        wrap.style.setProperty('--reader-spread-gutter', `${geometry?.physicalGutter || 0}px`);
+        ctl._fdoc.body.style.setProperty('--reader-stage-block', `${geometry?.outerBlock || 10}px`);
+        flow.style.setProperty('--reader-pad-inline', `${geometry?.pagePaddingInline || 36}px`);
+        flow.style.setProperty('--reader-pad-block', `${geometry?.pagePaddingBlock || 32}px`);
+        // 内容栏只是版心；columnGap 同时包含前页右留白、实体中缝和后页左留白。
+        flow.style.columnWidth = `${geometry.contentWidth}px`;
+        flow.style.columnGap = `${geometry.columnGap}px`;
+        flow.style.columnFill = 'auto';
         flow.style.height = '100%';
-        if (anchorEl && anchorEl.isConnected) applyOffset(isVert ? -anchorEl.offsetLeft : anchorEl.offsetLeft);
-        else applyOffset((ctl._flowRatio || 0) * Math.max(0, flow.scrollWidth - wrapW));
+        const locator = semanticLocator || stableSemanticLocator;
+        if (locator) restoreSemanticLocator(locator);
+        else applyOffset(ctl._flowOffset || 0);
       };
       layOut();
-      // 定位三级：内容锚（重开恢复）→ 分栏屏位比例 → 章标记（koodo handleRecord 同优先级）
-      // 重放式恢复（随三趟重排重放）：首趟布局宽度可能未稳，恢复一次性消费=锚块被钉死在
-      // 过渡布局的错误位置（保存 50% 恢复 33% 实锤）——每趟重排都按锚/比例重放，落定后一次性消费
-      const offOf = (node) => isVert ? -node.offsetLeft : node.offsetLeft; // 竖排正向平移（恢复=块视觉 x 归零）
-      const restoreOnce = () => {
-        if (ctl._pendingAnchor) {
-          const node = resolveXpath(ctl._pendingAnchor.p);
-          // 文本指纹校验：路径解析到的节点与记忆文本一致才采纳（书改版防错锚）
-          const fp = (ctl._pendingAnchor.t || '').trim().slice(0, 20);
-          const ok = node && (!fp || (node.textContent || '').trim().startsWith(fp));
-          // 恢复决策诊断窗（E2E 排障取数口）
-          window.__restoreDbg = { p: ctl._pendingAnchor.p, fp, nodeText: (node?.textContent || '').trim().slice(0, 20), nodeOffL: node?.offsetLeft ?? null, ok, max: Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1)), wrapW: wrap.clientWidth };
-          if (ok) applyOffset(offOf(node));
-          else applyOffset((ctl._pendingRatio || 0) * Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1)));
-          return true;
-        }
-        if (typeof ctl._pendingRatio === 'number') {
-          applyOffset(ctl._pendingRatio * Math.max(0, flow.scrollWidth - (wrap.clientWidth || 1)));
-          return true;
-        }
-        return false;
-      };
-      const hadPending = restoreOnce();
+      // Reopen/reflow accepts semantic anchors only. Legacy ratio evidence is
+      // intentionally ignored in paged mode because it describes old pixels.
+      const pendingLocator = ctl._pendingAnchor;
+      const hadPending = restoreSemanticLocator(pendingLocator);
       if (!hadPending) {
         const anchor = flow.querySelector(`[data-i="${currentPos()}"]`);
         if (anchor) applyOffset(offOf(anchor));
@@ -2235,12 +2650,12 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       ctl._flowRAF = requestAnimationFrame(() => {
         if (!renderAlive() || ctl._flowWrap !== wrap) return;
         layOut();
-        if (hadPending) restoreOnce();
+        if (hadPending) restoreSemanticLocator(pendingLocator);
       });
       ctl._flowTimer = setTimeout(() => {
         if (!renderAlive() || ctl._flowWrap !== wrap) return;
         layOut();
-        if (hadPending) restoreOnce();
+        if (hadPending) restoreSemanticLocator(pendingLocator);
         ctl._pendingAnchor = null;
         ctl._pendingRatio = null;
       }, 320);
@@ -2248,37 +2663,71 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       if (typeof ResizeObserver !== 'undefined') {
         if (ctl._flowRO) ctl._flowRO.disconnect();
         ctl._flowRO = new ResizeObserver(() => {
-          if (renderAlive() && ctl._flowWrap === wrap) layOut();
+          if (!renderAlive() || ctl._flowWrap !== wrap) return;
+          // One BrowserWindow resize produces a burst of callbacks with mixed
+          // intermediate geometries. Snapshot once, replay that same semantic
+          // point for the whole burst, and do not let caret sampling from an
+          // intermediate frame become the next canonical locator.
+          resizeSemanticLocator ||= stableSemanticLocator
+            ? { ...stableSemanticLocator }
+            : null;
+          const locator = resizeSemanticLocator ? { ...resizeSemanticLocator } : null;
+          if (!locator) return;
+          const token = ++resizeSemanticEpoch;
+          layOut(locator);
+          clearTimeout(ctl._flowResizeTimer);
+          ctl._flowResizeTimer = setTimeout(() => {
+            if (!renderAlive() || ctl._flowWrap !== wrap || token !== resizeSemanticEpoch) return;
+            layOut(locator);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              if (!renderAlive() || ctl._flowWrap !== wrap || token !== resizeSemanticEpoch) return;
+              rememberSemanticLocator(locator);
+              resizeSemanticLocator = null;
+              ctl._flowResizeTimer = null;
+            }));
+          }, 180);
         });
         ctl._flowRO.observe(pageEl);
+      }
+      if (ctl._pendingTurnDirection) {
+        signalPageTurn(wrap, ctl._pendingTurnDirection, { chapter: true });
+        ctl._pendingTurnDirection = 0;
       }
       // 切片翻页口：贴网自矫正（koodo 纪律——先 Math.round 取整贴网再 ±1 页，漂移不累积）
       ctl._flowNav = async (delta) => {
         if (!renderAlive() || ctl._flowWrap !== wrap) return;
         const total = totalPages();
         if (!wrap.clientWidth) {
-          if (ctl.book?.meta.format === 'epub') ctl.chapterIdx = Math.max(0, Math.min(ctl.chapterIdx + delta, total - 1));
-          else ctl.pageIdx = Math.max(0, Math.min(ctl.pageIdx + delta, total - 1));
+          const next = advancePhysicalPage(currentPos(), delta, total);
+          if (ctl.book?.meta.format === 'epub') ctl.chapterIdx = next;
+          else ctl.pageIdx = next;
+          ctl._pendingAnchor = { kind: 'chapter-edge', edge: delta < 0 ? 'end' : 'start', m: next };
           await showCurrent();
           return;
         }
         const step = stepOf();
         const cur = Math.round((ctl._flowOffset || 0) / step);
-        const last = Math.max(0, Math.ceil(Math.max(0, flow.scrollWidth - wrap.clientWidth) / step));
+        const last = Math.max(0, Math.floor(Math.max(0, flow.scrollWidth - wrap.clientWidth) / step));
         if ((delta > 0 && cur < last) || (delta < 0 && cur > 0)) {
-          applyOffset((cur + delta) * step, true);
+          applyOffset((cur + delta) * step, true, delta);
           return;
         }
-        const next = Math.max(0, Math.min(currentPos() + Math.sign(delta), total - 1));
+        const next = advancePhysicalPage(currentPos(), delta, total);
         if (next === currentPos()) return;
+        const bridge = ctl._pageGeometry?.effectiveMode === 'double'
+          ? chapterBridgeLocator(currentPos(), next, total)
+          : null;
         if (ctl.book?.meta.format === 'epub') ctl.chapterIdx = next; else ctl.pageIdx = next;
-        ctl._pendingRatio = delta < 0 ? 1 : 0;
-        ctl._pendingAnchor = null;
+        ctl._pendingRatio = null;
+        ctl._pendingAnchor = bridge || { kind: 'chapter-edge', edge: delta < 0 ? 'end' : 'start', m: next };
+        ctl._pendingTurnDirection = delta;
         await showCurrent();
       };
-      ctl._flowLayout = () => {
+      ctl._flowLayout = (semanticLocator = null) => {
         if (!renderAlive() || ctl._flowWrap !== wrap) return;
-        layOut();
+        const locator = semanticLocator
+          || (stableSemanticLocator ? { ...stableSemanticLocator } : captureAnchor());
+        layOut(locator);
         updateProgressBar();
       };
     }
@@ -2294,14 +2743,11 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     const isImage = b.meta.format === 'cbz' || b.meta.format === 'manga-folder';
     if (isImage && ctl.mode === 'double') {
       const count = totalPages();
-      const spread = planSpread({
-        count, index: ctl.pageIdx, mode: 'double', direction: ctl.direction,
-        coverSingle: ctl.spreadCoverSingle !== false,
-        offset: ctl.spreadOffset || 0,
-        aspect: (i) => b._pageAspect?.get(i) || 0,
-      });
-      const next = delta > 0 ? spread.nextIndex : spread.prevIndex;
-      if (Number.isInteger(next)) ctl.pageIdx = next;
+      const next = advancePhysicalPage(ctl.pageIdx, delta, count);
+      if (next !== ctl.pageIdx) {
+        ctl.pageIdx = next;
+        ctl._pendingTurnDirection = delta;
+      }
       await showCurrent();
       return;
     }
@@ -2311,17 +2757,21 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       return;
     }
     const total = totalPages();
-    const step = ctl.mode === 'double' ? delta * 2 : delta;
+    const step = Math.sign(delta);
+    const before = currentPos();
     if (b.meta.format === 'epub') ctl.chapterIdx = Math.min(Math.max(ctl.chapterIdx + step, 0), total - 1);
     else ctl.pageIdx = Math.min(Math.max(ctl.pageIdx + step, 0), total - 1);
+    if (currentPos() !== before) ctl._pendingTurnDirection = delta;
     await showCurrent();
   }
 
   // ==================== 阅读主题与样式 ====================
   function applyReadTheme() {
     const t = READ_THEMES[ctl.readTheme] || READ_THEMES.paper;
-    contentEl.style.background = t.bg;
-    pageEl.style.background = t.bg;
+    const stage = `color-mix(in srgb, ${t.bg} 94%, ${t.fg} 6%)`;
+    const textOwner = ['epub', 'txt', 'mobi', 'azw3'].includes(ctl.book?.meta?.format);
+    contentEl.style.background = stage;
+    pageEl.style.background = textOwner ? 'transparent' : t.bg;
     pageEl.style.color = t.fg;
     applyTextStyle();
   }
@@ -3022,7 +3472,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     void scheduleReaderAction(() => showCurrent());
   });
   root.querySelector('.lib-mode').addEventListener('change', (e) => {
-    ctl.mode = e.target.value;
+    ctl.mode = normalizeReaderMode(e.target.value);
     contentEl.onscroll = null;
     queueReaderAppearance();
     void scheduleReaderAction(() => showCurrent());
@@ -3033,13 +3483,22 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     queueReaderAppearance();
   });
   root.querySelector('[data-a=font-minus]').addEventListener('click', () => {
+    const locator = captureReaderReflowLocator();
     ctl.fontSize = Math.max(12, ctl.fontSize - 1);
     applyTextStyle();
+    reflowReaderGeometry(locator);
     queueReaderAppearance();
   });
   root.querySelector('.lib-pagew').addEventListener('change', (e) => {
+    const locator = captureReaderReflowLocator();
     ctl.pageWidth = +e.target.value;
-    if (ctl._flowLayout) ctl._flowLayout();
+    reflowReaderGeometry(locator);
+    queueReaderAppearance();
+  });
+  root.querySelector('.lib-margin').addEventListener('change', (e) => {
+    const locator = captureReaderReflowLocator();
+    ctl.pageMargin = normalizeReaderMargin(e.target.value);
+    reflowReaderGeometry(locator);
     queueReaderAppearance();
   });
   // 简繁转换：版本戳驱动章节回炉 + 随书记忆
@@ -3052,7 +3511,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
   import('../../lib/select-menu.js').then(({ selectProxy }) => {
     if (ctl._destroyed) return;
     root._libSelectProxies ||= new Map();
-    for (const cls of ['.lib-cat-filter', '.lib-shelf-sort', '.lib-shelf-format', '.lib-shelf-missing', '.lib-mode', '.lib-read-theme', '.lib-pagew', '.lib-zh']) {
+    for (const cls of ['.lib-cat-filter', '.lib-shelf-sort', '.lib-shelf-format', '.lib-shelf-missing', '.lib-mode', '.lib-read-theme', '.lib-pagew', '.lib-margin', '.lib-zh']) {
       const s = root.querySelector(cls); if (!s) continue;
       const px = selectProxy(s);
       root._libSelectProxies.set(cls, px);
@@ -3140,10 +3599,14 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
     });
     void redraw().catch(() => { if (ownerAlive()) toast('读取净化规则失败'); });
   });
-  ctl.pageWidth = ctl.pageWidth ?? 0.7; // 仅初始化：0.7=窗格 70%（百分比，随窗格走；0=也按 70% 兜底）
+  ctl.pageWidth = ctl.pageWidth ?? 0.7; // 纸张宽度；版心由 pageMargin 独立决定。
+  ctl.pageMargin = normalizeReaderMargin(ctl.pageMargin);
+  ctl.turnEffect = 'fade';
   root.querySelector('[data-a=font-plus]').addEventListener('click', () => {
+    const locator = captureReaderReflowLocator();
     ctl.fontSize = Math.min(32, ctl.fontSize + 1);
     applyTextStyle();
+    reflowReaderGeometry(locator);
     queueReaderAppearance();
   });
   // 阅读滚轮：默认向下翻/滚，Ctrl+滚轮字号缩放（漫画为图宽缩放）
@@ -3158,14 +3621,14 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       if (isImage) {
         // 漫画：Ctrl+滚轮缩放图宽（60%–130%）
         ctl.mangaZoom = Math.min(130, Math.max(50, (ctl.mangaZoom || 100) + (e.deltaY < 0 ? 5 : -5)));
-        pageEl.style.setProperty('--lib-comic-zoom', `${ctl.mangaZoom}%`);
-        pageEl.querySelectorAll('.lib-manga-page').forEach(img => { img.style.width = ctl.mangaZoom + '%'; });
+        reflowReaderGeometry();
         toast('图宽 ' + ctl.mangaZoom + '%');
         queueReaderAppearance();
       } else {
+        const locator = captureReaderReflowLocator();
         ctl.fontSize = Math.min(32, Math.max(12, ctl.fontSize + (e.deltaY < 0 ? 1 : -1)));
         applyTextStyle();
-        ctl._flowLayout?.(); // 分栏重排（帧内样式已同步，锚点重锚不丢位置）
+        reflowReaderGeometry(locator);
         queueReaderAppearance();
       }
       return;
@@ -3264,8 +3727,8 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
       { label: '摘录到书摘笔记', fn: () => { if (!ownerAlive()) return; const t = readSelection() || ctl._lastSel || ''; if (t) { window.__libClipText = t; window.MazzCommands.execute('bridge.libToNote'); } }, disabled: !sel },
       { label: '复制选中', fn: () => { if (ownerAlive()) void navigator.clipboard?.writeText(sel); }, disabled: !sel },
       '-',
-      { label: '字号 +', fn: () => { if (!ownerAlive()) return; ctl.fontSize = Math.min(32, ctl.fontSize + 1); applyTextStyle(); ctl._flowLayout?.(); queueReaderAppearance(); } },
-      { label: '字号 −', fn: () => { if (!ownerAlive()) return; ctl.fontSize = Math.max(12, ctl.fontSize - 1); applyTextStyle(); ctl._flowLayout?.(); queueReaderAppearance(); } },
+      { label: '字号 +', fn: () => { if (!ownerAlive()) return; const locator = captureReaderReflowLocator(); ctl.fontSize = Math.min(32, ctl.fontSize + 1); applyTextStyle(); reflowReaderGeometry(locator); queueReaderAppearance(); } },
+      { label: '字号 −', fn: () => { if (!ownerAlive()) return; const locator = captureReaderReflowLocator(); ctl.fontSize = Math.max(12, ctl.fontSize - 1); applyTextStyle(); reflowReaderGeometry(locator); queueReaderAppearance(); } },
       { label: '添加书签', fn: () => { if (ownerAlive()) void addMark(); } },
       '-',
       { label: '返回书架', fn: () => { if (ownerAlive()) root.querySelector('[data-a=back]').click(); } },
@@ -3333,7 +3796,7 @@ body.lib-vertical{writing-mode:vertical-rl;text-orientation:mixed;}`;
   ctl.captureProgress = progressRecord;
   ctl.applyProgress = async (rec) => {
     if (ctl._destroyed || ctl._destroying || ctl._workspaceRebinding || !ctl.book || !rec) return;
-    ctl._pendingRatio = typeof rec.ratio === 'number' ? rec.ratio : null;
+    ctl._pendingRatio = ctl.mode === 'scroll' && typeof rec.ratio === 'number' ? rec.ratio : null;
     ctl._pendingAnchor = rec.anchor || null;
     if (ctl.book.meta.format === 'epub') ctl.chapterIdx = Math.max(0, Math.min(Number(rec.chapter) || 0, totalPages() - 1));
     else ctl.pageIdx = Math.max(0, Math.min(Number(rec.page) || 0, totalPages() - 1));

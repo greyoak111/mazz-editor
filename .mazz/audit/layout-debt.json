@@ -8,24 +8,24 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 679,
+    "totalFindings": 697,
     "filesWithFindings": 71,
     "byRule": {
-      "fixed-width-px": 193,
-      "white-space-nowrap": 132,
-      "position-absolute": 159,
-      "fixed-min-width": 86,
+      "fixed-width-px": 200,
+      "white-space-nowrap": 133,
+      "position-absolute": 160,
+      "fixed-min-width": 87,
       "sidebar-pixel-coupling": 12,
       "fixed-left-right": 31,
       "width-100vw": 8,
-      "resize-js-layout": 35,
-      "calc-viewport-or-container": 12,
+      "resize-js-layout": 40,
+      "calc-viewport-or-container": 15,
       "flex-shrink-zero": 11
     },
     "topFiles": [
       {
         "file": "renderer/styles/base.css",
-        "count": 366
+        "count": 376
       },
       {
         "file": "renderer/base.css",
@@ -33,7 +33,7 @@
       },
       {
         "file": "renderer/modules/library/index.js",
-        "count": 15
+        "count": 21
       },
       {
         "file": "renderer/modules/browser/index.js",
@@ -104,6 +104,10 @@
         "count": 4
       },
       {
+        "file": "renderer/modules/library/text-viewport.js",
+        "count": 4
+      },
+      {
         "file": "renderer/panels/bookmark.html",
         "count": 4
       },
@@ -138,17 +142,13 @@
       {
         "file": "renderer/core/visual-composition.js",
         "count": 3
-      },
-      {
-        "file": "renderer/modules/library/shelf-view.js",
-        "count": 3
       }
     ],
     "byProvisionalClass": {
-      "D": 313,
-      "A": 190,
-      "B": 86,
-      "E": 59,
+      "D": 320,
+      "A": 192,
+      "B": 87,
+      "E": 67,
       "C": 31
     }
   },
@@ -997,112 +997,154 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/comic-viewport.js",
-      "line": 158,
-      "sample": "const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(setViewportHeight) : null;"
+      "line": 257,
+      "sample": "const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(setViewportGeometry) : null;"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 345,
+      "line": 359,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 820,
+      "line": 842,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 901,
+      "line": 923,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\">"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1718,
+      "line": 1756,
+      "sample": ".lib-flow-wrap::after{content:'';position:absolute;z-index:3;pointer-events:none;top:0;bottom:0;left:50%;width:var(--reader-spread-gutter,0px);transform:translateX(-50%);opacity:0;background:linear-gradient(90deg,color-mix(in srgb,var(--reader-ink) 8%,transparent),transparent 36%,transparent 64%,color-mix(in srgb,var(-"
+    },
+    {
+      "rule": "calc-viewport-or-container",
+      "provisionalClass": "E",
+      "file": "renderer/modules/library/index.js",
+      "line": 1764,
+      "sample": ".lib-flow :where(img,svg){display:block;margin:.65em auto;max-height:calc(100% - 1.3em);object-fit:contain;}"
+    },
+    {
+      "rule": "calc-viewport-or-container",
+      "provisionalClass": "E",
+      "file": "renderer/modules/library/index.js",
+      "line": 1769,
+      "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/modules/library/index.js",
+      "line": 1775,
       "sample": ".lib-text-slot.is-loading::after{content:'正在排版…';position:absolute;top:32px;left:50%;transform:translateX(-50%);opacity:.5;font-size:12px;}"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1719,
+      "line": 1776,
       "sample": ".lib-text-slot.is-error::after{content:'本节加载失败';position:absolute;top:32px;left:50%;transform:translateX(-50%);color:#b42318;font-size:12px;}"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2248,
+      "line": 2289,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2250,
+      "line": 2291,
+      "sample": "ctl._flowRO = new ResizeObserver(() => {"
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/modules/library/index.js",
+      "line": 2416,
+      "sample": "// ResizeObserver fires after Chromium has already committed the changed"
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/modules/library/index.js",
+      "line": 2663,
+      "sample": "if (typeof ResizeObserver !== 'undefined') {"
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/modules/library/index.js",
+      "line": 2665,
       "sample": "ctl._flowRO = new ResizeObserver(() => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 2364,
+      "line": 2814,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:320px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 2808,
+      "line": 3258,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 2882,
+      "line": 3332,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\"><b>${selectedIds.size} 本移到分类</b>"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/library/index.js",
-      "line": 3075,
+      "line": 3534,
       "sample": "<span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"${escapeHtml(r.pattern || '')}\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3105,
+      "line": 3564,
       "sample": "<div style=\"min-width:480px;max-width:620px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3108,
+      "line": 3567,
       "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3109,
+      "line": 3568,
       "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3112,
+      "line": 3571,
       "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
     },
     {
@@ -1130,14 +1172,28 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/text-viewport.js",
-      "line": 430,
+      "line": 166,
+      "sample": "// ResizeObserver runs after Chromium has committed the new box geometry."
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/modules/library/text-viewport.js",
+      "line": 503,
+      "sample": "// later ResizeObserver callback sees new rectangles."
+    },
+    {
+      "rule": "resize-js-layout",
+      "provisionalClass": "E",
+      "file": "renderer/modules/library/text-viewport.js",
+      "line": 513,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/text-viewport.js",
-      "line": 431,
+      "line": 514,
       "sample": "resizeObserver = new ResizeObserver(entries => {"
     },
     {
@@ -1347,14 +1403,14 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/viewer/player.js",
-      "line": 243,
+      "line": 241,
       "sample": "<div style=\"min-width:420px;font-size:12.5px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1380,
+      "line": 1378,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {
@@ -4081,668 +4137,738 @@
       "sample": ".mz-empty { position: absolute; inset: 0; display: grid; place-items: center; background: #101014; z-index: 3; transition: right .15s ease; }"
     },
     {
+      "rule": "calc-viewport-or-container",
+      "provisionalClass": "E",
+      "file": "renderer/styles/base.css",
+      "line": 1453,
+      "sample": ".mz-empty-in { max-width: min(420px, calc(100% - 40px)); padding: 20px; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.6; background: none; border: 0; box-shadow: none; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1455,
+      "sample": ".mz-empty-ico .mz-ico { width: 32px; height: 32px; }"
+    },
+    {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1457,
+      "line": 1463,
       "sample": ".mz-spectrum { position: absolute; inset: auto 0 0 0; bottom: 0; width: 100%; height: 42%; opacity: .85; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1458,
+      "line": 1464,
       "sample": ".mz-audio-disc { position: relative; z-index: 1; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; background: conic-gradient(var(--bg-active), var(--bg), var(--bg-active), var(--bg), var(--bg-active)); border: 2px solid var(--border); box-shadow: var(--shadow), inset"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1461,
+      "line": 1467,
       "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px 24px; background: linear-gradient(180deg, rgba(10,12,18,.82) 0%, rgba(10,12,18,.48) 58%, transparent 100%); transition: opacity .3s; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1464,
+      "line": 1470,
       "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--mz-overlay-fg); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1465,
+      "line": 1471,
       "sample": ".mz-meta { font-size: 11px; color: var(--mz-overlay-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1468,
+      "line": 1474,
       "sample": ".mz-controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; min-width: 0; padding: 6px 14px 10px; background: transparent; transition: opacity .3s; container: player-controls / inline-size; } /* W87e：按真实 control seat 宽度退化，不再让 max-content 越过窗格 */"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1477,
+      "line": 1483,
       "sample": ".mz-seek-track::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1481,
+      "line": 1487,
       "sample": ".mz-seek-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000 10%)); border-radius: 3px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1482,
+      "line": 1488,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1482,
+      "line": 1488,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1484,
+      "line": 1490,
       "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1495,
+      "line": 1501,
       "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1496,
+      "line": 1502,
       "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1497,
+      "line": 1503,
       "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1502,
+      "line": 1508,
       "sample": ".ie-crop { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; z-index: 4; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1503,
+      "line": 1509,
       "sample": ".ie-crop .ie-ch { position: absolute; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1515,
-      "sample": ".mz-play { font-size: 18px; width: 34px; }"
+      "line": 1521,
+      "sample": ".mz-bar > .mz-btn { width: 32px; height: 32px; padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1517,
-      "sample": ".mz-vol { width: 74px; accent-color: var(--accent); }"
+      "line": 1522,
+      "sample": ".mz-bar > .mz-btn.mz-play { width: 38px; height: 34px; padding: 0; font-size: 18px; }"
+    },
+    {
+      "rule": "fixed-min-width",
+      "provisionalClass": "B",
+      "file": "renderer/styles/base.css",
+      "line": 1523,
+      "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1523,
+      "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1524,
+      "sample": ".mz-vol { width: 74px; height: 20px; margin: 0; vertical-align: middle; accent-color: var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1520,
+      "line": 1527,
       "sample": ".mz-more-dot { position: absolute; right: 4px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--mz-overlay-bg); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1524,
+      "line": 1531,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1524,
+      "line": 1531,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1524,
+      "line": 1531,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1529,
+      "line": 1536,
       "sample": ".mz-control-density { font-size: 10.5px; color: var(--fg-dim); white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1530,
+      "line": 1537,
       "sample": ".mz-control-center > header button { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--fg-dim); cursor: pointer; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1549,
+      "sample": ".mz-control-center .mz-overflow-item.mz-btn > .mz-control-glyph { width: 20px; display: inline-flex; align-items: center; justify-content: center; color: currentColor; font: 700 10px/1 var(--font-ui); letter-spacing: -.03em; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1540,
-      "sample": ".mz-control-center .mz-overflow-item.mz-btn::after { content: attr(data-player-label); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; }"
+      "line": 1550,
+      "sample": ".mz-control-center .mz-overflow-item.mz-btn::after { content: attr(data-player-label); grid-column: 2; grid-row: 1; align-self: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; line-height: 1.2; text-align: left; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1546,
+      "line": 1556,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-control-center { right: calc(var(--mz-side-w) + 14px); width: min(360px, calc(100% - var(--mz-side-w) - 28px)); }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1565,
+      "sample": ".mz-bar > .mz-btn { width: 30px; padding: 0; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1566,
+      "sample": ".mz-bar > .mz-btn.mz-play { width: 34px; padding: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1565,
+      "line": 1578,
       "sample": ".mz-bar .mz-btn { min-width: 40px; min-height: 40px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1568,
+      "line": 1581,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1568,
+      "line": 1581,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1572,
+      "line": 1585,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-media, .mz-stage.side-open:not(.side-overlay) .mz-audio-wrap, .mz-stage.side-open:not(.side-overlay) .mz-sub-host { width: calc(100% - var(--mz-side-w)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1575,
+      "line": 1588,
       "sample": ".mz-side-grip { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 9; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1578,
+      "line": 1591,
       "sample": ".mz-stream-err { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 12%; text-align: center; background: color-mix(in srgb, #000 72%, transparent); color: #eee; pointer-events: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1583,
+      "line": 1596,
       "sample": ".mz-decode-actions .rb-btn { min-width: 112px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1593,
+      "line": 1606,
       "sample": ".mz-ml-caret { flex: none; width: 14px; text-align: center; opacity: .7; font-size: 10px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1594,
+      "line": 1607,
       "sample": ".mz-ml-dname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1599,
+      "line": 1612,
       "sample": ".mz-li { padding: 6px 9px; font-size: 12px; color: var(--fg-dim); border-radius: 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1628,
+      "line": 1641,
       "sample": ".fc-feed-cluster-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1634,
+      "line": 1647,
       "sample": ".fc-hit-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1650,
+      "line": 1663,
       "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1650,
+      "line": 1663,
       "sample": ".lib-progress-peek { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); z-index: 6; width: 46px; height: 12px; border-radius: 8px; background: var(--bg-soft, #e8e6e1); border: 1px solid var(--border); color: var(--fg-dim); font-size: 9px; line-height: 11px; text-align: center; cursor: pointer; opa"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1667,
+      "line": 1680,
       "sample": ".lib-comic-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fg-dim); font: 600 12px/1 system-ui; opacity: .55; background: color-mix(in srgb, var(--card) 72%, transparent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1669,
+      "line": 1682,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1669,
+      "line": 1682,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1670,
+      "line": 1683,
       "sample": ".lib-comic-slot.is-error::after { content: '本页解码失败'; position: absolute; top: 50%; color: var(--danger-fg, var(--danger)); font-size: 12px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1684,
+      "line": 1697,
       "sample": ".sd-grip-b { position: absolute; left: 0; right: 0; bottom: -4px; height: 8px; cursor: ns-resize; z-index: 5; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1685,
+      "line": 1698,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1685,
+      "line": 1698,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1704,
+      "line": 1717,
       "sample": ".mz-ico { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1705,
+      "line": 1718,
       "sample": ".rb-btn .mz-ico { width: 17px; height: 17px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1706,
+      "line": 1719,
       "sample": ".mazz-menu-icon .mz-ico { width: 15px; height: 15px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1710,
+      "line": 1723,
       "sample": ".w-card .mz-ico { width: 20px; height: 20px; color: var(--accent); vertical-align: -4px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1714,
+      "line": 1727,
       "sample": ".ribbon-tab-ico .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1716,
+      "line": 1729,
       "sample": ".tab-pin .mz-ico { width: 12px; height: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1719,
+      "line": 1732,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1719,
+      "line": 1732,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1727,
+      "line": 1740,
       "sample": ".sb-tab { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; border: 0; background: none; color: var(--fg-dim); font-size: 11.5px; padding: 5px 2px; cursor: pointer; border-radius: 6px; font-family: var(--font-ui); white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1728,
+      "line": 1741,
       "sample": ".sb-tab > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1731,
+      "line": 1744,
       "sample": ".sb-tab-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1732,
+      "line": 1745,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1733,
+      "line": 1746,
       "sample": "@container workspace-sidebar (max-width: 260px) {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1741,
+      "line": 1754,
       "sample": ".sb-tbtn .mz-ico { width: 13px; height: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1748,
+      "line": 1761,
       "sample": ".sb-item .mz-ico { width: 14px; height: 14px; flex: none; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1749,
+      "line": 1762,
       "sample": ".sb-item-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1755,
+      "line": 1768,
       "sample": ".sb-ol-arrow { font-style: normal; color: var(--fg-dim); width: 14px; text-align: center; cursor: pointer; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1762,
+      "line": 1775,
       "sample": ".sb-tag-head .mz-ico { width: 14px; height: 14px; color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1776,
+      "line": 1789,
       "sample": ".ft-dir { margin-left: auto; padding-left: 6px; padding-right: 26px; font-size: 10px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; direction: rtl; text-align: right; flex: none; pointer-events: none; position: relative; z-index: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1785,
+      "line": 1798,
       "sample": ".mz-bright { width: 56px; accent-color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1805,
+      "line": 1818,
       "sample": ".selmenu-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1809,
+      "line": 1822,
       "sample": ".sb-ws-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1824,
+      "line": 1837,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1824,
+      "line": 1837,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1829,
+      "line": 1842,
       "sample": ".fs-exit { position: fixed; right: 18px; bottom: 18px; z-index: 9999; border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); color: var(--fg); border-radius: 999px; padding: 8px 18px; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1835,
+      "line": 1848,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1835,
+      "line": 1848,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1835,
+      "line": 1848,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "D",
+      "file": "renderer/styles/base.css",
+      "line": 1863,
+      "sample": ".mz-companion-compose .mz-companion-send { flex:none; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; padding:0; border:0; border-radius:7px; background:var(--accent); color:var(--accent-fg); cursor:pointer; transition:filter .15s ease, transform .15s ease; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1864,
+      "sample": ".mz-companion-compose .mz-companion-send .mz-ico { width:17px; height:17px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1851,
+      "line": 1868,
       "sample": ".mz-danmaku-canvas { position:absolute; inset:0; z-index:6; pointer-events:none; width:100%; height:100%; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1852,
+      "line": 1869,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1852,
+      "line": 1869,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1855,
+      "line": 1872,
       "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1856,
+      "line": 1873,
       "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1857,
+      "line": 1874,
       "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1858,
+      "line": 1875,
       "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1859,
+      "line": 1876,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1861,
+      "line": 1878,
       "sample": ".ft-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1863,
+      "line": 1880,
       "sample": ".sd-tool-ico { display: inline-flex; align-items: center; justify-content: center; width: 18px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1872,
+      "line": 1889,
       "sample": ".mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: var(--fg-dim); font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1878,
+      "line": 1895,
       "sample": ".mz-ml-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1895,
+      "line": 1912,
       "sample": ".mz-mikan-season { min-width: 116px; max-width: 170px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1901,
+      "line": 1918,
       "sample": ".mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1902,
+      "line": 1919,
       "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1906,
+      "line": 1923,
       "sample": ".mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1910,
+      "line": 1927,
       "sample": ".mz-catalog-cover { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 16px; font-weight: 650; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1911,
+      "line": 1928,
       "sample": ".mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1917,
+      "line": 1934,
       "sample": ".mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1923,
+      "line": 1940,
       "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {

@@ -209,7 +209,7 @@ describe('Library reader preferences', () => {
       mode: 'vertical', direction: 'rtl', fontFamily: 'Noto Serif SC',
     });
     assert.deepEqual(result.locator, { page: 42, ratio: 0.6, anchor: { p: '2/1', t: '证据' } });
-    assert.equal(result.appearance.mode, 'vertical');
+    assert.equal(result.appearance.mode, 'single', 'retired vertical preference must migrate to reliable horizontal pagination');
     assert.equal(result.receipt.ok, true);
     const key = readerBookPrefsKey('D:/Books', 'book-z');
     const stored = fx.read(key);
@@ -220,12 +220,14 @@ describe('Library reader preferences', () => {
   test('controller 适配只做字段别名，不改变规范值', () => {
     const ctl = appearanceForReaderController({
       mode: 'double', direction: 'rtl', font: 'Noto Serif SC', fontSize: 20,
-      lineHeight: 2, pageWidth: 0.8, theme: 'night', zoom: 125,
+      lineHeight: 2, pageWidth: 0.8, pageMargin: 'spacious', turnEffect: 'fade',
+      theme: 'night', zoom: 125,
       spread: { cover: false, parity: 1, fit: 'width' },
     });
     assert.deepEqual(ctl, {
       mode: 'double', direction: 'rtl', fontFamily: 'Noto Serif SC', fontSize: 20,
-      lineHeight: 2, pageWidth: 0.8, readTheme: 'night', mangaZoom: 125,
+      lineHeight: 2, pageWidth: 0.8, pageMargin: 'spacious', turnEffect: 'fade',
+      readTheme: 'night', mangaZoom: 125,
       spreadCoverSingle: false, spreadParity: 1, spreadFit: 'width',
     });
   });

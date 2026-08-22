@@ -6,6 +6,7 @@
 // without discarding fields introduced by future versions or extensions.
 
 import { canonicalWorkspace, canonicalBookPath, stableHash } from './repository.js';
+import { normalizeReaderMargin, normalizeReaderMode, normalizeReaderTurnEffect } from './reader-pagination.js';
 
 const SCHEMA = 1;
 const PREFIX = 'library.reader.v1';
@@ -17,13 +18,15 @@ export const DEFAULT_READER_APPEARANCE = Object.freeze({
   fontSize: 16,
   lineHeight: 1.8,
   pageWidth: 0.7,
+  pageMargin: 'comfortable',
+  turnEffect: 'fade',
   theme: 'paper',
   zoom: 100,
   spread: Object.freeze({ cover: true, parity: 0, fit: 'contain' }),
 });
 
 const APPEARANCE_KEYS = new Set([
-  'mode', 'direction', 'font', 'fontSize', 'lineHeight', 'pageWidth', 'theme', 'zoom', 'spread',
+  'mode', 'direction', 'font', 'fontSize', 'lineHeight', 'pageWidth', 'pageMargin', 'turnEffect', 'theme', 'zoom', 'spread',
   // Legacy controller/storage aliases.
   'fontFamily', 'readTheme', 'mangaZoom', 'coverSingle', 'spreadCover',
   'spreadParity', 'spreadOffset', 'fit', 'fitMode',
@@ -97,7 +100,7 @@ export function normalizeReaderAppearance(value, { defaults = true } = {}) {
   }
 
   const mode = cleanString(alias(source, 'mode'), 24);
-  if (mode && ['single', 'double', 'scroll', 'vertical'].includes(mode)) output.mode = mode;
+  if (mode) output.mode = normalizeReaderMode(mode);
   const direction = alias(source, 'direction');
   if (direction === 'ltr' || direction === 'rtl') output.direction = direction;
 
@@ -109,6 +112,10 @@ export function normalizeReaderAppearance(value, { defaults = true } = {}) {
   if (lineHeight != null) output.lineHeight = lineHeight;
   const pageWidth = numberIn(alias(source, 'pageWidth'), 0.2, 1);
   if (pageWidth != null) output.pageWidth = pageWidth;
+  if (own(source, 'pageMargin')) output.pageMargin = normalizeReaderMargin(source.pageMargin);
+  // There is no longer a turn-effect choice. Reading any legacy slide/none
+  // value and every subsequent write canonicalizes to the sole fade feedback.
+  if (own(source, 'turnEffect')) output.turnEffect = normalizeReaderTurnEffect(source.turnEffect);
   const theme = cleanString(alias(source, 'theme', 'readTheme'), 64);
   if (theme) output.theme = theme;
   const zoom = numberIn(alias(source, 'zoom', 'mangaZoom'), 25, 400);
@@ -388,6 +395,8 @@ export function appearanceForReaderController(value) {
     fontSize: appearance.fontSize,
     lineHeight: appearance.lineHeight,
     pageWidth: appearance.pageWidth,
+    pageMargin: appearance.pageMargin,
+    turnEffect: appearance.turnEffect,
     readTheme: appearance.theme,
     mangaZoom: appearance.zoom,
     spreadCoverSingle: appearance.spread.cover,

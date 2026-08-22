@@ -60,7 +60,7 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           <div class="mz-seek-track" role="slider" tabindex="0" aria-label="播放进度" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="00:00 / --:--" aria-disabled="true"><div class="mz-seek-fill"></div><div class="mz-seek-knob"></div></div>
           <div class="mz-thumb" style="display:none"><canvas></canvas><span></span></div>
         </div>
-        <div class="mz-bar">
+        <div class="mz-bar" role="toolbar" aria-label="播放控制">
           <button class="mz-btn" data-a="prev" data-player-min="440" data-player-group="transport" data-player-label="上一个" title="上一个">${iconHtml('⏮')}</button>
           <button class="mz-btn mz-play" data-a="play" title="播放/暂停（空格）">${iconHtml('▶')}</button>
           <button class="mz-btn" data-a="next" data-player-min="440" data-player-group="transport" data-player-label="下一个" title="下一个">${iconHtml('⏭')}</button>
@@ -78,10 +78,10 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
           <button class="mz-btn" data-a="progmem" data-player-min="never" data-player-group="tools" data-player-label="进度记忆" aria-pressed="true" title="进度记忆（可开关）：记住本片播放位置，下次接着看">${iconHtml('🕐')}</button>
           <button class="mz-btn" data-a="sub" data-player-min="600" data-player-group="sound" data-player-label="字幕" aria-pressed="false" title="字幕（ASS/SRT 特效字幕，自动探测同名字幕）">${iconHtml('💬')}</button>
           <button class="mz-btn" data-a="companion" data-player-min="never" data-player-group="tools" data-player-label="陪看" title="陪看：防剧透的人格对话与本地观剧档">${iconHtml('✨')}</button>
-          <button class="mz-btn" data-a="danmaku" data-player-min="never" data-player-group="tools" data-player-label="弹幕" aria-pressed="false" title="弹幕：导入本地 XML / ASS / JSON 时间轨">弹</button>
+          <button class="mz-btn" data-a="danmaku" data-player-min="never" data-player-group="tools" data-player-label="弹幕" aria-pressed="false" title="弹幕：导入本地 XML / ASS / JSON 时间轨"><span class="mz-control-glyph" aria-hidden="true">弹</span></button>
           <button class="mz-btn" data-a="pset" data-player-min="never" data-player-group="tools" data-player-label="播放设置" title="播放设置（字幕/连播/片源）">${iconHtml('⚙')}</button>
           <button class="mz-btn" data-a="list" data-player-min="600" data-player-group="tools" data-player-label="播放列表" title="播放列表">${iconHtml('☰')}</button>
-          <button class="mz-btn" data-a="zoom-reset" data-player-min="never" data-player-group="picture" data-player-label="画面复位" data-player-video-only="1" title="画面复位（缩放/亮度一键还原）">1:1</button>
+          <button class="mz-btn" data-a="zoom-reset" data-player-min="never" data-player-group="picture" data-player-label="画面复位" data-player-video-only="1" title="画面复位（缩放/亮度一键还原）"><span class="mz-control-glyph" aria-hidden="true">1:1</span></button>
           <button class="mz-btn" data-a="lock" data-player-min="never" data-player-group="tools" data-player-label="锁定控制" aria-pressed="false" title="窗口锁定（沉浸观影防误触，一键开关）">${iconHtml('🔓')}</button>
           <button class="mz-btn" data-a="borderless" data-player-min="never" data-player-group="picture" data-player-label="无边框" aria-pressed="false" title="无边框（B）">${iconHtml('▢')}</button>
           <button class="mz-btn mz-more" data-a="more-controls" type="button" aria-haspopup="dialog" aria-expanded="false" title="更多播放控制">${iconHtml('⋯')}<span class="mz-more-dot" aria-hidden="true" hidden></span></button>
@@ -100,15 +100,13 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     // 空起手（W44 无视频启动）：舞台占位——侧栏三源全可用，导入/点源即播
     const empty = document.createElement('div');
     empty.className = 'mz-empty';
-    empty.innerHTML = `<div class="mz-empty-in">
+    empty.innerHTML = `<div class="mz-empty-in" role="group" aria-label="未载入媒体">
       <div class="mz-empty-ico">${iconHtml('🎬')}</div>
       <div class="mz-empty-t">没有正在播放的内容</div>
       <div class="mz-empty-d">左侧「媒体库 / 网络资源」选源即播，或直接导入视频</div>
-      <button class="rb-btn mz-empty-btn">${iconHtml('＋')}<span>导入视频</span></button>
+      <button class="mz-empty-btn" type="button" aria-label="导入视频或音频" title="导入视频或音频">${iconHtml('＋')}<span>导入视频</span></button>
     </div>`;
     // 几何只由 side-open/side-overlay 状态驱动；关闭侧栏时必须与媒体面、底栏一起铺满舞台。
-    empty.querySelector('.mz-empty-in').style.cssText = 'text-align:center;color:#94a3b8;font-size:13px;line-height:2';
-    empty.querySelector('.mz-empty-btn').style.cssText = 'margin-top:10px;padding:6px 18px';
     empty.querySelector('.mz-empty-btn').addEventListener('click', async () => {
       const r = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '视频/音频', extensions: [...MEDIA_VIDEO, ...MEDIA_AUDIO] }], multi: false }).catch(() => null);
       const p = Array.isArray(r) ? r[0] : r;
@@ -1425,15 +1423,16 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
 
   // ---------- 无边框 / 全屏 ----------
   const chromeEls = [controls, topbar];
+  const chromeHasFocus = () => chromeEls.some(element => element.matches(':focus-within'));
   let hideTimer = null;
   function scheduleHide() {
     clearTimeout(hideTimer);
     if (media.paused) return;
-    if (controlSurface.isOpen() || controls.matches(':focus-within')) return;
+    if (controlSurface.isOpen() || chromeHasFocus()) return;
     // W58f：自动隐藏只留全屏/无边框——窗口态底栏常驻（窗口态消失=「离谱情况」真机实锤）
     if (!document.fullscreenElement && !ctl.borderless) return;
     hideTimer = setTimeout(() => {
-      if (controlSurface.isOpen() || controls.matches(':focus-within')) return;
+      if (controlSurface.isOpen() || chromeHasFocus()) return;
       if (!ctl.borderless) controls.classList.add('fade');
       topbar.classList.add('fade');
     }, 2400);
@@ -1444,12 +1443,14 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
     scheduleHide();
   }
   const onControlSurfaceChange = () => showChrome();
-  const onControlsFocusOut = () => queueMicrotask(() => {
-    if (!controls.matches(':focus-within') && !controlSurface.isOpen()) scheduleHide();
+  const onChromeFocusOut = () => queueMicrotask(() => {
+    if (!chromeHasFocus() && !controlSurface.isOpen()) scheduleHide();
   });
   root.addEventListener('playercontrolsurfacechange', onControlSurfaceChange);
-  controls.addEventListener('focusin', showChrome);
-  controls.addEventListener('focusout', onControlsFocusOut);
+  for (const element of chromeEls) {
+    element.addEventListener('focusin', showChrome);
+    element.addEventListener('focusout', onChromeFocusOut);
+  }
   stage.addEventListener('mousemove', showChrome);
   stage.addEventListener('pointerdown', showChrome);
   media.addEventListener('play', scheduleHide);
@@ -1616,8 +1617,10 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('fullscreenchange', onFullscreenChange);
       root.removeEventListener('playercontrolsurfacechange', onControlSurfaceChange);
-      controls.removeEventListener('focusin', showChrome);
-      controls.removeEventListener('focusout', onControlsFocusOut);
+      for (const element of chromeEls) {
+        element.removeEventListener('focusin', showChrome);
+        element.removeEventListener('focusout', onChromeFocusOut);
+      }
       window.removeEventListener('resize', applySide);
       dragCleanup?.();
       clearTimeout(hideTimer);

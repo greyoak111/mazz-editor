@@ -12,6 +12,8 @@ export const MOBI_RESOURCE_LIMITS = Object.freeze({
   records: 20_000,
   textBytes: 64 * 1024 * 1024,
   recordBytes: 16 * 1024 * 1024,
+  imageBytes: 64 * 1024 * 1024,
+  imageTotalBytes: 128 * 1024 * 1024,
   lingoSourceBytes: 32 * 1024 * 1024,
 });
 
@@ -321,21 +323,80 @@ export async function parseMobi(buf) {
  * 漫画型 mobi 的文本记录只是 HTML 骨架（含 <img> 引用），正文是图片——
  * 此前只提文本，得到的全是骨架碎片（「乱码」真相），图片一张没提。
  */
-export function extractMobiImages(buf) {
+export function inspectMobiStructure(buf) {
   const v = new Uint8Array(buf);
-  if (v.length < 78) return [];
+  const empty = Object.freeze({
+    valid: false, sourceBytes: v.length, records: 0, textRecords: 0,
+    declaredTextBytes: 0, title: '未命名', author: '', images: Object.freeze([]), imageBytes: 0,
+    imageRatio: 0, imageDominant: false,
+  });
+  if (v.length < 78) return empty;
   const numRec = rU16(v, 76);
-  if (!numRec || numRec > 40000) return [];
+  if (!numRec) return empty;
+  if (numRec > MOBI_RESOURCE_LIMITS.records) {
+    throw mobiLimitError(`MOBI 记录数超过限制（${numRec} > ${MOBI_RESOURCE_LIMITS.records}）`, { records: numRec });
+  }
   const recOff = [];
+  const tableEnd = 78 + numRec * 8;
+  if (tableEnd > v.length) return empty;
+  let previous = tableEnd;
   for (let i = 0; i < numRec; i++) {
     const o = 78 + i * 8;
-    if (o + 4 > v.length) break;
-    recOff.push(rU32(v, o));
+    const offset = rU32(v, o);
+    if (offset < previous || offset > v.length) {
+      throw Object.assign(new Error('MOBI 记录偏移表损坏'), {
+        code: 'LIBRARY_MOBI_METADATA_INVALID', record: i, offset,
+      });
+    }
+    previous = offset;
+    recOff.push(offset);
   }
-  if (!recOff.length || recOff[0] + 16 > v.length) return [];
+  if (!recOff.length || recOff[0] + 16 > v.length) return empty;
   const r0 = recOff[0];
-  if (rStr(v, r0 + 16, 4, decUtf8) !== 'MOBI') return [];
+  if (rStr(v, r0 + 16, 4, decUtf8) !== 'MOBI') return empty;
   const textRecCount = rU16(v, r0 + 8);
+  const declaredTextBytes = rU32(v, r0 + 4);
+  const record0End = recOff[1] ?? v.length;
+  const textEnc = rU32(v, r0 + 28);
+  const dec = decoderFor(textEnc);
+  const fullNameOff = rU32(v, r0 + 100);
+  const fullNameLen = rU32(v, r0 + 104);
+  let title = fullNameOff && fullNameLen && r0 + fullNameOff + fullNameLen <= record0End
+    ? sniffDecode(v.subarray(r0 + fullNameOff, r0 + fullNameOff + fullNameLen), dec).replace(/\0.*$/g, '').trim()
+    : '';
+  let author = '';
+  const exthFlag = rU32(v, r0 + 128);
+  if (exthFlag & 0x40) {
+    const mobiHeaderLen = rU32(v, r0 + 20);
+    const exthOff = r0 + 16 + mobiHeaderLen;
+    if (exthOff < r0 || exthOff + 12 > record0End || rStr(v, exthOff, 4, decUtf8) !== 'EXTH') {
+      throw Object.assign(new Error('MOBI EXTH 偏移越界'), { code: 'LIBRARY_MOBI_METADATA_INVALID' });
+    }
+    const exthLen = rU32(v, exthOff + 4);
+    const exthCount = rU32(v, exthOff + 8);
+    const exthEnd = exthOff + exthLen;
+    const maxEntriesByBytes = Math.floor(Math.max(0, exthLen - 12) / 8);
+    if (exthLen < 12 || exthEnd > record0End || exthCount > maxEntriesByBytes) {
+      throw Object.assign(new Error('MOBI EXTH 目录损坏'), {
+        code: 'LIBRARY_MOBI_METADATA_INVALID', exthLen, exthCount,
+      });
+    }
+    let p = exthOff + 12;
+    for (let i = 0; i < exthCount; i++) {
+      if (p + 8 > exthEnd) throw Object.assign(new Error('MOBI EXTH 项头越界'), { code: 'LIBRARY_MOBI_METADATA_INVALID' });
+      const type = rU32(v, p);
+      const len = rU32(v, p + 4);
+      if (len < 8 || p + len > exthEnd) {
+        throw Object.assign(new Error('MOBI EXTH 项长度损坏'), { code: 'LIBRARY_MOBI_METADATA_INVALID', type, len });
+      }
+      if (type === 100 && len > 8 && !author) author = rStr(v, p + 8, len - 8, dec).trim();
+      if (type === 503 && len > 8) {
+        const candidate = sniffDecode(v.subarray(p + 8, p + len), dec).replace(/\0.*$/g, '').trim();
+        if (candidate) title = candidate;
+      }
+      p += len;
+    }
+  }
   const mimeOf = (rec) => {
     if (rec.length > 3 && rec[0] === 0xFF && rec[1] === 0xD8 && rec[2] === 0xFF) return 'image/jpeg';
     if (rec.length > 4 && rec[0] === 0x89 && rec[1] === 0x50 && rec[2] === 0x4E && rec[3] === 0x47) return 'image/png';
@@ -344,15 +405,53 @@ export function extractMobiImages(buf) {
     return null;
   };
   const images = [];
+  let imageBytes = 0;
   // 图片记录必在文本记录之后（textRecCount+1 起全扫，魔数判定即停非图）
   for (let i = textRecCount + 1; i < recOff.length; i++) {
     const s = recOff[i], e = i + 1 < recOff.length ? recOff[i + 1] : v.length;
     if (s >= e || s >= v.length) break;
     const rec = v.subarray(s, Math.min(e, v.length));
     const mime = mimeOf(rec);
-    if (mime) images.push({ mime, bytes: rec });
+    if (!mime) continue;
+    if (rec.byteLength > MOBI_RESOURCE_LIMITS.imageBytes) {
+      throw mobiLimitError('MOBI 单张图片超过限制', {
+        imageBytes: rec.byteLength, maxImageBytes: MOBI_RESOURCE_LIMITS.imageBytes, record: i,
+      });
+    }
+    imageBytes += rec.byteLength;
+    if (imageBytes > MOBI_RESOURCE_LIMITS.imageTotalBytes) {
+      throw mobiLimitError('MOBI 图片累计体积超过限制', {
+        imageBytes, maxImageBytes: MOBI_RESOURCE_LIMITS.imageTotalBytes,
+      });
+    }
+    images.push({ mime, bytes: rec, record: i });
   }
-  return images;
+  const imageRatio = v.length ? imageBytes / v.length : 0;
+  // A few illustrations never turn a readable novel into a comic.  This fast
+  // route is intentionally high-confidence: a real image publication has a
+  // long image run and the images dominate the physical source.  It restores
+  // the pre-W88 capability without feeding a 60 MiB image book into a text
+  // parser that would copy the source and eagerly materialize every resource.
+  const imageDominant = images.length >= 8
+    && imageRatio >= 0.70
+    && declaredTextBytes <= Math.max(4 * 1024 * 1024, v.length * 0.15);
+  return Object.freeze({
+    valid: true,
+    sourceBytes: v.length,
+    records: numRec,
+    textRecords: textRecCount,
+    declaredTextBytes,
+    title: title || '未命名',
+    author,
+    images: Object.freeze(images),
+    imageBytes,
+    imageRatio,
+    imageDominant,
+  });
+}
+
+export function extractMobiImages(buf) {
+  return inspectMobiStructure(buf).images;
 }
 
 /** 图片字节 → dataURL（分块编码防栈溢出） */

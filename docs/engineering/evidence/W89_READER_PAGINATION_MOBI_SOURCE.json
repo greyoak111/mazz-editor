@@ -1,0 +1,166 @@
+{
+  "protocol": "mazz.w89-reader-pagination-mobi/v1",
+  "generatedAt": "2026-08-22T06:54:27.092Z",
+  "mode": "source",
+  "verdict": "PASS",
+  "gates": [
+    {
+      "name": "60% paper retains a readable inner measure",
+      "verdict": "PASS",
+      "durationMs": 482,
+      "detail": {
+        "geometry": {
+          "requestedMode": "single",
+          "effectiveMode": "single",
+          "profile": "comfortable",
+          "viewportWidth": 1208,
+          "viewportHeight": 516,
+          "outerInline": 19,
+          "outerBlock": 9,
+          "sheetWidth": 724,
+          "wrapWidth": 724,
+          "physicalGutter": 0,
+          "pagePaddingInline": 45,
+          "pagePaddingBlock": 32,
+          "contentWidth": 634,
+          "columnGap": 90,
+          "pagePitch": 724,
+          "rowPitch": 28.8
+        },
+        "frameWidth": 1208,
+        "paper": {
+          "left": 241.1999969482422,
+          "right": 966.8000335693359,
+          "width": 725.6000366210938
+        },
+        "text": {
+          "left": 287,
+          "right": 921,
+          "width": 634
+        },
+        "computedPaddingInline": 45,
+        "stageBackground": "color(srgb 0.939608 0.926902 0.893882)",
+        "paperBackground": "rgb(251, 248, 240)"
+      }
+    },
+    {
+      "name": "page turn advances one exact pitch with visible, bounded feedback",
+      "verdict": "PASS",
+      "durationMs": 320,
+      "detail": {
+        "before": {
+          "offset": 0,
+          "pitch": 724,
+          "reduced": false
+        },
+        "after": {
+          "offset": 724,
+          "classes": [
+            "lib-flow-wrap is-turn-fade",
+            "lib-flow-wrap"
+          ]
+        }
+      }
+    },
+    {
+      "name": "progress fold keeps iframe geometry and semantic reading point stable",
+      "verdict": "PASS",
+      "durationMs": 731,
+      "detail": {
+        "before": {
+          "frameHeight": 516,
+          "offset": 724,
+          "anchor": {
+            "kind": "dom-text",
+            "p": "5",
+            "t": "第 4 段。真正耐读的分页，应当把纸张、页内留白与正文行宽分开计算；文字不贴边，翻页也不闪白。书页需要呼吸感。书页需要呼吸感。书页需要呼吸感。书页需要呼吸感。书",
+            "m": 0,
+            "r": 0.05,
+            "tp": "5/0",
+            "o": 0,
+            "q": "第 4 段。真正耐读的分页，应当把纸张、页内留白与正文行宽分开计算；文字不贴边，翻页也不闪白。书"
+          }
+        },
+        "folded": {
+          "frameHeight": 516,
+          "offset": 724,
+          "display": "flex"
+        },
+        "expanded": {
+          "frameHeight": 516,
+          "offset": 724,
+          "anchor": {
+            "kind": "dom-text",
+            "p": "5",
+            "t": "第 4 段。真正耐读的分页，应当把纸张、页内留白与正文行宽分开计算；文字不贴边，翻页也不闪白。书页需要呼吸感。书页需要呼吸感。书页需要呼吸感。书页需要呼吸感。书",
+            "m": 0,
+            "r": 0.05,
+            "tp": "5/0",
+            "o": 0,
+            "q": "第 4 段。真正耐读的分页，应当把纸张、页内留白与正文行宽分开计算；文字不贴边，翻页也不闪白。书"
+          }
+        }
+      }
+    },
+    {
+      "name": "double view still advances one physical page pitch",
+      "verdict": "PASS",
+      "durationMs": 98,
+      "detail": {
+        "before": {
+          "offset": 491,
+          "pitch": 491,
+          "wrapWidth": 965
+        },
+        "after": {
+          "offset": 982
+        }
+      }
+    },
+    {
+      "name": "57.6 MiB legacy image MOBI bypasses the 32 MiB text parser cliff",
+      "verdict": "PASS",
+      "durationMs": 874,
+      "detail": {
+        "id": "w89-mobi",
+        "runtimeFormat": "cbz",
+        "route": "image-dominant",
+        "pages": 336,
+        "cached": 1,
+        "page": 0,
+        "image": {
+          "complete": true,
+          "naturalWidth": 800,
+          "naturalHeight": 1176
+        }
+      }
+    },
+    {
+      "name": "reader leaves no renderer runtime errors",
+      "verdict": "PASS",
+      "durationMs": 0,
+      "detail": {
+        "runtimeErrors": []
+      }
+    }
+  ],
+  "runtimeErrors": [],
+  "specimen": {
+    "path": "D:\\mazzworkplace\\书库\\[成田良悟] 无头骑士异闻录1-10.mobi",
+    "size": 60429040,
+    "sha256": "b22ca25867ded5bc09ae9395bcf9308e30544cfef1b68cdb73616d8c363f7d55"
+  },
+  "artifacts": {
+    "bundle": "fbb67dc70c1b773085af0dc9485c7cb0824adde4ec291a9850e0dd3add5484c4",
+    "executable": null,
+    "packaged": null,
+    "paperScreenshot": {
+      "path": "D:\\output\\Mazz Editor\\docs\\engineering\\evidence\\W89_READER_PAPER_SOURCE.png",
+      "sha256": "40ea3003b412849d7ff733413d17f11f275dd5bcdb8119fb065553c3beb91dd2"
+    },
+    "mobiScreenshot": {
+      "path": "D:\\output\\Mazz Editor\\docs\\engineering\\evidence\\W89_MOBI_COMPAT_SOURCE.png",
+      "sha256": "562fb8dfe77ee772fe7eb65026b15ef9d782ea2f48c5414faf627fab863ff1ff"
+    }
+  }
+}

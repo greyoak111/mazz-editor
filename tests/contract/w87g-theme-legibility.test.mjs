@@ -46,7 +46,10 @@ describe('W87g Theme Legibility', () => {
     assert.match(panels, /::placeholder \{ color:\s*var\(--fg-dim\); opacity:\s*1; \}/);
     assert.match(base, /\.rb-btn:disabled \{ opacity:\s*\.58/);
     assert.match(convergence, /\[aria-disabled="true"\][^{]*\{ opacity:\s*\.58/);
-    assert.match(base, /\.mz-empty \.mz-empty-btn \{[^}]*background:\s*#1f2937[^}]*color:\s*#f8fafc/);
+    assert.ok(contrast('#cbd5e1', '#101014') >= 4.5, '播放器空态动作在暗舞台必须维持可读对比');
+    assert.match(base, /\.mz-empty \.mz-empty-btn \{[^}]*border:\s*0[^}]*background:\s*transparent[^}]*color:\s*#cbd5e1/);
+    assert.match(base, /\.mz-empty \.mz-empty-btn:hover \{[^}]*background:\s*rgba\(255,255,255,\.1\)[^}]*color:\s*#fff/);
+    assert.match(base, /\.mz-empty \.mz-empty-btn:focus-visible \{[^}]*outline:\s*2px solid var\(--accent\)/);
     assert.match(browser, /#q::placeholder,\.hset input::placeholder\{color:var\(--mut\);opacity:1\}/, 'Browser 自有主页输入提示必须使用主题次级前景');
   });
 

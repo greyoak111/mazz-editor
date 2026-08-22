@@ -113,6 +113,8 @@ export function createTextViewport({
   let frame = 0;
   let convergence = 0;
   let resizeObserver = null;
+  let resizeCompensationFrame = 0;
+  let resizeCompensating = false;
   const resident = new Map();
   const pending = new Map();
   const loadTokens = new Map();
@@ -161,6 +163,10 @@ export function createTextViewport({
   let restoringLocator = initialLocator && typeof initialLocator === 'object'
     ? { ...initialLocator, section: resolveSection(initialLocator), ratio: ratioOf(initialLocator.ratio) }
     : { section: active, sectionId: total ? idAt(active) : '', ratio: 0 };
+  // ResizeObserver runs after Chromium has committed the new box geometry.
+  // Keep the last canonical locator separately so a callback never tries to
+  // infer the old reading point from already-reflowed rectangles.
+  let stableLocator = restoringLocator ? { ...restoringLocator } : null;
 
   const alive = () => !destroyed && isAlive();
   const currentKeep = () => sectionWindow(active, total, before, after);
@@ -172,12 +178,26 @@ export function createTextViewport({
   const measure = index => {
     const slot = slots[index];
     if (!slot) return heights[index] || defaultHeight;
+    const loaded = resident.has(index) || slot.classList.contains('is-loaded');
+    const previousHeight = slot.style.height;
+    // A loaded slot's inline min-height is only the previous measurement used
+    // by its future placeholder.  Leaving that constraint in force while
+    // measuring makes reflow one-way: narrow text can grow the slot, but a
+    // later wider layout can never report its smaller natural block size.
+    // Remove both inline constraints for the synchronous layout read, then
+    // commit the new natural height below.  Unloaded placeholders keep their
+    // fixed ledger geometry.
+    if (loaded) {
+      slot.style.height = '';
+      slot.style.minHeight = '';
+    }
     const rectHeight = slot.getBoundingClientRect?.().height;
     const measured = finiteHeight(
       Math.max(Number(rectHeight) || 0, Number(slot.scrollHeight) || 0, Number(slot.offsetHeight) || 0),
       heights[index] || defaultHeight,
     );
     heights[index] = measured;
+    slot.style.height = loaded ? '' : previousHeight;
     slot.style.minHeight = `${measured}px`;
     return measured;
   };
@@ -339,6 +359,61 @@ export function createTextViewport({
     return Number.isFinite(offset) && (index === 0 || offset > 0) ? offset : ledgerTop(index);
   };
 
+  const locatorFromLedger = () => {
+    if (!total) return null;
+    const scrollTop = readScrollTop();
+    let remaining = scrollTop;
+    let section = total - 1;
+    let ratio = 1;
+    for (let index = 0; index < total; index++) {
+      const height = heights[index] || defaultHeight;
+      if (remaining < height || index === total - 1) {
+        section = index;
+        ratio = ratioOf(remaining / Math.max(1, height));
+        break;
+      }
+      remaining -= height;
+    }
+    const height = heights[section] || defaultHeight;
+    const totalHeight = Math.max(1, heights.reduce((sum, item) => sum + item, 0));
+    return {
+      section,
+      sectionId: idAt(section),
+      ratio: +ratio.toFixed(5),
+      progression: +clamp((ledgerTop(section) + ratio * height) / totalHeight, 0, 1).toFixed(5),
+      scrollTop: +scrollTop.toFixed(2),
+    };
+  };
+
+  const rememberStableLocator = locator => {
+    if (!locator || !total) return null;
+    const section = resolveSection(locator, active);
+    stableLocator = {
+      ...locator,
+      section,
+      sectionId: idAt(section),
+      ratio: ratioOf(locator.ratio),
+    };
+    return stableLocator;
+  };
+
+  const compensateToLocator = locator => {
+    if (!locator || !total || restoringLocator) return false;
+    const section = resolveSection(locator, active);
+    const ratio = ratioOf(locator.ratio);
+    const target = Math.max(0, ledgerTop(section) + ratio * (heights[section] || defaultHeight));
+    if (frame) { cancelAnimationFrame(frame); frame = 0; }
+    resizeCompensating = true;
+    writeScrollTop(target, false);
+    rememberStableLocator({ ...locator, section, sectionId: idAt(section), ratio, scrollTop: target });
+    if (resizeCompensationFrame) cancelAnimationFrame(resizeCompensationFrame);
+    resizeCompensationFrame = requestAnimationFrame(() => {
+      resizeCompensationFrame = 0;
+      resizeCompensating = false;
+    });
+    return true;
+  };
+
   /**
    * Capture the viewport-top reading point, not merely the active chapter.
    * The section key + section-relative ratio survives reflow and resize; the
@@ -383,13 +458,15 @@ export function createTextViewport({
     const height = slotHeight(section);
     const totalHeight = Math.max(1, heights.reduce((sum, item) => sum + item, 0));
     const progression = clamp((ledgerTop(section) + ratio * height) / totalHeight, 0, 1);
-    return {
+    const locator = {
       section,
       sectionId: idAt(section),
       ratio: +ratio.toFixed(5),
       progression: +progression.toFixed(5),
       scrollTop: +scrollTop.toFixed(2),
     };
+    rememberStableLocator(locator);
+    return locator;
   };
 
   const restoreLocator = async (locator, { smooth = false, notify = false } = {}) => {
@@ -400,6 +477,7 @@ export function createTextViewport({
     const changed = next !== active;
     active = next;
     restoringLocator = { ...source, section: active, sectionId: idAt(active), ratio };
+    rememberStableLocator(restoringLocator);
     await converge(active);
     if (!alive()) return false;
     await nextFrame();
@@ -407,6 +485,7 @@ export function createTextViewport({
     measure(active);
     const target = Math.max(0, slotTop(active) + ratio * slotHeight(active));
     writeScrollTop(target, smooth);
+    rememberStableLocator({ ...restoringLocator, scrollTop: target });
     await nextFrame();
     if (!alive()) return false;
     restoringLocator = null;
@@ -415,10 +494,14 @@ export function createTextViewport({
   };
 
   const onScroll = () => {
-    if (!alive() || frame) return;
+    if (!alive() || frame || resizeCompensating) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
       const next = geometricSection();
+      // The scroll event is the last point at which the old height ledger and
+      // the user's intended position are known to agree. Preserve it before a
+      // later ResizeObserver callback sees new rectangles.
+      rememberStableLocator(locatorFromLedger());
       if (next === active) return;
       active = next;
       onSection(active);
@@ -430,10 +513,18 @@ export function createTextViewport({
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(entries => {
       if (!alive()) return;
+      const locator = restoringLocator
+        ? { ...restoringLocator }
+        : (stableLocator ? { ...stableLocator } : locatorFromLedger());
+      let changed = false;
       for (const entry of entries) {
         const index = Number(entry.target?.dataset?.i);
-        if (Number.isInteger(index) && resident.has(index)) measure(index);
+        if (!Number.isInteger(index) || !resident.has(index)) continue;
+        const before = heights[index];
+        const after = measure(index);
+        if (after !== before) changed = true;
       }
+      if (changed) compensateToLocator(locator);
     });
   }
 
@@ -448,22 +539,35 @@ export function createTextViewport({
     get destroyed() { return destroyed; },
     ready,
     captureLocator,
+    captureStableLocator() {
+      if (!alive() || !total) return null;
+      const locator = restoringLocator || stableLocator;
+      return locator ? { ...locator } : null;
+    },
     async restoreLocator(locator, options = {}) {
       return restoreLocator(locator, { ...options, notify: options.notify !== false });
     },
     async goTo(index, { smooth = false, ratio = 0 } = {}) {
       return restoreLocator({ section: index, ratio }, { smooth, notify: true });
     },
-    refresh() {
+    refresh({ locator = null } = {}) {
       if (!alive()) return;
       for (const index of resident.keys()) measure(index);
-      onScroll();
+      // Geometry callers capture before changing typography/viewport width.
+      // Replaying that canonical locator synchronously avoids scheduling an
+      // onScroll frame that would reinterpret the old scrollTop against the
+      // newly measured height ledger before async restore gets a turn.
+      if (locator) compensateToLocator(locator);
+      else onScroll();
     },
     destroy() {
       if (destroyed) return;
       destroyed = true;
       convergence++;
       if (frame) cancelAnimationFrame(frame);
+      if (resizeCompensationFrame) cancelAnimationFrame(resizeCompensationFrame);
+      resizeCompensationFrame = 0;
+      resizeCompensating = false;
       for (const target of scrollTargets) target.removeEventListener('scroll', onScroll);
       resizeObserver?.disconnect?.();
       for (const index of loadTokens.keys()) loadTokens.set(index, (loadTokens.get(index) || 0) + 1);

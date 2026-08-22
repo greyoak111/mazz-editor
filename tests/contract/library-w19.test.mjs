@@ -70,12 +70,12 @@ describe('书库尾巴·简繁转换', () => {
   });
 });
 
-describe('书库尾巴·竖排', () => {
-  test('无 multicol 行距网格模型接线', () => {
+describe('书库尾巴·竖排半成品退役', () => {
+  test('入口撤下且旧偏好安全迁移为可靠横排', () => {
     const src = readSrc('renderer/modules/library/index.js');
-    assert.ok(src.includes('lib-vertical') && src.includes('writing-mode:vertical-rl'), '竖排书写模式必须注入');
-    assert.ok(src.includes('rowPitch'), '行距网格 snap 必须有（每屏整数竖行零切行）');
-    assert.ok(src.includes("ctl.mode === 'vertical'"), '竖排模式判定必须贯穿');
-    assert.ok(src.includes('isVert ? -node.offsetLeft : node.offsetLeft') || src.includes('offOf'), '竖排恢复定位必须方向翻转');
+    const pagination = readSrc('renderer/modules/library/reader-pagination.js');
+    assert.ok(!src.includes('<option value="vertical">'), '未完成的竖排不得继续暴露入口');
+    assert.ok(!src.includes('body.lib-vertical') && !src.includes("ctl.mode === 'vertical'"), '分页主链不得保留两套相斥几何');
+    assert.ok(pagination.includes("return READER_MODES.has(key) ? key : 'single'"), '旧 vertical 偏好必须迁回 single');
   });
 });

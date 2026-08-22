@@ -95,7 +95,7 @@ describe('W88 Library · final correctness and lifecycle gates', () => {
   });
 
   test('旧分栏回调既受当前 render generation 守卫，也能在 retire 时主动取消', () => {
-    const flowRestore = sliceBetween('const hadPending = restoreOnce();', 'ctl._flowNav = async');
+    const flowRestore = sliceBetween('const pendingLocator = ctl._pendingAnchor;', 'ctl._flowNav = async');
     const raf = flowRestore.match(/requestAnimationFrame\s*\(\s*\(\)\s*=>\s*\{([\s\S]*?)\}\s*\)/)?.[1] || '';
     const settle = flowRestore.match(/setTimeout\s*\(\s*\(\)\s*=>\s*\{([\s\S]*?)\}\s*,\s*320\s*\)/)?.[1] || '';
     const resizeStart = flowRestore.indexOf('new ResizeObserver');

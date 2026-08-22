@@ -20,13 +20,13 @@
       "foundPaths": [
         "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\codex",
         "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\codex.cmd",
-        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex",
-        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe"
+        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.818.2441.0_x64__2p2nqsd0c76g0\\app\\resources\\codex",
+        "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.818.2441.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe"
       ],
       "detection": "FOUND",
       "versionProbe": {
         "status": "FAILED",
-        "error": "spawnSync C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe EPERM"
+        "error": "spawnSync C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.818.2441.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe EPERM"
       },
       "authentication": {
         "status": "NOT_PROBED",

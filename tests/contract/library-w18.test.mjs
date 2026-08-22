@@ -6,6 +6,7 @@ import path from 'node:path';
 
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 const { makeBytesPager } = await import('../../renderer/modules/library/cbz.js');
+const { computeReaderPageGeometry } = await import('../../renderer/modules/library/reader-pagination.js');
 
 describe('再造书库·沙箱帧隔离', () => {
   test('沙箱帧机制存在于源码', () => {
@@ -25,10 +26,22 @@ describe('再造书库·沙箱帧隔离', () => {
 });
 
 describe('再造书库·步进几何与贴网自矫正', () => {
-  test('双页步进=2×(页宽+gap)——修复 48px 累积漂移', () => {
+  test('双页展示两张纸但游标一次只推进一个物理页距', () => {
     const src = readSrc('renderer/modules/library/index.js');
     assert.ok(src.includes('pitchOf') && src.includes('stepOf'), '必须有栏距/步进几何函数');
-    assert.ok(/stepOf\s*=\s*\(\)\s*=>.*2\s*\*\s*pitchOf/.test(src), '双页屏步进必须是 2×栏距');
+    assert.ok(src.includes('const stepOf = () => pitchOf() || 1'), '单双页必须共用一个物理页距');
+    const spread = computeReaderPageGeometry({
+      viewportWidth: 1440,
+      viewportHeight: 760,
+      mode: 'double',
+      pageWidth: 1,
+      margin: 'comfortable',
+    });
+    assert.equal(spread.effectiveMode, 'double');
+    assert.equal(spread.pagePitch, spread.contentWidth + spread.columnGap,
+      '内容栏距必须精确包含两侧版心留白与实体中缝');
+    assert.equal(spread.wrapWidth, spread.sheetWidth * 2 + spread.physicalGutter,
+      '双页纸张总宽必须只含一个实体中缝');
     assert.ok(src.includes("columnFill = 'auto'"), 'column-fill:auto 逐栏填满（分页必要条件）');
   });
   test('翻页先取整贴网再 ±1 页（漂移自矫正）', () => {

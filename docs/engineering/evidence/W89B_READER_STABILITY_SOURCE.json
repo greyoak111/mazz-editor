@@ -1,0 +1,943 @@
+{
+  "protocol": "mazz.w89b-reader-stability/v1",
+  "generatedAt": "2026-08-22T06:48:21.988Z",
+  "mode": "source",
+  "verdict": "PASS",
+  "gates": [
+    {
+      "name": "progress collapsed/expanded reserves one invariant reader viewport, including first open",
+      "verdict": "PASS",
+      "durationMs": 3921,
+      "detail": {
+        "hiddenFirstOpen": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 0,
+          "pitch": 845,
+          "physicalPage": 0,
+          "max": 21867,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 0,
+          "stableRect": {
+            "left": 284.5,
+            "top": 85.4000015258789,
+            "right": 316.5,
+            "bottom": 127
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "1",
+            "tp": "1/0",
+            "o": 0,
+            "q": "第 1 章"
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 846.6000366210938,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": true,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "expanded": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 0,
+          "pitch": 845,
+          "physicalPage": 0,
+          "max": 21867,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 0,
+          "stableRect": {
+            "left": 284.5,
+            "top": 85.4000015258789,
+            "right": 316.5,
+            "bottom": 127
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "1",
+            "tp": "1/0",
+            "o": 0,
+            "q": "第 1 章"
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 846.6000366210938,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "autoHidden": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 0,
+          "pitch": 845,
+          "physicalPage": 0,
+          "max": 21867,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 0,
+          "stableRect": {
+            "left": 284.5,
+            "top": 85.4000015258789,
+            "right": 316.5,
+            "bottom": 127
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "1",
+            "tp": "1/0",
+            "o": 0,
+            "q": "第 1 章"
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 846.6000366210938,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": true,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "double mode advances one physical page per action (overlapping spread)",
+      "verdict": "PASS",
+      "durationMs": 3326,
+      "detail": {
+        "before": {
+          "mode": "double",
+          "chapter": 0,
+          "offset": 0,
+          "pitch": 521,
+          "physicalPage": 0,
+          "max": 18720,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 0,
+          "stableRect": {
+            "left": 127.5,
+            "top": 85.4000015258789,
+            "right": 159.5,
+            "bottom": 127
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "1",
+            "tp": "1/0",
+            "o": 0,
+            "q": "第 1 章"
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 1026.5999755859375,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "afterOne": {
+          "mode": "double",
+          "chapter": 0,
+          "offset": 521,
+          "pitch": 521,
+          "physicalPage": 1,
+          "max": 18720,
+          "residual": 0,
+          "charOffset": 335,
+          "stableCharOffset": 335,
+          "stableRect": {
+            "left": 127.5,
+            "top": 51.79999923706055,
+            "right": 143.78750610351562,
+            "bottom": 72.5999984741211
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "5",
+            "tp": "5/0",
+            "o": 0,
+            "q": "W89B-C1-P004。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 1026.5999755859375,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -521, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "afterTwo": {
+          "mode": "double",
+          "chapter": 0,
+          "offset": 1042,
+          "pitch": 521,
+          "physicalPage": 2,
+          "max": 18720,
+          "residual": 0,
+          "charOffset": 722,
+          "stableCharOffset": 722,
+          "stableRect": {
+            "left": 127.5,
+            "top": 51.79999923706055,
+            "right": 143.5,
+            "bottom": 72.5999984741211
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "8",
+            "tp": "8/0",
+            "o": 57,
+            "q": "排版需要可靠锚点。稳定排版需要可靠锚点。稳定排版需要可靠锚点。稳定排版需要可靠锚点。稳定排版需要"
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 1026.5999755859375,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -1042, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "chapterEnd": {
+          "mode": "double",
+          "chapter": 0,
+          "offset": 18235,
+          "pitch": 521,
+          "physicalPage": 35,
+          "max": 18720,
+          "residual": 0,
+          "charOffset": 13425,
+          "stableCharOffset": 13425,
+          "stableRect": {
+            "left": 127.5,
+            "top": 51.79999923706055,
+            "right": 143.78750610351562,
+            "bottom": 72.5999984741211
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "124",
+            "tp": "124/0",
+            "o": 0,
+            "q": "W89B-C1-P123。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 1026.5999755859375,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -18235, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "bridge": {
+          "mode": "double",
+          "chapter": 0,
+          "offset": 19277,
+          "pitch": 521,
+          "physicalPage": 37,
+          "max": 38518,
+          "residual": 0,
+          "charOffset": 14195,
+          "stableCharOffset": null,
+          "stableRect": null,
+          "stableVisible": false,
+          "stableAnchor": {
+            "kind": "chapter-bridge",
+            "m": 1
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 1026.5999755859375,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -19277, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0,
+            1
+          ]
+        },
+        "bridgeForward": {
+          "mode": "double",
+          "chapter": 1,
+          "offset": 19798,
+          "pitch": 521,
+          "physicalPage": 38,
+          "max": 38518,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": null,
+          "stableRect": null,
+          "stableVisible": false,
+          "stableAnchor": {
+            "kind": "chapter-edge",
+            "edge": "start",
+            "m": 1
+          },
+          "frameHeight": 592,
+          "viewportHeight": 592,
+          "paper": {
+            "width": 1026.5999755859375,
+            "height": 571.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -19798, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0,
+            1
+          ]
+        },
+        "bridgeCompact": {
+          "mode": "double",
+          "chapter": 1,
+          "offset": 35583,
+          "pitch": 409,
+          "physicalPage": 87,
+          "max": 70312,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": null,
+          "stableRect": null,
+          "stableVisible": false,
+          "stableAnchor": {
+            "kind": "chapter-edge",
+            "edge": "start",
+            "m": 1
+          },
+          "frameHeight": 382.3999938964844,
+          "viewportHeight": 382,
+          "paper": {
+            "width": 805.6000366210938,
+            "height": 368
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -35583, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0,
+            1
+          ]
+        },
+        "bridgeRestored": {
+          "mode": "double",
+          "chapter": 1,
+          "offset": 18051,
+          "pitch": 547,
+          "physicalPage": 33,
+          "max": 34972,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": null,
+          "stableRect": null,
+          "stableVisible": false,
+          "stableAnchor": {
+            "kind": "chapter-edge",
+            "edge": "start",
+            "m": 1
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 1077.5999755859375,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -18051, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0,
+            1
+          ]
+        },
+        "bridgeBackward": {
+          "mode": "double",
+          "chapter": 0,
+          "offset": 17504,
+          "pitch": 547,
+          "physicalPage": 32,
+          "max": 34972,
+          "residual": 0,
+          "charOffset": 13975,
+          "stableCharOffset": 13975,
+          "stableRect": {
+            "left": 132,
+            "top": 52.79999923706055,
+            "right": 148.28750610351562,
+            "bottom": 73.5999984741211
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "129",
+            "tp": "129/0",
+            "o": 0,
+            "q": "W89B-C1-P128。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 1077.5999755859375,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -17504, 0)",
+          "effectiveMode": "double",
+          "mountedChapters": [
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "single mode crosses chapter edges in one command without a bridge repeat",
+      "verdict": "PASS",
+      "durationMs": 1900,
+      "detail": {
+        "lowEnd": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 22175,
+          "pitch": 887,
+          "physicalPage": 25,
+          "max": 22938,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 13645,
+          "stableRect": {
+            "left": 314.5,
+            "top": 52.79999923706055,
+            "right": 330.7875061035156,
+            "bottom": 73.5999984741211
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "126",
+            "tp": "126/0",
+            "o": 0,
+            "q": "W89B-C1-P125。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 888.6000366210938,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -22175, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "highStart": {
+          "mode": "single",
+          "chapter": 1,
+          "offset": 0,
+          "pitch": 887,
+          "physicalPage": 0,
+          "max": 22938,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": null,
+          "stableRect": null,
+          "stableVisible": false,
+          "stableAnchor": {
+            "kind": "chapter-edge",
+            "edge": "start",
+            "m": 1
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 888.6000366210938,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            1
+          ]
+        },
+        "lowRestored": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 22175,
+          "pitch": 887,
+          "physicalPage": 25,
+          "max": 22938,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": null,
+          "stableRect": null,
+          "stableVisible": false,
+          "stableAnchor": {
+            "kind": "chapter-edge",
+            "edge": "end",
+            "m": 0
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 888.6000366210938,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -22175, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "paged locator survives real viewport ResizeObserver height/width changes",
+      "verdict": "PASS",
+      "durationMs": 2209,
+      "detail": {
+        "before": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 3548,
+          "pitch": 887,
+          "physicalPage": 4,
+          "max": 22938,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 2095,
+          "stableRect": {
+            "left": 314.5,
+            "top": 52.79999923706055,
+            "right": 330.7875061035156,
+            "bottom": 73.5999984741211
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "21",
+            "tp": "21/0",
+            "o": 0,
+            "q": "W89B-C1-P020。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 888.6000366210938,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -3548, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "compact": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 5589,
+          "pitch": 621,
+          "physicalPage": 9,
+          "max": 40326,
+          "residual": 0,
+          "charOffset": 1946,
+          "stableCharOffset": 2095,
+          "stableRect": {
+            "left": 172.5,
+            "top": 243.8249969482422,
+            "right": 188.78750610351562,
+            "bottom": 264.625
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "21",
+            "tp": "21/0",
+            "o": 0,
+            "q": "W89B-C1-P020。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 373.6000061035156,
+          "viewportHeight": 374,
+          "paper": {
+            "width": 622.6000366210938,
+            "height": 359.20001220703125
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -5589, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "restored": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 3548,
+          "pitch": 887,
+          "physicalPage": 4,
+          "max": 22938,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 2095,
+          "stableRect": {
+            "left": 314.5,
+            "top": 52.79999923706055,
+            "right": 330.7875061035156,
+            "bottom": 73.5999984741211
+          },
+          "stableVisible": true,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "21",
+            "tp": "21/0",
+            "o": 0,
+            "q": "W89B-C1-P020。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 888.6000366210938,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, -3548, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        },
+        "semanticAnchorExact": true
+      }
+    },
+    {
+      "name": "unfinished vertical prototype is retired and legacy mode converges to single",
+      "verdict": "PASS",
+      "durationMs": 441,
+      "detail": {
+        "detail": {
+          "hasVerticalOption": false,
+          "selectedValue": ""
+        },
+        "frameState": {
+          "bodyClass": "lib-paged",
+          "mode": "single"
+        },
+        "probe": {
+          "mode": "single",
+          "chapter": 0,
+          "offset": 0,
+          "pitch": 887,
+          "physicalPage": 0,
+          "max": 22938,
+          "residual": 0,
+          "charOffset": 0,
+          "stableCharOffset": 2095,
+          "stableRect": {
+            "left": 3862.5,
+            "top": 52.79999923706055,
+            "right": 3878.78759765625,
+            "bottom": 73.5999984741211
+          },
+          "stableVisible": false,
+          "stableAnchor": {
+            "kind": "dom-text",
+            "m": 0,
+            "p": "21",
+            "tp": "21/0",
+            "o": 0,
+            "q": "W89B-C1-P020。视口高度改变时，这个逻辑位置必须留下；双页每次只推进一个物理页，不能把"
+          },
+          "frameHeight": 612,
+          "viewportHeight": 612,
+          "paper": {
+            "width": 888.6000366210938,
+            "height": 591.6000366210938
+          },
+          "progressCollapsed": false,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "effectiveMode": "single",
+          "mountedChapters": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "scroll text pageWidth changes measure without drifting its locator",
+      "verdict": "PASS",
+      "durationMs": 3463,
+      "detail": {
+        "narrow": {
+          "width": 623.4000244140625,
+          "contentHeight": 16849.650390625,
+          "slotHeight": 16850,
+          "inlineMinHeight": 16850,
+          "viewport": 1251,
+          "locator": {
+            "section": 1,
+            "sectionId": "c2",
+            "ratio": 0.44927,
+            "progression": 0.72464,
+            "scrollTop": 24432
+          }
+        },
+        "wide": {
+          "width": 1209.4000244140625,
+          "contentHeight": 13105.650390625,
+          "slotHeight": 13106,
+          "inlineMinHeight": 13106,
+          "viewport": 1251,
+          "locator": {
+            "section": 1,
+            "sectionId": "c2",
+            "ratio": 0.44833,
+            "progression": 0.72416,
+            "scrollTop": 18993.6
+          }
+        },
+        "narrowAgain": {
+          "width": 623.4000244140625,
+          "contentHeight": 16849.650390625,
+          "slotHeight": 16850,
+          "inlineMinHeight": 16850,
+          "viewport": 1251,
+          "locator": {
+            "section": 1,
+            "sectionId": "c2",
+            "ratio": 0.44761,
+            "progression": 0.7238,
+            "scrollTop": 24404
+          }
+        },
+        "compact": {
+          "locator": {
+            "section": 1,
+            "sectionId": "c2",
+            "ratio": 0.44703,
+            "progression": 0.72352,
+            "scrollTop": 24376.8
+          },
+          "viewport": 931
+        },
+        "restored": {
+          "locator": {
+            "section": 1,
+            "sectionId": "c2",
+            "ratio": 0.44633,
+            "progression": 0.72316,
+            "scrollTop": 24382.4
+          },
+          "viewport": 1251
+        }
+      }
+    },
+    {
+      "name": "scroll comic pageWidth is effective and viewport resize pins the active page",
+      "verdict": "PASS",
+      "durationMs": 7297,
+      "detail": {
+        "singleNarrow": {
+          "mode": "single",
+          "pageWidth": 0.5,
+          "boxWidth": 626,
+          "boxHeight": 298,
+          "hostWidth": 1268,
+          "hostHeight": 612,
+          "visibleWidth": 149,
+          "visibleHeight": 298,
+          "naturalWidth": 8,
+          "naturalHeight": 16
+        },
+        "singleWide": {
+          "mode": "single",
+          "pageWidth": 1,
+          "boxWidth": 1252,
+          "boxHeight": 596,
+          "hostWidth": 1268,
+          "hostHeight": 612,
+          "visibleWidth": 298,
+          "visibleHeight": 596,
+          "naturalWidth": 8,
+          "naturalHeight": 16
+        },
+        "doubleNarrow": {
+          "mode": "double",
+          "pageWidth": 0.5,
+          "boxWidth": 313,
+          "boxHeight": 298,
+          "hostWidth": 1268,
+          "hostHeight": 612,
+          "visibleWidth": 149,
+          "visibleHeight": 298,
+          "naturalWidth": 8,
+          "naturalHeight": 16
+        },
+        "doubleWide": {
+          "mode": "double",
+          "pageWidth": 1,
+          "boxWidth": 626,
+          "boxHeight": 596,
+          "hostWidth": 1268,
+          "hostHeight": 612,
+          "visibleWidth": 298,
+          "visibleHeight": 596,
+          "naturalWidth": 8,
+          "naturalHeight": 16
+        },
+        "narrow": {
+          "activePage": 7,
+          "scrollTop": 5560.7998046875,
+          "hostHeight": 612,
+          "hostWidth": 1268,
+          "slotTop": 0,
+          "slotHeight": 1178.4000244140625,
+          "imageWidth": 589.2000122070312,
+          "pageWidth": 0.5
+        },
+        "wide": {
+          "activePage": 7,
+          "scrollTop": 7917.60009765625,
+          "hostHeight": 612,
+          "hostWidth": 1268,
+          "slotTop": 0,
+          "slotHeight": 2356.800048828125,
+          "imageWidth": 1178.4000244140625,
+          "pageWidth": 1
+        },
+        "beforeWidthResize": {
+          "activePage": 7,
+          "scrollTop": 7917.60009765625,
+          "hostHeight": 612,
+          "hostWidth": 1268,
+          "slotTop": 0,
+          "slotHeight": 2356.800048828125,
+          "imageWidth": 1178.4000244140625,
+          "pageWidth": 1
+        },
+        "compactWidth": {
+          "activePage": 7,
+          "scrollTop": 7152.7998046875,
+          "hostHeight": 602.4000244140625,
+          "hostWidth": 888,
+          "slotTop": 0.399993896484375,
+          "slotHeight": 1622.4000244140625,
+          "imageWidth": 811.2000122070312,
+          "pageWidth": 1
+        },
+        "restoredWidth": {
+          "activePage": 7,
+          "scrollTop": 7917.60009765625,
+          "hostHeight": 612,
+          "hostWidth": 1268,
+          "slotTop": 0,
+          "slotHeight": 2356.800048828125,
+          "imageWidth": 1178.4000244140625,
+          "pageWidth": 1
+        },
+        "beforeResize": {
+          "activePage": 7,
+          "scrollTop": 7917.60009765625,
+          "hostHeight": 612,
+          "hostWidth": 1268,
+          "slotTop": 0,
+          "slotHeight": 2356.800048828125,
+          "imageWidth": 1178.4000244140625,
+          "pageWidth": 1
+        },
+        "afterResize": {
+          "activePage": 7,
+          "scrollTop": 7110.39990234375,
+          "hostHeight": 343.20001220703125,
+          "hostWidth": 1268,
+          "slotTop": 0.1999969482421875,
+          "slotHeight": 2356.800048828125,
+          "imageWidth": 1178.4000244140625,
+          "pageWidth": 1
+        }
+      }
+    },
+    {
+      "name": "reader stability run has no renderer exception",
+      "verdict": "PASS",
+      "durationMs": 0,
+      "detail": {
+        "runtimeErrors": []
+      }
+    }
+  ],
+  "runtimeErrors": [],
+  "fixtures": {
+    "epub": {
+      "bytes": 2760,
+      "sha256": "7791de19b00882b1d05a44b8773d5efa6b9edaa49e04db2d465ec17f2be1a7ed"
+    },
+    "cbz": {
+      "bytes": 3530,
+      "sha256": "3461b1f0b6465b3bb01777bb9af6c3b43287e8f7cad875253a9fc7a3204a6332"
+    }
+  }
+}

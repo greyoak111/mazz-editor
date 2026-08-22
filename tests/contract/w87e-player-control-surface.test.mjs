@@ -7,6 +7,8 @@ import path from 'node:path';
 const readSrc = p => fs.readFileSync(path.resolve(p), 'utf8');
 const player = readSrc('renderer/modules/viewer/player.js');
 const surface = readSrc('renderer/modules/viewer/player-controls.js');
+const companion = readSrc('renderer/modules/viewer/companion.js');
+const icons = readSrc('renderer/lib/svg-icons.js');
 const selectMenu = readSrc('renderer/lib/select-menu.js');
 const menuService = readSrc('renderer/core/menu-service.js');
 const css = readSrc('renderer/styles/base.css');
@@ -39,6 +41,34 @@ function controlSurfaceFixture() {
   return { root, stage: root.querySelector('.mz-stage'), controls };
 }
 
+function responsiveControlFixture(width) {
+  const root = document.createElement('div');
+  root.innerHTML = `
+    <div class="mz-stage">
+      <div class="mz-controls">
+        <div class="mz-bar">
+          <button data-a="prev" data-player-min="440" data-player-group="transport">上一个</button>
+          <button data-a="play">播放</button>
+          <span class="mz-time">00:00 / --:--</span><span class="mz-bar-spacer"></span>
+          <button data-a="mute" data-player-min="280" data-player-group="sound">静音</button>
+          <span data-a="speed" data-player-min="600" data-player-group="sound">倍速</span>
+          <button data-a="pip" data-player-min="960" data-player-group="picture">画中画</button>
+          <button data-a="snap" data-player-min="never" data-player-group="tools">截图</button>
+          <button data-a="more-controls" aria-expanded="false"><span class="mz-more-dot"></span>更多</button>
+          <button data-a="fullscreen" data-player-min="280" data-player-group="picture">全屏</button>
+        </div>
+      </div>
+      <section class="mz-control-center" hidden>
+        <header><span class="mz-control-density"></span><button data-a="more-close">关闭</button></header>
+        <div class="mz-control-center-body"></div>
+      </section>
+    </div>`;
+  document.body.appendChild(root);
+  const controls = root.querySelector('.mz-controls');
+  controls.getBoundingClientRect = () => ({ width, height: 48, left: 0, right: width, top: 0, bottom: 48, x: 0, y: 0 });
+  return { root, stage: root.querySelector('.mz-stage'), controls };
+}
+
 describe('W87e Player Control Surface', () => {
   test('W71 L/M/S/XS 按控件容器宽度落地，不再按窗口或 max-content 猜布局', () => {
     assert.match(surface, /width >= 960[\s\S]*width >= 600[\s\S]*width >= 440/);
@@ -68,6 +98,67 @@ describe('W87e Player Control Surface', () => {
     assert.match(player, /class="mz-control-center" role="dialog"[^>]*aria-modal="false"/);
   });
 
+  test('底栏命中框和时间基线固定，宽窄态保持两端稳定且不靠字形撑尺寸', () => {
+    assert.match(player, /class="mz-bar" role="toolbar" aria-label="播放控制"/);
+    assert.match(css, /\.mz-bar \{[^}]*align-items:\s*center[^}]*flex-wrap:\s*nowrap[^}]*min-height:\s*42px/);
+    assert.match(css, /\.mz-bar > \.mz-btn \{[^}]*width:\s*32px[^}]*height:\s*32px[^}]*padding:\s*0/);
+    assert.match(css, /\.mz-bar > \.mz-btn\.mz-play \{[^}]*width:\s*38px[^}]*height:\s*34px[^}]*padding:\s*0/);
+    assert.match(css, /\.mz-time \{[^}]*min-width:\s*10\.5ch[^}]*display:\s*inline-flex[^}]*align-items:\s*center[^}]*white-space:\s*nowrap/);
+    assert.match(css, /\.mz-bar-spacer \{[^}]*flex:\s*1 1 24px[^}]*min-width:\s*8px/);
+    assert.match(css, /@container player-controls \(max-width: 599px\)[\s\S]*\.mz-time-total \{ display:\s*none; \}[\s\S]*\.mz-bar > \.mz-btn \{ width:\s*30px/);
+    assert.match(css, /@container player-controls \(max-width: 439px\)[\s\S]*\.mz-bar \{ gap:\s*2px; padding-inline:\s*3px; \}/);
+  });
+
+  test('1024/720/520/320 四档真实控件节点按阈值稳定退入 More', async () => {
+    const { mountPlayerControlSurface } = await import('../../renderer/modules/viewer/player-controls.js');
+    const cases = [
+      [1024, 'l', ['prev', 'mute', 'speed', 'pip', 'fullscreen'], ['snap']],
+      [720, 'm', ['prev', 'mute', 'speed', 'fullscreen'], ['pip', 'snap']],
+      [520, 's', ['prev', 'mute', 'fullscreen'], ['speed', 'pip', 'snap']],
+      [320, 'xs', ['mute', 'fullscreen'], ['prev', 'speed', 'pip', 'snap']],
+    ];
+    for (const [width, density, inline, overflow] of cases) {
+      const fixture = responsiveControlFixture(width);
+      const api = mountPlayerControlSurface({ ...fixture, isVideo: true });
+      try {
+        await nextFrame();
+        const snapshot = api.snapshot();
+        assert.equal(snapshot.density, density, `${width}px 密度错误`);
+        assert.deepEqual(snapshot.inline, inline, `${width}px inline 顺序错误`);
+        assert.deepEqual(snapshot.overflow, overflow, `${width}px overflow 顺序错误`);
+        assert.equal(new Set([...snapshot.inline, ...snapshot.overflow]).size, 6, `${width}px 控件不得复制或丢失`);
+      } finally {
+        api.destroy();
+        fixture.root.remove();
+      }
+    }
+  });
+
+  test('浮动播放控制用固定图标列/文字列，SVG 与文本 glyph 同高同基线', () => {
+    assert.match(css, /\.mz-control-center \.mz-overflow-item\.mz-btn \{[^}]*height:\s*36px[^}]*display:\s*grid[^}]*grid-template-columns:\s*20px minmax\(0, 1fr\)[^}]*align-items:\s*center/);
+    assert.match(css, /\.mz-control-center \.mz-overflow-item\.mz-btn > \.mz-ico,[\s\S]*> \.mz-control-glyph \{[^}]*grid-column:\s*1[^}]*grid-row:\s*1[^}]*align-self:\s*center[^}]*justify-self:\s*center/);
+    assert.match(css, /\.mz-control-center \.mz-overflow-item\.mz-btn::after \{[^}]*grid-column:\s*2[^}]*grid-row:\s*1[^}]*align-self:\s*center[^}]*line-height:\s*1\.2[^}]*text-align:\s*left/);
+    assert.match(player, /data-a="danmaku"[^>]*>[\s\S]*?<span class="mz-control-glyph" aria-hidden="true">弹<\/span><\/button>/);
+    assert.match(player, /data-a="zoom-reset"[^>]*>[\s\S]*?<span class="mz-control-glyph" aria-hidden="true">1:1<\/span><\/button>/);
+    assert.doesNotMatch(player, /data-a="(?:danmaku|zoom-reset)"[^>]*>\s*(?:弹|1:1)\s*<\/button>/);
+  });
+
+  test('空播放器动作严格居中且无卡片边框，陪看发送只使用可访问 SVG', () => {
+    assert.match(css, /\.mz-empty \{[^}]*display:\s*grid[^}]*place-items:\s*center/);
+    assert.match(css, /\.mz-empty-in \{[^}]*background:\s*none[^}]*border:\s*0[^}]*box-shadow:\s*none/);
+    assert.match(css, /\.mz-empty \.mz-empty-btn \{[^}]*border:\s*0[^}]*background:\s*transparent/);
+    assert.match(css, /\.mz-empty \.mz-empty-btn:focus-visible \{[^}]*outline:\s*2px solid var\(--accent\)/);
+    assert.match(player, /class="mz-empty-btn" type="button" aria-label="导入视频或音频"/);
+    assert.doesNotMatch(player, /mz-empty-in'\)\.style|mz-empty-btn'\)\.style/);
+
+    assert.match(icons, /'↵':\s*S\('/, '发送键必须映射为 currentColor SVG');
+    assert.match(companion, /class="mz-companion-send"[^>]*data-c="send"[^>]*aria-label="发送消息（Enter）"[^>]*aria-keyshortcuts="Enter"[^>]*>\$\{iconHtml\('↵'\)\}<\/button>/);
+    assert.doesNotMatch(companion, /data-c="send"[^>]*>\s*说\s*<\/button>/);
+    assert.match(companion, /event\.key !== 'Enter' \|\| event\.isComposing[\s\S]*event\.preventDefault\(\)[\s\S]*send\(\)/);
+    assert.match(css, /\.mz-companion-compose \.mz-companion-send \{[^}]*width:34px[^}]*height:34px[^}]*display:inline-flex[^}]*align-items:center[^}]*justify-content:center/);
+    assert.match(css, /\.mz-companion-compose \.mz-companion-send:focus-visible \{[^}]*outline:2px solid var\(--accent\)/);
+  });
+
   test('Pane divider 与模块侧栏共享 ResizeObserver 几何真源', () => {
     assert.match(surface, /new ResizeObserver\(refresh\)/);
     assert.match(surface, /resizeObserver\?\.observe\(stage\)/);
@@ -84,7 +175,7 @@ describe('W87e Player Control Surface', () => {
   });
 
   test('打开态阻止自动淡出，Escape/外点/动作关闭且焦点可回 More', () => {
-    assert.match(player, /controlSurface\.isOpen\(\) \|\| controls\.matches\(':focus-within'\)/);
+    assert.match(player, /controlSurface\.isOpen\(\) \|\| chromeHasFocus\(\)/);
     assert.match(surface, /document\.addEventListener\('pointerdown', onOutside, true\)/);
     assert.match(surface, /document\.addEventListener\('keydown', onKey, true\)/);
     assert.match(surface, /focusWhenVisible\(\(\) => moreButton\)/);
@@ -195,8 +286,9 @@ describe('W87e Player Control Surface', () => {
   test('无边框可由焦点唤回；锁定态退出其余 Tab/指针序列并只提升解锁键', () => {
     assert.match(css, /\.mz-player\.borderless \.mz-stage:focus-within \.mz-controls/);
     assert.match(css, /\.mz-player\.borderless\.mz-controls-open \.mz-controls/);
-    assert.match(player, /controls\.addEventListener\('focusin', showChrome\)/);
-    assert.match(player, /controls\.matches\(':focus-within'\)/);
+    assert.match(player, /const chromeHasFocus = \(\) => chromeEls\.some\(element => element\.matches\(':focus-within'\)\)/);
+    assert.match(player, /for \(const element of chromeEls\) \{[\s\S]*element\.addEventListener\('focusin', showChrome\)/);
+    assert.match(css, /\.mz-controls\.fade:focus-within, \.mz-topbar\.fade:focus-within/);
     assert.match(player, /stage\.querySelectorAll\('button, input, select, \[role=slider\], \[tabindex\]'\)/);
     assert.match(player, /if \(element === lockBtn\) continue/);
     assert.match(player, /if \('disabled' in element\) element\.disabled = true;[\s\S]*element\.setAttribute\('tabindex', '-1'\)/);
