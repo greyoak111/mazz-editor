@@ -2,6 +2,7 @@
 import { describe, test, assert } from '../harness.mjs';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
+import { ProgressRelay } from '../../renderer/core/progress-relay.js';
 
 const require = createRequire(import.meta.url);
 const esbuild = require('esbuild');
@@ -15,6 +16,26 @@ function loadActivityCenter() {
 }
 
 describe('R1+R2 进度接力与通知中心', () => {
+  test('进度写失败保留 pending：交互拿失败回执，严格 flush 重试并拒绝伪成功', async () => {
+    let fail = true;
+    const calls = [];
+    const relay = new ProgressRelay(async (channel, payload) => {
+      calls.push({ channel, payload });
+      if (fail) throw Object.assign(new Error('disk full'), { code: 'ENOSPC' });
+      return { key: `${payload.kind}:${payload.path}`, value: payload.value };
+    }, { delay: 5 });
+    const first = await relay.put('library', 'D:/ws/a.epub', { chapter: 3 }, { immediate: true });
+    assert.equal(first.ok, false, '普通输入事件以回执收口，不产生 unhandled rejection');
+    assert.equal(relay.pending.size, 1, '失败 payload 必须保留给关闭耐久闸重试');
+    await assert.rejects(() => relay.flushAll(), error => error?.code === 'ENOSPC');
+    assert.equal(relay.pending.size, 1);
+    fail = false;
+    const retried = await relay.flushAll();
+    assert.equal(retried.length, 1);
+    assert.equal(relay.pending.size, 0);
+    assert.equal(calls.length, 3, 'immediate、失败 flush、成功重试各执行一次');
+  });
+
   test('事件账：未读、更新去重、已读清理与重启水合', async () => {
     const ActivityCenter = loadActivityCenter();
     let now = 1000, persisted = null;
@@ -37,13 +58,17 @@ describe('R1+R2 进度接力与通知中心', () => {
   test('三位置控制器全部入账：书库页码、播放器秒、编辑器光标', () => {
     const shell = read('renderer/shell/shell.js');
     const lib = read('renderer/modules/library/index.js');
+    const locatorStore = read('renderer/modules/library/locator-store.js');
     const player = read('renderer/modules/viewer/player.js');
     const viewer = read('renderer/modules/viewer/index.js');
     const text = read('renderer/modules/text/index.js');
     const md = read('renderer/modules/markdown/index.js');
     const code = read('renderer/modules/code/index.js');
     assert.ok(shell.includes('ProgressRelay') && shell.includes('sync:positionChanged'));
-    assert.ok(lib.includes("progressKind: 'library'") && lib.includes("MazzProgress?.put?.('library'"));
+    assert.ok(lib.includes("progressKind: 'library'")
+      && lib.includes('createLibraryLocatorStore')
+      && locatorStore.includes("this.progress.put('library'"),
+    '书库位置应由 locator-store 以调用点快照投影到 MazzProgress');
     assert.ok(viewer.includes("progressKind: 'player'") && player.includes('seconds: Math.max'));
     for (const src of [text, md, code]) assert.ok(src.includes("progressKind: 'editor'"), '三个编辑内核都应接光标接力');
   });

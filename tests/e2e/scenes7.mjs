@@ -17,6 +17,38 @@ export async function scenes7({ win, human, WS, scenario }) {
   const evaluate = (fn, arg) => win.evaluate(fn, arg);
   const wait = (ms) => win.waitForTimeout(ms);
 
+  // selectProxy 会把原生 select 隐藏并在其后挂语义按钮；原生 select 仍是唯一状态源。
+  // E2E 不再按几何尺寸找 select，而是走浏览器原生 value setter + 可冒泡事件，
+  // 同时核对代理按钮文案，避免“状态改了但用户看见的按钮没同步”的假绿。
+  const setLibrarySelect = async (selector, value) => {
+    const state = await evaluate(({ selector, value }) => {
+      const view = document.defaultView;
+      const select = window.__activeLibraryCtl?.root?.querySelector(selector)
+        || document.querySelector(`.pane.active .lib-reader ${selector}`);
+      if (!view || !(select instanceof view.HTMLSelectElement)) {
+        return { ok: false, reason: `missing select ${selector}` };
+      }
+      const option = [...select.options].find(item => item.value === value);
+      if (!option) return { ok: false, reason: `missing option ${value}`, values: [...select.options].map(item => item.value) };
+      const setter = Object.getOwnPropertyDescriptor(view.HTMLSelectElement.prototype, 'value')?.set;
+      if (setter) setter.call(select, value);
+      else select.value = value;
+      select.dispatchEvent(new view.Event('input', { bubbles: true, composed: true }));
+      select.dispatchEvent(new view.Event('change', { bubbles: true, composed: true }));
+      const proxy = select.nextElementSibling?.matches?.('.selmenu-btn') ? select.nextElementSibling : null;
+      const label = proxy?.querySelector('.selmenu-label')?.textContent?.trim() || '';
+      return {
+        ok: select.value === value && (!proxy || label === option.textContent.trim()),
+        value: select.value,
+        expectedLabel: option.textContent.trim(),
+        label,
+        proxied: !!proxy,
+      };
+    }, { selector, value });
+    await human.assert(state.ok, `${selector} 应切换为 ${value} 且代理文案同步（${JSON.stringify(state)}）`);
+    return state;
+  };
+
   // 注册书并打开（幂等）
   const openBookByCard = async ({ id, title, path: p, format }) => {
     await evaluate(async ({ id, title, p, format }) => {
@@ -91,7 +123,7 @@ export async function scenes7({ win, human, WS, scenario }) {
 
   // ==================== 3：双页步进零漂移（48px 累积错位回归） ====================
   await scenario('书库·双页·步进零漂移', async () => {
-    await evaluate(() => { const s = [...document.querySelectorAll('.lib-mode')].find(x => x.getBoundingClientRect().width > 0); s.value = 'double'; s.dispatchEvent(new Event('change')); });
+    await setLibrarySelect('.lib-mode', 'double');
     await wait(700);
     const r = await evaluate(async () => {
       const ctl = window.__activeLibraryCtl;
@@ -104,7 +136,7 @@ export async function scenes7({ win, human, WS, scenario }) {
     human.log('双页三连翻:', JSON.stringify(r));
     await human.assert(r.offs[2] > 0, '三连翻应有位移');
     await human.assert(r.dev.every(d => d <= 1), `每次翻页都必须落在步进网格上（老 48px 累积错位；实际偏差 ${JSON.stringify(r.dev)}）`);
-    await evaluate(() => { const s = [...document.querySelectorAll('.lib-mode')].find(x => x.getBoundingClientRect().width > 0); s.value = 'single'; s.dispatchEvent(new Event('change')); });
+    await setLibrarySelect('.lib-mode', 'single');
     await wait(500);
   });
 
@@ -181,7 +213,7 @@ export async function scenes7({ win, human, WS, scenario }) {
   // ==================== 8：滚动模式帧内渲染 ====================
   await scenario('书库·滚动模式·帧内渲染', async () => {
     await openBookByCard(EPUB);
-    await evaluate(() => { const s = [...document.querySelectorAll('.lib-mode')].find(x => x.getBoundingClientRect().width > 0); s.value = 'scroll'; s.dispatchEvent(new Event('change')); });
+    await setLibrarySelect('.lib-mode', 'scroll');
     await wait(1200);
     const r = await evaluate(() => {
       const f = [...document.querySelectorAll('iframe.lib-book-frame')].find(x => x.getBoundingClientRect().width > 0);

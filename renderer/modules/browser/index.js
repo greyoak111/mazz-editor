@@ -87,7 +87,31 @@ function createBrowser(container) {
     panelBody: root.querySelector('.br-panel-body'),
     findbar: root.querySelector('.br-findbar'),
     findInput: root.querySelector('.br-find-input'),
+    _handoffProvisional: false,
+    _handoffDiscardable: false,
+    _destroyed: false,
+    _offs: [],
+    _resizeObserver: null,
+    _resizeHandler: null,
   };
+
+  const keepOff = off => { if (typeof off === 'function') ctl._offs.push(off); return off; };
+  function ensureNativeView(tab, { strict = false } = {}) {
+    if (!isElectron() || !tab) return Promise.resolve(true);
+    if (tab._nativeCreated) return tab.viewReady || Promise.resolve(true);
+    tab._nativeCreated = true;
+    const creation = window.mazz.invoke('bv:create', {
+      tabId: tab.viewId, partition: tab.partition, url: 'about:blank',
+    }).then(result => {
+      if (result !== true && result?.ok !== true) throw new Error(`bv:create rejected for ${tab.viewId}`);
+      return true;
+    });
+    tab.viewReady = strict ? creation : creation.catch(() => {
+      tab._nativeCreated = false;
+      return false;
+    });
+    return tab.viewReady;
+  }
 
   // ==================== 标签管理 ====================
   function openTab(url = HOME, { background = false, partition = 'persist:mazz-browser' } = {}) {
@@ -96,7 +120,7 @@ function createBrowser(container) {
     viewWrap.className = 'br-view-wrap';
     viewWrap.dataset.tabId = id;
     viewWrap.dataset.partition = partition;
-    const tab = { id, view: null, viewId: null, host: null, partition, title: '新标签页', url: HOME, el: null, canBack: false, canFwd: false };
+    const tab = { id, view: null, viewId: null, host: null, partition, title: '新标签页', url: HOME, el: null, canBack: false, canFwd: false, _nativeCreated: false, pendingNavigation: null };
     if (isElectron()) {
       // WebContentsView 时代：视图由主进程持有一等公民，宿主 div 只量尺寸摆位置——
       // 会话分离沿用：隐私浏览 persist:mazz-browser（反追踪）；投稿会话 persist:mazz-author（固定登录态）
@@ -104,8 +128,10 @@ function createBrowser(container) {
       tab.host = document.createElement('div');
       tab.host.className = 'br-view-host';
       viewWrap.appendChild(tab.host);
-      // 创建就绪闸：renderHome/导航必等视图落地（竞态实锤——bv:js 抢在 bv:create 前到达=主页永远空白）
-      tab.viewReady = window.mazz.invoke('bv:create', { tabId: id, partition, url: 'about:blank' }).catch(() => {});
+      // Provisional handoff only restores a DOM plan. It must not create a
+      // persistent-partition WebContentsView, run JS/network or play audio
+      // while the source Browser is still the sole owner.
+      if (!ctl._handoffProvisional) ensureNativeView(tab);
     } else {
       tab.view = document.createElement('iframe');
       tab.view.className = 'br-webview';
@@ -118,7 +144,13 @@ function createBrowser(container) {
     ctl.tabs.push(tab);
     renderTabs();
     if (!background) activate(id);
-    tab.navigationReady = navigate(tab, url);
+    if (ctl._handoffProvisional) {
+      tab.url = url;
+      tab.pendingNavigation = url;
+      tab.navigationReady = Promise.resolve(true);
+    } else {
+      tab.navigationReady = navigate(tab, url);
+    }
     return tab;
   }
 
@@ -131,7 +163,7 @@ function createBrowser(container) {
     renderTabs();
     syncBounds();
     // 切回即聚焦唤醒输入（webview 时代要靠 focus 赌运气，视图时代主进程一句话的事）
-    if (isElectron()) window.mazz.invoke('bv:focus', { tabId: tab.viewId }).catch(() => {});
+    if (isElectron() && !ctl._handoffProvisional) window.mazz.invoke('bv:focus', { tabId: tab.viewId }).catch(() => {});
     else try { tab.view.focus?.(); } catch {}
   }
 
@@ -139,7 +171,7 @@ function createBrowser(container) {
     const i = ctl.tabs.findIndex(t => t.id === id);
     if (i < 0) return;
     const tab = ctl.tabs[i];
-    if (isElectron() && tab.viewId) window.mazz.invoke('bv:destroy', { tabId: tab.viewId }).catch(() => {});
+    if (isElectron() && tab.viewId && tab._nativeCreated) window.mazz.invoke('bv:destroy', { tabId: tab.viewId }).catch(() => {});
     tab.host.remove();
     tab.el?.remove();
     ctl.tabs.splice(i, 1);
@@ -248,7 +280,8 @@ function createBrowser(container) {
     if (!isElectron()) return;
     const fs = ctl._htmlFs && ctl._htmlFs === ctl.activeId; // HTML5 全屏态：视图铺满主窗
     for (const tab of ctl.tabs) {
-      const on = tab.id === ctl.activeId && !ctl._dragCloak && tab.host?.isConnected; // 全局弹层遮挡由 VisualCompositionRuntime 在主进程按宿主仲裁；这里只保留拖拽即时闸
+      if (!tab._nativeCreated) continue;
+      const on = !ctl._handoffProvisional && tab.id === ctl.activeId && !ctl._dragCloak && tab.host?.isConnected; // 全局弹层遮挡由 VisualCompositionRuntime 在主进程按宿主仲裁；这里只保留拖拽即时闸
       if (!on) { window.mazz.invoke('bv:bounds', { tabId: tab.viewId, visible: false }).catch(() => {}); continue; }
       let r;
       if (fs) r = { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
@@ -266,8 +299,12 @@ function createBrowser(container) {
   };
   if (isElectron()) {
     // 布局跟随：容器尺寸/窗体尺寸变化即重摆
-    try { new ResizeObserver(() => syncBounds()).observe(ctl.views); } catch {}
-    window.addEventListener('resize', syncBounds);
+    try {
+      ctl._resizeObserver = new ResizeObserver(() => syncBounds());
+      ctl._resizeObserver.observe(ctl.views);
+    } catch {}
+    ctl._resizeHandler = syncBounds;
+    window.addEventListener('resize', ctl._resizeHandler);
   }
 
   /** 主页 HTML（主题变量化：明亮/黑暗/跟随系统 + ⚙ 设置面板） */
@@ -608,10 +645,10 @@ function createBrowser(container) {
   // 事件路由登记（每个模块实例一次）
   if (isElectron() && !ctl._bvWired) {
     ctl._bvWired = true;
-    window.mazz.on('bv:event', ({ tabId, type, data }) => {
+    keepOff(window.mazz.on('bv:event', ({ tabId, type, data }) => {
       const tab = ctl.tabs.find(t => t.viewId === tabId);
       if (tab) handleBvEvent(tab, type, data || {});
-    });
+    }));
   }
 
   /** iframe 预览路径（非 Electron：网页预览/契约环境） */
@@ -622,7 +659,7 @@ function createBrowser(container) {
     v.addEventListener('did-navigate-in-page', (e) => handleBvEvent(tab, 'did-navigate-in-page', { url: e.url, isMainFrame: e.isMainFrame !== false }));
     v.addEventListener('page-title-updated', (e) => handleBvEvent(tab, 'page-title-updated', { title: e.title }));
     // 主页搜索框：postMessage 通道（iframe 预览专用）
-    window.addEventListener('message', (e) => {
+    const onMessage = (e) => {
       if (e.data?.mazzSearch) {
         const input = normalizeInput(e.data.mazzSearch);
         if (input?.type === 'url') navigate(tab, input.value);
@@ -630,7 +667,9 @@ function createBrowser(container) {
         return;
       }
       if (e.data?.mazzAct) handleHomeAction(e.data.mazzAct, e.data.url);
-    });
+    };
+    window.addEventListener('message', onMessage);
+    ctl._offs.push(() => window.removeEventListener('message', onMessage));
     v.addEventListener('focus', () => { current = ctl; contextKeys.set('module', MODULE); });
   }
 
@@ -675,12 +714,15 @@ function createBrowser(container) {
   }
 
   function saveBookmarks() {
+    if (ctl._handoffProvisional) return;
     window.mazz.invoke('settings:set', { key: 'browser.bookmarks', value: ctl.bookmarks }).catch(() => {});
   }
   function saveFolders() {
+    if (ctl._handoffProvisional) return;
     window.mazz.invoke('settings:set', { key: 'browser.folders', value: ctl.folders }).catch(() => {});
   }
   function saveHistory() {
+    if (ctl._handoffProvisional) return;
     window.mazz.invoke('settings:set', { key: 'browser.history', value: ctl.history }).catch(() => {});
   }
   function pushHistory(url, title, passive = false) {
@@ -694,7 +736,7 @@ function createBrowser(container) {
     ctl.history.unshift({ url, title: title || url, at: Date.now() });
     ctl.history = ctl.history.slice(0, 200);
     saveHistory();
-    if (!passive) {
+    if (!passive && !ctl._handoffProvisional) {
       let host = '';
       try { host = new URL(url).hostname; } catch {}
       captureWorkspaceEvent({ sourceModule: 'browser', action: 'view', objectRefs: [`url:${pageKey(url)}`], contextRefs: ['context:browser-history'], outcome: 'success', summary: `查看网页 · ${host || '网页'}` });
@@ -982,12 +1024,12 @@ function createBrowser(container) {
 
   // 新窗审批事件（主进程转发）：弹窗改在模块内开标签
   if (isElectron()) {
-    window.mazz.on('browser:openUrl', ({ url }) => { if (url) openTab(url); });
+    keepOff(window.mazz.on('browser:openUrl', ({ url }) => { if (url) openTab(url); }));
     // W43 并行面板回推：数据已变→装载+主页即刷；动作→开网址/指定条目填充
-    window.mazz.on('panel:changed', (pl) => {
+    keepOff(window.mazz.on('panel:changed', (pl) => {
       if (pl?.kind !== 'favmgr') return;
       loadStore().then(() => { for (const t of ctl.tabs || []) if (t.url === HOME) renderHome(t); });
-    });
+    }));
     async function handleHarvestPanelAction(pl) {
       const push = payload => window.mazz.invoke('panel:push', { kind: 'harvest', payload }).catch(() => {});
       const refreshPromotionManagement = async message => {
@@ -1044,7 +1086,7 @@ function createBrowser(container) {
         toast('AI 对话整理失败：' + message);
       }
     }
-    window.mazz.on('panel:action', (pl) => {
+    keepOff(window.mazz.on('panel:action', (pl) => {
       if (pl?.type === 'openUrl' && pl.url) openTab(pl.url);
       else if (pl?.type === 'fillPassword' && pl.id) fillPassword(pl.id);
       // 每个浏览器实例都订阅同一主窗信道；只允许当前实例响应一次，否则开过 N 个浏览器就会启动 N 份批队列。
@@ -1073,9 +1115,9 @@ function createBrowser(container) {
           toast(`已收藏到「${ctl.folders.find(f => f.id === folderId)?.name || '默认收藏夹'}」`);
         }
       }
-    });
+    }));
     // W47 密码智能记录：页面提交捕获 → 询问保存（Edge 同款；每站每人每会话只问一趟，绝不静默落库）
-    window.mazz.on('bv:event', ({ type, data }) => {
+    keepOff(window.mazz.on('bv:event', ({ type, data }) => {
       // W48 修改识别：密码已更改 → 询问更新保存（Edge 同款）
       if (type === 'pw-changed' && data?.id) {
         const ck = 'pwOffered|chg|' + data.id;
@@ -1103,7 +1145,7 @@ function createBrowser(container) {
           } },
         { label: '暂不', ghost: true, fn: () => {} },
       ], 12000);
-    });
+    }));
   }
 
   // 键盘（模块级）：Ctrl+T 新标签 / Ctrl+L 地址栏 / Ctrl+W 关标签
@@ -1321,10 +1363,36 @@ function createBrowser(container) {
   ctl.reloadTab = reloadTab; // 命令注册在模块顶层够不着 createBrowser 内部函数——实例方法出口（ReferenceError 实锤平反）
   ctl.clipper = createClipRuntime({ ctl, toast });
   ctl.harvester = createHarvestRuntime({ ctl, toast });
+  ctl.prepareHandoffCommit = async () => {
+    if (ctl._destroyed) return false;
+    if (isElectron()) {
+      for (const tab of ctl.tabs) {
+        const created = await ensureNativeView(tab, { strict: true });
+        if (created !== true) throw new Error(`bv:create failed for ${tab.viewId}`);
+      }
+    }
+    for (const tab of ctl.tabs) {
+      const url = tab.pendingNavigation;
+      if (!url) continue;
+      if (isElectron() && url !== HOME) {
+        tab.url = url;
+        const result = await window.mazz.invoke('bv:nav', {
+          tabId: tab.viewId, action: 'load', url,
+        });
+        if (result !== true && result?.ok !== true) throw new Error(`bv:nav rejected for ${tab.viewId}`);
+        tab.navQueue = Promise.resolve(true);
+      } else {
+        await navigate(tab, url);
+      }
+      tab.pendingNavigation = null;
+    }
+    return !ctl._destroyed;
+  };
 
   // 初始：恢复内容会在 create() 返回后的同一任务里设置 _restoreRequested；Store 完成前不得擅开 HOME，
   // 否则分窗交接会先画一个临时主页，再拆掉重建，形成白闪并与真实恢复竞跑。
   ctl._storeReady = loadStore().then(() => {
+    if (ctl._destroyed) return null;
     if (!ctl._restoreRequested && !ctl.tabs.length) return openTab(HOME);
     return null;
   });
@@ -1337,6 +1405,31 @@ function prettyUrl(url) {
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function escapeAttr(s) { return escapeHtml(s); }
+
+async function disposeBrowserController(ctl) {
+  if (!ctl || ctl._destroyed) return true;
+  ctl._destroyed = true;
+  try { ctl._resizeObserver?.disconnect?.(); } catch {}
+  ctl._resizeObserver = null;
+  if (ctl._resizeHandler) window.removeEventListener('resize', ctl._resizeHandler);
+  ctl._resizeHandler = null;
+  for (const off of ctl._offs.splice(0)) { try { off(); } catch {} }
+  const destroys = [];
+  if (isElectron()) {
+    for (const tab of ctl.tabs) {
+      clearTimeout(tab._navDog);
+      if (tab.viewId && tab._nativeCreated) destroys.push(window.mazz.invoke('bv:destroy', { tabId: tab.viewId }).catch(() => false));
+    }
+  }
+  ctl.tabs = [];
+  ctl.activeId = null;
+  ctl.root?.remove?.();
+  instances.delete(ctl.container);
+  if (current === ctl) current = null;
+  if (window.__activeBrowserCtl === ctl) window.__activeBrowserCtl = null;
+  const results = await Promise.all(destroys);
+  return results.every(result => result === true || result?.ok === true);
+}
 
 // ==================== 模块契约 ====================
 export default {
@@ -1371,14 +1464,38 @@ export default {
       }
     }
   },
+  setHandoffProvisional(enabled, state) {
+    const ctl = instances.get(state?.container) || state;
+    if (!ctl) return false;
+    ctl._handoffProvisional = !!enabled;
+    if (enabled) {
+      ctl._handoffDiscardable = true;
+      ctl.__sync?.();
+    } else {
+      ctl.__sync?.();
+    }
+    return true;
+  },
+  prepareHandoffCommit(_context, state) {
+    const ctl = instances.get(state?.container) || state;
+    return ctl?.prepareHandoffCommit?.() ?? false;
+  },
+  finalizeHandoff(state) {
+    const ctl = instances.get(state?.container) || state;
+    if (!ctl) return false;
+    ctl._handoffDiscardable = false;
+    return true;
+  },
+  async discard(state) {
+    const ctl = instances.get(state?.container) || state;
+    if (!ctl?._handoffDiscardable) return false;
+    return disposeBrowserController(ctl);
+  },
   /** 幽灵三钩③：外壳关签/分窗摘除必收尸（module-registry detach 唯一出口） */
   dispose(state) {
     const ctl = instances.get(state?.container);
-    if (!ctl || !isElectron()) return;
-    for (const t of ctl.tabs) {
-      if (t.viewId) window.mazz.invoke('bv:destroy', { tabId: t.viewId }).catch(() => {});
-    }
-    ctl.tabs = [];
+    if (!ctl) return true;
+    return disposeBrowserController(ctl);
   },
   getContent(state) {
     const ctl = instances.get(state.container);
@@ -1399,13 +1516,15 @@ export default {
     if (obj?.mark !== 'mazz-browser-v1' || !Array.isArray(obj.tabs) || !obj.tabs.length) return;
     ctl._restoreRequested = true;
     await ctl._storeReady;
+    if (ctl._destroyed) return;
     const destroy = [];
     for (let i = ctl.tabs.length - 1; i >= 0; i--) {
       // 恢复只操作 state.container 对应 ctl，禁止经全局 current/MazzCommands 把内容开进另一窗的 Browser。
-      if (isElectron() && ctl.tabs[i].viewId) destroy.push(window.mazz.invoke('bv:destroy', { tabId: ctl.tabs[i].viewId }).catch(() => false));
+      if (isElectron() && ctl.tabs[i].viewId && ctl.tabs[i]._nativeCreated) destroy.push(window.mazz.invoke('bv:destroy', { tabId: ctl.tabs[i].viewId }).catch(() => false));
       ctl.tabs[i].host?.remove(); ctl.tabs[i].el?.remove();
     }
     await Promise.all(destroy);
+    if (ctl._destroyed) return;
     ctl.tabs.length = 0;
     ctl.activeId = null;
     const activeIndex = Math.min(obj.tabs.length - 1, Math.max(0, Number(obj.activeIndex) || 0));

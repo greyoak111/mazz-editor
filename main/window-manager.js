@@ -1,10 +1,13 @@
 // main/window-manager.js —— 窗口管理器：主窗（自绘标题栏）+ 快速笔记窗 + 窗口状态记忆
 'use strict';
-const { BrowserWindow, screen, nativeTheme } = require('electron');
+const { app, BrowserWindow, screen, nativeTheme } = require('electron');
 const path = require('path');
 
 // W52：主窗底色跟随 app 主题（拖拽闪主题色不闪刺白——deepseek 方案照收；theme:changed 即换 setBackgroundColor）
 const THEME_BG = { paper: '#f7f6f3', ink: '#16181d', indigo: '#101226', moss: '#1a211c', sand: '#f4ede1', construct: '#f0e6d2' };
+// 只执行固定、仓库内受控的关闭钩；严禁把外部字符串拼进 executeJavaScript。
+const PREPARE_CLOSE_SCRIPT = 'globalThis.MazzShell?.prepareForClose?.("window-close") ?? true';
+const CLOSE_DURABILITY_TIMEOUT_MS = 5000;
 
 class WindowManager {
   constructor({ store, iconPath, resourceLedger = null }) {
@@ -18,6 +21,7 @@ class WindowManager {
     this.children = new Set();
     this.onCloseRequest = null; // 由 main.js 注入：关闭行为（询问/托盘/退出）
     this.forceClose = false;
+    this.closeDurabilityTimeoutMs = CLOSE_DURABILITY_TIMEOUT_MS;
   }
 
   setVisualComposition(runtime) {
@@ -53,6 +57,107 @@ class WindowManager {
     win.on('leave-full-screen', () => emit(false));
   }
 
+  /**
+   * renderer 关闭耐久性闸。首次 close 被拦住，等待 Shell/ModuleRegistry 的异步 dispose；
+   * 只有 renderer gone/destroyed 可以绕过 ACK。活 renderer 超时只告警并
+   * 继续等待同一事务，绝不能把“仍在写盘”误判为“可以销毁”。
+   */
+  wireDurableClose(win, { main = false } = {}) {
+    win.__durableCloseReady = false;
+    win.__durableClosePending = null;
+    const notifyFailure = (message, code = 'WINDOW_CLOSE_DURABILITY_FAILED') => {
+      try {
+        if (!win.webContents.isDestroyed()) {
+          win.webContents.send('mazz:event', {
+            channel: 'window:durability-failed',
+            payload: { message, code },
+          });
+        }
+      } catch {}
+    };
+    win.__notifyDurabilityFailure = notifyFailure;
+    win.on('close', (event) => {
+      if (win.__durableCloseReady || win.isDestroyed()) return;
+      // The very first side effect of an uncommitted close is always the
+      // veto. onCloseRequest may read/write Store or open a native dialog and
+      // is not allowed to let an exception leak past this boundary.
+      event.preventDefault();
+      if (win.__durableClosePending) return;
+
+      if (main && !this.forceClose && this.onCloseRequest) {
+        try {
+          if (this.onCloseRequest(win) === 'prevent') return;
+        } catch (error) {
+          console.error('[window] 关闭策略/设置写盘失败，窗口保持打开:', error?.message || error);
+          notifyFailure('关闭设置未能写入磁盘，窗口已保持打开；请检查磁盘空间或目录权限。',
+            error?.code || 'WINDOW_CLOSE_POLICY_FAILED');
+          return;
+        }
+      }
+
+      let timeoutId = null;
+      let releaseGone = null;
+      const rendererGone = new Promise(resolve => {
+        const release = () => resolve({ status: 'renderer-gone' });
+        releaseGone = release;
+        win.webContents.once('destroyed', release);
+        win.webContents.once('render-process-gone', release);
+      });
+      timeoutId = setTimeout(() => {
+        console.warn(`[window] renderer 关闭耐久事务仍在执行 (${this.closeDurabilityTimeoutMs}ms)，继续等待`);
+        notifyFailure('仍在安全保存数据，完成后会自动关闭窗口。', 'WINDOW_CLOSE_DURABILITY_PENDING');
+      }, this.closeDurabilityTimeoutMs);
+      let prepare;
+      try {
+        prepare = win.webContents.isDestroyed()
+          ? Promise.resolve({ status: 'renderer-gone' })
+          : win.webContents.executeJavaScript(PREPARE_CLOSE_SCRIPT, true)
+            .then(result => {
+              if (result === false || result?.ok === false) {
+                return { status: 'failed', detail: result && typeof result === 'object' ? result : null };
+              }
+              return { status: 'done', detail: result && typeof result === 'object' ? result : null };
+            });
+      } catch (error) {
+        prepare = Promise.reject(error);
+      }
+
+      win.__durableClosePending = Promise.race([prepare, rendererGone])
+        .then(result => {
+          if (result.status === 'failed') {
+            console.error('[window] 数据未能持久化，窗口保持打开');
+            notifyFailure(result.detail?.message
+              || '数据未能写入磁盘，请检查磁盘空间或目录权限后重试关闭。',
+            result.detail?.code || 'WINDOW_CLOSE_DURABILITY_FAILED');
+          }
+          return result;
+        })
+        .catch(error => {
+          console.error('[window] renderer 关闭收尸失败，窗口保持打开:', error?.message || error);
+          notifyFailure(error?.message
+            ? `关闭前保存失败：${error.message}`
+            : '关闭前保存失败，窗口已保持打开。', error?.code || 'WINDOW_CLOSE_DURABILITY_FAILED');
+          return { status: 'failed', detail: { message: error?.message, code: error?.code } };
+        })
+        .then(result => {
+          clearTimeout(timeoutId);
+          try { win.webContents.removeListener('destroyed', releaseGone); } catch {}
+          try { win.webContents.removeListener('render-process-gone', releaseGone); } catch {}
+          win.__durableClosePending = null;
+          if (result.status === 'failed') {
+            win.__durableCloseReady = false;
+            return result.status;
+          }
+          win.__durableCloseReady = true;
+          if (win.isDestroyed()) return;
+          // app.quit 因任一窗口 preventDefault 会停止；重新进入即可逐窗通过已完成的耐久闸。
+          if (this.forceClose) app.quit();
+          else win.close();
+          return result.status;
+        });
+    });
+  }
+
   createMain() {
     const state = this.store.get('windowState', { width: 1440, height: 900 });
     // 防离屏：记忆坐标不在任何显示器范围内时丢弃（多屏拔插/远程桌面常见）
@@ -84,6 +189,7 @@ class WindowManager {
     this.main = win;
     this.trackWindow(win, 'main');
     this.wireShellWindow(win);
+    this.wireDurableClose(win, { main: true });
 
     if (state.maximized) win.maximize();
 
@@ -108,19 +214,23 @@ class WindowManager {
     win.loadURL('mazz-res://app/index.html'); // 页面同源化（file:// 页面 media loader 零请求实锤——媒体与页面同走 mazz-res 一源）
 
     // 窗口状态记忆
-    const saveState = () => {
+    const saveState = (event) => {
       if (win.isDestroyed()) return;
-      const b = win.getNormalBounds();
-      this.store.set('windowState', { ...b, maximized: win.isMaximized() });
+      try {
+        const b = win.getNormalBounds();
+        this.store.set('windowState', { ...b, maximized: win.isMaximized() });
+      } catch (error) {
+        // This listener runs after wireDurableClose. A final Store failure must
+        // still veto the now-ready close and reopen the durability gate.
+        event?.preventDefault?.();
+        win.__durableCloseReady = false;
+        console.error('[window] 窗口状态写盘失败，窗口保持打开:', error?.message || error);
+        win.__notifyDurabilityFailure?.('窗口状态未能写入磁盘，窗口已保持打开；请检查磁盘空间或目录权限。',
+          error?.code || 'WINDOW_STATE_DURABILITY_FAILED');
+      }
     };
     win.on('close', saveState);
     win.on('closed', () => { this.main = null; });
-
-    // 关闭行为可配：退出 / 最小化到托盘（默认询问一次后记住）
-    win.on('close', (e) => {
-      if (this.forceClose) return;
-      if (this.onCloseRequest && this.onCloseRequest(win) === 'prevent') e.preventDefault();
-    });
 
     // 渲染进程崩溃自愈（配合 crash-recovery）
     win.webContents.on('render-process-gone', (_e, details) => {
@@ -168,6 +278,7 @@ class WindowManager {
     this.children.add(win);
     this.trackWindow(win, 'child');
     this.wireShellWindow(win);
+    this.wireDurableClose(win);
     win.once('ready-to-show', () => {
       win.__readyToShow = true;
       if (win.__handoffReady) { win.show(); win.focus(); }

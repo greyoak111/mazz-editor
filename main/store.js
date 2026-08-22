@@ -17,20 +17,34 @@ class Store {
     return key in this.data ? this.data[key] : fallback;
   }
   set(key, value) {
-    this.data[key] = value;
-    this.flush();
+    const next = { ...this.data, [key]: value };
+    this._write(next);
+    this.data = next;
+    return true;
   }
   merge(obj) {
-    Object.assign(this.data, obj);
-    this.flush();
+    const next = { ...this.data, ...(obj || {}) };
+    this._write(next);
+    this.data = next;
+    return true;
   }
   flush() {
+    this._write(this.data);
+    return true;
+  }
+  _write(snapshot) {
+    const tmp = this.file + '.tmp';
     try {
       fs.mkdirSync(path.dirname(this.file), { recursive: true });
-      const tmp = this.file + '.tmp';
-      fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2));
+      fs.writeFileSync(tmp, JSON.stringify(snapshot, null, 2));
       fs.renameSync(tmp, this.file); // 原子写，防半文件
-    } catch (e) { console.error('[store] flush failed:', e.message); }
+    } catch (error) {
+      // A failed rename/write is a failed transaction.  Keep the last durable
+      // in-memory snapshot and propagate the error so IPC/CAS/close gates can
+      // report failure instead of acknowledging data that never reached disk.
+      try { fs.unlinkSync(tmp); } catch {}
+      throw error;
+    }
   }
 }
 module.exports = Store;

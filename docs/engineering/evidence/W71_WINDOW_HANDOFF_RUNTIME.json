@@ -1,7 +1,13 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T12:32:41.039Z",
+  "generatedAt": "2026-08-21T00:26:11.748Z",
   "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+  "artifacts": {
+    "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
+    "executableSha256": "9abce0f64882d7983364cc0ad266d3106a6a5d41289c5e770a83f9efb3a770bd",
+    "bundlePath": "D:\\output\\Mazz Editor\\renderer\\dist\\app.js",
+    "bundleSha256": "f8029974e094fb4db980b7e3fabe41afc56754dae9e2399dd18a08c2d1b2c833"
+  },
   "rejectedDuplicate": {
     "sourcePreserved": true,
     "targetPreserved": true
@@ -25,9 +31,898 @@
       "childTabId": "tab-21"
     }
   ],
+  "phaseDurations": [
+    {
+      "phase": "initial main->new-child command",
+      "durationMs": 3240,
+      "status": "pass"
+    },
+    {
+      "phase": "child domcontentloaded",
+      "durationMs": 1,
+      "status": "pass"
+    },
+    {
+      "phase": "child shell ready",
+      "durationMs": 557,
+      "status": "pass"
+    },
+    {
+      "phase": "initial child owner",
+      "durationMs": 34,
+      "status": "pass"
+    },
+    {
+      "phase": "initial main empty",
+      "durationMs": 12,
+      "status": "pass"
+    },
+    {
+      "phase": "child resource snapshot",
+      "durationMs": 13,
+      "status": "pass"
+    },
+    {
+      "phase": "duplicate target open",
+      "durationMs": 450,
+      "status": "pass"
+    },
+    {
+      "phase": "duplicate target active",
+      "durationMs": 34,
+      "status": "pass"
+    },
+    {
+      "phase": "duplicate child->main command",
+      "durationMs": 118,
+      "status": "pass"
+    },
+    {
+      "phase": "duplicate target close",
+      "durationMs": 27,
+      "status": "pass"
+    },
+    {
+      "phase": "duplicate target empty",
+      "durationMs": 103,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 child->main command",
+      "durationMs": 276,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 main owner",
+      "durationMs": 290,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 child empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 main->child command",
+      "durationMs": 278,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 child owner",
+      "durationMs": 351,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 main empty",
+      "durationMs": 12,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 child->main command",
+      "durationMs": 285,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 main owner",
+      "durationMs": 333,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 child empty",
+      "durationMs": 11,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 main->child command",
+      "durationMs": 245,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 child owner",
+      "durationMs": 380,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 main empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 child->main command",
+      "durationMs": 272,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 main owner",
+      "durationMs": 277,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 child empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 main->child command",
+      "durationMs": 225,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 child owner",
+      "durationMs": 310,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 main empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 child->main command",
+      "durationMs": 278,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 main owner",
+      "durationMs": 290,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 child empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 main->child command",
+      "durationMs": 204,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 child owner",
+      "durationMs": 269,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 main empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 child->main command",
+      "durationMs": 190,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 main owner",
+      "durationMs": 238,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 child empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 main->child command",
+      "durationMs": 209,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 child owner",
+      "durationMs": 236,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 main empty",
+      "durationMs": 6,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 child->main command",
+      "durationMs": 185,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 main owner",
+      "durationMs": 209,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 child empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 main->child command",
+      "durationMs": 194,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 child owner",
+      "durationMs": 246,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 main empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 child->main command",
+      "durationMs": 201,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 main owner",
+      "durationMs": 230,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 child empty",
+      "durationMs": 8,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 main->child command",
+      "durationMs": 201,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 child owner",
+      "durationMs": 234,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 main empty",
+      "durationMs": 8,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 child->main command",
+      "durationMs": 216,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 main owner",
+      "durationMs": 250,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 child empty",
+      "durationMs": 8,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 main->child command",
+      "durationMs": 189,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 child owner",
+      "durationMs": 231,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 main empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 child->main command",
+      "durationMs": 209,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 main owner",
+      "durationMs": 232,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 child empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 main->child command",
+      "durationMs": 197,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 child owner",
+      "durationMs": 270,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 main empty",
+      "durationMs": 8,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 child->main command",
+      "durationMs": 246,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 main owner",
+      "durationMs": 310,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 child empty",
+      "durationMs": 10,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 main->child command",
+      "durationMs": 287,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 child owner",
+      "durationMs": 320,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 main empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 child->main command",
+      "durationMs": 201,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 main owner",
+      "durationMs": 221,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 child empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 main->child command",
+      "durationMs": 226,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 child owner",
+      "durationMs": 211,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 main empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 child->main command",
+      "durationMs": 210,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 main owner",
+      "durationMs": 274,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 child empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 main->child command",
+      "durationMs": 199,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 child owner",
+      "durationMs": 249,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 main empty",
+      "durationMs": 8,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 child->main command",
+      "durationMs": 211,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 main owner",
+      "durationMs": 270,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 child empty",
+      "durationMs": 14,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 main->child command",
+      "durationMs": 210,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 child owner",
+      "durationMs": 304,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 main empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 child->main command",
+      "durationMs": 267,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 main owner",
+      "durationMs": 291,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 child empty",
+      "durationMs": 10,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 main->child command",
+      "durationMs": 331,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 child owner",
+      "durationMs": 365,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 main empty",
+      "durationMs": 12,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 child->main command",
+      "durationMs": 338,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 main owner",
+      "durationMs": 383,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 child empty",
+      "durationMs": 10,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 main->child command",
+      "durationMs": 352,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 child owner",
+      "durationMs": 354,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 main empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 child->main command",
+      "durationMs": 415,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 main owner",
+      "durationMs": 338,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 child empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 main->child command",
+      "durationMs": 225,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 child owner",
+      "durationMs": 253,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 main empty",
+      "durationMs": 7,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 child->main command",
+      "durationMs": 221,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 main owner",
+      "durationMs": 362,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 child empty",
+      "durationMs": 10,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 main->child command",
+      "durationMs": 301,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 child owner",
+      "durationMs": 282,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 main empty",
+      "durationMs": 12,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 child->main command",
+      "durationMs": 431,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 main owner",
+      "durationMs": 297,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 child empty",
+      "durationMs": 13,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 main->child command",
+      "durationMs": 332,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 child owner",
+      "durationMs": 391,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 main empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 child->main command",
+      "durationMs": 325,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 main owner",
+      "durationMs": 318,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 child empty",
+      "durationMs": 11,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 main->child command",
+      "durationMs": 237,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 child owner",
+      "durationMs": 240,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 main empty",
+      "durationMs": 10,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 child->main command",
+      "durationMs": 230,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 main owner",
+      "durationMs": 264,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 child empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 main->child command",
+      "durationMs": 217,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 child owner",
+      "durationMs": 337,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 main empty",
+      "durationMs": 9,
+      "status": "pass"
+    },
+    {
+      "phase": "final child->main command",
+      "durationMs": 263,
+      "status": "pass"
+    },
+    {
+      "phase": "final main owner",
+      "durationMs": 271,
+      "status": "pass"
+    },
+    {
+      "phase": "final child empty",
+      "durationMs": 13,
+      "status": "pass"
+    }
+  ],
+  "commandDurations": [
+    {
+      "phase": "initial main->new-child command",
+      "durationMs": 3240,
+      "status": "pass"
+    },
+    {
+      "phase": "duplicate child->main command",
+      "durationMs": 118,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 child->main command",
+      "durationMs": 276,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 1 main->child command",
+      "durationMs": 278,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 child->main command",
+      "durationMs": 285,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 2 main->child command",
+      "durationMs": 245,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 child->main command",
+      "durationMs": 272,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 3 main->child command",
+      "durationMs": 225,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 child->main command",
+      "durationMs": 278,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 4 main->child command",
+      "durationMs": 204,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 child->main command",
+      "durationMs": 190,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 5 main->child command",
+      "durationMs": 209,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 child->main command",
+      "durationMs": 185,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 6 main->child command",
+      "durationMs": 194,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 child->main command",
+      "durationMs": 201,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 7 main->child command",
+      "durationMs": 201,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 child->main command",
+      "durationMs": 216,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 8 main->child command",
+      "durationMs": 189,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 child->main command",
+      "durationMs": 209,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 9 main->child command",
+      "durationMs": 197,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 child->main command",
+      "durationMs": 246,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 10 main->child command",
+      "durationMs": 287,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 child->main command",
+      "durationMs": 201,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 11 main->child command",
+      "durationMs": 226,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 child->main command",
+      "durationMs": 210,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 12 main->child command",
+      "durationMs": 199,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 child->main command",
+      "durationMs": 211,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 13 main->child command",
+      "durationMs": 210,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 child->main command",
+      "durationMs": 267,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 14 main->child command",
+      "durationMs": 331,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 child->main command",
+      "durationMs": 338,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 15 main->child command",
+      "durationMs": 352,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 child->main command",
+      "durationMs": 415,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 16 main->child command",
+      "durationMs": 225,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 child->main command",
+      "durationMs": 221,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 17 main->child command",
+      "durationMs": 301,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 child->main command",
+      "durationMs": 431,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 18 main->child command",
+      "durationMs": 332,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 child->main command",
+      "durationMs": 325,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 19 main->child command",
+      "durationMs": 237,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 child->main command",
+      "durationMs": 230,
+      "status": "pass"
+    },
+    {
+      "phase": "cycle 20 main->child command",
+      "durationMs": 217,
+      "status": "pass"
+    },
+    {
+      "phase": "final child->main command",
+      "durationMs": 263,
+      "status": "pass"
+    }
+  ],
   "final": {
     "id": "tab-23",
-    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-8EfB82/handoff.md",
+    "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-ymsN6n/handoff.md",
     "content": "# 交接证明\n\nalpha beta gamma delta",
     "dirty": true,
     "pinned": true,
@@ -38,15 +933,33 @@
   },
   "recoverySnapshots": [
     {
-      "ownerId": "e9afac91-0717-423d-b601-29f6352f3dba:1",
+      "ownerId": "2a575d02-8d66-4dfd-95c8-e307288803e0:1",
       "tabId": "tab-23",
       "content": "# 交接证明\n\nalpha beta gamma delta",
-      "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-8EfB82/handoff.md"
+      "filePath": "C:/Users/ADMINI~1/AppData/Local/Temp/mazz-w71-handoff-ws-ymsN6n/handoff.md"
     }
   ],
   "resources": {
-    "baseline": 2,
-    "withChild": 3,
-    "final": 2
+    "baseline": {
+      "activeCount": 2,
+      "byType": {
+        "browser-window": 1,
+        "file-watcher": 1
+      }
+    },
+    "withChild": {
+      "activeCount": 3,
+      "byType": {
+        "browser-window": 2,
+        "file-watcher": 1
+      }
+    },
+    "final": {
+      "activeCount": 2,
+      "byType": {
+        "browser-window": 1,
+        "file-watcher": 1
+      }
+    }
   }
 }

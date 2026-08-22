@@ -7,6 +7,37 @@ export async function scenes8({ win, human, WS, scenario }) {
   const evaluate = (fn, arg) => win.evaluate(fn, arg);
   const wait = (ms) => win.waitForTimeout(ms);
 
+  // selectProxy 隐藏原生 select，但它仍是状态与 change 事件的单源。
+  // 使用原生 setter 触发真实语义事件，并核对可见代理按钮的文案同步。
+  const setLibrarySelect = async (selector, value) => {
+    const state = await evaluate(({ selector, value }) => {
+      const view = document.defaultView;
+      const select = window.__activeLibraryCtl?.root?.querySelector(selector)
+        || document.querySelector(`.pane.active .lib-reader ${selector}`);
+      if (!view || !(select instanceof view.HTMLSelectElement)) {
+        return { ok: false, reason: `missing select ${selector}` };
+      }
+      const option = [...select.options].find(item => item.value === value);
+      if (!option) return { ok: false, reason: `missing option ${value}`, values: [...select.options].map(item => item.value) };
+      const setter = Object.getOwnPropertyDescriptor(view.HTMLSelectElement.prototype, 'value')?.set;
+      if (setter) setter.call(select, value);
+      else select.value = value;
+      select.dispatchEvent(new view.Event('input', { bubbles: true, composed: true }));
+      select.dispatchEvent(new view.Event('change', { bubbles: true, composed: true }));
+      const proxy = select.nextElementSibling?.matches?.('.selmenu-btn') ? select.nextElementSibling : null;
+      const label = proxy?.querySelector('.selmenu-label')?.textContent?.trim() || '';
+      return {
+        ok: select.value === value && (!proxy || label === option.textContent.trim()),
+        value: select.value,
+        expectedLabel: option.textContent.trim(),
+        label,
+        proxied: !!proxy,
+      };
+    }, { selector, value });
+    await human.assert(state.ok, `${selector} 应切换为 ${value || '(原文)'} 且代理文案同步（${JSON.stringify(state)}）`);
+    return state;
+  };
+
   const openBookByCard = async ({ id, title, path: p, format }) => {
     await evaluate(async ({ id, title, p, format }) => {
       const books = (await window.mazz.invoke('settings:get', { key: 'library.books' }).catch(() => [])) || [];
@@ -112,7 +143,7 @@ export async function scenes8({ win, human, WS, scenario }) {
 
   // ==================== 4：简繁转换（随书记忆） ====================
   await scenario('书库·简繁转换·随书记忆', async () => {
-    await evaluate(() => { const s = [...document.querySelectorAll('.lib-zh')].find(x => x.getBoundingClientRect().width > 0); s.value = 's2t'; s.dispatchEvent(new Event('change')); });
+    await setLibrarySelect('.lib-zh', 's2t');
     await wait(1200);
     await human.assert(await frameHas('從'), '转繁体后应见「從」');
     await human.assert(await frameHas('來'), '转繁体后应见「來」');
@@ -121,14 +152,14 @@ export async function scenes8({ win, human, WS, scenario }) {
     await openBookByCard(EPUB);
     await human.assert(await frameHas('從'), '重开应自动恢复转繁体（随书记忆）');
     // 切回原文
-    await evaluate(() => { const s = [...document.querySelectorAll('.lib-zh')].find(x => x.getBoundingClientRect().width > 0); s.value = ''; s.dispatchEvent(new Event('change')); });
+    await setLibrarySelect('.lib-zh', '');
     await wait(1000);
     await human.assert(await frameHas('从'), '切回原文应还原简体');
   });
 
   // ==================== 5：竖排（行距网格切片） ====================
   await scenario('书库·竖排·行距网格零切行', async () => {
-    await evaluate(() => { const s = [...document.querySelectorAll('.lib-mode')].find(x => x.getBoundingClientRect().width > 0); s.value = 'vertical'; s.dispatchEvent(new Event('change')); });
+    await setLibrarySelect('.lib-mode', 'vertical');
     await wait(1300);
     const r = await evaluate(() => {
       const f = [...document.querySelectorAll('iframe.lib-book-frame')].find(x => x.getBoundingClientRect().width > 0);
@@ -163,7 +194,7 @@ export async function scenes8({ win, human, WS, scenario }) {
     human.log('竖排翻页:', JSON.stringify(nav));
     await human.assert(nav.off === nav.step, `竖排步进必须=网格宽（${nav.off} vs ${nav.step}）`);
     // 回单页
-    await evaluate(() => { const s = [...document.querySelectorAll('.lib-mode')].find(x => x.getBoundingClientRect().width > 0); s.value = 'single'; s.dispatchEvent(new Event('change')); });
+    await setLibrarySelect('.lib-mode', 'single');
     await wait(600);
     await backToShelf();
   });

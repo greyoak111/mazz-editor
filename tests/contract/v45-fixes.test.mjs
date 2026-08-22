@@ -94,9 +94,15 @@ describe('v45 实机回归', () => {
 
   test('工作区切换活取根路径+缓存失效+重挂监听', () => {
     const sh = readSrc('renderer/shell/shell.js');
+    const main = readSrc('main/main.js');
     assert.ok(sh.includes("mazz.on('workspace:changed'"), '壳必须监听 workspace:changed');
     assert.ok(sh.includes('invalidateWsCache'), '必须使 ws-path 缓存失效');
     assert.ok(sh.includes("invoke('workspace:get').catch(() => null)"), 'getWorkspace 必须活取');
+    assert.equal((main.match(/wm\.broadcastShells\('workspace:changed'/g) || []).length, 2,
+      'remove/setCurrent 两条切换路径都必须广播到主窗与所有子窗 renderer');
+    assert.equal((main.match(/bus\.send\(wm\.main, 'workspace:changed'/g) || []).length
+      + (main.match(/wm\.broadcast\('workspace:changed'/g) || []).length, 0,
+      'workspace 变更不得只通知主窗，避免子窗继续写旧 workspace');
   });
 
   test('浏览器客进程崩溃复活（僵尸标签绝育）', () => {

@@ -2,6 +2,23 @@
 // 借鉴 NanaView：图片序列串成长条，一话=一个图片文件夹
 const IMG_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'avif']);
 
+function sourceChangedError(dir, stat = null) {
+  const error = new Error(`漫画目录在读取期间已移动、删除或不可访问：${dir}`);
+  error.code = 'LIBRARY_SOURCE_CHANGED';
+  error.sourceCode = String(stat?.code || '');
+  return error;
+}
+
+async function assertDirectory(dir, previous = null) {
+  const stat = await window.mazz.invoke('fs:stat', { path: dir });
+  if (!stat?.exists || !stat?.isDir) throw sourceChangedError(dir, stat);
+  if (previous && Number.isFinite(previous.mtime) && Number.isFinite(stat.mtime)
+      && previous.mtime !== stat.mtime) {
+    throw sourceChangedError(dir, stat);
+  }
+  return stat;
+}
+
 /** 自然排序（数字按数值比较：p1 < p2 < p10） */
 export function naturalSort(a, b) {
   const ax = a.match(/\d+|\D+/g) || [a], bx = b.match(/\d+|\D+/g) || [b];
@@ -17,7 +34,13 @@ export function naturalSort(a, b) {
 }
 
 async function listImages(dir) {
-  const entries = await window.mazz.invoke('fs:listDir', { path: dir }).catch(() => []);
+  // A transient/permission read failure is not an empty chapter.  Returning
+  // [] here used to let buildMangaBook commit a partial book, after which the
+  // reader clamped a valid saved page to the shortened list and persisted the
+  // wrong locator.  Let the candidate-open transaction fail closed instead.
+  const before = await assertDirectory(dir);
+  const entries = await window.mazz.invoke('fs:listDir', { path: dir });
+  await assertDirectory(dir, before);
   return entries.filter(e => !e.isDir && IMG_EXTS.has(e.name.split('.').pop().toLowerCase()))
     .map(e => e.path).sort(naturalSort);
 }
@@ -27,7 +50,8 @@ async function listImages(dir) {
  * 结构：文件夹下全是图片 = 一话；含图片子文件夹 = 每个子文件夹一话；两者都有时根目录图片作「正篇」在前
  */
 export async function buildMangaBook(dir) {
-  const entries = await window.mazz.invoke('fs:listDir', { path: dir }).catch(() => []);
+  const rootBefore = await assertDirectory(dir);
+  const entries = await window.mazz.invoke('fs:listDir', { path: dir });
   if (!entries.length) throw new Error('文件夹为空或不可读');
   const title = dir.replace(/\\/g, '/').split('/').pop();
   const chapters = [];
@@ -38,6 +62,7 @@ export async function buildMangaBook(dir) {
     const pages = await listImages(sub);
     if (pages.length) chapters.push({ name: sub.replace(/\\/g, '/').split('/').pop(), pages });
   }
+  await assertDirectory(dir, rootBefore);
   if (!chapters.length) throw new Error('文件夹（含子文件夹）里没有图片');
   return { title, chapters };
 }

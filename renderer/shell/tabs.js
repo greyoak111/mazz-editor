@@ -37,11 +37,11 @@ export class Tabs {
     this._resizeObserver?.observe(this.el);
   }
 
-  add({ title, moduleId, iconId = moduleIconId(moduleId), filePath = null }) {
+  add({ title, moduleId, iconId = moduleIconId(moduleId), filePath = null, activate = true, provisional = false }) {
     // 同文件复用标签
     if (filePath) {
       const hit = this.tabs.find(t => t.filePath === filePath);
-      if (hit) { this.activate(hit.id); return hit; }
+      if (hit) { if (activate) this.activate(hit.id); return hit; }
     }
     const id = 'tab-' + seq++;
     const view = document.createElement('div');
@@ -53,11 +53,11 @@ export class Tabs {
     view.setAttribute('aria-hidden', 'true');
     view.setAttribute('inert', '');
     this.area.appendChild(view);
-    const tab = { id, title, moduleId, iconId, filePath, dirty: false, pinned: false, view };
+    const tab = { id, title, moduleId, iconId, filePath, dirty: false, pinned: false, provisional: !!provisional, view };
     this.tabs.push(tab);
     this.render();
-    this.activate(id);
-    bus.emit('tab:added', tab);
+    if (activate && !provisional) this.activate(id);
+    if (!provisional) bus.emit('tab:added', tab);
     return tab;
   }
 
@@ -73,7 +73,7 @@ export class Tabs {
 
   activate(id) {
     const tab = this.get(id);
-    if (!tab) return;
+    if (!tab || tab.provisional || tab.handoffFrozen) return false;
     if (this.activeId && this.activeId !== id) {
       const outgoing = this.get(this.activeId);
       this._releaseFocus(outgoing?.view);
@@ -89,6 +89,18 @@ export class Tabs {
     bus.emit('tab:activate', tab);
     this.render();
     contextKeys.set('hasTabs', this.tabs.length > 0);
+    return true;
+  }
+
+  /** Publish a fully-restored handoff tab. Until this call it has no tab-strip
+   * presence, cannot receive focus and its module view remains inert. */
+  commitProvisional(id) {
+    const tab = this.get(id);
+    if (!tab || !tab.provisional) return false;
+    tab.provisional = false;
+    bus.emit('tab:added', tab);
+    this.render();
+    return this.activate(id);
   }
 
   setDirty(id, dirty) {
@@ -119,12 +131,16 @@ export class Tabs {
   }
 
   cycle(dir = 1) {
-    if (this.tabs.length < 2) return;
-    const i = this.tabs.findIndex(t => t.id === this.activeId);
-    const next = this.tabs[(i + dir + this.tabs.length) % this.tabs.length];
+    const visible = this.tabs.filter(tab => !tab.provisional);
+    if (visible.length < 2) return;
+    const i = visible.findIndex(t => t.id === this.activeId);
+    const next = visible[(i + dir + visible.length) % visible.length];
     this.activate(next.id);
   }
-  activateIndex(n) { if (this.tabs[n - 1]) this.activate(this.tabs[n - 1].id); }
+  activateIndex(n) {
+    const tab = this.tabs.filter(item => !item.provisional)[n - 1];
+    if (tab) this.activate(tab.id);
+  }
 
   _maxScroll() {
     return Math.max(0, this.el.scrollWidth - this.el.clientWidth);
@@ -211,6 +227,7 @@ export class Tabs {
     const generation = ++this._renderGeneration;
     this.el.querySelectorAll('.tab').forEach(e => e.remove()); // 保留窗格关闭钮等非标签元素
     for (const t of this.tabs) {
+      if (t.provisional) continue;
       const el = document.createElement('div');
       el.className = 'tab' + (t.id === this.activeId ? ' on' : '');
       // W87d：document capture 阶段必须在抓取原生 Surface 前识别并激活拖动源。
@@ -255,10 +272,11 @@ export class Tabs {
         }
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
-        const at = this.tabs.findIndex(tab => tab.id === t.id);
-        const target = event.key === 'Home' ? this.tabs[0]
-          : event.key === 'End' ? this.tabs.at(-1)
-            : this.tabs[(at + (event.key === 'ArrowRight' ? 1 : -1) + this.tabs.length) % this.tabs.length];
+        const visible = this.tabs.filter(tab => !tab.provisional);
+        const at = visible.findIndex(tab => tab.id === t.id);
+        const target = event.key === 'Home' ? visible[0]
+          : event.key === 'End' ? visible.at(-1)
+            : visible[(at + (event.key === 'ArrowRight' ? 1 : -1) + visible.length) % visible.length];
         this.activate(target.id);
         requestAnimationFrame(() => this.el.querySelector(`[data-tab-id="${target.id}"] .t-name`)?.focus());
       });
@@ -315,6 +333,6 @@ export class Tabs {
       if (this._scrollPinnedRight) this._setScroll(this._maxScroll(), true);
       else this._ensureActiveVisible();
     });
-    contextKeys.set('hasTabs', this.tabs.length > 0);
+    contextKeys.set('hasTabs', this.tabs.some(tab => !tab.provisional));
   }
 }

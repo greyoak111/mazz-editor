@@ -1,0 +1,906 @@
+{
+  "protocol": "mazz.w88-library-residency/v1",
+  "createdAt": "2026-08-20T23:57:02.882Z",
+  "mode": "source",
+  "git": {
+    "head": "aa178f535c075c1533f9b308be0b4684ca4e5146",
+    "dirty": true
+  },
+  "runtime": {
+    "kind": "source",
+    "bundle": "renderer/dist/app.js",
+    "sha256": "f8029974e094fb4db980b7e3fabe41afc56754dae9e2399dd18a08c2d1b2c833"
+  },
+  "verdict": "PASS",
+  "bounds": {
+    "epubResidentMax": 7,
+    "cbzResidentMax": 6
+  },
+  "fixtures": {
+    "epubChapters": 100,
+    "cbzPages": 300
+  },
+  "results": [
+    {
+      "name": "两书切换保持独立且稳定的资产/渲染指纹",
+      "verdict": "PASS",
+      "durationMs": 398,
+      "detail": {
+        "a1": "6ea4d11c8bfd45c24e8031368fb272ad447e0593481f94327a8c3c55a7f2f2e7",
+        "b": "615617cc48b2bc014cbe8f1f658539db4f4ce3f9eb277e6697c43a26bacad81f",
+        "a2": "6ea4d11c8bfd45c24e8031368fb272ad447e0593481f94327a8c3c55a7f2f2e7",
+        "oldA": {
+          "kind": "epub",
+          "loadedCount": 0,
+          "liveImageCount": 0,
+          "cachedCount": null,
+          "residentCount": null
+        },
+        "oldB": {
+          "kind": "epub",
+          "loadedCount": 0,
+          "liveImageCount": 0,
+          "cachedCount": null,
+          "residentCount": null
+        }
+      }
+    },
+    {
+      "name": "100 章 EPUB 在分页与滚动模式均保持 bounded resident set",
+      "verdict": "PASS",
+      "durationMs": 3216,
+      "detail": {
+        "max": 7,
+        "samples": [
+          {
+            "mode": "single",
+            "id": "w88-epub-a",
+            "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+            "title": "W88 百章甲卷",
+            "format": "epub",
+            "chapterIdx": 0,
+            "spineCount": 100,
+            "firstSpine": {
+              "id": "chapter-001",
+              "href": "chapters/ch001.xhtml"
+            },
+            "lastSpine": {
+              "id": "chapter-100",
+              "href": "chapters/ch100.xhtml"
+            },
+            "markerVisible": true,
+            "frameTextLength": 291,
+            "frameImages": 1,
+            "decodedFrameImages": 1,
+            "frameImageUrlsLive": true,
+            "domChapterCount": 1,
+            "textSlotCount": 0,
+            "hasTextViewport": false,
+            "textResidentCount": null,
+            "textPendingCount": null,
+            "loadedCount": 2,
+            "liveImageCount": 3,
+            "procCacheCount": 0,
+            "blob": {
+              "installed": true,
+              "created": 9,
+              "revoked": 6,
+              "live": 3,
+              "urls": [
+                "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+                "blob:mazz-res://app/d9966644-8eaa-456b-92c1-327afb61a1d0",
+                "blob:mazz-res://app/f13a1905-6901-43ec-ae2d-94184a9006fa"
+              ]
+            }
+          },
+          {
+            "mode": "single",
+            "id": "w88-epub-a",
+            "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+            "title": "W88 百章甲卷",
+            "format": "epub",
+            "chapterIdx": 49,
+            "spineCount": 100,
+            "firstSpine": {
+              "id": "chapter-001",
+              "href": "chapters/ch001.xhtml"
+            },
+            "lastSpine": {
+              "id": "chapter-100",
+              "href": "chapters/ch100.xhtml"
+            },
+            "markerVisible": true,
+            "frameTextLength": 291,
+            "frameImages": 1,
+            "decodedFrameImages": 1,
+            "frameImageUrlsLive": true,
+            "domChapterCount": 1,
+            "textSlotCount": 0,
+            "hasTextViewport": false,
+            "textResidentCount": null,
+            "textPendingCount": null,
+            "loadedCount": 3,
+            "liveImageCount": 4,
+            "procCacheCount": 0,
+            "blob": {
+              "installed": true,
+              "created": 12,
+              "revoked": 8,
+              "live": 4,
+              "urls": [
+                "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+                "blob:mazz-res://app/75fff206-2dbb-4ca7-9be7-8e71db0eca15",
+                "blob:mazz-res://app/a3da356a-d026-49a8-b856-9c0589a709e8",
+                "blob:mazz-res://app/efcc69fb-8b82-42e2-a273-38dd3856f1da"
+              ]
+            }
+          },
+          {
+            "mode": "single",
+            "id": "w88-epub-a",
+            "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+            "title": "W88 百章甲卷",
+            "format": "epub",
+            "chapterIdx": 99,
+            "spineCount": 100,
+            "firstSpine": {
+              "id": "chapter-001",
+              "href": "chapters/ch001.xhtml"
+            },
+            "lastSpine": {
+              "id": "chapter-100",
+              "href": "chapters/ch100.xhtml"
+            },
+            "markerVisible": true,
+            "frameTextLength": 291,
+            "frameImages": 1,
+            "decodedFrameImages": 1,
+            "frameImageUrlsLive": true,
+            "domChapterCount": 1,
+            "textSlotCount": 0,
+            "hasTextViewport": false,
+            "textResidentCount": null,
+            "textPendingCount": null,
+            "loadedCount": 2,
+            "liveImageCount": 3,
+            "procCacheCount": 0,
+            "blob": {
+              "installed": true,
+              "created": 14,
+              "revoked": 11,
+              "live": 3,
+              "urls": [
+                "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+                "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+                "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9"
+              ]
+            }
+          },
+          {
+            "mode": "scroll",
+            "id": "w88-epub-a",
+            "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+            "title": "W88 百章甲卷",
+            "format": "epub",
+            "chapterIdx": 0,
+            "spineCount": 100,
+            "firstSpine": {
+              "id": "chapter-001",
+              "href": "chapters/ch001.xhtml"
+            },
+            "lastSpine": {
+              "id": "chapter-100",
+              "href": "chapters/ch100.xhtml"
+            },
+            "markerVisible": true,
+            "frameTextLength": 582,
+            "frameImages": 2,
+            "decodedFrameImages": 2,
+            "frameImageUrlsLive": true,
+            "domChapterCount": 2,
+            "textSlotCount": 100,
+            "hasTextViewport": true,
+            "textResidentCount": 2,
+            "textPendingCount": 0,
+            "loadedCount": 4,
+            "liveImageCount": 5,
+            "procCacheCount": 0,
+            "blob": {
+              "installed": true,
+              "created": 16,
+              "revoked": 11,
+              "live": 5,
+              "urls": [
+                "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+                "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+                "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9",
+                "blob:mazz-res://app/f019073b-969a-435c-8ec7-3e1c3e3a9a3b",
+                "blob:mazz-res://app/b19b015a-de05-48b4-81fe-9992340d8774"
+              ]
+            }
+          },
+          {
+            "mode": "scroll",
+            "id": "w88-epub-a",
+            "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+            "title": "W88 百章甲卷",
+            "format": "epub",
+            "chapterIdx": 49,
+            "spineCount": 100,
+            "firstSpine": {
+              "id": "chapter-001",
+              "href": "chapters/ch001.xhtml"
+            },
+            "lastSpine": {
+              "id": "chapter-100",
+              "href": "chapters/ch100.xhtml"
+            },
+            "markerVisible": true,
+            "frameTextLength": 873,
+            "frameImages": 3,
+            "decodedFrameImages": 3,
+            "frameImageUrlsLive": true,
+            "domChapterCount": 3,
+            "textSlotCount": 100,
+            "hasTextViewport": true,
+            "textResidentCount": 3,
+            "textPendingCount": 0,
+            "loadedCount": 5,
+            "liveImageCount": 6,
+            "procCacheCount": 0,
+            "blob": {
+              "installed": true,
+              "created": 19,
+              "revoked": 13,
+              "live": 6,
+              "urls": [
+                "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+                "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+                "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9",
+                "blob:mazz-res://app/cf372061-45a5-4123-9e2e-b3b006ab8ee7",
+                "blob:mazz-res://app/8138812e-c36d-4730-8fb5-47ec7913cafd",
+                "blob:mazz-res://app/3dd00aab-0a92-4729-82a9-a9e8e3e2e3e9"
+              ]
+            }
+          },
+          {
+            "mode": "scroll",
+            "id": "w88-epub-a",
+            "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+            "title": "W88 百章甲卷",
+            "format": "epub",
+            "chapterIdx": 98,
+            "spineCount": 100,
+            "firstSpine": {
+              "id": "chapter-001",
+              "href": "chapters/ch001.xhtml"
+            },
+            "lastSpine": {
+              "id": "chapter-100",
+              "href": "chapters/ch100.xhtml"
+            },
+            "markerVisible": true,
+            "frameTextLength": 582,
+            "frameImages": 2,
+            "decodedFrameImages": 2,
+            "frameImageUrlsLive": true,
+            "domChapterCount": 2,
+            "textSlotCount": 100,
+            "hasTextViewport": true,
+            "textResidentCount": 2,
+            "textPendingCount": 0,
+            "loadedCount": 2,
+            "liveImageCount": 3,
+            "procCacheCount": 0,
+            "blob": {
+              "installed": true,
+              "created": 19,
+              "revoked": 16,
+              "live": 3,
+              "urls": [
+                "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+                "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+                "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "EPUB 返回书架后 iframe/cache/blob 全归零",
+      "verdict": "PASS",
+      "durationMs": 440,
+      "detail": {
+        "handle": {
+          "kind": "epub",
+          "loadedCount": 0,
+          "liveImageCount": 0,
+          "cachedCount": null,
+          "residentCount": null
+        },
+        "dom": {
+          "activeBook": null,
+          "readerVisible": false,
+          "frames": 0,
+          "mangaImages": 0,
+          "blobImages": 0,
+          "blob": {
+            "installed": true,
+            "created": 19,
+            "revoked": 19,
+            "live": 0,
+            "urls": []
+          }
+        }
+      }
+    },
+    {
+      "name": "300 页 CBZ 滚动模式保持虚拟 rail 与 bounded resident set",
+      "verdict": "PASS",
+      "durationMs": 1777,
+      "detail": {
+        "max": 6,
+        "samples": [
+          {
+            "id": "w88-cbz-300",
+            "count": 300,
+            "pageIdx": 0,
+            "hasViewport": true,
+            "residentCount": 4,
+            "cachedCount": 4,
+            "domImages": 4,
+            "decodedImages": 4,
+            "imageUrlsLive": true,
+            "domSlots": 300,
+            "blob": {
+              "installed": true,
+              "created": 23,
+              "revoked": 19,
+              "live": 4,
+              "urls": [
+                "blob:mazz-res://app/479a05ba-e532-407e-b3a6-2cc43fc6e5fb",
+                "blob:mazz-res://app/b012a5ff-d68a-40f9-bf9c-37a9108307dc",
+                "blob:mazz-res://app/488ec38a-cee8-4a4e-8743-9b3d044df8a2",
+                "blob:mazz-res://app/ecef1ddb-211e-4ba7-aae7-23d6129dbee4"
+              ]
+            }
+          },
+          {
+            "id": "w88-cbz-300",
+            "count": 300,
+            "pageIdx": 149,
+            "hasViewport": true,
+            "residentCount": 6,
+            "cachedCount": 6,
+            "domImages": 6,
+            "decodedImages": 6,
+            "imageUrlsLive": true,
+            "domSlots": 300,
+            "blob": {
+              "installed": true,
+              "created": 29,
+              "revoked": 23,
+              "live": 6,
+              "urls": [
+                "blob:mazz-res://app/1973e693-9fb6-420d-889a-f88878476c98",
+                "blob:mazz-res://app/626f18ac-0dc5-4eba-b8e2-b4c5e648c044",
+                "blob:mazz-res://app/20c640cc-147b-4ec6-82e7-88290a4bdb4c",
+                "blob:mazz-res://app/a8c69cbc-f123-48c1-823f-8eab1f21b971",
+                "blob:mazz-res://app/4a24da8d-43dc-43b9-976a-19c76eab9054",
+                "blob:mazz-res://app/6221db00-30b2-4761-9fb4-b48424cd6eeb"
+              ]
+            }
+          },
+          {
+            "id": "w88-cbz-300",
+            "count": 300,
+            "pageIdx": 299,
+            "hasViewport": true,
+            "residentCount": 3,
+            "cachedCount": 3,
+            "domImages": 3,
+            "decodedImages": 3,
+            "imageUrlsLive": true,
+            "domSlots": 300,
+            "blob": {
+              "installed": true,
+              "created": 32,
+              "revoked": 29,
+              "live": 3,
+              "urls": [
+                "blob:mazz-res://app/2d2b255b-9bef-41f3-9a1f-3db1a20652c3",
+                "blob:mazz-res://app/50b6309b-ce60-4eec-85e1-1e917590600d",
+                "blob:mazz-res://app/e44b7d9c-42b2-437e-b5fb-ce0b9b16ca99"
+              ]
+            }
+          },
+          {
+            "id": "w88-cbz-300",
+            "count": 300,
+            "pageIdx": 0,
+            "hasViewport": true,
+            "residentCount": 4,
+            "cachedCount": 4,
+            "domImages": 4,
+            "decodedImages": 4,
+            "imageUrlsLive": true,
+            "domSlots": 300,
+            "blob": {
+              "installed": true,
+              "created": 36,
+              "revoked": 32,
+              "live": 4,
+              "urls": [
+                "blob:mazz-res://app/ab6a2ec6-d123-4cca-a6b3-ed392e542999",
+                "blob:mazz-res://app/4b7eaf67-4d09-4344-a887-6ad43e0a112c",
+                "blob:mazz-res://app/7da406ba-b06c-459f-b21b-332eac8cbdb5",
+                "blob:mazz-res://app/7d36c4fe-dbf9-4d45-bf18-6ee45f2c9aaa"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CBZ 返回书架后 viewport/cache/blob 全归零",
+      "verdict": "PASS",
+      "durationMs": 423,
+      "detail": {
+        "handle": {
+          "kind": "cbz",
+          "loadedCount": null,
+          "liveImageCount": null,
+          "cachedCount": 0,
+          "residentCount": 0
+        },
+        "dom": {
+          "activeBook": null,
+          "readerVisible": false,
+          "frames": 0,
+          "mangaImages": 0,
+          "blobImages": 0,
+          "blob": {
+            "installed": true,
+            "created": 36,
+            "revoked": 36,
+            "live": 0,
+            "urls": []
+          }
+        }
+      }
+    },
+    {
+      "name": "W88 全程零主进程/renderer 异常",
+      "verdict": "PASS",
+      "durationMs": 0,
+      "detail": {
+        "errors": []
+      }
+    }
+  ],
+  "runtimeErrors": [],
+  "observations": {
+    "switch": {
+      "a1": "6ea4d11c8bfd45c24e8031368fb272ad447e0593481f94327a8c3c55a7f2f2e7",
+      "b": "615617cc48b2bc014cbe8f1f658539db4f4ce3f9eb277e6697c43a26bacad81f",
+      "a2": "6ea4d11c8bfd45c24e8031368fb272ad447e0593481f94327a8c3c55a7f2f2e7",
+      "oldA": {
+        "kind": "epub",
+        "loadedCount": 0,
+        "liveImageCount": 0,
+        "cachedCount": null,
+        "residentCount": null
+      },
+      "oldB": {
+        "kind": "epub",
+        "loadedCount": 0,
+        "liveImageCount": 0,
+        "cachedCount": null,
+        "residentCount": null
+      }
+    },
+    "epub": [
+      {
+        "mode": "single",
+        "id": "w88-epub-a",
+        "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+        "title": "W88 百章甲卷",
+        "format": "epub",
+        "chapterIdx": 0,
+        "spineCount": 100,
+        "firstSpine": {
+          "id": "chapter-001",
+          "href": "chapters/ch001.xhtml"
+        },
+        "lastSpine": {
+          "id": "chapter-100",
+          "href": "chapters/ch100.xhtml"
+        },
+        "markerVisible": true,
+        "frameTextLength": 291,
+        "frameImages": 1,
+        "decodedFrameImages": 1,
+        "frameImageUrlsLive": true,
+        "domChapterCount": 1,
+        "textSlotCount": 0,
+        "hasTextViewport": false,
+        "textResidentCount": null,
+        "textPendingCount": null,
+        "loadedCount": 2,
+        "liveImageCount": 3,
+        "procCacheCount": 0,
+        "blob": {
+          "installed": true,
+          "created": 9,
+          "revoked": 6,
+          "live": 3,
+          "urls": [
+            "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+            "blob:mazz-res://app/d9966644-8eaa-456b-92c1-327afb61a1d0",
+            "blob:mazz-res://app/f13a1905-6901-43ec-ae2d-94184a9006fa"
+          ]
+        }
+      },
+      {
+        "mode": "single",
+        "id": "w88-epub-a",
+        "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+        "title": "W88 百章甲卷",
+        "format": "epub",
+        "chapterIdx": 49,
+        "spineCount": 100,
+        "firstSpine": {
+          "id": "chapter-001",
+          "href": "chapters/ch001.xhtml"
+        },
+        "lastSpine": {
+          "id": "chapter-100",
+          "href": "chapters/ch100.xhtml"
+        },
+        "markerVisible": true,
+        "frameTextLength": 291,
+        "frameImages": 1,
+        "decodedFrameImages": 1,
+        "frameImageUrlsLive": true,
+        "domChapterCount": 1,
+        "textSlotCount": 0,
+        "hasTextViewport": false,
+        "textResidentCount": null,
+        "textPendingCount": null,
+        "loadedCount": 3,
+        "liveImageCount": 4,
+        "procCacheCount": 0,
+        "blob": {
+          "installed": true,
+          "created": 12,
+          "revoked": 8,
+          "live": 4,
+          "urls": [
+            "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+            "blob:mazz-res://app/75fff206-2dbb-4ca7-9be7-8e71db0eca15",
+            "blob:mazz-res://app/a3da356a-d026-49a8-b856-9c0589a709e8",
+            "blob:mazz-res://app/efcc69fb-8b82-42e2-a273-38dd3856f1da"
+          ]
+        }
+      },
+      {
+        "mode": "single",
+        "id": "w88-epub-a",
+        "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+        "title": "W88 百章甲卷",
+        "format": "epub",
+        "chapterIdx": 99,
+        "spineCount": 100,
+        "firstSpine": {
+          "id": "chapter-001",
+          "href": "chapters/ch001.xhtml"
+        },
+        "lastSpine": {
+          "id": "chapter-100",
+          "href": "chapters/ch100.xhtml"
+        },
+        "markerVisible": true,
+        "frameTextLength": 291,
+        "frameImages": 1,
+        "decodedFrameImages": 1,
+        "frameImageUrlsLive": true,
+        "domChapterCount": 1,
+        "textSlotCount": 0,
+        "hasTextViewport": false,
+        "textResidentCount": null,
+        "textPendingCount": null,
+        "loadedCount": 2,
+        "liveImageCount": 3,
+        "procCacheCount": 0,
+        "blob": {
+          "installed": true,
+          "created": 14,
+          "revoked": 11,
+          "live": 3,
+          "urls": [
+            "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+            "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+            "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9"
+          ]
+        }
+      },
+      {
+        "mode": "scroll",
+        "id": "w88-epub-a",
+        "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+        "title": "W88 百章甲卷",
+        "format": "epub",
+        "chapterIdx": 0,
+        "spineCount": 100,
+        "firstSpine": {
+          "id": "chapter-001",
+          "href": "chapters/ch001.xhtml"
+        },
+        "lastSpine": {
+          "id": "chapter-100",
+          "href": "chapters/ch100.xhtml"
+        },
+        "markerVisible": true,
+        "frameTextLength": 582,
+        "frameImages": 2,
+        "decodedFrameImages": 2,
+        "frameImageUrlsLive": true,
+        "domChapterCount": 2,
+        "textSlotCount": 100,
+        "hasTextViewport": true,
+        "textResidentCount": 2,
+        "textPendingCount": 0,
+        "loadedCount": 4,
+        "liveImageCount": 5,
+        "procCacheCount": 0,
+        "blob": {
+          "installed": true,
+          "created": 16,
+          "revoked": 11,
+          "live": 5,
+          "urls": [
+            "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+            "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+            "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9",
+            "blob:mazz-res://app/f019073b-969a-435c-8ec7-3e1c3e3a9a3b",
+            "blob:mazz-res://app/b19b015a-de05-48b4-81fe-9992340d8774"
+          ]
+        }
+      },
+      {
+        "mode": "scroll",
+        "id": "w88-epub-a",
+        "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+        "title": "W88 百章甲卷",
+        "format": "epub",
+        "chapterIdx": 49,
+        "spineCount": 100,
+        "firstSpine": {
+          "id": "chapter-001",
+          "href": "chapters/ch001.xhtml"
+        },
+        "lastSpine": {
+          "id": "chapter-100",
+          "href": "chapters/ch100.xhtml"
+        },
+        "markerVisible": true,
+        "frameTextLength": 873,
+        "frameImages": 3,
+        "decodedFrameImages": 3,
+        "frameImageUrlsLive": true,
+        "domChapterCount": 3,
+        "textSlotCount": 100,
+        "hasTextViewport": true,
+        "textResidentCount": 3,
+        "textPendingCount": 0,
+        "loadedCount": 5,
+        "liveImageCount": 6,
+        "procCacheCount": 0,
+        "blob": {
+          "installed": true,
+          "created": 19,
+          "revoked": 13,
+          "live": 6,
+          "urls": [
+            "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+            "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+            "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9",
+            "blob:mazz-res://app/cf372061-45a5-4123-9e2e-b3b006ab8ee7",
+            "blob:mazz-res://app/8138812e-c36d-4730-8fb5-47ec7913cafd",
+            "blob:mazz-res://app/3dd00aab-0a92-4729-82a9-a9e8e3e2e3e9"
+          ]
+        }
+      },
+      {
+        "mode": "scroll",
+        "id": "w88-epub-a",
+        "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\mazz-w88-library-source-ws-lnUxEZ\\书库\\W88-百章甲卷.epub",
+        "title": "W88 百章甲卷",
+        "format": "epub",
+        "chapterIdx": 98,
+        "spineCount": 100,
+        "firstSpine": {
+          "id": "chapter-001",
+          "href": "chapters/ch001.xhtml"
+        },
+        "lastSpine": {
+          "id": "chapter-100",
+          "href": "chapters/ch100.xhtml"
+        },
+        "markerVisible": true,
+        "frameTextLength": 582,
+        "frameImages": 2,
+        "decodedFrameImages": 2,
+        "frameImageUrlsLive": true,
+        "domChapterCount": 2,
+        "textSlotCount": 100,
+        "hasTextViewport": true,
+        "textResidentCount": 2,
+        "textPendingCount": 0,
+        "loadedCount": 2,
+        "liveImageCount": 3,
+        "procCacheCount": 0,
+        "blob": {
+          "installed": true,
+          "created": 19,
+          "revoked": 16,
+          "live": 3,
+          "urls": [
+            "blob:mazz-res://app/fb7e7631-b22e-4774-85fe-86aafed00448",
+            "blob:mazz-res://app/5ba92fbc-1bb3-4e48-8543-c47284335b1f",
+            "blob:mazz-res://app/15d2de1a-ee36-457e-aef7-f8bbb721c1d9"
+          ]
+        }
+      }
+    ],
+    "cbz": [
+      {
+        "id": "w88-cbz-300",
+        "count": 300,
+        "pageIdx": 0,
+        "hasViewport": true,
+        "residentCount": 4,
+        "cachedCount": 4,
+        "domImages": 4,
+        "decodedImages": 4,
+        "imageUrlsLive": true,
+        "domSlots": 300,
+        "blob": {
+          "installed": true,
+          "created": 23,
+          "revoked": 19,
+          "live": 4,
+          "urls": [
+            "blob:mazz-res://app/479a05ba-e532-407e-b3a6-2cc43fc6e5fb",
+            "blob:mazz-res://app/b012a5ff-d68a-40f9-bf9c-37a9108307dc",
+            "blob:mazz-res://app/488ec38a-cee8-4a4e-8743-9b3d044df8a2",
+            "blob:mazz-res://app/ecef1ddb-211e-4ba7-aae7-23d6129dbee4"
+          ]
+        }
+      },
+      {
+        "id": "w88-cbz-300",
+        "count": 300,
+        "pageIdx": 149,
+        "hasViewport": true,
+        "residentCount": 6,
+        "cachedCount": 6,
+        "domImages": 6,
+        "decodedImages": 6,
+        "imageUrlsLive": true,
+        "domSlots": 300,
+        "blob": {
+          "installed": true,
+          "created": 29,
+          "revoked": 23,
+          "live": 6,
+          "urls": [
+            "blob:mazz-res://app/1973e693-9fb6-420d-889a-f88878476c98",
+            "blob:mazz-res://app/626f18ac-0dc5-4eba-b8e2-b4c5e648c044",
+            "blob:mazz-res://app/20c640cc-147b-4ec6-82e7-88290a4bdb4c",
+            "blob:mazz-res://app/a8c69cbc-f123-48c1-823f-8eab1f21b971",
+            "blob:mazz-res://app/4a24da8d-43dc-43b9-976a-19c76eab9054",
+            "blob:mazz-res://app/6221db00-30b2-4761-9fb4-b48424cd6eeb"
+          ]
+        }
+      },
+      {
+        "id": "w88-cbz-300",
+        "count": 300,
+        "pageIdx": 299,
+        "hasViewport": true,
+        "residentCount": 3,
+        "cachedCount": 3,
+        "domImages": 3,
+        "decodedImages": 3,
+        "imageUrlsLive": true,
+        "domSlots": 300,
+        "blob": {
+          "installed": true,
+          "created": 32,
+          "revoked": 29,
+          "live": 3,
+          "urls": [
+            "blob:mazz-res://app/2d2b255b-9bef-41f3-9a1f-3db1a20652c3",
+            "blob:mazz-res://app/50b6309b-ce60-4eec-85e1-1e917590600d",
+            "blob:mazz-res://app/e44b7d9c-42b2-437e-b5fb-ce0b9b16ca99"
+          ]
+        }
+      },
+      {
+        "id": "w88-cbz-300",
+        "count": 300,
+        "pageIdx": 0,
+        "hasViewport": true,
+        "residentCount": 4,
+        "cachedCount": 4,
+        "domImages": 4,
+        "decodedImages": 4,
+        "imageUrlsLive": true,
+        "domSlots": 300,
+        "blob": {
+          "installed": true,
+          "created": 36,
+          "revoked": 32,
+          "live": 4,
+          "urls": [
+            "blob:mazz-res://app/ab6a2ec6-d123-4cca-a6b3-ed392e542999",
+            "blob:mazz-res://app/4b7eaf67-4d09-4344-a887-6ad43e0a112c",
+            "blob:mazz-res://app/7da406ba-b06c-459f-b21b-332eac8cbdb5",
+            "blob:mazz-res://app/7d36c4fe-dbf9-4d45-bf18-6ee45f2c9aaa"
+          ]
+        }
+      }
+    ],
+    "cleanup": {
+      "epub": {
+        "handle": {
+          "kind": "epub",
+          "loadedCount": 0,
+          "liveImageCount": 0,
+          "cachedCount": null,
+          "residentCount": null
+        },
+        "dom": {
+          "activeBook": null,
+          "readerVisible": false,
+          "frames": 0,
+          "mangaImages": 0,
+          "blobImages": 0,
+          "blob": {
+            "installed": true,
+            "created": 19,
+            "revoked": 19,
+            "live": 0,
+            "urls": []
+          }
+        }
+      },
+      "cbz": {
+        "handle": {
+          "kind": "cbz",
+          "loadedCount": null,
+          "liveImageCount": null,
+          "cachedCount": 0,
+          "residentCount": 0
+        },
+        "dom": {
+          "activeBook": null,
+          "readerVisible": false,
+          "frames": 0,
+          "mangaImages": 0,
+          "blobImages": 0,
+          "blob": {
+            "installed": true,
+            "created": 36,
+            "revoked": 36,
+            "live": 0,
+            "urls": []
+          }
+        }
+      }
+    }
+  },
+  "temp": null
+}

@@ -7,6 +7,7 @@ const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const INVOKE_CHANNELS = new Set([
   'fs:readFile', 'fs:writeFile', 'fs:listDir', 'fs:stat', 'fs:mkdir', 'fs:rename', 'fs:delete',
   'fs:readFileBase64', 'fs:writeFileBase64', 'fs:probeFile',
+  'library:importMaterialize', 'library:importFinalize',
   'evidence:scanWorkspace', 'evidence:fileRelations', 'evidence:createAnchorForPath', 'evidence:invalidate',
   'context:snapshot', 'context:addSubject', 'context:removePlacement', 'context:updatePlacement',
   'context:addShadowEdge', 'context:dismissShadowEdge', 'context:promoteEdge',
@@ -22,9 +23,10 @@ const INVOKE_CHANNELS = new Set([
   'fs:watch', 'fs:unwatch',
   'dialog:openFile', 'dialog:saveFile', 'dialog:openFolder', 'dialog:confirm',
   'recent:list', 'recent:add', 'recent:clear',
-  'settings:get', 'settings:set', 'workspace:get',
+  'settings:get', 'settings:set', 'settings:compareAndSet', 'workspace:get',
   'window:minimize', 'window:toggleMaximize', 'window:close', 'window:setTitle',
   'window:isMaximized', 'window:isFullScreen', 'window:toggleFullScreen', 'window:openChild', 'window:toMain', 'window:handoffAck',
+  'window:handoffCommit', 'window:handoffRollback',
   'theme:setSource', 'theme:isDark',
   'print:print', 'print:toPDF', 'print:html',
   'clipboard:write', 'clipboard:read', 'clipboard:readImagePNG',
@@ -87,7 +89,7 @@ const INVOKE_CHANNELS = new Set([
 // 白名单：主进程 -> 渲染进程 事件
 const EVENT_CHANNELS = new Set([
   'file:open', 'file:changed', 'file:import', 'command:invoke', 'menu:clicked',
-  'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role',
+  'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role', 'window:durability-failed',
   'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'factory:aiUsage', 'library:download',
   'harness:event',
   'workspace:changed', 'window:fullscreen', 'bv:event', 'bv:frame', 'slideRemote:cmd', 'slideRemote:client',

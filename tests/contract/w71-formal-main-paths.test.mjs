@@ -45,6 +45,10 @@ window.mazz = {
   },
 };
 window.MazzCommands = { execute: () => {} };
+window.MazzProgress = {
+  put: async () => ({ ok: true }),
+  flushAll: async () => [],
+};
 window.MazzHost = {
   notifyChange: () => {},
   setTabTitle: (_container, title) => titles.push(title),
@@ -111,16 +115,17 @@ describe('W71 C2 正式主链收敛', () => {
       assert.equal(await libraryModule.setContent(JSON.stringify({ mark: 'mazz-library-v2', bookId: 'w71-book' }), state), true);
       assert.equal(titles.at(-1), '封板样书');
       container.querySelector('[data-a=back]').click();
+      await tick();
       assert.equal(titles.at(-1), '书库');
       assert.equal(titles.at(-1).includes('📚'), false, 'emoji 不得再次写入标题业务状态');
-      libraryModule.dispose(state);
+      await libraryModule.dispose(state);
       assert.equal(libraryModule._forTests.instances.size, 0);
 
       for (let i = 0; i < 20; i++) {
         const node = document.createElement('div');
         document.body.appendChild(node);
         const loopState = libraryModule.create(node);
-        libraryModule.dispose(loopState);
+        await libraryModule.dispose(loopState);
       }
       await tick();
       assert.equal(libraryModule._forTests.instances.size, 0);

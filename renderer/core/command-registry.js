@@ -58,6 +58,10 @@ export class CommandRegistry {
   async execute(id, ...args) {
     const cmd = this.commands.get(id);
     if (!cmd) { console.warn(`[commands] 未注册: ${id}`); return undefined; }
+    // Cross-window handoff freezes the complete source shell from immediately
+    // before snapshot capture until commit/rollback. Blocking here covers
+    // ribbon, menus, keybindings and external command IPC alike.
+    if (contextKeys.get('handoffPending')) return undefined;
     if (!this.isEnabled(id)) return undefined;
     return await cmd.run(...args);
   }

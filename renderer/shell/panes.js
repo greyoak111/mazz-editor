@@ -39,7 +39,7 @@ class Leaf {
     });
     this.refreshEmpty();
   }
-  isEmpty() { return this.tabs.tabs.length === 0; }
+  isEmpty() { return !this.tabs.tabs.some(tab => !tab.provisional); }
   refreshEmpty() {
     // 欢迎页显示时占位提示隐藏（防文字叠在欢迎卡片上）
     const hasWelcome = !!this.el.querySelector('.welcome');

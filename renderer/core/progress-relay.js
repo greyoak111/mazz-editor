@@ -16,8 +16,16 @@ export class ProgressRelay {
     const id = this._id(kind, path);
     this.pending.set(id, { kind, path, value });
     clearTimeout(this.timers.get(id));
-    if (immediate) return this.flush(id);
-    this.timers.set(id, setTimeout(() => this.flush(id), this.delay));
+    if (immediate) {
+      // UI event handlers receive an explicit receipt rather than an
+      // unhandled rejection. The payload is restored on failure, so the
+      // strict flushAll() close gate can retry/report it later.
+      return this.flush(id).then(
+        result => ({ ok: true, result }),
+        error => ({ ok: false, error }),
+      );
+    }
+    this.timers.set(id, setTimeout(() => { void this.flush(id).catch(() => {}); }, this.delay));
     return Promise.resolve(null);
   }
 
@@ -27,7 +35,20 @@ export class ProgressRelay {
     const payload = this.pending.get(id);
     if (!payload) return null;
     this.pending.delete(id);
-    return this.invoke('sync:positionPut', payload).catch(() => null);
+    try {
+      const result = await this.invoke('sync:positionPut', payload);
+      if (result == null || result === false || result?.ok === false) {
+        throw Object.assign(new Error('阅读位置持久化未返回成功回执'), {
+          code: 'PROGRESS_DURABILITY_FAILED', receipt: result,
+        });
+      }
+      return result;
+    } catch (error) {
+      // A newer put supersedes this payload. Otherwise retain it so flushAll()
+      // can retry and a window close cannot acknowledge a lost locator.
+      if (!this.pending.has(id)) this.pending.set(id, payload);
+      throw error;
+    }
   }
 
   async flushAll() {

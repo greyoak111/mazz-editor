@@ -92,10 +92,12 @@ let mazzResHandler = null;
 
 const Store = require('./store');
 const IpcBus = require('./ipc-bus');
+const LibraryImportService = require('./library-import-service');
 const WindowManager = require('./window-manager');
 const TrayService = require('./tray-service');
 const GlobalShortcuts = require('./global-shortcuts');
 const CrashRecovery = require('./crash-recovery');
+const { publishIdempotently } = require('./handoff-transaction');
 const FileWatcher = require('./file-watcher');
 const SearxService = require('./searx');
 const TranslateService = require('./translate');
@@ -171,7 +173,32 @@ const store = new Store(path.join(app.getPath('userData'), 'mazz-settings.json')
   quickNoteTarget: 'daily', // daily | inbox
 });
 
+// One synchronous main-process turn is the serialization boundary shared by
+// every BrowserWindow renderer. Values originate from the JSON store, so exact
+// JSON equality is the appropriate compare token (Library envelopes also carry
+// monotonic revisions). Multi-entry CAS is all-or-nothing and flushes once.
+function settingsCasEqual(left, right) {
+  if (Object.is(left, right)) return true;
+  try { return JSON.stringify(left) === JSON.stringify(right); }
+  catch { return false; }
+}
+
+function settingsCasEntries(payload = {}) {
+  const entries = Array.isArray(payload.entries)
+    ? payload.entries
+    : [{ key: payload.key, expected: payload.expected, value: payload.value }];
+  const seen = new Set();
+  return entries.map(entry => {
+    const key = String(entry?.key || '');
+    if (!key || seen.has(key)) throw new TypeError('settings:compareAndSet requires unique non-empty keys');
+    seen.add(key);
+    return { key, expected: entry.expected, value: entry.value };
+  });
+}
+
 const bus = new IpcBus();
+let crashRecovery = null;
+const libraryImportService = new LibraryImportService();
 const resourceLedger = new ResourceLedger();
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
 const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
@@ -329,7 +356,28 @@ function registerChannels() {
   };
   // —— 文件系统 ——
   bus.handle('fs:readFile', async ({ path: p, encoding }) => fs.readFileSync(p, encoding || 'utf8'));
-  bus.handle('fs:readFileBase64', async ({ path: p }) => fs.readFileSync(p).toString('base64'));
+  bus.handle('fs:readFileBase64', async ({ path: p, maxBytes = 0 }) => {
+    const limit = Math.max(0, Number(maxBytes) || 0);
+    if (limit) {
+      const stat = await fs.promises.stat(p);
+      if (stat.size > limit) {
+        const error = new Error(`File exceeds bounded read limit (${stat.size} > ${limit})`);
+        error.code = 'FS_READ_LIMIT_EXCEEDED';
+        error.size = stat.size;
+        error.limit = limit;
+        throw error;
+      }
+    }
+    const data = await fs.promises.readFile(p);
+    if (limit && data.byteLength > limit) {
+      const error = new Error(`File exceeds bounded read limit (${data.byteLength} > ${limit})`);
+      error.code = 'FS_READ_LIMIT_EXCEEDED';
+      error.size = data.byteLength;
+      error.limit = limit;
+      throw error;
+    }
+    return data.toString('base64');
+  });
   bus.handle('fs:probeFile', async ({ path: p }) => require('./file-probe').probeFileSync(p));
   bus.handle('evidence:scanWorkspace', async ({ force = false } = {}) => addressableEvidence.scan({ force: force === true }));
   bus.handle('evidence:fileRelations', async ({ path: p, force = false } = {}) => addressableEvidence.fileRelations({ path: p, force: force === true }));
@@ -386,6 +434,14 @@ function registerChannels() {
     writeAtomic(p, Buffer.from(base64, 'base64'));
     return true;
   });
+  bus.handle('library:importMaterialize', async (payload, event) => {
+    const receipt = await libraryImportService.materialize(payload, event?.sender?.id);
+    return { ...receipt, path: toSlash(receipt.path) };
+  });
+  bus.handle('library:importFinalize', async (payload, event) => {
+    const result = await libraryImportService.finalize(payload, event?.sender?.id);
+    return result?.path ? { ...result, path: toSlash(result.path) } : result;
+  });
   bus.handle('fs:writeFile', async ({ path: p, content, encoding }) => {
     writeAtomic(p, content, encoding || 'utf8');
     return true;
@@ -406,7 +462,12 @@ function registerChannels() {
   });
   bus.handle('fs:stat', async ({ path: p }) => {
     try { const s = fs.statSync(p); return { exists: true, isDir: s.isDirectory(), size: s.size, mtime: s.mtimeMs }; }
-    catch { return { exists: false }; }
+    catch (error) {
+      // Keep the historical `exists:false` envelope for callers, but retain
+      // the OS error code so reliability-sensitive features can distinguish
+      // ENOENT from EACCES/EPERM instead of declaring a readable source gone.
+      return { exists: false, code: String(error?.code || '') };
+    }
   });
   bus.handle('fs:mkdir', async ({ path: p }) => { fs.mkdirSync(p, { recursive: true }); return true; });
   bus.handle('fs:rename', async ({ from, to }) => {
@@ -503,6 +564,20 @@ function registerChannels() {
   // —— 工作区 / 设置 ——
   bus.handle('settings:get', async ({ key }) => store.get(key));
   bus.handle('settings:set', async ({ key, value }) => { store.set(key, value); return true; });
+  bus.handle('settings:compareAndSet', async (payload = {}) => {
+    const entries = settingsCasEntries(payload);
+    // IPC normalizes an undefined handler result to null. Use the same missing
+    // token inside the main-process CAS boundary; otherwise a renderer that
+    // just read a missing setting as null can never create it because
+    // `undefined !== null`, exhausting every retry on first Library launch.
+    const current = entries.map(entry => ({ key: entry.key, value: store.get(entry.key, null) }));
+    const conflict = entries.findIndex((entry, index) => !settingsCasEqual(current[index].value, entry.expected));
+    if (conflict >= 0) {
+      return { ok: false, key: entries[conflict].key, current: current[conflict].value, values: current };
+    }
+    store.merge(Object.fromEntries(entries.map(entry => [entry.key, entry.value])));
+    return { ok: true, values: entries.map(entry => ({ key: entry.key, value: entry.value })) };
+  });
 
   // —— 智能创作 · pandoc 通道（文风素材 docx 提取 + 连写产出多格式导出） ——
   // 设计：pandoc 未安装不报错轰炸，available=false 由渲染层静默降级
@@ -978,16 +1053,21 @@ function registerChannels() {
     }
     store.set('workspaces', list);
     // 广播刷新：侧栏下拉只在 workspace:changed 时重渲染（此前漏广播，改名后下拉不同步——E2E 边边角角批实抓）
-    if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'workspace:changed', { path: toSlash(store.get('workspace')) });
+    wm.broadcastShells('workspace:changed', { path: toSlash(store.get('workspace')) });
     return wsList();
   });
   bus.handle('workspace:setCurrent', async ({ path: p }) => {
     if (!p || !fs.existsSync(p)) throw new Error('目录不存在');
+    if (pendingHandoffTransactions.size) {
+      const error = new Error('标签跨窗口移交期间暂不能切换工作区');
+      error.code = 'WORKSPACE_HANDOFF_IN_PROGRESS';
+      throw error;
+    }
     store.set('workspace', p);
     addressableEvidence.invalidate();
     // watcher 跟随：重挂全部监听（旧目录文件变化不再打扰）
     try { watcher.watcher?.close(); watcher.watcher = null; watcher.watched?.clear?.(); } catch {}
-    if (wm.main && !wm.main.isDestroyed()) bus.send(wm.main, 'workspace:changed', { path: toSlash(p) });
+    wm.broadcastShells('workspace:changed', { path: toSlash(p) });
     return toSlash(p);
   });
 
@@ -1026,6 +1106,7 @@ function registerChannels() {
   // 分窗交接必须由目标 renderer 明确收讫后，源窗才允许删除本地标签。
   // 这不是通用 Event Bus，只是一条有 timeout / owner 校验的单用途两阶段提交。
   const pendingHandoffs = new Map();
+  const pendingHandoffTransactions = new Map();
   const deliverHandoff = (target, handoff, { afterLoad = false } = {}) => new Promise(resolve => {
     if (!target || target.isDestroyed() || target.webContents.isDestroyed()) { resolve(false); return; }
     const transferId = require('crypto').randomUUID();
@@ -1057,15 +1138,197 @@ function registerChannels() {
     if (afterLoad) target.webContents.once('did-finish-load', () => setTimeout(send, 600));
     else send();
   });
-  bus.handle('window:handoffAck', async ({ transferId, ok } = {}, event) => {
+  const settleHandoffTransaction = (record, { closeOwned = false } = {}) => {
+    if (!record || record.settled) return;
+    record.settled = true;
+    clearTimeout(record.expiry);
+    record.awaiting?.finish(false);
+    record.awaiting = null;
+    pendingHandoffTransactions.delete(record.transferId);
+    try { record.target.webContents.removeListener('destroyed', record.onTargetGone); } catch {}
+    try { record.target.webContents.removeListener('render-process-gone', record.onTargetGone); } catch {}
+    try { record.source?.removeListener('destroyed', record.onSourceGone); } catch {}
+    try { record.source?.removeListener('render-process-gone', record.onSourceGone); } catch {}
+    if (closeOwned && record.ownedTarget && !record.target.isDestroyed()) {
+      try { record.target.close(); } catch {}
+    }
+  };
+
+  const sendHandoffPhase = (record, phase) => new Promise(resolve => {
+    if (!record || record.settled || record.target.isDestroyed()
+        || record.target.webContents.isDestroyed() || record.awaiting) {
+      resolve(false);
+      return;
+    }
+    let settled = false;
+    let timer = null;
+    const finish = ok => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (record.awaiting?.phase === phase) record.awaiting = null;
+      resolve(!!ok);
+    };
+    record.awaiting = { phase, finish };
+    record.lastPhaseTimeout = null;
+    timer = setTimeout(() => {
+      record.lastPhaseTimeout = phase;
+      finish(false);
+    }, 12000);
+    record.target.webContents.send('mazz:event', {
+      channel: 'window:handoff',
+      payload: phase === 'prepare'
+        ? { ...record.handoff, __transferId: record.transferId, __handoffPhase: phase }
+        : { __transferId: record.transferId, __handoffPhase: phase },
+    });
+  });
+
+  const rollbackHandoffTransaction = async (record, { closeOwned = true } = {}) => {
+    if (!record || record.settled) return false;
+    clearTimeout(record.expiry);
+    // Cancel an outstanding prepare/commit wait before issuing rollback. The
+    // target reserves the provisional record synchronously, so rollback can
+    // safely overtake a slow parser without leaving a late-created ghost.
+    record.awaiting?.finish(false);
+    await Promise.resolve();
+    if (!record.target.isDestroyed() && !record.target.webContents.isDestroyed()) {
+      await sendHandoffPhase(record, 'rollback').catch(() => false);
+    }
+    if (record.targetTabId) {
+      try {
+        if (!crashRecovery?.clearOwnedSnapshot(record.targetTabId, record.targetId)) {
+          throw new Error('target recovery owner could not be retired');
+        }
+      }
+      catch (error) {
+        console.error('[handoff] target rollback recovery retirement failed:', error?.message || error);
+        return false;
+      }
+    }
+    settleHandoffTransaction(record, { closeOwned });
+    return true;
+  };
+
+  const prepareHandoffTransaction = async (target, handoff, {
+    afterLoad = false, source = null, ownedTarget = false,
+  } = {}) => {
+    if (!target || target.isDestroyed() || target.webContents.isDestroyed()) return { ok: false };
+    const transferId = require('crypto').randomUUID();
+    const record = {
+      transferId, target, targetId: target.webContents.id,
+      source, sourceId: source?.id || null, handoff, ownedTarget,
+      stage: 'preparing', awaiting: null, expiry: null, settled: false,
+    };
+    record.onTargetGone = () => settleHandoffTransaction(record, { closeOwned: false });
+    record.onSourceGone = () => {
+      if (record.sourceRecoveryRetired) return;
+      void rollbackHandoffTransaction(record, { closeOwned: true });
+    };
+    pendingHandoffTransactions.set(transferId, record);
+    target.webContents.once('destroyed', record.onTargetGone);
+    target.webContents.once('render-process-gone', record.onTargetGone);
+    source?.once('destroyed', record.onSourceGone);
+    source?.once('render-process-gone', record.onSourceGone);
+    if (afterLoad) {
+      await new Promise(resolve => {
+        let done = false;
+        const finish = () => { if (!done) { done = true; resolve(); } };
+        target.webContents.once('did-finish-load', () => setTimeout(finish, 600));
+        setTimeout(finish, 12000);
+      });
+      if (record.settled) return { ok: false };
+    }
+    const ok = await sendHandoffPhase(record, 'prepare');
+    if (!ok) {
+      await rollbackHandoffTransaction(record, { closeOwned: true });
+      return { ok: false };
+    }
+    record.stage = 'prepared';
+    // A vanished/frozen source may not strand an invisible provisional owner.
+    record.expiry = setTimeout(() => { void rollbackHandoffTransaction(record, { closeOwned: true }); }, 30000);
+    return { ok: true, transferId };
+  };
+
+  bus.handle('window:handoffAck', async ({ transferId, phase, ok, targetTabId } = {}, event) => {
+    const transaction = pendingHandoffTransactions.get(transferId);
+    if (transaction) {
+      if (transaction.targetId !== event?.sender?.id) return false;
+      if (targetTabId) transaction.targetTabId = String(targetTabId);
+      const awaiting = transaction.awaiting;
+      if (!awaiting || (phase && awaiting.phase !== phase)) return false;
+      transaction.lastPhaseTimeout = null;
+      awaiting.finish(ok);
+      return true;
+    }
     const pending = pendingHandoffs.get(transferId);
     if (!pending || pending.targetId !== event?.sender?.id) return false;
     pending.finish(ok);
     return true;
   });
 
+  bus.handle('window:handoffCommit', async ({ transferId } = {}, event) => {
+    const record = pendingHandoffTransactions.get(transferId);
+    if (!record || record.settled || record.sourceId !== event?.sender?.id || record.stage !== 'prepared') return false;
+    clearTimeout(record.expiry);
+    record.stage = 'committing';
+    const ok = await sendHandoffPhase(record, 'commit');
+    if (!ok) {
+      await rollbackHandoffTransaction(record, { closeOwned: true });
+      return false;
+    }
+    // Target recovery is now strict and durable while still inert. Retire the
+    // exact source-owner snapshot in main before publication; a renderer crash
+    // can no longer resurrect both owners.
+    try {
+      if (!crashRecovery?.clearOwnedSnapshot(record.handoff?.sourceTabId, record.sourceId)) {
+        throw new Error('source recovery owner could not be retired');
+      }
+      record.sourceRecoveryRetired = true;
+    } catch (error) {
+      console.error('[handoff] source recovery retirement failed:', error?.message || error);
+      await rollbackHandoffTransaction(record, { closeOwned: true });
+      return false;
+    }
+    record.stage = 'publish-ready';
+    // Finalize is idempotent in the target. A timeout is ambiguous (the target
+    // may have published and only lost its ACK), so retry until an explicit
+    // response or target death instead of ever restoring a second live owner.
+    const published = await publishIdempotently({
+      record,
+      send: () => sendHandoffPhase(record, 'finalize'),
+      isAlive: () => !record.target.isDestroyed() && !record.target.webContents.isDestroyed(),
+    });
+    if (!published) {
+      // Ownership became irreversible when the source recovery owner was
+      // retired. The target's durable precommit is now the only recovery
+      // material, so never resurrect a second source even if its renderer died
+      // before acknowledging the idempotent publish.
+      settleHandoffTransaction(record, { closeOwned: false });
+      return true;
+    }
+    record.stage = 'committed';
+    settleHandoffTransaction(record, { closeOwned: false });
+    if (!record.target.isDestroyed()) {
+      if (record.ownedTarget) {
+        record.target.once('show', () => visualComposition.refreshHost?.(record.target, 'child-handoff-committed'));
+        if (typeof record.target.__showAfterHandoff === 'function') record.target.__showAfterHandoff();
+        else { record.target.show(); record.target.focus(); }
+      } else {
+        record.target.show();
+        record.target.focus();
+      }
+    }
+    return true;
+  });
+
+  bus.handle('window:handoffRollback', async ({ transferId } = {}, event) => {
+    const record = pendingHandoffTransactions.get(transferId);
+    if (!record || record.settled || record.sourceId !== event?.sender?.id) return false;
+    return rollbackHandoffTransaction(record, { closeOwned: true });
+  });
+
   // 分窗：开新窗口并交接标签快照
-  bus.handle('window:openChild', async ({ handoff }) => {
+  bus.handle('window:openChild', async ({ handoff, transactional = false } = {}, event) => {
     // W53：lean 路线退役（七面板+坞浮动全走 panel-windows 全原生子窗格）——openChild 只服务模块分窗
     const child = wm.createChild({ deferShow: !!handoff?.moduleId });
     child.webContents.once('did-finish-load', () => {
@@ -1073,6 +1336,13 @@ function registerChannels() {
     });
     // 兼容“只创建空工作台分窗”的既有调用；没有数据要提交时无需 ACK。
     if (!handoff?.moduleId) return true;
+    if (transactional) {
+      return prepareHandoffTransaction(child, handoff, {
+        afterLoad: true,
+        source: event?.sender || null,
+        ownedTarget: true,
+      });
+    }
     const ok = await deliverHandoff(child, handoff, { afterLoad: true });
     if (ok && !child.isDestroyed()) {
       // ACK 表示目标 renderer 已恢复标签，并完成 Browser Surface 的宿主迁移。
@@ -1101,9 +1371,15 @@ function registerChannels() {
     return null;
   });
   // 标签快照转发到既有子窗口（不新建窗口）
-  bus.handle('window:toChild', async ({ winId, handoff }) => {
+  bus.handle('window:toChild', async ({ winId, handoff, transactional = false } = {}, event) => {
     for (const child of wm.children) {
       if (child.id === winId && !child.isDestroyed()) {
+        if (transactional) {
+          return prepareHandoffTransaction(child, handoff, {
+            source: event?.sender || null,
+            ownedTarget: false,
+          });
+        }
         child.show(); child.focus();
         return deliverHandoff(child, handoff);
       }
@@ -1133,8 +1409,14 @@ function registerChannels() {
     return true;
   });
   // 移回主窗口：子窗标签快照转发主窗
-  bus.handle('window:toMain', async ({ handoff }) => {
+  bus.handle('window:toMain', async ({ handoff, transactional = false } = {}, event) => {
     if (wm.main && !wm.main.isDestroyed()) {
+      if (transactional) {
+        return prepareHandoffTransaction(wm.main, handoff, {
+          source: event?.sender || null,
+          ownedTarget: false,
+        });
+      }
       wm.main.show(); wm.main.focus();
       return deliverHandoff(wm.main, handoff);
     }
@@ -1670,7 +1952,7 @@ app.whenReady().then(() => {
 
   bus.start();
   registerChannels();
-  new CrashRecovery({ app, bus });
+  crashRecovery = new CrashRecovery({ app, bus });
   watcher = new FileWatcher({ bus, windowManager: wm, resourceLedger });
 
   wm.createMain();

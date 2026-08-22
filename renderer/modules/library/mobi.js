@@ -8,21 +8,55 @@ function rStr(v, o, len, dec) {
   return dec.decode(bytes).replace(/\0.*$/g, '');
 }
 
+export const MOBI_RESOURCE_LIMITS = Object.freeze({
+  records: 20_000,
+  textBytes: 64 * 1024 * 1024,
+  recordBytes: 16 * 1024 * 1024,
+  lingoSourceBytes: 32 * 1024 * 1024,
+});
+
+function mobiLimitError(message, detail = {}) {
+  return Object.assign(new Error(message), { code: 'LIBRARY_MOBI_RESOURCE_LIMIT', ...detail });
+}
+
+const isMobiLimitError = error => error?.code === 'LIBRARY_MOBI_RESOURCE_LIMIT';
+
 /** PalmDOC LZ77 解压 */
-export function lz77(src) {
-  const out = [];
+export function lz77(src, { maxOutputBytes = MOBI_RESOURCE_LIMITS.recordBytes } = {}) {
+  const limit = Math.max(0, Math.trunc(Number(maxOutputBytes) || 0));
+  let out = new Uint8Array(Math.min(limit, Math.max(256, Math.min(src.length * 2, 64 * 1024))));
+  let length = 0;
+  const reserve = count => {
+    if (length + count > limit) {
+      throw mobiLimitError(`PalmDOC 记录解压后超过限制（${length + count} > ${limit}）`, {
+        outputBytes: length + count, maxOutputBytes: limit,
+      });
+    }
+    if (length + count <= out.length) return;
+    let capacity = Math.max(256, out.length || 0);
+    while (capacity < length + count) capacity = Math.min(limit, Math.max(capacity * 2, length + count));
+    const next = new Uint8Array(capacity);
+    next.set(out.subarray(0, length));
+    out = next;
+  };
+  const push = value => { reserve(1); out[length++] = value; };
   let i = 0;
   while (i < src.length) {
     const c = src[i++];
     if (c >= 0x01 && c <= 0x08) {
       // 直接复制 c 个字节
-      for (let j = 0; j < c && i < src.length; j++) out.push(src[i++]);
+      const count = Math.min(c, src.length - i);
+      reserve(count);
+      out.set(src.subarray(i, i + count), length);
+      length += count;
+      i += count;
     } else if (c < 0x80) {
-      out.push(c);
+      push(c);
     } else if (c >= 0xc0) {
       // 0xC0-0xFF：空格 + (c & 0x7f) 字面字符（不再多消费字节）
-      out.push(0x20);
-      out.push(c & 0x7f);
+      reserve(2);
+      out[length++] = 0x20;
+      out[length++] = c & 0x7f;
     } else {
       // 0x80-0xbf：距离+长度
       if (i >= src.length) break;
@@ -30,11 +64,13 @@ export function lz77(src) {
       let dist = ((c & 0x3f) << 8) | c2;
       dist = (dist & 0x3fff) >>> 2;
       let len = (c2 & 0x07) + 3;
-      const from = out.length - dist;
-      for (let j = 0; j < len; j++) out.push(out[from + j]);
+      const from = length - dist;
+      if (dist <= 0 || from < 0) throw new Error('PalmDOC LZ77 距离损坏');
+      reserve(len);
+      for (let j = 0; j < len; j++) out[length++] = out[from + j];
     }
   }
-  return new Uint8Array(out);
+  return out.slice(0, length);
 }
 
 const decUtf8 = new TextDecoder('utf-8');
@@ -63,14 +99,16 @@ function langScore(sample) {
 }
 function sniffDecode(bytes, preferred) {
   const candidates = [preferred, decUtf8, mkDec('gbk'), dec1252].filter((d, i, a) => d && a.indexOf(d) === i);
-  let best = null, bestScore = -Infinity;
+  let bestDecoder = decUtf8, bestScore = -Infinity;
   for (const d of candidates) {
     const sample = d.decode(bytes.subarray(0, Math.min(bytes.length, 65536)));
     const fffd = (sample.match(/�/g) || []).length;
     const score = langScore(sample) - fffd * 200; // FFFD 重罚，语言命中定胜负
-    if (score > bestScore) { bestScore = score; best = sample; }
+    if (score > bestScore) { bestScore = score; bestDecoder = d; }
   }
-  return best ?? decUtf8.decode(bytes);
+  // 样本只用于选择编码；正文必须由胜出的 decoder 解完整字节流。此前直接
+  // 返回 64 KiB sample，会让所有更长的经典 MOBI 静默缺尾而仍被当作成功。
+  return bestDecoder.decode(bytes);
 }
 
 /** 剥 KF8/HTML 标签为纯文本 */
@@ -97,7 +135,9 @@ export function parseMobiClassic(buf) {
   const v = new Uint8Array(buf);
   if (v.length < 78) throw new Error('文件太小，不是合法 MOBI');
   const numRec = rU16(v, 76);
-  if (!numRec || numRec > 40000) throw new Error('记录数异常，不是合法 MOBI');
+  if (!numRec || numRec > MOBI_RESOURCE_LIMITS.records) {
+    throw mobiLimitError(`MOBI 记录数超过限制（${numRec} > ${MOBI_RESOURCE_LIMITS.records}）`, { records: numRec });
+  }
   // 记录偏移表
   const recOff = [];
   for (let i = 0; i < numRec; i++) {
@@ -123,18 +163,45 @@ export function parseMobiClassic(buf) {
   const compression = rU16(v, r0);
   const textLength = rU32(v, r0 + 4);
   const textRecCount = rU16(v, r0 + 8);
+  if (textLength > MOBI_RESOURCE_LIMITS.textBytes) {
+    throw mobiLimitError(`MOBI 正文超过限制（${textLength} > ${MOBI_RESOURCE_LIMITS.textBytes}）`, {
+      textLength, maxTextBytes: MOBI_RESOURCE_LIMITS.textBytes,
+    });
+  }
+  if (textRecCount > MOBI_RESOURCE_LIMITS.records || textRecCount >= recOff.length) {
+    throw mobiLimitError('MOBI 文本记录数异常', { textRecCount, records: recOff.length });
+  }
   // EXTH 作者/标题（若存在；EXTH 的 503=书名比 fullName 更可靠）
   let author = '';
   const exthFlag = rU32(v, r0 + 128);
   if (exthFlag & 0x40) {
     const mobiHeaderLen = rU32(v, r0 + 20);
     const exthOff = r0 + 16 + mobiHeaderLen;
+    const record0End = recOff[1] ?? v.length;
+    if (exthOff < r0 || exthOff + 12 > record0End) {
+      throw Object.assign(new Error('MOBI EXTH 偏移越界'), { code: 'LIBRARY_MOBI_METADATA_INVALID' });
+    }
     if (rStr(v, exthOff, 4, decUtf8) === 'EXTH') {
       const exthLen = rU32(v, exthOff + 4);
       const exthCount = rU32(v, exthOff + 8);
+      const exthEnd = exthOff + exthLen;
+      const maxEntriesByBytes = Math.floor(Math.max(0, exthLen - 12) / 8);
+      if (exthLen < 12 || exthEnd > record0End || exthCount > maxEntriesByBytes) {
+        throw Object.assign(new Error('MOBI EXTH 目录损坏'), {
+          code: 'LIBRARY_MOBI_METADATA_INVALID', exthLen, exthCount,
+        });
+      }
       let p = exthOff + 12;
-      for (let i = 0; i < exthCount && p + 8 < exthOff + exthLen; i++) {
+      for (let i = 0; i < exthCount; i++) {
+        if (p + 8 > exthEnd) {
+          throw Object.assign(new Error('MOBI EXTH 项头越界'), { code: 'LIBRARY_MOBI_METADATA_INVALID' });
+        }
         const type = rU32(v, p), len = rU32(v, p + 4);
+        if (len < 8 || p + len > exthEnd) {
+          throw Object.assign(new Error('MOBI EXTH 项长度损坏'), {
+            code: 'LIBRARY_MOBI_METADATA_INVALID', type, len,
+          });
+        }
         if (type === 100 && len > 8 && !author) author = rStr(v, p + 8, len - 8, dec);
         if (type === 503 && len > 8) { // EXTH 书名：真书以此为正（fullName 字段错位乱码实锤）
           const t = sniffDecode(v.subarray(p + 8, p + len), dec).replace(/\0.*$/g, '').trim();
@@ -156,7 +223,13 @@ export function parseMobiClassic(buf) {
     if (s >= e || s >= v.length) break;
     let rec = v.subarray(s, Math.min(e, v.length));
     // 去尾部多余字节（压缩记录尾部有标记位）
-    if (compression === 2) rec = lz77(rec);
+    const remaining = MOBI_RESOURCE_LIMITS.textBytes - total;
+    if (remaining <= 0) throw mobiLimitError('MOBI 正文累计体积超过限制');
+    if (compression === 2) {
+      rec = lz77(rec, { maxOutputBytes: Math.min(remaining, MOBI_RESOURCE_LIMITS.recordBytes) });
+    } else if (rec.byteLength > Math.min(remaining, MOBI_RESOURCE_LIMITS.recordBytes)) {
+      throw mobiLimitError('MOBI 单条正文记录超过限制', { recordBytes: rec.byteLength });
+    }
     chunks.push(rec);
     total += rec.length;
   }
@@ -198,27 +271,46 @@ export async function parseMobi(buf) {
   try {
     const r = parseMobiClassic(buf);
     if (r?.text && junkScore(r.text) < 0.006) return r;
-  } catch {}
+  } catch (error) {
+    if (isMobiLimitError(error) || error?.code === 'LIBRARY_MOBI_METADATA_INVALID') throw error;
+  }
+  const sourceBytes = Number(buf?.byteLength ?? buf?.length ?? 0);
+  if (sourceBytes > MOBI_RESOURCE_LIMITS.lingoSourceBytes) {
+    throw mobiLimitError(`复杂 MOBI/AZW3 超过兼容解析上限（${sourceBytes} > ${MOBI_RESOURCE_LIMITS.lingoSourceBytes}）`, {
+      sourceBytes, maxSourceBytes: MOBI_RESOURCE_LIMITS.lingoSourceBytes,
+    });
+  }
   // ② lingo 现成解析器（MOBI 先试，不行 KF8）
   for (const init of ['initMobiFile', 'initKf8File']) {
+    let book = null;
     try {
       const mod = await import('@lingo-reader/mobi-parser');
-      const book = await mod[init](new Uint8Array(buf));
+      book = await mod[init](new Uint8Array(buf));
       const meta = book.getMetadata?.() || {};
       const spine = book.getSpine?.() || [];
+      if (spine.length > MOBI_RESOURCE_LIMITS.records) throw mobiLimitError('MOBI 章节数超过限制');
       if (spine.length) {
         let text = '';
         for (const ch of spine) {
           const c = book.loadChapter?.(ch.id);
-          if (c?.html) text += stripMarkup(c.html) + '\n\n';
+          if (c?.html) {
+            const chapter = stripMarkup(c.html);
+            if (text.length + chapter.length + 2 > MOBI_RESOURCE_LIMITS.textBytes) {
+              throw mobiLimitError('MOBI 兼容解析正文累计体积超过限制');
+            }
+            text += chapter + '\n\n';
+          }
         }
         text = text.trim();
         if (text && junkScore(text) < 0.006) {
           return { title: meta.title || '未命名', author: meta.author || '', text };
         }
       }
-      book.destroy?.();
-    } catch {}
+    } catch (error) {
+      if (isMobiLimitError(error)) throw error;
+    } finally {
+      try { book?.destroy?.(); } catch {}
+    }
   }
   // ③ 优雅拒绝
   throw new Error('此 mobi 为 KF8/AZW3 混合格式，暂未能解析（建议用 Calibre 转 epub 后入库）');

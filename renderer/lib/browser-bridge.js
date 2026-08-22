@@ -10,6 +10,11 @@ function loadJSON(key, fallback) {
 }
 function saveJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
+function browserSettingsCasEqual(left, right) {
+  if (Object.is(left, right)) return true;
+  try { return JSON.stringify(left) === JSON.stringify(right); } catch { return false; }
+}
+
 // —— 极简虚拟文件系统：{ [path]: {type:'file'|'dir', content?, mtime} } ——
 function loadVFS() {
   let vfs = loadJSON(VFS_KEY, null);
@@ -306,6 +311,23 @@ export function installBrowserBridge() {
         case 'recent:clear': saveJSON(RECENT_KEY, []); return true;
         case 'settings:get': return settings[payload.key];
         case 'settings:set': { settings[payload.key] = payload.value; saveJSON(SETTINGS_KEY, settings); return true; }
+        case 'settings:compareAndSet': {
+          const entries = Array.isArray(payload.entries)
+            ? payload.entries
+            : [{ key: payload.key, expected: payload.expected, value: payload.value }];
+          const seen = new Set();
+          for (const entry of entries) {
+            const key = String(entry?.key || '');
+            if (!key || seen.has(key)) throw new TypeError('settings:compareAndSet requires unique non-empty keys');
+            seen.add(key);
+            if (!browserSettingsCasEqual(settings[key], entry.expected)) {
+              return { ok: false, key, current: settings[key] };
+            }
+          }
+          for (const entry of entries) settings[entry.key] = entry.value;
+          saveJSON(SETTINGS_KEY, settings);
+          return { ok: true };
+        }
         case 'sync:positionPut': {
           const key = browserPositionKey(payload.kind, payload.path);
           if (!key) throw new Error('进度对象缺少有效 kind/path');

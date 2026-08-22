@@ -96,6 +96,9 @@ export function saveFiltersFor(inst, tabTitle = '') {
   return [...formats.map(([name, extensions]) => ({ name, extensions })), { name: '所有文件', extensions: ['*'] }];
 }
 function safeGet(fn) { try { return fn(); } catch { return null; } }
+function canonicalHandoffOwner(value) {
+  return normalizeChangePath(value).replace(/\/+$/, '');
+}
 
 export class Shell {
   constructor(root) {
@@ -106,6 +109,10 @@ export class Shell {
     this.workspace = null;
     this.zoom = 1;
     this._themeRevision = 0;
+    this._prepareClosePromise = null;
+    this._handoffSourceLock = null;
+    this._provisionalHandoffs = new Map();
+    this._publishedHandoffs = new Set();
     this.containerTab = new WeakMap(); // container -> tabId
 
     // —— DOM 骨架 ——
@@ -172,7 +179,10 @@ export class Shell {
       notifyChange: (container) => {
         const tabId = this.containerTab.get(container);
         if (!tabId) return;
-        this.tabs.setDirty(tabId, true);
+        const owner = this.findTabById(tabId);
+        const tab = owner?.tab;
+        if (tab?.handoffFrozen) tab.handoffRevision = (tab.handoffRevision || 0) + 1;
+        owner?.tabs.setDirty(tabId, true);
         snapshots.markDirty(tabId);
         bus.emit('doc:changed', { tabId });
       },
@@ -180,6 +190,7 @@ export class Shell {
         const tabId = this.containerTab.get(container);
         if (!tabId) return;
         const owner = this.findTabById(tabId);
+        if (owner?.tab?.handoffFrozen) owner.tab.handoffRevision = (owner.tab.handoffRevision || 0) + 1;
         owner?.tabs.setDirty(tabId, !!dirty);
         if (dirty) snapshots.markDirty(tabId);
         this.syncTitle();
@@ -222,11 +233,130 @@ export class Shell {
       if (active) this.captureProgressFor(active.id);
     }, 1500);
     window.addEventListener('beforeunload', () => {
-      this.progressRelay.flushAll();
-      this.externalChanges.dispose();
+      // 浏览器 beforeunload 本身不能延迟销毁；正常 Electron 关闭由 WindowManager
+      // 预先 await prepareForClose()，这里仅作崩溃/裸网页关闭的 best-effort 兜底。
+      this.prepareForClose('beforeunload');
     }, { once: true });
     registerCommandSource();
     this.registerFileSource();
+  }
+
+  /**
+   * 窗口关闭耐久事务：先完成所有脏签决策，再冻结实时 owner；所有
+   * beforeClose / module prepare / strict snapshot / progress flush 全部成功
+   * 后，才一次性 commit 模块拆卸。失败只 abort preflight，窗口保持可用。
+   */
+  prepareForClose(reason = 'window-close') {
+    if (this._prepareClosePromise) return this._prepareClosePromise;
+    const task = (async () => {
+      const tabs = this.paneTree.leaves().flatMap(leaf => leaf.tabs.tabs.map(tab => ({ tab, leaf })));
+
+      // 与单签 closeTabFlow 完全相同的保存/不保存/取消语义。原生确认框
+      // 自身是 modal；等全部选择结束后再冻结，避免用户取消时界面闪锁。
+      for (const { tab } of tabs) {
+        const inst = modules.instances.get(tab.id);
+        if (!tab.dirty || inst?.def?.managedSave || !window.mazz?.isElectron) continue;
+        const choice = await window.mazz.invoke('dialog:confirm', {
+          title: '未保存的更改', message: `“${tab.title}”有未保存的更改。`,
+          detail: '关闭前是否保存？', buttons: ['保存', '不保存', '取消'],
+        });
+        if (choice !== 0 && choice !== 1) {
+          return { ok: false, cancelled: true, code: 'WINDOW_CLOSE_CANCELLED', message: '已取消关闭' };
+        }
+        if (choice === 0 && !await this.saveTab(tab)) {
+          return { ok: false, cancelled: true, code: 'WINDOW_CLOSE_SAVE_CANCELLED', message: `“${tab.title}”未保存，已取消关闭` };
+        }
+      }
+
+      const previousRootInert = !!this.root?.inert;
+      const previousClosePending = contextKeys.get('windowClosePending');
+      if (this.root) this.root.inert = true;
+      contextKeys.set('windowClosePending', true);
+      let moduleAttempt = null;
+      try {
+        if (this._handoffSourceLock || this._provisionalHandoffs?.size) {
+          throw Object.assign(new Error('标签移交尚未完成，请稍后重试关闭'), { code: 'WINDOW_HANDOFF_IN_PROGRESS' });
+        }
+        const tabIds = new Set(tabs.map(({ tab }) => tab.id));
+        if (tabIds.size !== modules.instances.size
+            || [...modules.instances.keys()].some(tabId => !tabIds.has(tabId))) {
+          throw Object.assign(new Error('关闭预检时标签与模块 owner 不一致'), { code: 'WINDOW_CLOSE_OWNER_CHANGED' });
+        }
+
+        // beforeClose may itself be fallible (managed Notes save, etc.) but
+        // must never deactivate the instance. Run every one before Registry
+        // starts the all-owner prepare phase.
+        for (const { tab } of tabs) {
+          const inst = modules.instances.get(tab.id);
+          if (!inst || !this.findTabById(tab.id)) {
+            throw Object.assign(new Error('关闭预检期间标签 owner 发生变化'), { code: 'WINDOW_CLOSE_OWNER_CHANGED' });
+          }
+          if (typeof inst.def.beforeClose === 'function') {
+            const ok = await inst.def.beforeClose(inst.state);
+            if (ok === false) {
+              throw Object.assign(new Error(`“${tab.title}”仍有内容未能保存`), { code: 'WINDOW_CLOSE_BEFORE_CLOSE_FAILED' });
+            }
+          }
+        }
+
+        moduleAttempt = await modules.prepareAll({ reason });
+
+        // Capture every payload synchronously from the frozen live owner. This
+        // bypasses the 2s debounce, so an immediate Alt+F4 cannot lose the last
+        // keystroke. “不保存” tabs retain this recovery material until commit.
+        const durable = tabs.map(({ tab }) => {
+          const inst = modules.instances.get(tab.id);
+          if (!inst) throw Object.assign(new Error('严格快照 owner 已失效'), { code: 'WINDOW_CLOSE_OWNER_CHANGED' });
+          return { tab, inst, payload: this.snapshotPayloadStrict(tab, inst) };
+        });
+        for (const { tab, inst, payload } of durable) {
+          const receipt = await snapshots.writePayloadStrict(tab.id, payload);
+          if (!inst.def.readOnly && window.mazz?.isElectron && receipt?.skipped) {
+            throw Object.assign(new Error(`“${tab.title}”缺少严格恢复快照`), { code: 'WINDOW_CLOSE_SNAPSHOT_SKIPPED' });
+          }
+        }
+
+        const progressWrites = [];
+        for (const { tab } of durable) {
+          const write = this.captureProgressFor(tab.id, { immediate: true });
+          if (write && typeof write.then === 'function') progressWrites.push(write);
+        }
+        for (const receipt of await Promise.all(progressWrites)) {
+          if (receipt?.ok === false) throw receipt.error || new Error('阅读位置未能持久化');
+        }
+        await this.progressRelay.flushAll();
+
+        await modules.commitPrepared(moduleAttempt);
+        moduleAttempt = null;
+        clearInterval(this._progressTimer);
+        for (const { tab } of durable) snapshots.untrack(tab.id);
+        try { this.externalChanges.dispose(); } catch (error) {
+          console.error('[shell] 外部变化监听收尸失败:', error?.message || error);
+        }
+        return { ok: true };
+      } catch (error) {
+        if (moduleAttempt) await modules.abortPrepared(moduleAttempt);
+        if (this.root) this.root.inert = previousRootInert;
+        contextKeys.set('windowClosePending', previousClosePending);
+        throw error;
+      }
+    })().catch((error) => {
+      console.error('[shell] 关闭前收尸失败:', error?.message || error);
+      return {
+        ok: false,
+        cancelled: error?.code === 'WINDOW_CLOSE_CANCELLED' || error?.code === 'WINDOW_CLOSE_SAVE_CANCELLED',
+        code: error?.code || 'WINDOW_CLOSE_DURABILITY_FAILED',
+        message: error?.message || '数据未能持久化',
+      };
+    });
+    this._prepareClosePromise = task;
+    // A durability failure keeps the window and module owners alive.  Do not
+    // memoize that negative result forever: after the user fixes disk space or
+    // permissions, the next close attempt must run a fresh preflight.
+    void task.then(result => {
+      if (result?.ok === false && this._prepareClosePromise === task) this._prepareClosePromise = null;
+    });
+    return task;
   }
 
   /** Ribbon 静态页：文件 / 视图（按钮一律走命令注册表） */
@@ -872,7 +1002,7 @@ export class Shell {
     }
     const baseDecision = externalChangeDecision({ event });
     if (baseDecision === 'delete') {
-      this.closeGhostTabs(path);
+      void this.closeGhostTabs(path).catch(error => console.error('[ghost-tabs]', error));
       return;
     }
     if (baseDecision === 'ignore') return;
@@ -1109,23 +1239,46 @@ export class Shell {
     };
   }
 
-  openTab(moduleId, { title, filePath = null, content = null }) {
-    this.hideWelcome();
+  snapshotPayloadStrict(tab, inst = tab && modules.instances.get(tab.id)) {
+    if (!tab || !inst) throw new Error('标签实例已失效');
+    const content = inst.def.getContent(inst.state);
+    if (!inst.def.readOnly && content == null) throw new Error('模块未返回可恢复内容');
+    const progress = typeof inst.def.captureProgress === 'function'
+      ? inst.def.captureProgress(inst.state)
+      : null;
+    return {
+      title: tab.title || null,
+      filePath: tab.filePath || null,
+      moduleId: inst.name || tab.moduleId,
+      iconId: tab.iconId || inst.def.iconId || moduleIconId(inst.name || tab.moduleId),
+      content,
+      dirty: !!tab.dirty,
+      pinned: !!tab.pinned,
+      progress,
+    };
+  }
+
+  openTab(moduleId, { title, filePath = null, content = null, provisional = false } = {}) {
+    if (!provisional) this.hideWelcome();
     const iconId = modules.get(moduleId)?.iconId || moduleIconId(moduleId);
-    const tab = this.tabs.add({ title, moduleId, iconId, filePath });
+    const tab = this.tabs.add({ title, moduleId, iconId, filePath, activate: !provisional, provisional });
     // 空内容视为 null：让模块用自身默认初始内容（如演示模板），不触发 setContent('') 清空
-    const inst = modules.attach(tab.id, moduleId, tab.view, content ? content : null);
+    const restoreContent = provisional ? content : (content ? content : null);
+    const inst = modules.attach(tab.id, moduleId, tab.view, restoreContent, {
+      activate: !provisional,
+      provisional,
+    });
     try { inst.state.title = title; } catch {}
     // W58 路径同步另一半：打开即把 filePath 写进模块 state（attach 单参丢路径——打开时实例路径盲=runFile fp=null 实锤）
     try { if (filePath) inst.state.filePath = filePath; } catch {}
     this.containerTab.set(tab.view, tab.id);
     // attach() 首次 activate 早于 filePath 注入；由壳在内容与路径都到位后统一恢复位置。
-    setTimeout(() => this.restoreProgressFor(tab, inst), 0);
+    if (!provisional) setTimeout(() => this.restoreProgressFor(tab, inst), 0);
     tab.forceClose = false;
-    if (!inst.def.readOnly) {
+    if (!provisional && !inst.def.readOnly) {
       snapshots.track(tab.id, () => this.snapshotPayload(tab, inst));
     }
-    this.rebuildModuleRibbon(tab);
+    if (!provisional) this.rebuildModuleRibbon(tab);
     this.paneTree.paneOfTab(tab.id)?.refreshEmpty();
     return { tab, inst };
   }
@@ -1471,8 +1624,13 @@ export class Shell {
       if (l) { try { inst.state.language = l; } catch {} }
     }
     owner?.tabs.setDirty(tab.id, false);
-    snapshots.untrack(tab.id);
-    snapshots.track(tab.id, () => this.snapshotPayload(tab, inst));
+    // Wait for the old recovery file to be cleared before installing the new
+    // getter. Otherwise an unawaited clear can overtake an immediate Alt+F4
+    // strict write and erase the freshly persisted last keystroke.
+    await snapshots.untrackStrict(tab.id).catch(error => {
+      console.warn('[snapshot] 保存后旧恢复材料清理失败，将由后续严格快照覆盖:', error?.message || error);
+    });
+    snapshots.replaceTracking(tab.id, () => this.snapshotPayload(tab, inst));
     const signature = await window.mazz.invoke('fs:stat', { path: target }).catch(() => null);
     this.externalChanges.markOwnWrite(target, signature);
     await window.mazz?.invoke('fs:watch', { paths: [target] }).catch(() => {});
@@ -1484,7 +1642,7 @@ export class Shell {
   }
 
   /** 关闭指定路径（或其父路径）已删除的全部标签（虚空标签清扫；含目录级联） */
-  closeGhostTabs(path) {
+  async closeGhostTabs(path) {
     // Windows IPC 路径可能是 `C:\\...`、`C:/...` 或混合分隔符；标签保存路径也未必与删除广播同形。
     // 必须复用外部变化协议的 canonical path，否则真实文件已删而标签会因字符串形态不同继续悬空。
     const norm = normalizeChangePath(path);
@@ -1495,9 +1653,14 @@ export class Shell {
         const fp = normalizeChangePath(tab.filePath);
         if (fp && (fp === norm || fp.startsWith(norm + '/'))) {
           tab.forceClose = true;
-          modules.detach(tab.id);
+          const disposed = await modules.detach(tab.id);
+          if (disposed === false) {
+            tab.forceClose = false;
+            toast(`“${tab.title}”的数据未能写入磁盘，已保留标签`);
+            continue;
+          }
           snapshots.untrack(tab.id);
-          leaf.tabs.close(tab.id, { force: true });
+          await leaf.tabs.close(tab.id, { force: true });
           closed++;
         }
       }
@@ -1526,7 +1689,12 @@ export class Shell {
       if (ok === false) return;
     }
     tab.forceClose = true;
-    modules.detach(id);
+    const disposed = await modules.detach(id);
+    if (disposed === false) {
+      tab.forceClose = false;
+      toast('书库数据未能写入磁盘，标签已保持打开；请检查磁盘空间或目录权限后重试');
+      return false;
+    }
     snapshots.untrack(id);
     await tabsObj.close(id, { force: true });
     // 窗格最后一个标签关闭 → 自动收缩窗格（根窗格除外）
@@ -1561,14 +1729,23 @@ export class Shell {
   captureProgressFor(tabId, { immediate = false } = {}) {
     const inst = modules.instances.get(tabId);
     const tab = this.paneTree.leaves().flatMap(x => x.tabs.tabs).find(x => x.id === tabId);
+    // Library owns a workspace-scoped, versioned locator ledger and projects
+    // it to LAN sync itself.  A second generic relay would create a competing
+    // whole-record writer and could later force an older sync record over a
+    // newer repository locator.
+    if (inst?.def?.ownsProgressPersistence) return;
     const meta = this.progressMeta(tab, inst);
     if (!meta || typeof inst.def.captureProgress !== 'function') return;
     if (inst._progressRestoring) return;
     const value = safeGet(() => inst.def.captureProgress(inst.state));
-    if (value != null) this.progressRelay.put(meta.kind, meta.path, value, { immediate });
+    if (value != null) return this.progressRelay.put(meta.kind, meta.path, value, { immediate });
   }
 
   async restoreProgressFor(tab, inst, { force = false } = {}) {
+    // Self-managed modules reconcile their durable/local and remote versions
+    // at their own owner boundary. Never force-apply a generic sync event on
+    // top of an in-flight or newer local locator.
+    if (inst?.def?.ownsProgressPersistence) return;
     const meta = this.progressMeta(tab, inst);
     if (!meta || typeof inst?.def?.applyProgress !== 'function') return;
     const token = `${meta.kind}:${meta.path}`;
@@ -2002,16 +2179,11 @@ export class Shell {
       run: async () => {
         const tab = this.tabs.active;
         if (!tab) return;
-        const snapshot = await this.buildTabHandoff(tab);
-        const ok = await window.mazz.invoke('window:toMain', { handoff: snapshot });
-        if (ok) {
-          tab.forceClose = true;
-          modules.detach(tab.id);
-          snapshots.untrack(tab.id);
-          const pane = this.paneTree.paneOfTab(tab.id);
-          await (pane ? pane.tabs : this.tabs).close(tab.id, { force: true });
-          if (pane) this.paneTree.onLeafEmpty(pane);
-          toast(`已移回主窗口：${tab.title}`);
+        try {
+          const ok = await this.transferTabAtomically(tab, 'window:toMain', {});
+          if (ok) toast(`已移回主窗口：${tab.title}`);
+        } catch (error) {
+          toast('移回主窗失败：' + (error?.message || error));
         }
       } });
 
@@ -2082,7 +2254,7 @@ export class Shell {
         try {
           const res = await window.mazz.invoke('fs:delete', { path: p });
           if (res && res.trashed === false) toast('回收站不可用，已直接删除（文件被占用）');
-          this.closeGhostTabs(p); // 虚空标签即扫（watcher 的 unlink 是第二道）
+          void this.closeGhostTabs(p).catch(error => console.error('[ghost-tabs]', error)); // 虚空标签即扫（watcher 的 unlink 是第二道）
         } catch (e) { toast('删除失败：' + e.message); }
         await this.fileTree.refresh();
       }
@@ -2168,16 +2340,32 @@ export class Shell {
       const ok = await inst.def.beforeClose(inst.state);
       if (ok === false) throw new Error(`“${tab.title}”仍有内容未能保存，已取消移交`);
     }
-    const content = inst.def.readOnly && tab.filePath
-      ? { path: tab.filePath }
-      : safeGet(() => inst.def.getContent(inst.state));
-    const progress = typeof inst.def.captureProgress === 'function'
-      ? safeGet(() => inst.def.captureProgress(inst.state))
-      : null;
+    let content;
+    let progress = null;
+    try {
+      content = inst.def.readOnly && tab.filePath
+        ? { path: tab.filePath }
+        : inst.def.getContent(inst.state);
+      if (!inst.def.readOnly && content == null) throw new Error('模块未返回可移交内容');
+      if (typeof inst.def.captureProgress === 'function') progress = inst.def.captureProgress(inst.state);
+    } catch (error) {
+      throw new Error(`无法取得“${tab.title}”的完整移交快照：${error?.message || error}`);
+    }
     const meta = this.progressMeta(tab, inst);
-    if (meta && progress != null) await this.progressRelay.put(meta.kind, meta.path, progress, { immediate: true });
+    if (meta && progress != null && !inst.def.ownsProgressPersistence) {
+      const receipt = await this.progressRelay.put(meta.kind, meta.path, progress, { immediate: true });
+      if (receipt?.ok === false) throw receipt.error || new Error('标签位置未能持久化');
+    }
+    const workspace = await window.mazz?.invoke('workspace:get').catch(() => this.workspace || '');
+    const ownerIdentity = typeof inst.def.captureHandoffOwner === 'function'
+      ? await inst.def.captureHandoffOwner(inst.state)
+      : null;
+    if (ownerIdentity && canonicalHandoffOwner(ownerIdentity) !== canonicalHandoffOwner(workspace)) {
+      throw new Error('模块仍在切换工作区，已保留源标签');
+    }
     return {
       schemaVersion: 1,
+      sourceTabId: tab.id,
       moduleId: tab.moduleId,
       iconId: tab.iconId || inst.def.iconId || moduleIconId(tab.moduleId),
       title: tab.title,
@@ -2186,7 +2374,211 @@ export class Shell {
       dirty: !!tab.dirty,
       pinned: !!tab.pinned,
       progress,
+      workspace: workspace || '',
+      ownerIdentity: ownerIdentity || null,
     };
+  }
+
+  freezeHandoffSource(tab) {
+    if (!tab || this._handoffSourceLock) throw new Error('当前窗口已有标签正在移交');
+    const owner = this.findTabById(tab.id);
+    if (!owner) throw new Error('源标签已不存在');
+    const lock = {
+      tab, owner,
+      previousRootInert: !!this.root.inert,
+      previousPending: contextKeys.get('handoffPending'),
+      wasActive: owner.tabs.activeId === tab.id,
+      revision: Number(tab.handoffRevision) || 0,
+    };
+    this._handoffSourceLock = lock;
+    tab.handoffFrozen = true;
+    tab.view.setAttribute('inert', '');
+    tab.view.setAttribute('aria-busy', 'true');
+    this.root.inert = true;
+    contextKeys.set('handoffPending', true);
+    if (lock.wasActive) modules.deactivateTab(tab.id);
+    return lock;
+  }
+
+  releaseHandoffSource(lock) {
+    if (!lock || this._handoffSourceLock !== lock) return;
+    const { tab, owner } = lock;
+    tab.handoffFrozen = false;
+    tab.view.removeAttribute('aria-busy');
+    this.root.inert = lock.previousRootInert;
+    contextKeys.set('handoffPending', lock.previousPending);
+    this._handoffSourceLock = null;
+    if (this.findTabById(tab.id) && owner.tabs.activeId === tab.id) {
+      tab.view.toggleAttribute('inert', false);
+      modules.activateTab(tab.id);
+    }
+  }
+
+  handoffSnapshotStillCurrent(tab, snapshot, revision) {
+    if (!tab || !snapshot || !this.findTabById(tab.id) || !modules.instances.has(tab.id)) return false;
+    if ((Number(tab.handoffRevision) || 0) !== revision) return false;
+    const inst = modules.instances.get(tab.id);
+    const content = inst.def.readOnly && tab.filePath
+      ? { path: tab.filePath }
+      : safeGet(() => inst.def.getContent(inst.state));
+    const progress = typeof inst.def.captureProgress === 'function'
+      ? safeGet(() => inst.def.captureProgress(inst.state))
+      : null;
+    const comparable = value => JSON.stringify(value, (key, item) => key === 'updatedAt' ? undefined : item);
+    try {
+      return tab.title === snapshot.title
+        && tab.filePath === snapshot.filePath
+        && !!tab.dirty === snapshot.dirty
+        && !!tab.pinned === snapshot.pinned
+        && comparable(content == null ? '' : content) === comparable(snapshot.content)
+        && comparable(progress) === comparable(snapshot.progress);
+    } catch { return false; }
+  }
+
+  async handoffOwnershipStillCurrent(tab, snapshot) {
+    if (!tab || !snapshot || !this.findTabById(tab.id)) return false;
+    const currentWorkspace = await window.mazz?.invoke('workspace:get').catch(() => this.workspace || '');
+    if (canonicalHandoffOwner(currentWorkspace) !== canonicalHandoffOwner(snapshot.workspace)) return false;
+    const inst = modules.instances.get(tab.id);
+    if (!inst) return false;
+    if (!snapshot.ownerIdentity || typeof inst.def.captureHandoffOwner !== 'function') return true;
+    const owner = await inst.def.captureHandoffOwner(inst.state);
+    return canonicalHandoffOwner(owner) === canonicalHandoffOwner(snapshot.ownerIdentity)
+      && canonicalHandoffOwner(owner) === canonicalHandoffOwner(currentWorkspace);
+  }
+
+  async rollbackPreparedHandoff(receipt) {
+    if (!receipt?.transferId || !window.mazz?.isElectron) return false;
+    return window.mazz.invoke('window:handoffRollback', { transferId: receipt.transferId }).catch(() => false);
+  }
+
+  async restoreDetachedHandoffSource(tab, snapshot, wasActive = true) {
+    const owner = this.findTabById(tab.id);
+    if (!owner) return false;
+    tab.view.replaceChildren();
+    const inst = modules.attach(tab.id, snapshot.moduleId, tab.view, snapshot.content, {
+      activate: !!wasActive,
+    });
+    try { inst.state.title = snapshot.title; } catch {}
+    try { if (snapshot.filePath) inst.state.filePath = snapshot.filePath; } catch {}
+    this.containerTab.set(tab.view, tab.id);
+    const loaded = await inst.ready;
+    if (!loaded.ok) throw loaded.error || new Error('源标签恢复失败');
+    if (snapshot.progress != null && typeof inst.def.applyProgress === 'function') {
+      await inst.def.applyProgress(snapshot.progress, inst.state);
+    }
+    tab.title = snapshot.title;
+    tab.filePath = snapshot.filePath;
+    tab.dirty = !!snapshot.dirty;
+    tab.pinned = !!snapshot.pinned;
+    if (!inst.def.readOnly) {
+      snapshots.track(tab.id, () => this.snapshotPayload(tab, inst));
+      if (tab.dirty) snapshots.markDirty(tab.id);
+    }
+    owner.tabs.render();
+    if (wasActive) this.rebuildModuleRibbon(tab);
+    this.syncTitle();
+    return true;
+  }
+
+  async closeTransferredSource(tab) {
+    let recoveryCleared = true;
+    try { await snapshots.untrackStrict(tab.id); }
+    catch (error) {
+      recoveryCleared = false;
+      console.error('[handoff] 源恢复快照严格清理失败:', error);
+    }
+    const pane = this.paneTree.paneOfTab(tab.id);
+    await (pane ? pane.tabs : this.tabs).close(tab.id, { force: true });
+    if (pane) this.paneTree.onLeafEmpty(pane);
+    if (!this.paneTree.leaves().some(leaf => leaf.tabs.tabs.some(item => !item.provisional))) this.showWelcome();
+    this.syncTitle();
+    return recoveryCleared;
+  }
+
+  /** Freeze-before-capture, provisional target, durable source close, then
+   * exact commit. Any failure rolls the target back and keeps/rehydrates the
+   * source as the sole writable owner. */
+  async transferTabAtomically(tab, channel, payload = {}) {
+    const lock = this.freezeHandoffSource(tab);
+    let sourceDetached = false;
+    let targetCommitted = false;
+    let receipt = null;
+    let snapshot = null;
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        snapshot = await this.buildTabHandoff(tab);
+        const revision = Number(tab.handoffRevision) || 0;
+        const transactional = !!window.mazz?.isElectron;
+        const reply = await window.mazz.invoke(channel, { ...payload, handoff: snapshot, transactional });
+        const prepared = transactional ? reply?.ok === true && !!reply.transferId : reply === true;
+        if (!prepared) return false;
+        receipt = transactional ? reply : null;
+        if (this.handoffSnapshotStillCurrent(tab, snapshot, revision)
+            && await this.handoffOwnershipStillCurrent(tab, snapshot)) {
+          // Keep the source crash-recovery owner until the target has written
+          // its own strict recovery material and commit has ACKed.
+          const sourceInst = modules.instances.get(tab.id);
+          const sourceRecovery = await snapshots.writePayloadStrict(
+            tab.id,
+            this.snapshotPayloadStrict(tab, sourceInst),
+          );
+          if (!sourceInst?.def.readOnly && sourceRecovery?.skipped) {
+            throw new Error('源标签缺少严格崩溃恢复材料，已取消移交');
+          }
+          if (this.handoffSnapshotStillCurrent(tab, snapshot, revision)
+              && await this.handoffOwnershipStillCurrent(tab, snapshot)) break;
+        }
+        await this.rollbackPreparedHandoff(receipt);
+        receipt = null;
+        snapshot = null;
+        if (attempt === 2) throw new Error('移交期间内容持续变化，已保留源标签');
+      }
+
+      tab.forceClose = true;
+      const disposed = await modules.detach(tab.id);
+      if (disposed === false) {
+        tab.forceClose = false;
+        await this.rollbackPreparedHandoff(receipt);
+        toast('源标签未能通过耐久关闭，已撤回目标副本');
+        return false;
+      }
+      sourceDetached = true;
+      if (receipt) {
+        const committed = await window.mazz.invoke('window:handoffCommit', {
+          transferId: receipt.transferId,
+        }).catch(() => false);
+        if (!committed) {
+          await this.rollbackPreparedHandoff(receipt);
+          await this.restoreDetachedHandoffSource(tab, snapshot, lock.wasActive);
+          sourceDetached = false;
+          tab.forceClose = false;
+          toast('目标窗口未能提交，源标签已恢复');
+          return false;
+        }
+      }
+      targetCommitted = true;
+      const recoveryCleared = await this.closeTransferredSource(tab);
+      if (!recoveryCleared) toast('移交已完成，但旧恢复快照清理失败；请尽快重启后确认恢复项');
+      sourceDetached = false;
+      return true;
+    } catch (error) {
+      await this.rollbackPreparedHandoff(receipt);
+      if (targetCommitted) {
+        // Publication is irreversible. Never rehydrate a second writable
+        // source merely because local tab-strip cleanup failed afterwards.
+        await this.closeTransferredSource(tab).catch(() => false);
+        sourceDetached = false;
+        return true;
+      }
+      if (sourceDetached && snapshot && this.findTabById(tab.id)) {
+        await this.restoreDetachedHandoffSource(tab, snapshot, lock.wasActive).catch(() => false);
+      }
+      tab.forceClose = false;
+      throw error;
+    } finally {
+      this.releaseHandoffSource(lock);
+    }
   }
 
   /** 把标签移交到新窗口（快照内容 → 目标确认收讫 → 本窗口关闭） */
@@ -2194,39 +2586,215 @@ export class Shell {
     const tab = this.tabs.get(tabId);
     if (!tab) return;
     try {
-      const snapshot = await this.buildTabHandoff(tab);
       // 指定/拖到既有外部窗格 → 迁入该窗（v33 反馈：只会新建窗格进不去）
       const targetId = pos?.childId || (pos && Number.isFinite(pos.x)
         ? (await window.mazz.invoke('window:childAt', { x: pos.x, y: pos.y }).catch(() => null))?.id
         : null);
       if (targetId) {
-        const ok = await window.mazz.invoke('window:toChild', { winId: targetId, handoff: snapshot });
+        const ok = await this.transferTabAtomically(tab, 'window:toChild', { winId: targetId });
         if (ok) {
-          tab.forceClose = true;
-          modules.detach(tabId);
-          snapshots.untrack(tabId);
-          const pane0 = this.paneTree.paneOfTab(tabId);
-          await (pane0 ? pane0.tabs : this.tabs).close(tabId, { force: true });
-          if (pane0) this.paneTree.onLeafEmpty(pane0);
           toast(`已移入该窗口：${tab.title}`);
           return;
         }
       }
-      const ok = await window.mazz.invoke('window:openChild', { handoff: snapshot });
+      const ok = await this.transferTabAtomically(tab, 'window:openChild');
       if (!ok) throw new Error('目标窗口未确认接收');
-      tab.forceClose = true;
-      modules.detach(tabId);
-      snapshots.untrack(tabId);
-      const pane = this.paneTree.paneOfTab(tabId);
-      await (pane ? pane.tabs : this.tabs).close(tabId, { force: true });
-      if (pane) this.paneTree.onLeafEmpty(pane);
       toast(`已移到新窗口：${tab.title}`);
     } catch (e) {
       toast('分窗失败：' + e.message);
     }
   }
 
-  /** 新窗口启动时接收交接标签 */
+  async discardProvisionalHandoffRecord(record) {
+    if (!record) return true;
+    if (record.cleanupPromise) return record.cleanupPromise;
+    record.cancelled = true;
+    record.stage = 'rolling-back';
+    record.cleanupPromise = (async () => {
+      if (this._provisionalHandoffs.get(record.transferId) === record) {
+        this._provisionalHandoffs.delete(record.transferId);
+      }
+      let ok = true;
+      if (record.snapshotWritten || record.tracked) {
+        try { await snapshots.untrackStrict(record.tab.id); }
+        catch (error) { console.error('[handoff] provisional 快照清理失败:', error); ok = false; }
+      }
+      if (await modules.discard(record.tab.id) === false) ok = false;
+      record.tab.forceClose = true;
+      await record.pane.tabs.close(record.tab.id, { force: true });
+      record.pane.refreshEmpty();
+      record.stage = 'rolled-back';
+      record.rollbackResult = ok;
+      return ok;
+    })();
+    return record.cleanupPromise;
+  }
+
+  async rollbackProvisionalHandoff(transferId) {
+    const record = this._provisionalHandoffs.get(transferId);
+    if (!record) return true;
+    record.cancelled = true;
+    if (record.commitPromise) {
+      await record.commitPromise.catch(() => false);
+      if (this._provisionalHandoffs.get(transferId) !== record) return record.rollbackResult !== false;
+    }
+    if (record.ready) await record.ready.catch(() => null);
+    if (this._provisionalHandoffs.get(transferId) !== record) return record.rollbackResult !== false;
+    return this.discardProvisionalHandoffRecord(record);
+  }
+
+  /** Target phase 1: restore into an unlisted, inert owner. No snapshot,
+   * recent-file entry or module-owned durability write is allowed here. */
+  async prepareHandoff(snapshot) {
+    const transferId = snapshot?.__transferId;
+    if (!transferId || this._provisionalHandoffs.has(transferId)) return false;
+    if (!snapshot?.moduleId || !modules.get(snapshot.moduleId)) return false;
+    const duplicate = snapshot.filePath && this.paneTree.leaves()
+      .flatMap(leaf => leaf.tabs.tabs)
+      .some(tab => tab.filePath === snapshot.filePath && tab.moduleId === snapshot.moduleId);
+    if (duplicate) return false;
+    let tab = null;
+    let record = null;
+    try {
+      const pane = this.paneTree.active;
+      const opened = this.openTab(snapshot.moduleId, {
+        title: snapshot.title || '分窗标签',
+        filePath: snapshot.filePath || null,
+        content: snapshot.content,
+        provisional: true,
+      });
+      tab = opened.tab;
+      record = {
+        transferId, snapshot, pane, tab, inst: opened.inst,
+        tracked: false, snapshotWritten: false, cancelled: false,
+        stage: 'loading', ready: opened.inst.ready, commitPromise: null, cleanupPromise: null,
+      };
+      this._provisionalHandoffs.set(transferId, record);
+      // The record exists before the first await. A main-process timeout can
+      // therefore cancel this exact provisional even while workspace:get or a
+      // large Library parser is still pending.
+      const currentWorkspace = await window.mazz?.invoke('workspace:get').catch(() => this.workspace || '');
+      if (record.cancelled || this._provisionalHandoffs.get(transferId) !== record) return false;
+      if (snapshot.workspace != null
+          && canonicalHandoffOwner(snapshot.workspace) !== canonicalHandoffOwner(currentWorkspace)) {
+        throw new Error('工作区在准备移交期间已切换');
+      }
+      const loaded = await record.ready;
+      if (record.cancelled || this._provisionalHandoffs.get(transferId) !== record
+          || !modules.instances.has(tab.id)) return false;
+      if (!loaded.ok) throw loaded.error || new Error('内容无法解析');
+      tab.pinned = !!snapshot.pinned;
+      tab.dirty = !!snapshot.dirty;
+      record.stage = 'prepared';
+      return true;
+    } catch (error) {
+      if (record) await this.discardProvisionalHandoffRecord(record);
+      else if (tab) await modules.discard(tab.id);
+      console.error('[handoff] provisional 恢复失败:', error?.message || error);
+      return false;
+    }
+  }
+
+  /** Target phase 2: source durability close already succeeded. Complete all
+   * fallible restore and recovery work while the target is still inert. The
+   * ACK only means "commit-ready"; main sends a separate no-fail publish. */
+  async commitHandoff(transferId) {
+    const record = this._provisionalHandoffs.get(transferId);
+    if (!record || record.cancelled || record.stage !== 'prepared') return false;
+    if (record.commitPromise) return record.commitPromise;
+    const assertLive = () => {
+      if (record.cancelled || this._provisionalHandoffs.get(transferId) !== record
+          || !modules.instances.has(record.tab.id) || !record.tab.provisional) {
+        throw new Error('provisional 标签已失效');
+      }
+    };
+    record.commitPromise = (async () => {
+      const { snapshot, inst, tab, pane } = record;
+      record.stage = 'committing';
+      assertLive();
+      const currentWorkspace = await window.mazz?.invoke('workspace:get').catch(() => this.workspace || '');
+      assertLive();
+      if (canonicalHandoffOwner(currentWorkspace) !== canonicalHandoffOwner(snapshot.workspace)) {
+        throw new Error('工作区在移交期间已切换');
+      }
+      if (snapshot.ownerIdentity && typeof inst.def.captureHandoffOwner === 'function') {
+        const targetOwner = await inst.def.captureHandoffOwner(inst.state);
+        assertLive();
+        if (canonicalHandoffOwner(targetOwner) !== canonicalHandoffOwner(snapshot.ownerIdentity)
+            || canonicalHandoffOwner(targetOwner) !== canonicalHandoffOwner(currentWorkspace)) {
+          throw new Error('目标模块绑定了错误的工作区 owner');
+        }
+      }
+      if (snapshot.progress != null && typeof inst.def.applyProgress === 'function') {
+        await inst.def.applyProgress(snapshot.progress, inst.state);
+        assertLive();
+      }
+      if (!await modules.prepareHandoffCommit(tab.id, { snapshot, workspace: currentWorkspace })) {
+        throw new Error('模块无法完成 provisional 提交预检');
+      }
+      assertLive();
+      const targetRecovery = await snapshots.writePayloadStrict(
+        tab.id,
+        this.snapshotPayloadStrict(tab, inst),
+      );
+      if (targetRecovery?.skipped) throw new Error('目标恢复快照未落盘');
+      record.snapshotWritten = true;
+      assertLive();
+      if (snapshot.filePath) {
+        const recent = await window.mazz?.invoke('recent:add', { path: snapshot.filePath });
+        if (recent === false) throw new Error('最近文件索引拒绝移交');
+        assertLive();
+      }
+      const finalWorkspace = await window.mazz?.invoke('workspace:get').catch(() => this.workspace || '');
+      assertLive();
+      if (canonicalHandoffOwner(finalWorkspace) !== canonicalHandoffOwner(snapshot.workspace)) {
+        throw new Error('工作区在目标预提交期间已切换');
+      }
+      if (snapshot.ownerIdentity && typeof inst.def.captureHandoffOwner === 'function') {
+        const finalOwner = await inst.def.captureHandoffOwner(inst.state);
+        assertLive();
+        if (canonicalHandoffOwner(finalOwner) !== canonicalHandoffOwner(snapshot.ownerIdentity)
+            || canonicalHandoffOwner(finalOwner) !== canonicalHandoffOwner(finalWorkspace)) {
+          throw new Error('目标 owner 在发布前已失效');
+        }
+      }
+      record.stage = 'commit-ready';
+      return true;
+    })().catch(async error => {
+      console.error('[handoff] commit 失败:', error?.message || error);
+      await this.discardProvisionalHandoffRecord(record);
+      return false;
+    });
+    return record.commitPromise;
+  }
+
+  finalizeHandoff(transferId) {
+    if (this._publishedHandoffs.has(transferId)) return true;
+    const record = this._provisionalHandoffs.get(transferId);
+    if (!record || record.cancelled || record.stage !== 'commit-ready') return false;
+    const { tab, inst, pane } = record;
+    // No awaits and no fallible persistence below this point: once main has
+    // observed commit-ready, ownership can only move forward to this target.
+    if (!modules.commitProvisional(tab.id)) return false;
+    this.paneTree.setActive(pane);
+    if (!pane.tabs.commitProvisional(tab.id)) return false;
+    if (!inst.def.readOnly) {
+      snapshots.track(tab.id, () => this.snapshotPayload(tab, inst));
+      record.tracked = true;
+      if (tab.dirty) snapshots.markDirty(tab.id);
+    }
+    modules.finalizeHandoff(record.tab.id);
+    record.stage = 'published';
+    this._provisionalHandoffs.delete(transferId);
+    this._publishedHandoffs.add(transferId);
+    if (this._publishedHandoffs.size > 256) {
+      this._publishedHandoffs.delete(this._publishedHandoffs.values().next().value);
+    }
+    this.syncTitle();
+    return true;
+  }
+
+  /** Legacy one-phase receiver retained for browser preview/old callers. */
   async receiveHandoff(snapshot) {
     // W52③ 全应用子窗 modal 支路：settings/help/agreement 大 UI 零重写落第二窗
     // W53：openModal/lean 支路全体退役——设置/帮助/协议/翻译/插件/快开/内录全走 panel-windows 全原生子窗格
@@ -2240,29 +2808,31 @@ export class Shell {
       filePath: snapshot.filePath || null,
       content: snapshot.content,
     });
-    const loaded = await inst.ready;
-    if (!loaded.ok) {
+    try {
+      const loaded = await inst.ready;
+      if (!loaded.ok) throw loaded.error || new Error('内容无法解析');
+      if (snapshot.progress != null && typeof inst?.def?.applyProgress === 'function') {
+        await inst.def.applyProgress(snapshot.progress, inst.state);
+      }
+      if (snapshot.pinned) {
+        tab.pinned = true;
+        this.findTabById(tab.id)?.tabs.render();
+      }
+      if (snapshot.dirty) {
+        this.findTabById(tab.id)?.tabs.setDirty(tab.id, true);
+        snapshots.markDirty(tab.id);
+      }
+      // Legacy callers retain their pre-W88 one-phase behavior. Any failure
+      // below still discards the just-created target before NACK.
+      await snapshots.writeOne(tab.id);
+      this.syncTitle();
+      if (snapshot.filePath) await window.mazz?.invoke('recent:add', { path: snapshot.filePath });
+      return true;
+    } catch (error) {
       await this.discardFailedOpen(tab);
-      toast(`恢复“${snapshot.title || '分窗标签'}”失败：${loaded.error?.message || loaded.error || '内容无法解析'}`);
+      toast(`恢复“${snapshot.title || '分窗标签'}”失败：${error?.message || error || '内容无法解析'}`);
       return false;
     }
-    if (snapshot.progress != null && typeof inst?.def?.applyProgress === 'function') {
-      await inst.def.applyProgress(snapshot.progress, inst.state);
-    }
-    if (snapshot.pinned) {
-      tab.pinned = true;
-      this.findTabById(tab.id)?.tabs.render();
-    }
-    if (snapshot.dirty) {
-      this.findTabById(tab.id)?.tabs.setDirty(tab.id, true);
-      snapshots.markDirty(tab.id);
-    }
-    // 目标确认前先把新 owner 的恢复材料落盘；源标签随后才会清除自己的快照。
-    // 干净标签同样写入，保证迁移后立即 crash 仍能重建工作台位置。
-    await snapshots.writeOne(tab.id);
-    this.syncTitle();
-    if (snapshot.filePath) await window.mazz?.invoke('recent:add', { path: snapshot.filePath });
-    return true;
   }
 
   async newFileInTree() {
@@ -2546,10 +3116,25 @@ export class Shell {
       window.mazz.on('command:invoke', ({ id, payload }) => commands.execute(id, payload));
       window.mazz.on('window:handoff', async (snapshot) => {
         let ok = false;
-        try { ok = await this.receiveHandoff(snapshot); }
+        const phase = snapshot?.__handoffPhase || 'legacy';
+        let targetTabId = snapshot?.__transferId
+          ? this._provisionalHandoffs.get(snapshot.__transferId)?.tab?.id || null
+          : null;
+        try {
+          if (phase === 'prepare') ok = await this.prepareHandoff(snapshot);
+          else if (phase === 'commit') ok = await this.commitHandoff(snapshot?.__transferId);
+          else if (phase === 'rollback') ok = await this.rollbackProvisionalHandoff(snapshot?.__transferId);
+          else if (phase === 'finalize') ok = this.finalizeHandoff(snapshot?.__transferId);
+          else ok = await this.receiveHandoff(snapshot);
+        }
         catch (error) { console.error('[handoff] 接收失败:', error); }
+        if (!targetTabId && snapshot?.__transferId) {
+          targetTabId = this._provisionalHandoffs.get(snapshot.__transferId)?.tab?.id || null;
+        }
         if (snapshot?.__transferId) {
-          await window.mazz.invoke('window:handoffAck', { transferId: snapshot.__transferId, ok }).catch(() => {});
+          await window.mazz.invoke('window:handoffAck', {
+            transferId: snapshot.__transferId, phase, ok, targetTabId,
+          }).catch(() => {});
         }
       });
       window.mazz.on('theme:changed', ({ id }) => { if (id) this.setTheme(id); });
@@ -3265,6 +3850,9 @@ export class Shell {
         } else if (!on && fsExitBtn) { fsExitBtn.remove(); fsExitBtn = null; }
       };
       window.mazz.on('window:fullscreen', ({ on }) => setFsUi(on));
+      window.mazz.on('window:durability-failed', ({ message } = {}) => {
+        toast(message || '数据未能写入磁盘，窗口已保持打开；请检查磁盘空间或目录权限');
+      });
       window.mazz.invoke('window:isFullScreen').then(setFsUi).catch(() => {});
       document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;

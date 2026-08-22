@@ -19,6 +19,7 @@ class CrashRecovery {
       try { this.previousRunId = JSON.parse(fs.readFileSync(this.flagFile, 'utf8'))?.runId || null; } catch {}
     }
     this.pendingRecoveryIds = new Set();
+    this.sealedSnapshots = new Set();
     try {
       const pending = JSON.parse(fs.readFileSync(this.pendingRecoveryFile, 'utf8'));
       for (const id of pending?.recoveryIds || []) this.pendingRecoveryIds.add(String(id));
@@ -45,8 +46,17 @@ class CrashRecovery {
     // 渲染进程每 30s（及内容变更防抖后）推送快照，主进程原子落盘
     const ownerId = event => `${this.runId}:${String(event?.sender?.id || 'legacy')}`;
     const snapshotFile = (tabId, event) => path.join(this.dir, encodeURIComponent(`${ownerId(event)}:${tabId}`) + '.json');
+    this.snapshotFileForOwner = (tabId, senderId) => path.join(
+      this.dir,
+      encodeURIComponent(`${this.runId}:${String(senderId || 'legacy')}:${tabId}`) + '.json',
+    );
     const entries = () => fs.readdirSync(this.dir).filter(f => f.endsWith('.json')).map(file => {
-      try { return { file: path.join(this.dir, file), record: JSON.parse(fs.readFileSync(path.join(this.dir, file), 'utf8')) }; }
+      try {
+        const record = JSON.parse(fs.readFileSync(path.join(this.dir, file), 'utf8'));
+        const senderId = String(record?.ownerId || '').split(':').at(-1);
+        if (this.sealedSnapshots.has(`${senderId}:${record?.tabId}`)) return null;
+        return { file: path.join(this.dir, file), record };
+      }
       catch { return null; }
     }).filter(Boolean);
     // 冻结进程启动前已经存在的恢复材料；本轮新写快照绝不能混进上次事故的候选集。
@@ -84,6 +94,7 @@ class CrashRecovery {
     }
     bus.handle('snapshot:write', async ({ tabId, title, filePath, moduleId, content, dirty, pinned, progress } = {}, event) => {
       if (!tabId) return false;
+      if (this.sealedSnapshots.has(`${String(event?.sender?.id || 'legacy')}:${tabId}`)) return false;
       const file = snapshotFile(tabId, event);
       const rec = {
         tabId, ownerId: ownerId(event), title: title || null, filePath, moduleId, content,
@@ -98,9 +109,11 @@ class CrashRecovery {
       return entries().map(x => x.record).sort((a, b) => b.savedAt - a.savedAt);
     });
     bus.handle('snapshot:clear', async ({ tabId }, event) => {
-      try { fs.unlinkSync(snapshotFile(tabId, event)); } catch {}
+      try { fs.unlinkSync(snapshotFile(tabId, event)); }
+      catch (error) { if (error?.code !== 'ENOENT') throw error; }
       // 兼容清理旧版未分 owner 的快照；不会碰其他 renderer 的同名 tab。
-      try { fs.unlinkSync(path.join(this.dir, encodeURIComponent(tabId) + '.json')); } catch {}
+      try { fs.unlinkSync(path.join(this.dir, encodeURIComponent(tabId) + '.json')); }
+      catch (error) { if (error?.code !== 'ENOENT') throw error; }
       return true;
     });
     // child reload 后只交付该 WebContents 在本次 app run 内的快照；一次消费，禁止其他窗口冒领。
@@ -198,6 +211,22 @@ class CrashRecovery {
       return true;
     });
     bus.handle('crash:lastExitUnclean', async () => this.lastExitUnclean);
+  }
+
+  /** Main-process handoff settlement: once the target recovery snapshot is
+   * durable, retire the exact source owner before target publication. */
+  clearOwnedSnapshot(tabId, senderId) {
+    if (!tabId || !senderId) return false;
+    this.sealedSnapshots.add(`${String(senderId)}:${tabId}`);
+    const file = this.snapshotFileForOwner(tabId, senderId);
+    try { fs.unlinkSync(file); }
+    catch (error) {
+      if (error?.code !== 'ENOENT') {
+        try { fs.renameSync(file, `${file}.superseded`); }
+        catch { throw error; }
+      }
+    }
+    return true;
   }
 }
 module.exports = CrashRecovery;

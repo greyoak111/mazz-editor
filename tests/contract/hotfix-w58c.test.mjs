@@ -77,7 +77,7 @@ describe('④ B12b select 普查收编', () => {
       ['renderer/modules/sheet/charts.js', "selectProxy(chartEl.querySelector('select')"],
       ['renderer/modules/viewer/player.js', "selectProxy(root.querySelector('.mz-speed')"],
       ['renderer/modules/markdown/index.js', /selectProxy\(sel\);\r?\n\s*if \(lh\) selectProxy\(lh\)/],
-      ['renderer/modules/library/index.js', "'.lib-cat-filter', '.lib-mode', '.lib-read-theme', '.lib-pagew', '.lib-zh'"],
+      ['renderer/modules/library/index.js', "'.lib-cat-filter', '.lib-shelf-sort', '.lib-shelf-format', '.lib-shelf-missing', '.lib-mode', '.lib-read-theme', '.lib-pagew', '.lib-zh'"],
       ['renderer/modules/math/index.js', 'selectProxy(backendSel)'],
       ['renderer/modules/search/index.js', 'selectProxy(typeEl); selectProxy(scopeEl)'],
       ['renderer/modules/factory/index.js', 'selectProxy(this.genreSel'],
