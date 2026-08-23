@@ -79,15 +79,12 @@ describe('W68c 终审、求助与预算帽', () => {
     assert.deepEqual(detectHumanHelpMoments({ reviews: [{}], objections: [], gates: { machine: false, point: true } }).map(x => x.id), ['redBlindspot']);
   });
 
-  test('预算帽正常/降级/硬停三态，超帽只给降级或停摆', () => {
+  test('旧预算 API 只记厂商计量，不再提供降级或停摆动作', () => {
     assert.equal(evaluateBudgetCap({ capTokens: 32000, usedTokens: 1000, requestedRitual: 'full' }).status, 'ok');
-    const degrade = evaluateBudgetCap({ capTokens: 12000, usedTokens: 1000, requestedRitual: 'full' });
-    assert.equal(degrade.status, 'degrade');
-    assert.deepEqual(makeBudgetCard({ capTokens: 12000, usedTokens: 1000, requestedRitual: 'full' }).actions, ['degrade', 'stop']);
-    assert.equal(evaluateBudgetCap({ capTokens: 7999, usedTokens: 0 }).status, 'stop');
-    const factory = src('renderer/modules/factory/index.js');
-    assert(factory.includes("window.addEventListener('mazz:factory-task-updated'"), 'Desk 决定必须回写生产面板内存态');
-    assert(factory.includes("patch.status === 'paused' && this.runningTasks.has(taskId)"), '停摆决定必须触发在飞生产终止');
+    const tracked = evaluateBudgetCap({ capTokens: 1, usedTokens: 999999, requestedRitual: 'full' });
+    assert.equal(tracked.status, 'ok');
+    assert.equal(tracked.enforcement, 'provider-native');
+    assert.deepEqual(makeBudgetCard({ capTokens: 1, usedTokens: 999999, requestedRitual: 'full' }).actions, []);
   });
 });
 

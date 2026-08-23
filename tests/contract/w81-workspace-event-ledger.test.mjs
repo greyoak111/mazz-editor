@@ -98,6 +98,19 @@ describe('W81 Workspace Event Ledger', () => {
     assert.equal(lifecycle.stage, 'promoted-specification'); assert.equal(lifecycle.authorityGranted, false); assert.equal(lifecycle.inferred, true);
   });
 
+  test('长摘要与超过二十个匹配 Episode 全量进入上下文检索', () => {
+    const tail = '不可截断尾部';
+    const longSummary = `${'运行史'.repeat(200)}${tail}`;
+    assert.ok(ledger.normalizeWorkspaceEvent(event({ summary: longSummary })).summary.endsWith(tail));
+    const rows = Array.from({ length: 25 }, (_, index) => event({
+      idempotencyKey: `full:${index}`,
+      occurredAt: new Date(Date.parse('2026-08-19T01:00:00Z') + index * 60 * 60 * 1000).toISOString(),
+      objectRefs: [`file:D:/repo/${index}.md`], contextRefs: [`topic:全量-${index}`],
+      summary: `全量上下文 第${index + 1}条`,
+    }));
+    assert.equal(ledger.searchOperationalHistory(rows, '全量上下文').length, rows.length);
+  });
+
   test('正式 UI/IPC 与三个 pilot producer 接线且终端不转发命令正文', () => {
     const read = relative => fs.readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
     const preload = read('preload/bridge.js'), main = read('main/main.js'), sidebar = read('renderer/shell/sidebar-panels.js');

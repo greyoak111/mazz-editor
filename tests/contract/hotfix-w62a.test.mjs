@@ -5,8 +5,9 @@ import { describe, test, assert } from '../harness.mjs';
 import { CommandRegistry } from '../../renderer/core/command-registry.js';
 import {
   AgentRuntime, appendLedger, decideAgentCommand, frequentLedgerInputs, ledgerToMarkdown,
-  normalizeLedger, parseAgentDecision, resolveLedgerInput, validateAgentArgs,
+  normalizeLedger, parseAgentDecision, resolveLedgerInput, summarizeToolResult, validateAgentArgs,
 } from '../../renderer/modules/factory/agent.js';
+import { aiTranslate } from '../../renderer/lib/ai-translate.js';
 
 const src = rel => fs.readFileSync(new URL('../../' + rel, import.meta.url), 'utf8');
 const factorySrc = src('renderer/modules/factory/index.js');
@@ -125,9 +126,98 @@ describe('W62a 台账、指代与车间落点', () => {
     assert.match(ledgerToMarkdown(ledger), /Mazz 指令台台账[\s\S]*file\.openPath/);
   });
 
+  test('完整台账、工具结果、focus、回答与完结消息不被本地字符门限截断', async () => {
+    const firstInput = `最早交办:${'甲'.repeat(1600)}:最早尾标`;
+    const entries = Array.from({ length: 130 }, (_, index) => ({
+      at: index + 1,
+      type: 'user',
+      input: index === 0 ? firstInput : `交办-${index}`,
+    }));
+    let ledger = normalizeLedger({ entries });
+    assert.equal(ledger.entries.length, 130);
+    ledger = appendLedger(ledger, { type: 'user', input: '第131条' });
+    assert.equal(ledger.entries.length, 131);
+
+    const longResult = `工具结果:${'乙'.repeat(1800)}:结果尾标`;
+    const longPath = `D:/${'目录/'.repeat(220)}工件.md`;
+    const summary = summarizeToolResult({ path: longPath, evidence: longResult });
+    assert(summary.includes(longPath) && summary.includes(longResult));
+    ledger = appendLedger(ledger, { type: 'tool', command: 'demo.long', args: { path: longPath }, result: longResult, focus: longPath, status: 'done' });
+    const markdown = ledgerToMarkdown(ledger);
+    assert(markdown.includes(firstInput) && markdown.includes(longPath) && markdown.includes(longResult));
+
+    let prompt = '';
+    const transcriptTail = `本轮结果:${'丙'.repeat(1700)}:本轮尾标`;
+    await decideAgentCommand({
+      input: '继续', cards: [], ledger, transcript: [{ command: 'demo.long', args: { path: longPath }, result: transcriptTail }],
+      ask: async request => { prompt = request.user; return '{"command":"agent.finish","args":{"message":"完成"}}'; },
+    });
+    assert(prompt.includes(firstInput) && prompt.includes(longResult) && prompt.includes(transcriptTail));
+
+    const registry = new CommandRegistry();
+    registry.register('demo.long', { title: '长结果', argsSchema: { type: 'object' }, run: () => ({ path: longPath, evidence: longResult }) });
+    const finishMessage = `完成说明:${'丁'.repeat(1700)}:完结尾标`;
+    const decisions = [{ command: 'demo.long', args: { path: longPath } }, { command: 'agent.finish', args: { message: finishMessage } }];
+    const runtime = new AgentRuntime({ registry, ledger: normalizeLedger(), decide: async () => decisions.shift() });
+    const done = await runtime.submit('执行长结果命令');
+    assert.equal(runtime.ledger.entries.find(entry => entry.type === 'tool')?.focus, longPath);
+    assert(runtime.ledger.entries.find(entry => entry.type === 'tool')?.result.includes(longResult));
+    assert.equal(runtime.ledger.entries.find(entry => entry.type === 'finish')?.message, finishMessage);
+    assert.equal(done.message, finishMessage);
+
+    const longAnswer = `选择:${'戊'.repeat(900)}:选择尾标`;
+    const seen = [];
+    const clarifyQueue = [
+      { command: 'agent.clarify', args: { question: '请选择', options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] } },
+      { command: 'agent.finish', args: { message: '已处理' } },
+    ];
+    const clarifyRuntime = new AgentRuntime({ registry, ledger: normalizeLedger(), decide: async context => { seen.push(context.transcript); return clarifyQueue.shift(); } });
+    await clarifyRuntime.submit('需要澄清');
+    await clarifyRuntime.answer(longAnswer);
+    assert.equal(seen[1][0].result, `用户选择：${longAnswer}`);
+  });
+
   test('指令台并入工厂车间流，不新增 agent 子窗', () => {
     for (const pin of ['fc-command-dock', 'fc-agent-input', 'AgentRuntime', 'persistAgentLedger', '交办台账.md', "aiRolePicker('agent'"]) assert(factorySrc.includes(pin), `车间指令台缺 ${pin}`);
     assert(!factorySrc.includes("kind: 'agent'"), '不得另开 agent 子窗');
     assert(registrySrc.includes('toolCards(') && registrySrc.includes('danger:'), '命令表未提供受控工具卡');
+  });
+});
+
+describe('AI 翻译把完整输入一次性交给厂商', () => {
+  test('超长输入只发一次且不切块，空输入不发请求', async () => {
+    const previousMazz = window.mazz;
+    const requests = [];
+    const target = { providerId: 'custom', model: 'mock-model' };
+    window.mazz = {
+      isElectron: true,
+      invoke: async (channel, payload = {}) => {
+        if (channel === 'settings:get' && payload.key === 'factory.providers') {
+          return { custom: { id: 'custom', name: 'Mock', baseURL: 'https://mock.invalid', model: 'mock-model', models: ['mock-model'], cards: ['fast'] } };
+        }
+        if (channel === 'settings:get' && payload.key === 'factory.routing') return { version: 1, default: target, routes: { translation: target } };
+        if (channel === 'secret:get' && payload.key === 'factory.keys') return JSON.stringify({ custom: 'test-key' });
+        if (channel === 'factory:aiChat') {
+          requests.push(payload);
+          return { text: '完整译文', finishReason: 'stop', completionKind: 'finish-reason' };
+        }
+        return null;
+      },
+    };
+    try {
+      const original = `原文开始\n${'长文。'.repeat(1800)}\n原文结束`;
+      const translated = await aiTranslate({ text: original, from: 'zh-CN', to: 'en' });
+      assert.equal(translated.text, '完整译文');
+      assert.equal(requests.length, 1);
+      assert(requests[0].user.includes(original));
+      assert.equal(requests[0].user.includes('长文分段'), false);
+      assert.equal('maxTokens' in requests[0] || 'max_tokens' in requests[0], false);
+
+      const empty = await aiTranslate({ text: '', from: 'zh-CN', to: 'en' });
+      assert.equal(empty.text, '');
+      assert.equal(requests.length, 1);
+    } finally {
+      window.mazz = previousMazz;
+    }
   });
 });

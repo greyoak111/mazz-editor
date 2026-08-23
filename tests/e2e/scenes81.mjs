@@ -1,4 +1,4 @@
-// W68c：闲聊隔离、模糊澄清、锁定 diff、终审三钮、预算帽与七指标看板。
+// W68c：闲聊隔离、模糊澄清、锁定 diff、终审三钮、Provider usage 只读观测与七指标看板。
 import fs from 'fs';
 import path from 'path';
 
@@ -14,12 +14,22 @@ export async function scenes81({ win, human, scenario, shotDir }) {
       const { makeFinalReviewCard } = await import('./modules/factory/command-gate.js');
       const ws = String(await window.mazz.invoke('workspace:get')).replace(/\\/g, '/').replace(/\/$/, '');
       const folder = `${ws}/Output/小说/20260813-W68c指令闸实证`;
-      const task = { id: 'w68c-command-gate', label: '事件日·W68c指令闸实证', folder, genreId: 'xiaoshuo', values: { 书名: 'W68c指令闸实证', 事件日: true }, mode: 'single', status: 'done', reviewProtocol: 'W68a', reviewRitual: 'full', reviewBudgetCap: 12000, outputProtocol: 'W60b' };
+      const task = { id: 'w68c-command-gate', label: '事件日·W68c指令闸实证', folder, genreId: 'xiaoshuo', values: { 书名: 'W68c指令闸实证', 事件日: true }, mode: 'single', status: 'done', reviewProtocol: 'W68a', reviewRitual: 'full', outputProtocol: 'W60b' };
       fp.tasks = fp.tasks.filter(x => x.id !== task.id).concat(task); fp.persistTasks();
       await window.mazz.invoke('fs:mkdir', { path: folder });
       await window.mazz.invoke('fs:writeFile', { path: `${folder}/圣经.md`, content: '# 圣经\n\n## 锁定事实\n\n- 舰名＝海岳\n' });
       await window.mazz.invoke('fs:writeFile', { path: `${folder}/判例库.md`, content: '# 判例库\n\n- W68-R4：锁定项先确认。\n' });
-      await window.mazz.invoke('fs:writeFile', { path: `${folder}/成本台账.json`, content: JSON.stringify({ totalTokens: 4200, units: [{ unitNo: 1, ritual: { requested: 'full' }, budget: { capTokens: 12000, usedTokens: 4200 } }] }, null, 2) });
+      const observedAt = '2026-08-13T10:00:00.000Z';
+      await window.mazz.invoke('fs:writeFile', { path: `${folder}/成本台账.json`, content: JSON.stringify({
+        totalTokens: 4200,
+        units: [{
+          unitNo: 1, ritual: { requested: 'full', effective: 'full' }, at: observedAt,
+          budget: {
+            capTokens: null, usedTokens: 4200, remainingTokens: null, source: 'provider-reported', enforced: false,
+            entries: [{ seat: 'M1', phase: 'draft', tokens: 4200, inputTokens: 3000, outputTokens: 1200, source: 'provider-reported', at: observedAt }],
+          },
+        }],
+      }, null, 2) });
       const events = [normalizeFactoryEvent({ id: 'w68c-body', type: 'body', title: '事件日正文', content: '# 正文\n\n舰队沿东海航路启航。', unitNo: 1, unitName: '章', stage: 'draft' }), normalizeFactoryEvent({ id: 'w68c-machine', type: 'review', title: '机检打回', content: '未通过：锁定口径待核', unitNo: 1, unitName: '章', stage: 'machine' }), normalizeFactoryEvent({ id: 'w68c-objection', type: 'review', title: '质询', content: '有效质询：编队命名缺来源', unitNo: 1, unitName: '章', stage: 'objection', tone: 'disagreement', threadId: 'w68c-thread' }), normalizeFactoryEvent({ id: 'w68c-answer', type: 'review', title: '答辩', content: '根据证据《东海编制表》撤回 withdraw', unitNo: 1, unitName: '章', stage: 'answer', tone: 'evidence', threadId: 'w68c-thread' }), normalizeFactoryEvent({ id: 'w68c-hearing', type: 'verdict', title: '开庭裁决', content: '维持证据口径', unitNo: 1, unitName: '章', stage: 'hearing', tone: 'verdict', threadId: 'w68c-thread' })];
       for (const [no, action] of [[1, 'seal'], [2, 'return'], [3, 'hold']]) {
         const artifactDir = `${folder}/工件/第00${no}章-终审${no}`;
@@ -42,7 +52,7 @@ export async function scenes81({ win, human, scenario, shotDir }) {
     }, { timeout: 15000, msg: 'W68c 卡片载入' });
     const state = await human.evaluate(() => ({ buttons: [...document.querySelectorAll('[data-card-action^="final:"]')].map(x => x.textContent.trim()), healthPin: document.querySelector('[data-a="health"]')?.textContent, cost: document.querySelector('[data-stat="cost"]')?.textContent }));
     await human.assert(['入库', '打回', '先放着'].every(x => state.buttons.includes(x)), '终审三钮必须同卡可见');
-    await human.assert(/7 项/.test(state.healthPin || '') && state.cost === '4,200', '健康七指标和成本帽必须钉顶');
+    await human.assert(/7 项/.test(state.healthPin || '') && state.cost === '4,200', '健康七指标和 Provider 实报 usage 必须钉顶');
   });
 
   await scenario('W68c 闲聊零误触发、模糊指令二选一且质检不改稿', async () => {
@@ -89,7 +99,7 @@ export async function scenes81({ win, human, scenario, shotDir }) {
     await human.assert(after.includes('护航编队按东海系命名'), '确认后锁定变更才可写入圣经');
   });
 
-  await scenario('W68c 终审三钮真落状态、入库正文与预算降级', async () => {
+  await scenario('W68c 终审三钮真落状态、入库正文与 Provider usage 只读', async () => {
     for (const [id, action] of [['w68c-final-seal', 'final:seal'], ['w68c-final-return', 'final:return'], ['w68c-final-hold', 'final:hold']]) {
       await human.evaluate(id => document.querySelector(`[data-jump="${CSS.escape(id)}"]`)?.click(), id);
       await win.waitForSelector(`[data-event="${id}"] [data-card-action="${action}"]`, { timeout: 5000 });
@@ -106,14 +116,21 @@ export async function scenes81({ win, human, scenario, shotDir }) {
     }), folder);
     await human.assert(/第1章终审正文/.test(persisted.target) && persisted.ledger.decisions.length === 3 && /打回/.test(persisted.returned), '入库/打回/先放着均须物理留痕');
 
-    await human.click('[data-a="budget"]');
-    await human.until(() => !!document.querySelector('[data-card-action="budget:degrade"]'), { timeout: 6000, msg: '预算降级卡' });
-    await human.click('[data-card-action="budget:degrade"]');
-    await human.until(() => {
+    const beforeUsageClick = await human.evaluate(() => {
       const tasks = JSON.parse(localStorage.getItem('mazz.factory.tasks') || '[]');
-      return tasks.find(x => x.id === 'w68c-command-gate')?.reviewRitual === 'light';
-    }, { timeout: 6000, msg: '预算帽降级写入任务' });
-    await human.assert(true, '超帽选择降级后保留轻仪式而非绕闸');
+      return tasks.find(x => x.id === 'w68c-command-gate')?.reviewRitual;
+    });
+    await human.click('[data-a="budget"]');
+    await win.waitForTimeout(250);
+    const usageState = await human.evaluate(() => {
+      const tasks = JSON.parse(localStorage.getItem('mazz.factory.tasks') || '[]');
+      return {
+        ritual: tasks.find(x => x.id === 'w68c-command-gate')?.reviewRitual,
+        localActions: document.querySelectorAll('[data-card-action^="budget:"]').length,
+      };
+    });
+    await human.assert(beforeUsageClick === 'full' && usageState.ritual === 'full' && usageState.localActions === 0,
+      'Provider usage 入口只能展示观测值，不得生成降级/暂停动作或改写审校档位');
   });
 
   await scenario('W68c 七指标看板、关闭重开恢复与宿主窄分屏', async () => {
@@ -139,6 +156,7 @@ export async function scenes81({ win, human, scenario, shotDir }) {
     await win.screenshot({ path: path.join(shotDir, 'w68c-gates-split.png') });
     const archivePath = path.join(folder.replace(/\//g, path.sep), '工厂群.md');
     const archive = fs.readFileSync(archivePath, 'utf8');
-    await human.assert(archive.includes('instruction-chat') && archive.includes('lock-decision') && archive.includes('final-human') && archive.includes('budget-decision'), '四类决定必须全进物理群档');
+    await human.assert(archive.includes('instruction-chat') && archive.includes('lock-decision') && archive.includes('final-human') && !archive.includes('budget-decision'),
+      '指令、锁定与终审决定必须进物理群档，Provider usage 观测不得伪造人工预算决定');
   });
 }

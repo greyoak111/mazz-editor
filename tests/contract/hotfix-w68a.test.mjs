@@ -141,10 +141,10 @@ describe('W68a 双环、开庭与四闸', () => {
   });
 });
 
-describe('W68a 预算、仪式与工件族', () => {
-  test('预算先降仪式、再硬停，外部席不从轻仪式删除', () => {
-    assert.deepEqual(planReviewRitual('full', 12000), { requested: 'full', effective: 'light', downgraded: true, stopped: false, reason: '预算不足以覆盖全仪式，降为轻仪式并保留外部红队席' });
-    assert.equal(planReviewRitual('light', 7999).stopped, true);
+describe('W68a 厂商计量、仪式与工件族', () => {
+  test('旧 Token 数值不再降仪式或硬停，外部席按用户所选仪式执行', () => {
+    assert.deepEqual(planReviewRitual('full', 1), { requested: 'full', effective: 'full', downgraded: false, stopped: false, reason: '' });
+    assert.equal(planReviewRitual('light', 0).stopped, false);
   });
 
   test('封存清单钉住十一类工件、只读原件与补遗规则', () => {

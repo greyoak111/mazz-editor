@@ -17,7 +17,7 @@ class GlobalShortcuts {
     this._reg(map.quickNote, () => {
       // 支持全局选中文本后唤起自动带入（尽力读取剪贴板）
       let initial = '';
-      try { initial = clipboard.readText().slice(0, 2000); } catch {}
+      try { initial = clipboard.readText(); } catch {}
       this.wm.toggleQuickNote(initial);
     });
   }

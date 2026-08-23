@@ -36,10 +36,12 @@ describe('W73g Director and Process Protocol assets', () => {
     assert.equal(protocol.schema, FACTORY_PROCESS_PROTOCOL_SCHEMA);
     assert.equal(protocol.directorTable.length, 7);
     assert.equal(protocol.handoffs.length, 7);
-    assert.equal(protocol.exceptions.length, 6);
+    assert.equal(protocol.exceptions.length, 5);
     assert.equal(protocol.artifactChain.length, 12);
     assert.deepEqual(protocol.gateRecoveryProjection.gates.map(row => row.gateRef), ['w68:machine', 'w68:point', 'w68:review', 'w68:objection']);
     assert.equal(protocol.exceptions.every(row => row.automaticFallback === false), true);
+    assert.equal(protocol.exceptions.some(row => row.exceptionId === 'exception:budget-stop'), false);
+    assert.equal(protocol.gateRecoveryProjection.recoveryPoints.some(row => row.recoveryPointId === 'recovery:budget-decision'), false);
     assert.match(protocol.provenance.boundary, /no execution|不执行/i);
     const markdown = renderFactoryProcessProtocolMarkdown(protocol);
     for (const heading of ['Director table', 'Handoff', 'Exception', 'Artifact chain', 'Gate projection', 'Recovery points']) assert.ok(markdown.includes(heading));

@@ -30,10 +30,8 @@ function normalizedPayload(payload = {}) {
     scrollPasses: Math.max(0, Number(payload.meta?.scrollPasses) || 0),
   };
   if (!/^https?:\/\//i.test(meta.url)) throw new Error('对话来源网址无效');
-  const messages = normalizeHarvestMessages(payload.messages).slice(0, 1000);
+  const messages = normalizeHarvestMessages(payload.messages);
   if (!messages.length) throw new Error('请至少选择一条消息');
-  const totalChars = messages.reduce((sum, row) => sum + row.text.length, 0);
-  if (totalChars > 500_000) throw new Error('一次最多处理 50 万字，请缩小选择范围');
   return { meta, messages };
 }
 
@@ -45,9 +43,7 @@ function normalizedReview(review = {}) {
   const title = String(review.title || '').trim();
   const statement = String(review.statement || '').replace(/\r\n?/g, '\n').trim();
   if (!title) throw new Error('请填写候选标题');
-  if (title.length > 500) throw new Error('候选标题最多 500 字符');
   if (!statement) throw new Error('请审阅并填写候选正文');
-  if (statement.length > 100_000) throw new Error('候选正文最多 10 万字符');
   const proposedAt = new Date(String(review.proposedAt || '')).toISOString();
   const supersedes = [...new Set((Array.isArray(review.supersedes) ? review.supersedes : [])
     .map(value => String(value || '').trim()).filter(Boolean))];
@@ -58,8 +54,7 @@ function normalizedReview(review = {}) {
 
 function managementReason(value, action) {
   const reason = String(value || '').trim();
-  if (reason.length < 4) throw new Error(`${action}前请填写至少 4 个字的原因`);
-  if (reason.length > 1200) throw new Error('原因最多 1200 字符');
+  if (!reason) throw new Error(`${action}前请填写原因`);
   return reason;
 }
 

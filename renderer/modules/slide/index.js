@@ -975,22 +975,23 @@ async function aiSplitMarkdownToSlides(md, title, { skipConfirm = false } = {}) 
   try {
     text = await chat({
       cfg, role: 'blueprint', temperature: 0.3,
-      system: '你是演示文稿排版助手。把用户文稿拆成演示页序列，只回 JSON 数组，每项 {"title":"页标题","bullets":["要点"],"notes":"讲者备注"}。3–12 页，每页 3–6 条要点，要点 ≤20 字。不输出任何 JSON 以外的文字。',
-      user: String(md || '').slice(0, 12000),
+      system: '你是演示文稿排版助手。按内容的完整结构自然拆成演示页序列，不设页数、每页要点数或文字长度限制。只回 JSON 数组，每项 {"title":"页标题","bullets":["要点"],"notes":"讲者备注"}。不输出任何 JSON 以外的文字。',
+      user: String(md || ''),
     });
   } catch (e) { toast('AI 拆段失败：' + String(e.message || e).slice(0, 120)); return; }
   // 宽容解析：剥围栏/抓首个 JSON 数组
   const m = String(text || '').replace(/```(?:json)?/gi, '').match(/\[[\s\S]*\]/);
   let pages = [];
   try { pages = JSON.parse(m?.[0] || '[]'); } catch { pages = []; }
-  pages = (Array.isArray(pages) ? pages : []).filter(p => p && (p.title || (p.bullets || []).length));
+  pages = (Array.isArray(pages) ? pages : []).filter(p => p && typeof p === 'object'
+    && (String(p.title || '').trim() || (Array.isArray(p.bullets) && p.bullets.some(Boolean))));
   if (!pages.length) { toast('AI 拆段失败：返回无法解析（换个模型再试）'); return; }
   const doc = createSlideDoc(title || 'AI 演示', 'night');
-  for (const p of pages.slice(0, 12)) {
+  for (const p of pages) {
     const items = [];
-    if (p.title) items.push(createItem('text', { text: String(p.title).slice(0, 40), style: { size: 40, bold: true, align: 'center' }, left: 10, top: 12, width: 80, height: 14 }));
-    const bl = (p.bullets || []).filter(Boolean).slice(0, 6);
-    if (bl.length) items.push(createItem('text', { left: 12, top: p.title ? 32 : 20, width: 76, height: p.title ? 58 : 70, list: { items: bl.map(t => ({ text: String(t).slice(0, 60), icon: '•' })) }, style: { size: 24 } }));
+    if (p.title) items.push(createItem('text', { text: String(p.title), style: { size: 40, bold: true, align: 'center' }, left: 10, top: 12, width: 80, height: 14 }));
+    const bl = Array.isArray(p.bullets) ? p.bullets.filter(Boolean) : [];
+    if (bl.length) items.push(createItem('text', { left: 12, top: p.title ? 32 : 20, width: 76, height: p.title ? 58 : 70, list: { items: bl.map(t => ({ text: String(t), icon: '•' })) }, style: { size: 24 } }));
     addSlideToDoc(doc, createV2Slide(null, { notes: String(p.notes || ''), items }));
   }
   window.MazzHost?.openTab('slide', { title: (title || 'AI 演示') + '.mazzslide', content: serializeDoc(doc) });

@@ -69,7 +69,7 @@ export async function scenes77({ app, win, human, scenario, shotDir }) {
       const P = await import('./modules/factory/provider.js');
       const chapter = await P.getProviderConfig('chapter');
       const blueprint = await P.getProviderConfig('blueprint');
-      const reply = await P.chat({ role: 'chapter', user: 'W62 路由实证', maxTokens: 32 });
+      const reply = await P.chat({ role: 'chapter', user: 'W62 路由实证' });
       return { chapter: chapter.providerId, blueprint: blueprint.providerId, reply };
     });
     await human.assert(routed.chapter === 'kimi' && routed.blueprint === 'deepseek', '章节应走改派，蓝图应走全局兜底');

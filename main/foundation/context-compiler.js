@@ -66,10 +66,13 @@ function normalizeContextSource(input, index = 0) {
     replacementRef: optionalString(input.replacementRef), supersessionReason: optionalString(input.supersessionReason),
     version: optionalString(input.version), mtime: optionalIso(input.mtime, `sources[${index}].mtime`),
     hash: requiredString(input.hash, `sources[${index}].hash`),
-    tokenEstimate: Math.ceil(finite(input.tokenEstimate, `sources[${index}].tokenEstimate`, { min: 0, max: 10_000_000 })),
+    // Legacy estimates remain inspectable telemetry. They are deliberately
+    // optional and never participate in context selection.
+    tokenEstimate: input.tokenEstimate === undefined || input.tokenEstimate === null || input.tokenEstimate === ''
+      ? null : Math.ceil(finite(input.tokenEstimate, `sources[${index}].tokenEstimate`)),
     relevance: finite(input.relevance, `sources[${index}].relevance`, { min: 0, max: 1 }),
     authorityLevel: Math.floor(finite(input.authorityLevel ?? 0, `sources[${index}].authorityLevel`, { min: 0, max: 100 })),
-    summary: optionalString(input.summary).slice(0, 1000), excerpt: optionalString(input.excerpt).slice(0, 12000),
+    summary: optionalString(input.summary), excerpt: optionalString(input.excerpt),
     sensitivity: stringList(input.sensitivity || [], `sources[${index}].sensitivity`),
     provenance: clonePlain(input.provenance || {}, `sources[${index}].provenance`), mandatory: input.mandatory === true,
   };
@@ -141,7 +144,10 @@ function compileContextPackage(input = {}) {
   if (!isPlainObject(input)) throw new Error('Context compile request 必须是对象');
   assertKnownKeys(input, ['taskId', 'seatId', 'checkpointId', 'compilerVersion', 'policyVersion', 'budget', 'sources', 'obligations', 'constraints', 'recentDelta', 'unknowns', 'seatPolicy', 'compiledAt'], 'Context compile request');
   assertNoSecrets(input, 'Context compile request');
-  const budget = Math.floor(finite(input.budget, 'budget', { min: 1, max: 2_000_000 }));
+  // budget/maxSourceTokens are accepted for backwards compatibility and
+  // surfaced as telemetry only. Provider/model context policy owns capacity.
+  const budget = input.budget === undefined || input.budget === null || input.budget === ''
+    ? null : Math.floor(finite(input.budget, 'budget'));
   const sources = (input.sources || []).map(normalizeContextSource);
   const sourceIds = new Set();
   for (const source of sources) { if (sourceIds.has(source.sourceRef)) throw new Error(`sourceRef 重复: ${source.sourceRef}`); sourceIds.add(source.sourceRef); }
@@ -149,7 +155,8 @@ function compileContextPackage(input = {}) {
   assertKnownKeys(seatPolicy, ['allowedSensitivity', 'deniedKinds', 'maxSourceTokens'], 'seatPolicy');
   const allowedSensitivity = new Set(stringList(seatPolicy.allowedSensitivity || ['public', 'internal'], 'seatPolicy.allowedSensitivity'));
   const deniedKinds = new Set(stringList(seatPolicy.deniedKinds || [], 'seatPolicy.deniedKinds'));
-  const maxSourceTokens = Math.floor(finite(seatPolicy.maxSourceTokens ?? budget, 'seatPolicy.maxSourceTokens', { min: 1, max: budget }));
+  const maxSourceTokens = seatPolicy.maxSourceTokens === undefined || seatPolicy.maxSourceTokens === null || seatPolicy.maxSourceTokens === ''
+    ? null : Math.floor(finite(seatPolicy.maxSourceTokens, 'seatPolicy.maxSourceTokens'));
   const exclusions = [], eligible = [];
   for (const source of sources) {
     const deniedLabel = source.sensitivity.find(label => !allowedSensitivity.has(label));
@@ -159,14 +166,9 @@ function compileContextPackage(input = {}) {
     else eligible.push(source);
   }
   eligible.sort((a, b) => Number(b.mandatory) - Number(a.mandatory) || statusRank(b.status) - statusRank(a.status) || b.authorityLevel - a.authorityLevel || b.relevance - a.relevance || a.sourceRef.localeCompare(b.sourceRef));
-  const selected = []; let used = 0; let overflow = false;
-  for (const source of eligible) {
-    const sourceCost = source.tokenEstimate;
-    if (!source.mandatory && sourceCost > maxSourceTokens) exclusions.push({ ref: source.sourceRef, reason: 'SOURCE_TOKEN_LIMIT' });
-    else if (source.mandatory || used + sourceCost <= budget) {
-      selected.push(source); used += sourceCost; if (used > budget || source.tokenEstimate > maxSourceTokens) overflow = true;
-    } else exclusions.push({ ref: source.sourceRef, reason: 'BUDGET_EXCEEDED' });
-  }
+  const selected = eligible;
+  const used = selected.reduce((total, source) => total + (source.tokenEstimate ?? 0), 0);
+  const overflow = false;
   const coverageSnapshot = createCoverageSnapshot(input.obligations || []);
   const conflicts = sourceConflictMap(sources);
   const constraints = stringList(input.constraints || [], 'constraints');
@@ -180,7 +182,11 @@ function compileContextPackage(input = {}) {
     relevantRefs: selected.filter(source => source.status !== 'CURRENT' || CANDIDATE_KINDS.has(source.kind)),
     recentDelta, constraints, knownConflicts: conflicts, unknowns,
     excludedRefs: exclusions.sort((a, b) => a.ref.localeCompare(b.ref)), coverageSnapshot,
-    provenance: { sourceCount: sources.length, selectedCount: selected.length, candidateAuthorityGranted: false, compiler: 'deterministic-local', conversationHistoryUsed: false },
+    provenance: {
+      sourceCount: sources.length, selectedCount: selected.length, candidateAuthorityGranted: false,
+      compiler: 'deterministic-local', conversationHistoryUsed: false,
+      tokenPolicy: 'provider-owned', legacyBudgetObserved: budget, legacyMaxSourceTokensObserved: maxSourceTokens,
+    },
     compiledAt: iso(input.compiledAt || new Date().toISOString(), 'compiledAt'),
   };
   const contextPackageId = `context-package:${digest(base)}`;

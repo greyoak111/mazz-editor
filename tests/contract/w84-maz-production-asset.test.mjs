@@ -74,6 +74,14 @@ test('W84c Definition profiles 默认不可执行，secret 和不支持 profile 
   await assert.rejects(() => maz.buildProductionAsset({ manifest: manifest('plugin'), files: { 'main.js': 'x' } }), /非执行/);
 });
 
+test('W84c 名称与描述由资产完整保存，不套本地字符帽', () => {
+  const name = `${'长名称'.repeat(130)}名称尾部`;
+  const description = `${'完整描述'.repeat(600)}描述尾部`;
+  const normalized = maz.validateManifest({ ...manifest('workflow'), name, description });
+  assert.equal(normalized.name, name);
+  assert.equal(normalized.description, description);
+});
+
 test('W84d legacy style 迁移先预览且不覆盖原包；legacy plugin 不借统一格式获信任', async () => {
   const source = await legacyStyle();
   const before = maz.sha256(source);

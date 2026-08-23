@@ -66,29 +66,26 @@ describe('W60b Output 目录协议', () => {
   });
 });
 
-describe('W60b 篇幅联动与批量闸', () => {
-  test('四档齐全；总字数与每章字数向上联动章节数', () => {
-    assert(eng.FACTORY_LENGTH_PRESETS.map(x => x.id).join(',') === 'short,medium,long,unlimited', '四档不全');
-    assert(eng.FACTORY_LENGTH_PRESETS.map(x => x.totalWords).join(',') === '10000,100000,500000,0', '四档字数未按 1万/10万/50万/无限定稿');
-    assert(eng.FACTORY_LENGTH_PRESETS.map(x => x.wordsPerUnit).join(',') === '2000,4000,6000,4000', '四档默认单元字数失真');
+describe('W60b 可选篇幅参考与无数量批量', () => {
+  test('新项目默认不指定；参考数值不再派生连写模式或执行终点', () => {
+    const empty = eng.resolveFactoryLengthPlan();
+    assert.deepEqual(empty, { preset: 'custom', totalWords: 0, wordsPerUnit: 0, maxMode: false, maxChapters: 0 });
     const plan = eng.resolveFactoryLengthPlan({ preset: 'medium', totalWords: 52001, wordsPerUnit: 3000 });
-    assert(plan.maxMode && plan.maxChapters === 18, '联动应向上取整为 18：' + JSON.stringify(plan));
+    assert(!plan.maxMode && plan.maxChapters === 0, '参考字数不得开启连写或换算执行单元：' + JSON.stringify(plan));
     assert(plan.totalWords === 52001 && plan.wordsPerUnit === 3000, '智能行数值丢失');
     const unlimited = eng.resolveFactoryLengthPlan({ preset: 'unlimited' });
-    assert(unlimited.maxMode && unlimited.maxChapters === 0 && unlimited.totalWords === 0, '无限档协议失真');
+    assert(!unlimited.maxMode && unlimited.maxChapters === 0 && unlimited.totalWords === 0, '旧无限档只可作兼容参考，不能自动开连写');
   });
 
-  test('30 条只软提示，100 条可入，101 条硬拒绝', () => {
-    assert(!eng.factoryBatchGate(30).warning, '30 条不应提示');
-    assert(eng.factoryBatchGate(31).allowed && eng.factoryBatchGate(31).warning, '31 条应软提示但允许');
-    assert(eng.factoryBatchGate(100).allowed, '100 条应允许');
-    assert(!eng.factoryBatchGate(101).allowed, '101 条必须拒绝');
+  test('任意数量的合法名单直接入队，不提示、不拒绝', () => {
+    for (const count of [30, 31, 100, 101, 1001]) {
+      const gate = eng.factoryBatchGate(count);
+      assert(gate.allowed && !gate.warning && !gate.message, `${count} 条不应触发本地数量闸：${JSON.stringify(gate)}`);
+    }
     const tpl = { input_fields: [{ id: '书名', label: '书名' }] };
-    const csv100 = ['书名', ...Array.from({ length: 100 }, (_, i) => `书${i + 1}`)].join('\n');
-    assert(eng.parseCsvTasks(csv100, tpl).length === 100, '100 行解析失败');
-    let msg = '';
-    try { eng.parseCsvTasks(csv100 + '\n书101', tpl); } catch (e) { msg = e.message; }
-    assert(msg.includes('100') && msg.includes('拒绝'), '101 行未硬拒绝：' + msg);
+    const csv = ['书名', ...Array.from({ length: 1001 }, (_, i) => `书${i + 1}`)].join('\n');
+    assert(eng.parseCsvTasks(csv, tpl).length === 1001, '1000+ 行合法 CSV 应完整解析');
+    assert(projectPanelSrc.includes('所有格式合法的书名都会入队'), '立项 UI 未说明无数量闸');
   });
 });
 
@@ -101,17 +98,19 @@ describe('项目立项 UI 单一规格与确认事务', () => {
     assert(!projectPanelSrc.includes('class="tab" data-t="genre"'), '新建创作模板不得再伪装成同级页签');
   });
 
-  test('旧长度字段仅保留兼容元数据，新项目表单只渲染 lengthPlan', () => {
+  test('新项目删除旧长度字段与数值档位，只保留空白可选参考', () => {
     for (const id of ["id: 'length'", "id: '篇幅长短'", "id: '每章字数'"]) {
-      const row = novelGenreSrc.split('\n').find(line => line.includes(id));
-      assert(row?.includes("uiOwner: 'lengthPlan'"), `${id} 未交给 lengthPlan 单一所有者`);
+      assert(!novelGenreSrc.includes(id), `${id} 不应继续成为新小说字段`);
     }
-    assert(projectPanelSrc.includes("filter(field => field.uiOwner !== 'lengthPlan')"), '项目表单未隐藏旧长度字段');
-    for (const pin of ['formatPresetTotal', '1万字', '10万字', '50万字', '自定义篇幅']) {
-      assert(projectPanelSrc.includes(pin) || (pin.endsWith('万字') && projectPanelSrc.includes('total / 10000')), `篇幅卡契约缺 ${pin}`);
+    assert(projectPanelSrc.includes("field.uiOwner !== 'lengthPlan'") && projectPanelSrc.includes('legacyLengthFieldIds'), '项目表单未隐藏旧长度字段');
+    for (const stale of ['formatPresetTotal', '1万字', '10万字', '50万字', 'data-preset', 'word-chips', '按剩余字数安排']) {
+      assert(!projectPanelSrc.includes(stale), `新项目仍暴露固定篇幅规格：${stale}`);
     }
-    assert(projectPanelSrc.includes('aria-pressed=') && projectPanelSrc.includes('id="pj-chapters"') && projectPanelSrc.includes('aria-live="polite"'), '篇幅选择或预计章数缺可访问状态');
-    assert(projectPanelSrc.includes('向上取整，末') && projectPanelSrc.includes('按剩余字数安排'), '预计章数规则必须明示');
+    assert(projectPanelSrc.includes('id="pj-total"') && projectPanelSrc.includes('参考总字数（可选）'), '缺可选总字数参考');
+    assert(projectPanelSrc.includes('id="pj-words"') && projectPanelSrc.includes('placeholder="不指定"'), '缺可选单元参考');
+    assert(projectPanelSrc.includes('id="pj-max"') && projectPanelSrc.includes('关闭即单篇'), '连写必须独立显式选择');
+    assert(projectPanelSrc.includes('id="pj-chapters"') && projectPanelSrc.includes('aria-live="polite"'), '规划预览缺可访问状态');
+    assert(projectPanelSrc.includes('生成与验收不会按字数、字符数、段数或对话比例卡住'), '参考值非门禁语义未明示');
   });
 
   test('提交按 requestId 等结果，人工确认超时保持同一事务，失败保窗、成功才关闭', () => {

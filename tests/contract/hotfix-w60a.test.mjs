@@ -8,14 +8,13 @@ const eng = await import('../../renderer/modules/factory/engine.js');
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
 describe('W60a 蓝图双通道与结构单元', () => {
-  test('novel 19 键 / META 8 键按家族选表，第三方任一通过', () => {
-    const novel = '故事标题 简介 核心价值 主角 配角 世界观 三幕 章节 文风 节奏';
-    const meta = '任务目标 目标读者 核心材料 结构大纲 核心要点 论据数据 术语口径 质量校验';
-    assert(eng.blueprintStructureOk(novel, 'novel'), 'novel 完整蓝图应通过');
-    assert(!eng.blueprintStructureOk(meta, 'novel'), 'META 蓝图不可冒充 novel');
-    assert(eng.blueprintStructureOk(meta, 'meta'), 'META 完整蓝图应通过');
-    assert(!eng.blueprintStructureOk('任务目标 目标读者 核心材料', 'meta'), 'META 少于 4 键必须失败');
-    assert(eng.blueprintStructureOk(meta, 'auto'), '第三方文体应允许 META 通道');
+  test('蓝图只按可执行协议形态校验，不再累计关键词数量', () => {
+    const novel = '# 蓝图\n第1章：启程\n## 创作启动指令';
+    const meta = '# 蓝图\n第1节：材料核验\n## 创作启动指令';
+    assert(eng.blueprintStructureOk(novel, 'novel'), '可执行小说蓝图应通过');
+    assert(eng.blueprintStructureOk(meta, 'meta'), '可执行说明蓝图应通过');
+    assert(!eng.blueprintStructureOk('任务目标 目标读者 核心材料', 'meta'), '没有单元与启动指令的碎片必须失败');
+    assert(eng.blueprintStructureOk(meta, 'auto'), '第三方文体应允许可执行单元协议');
   });
 
   test('snapshotSchema 默认 narrative 零回归，expository 四账齐', () => {
@@ -30,14 +29,14 @@ describe('W60a 蓝图双通道与结构单元', () => {
   });
 });
 
-describe('W60a TOKEN_DECLARATION 与兜底', () => {
-  test('声明缺失自动补；声明优先于去重续写终止', () => {
+describe('W60a 旧字数声明迁移与兜底', () => {
+  test('不再补造字数声明；旧声明只清理而不终止续写', () => {
     const filled = eng.ensureTokenDeclaration('正文甲乙');
-    assert(filled.endsWith('[本次续写字数：4]'), '应按正文实长自动补声明：' + filled);
-    assert.equal(eng.tokenDeclarationOf(filled), 4);
+    assert.equal(filled, '正文甲乙');
+    assert.equal(eng.tokenDeclarationOf(filled), null);
     assert.equal(eng.stripTokenDeclaration(filled), '正文甲乙');
     const done = eng.mergeDeclaredContinuation('已有正文\n[本次续写字数：4]', '不得拼入');
-    assert(done.complete && done.text.includes('已有正文') && !done.text.includes('不得拼入'), '已有声明必须立即终止');
+    assert(!done.complete && done.text.includes('已有正文') && done.text.includes('不得拼入'), '旧声明不得再充当续写终止门');
   });
 
   test('三败兜底同时覆盖 narrative / expository', () => {
@@ -59,14 +58,14 @@ describe('W60a 六层锚与快照', () => {
       outline: outlines[6], chapterNo: 7, total: 12, wordsPerChapter: 2000, title: '书',
       correctionDirective: '纠偏：视角回正', snapshotSchema: eng.getSnapshotSchema({}),
     });
-    const labels = ['第一层：恒定锚', '第二层：窗口锚', '第三层：滚动快照', '第四层：伏笔台账', '第五层：本章任务与 TOKEN 声明', '第六层：纠偏指令'];
+    const labels = ['第一层：恒定锚', '第二层：窗口锚', '第三层：滚动快照', '第四层：伏笔台账', '第五层：本章任务', '第六层：纠偏指令'];
     let at = -1;
     for (const label of labels) { const next = cp.system.indexOf(label); assert(next > at, '六层次序错误：' + label); at = next; }
     assert(cp.system.includes('第4章') && cp.system.includes('第10章'), 'N±3 窗口边界缺失');
     assert(!cp.system.includes('第3章') && !cp.system.includes('第11章'), '窗口泄漏到 N±4');
-    assert(cp.system.includes('[本次续写字数：N]'), 'TOKEN 声明协议未注入');
+    assert(!cp.system.includes('[本次续写字数：N]') && cp.user.includes('不要附加字数或字符数声明'), '字数声明不得成为完成协议');
     const anchor = eng.buildConstantAnchor('核心'.repeat(400), '绝对禁止事项：保留视角规则。'.repeat(30));
-    assert(anchor.length <= 800 && anchor.includes('核心') && anchor.includes('绝对禁止事项'), '恒定锚必须在 800 字内同时保住核心与指令');
+    assert(anchor.length > 800 && anchor.includes('核心'.repeat(400)) && anchor.includes('绝对禁止事项：保留视角规则。'.repeat(30)), '恒定锚不得按字符预算裁剪');
   });
 
   test('expository 快照提示使用四账且伏笔/台账只增不减', () => {
@@ -79,7 +78,7 @@ describe('W60a 六层锚与快照', () => {
 
   test('index 运行链接入家族、Schema、兜底与声明收口', () => {
     const src = readSrc('renderer/modules/factory/index.js');
-    for (const pin of ['blueprintFamily(', 'getSnapshotSchema(', 'canUseUnlimited(tpl)', 'buildFallbackBlueprint(', 'mergeDeclaredContinuation(', 'stripTokenDeclaration(']) {
+    for (const pin of ['blueprintFamily(', 'getSnapshotSchema(', 'shouldContinueFactoryUnits(', 'mergeDeclaredContinuation(', 'stripTokenDeclaration(']) {
       assert(src.includes(pin), 'index 缺运行链接线：' + pin);
     }
     assert.match(src, /task\.doneChapters\}\s+\$\{snapshotSchema\.unitName\}/, '连写收尾必须沿用本次运行的结构单元，不能引用游离变量');

@@ -64,8 +64,8 @@ class WorkspaceEventService {
     const stat = this.fs.existsSync(this.file()) ? this.fs.statSync(this.file()) : { size: 0 };
     return { enabled: this.enabled(), workspaceId: workspaceId(this.root()), events: rows, episodes: events.buildEpisodes(rows), count: rows.length, bytes: stat.size, localOnly: true, capturesKeystrokes: false, capturesSecrets: false, capturesClipboardBody: false };
   }
-  search(query) { return events.searchOperationalHistory(this.list({ limit: 5000 }), query); }
-  lifecycle(ref) { return events.aggregateConceptLifecycle(this.list({ limit: 5000 }), ref); }
+  search(query) { return events.searchOperationalHistory(this.readRecords().map(record => record.event), query); }
+  lifecycle(ref) { return events.aggregateConceptLifecycle(this.readRecords().map(record => record.event), ref); }
   export() { return { schema: 'mazz.workspace-event-export/v0', exportedAt: new Date().toISOString(), ...this.snapshot() }; }
   applyRetention({ now = new Date().toISOString(), authorityRef, reason } = {}) {
     if (!String(authorityRef || '').startsWith('human:')) throw new Error('执行保留策略需要 human:* Authority');

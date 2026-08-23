@@ -8,13 +8,13 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 715,
+    "totalFindings": 712,
     "filesWithFindings": 71,
     "byRule": {
-      "fixed-width-px": 198,
+      "fixed-width-px": 196,
       "white-space-nowrap": 141,
       "position-absolute": 167,
-      "fixed-min-width": 91,
+      "fixed-min-width": 90,
       "sidebar-pixel-coupling": 12,
       "fixed-left-right": 31,
       "width-100vw": 8,
@@ -37,7 +37,7 @@
       },
       {
         "file": "renderer/panels/factorycfg.html",
-        "count": 13
+        "count": 12
       },
       {
         "file": "renderer/modules/browser/index.js",
@@ -50,10 +50,6 @@
       {
         "file": "renderer/styles/convergence.css",
         "count": 8
-      },
-      {
-        "file": "renderer/modules/factory/index.js",
-        "count": 7
       },
       {
         "file": "renderer/modules/slide/index.js",
@@ -73,6 +69,10 @@
       },
       {
         "file": "renderer/lib/print-preview.js",
+        "count": 5
+      },
+      {
+        "file": "renderer/modules/factory/index.js",
         "count": 5
       },
       {
@@ -145,9 +145,9 @@
       }
     ],
     "byProvisionalClass": {
-      "D": 332,
-      "A": 193,
-      "B": 91,
+      "D": 331,
+      "A": 192,
+      "B": 90,
       "E": 68,
       "C": 31
     }
@@ -899,7 +899,7 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1667,
+      "line": 1674,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:var(--fg-dim);margin-top:8px\">到期：${new Date(share.expiresAt).to"
     },
     {
@@ -941,63 +941,49 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/desk.js",
-      "line": 413,
+      "line": 429,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;display:grid;gap:10px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/factory/desk.js",
-      "line": 654,
+      "line": 657,
       "sample": "ctl.resizeObserver = new ResizeObserver(entries => {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 549,
-      "sample": "<label class=\"fc-check\" title=\"每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停\">预算 <input type=\"number\" class=\"fc-review-budget\" min=\"8000\" step=\"1000\" value=\"32000\" style=\"width:72px\"> token</label>"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "D",
-      "file": "renderer/modules/factory/index.js",
-      "line": 552,
+      "line": 564,
       "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 1002,
+      "line": 1012,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-height:60vh;overflow:auto\">${ids.map(id => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 1058,
+      "line": 1068,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;max-height:55vh;overflow:auto\">${this.styles.length ? this.styles.map(s => `"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 3922,
-      "sample": "m.body.innerHTML = `<div style=\"min-width:360px\"><p>${gate.message}</p><p style=\"color:var(--fg-dim);font-size:12px\">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style=\"display:flex;justify-content:flex-end;gap:8px\"><button class=\"rb-btn\" data-b=\"cancel\">取消</button><button class=\"rb-btn\" data-b=\"ok\" style=\"background:va"
-    },
-    {
-      "rule": "fixed-min-width",
-      "provisionalClass": "B",
-      "file": "renderer/modules/factory/index.js",
-      "line": 4037,
+      "line": 4021,
       "sample": "<div style=\"min-width:420px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 4108,
+      "line": 4092,
       "sample": "<div style=\"min-width:460px\">"
     },
     {
@@ -1648,35 +1634,28 @@
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 82,
+      "line": 72,
       "sample": ".research-source span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 88,
+      "line": 78,
       "sample": ".feed-cluster-head b { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/panels/factorycfg.html",
-      "line": 111,
+      "line": 101,
       "sample": ".route-pick { width:100%; justify-content:flex-start; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/panels/factorycfg.html",
-      "line": 492,
-      "sample": "<div class=\"inline-row\"><label><input id=\"pj-dual\" type=\"checkbox\" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id=\"pj-max\" type=\"checkbox\" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>交叉审校 <select id=\"pj-review-ritual\" class=\"sel\"><option value=\"light\" ${(s.reviewRitual || 'light') === 'light' ? '"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/panels/factorycfg.html",
-      "line": 502,
+      "line": 468,
       "sample": "<div class=\"inline-row\"><label class=\"sr-only\" for=\"pj-feed-query\">订阅主题</label><input id=\"pj-feed-query\" class=\"inp\" style=\"flex:1\" placeholder=\"要持续观察的主题\" value=\"${attr(s.extras?.feed?.query || '')}\"><label class=\"sr-only\" for=\"pj-feed-dimension\">工作维度</label><input id=\"pj-feed-dimension\" class=\"inp\" style=\"width:150px\""
     },
     {
@@ -2187,28 +2166,28 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/shell/file-tree.js",
-      "line": 42,
+      "line": 50,
       "sample": "// ResizeObserver 看树容器真实宽度，比阈值即挂 ft-narrow 类整族隐藏（无 RO 环境=一次性判定+resize 兜底）"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/shell/file-tree.js",
-      "line": 44,
+      "line": 52,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/shell/file-tree.js",
-      "line": 45,
+      "line": 53,
       "sample": "this._narrowRO = new ResizeObserver((es) => {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/shell/file-tree.js",
-      "line": 49,
+      "line": 57,
       "sample": "} else { ckNarrow(); window.addEventListener('resize', ckNarrow); }"
     },
     {
@@ -2236,35 +2215,35 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 480,
+      "line": 484,
       "sample": "<div style=\"min-width:560px;max-width:720px\">"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/shell/shell.js",
-      "line": 486,
+      "line": 490,
       "sample": "<div style=\"font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${s.name}</div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 4327,
+      "line": 4325,
       "sample": "<button class=\"rb-btn\" style=\"min-width:28px\" id=\"m-close\" title=\"关闭\" aria-label=\"关闭\">${iconHtml('✕')}</button>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 4343,
+      "line": 4341,
       "sample": "<div style=\"min-width:430px;max-width:600px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/shell/shell.js",
-      "line": 4365,
+      "line": 4363,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {

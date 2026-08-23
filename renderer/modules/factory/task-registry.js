@@ -25,7 +25,42 @@ function optionalBoolean(...values) {
 }
 
 export function normalizeFactoryMode(value = '') {
-  return value === 'single' ? 'single' : 'max';
+  return value === 'max' ? 'max' : 'single';
+}
+
+function positiveFinite(...values) {
+  const value = optionalFinite(...values);
+  return value !== undefined && value > 0 ? value : undefined;
+}
+
+/**
+ * Length/cost fields survive old receipts and CSV imports, but are planning
+ * hints only.  Keeping an explicit advisory envelope prevents a restored
+ * legacy field from quietly becoming an execution gate again.
+ */
+export function normalizeFactoryAdvisoryTargets(value = {}, legacy = {}) {
+  const source = value && typeof value === 'object' ? value : {};
+  const totalWords = positiveFinite(source.totalWords, legacy.totalWords);
+  const wordsPerUnit = positiveFinite(source.wordsPerUnit, legacy.wordsPerUnit);
+  const plannedUnits = positiveFinite(source.plannedUnits, legacy.maxChapters);
+  const reviewBudgetTokens = positiveFinite(source.reviewBudgetTokens, legacy.reviewBudgetCap);
+  const rawPreset = firstPresent(source.lengthPreset, legacy.lengthPreset);
+  const lengthPreset = rawPreset && rawPreset !== 'custom' ? String(rawPreset) : undefined;
+  const targets = { totalWords, wordsPerUnit, plannedUnits, lengthPreset, reviewBudgetTokens };
+  return Object.values(targets).some(item => item !== undefined) ? targets : undefined;
+}
+
+/** Pure loop contract used by the runtime and by bounded unlimited-mode tests. */
+export function shouldContinueFactoryUnits({
+  unlimited = false, unitNo = 1, maxChapters = 0, retryChapter = 0, shouldStop = () => false,
+} = {}) {
+  if (shouldStop()) return false;
+  const current = Math.max(1, Math.trunc(Number(unitNo) || 1));
+  const retry = Math.max(0, Math.trunc(Number(retryChapter) || 0));
+  if (retry) return current <= retry;
+  if (unlimited) return true;
+  const planned = Math.max(0, Math.trunc(Number(maxChapters) || 0));
+  return planned > 0 && current <= planned;
 }
 
 const FACTORY_RESUMABLE_STATUSES = new Set(['running', 'paused', 'stopped']);
@@ -50,7 +85,10 @@ function recoveredRegistryStatus(state = {}) {
 export function factoryTaskState(task = {}, patch = {}) {
   const rawMaxChapters = firstPresent(task.maxChapters, patch.maxChapters, 0);
   const maxChapters = Number.isFinite(Number(rawMaxChapters)) ? Number(rawMaxChapters) : 0;
-  const mode = normalizeFactoryMode(firstPresent(task.mode, patch.mode, 'max'));
+  const rawMode = firstPresent(task.mode, patch.mode);
+  const mode = rawMode === undefined
+    ? (maxChapters > 1 || firstPresent(task.lengthPreset, patch.lengthPreset) === 'unlimited' ? 'max' : 'single')
+    : normalizeFactoryMode(rawMode);
   const receiptAt = Number(task.receiptAt) || Number(patch.receiptAt) || 0;
   const createdAt = Number(task.createdAt) || Number(patch.createdAt) || 0;
   const totalWords = optionalFinite(task.totalWords, patch.totalWords);
@@ -63,6 +101,10 @@ export function factoryTaskState(task = {}, patch = {}) {
   const outputProtocolRaw = firstPresent(task.outputProtocol, patch.outputProtocol);
   const reviewProtocolRaw = firstPresent(task.reviewProtocol, patch.reviewProtocol);
   const exportFmtRaw = firstPresent(task.exportFmt, patch.exportFmt);
+  const advisoryTargets = normalizeFactoryAdvisoryTargets(
+    { ...(patch.advisoryTargets || {}), ...(task.advisoryTargets || {}) },
+    { totalWords, wordsPerUnit, maxChapters, lengthPreset: lengthPresetRaw, reviewBudgetCap },
+  );
   return {
     ...patch,
     id: String(firstPresent(task.id, patch.id, '') || ''),
@@ -81,6 +123,7 @@ export function factoryTaskState(task = {}, patch = {}) {
     reviewBudgetCap,
     dualLoop,
     autoPreview,
+    advisoryTargets,
     outputProtocol: outputProtocolRaw === undefined ? undefined : String(outputProtocolRaw),
     reviewProtocol: reviewProtocolRaw === undefined ? undefined : String(reviewProtocolRaw),
     exportFmt: exportFmtRaw === undefined ? undefined : String(exportFmtRaw),
@@ -118,7 +161,7 @@ export function makeRecoveredFactoryTask(state = {}, { fallbackGenreId = '' } = 
     genreId: String(state.genreId || fallbackGenreId || ''),
     values: state.values && typeof state.values === 'object' ? state.values : {},
     dump: String(state.dump || ''),
-    mode: normalizeFactoryMode(state.mode),
+    mode: explicitMode ? normalizeFactoryMode(state.mode) : (Number(state.maxChapters) > 1 || state.lengthPreset === 'unlimited' ? 'max' : 'single'),
     maxChapters: Number(state.maxChapters) || 0,
     status: recoveredRegistryStatus(state),
     doneChapters: Number(state.currentChapter ?? state.doneChapters) || 0,
@@ -142,6 +185,7 @@ export function makeRecoveredFactoryTask(state = {}, { fallbackGenreId = '' } = 
     reviewBudgetCap: optionalFinite(state.reviewBudgetCap),
     dualLoop: optionalBoolean(state.dualLoop),
     autoPreview: optionalBoolean(state.autoPreview),
+    advisoryTargets: normalizeFactoryAdvisoryTargets(state.advisoryTargets, state),
     reviewState: state.reviewState,
     manualRevision: state.manualRevision,
     recoveredFromDisk: true,
@@ -197,7 +241,7 @@ export function mergeFactoryResumables(tasks = [], states = [], { activeTaskIds 
     }
 
     let taskChanged = false;
-    for (const key of ['folder', 'genreId', 'reviewState', 'manualRevision']) {
+    for (const key of ['folder', 'genreId', 'reviewState', 'manualRevision', 'advisoryTargets']) {
       taskChanged = setIfMissing(task, key, recovered[key]) || taskChanged;
     }
     // The disk receipt/checkpoint is the durable execution contract. Once a

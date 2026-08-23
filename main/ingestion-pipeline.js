@@ -14,7 +14,6 @@ const INGESTION_MANIFEST_SCHEMA = 'mazz.ingestion-manifest/v0';
 const INGESTION_CATALOG_SCHEMA = 'mazz.ingestion-catalog/v0';
 const INGESTION_CONFLICT_SCHEMA = 'mazz.ingestion-conflict/v0';
 const INGESTION_LAYERS = Object.freeze(['source-fact', 'derived', 'estimate', 'hypothesis', 'missing']);
-const MAX_TEXT_CHARS = 2_000_000;
 const CHUNK_CHARS = 1_600;
 const REQUEST_FIELDS = Object.freeze([
   'schema', 'assetId', 'projectId', 'projectPath', 'title', 'mediaType', 'layer',
@@ -69,7 +68,6 @@ function normalizeIngestionRequest(input) {
   const layer = requiredString(input.layer, 'layer');
   if (!INGESTION_LAYERS.includes(layer)) throw new Error(`非法材料层级：${layer}`);
   const text = String(input.text ?? '').replace(/\r\n?/g, '\n');
-  if (text.length > MAX_TEXT_CHARS) throw new Error(`材料超过 W74a 上限：${text.length}/${MAX_TEXT_CHARS} 字符`);
   if (layer !== 'missing' && !text.trim()) throw new Error('非 missing 材料必须有正文');
   if (layer === 'missing' && text.trim()) throw new Error('missing 材料不得伪装成已有正文');
   if (!isPlainObject(input.sourceRef)) throw new Error('sourceRef 必须是对象');

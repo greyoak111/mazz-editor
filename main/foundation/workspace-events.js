@@ -79,7 +79,7 @@ function normalizeWorkspaceEvent(input) {
     provenance: clonePlain(input.provenance, 'provenance'),
     privacyClass, retentionClass,
     payloadRef: optionalString(input.payloadRef),
-    summary: optionalString(input.summary).slice(0, 240),
+    summary: optionalString(input.summary),
     clockStatus: skewMs < -300000 ? 'ANOMALOUS_RECORDED_BEFORE_OCCURRED' : 'NORMAL',
   });
 }
@@ -149,7 +149,7 @@ function buildEpisodes(eventInputs, { maxGapMs = 45 * 60 * 1000 } = {}) {
   }));
 }
 
-function searchOperationalHistory(eventInputs, query, { limit = 20 } = {}) {
+function searchOperationalHistory(eventInputs, query) {
   const terms = requiredString(query, 'query').toLocaleLowerCase('zh-CN').split(/\s+/).filter(Boolean);
   const episodes = buildEpisodes(eventInputs);
   const byId = new Map(eventInputs.map(input => { const event = normalizeWorkspaceEvent(input); return [event.eventId, event]; }));
@@ -161,7 +161,7 @@ function searchOperationalHistory(eventInputs, query, { limit = 20 } = {}) {
     if (hits.length) rows.push({ episodeId: episode.episodeId, label: episode.label, score: hits.length / terms.length + episode.confidence, reasons: hits.map(term => `term:${term}`), eventRefs: episode.eventRefs, startedAt: episode.startedAt, endedAt: episode.endedAt });
   }
   rows.sort((a, b) => b.score - a.score || b.endedAt.localeCompare(a.endedAt) || a.episodeId.localeCompare(b.episodeId));
-  return deepFreeze(rows.slice(0, limit));
+  return deepFreeze(rows);
 }
 
 function aggregateConceptLifecycle(eventInputs, ref) {

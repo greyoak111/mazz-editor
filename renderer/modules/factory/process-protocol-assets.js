@@ -261,7 +261,7 @@ export function createW68FactoryProcessProtocol() {
     workflowRef: 'W68',
     workflowVersion: 'W68a/W68c',
     directorTable: [
-      { stageId: 'intake', label: '立项与运行确认', directorRef: 'seat:factory-director', responsibility: '确认目标、锁定材料、治理仪式与预算边界；只协调，不代替 Gate 或人工签发。', authorityScope: 'coordinate', inputArtifactRoles: ['blueprint'], outputArtifactRoles: ['skeleton', 'draft'], gateRefs: [], exceptionRefs: ['exception:no-qualified-executor', 'exception:budget-stop', 'exception:provider-unavailable'] },
+      { stageId: 'intake', label: '立项与运行确认', directorRef: 'seat:factory-director', responsibility: '确认目标、锁定材料与治理仪式；只协调，不代替 Gate、Provider 或人工签发。', authorityScope: 'coordinate', inputArtifactRoles: ['blueprint'], outputArtifactRoles: ['skeleton', 'draft'], gateRefs: [], exceptionRefs: ['exception:no-qualified-executor', 'exception:provider-unavailable'] },
       { stageId: 'm1-machine', label: 'M1 确定性机检', directorRef: 'seat:m1-inspector', responsibility: '对草稿执行确定性检查并提出可定位 Finding；不得自批正文。', authorityScope: 'inspect', inputArtifactRoles: ['draft'], outputArtifactRoles: ['machine'], gateRefs: ['w68:machine'], exceptionRefs: ['exception:authority-mismatch'] },
       { stageId: 'm2-point', label: 'M2 语义对点', directorRef: 'seat:m2-reviewer', responsibility: '依据骨架、锁定材料与机检证据判断方向，生成对点结论；不得兼任回炉执行。', authorityScope: 'recommend', inputArtifactRoles: ['skeleton', 'draft', 'machine'], outputArtifactRoles: ['point', 'repair'], gateRefs: ['w68:point'], exceptionRefs: ['exception:three-round-nonconvergence'] },
       { stageId: 'm3-rework', label: 'M3 定向回炉', directorRef: 'seat:m3-reviser', responsibility: '只按修订单修改受影响集合并保护锁定项，留下改前、改后与复验证据。', authorityScope: 'revise', inputArtifactRoles: ['draft', 'repair'], outputArtifactRoles: ['draft', 'machine'], gateRefs: [], exceptionRefs: ['exception:three-round-nonconvergence'] },
@@ -279,7 +279,6 @@ export function createW68FactoryProcessProtocol() {
       { handoffId: 'handoff:m6-to-human', fromStage: 'm6-arbitration', toStage: 'human-final', trigger: '裁决与 manifest 可下钻', requiredArtifactRoles: ['verdict', 'manifest'], acceptanceGateRef: 'w68:objection', rejectionTarget: 'm3-rework', evidenceRequired: true, authorityRef: 'seat:m6-arbitrator' },
     ],
     exceptions: [
-      { exceptionId: 'exception:budget-stop', trigger: '预算硬闸不足或明确停摆', state: 'blocked', authorityRef: 'human:factory-operator', evidenceRequirements: ['成本台账或预算 Gate 引用', '降级/停摆决定'], recoveryPointId: 'recovery:budget-decision', automaticFallback: false },
       { exceptionId: 'exception:no-qualified-executor', trigger: '没有满足 Seat 与资格要求的执行者', state: 'blocked', authorityRef: 'human:factory-operator', evidenceRequirements: ['调度排除理由', '资格或健康证据'], recoveryPointId: 'recovery:executor-selection', automaticFallback: false },
       { exceptionId: 'exception:provider-unavailable', trigger: 'Provider 或真实 Harness/Executor 不可用', state: 'blocked', authorityRef: 'human:factory-operator', evidenceRequirements: ['边界失败记录', '恢复或改派决定'], recoveryPointId: 'recovery:provider-restored', automaticFallback: false },
       { exceptionId: 'exception:three-round-nonconvergence', trigger: '三轮回炉仍不收敛', state: 'blocked', authorityRef: 'human:factory-operator', evidenceRequirements: ['三轮 Rework 引用', '退骨或人工升级决定'], recoveryPointId: 'recovery:skeleton-revision', automaticFallback: false },
@@ -308,7 +307,6 @@ export function createW68FactoryProcessProtocol() {
         { gateRef: 'w68:objection', label: '质询与仲裁', stageId: 'm6-arbitration', inputArtifactRoles: ['objection', 'answer', 'verdict'], passState: 'continue:human-final', failState: 'blocked:human-escalation', authorityRef: 'seat:m6-arbitrator', recoveryPointId: 'recovery:authority-corrected' },
       ],
       recoveryPoints: [
-        { recoveryPointId: 'recovery:budget-decision', triggeredBy: ['exception:budget-stop'], state: 'blocked', resumeStage: 'intake', authorityRef: 'human:factory-operator', evidenceRequirements: ['预算决定引用'] },
         { recoveryPointId: 'recovery:executor-selection', triggeredBy: ['exception:no-qualified-executor'], state: 'blocked', resumeStage: 'intake', authorityRef: 'human:factory-operator', evidenceRequirements: ['资格与改派证据'] },
         { recoveryPointId: 'recovery:provider-restored', triggeredBy: ['exception:provider-unavailable'], state: 'blocked', resumeStage: 'intake', authorityRef: 'human:factory-operator', evidenceRequirements: ['可用性复核证据'] },
         { recoveryPointId: 'recovery:skeleton-revision', triggeredBy: ['exception:three-round-nonconvergence', 'w68:machine', 'w68:point'], state: 'blocked', resumeStage: 'intake', authorityRef: 'human:factory-operator', evidenceRequirements: ['退骨/回炉工件引用', '恢复决定'] },

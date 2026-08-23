@@ -46,33 +46,44 @@ export function fieldValue(tpl, values, ...idsOrLabels) {
 }
 
 // ==================== W60b 立项与产出协议 ====================
+/** 仅供旧任务/旧调用兼容；新立项不渲染这些档位，也不会自动选择。 */
 export const FACTORY_LENGTH_PRESETS = Object.freeze([
   Object.freeze({ id: 'short', label: '短篇', totalWords: 10000, wordsPerUnit: 2000 }),
   Object.freeze({ id: 'medium', label: '中篇', totalWords: 100000, wordsPerUnit: 4000 }),
   Object.freeze({ id: 'long', label: '长篇', totalWords: 500000, wordsPerUnit: 6000 }),
   Object.freeze({ id: 'unlimited', label: '无限', totalWords: 0, wordsPerUnit: 4000 }),
 ]);
+const UNSPECIFIED_LENGTH_PLAN = Object.freeze({ id: 'custom', label: '不指定', totalWords: 0, wordsPerUnit: 0 });
 
-/** 篇幅卡 + 总字数智能行 + 每单元字数 chips 的单源联动。 */
-export function resolveFactoryLengthPlan({ preset = 'short', totalWords, wordsPerUnit } = {}) {
-  const base = FACTORY_LENGTH_PRESETS.find(x => x.id === preset) || FACTORY_LENGTH_PRESETS[0];
+/**
+ * 旧篇幅预设只是规划建议，不是交付门禁。
+ * 显式的 0/空值表示“不指定”；仅在调用方完全没有传值时采用预设建议。
+ */
+export function resolveFactoryLengthPlan({ preset = 'custom', totalWords, wordsPerUnit, maxMode = false } = {}) {
+  const base = FACTORY_LENGTH_PRESETS.find(x => x.id === preset) || UNSPECIFIED_LENGTH_PLAN;
   const unlimited = base.id === 'unlimited';
-  const safeWords = Math.max(100, Math.round(Number(wordsPerUnit) || base.wordsPerUnit));
-  const safeTotal = unlimited ? 0 : Math.max(1, Math.round(Number(totalWords) || base.totalWords));
+  const guidanceNumber = (value, fallback) => {
+    if (value === undefined || value === null) return Math.round(Number(fallback) || 0);
+    if (value === '') return 0;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0;
+  };
+  const safeWords = guidanceNumber(wordsPerUnit, base.wordsPerUnit);
+  const safeTotal = unlimited ? 0 : guidanceNumber(totalWords, base.totalWords);
   return {
     preset: base.id,
     totalWords: safeTotal,
     wordsPerUnit: safeWords,
-    maxMode: true,
-    maxChapters: unlimited ? 0 : Math.ceil(safeTotal / safeWords),
+    // 字数只保留为可选参考，不再换算执行终点。连写也必须由用户明确开启；
+    // 实际终点来自蓝图内容单元或用户停止，而不是“总字数 ÷ 单元字数”。
+    maxMode: Boolean(maxMode),
+    maxChapters: 0,
   };
 }
 
-/** 批量名单闸：30 条后提醒，100 条硬顶。 */
+/** 旧调用兼容：批量数量不再触发确认或拒绝；逐条格式校验仍由解析器负责。 */
 export function factoryBatchGate(count) {
   const n = Math.max(0, Math.floor(Number(count) || 0));
-  if (n > 100) return { allowed: false, warning: true, count: n, message: `批量名单共 ${n} 条，超过 100 条硬顶，已拒绝导入` };
-  if (n > 30) return { allowed: true, warning: true, count: n, message: `批量名单共 ${n} 条；超过 30 条，确认后再入队` };
   return { allowed: true, warning: false, count: n, message: '' };
 }
 
@@ -177,17 +188,44 @@ export function serializeFactoryText(markdown, format, title = '未命名') {
 
 /**
  * 组装完整创作焚诀（生成提示词阶段的产物，也是直接生成时的 system+user 蓝本）
- * 结构遵循元焚诀：需求痛点 → 核心契约 → 文体规范（元变量）→ 结构蓝图（篇幅预算）→ 维度规则 → 校验 → 启动指令
+ * 结构遵循元焚诀：需求痛点 → 核心契约 → 文体规范（元变量）→ 结构蓝图 → 维度规则 → 校验 → 启动指令
  */
+const OPTIONAL_QUANTITY_RULES = new Set(['minLength', 'maxLength', 'maxParagraphs', 'notAllDialog']);
+const LEGACY_LENGTH_FIELD_IDS = new Set([
+  'length', '篇幅', '篇幅长短', '每章字数', '目标总字数', 'totalWords', 'wordsPerUnit',
+]);
+
+function isOptionalQuantityRule(check = {}) {
+  return OPTIONAL_QUANTITY_RULES.has(String(check.rule || ''));
+}
+
+function isLengthPlanField(field = {}) {
+  return field.uiOwner === 'lengthPlan' || LEGACY_LENGTH_FIELD_IDS.has(String(field.id || ''));
+}
+
+function explicitLengthGuidance(tpl, values) {
+  const field = (tpl.input_fields || []).find(item => item.uiOwner !== 'lengthPlan'
+    && ['length', '篇幅'].includes(String(item.id || '')));
+  if (!field) return '';
+  const value = values?.[field.id];
+  return value != null ? String(value).trim() : '';
+}
+
 export function buildMantra(tpl, values, dumpText = '') {
-  const fieldLines = tpl.input_fields
+  const fields = (tpl.input_fields || []).filter(field => !isLengthPlanField(field));
+  const fieldLines = fields
     .map(f => `- **${f.label}**：${values[f.id]?.trim() || '（未填）'}`)
     .join('\n');
   const mv = tpl.meta_vars || {};
   const mvLines = Object.entries(mv).map(([k, v]) => `- **${k}**：${v}`).join('\n');
-  const checks = (tpl.quality_checks || []).map((c, i) => `${i + 1}. ${c.label}`).join('\n');
+  const effectiveChecks = (tpl.quality_checks || []).filter(check => !isOptionalQuantityRule(check));
+  const checks = effectiveChecks.map((c, i) => `${i + 1}. ${c.label}`).join('\n')
+    || '（不设字数、字符数、段数或对话比例门禁；以内容完整和结构契约为准。）';
   const out = tpl.output_rules || {};
-  const lenText = fieldValue(tpl, values, 'length', '篇幅') || `不超过 ${out.max_length || 3000} 字`;
+  const lenText = explicitLengthGuidance(tpl, values);
+  const lengthLine = lenText
+    ? `- 篇幅参考（可选指导，不作为验收门禁）：${lenText}`
+    : '- 篇幅由内容完整性决定，不设字数、字符数、段数或对话比例门禁';
   const contract = buildContract(tpl, values);
   const dimensionBlock = buildDimensions(tpl);
 
@@ -200,7 +238,7 @@ ${mvLines}
 
 【输出要求】
 - 输出格式：${out.format || 'markdown'}；结构：${out.structure || '清晰分层'}
-- 篇幅：${lenText}
+${lengthLine}
 - 只输出正文本身，不要解释、不要客套、不要复述要求`,
     // 直接生成时的 user prompt（任务 + 素材 + 契约 + 校验）
     user: `【文体】${tpl.name}（${tpl.description || ''}）
@@ -211,7 +249,7 @@ ${dumpText.trim() ? `\n【补充素材（竹筒倒豆子）】\n${dumpText.trim(
 【核心契约（不可违反）】
 ${contract}
 
-【结构蓝图（含篇幅预算）】
+【结构蓝图】
 ${dimensionBlock.blueprint}
 
 【创作启动指令】
@@ -229,7 +267,7 @@ ${contract}
 ## 三、文体与风格规范（元变量）
 ${mvLines}
 
-## 四、结构蓝图与篇幅预算
+## 四、结构蓝图
 ${dimensionBlock.blueprint}
 
 ## 五、核心维度执行规则
@@ -239,17 +277,17 @@ ${dimensionBlock.rules}
 ${checks}
 
 ## 七、创作启动指令
-你是一名按上述规范写作的专家。请基于本焚诀创作《${fieldValue(tpl, values, 'title', 'subject', 'task', 'premise') || tpl.name}》，篇幅 ${lenText}，从结构蓝图的第一部分开始逐段写透，写完逐项通过第六节校验后只输出正文。`,
+你是一名按上述规范写作的专家。请基于本焚诀创作《${fieldValue(tpl, values, 'title', 'subject', 'task', 'premise') || tpl.name}》，${lenText ? `可参考用户给出的篇幅倾向“${lenText}”，但不得把它当作截断或验收门禁，` : ''}从结构蓝图的第一部分开始逐段写透，完成内容与结构契约后只输出正文。`,
   };
 }
 
 /** 核心契约：模板校验项 + 必填要素转铁律 */
 function buildContract(tpl, values) {
   const lines = [];
-  for (const f of tpl.input_fields) {
+  for (const f of (tpl.input_fields || []).filter(field => !isLengthPlanField(field))) {
     if (f.required) lines.push(`- 「${f.label}」必须准确呈现，不得遗漏或篡改。`);
   }
-  for (const c of (tpl.quality_checks || []).slice(0, 3)) lines.push(`- ${c.label}。`);
+  for (const c of (tpl.quality_checks || []).filter(check => !isOptionalQuantityRule(check))) lines.push(`- ${c.label}。`);
   const avoid = values.must_avoid?.trim();
   if (avoid) lines.push(`- 绝对避免：${avoid.replace(/\n/g, '；')}。`);
   return lines.join('\n') || '- 不写空话套话。';
@@ -259,14 +297,14 @@ function buildContract(tpl, values) {
 function buildDimensions(tpl) {
   const out = tpl.output_rules || {};
   const structure = (out.structure || '开头 → 主体 → 结尾').split('→').map(s => s.trim()).filter(Boolean);
-  const parts = structure.map((s, i) => `| ${s} | 约 ${Math.round(100 / structure.length)}% | ${i === 0 ? '开宗明义' : i === structure.length - 1 ? '收束有力' : '充分展开'} |`).join('\n');
-  const blueprint = `${out.structure || '清晰分层'}；预算：${out.max_length || 3000} 字以内
+  const parts = structure.map((s, i) => `| ${s} | ${i === 0 ? '开宗明义' : i === structure.length - 1 ? '收束有力' : '充分展开'} |`).join('\n');
+  const blueprint = `${out.structure || '清晰分层'}；各部分按内容需要展开，不设数量配额
 
-| 部分 | 篇幅占比 | 要求 |
-| --- | --- | --- |
+| 部分 | 要求 |
+| --- | --- |
 ${parts}`;
   const rules = [
-    `### 结构骨架（优先级: 高）\n- 怎么做：严格按结构蓝图推进，每部分篇幅不低于预算 70%。\n- 不要做：跳段、合并压缩、用一句话总结代替展开。\n- 自检：遮住标题能说出每段在结构中的位置。`,
+    `### 结构骨架（优先级: 高）\n- 怎么做：按结构蓝图推进，每部分写到信息与叙事功能完整。\n- 不要做：跳过必要环节、用一句话总结代替展开。\n- 自检：遮住标题能说出每段在结构中的位置。`,
     `### 受众适配（优先级: 高）\n- 怎么做：每写一段自问「目标读者读到这句会怎么想」。\n- 不要做：自嗨、堆术语无解释、忽视读者既有认知。\n- 自检：读者能否不费力地复述核心信息。`,
     `### 语言质地（优先级: 中）\n- 怎么做：动词优先、短句优先、具体优先。\n- 不要做：形容词堆砌、长句嵌套、空话套话。\n- 自检：每句都有不可替代的信息量。`,
   ].join('\n\n');
@@ -277,7 +315,6 @@ ${parts}`;
 /** 执行校验：返回 [{label, pass, detail}] */
 export function runQualityChecks(tpl, text) {
   const t = String(text || '');
-  const paragraphs = t.split(/\n\s*\n/).filter(p => p.trim());
   const results = [];
   for (const c of tpl.quality_checks || []) {
     let pass = true, detail = '';
@@ -297,28 +334,17 @@ export function runQualityChecks(tpl, text) {
         detail = pass ? '' : '全文没有任何数字';
         break;
       case 'maxLength':
-        pass = t.length <= c.value;
-        detail = pass ? '' : `当前 ${t.length} 字`;
-        break;
       case 'minLength':
-        pass = t.length >= c.value;
-        detail = pass ? '' : `当前仅 ${t.length} 字`;
-        break;
       case 'maxParagraphs':
-        pass = paragraphs.length <= c.value;
-        detail = pass ? '' : `当前 ${paragraphs.length} 段`;
+      case 'notAllDialog':
+        // 旧模板/旧任务仍可带这些字段，但数量值只是写作参考，不得再关闭 W68 机检闸。
+        pass = true;
+        detail = '数量建议已从验收门禁移除';
         break;
       case 'forbiddenWords': {
         const hit = (c.value || []).filter(w => t.includes(w));
         pass = !hit.length;
         detail = pass ? '' : `命中：${hit.join('、')}`;
-        break;
-      }
-      case 'notAllDialog': {
-        const dialogLines = t.split('\n').filter(l => /^\s*[「"“]/.test(l)).length;
-        const total = t.split('\n').filter(l => l.trim()).length || 1;
-        pass = dialogLines / total < 0.6;
-        detail = pass ? '' : '对话占比过高';
         break;
       }
       default:
@@ -352,8 +378,6 @@ export function parseCsvTasks(text, tpl) {
   }
   pushRow();
   if (rows.length < 2) throw new Error('CSV 至少需要表头 + 一行数据');
-  const gate = factoryBatchGate(rows.length - 1);
-  if (!gate.allowed) throw new Error(gate.message);
   const headers = rows[0];
   const colToField = headers.map(h => {
     const f = tpl.input_fields.find(x => x.label === h || x.id === h);
@@ -379,7 +403,7 @@ export function buildChapterPrompt(tpl, values, dump, stateSummary, chapterNo, t
 
 【连写模式 · 第 ${chapterNo} 章${total ? ' / 共 ' + total + ' 章' : '（写到手动终止）'}】
 ${chapterNo > 1 ? `以下是截至上一章的叙事状态快照，请严格衔接（人物状态/伏笔/时间线不得矛盾）：\n${stateSummary}\n` : '这是第一章，请建立核心设定与钩子。'}
-只输出第 ${chapterNo}章正文（可带「第 ${chapterNo} 章」标题行），不要写大纲、不要解释。篇幅按蓝图的章预算写足。`,
+  只输出第 ${chapterNo}章正文（可带「第 ${chapterNo} 章」标题行），不要写大纲、不要解释。以本章任务完整和叙事节奏为准，不按字数配额截断或补齐。`,
   };
 }
 
@@ -388,7 +412,7 @@ export function buildStateSummaryPrompt(prevSummary, chapterText, chapterNo, sch
   const snapshot = getSnapshotSchema(schema);
   return {
     system: `你是长篇写作的状态记录员。把当前${snapshot.unitName}状态压缩成精确摘要，供下一${snapshot.unitName}无缝衔接。只输出结构化摘要，不要评论。`,
-    user: `【此前状态】\n${prevSummary || `（第一${snapshot.unitName}前）`}\n\n【刚写完的第 ${chapterNo} ${snapshot.unitName}】\n${String(chapterText || '').slice(-3000)}\n\n请输出截至第 ${chapterNo} ${snapshot.unitName}的状态快照，严格保留以下分区：\n${snapshot.sections.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n累计台账纪律：既有条目只增不减；已解决的伏笔保留原条目并加回收标注，已完成的论据或事项保留原条目并加完成标注，禁止静默删除。`,
+    user: `【此前状态】\n${prevSummary || `（第一${snapshot.unitName}前）`}\n\n【刚写完的第 ${chapterNo} ${snapshot.unitName}】\n${String(chapterText || '')}\n\n请输出截至第 ${chapterNo} ${snapshot.unitName}的状态快照，严格保留以下分区：\n${snapshot.sections.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n累计台账纪律：既有条目只增不减；已解决的伏笔保留原条目并加回收标注，已完成的论据或事项保留原条目并加完成标注，禁止静默删除。`,
   };
 }
 
@@ -416,8 +440,27 @@ export async function readMaxTaskProgress(folder, schema = {}) {
  * 渲染插件 prompt：{字段id} 依次用 插件字段值 → 任务字段值 替换，剩余占位符 → [未指定]
  * @returns {string} 可直接拼进蓝图 prompt 的插件段落
  */
+export function normalizePluginQuantityGuidance(prompt = '') {
+  return String(prompt)
+    // 只处理插件自带的配额句；此时用户占位值尚未回填，不会改用户事实数字。
+    .replace(/列出当前最热门的\s*\d+\s*[-–—~～至到]\s*\d+\s*个题材类型/g, '列出当前热门题材类型，按材料完整展开')
+    .replace(/每个维度控制在\s*\d+\s*[-–—~～至到]\s*\d+\s*行以内/g, '每个维度按内容需要完整展开')
+    .replace(/每\s*\d+\s*字\s*至少\s*出现\s*[零一二两三四五六七八九十百\d]+\s*处/g, '在适合的段落加入')
+    .replace(/禁止在\s*\d+\s*字内连续出现超过\s*[零一二两三四五六七八九十百\d]+\s*处/g, '避免连续堆叠过于整齐的')
+    .replace(/每章对话必须至少跑题\s*[零一二两三四五六七八九十百\d]+\s*次/g, '每章对话允许自然跑题')
+    .replace(/允许\s*[零一二两三四五六七八九十百\d]+\s*次/g, '允许偶尔')
+    .replace(/每章至少有\s*[零一二两三四五六七八九十百\d]+\s*处/g, '每章可按内容需要安排')
+    .replace(/每章至少\s*[零一二两三四五六七八九十百\d]+\s*处/g, '每章可按内容需要安排')
+    .replace(/至少出现\s*[零一二两三四五六七八九十百\d]+\s*次/g, '可以反复出现')
+    .replace(/必须至少做出\s*[零一二两三四五六七八九十百\d]+\s*次/g, '可以做出')
+    .replace(/至少做出\s*[零一二两三四五六七八九十百\d]+\s*次/g, '可以做出')
+    .replace(/必须存在至少\s*[零一二两三四五六七八九十百\d]+\s*个/g, '可以保留')
+    .replace(/至少有\s*[零一二两三四五六七八九十百\d]+\s*个/g, '可以有')
+    .replace(/必须留下至少\s*[零一二两三四五六七八九十百\d]+\s*个/g, '可以留下若干');
+}
+
 export function renderPluginPrompt(plugin, pluginValues = {}, taskValues = {}) {
-  let text = plugin.prompt;
+  let text = normalizePluginQuantityGuidance(plugin.prompt);
   for (const f of plugin.fields || []) {
     const v = pluginValues[f.id] ?? taskValues[f.id] ?? f.options?.[0] ?? '';
     text = text.replaceAll('{' + f.id + '}', String(v).trim() || '[未指定]');
@@ -437,7 +480,7 @@ export function buildEmbedBlocks(embeds = []) {
 ${f.note ? `- 用户说明：${f.note}\n` : ''}
 **文件内容：**
 
-${(f.text || '').slice(0, 8000)}`);
+${f.text || ''}`);
   return `## 插件模块：文件嵌入（最高优先级）
 
 **优先级声明：本模块为最高优先级。当嵌入文件内容与自动推演内容冲突时，以嵌入文件为准；需在一致性校验中标注张力并给出调整建议，而非修改嵌入文件的内容。**
@@ -454,10 +497,10 @@ ${parts.join('\n\n')}`;
  */
 export function buildNovelBlueprintPrompt(values, opts = {}) {
   const title = values['书名'] || values.title || '未命名';
-  const chapters = opts.maxMode ? 'max' : (opts.chapters || values['计划章节数'] || 10);
-  const chapterRule = opts.maxMode
-    ? '根据故事发展需要自行决定章节数量，将故事完整叙述至自然结尾。'
-    : `章节大纲必须恰好是${chapters}章，不要多也不要少。`;
+  const requestedChapters = Number(opts.chapters ?? values['计划章节数']);
+  const chapterRule = Number.isFinite(requestedChapters) && requestedChapters > 0
+    ? `用户给出的 ${Math.round(requestedChapters)} 章仅作结构规划参考；请按故事内容自然拆分，不得为凑数合并、拆散或提前结束。`
+    : '根据故事发展需要自行决定章节数量，将故事完整叙述至自然结尾。';
   const pluginText = (opts.pluginBlocks || []).filter(Boolean).join('\n\n') || '（无额外内容维度插件）';
 
   return `你是一位资深小说创作顾问。请根据以下信息，生成一份完整的「全要素故事蓝图」。
@@ -467,9 +510,7 @@ export function buildNovelBlueprintPrompt(values, opts = {}) {
 - 价值取向：${values['价值取向'] || '（未填）'}
 - 文风学习对象：${values['文风学习对象'] || '（未指定）'}
 - 作品类型：${values['作品类型'] || '（未指定）'}
-- 篇幅长短：${values['篇幅长短'] || '（未指定）'}
-- 目标总字数：${values['目标总字数'] || '（未指定）'}
-- 每章字数：约 ${opts.wordsPerChapter || values['每章字数'] || 2000} 字
+- 篇幅指导：${Number(opts.wordsPerChapter) > 0 ? `可参考每章约 ${opts.wordsPerChapter} 字，但该数值不是截断、补齐或验收门禁` : '不指定字数，以每章任务完整为准'}
 
 ## 文风参考素材
 ${opts.stylePackage || '（未提供）'}
@@ -482,7 +523,7 @@ ${pluginText}
 1. 故事标题与一句话简介
 2. 核心价值取向的文学表达
 3. 主角详细人设
-4. 配角群像（至少3位）
+4. 配角群像（按故事需要自然展开）
 5. 世界观设定
 6. 三幕结构大纲
 7. 各章节详细纲要（格式：第N章：……，每章一行）
@@ -490,7 +531,7 @@ ${pluginText}
 9. 全文节奏控制表
 
 ${chapterRule}
-请控制每个部分的篇幅，确保以上9个部分全部完整输出，不要中途截断。最后以「## 创作启动指令」收尾，给出写作时必须遵守的视角、句法、对话、描写规则与绝对禁止事项。`;
+请确保以上9个部分全部完整输出，不要因数量指导而中途截断。最后以「## 创作启动指令」收尾，给出写作时必须遵守的视角、句法、对话、描写规则与绝对禁止事项。`;
 }
 
 export const NOVEL_BLUEPRINT_KEYS = ['故事标题', '简介', '核心价值', '价值取向', '主角', '人设', '配角', '群像',
@@ -528,8 +569,13 @@ export function canUseUnlimited(tpl = {}) {
 export function buildMetaBlueprintPrompt(tpl, values, opts = {}) {
   const schema = getSnapshotSchema(tpl);
   const title = fieldValue(tpl, values, 'title', 'subject', 'task', 'premise') || tpl.name || '未命名任务';
-  const fieldLines = (tpl.input_fields || []).map(f => `- ${f.label}：${values[f.id] || '（未填）'}`).join('\n');
-  const count = opts.chapters || values['计划章节数'] || 10;
+  const fieldLines = (tpl.input_fields || [])
+    .filter(field => !isLengthPlanField(field))
+    .map(f => `- ${f.label}：${values[f.id] || '（未填）'}`).join('\n');
+  const requestedUnits = Number(opts.chapters ?? values['计划章节数']);
+  const unitGuidance = Number.isFinite(requestedUnits) && requestedUnits > 0
+    ? `用户给出的 ${Math.round(requestedUnits)} 个${schema.unitName}仅作结构规划参考；按材料和论证需要自然拆分，不得凑数。`
+    : `按材料和论证需要自然拆分${schema.unitName}，不预设数量。`;
   return `你是一位资深${tpl.name || '说明文'}编撰顾问。请生成可执行的结构蓝图（Markdown）。
 
 ## 已确认材料
@@ -540,7 +586,7 @@ ${opts.embedBlocks ? `\n${opts.embedBlocks}` : ''}
 1. 任务目标：说明《${title}》要解决的问题与交付边界
 2. 目标读者：读者已有知识、决策需求与阅读顺序
 3. 核心材料：事实、约束和缺口清单
-4. 结构大纲：列出 ${count} 个${schema.unitName}，格式为「第N${schema.unitName}：……」
+4. 结构大纲：格式为「第N${schema.unitName}：……」。${unitGuidance}
 5. 核心要点：每${schema.unitName}必须完成的论述任务
 6. 论据数据：每项结论对应的事实、数字或引用
 7. 术语口径：关键术语、单位、时间与统计口径
@@ -555,19 +601,16 @@ export function buildBlueprintPrompt(tpl, values, opts = {}) {
     : buildNovelBlueprintPrompt(values, opts);
 }
 
-/** 蓝图结构完整性双通道：novel 19 键≥6 / META 8 键≥4。 */
-export function blueprintStructureOk(blueprint, family = 'auto') {
-  const text = String(blueprint || '').toLowerCase();
-  const hits = keys => keys.filter(s => text.includes(s.toLowerCase())).length;
-  const novelOk = hits(NOVEL_BLUEPRINT_KEYS) >= 6;
-  const metaOk = hits(META_BLUEPRINT_KEYS) >= 4;
-  if (family === 'novel') return novelOk;
-  if (family === 'meta') return metaOk;
-  return novelOk || metaOk;
+/** 蓝图只校验可执行协议形态，不再用“命中多少关键词”充当本地数量闸。 */
+export function blueprintStructureOk(blueprint, _family = 'auto') {
+  const text = String(blueprint || '');
+  const hasDirective = /(?:^|\n)#{1,3}\s*创作启动指令\s*$/m.test(text);
+  const hasUnit = /(?:^|\n)[#\s>*-]*第[一二三四五六七八九十百千\d]+(?:章|节|单元|幕|篇|部分|项)\s*[：:]\s*\S+/m.test(text);
+  return hasDirective && hasUnit;
 }
 
 /** 从蓝图解析章节大纲（移植原版 _parse_chapters：第N章：… 每章一行） */
-export function parseChapterOutlines(blueprint, fallbackCount = 10, schema = {}) {
+export function parseChapterOutlines(blueprint, _legacyFallbackCount = 0, schema = {}) {
   const { unitName } = getSnapshotSchema(schema);
   const unit = escapeRegExp(unitName);
   const strictRe = new RegExp(`^[#\\s>*-]*第[一二三四五六七八九十百千\\d]+${unit}\\s*[：:]\\s*[^\\n]+`, 'gm');
@@ -576,10 +619,10 @@ export function parseChapterOutlines(blueprint, fallbackCount = 10, schema = {})
     const looseRe = new RegExp(`^第[0-9一二三四五六七八九十百千]+${unit}(?![^\\s：:，。]*人称)`);
     outlines = String(blueprint || '').split('\n')
       .map(l => l.trim())
-      .filter(l => looseRe.test(l) && l.length < 80);
+      .filter(l => looseRe.test(l));
   }
-  if (!outlines.length) return Array.from({ length: fallbackCount }, (_, i) => `第${i + 1}${unitName}`);
-  return outlines.map(l => l.replace(/^[#\s>*-]+/, '').trim()).slice(0, 999);
+  if (!outlines.length) return [];
+  return outlines.map(l => l.replace(/^[#\s>*-]+/, '').trim());
 }
 
 function escapeRegExp(s) {
@@ -589,9 +632,18 @@ function escapeRegExp(s) {
 /** 三次蓝图调用全败后的确定性兜底，保证仍能产出并通过对应家族校验。 */
 export function buildFallbackBlueprint(task, total = 0, tpl = {}) {
   const schema = getSnapshotSchema(tpl);
-  const count = total || 10;
-  const units = Array.from({ length: count }, (_, i) => `第${i + 1}${schema.unitName}：根据已确认材料自然推进`).join('\n');
+  const requestedUnits = Number(total);
+  const units = Number.isFinite(requestedUnits) && requestedUnits > 0
+    ? Array.from({ length: Math.round(requestedUnits) }, (_, i) => `第${i + 1}${schema.unitName}：根据已确认材料自然推进`).join('\n')
+    : `（按已确认材料自然拆分${schema.unitName}，不预设数量。）`;
   const values = task.values || {};
+  const hiddenLengthIds = new Set((tpl.input_fields || [])
+    .filter(field => isLengthPlanField(field))
+    .map(field => field.id));
+  const contentValues = Object.entries(values)
+    .filter(([id]) => !hiddenLengthIds.has(id) && !LEGACY_LENGTH_FIELD_IDS.has(id))
+    .map(([, value]) => value)
+    .filter(Boolean);
   if (schema.type === 'expository') {
     return `# 《${task.label}》结构蓝图（兜底）
 
@@ -602,7 +654,7 @@ export function buildFallbackBlueprint(task, total = 0, tpl = {}) {
 以任务表单中指定的受众为准。
 
 ## 核心材料
-${Object.values(values).filter(Boolean).join('；') || '以用户已确认材料为准；缺证处标记待核。'}
+${contentValues.join('；') || '以用户已确认材料为准；缺证处标记待核。'}
 
 ## 结构大纲
 ${units}
@@ -635,14 +687,13 @@ ${units}
 
 ## 世界观设定与三幕结构大纲
 - 作品类型：${values['作品类型'] || '小说'}
-- 篇幅：${values['篇幅长短'] || '中篇'}
 - 计划章节数：${total || '不限'}
 
 ## 章节详细纲要
 ${units}
 
 ## 文风执行方案与节奏控制表
-文风参考：${values['文风学习对象'] || '未指定'}；每${schema.unitName}字数约 ${values['每章字数'] || 2000} 字。
+文风参考：${values['文风学习对象'] || '未指定'}；每${schema.unitName}以任务完整和节奏需要为准，不设字数验收门。
 
 ## 创作启动指令
 保持一致的叙事视角和语气基调，写场景不写梗概。`;
@@ -653,7 +704,7 @@ export function extractBlueprintCore(blueprint) {
   const text = String(blueprint || '');
   const m = /\n#{1,3}\s*(?:\d+\.?\s*)?创作启动指令/.exec(text);
   const core = (m ? text.slice(0, m.index) : text).trim();
-  return `## 蓝图核心设定\n\n${core.length >= 200 ? core : text.trim()}`;
+  return `## 蓝图核心设定\n\n${core || text.trim()}`;
 }
 
 /** 提取创作启动指令（没有则退回全文） */
@@ -672,16 +723,12 @@ export function stripMdFence(text) {
   return t.trim();
 }
 
-/** 恒定锚：核心与启动指令分别留配额，总长最多 800 字，生成一次后随任务缓存。 */
+/** 恒定锚：保留完整核心契约与启动指令，生成一次后随任务缓存。 */
 export function buildConstantAnchor(blueprintCore, writingDirective = '') {
   const core = String(blueprintCore || '').trim();
   const directive = String(writingDirective || '').trim();
-  if (!directive) return core.length <= 800 ? core : core.slice(0, 797) + '…';
-  const directiveBudget = Math.min(300, directive.length);
-  const coreBudget = Math.max(0, 800 - directiveBudget - 20);
-  const corePart = core.length <= coreBudget ? core : core.slice(0, Math.max(0, coreBudget - 1)) + '…';
-  const directivePart = directive.length <= directiveBudget ? directive : directive.slice(0, Math.max(0, directiveBudget - 1)) + '…';
-  return `${corePart}\n\n【执行规约】\n${directivePart}`.slice(0, 800);
+  if (!directive) return core;
+  return `${core}\n\n【执行规约】\n${directive}`.trim();
 }
 
 /** 窗口锚：当前结构单元 N±3。 */
@@ -711,16 +758,15 @@ export function stripTokenDeclaration(text) {
   return String(text || '').trim().replace(TOKEN_DECLARATION_RE, '').trimEnd();
 }
 
-/** Legacy migration helper only; new executions must validate a model-native declaration. */
+/** Legacy migration helper only: clean an old suffix without synthesizing a new declaration. */
 export function ensureTokenDeclaration(text) {
-  const src = String(text || '').trim();
-  if (tokenDeclarationOf(src) != null) return src;
-  return `${src}\n[本次续写字数：${stripTokenDeclaration(src).length}]`.trim();
+  return stripTokenDeclaration(text);
 }
 
 /**
- * Validate the provider-safe result and the declaration actually emitted by the
- * model. This helper never repairs or synthesizes evidence.
+ * Backward-compatible completion normalizer. Provider/transport completion and
+ * a non-empty body remain safety requirements; the old character declaration is
+ * diagnostic metadata only and never controls commit eligibility.
  */
 export function validateNativeContinuationDeclaration(text, completion = {}) {
   const rawText = String(text || '').trim();
@@ -733,8 +779,6 @@ export function validateNativeContinuationDeclaration(text, completion = {}) {
   let reason = 'ok';
   if (!completionSafe) reason = 'provider-unsafe';
   else if (!body.trim()) reason = 'empty-body';
-  else if (!declarationPresent) reason = 'missing-native-declaration';
-  else if (!declarationMatches) reason = 'declaration-length-mismatch';
   return {
     text: body,
     rawText,
@@ -748,18 +792,14 @@ export function validateNativeContinuationDeclaration(text, completion = {}) {
   };
 }
 
-/** 声明是续写终止信号；兼容旧任务读取，但不改写模型原生声明。 */
+/** 兼容清理旧声明；声明不再是续写终止或提交信号。 */
 export function mergeDeclaredContinuation(prev, next = '') {
-  const prevCount = tokenDeclarationOf(prev);
-  if (prevCount != null) return { text: String(prev || '').trim(), declared: prevCount, complete: true };
   const nextCount = tokenDeclarationOf(next);
   const merged = dedupMerge(stripTokenDeclaration(prev), stripTokenDeclaration(next));
-  if (nextCount == null) return { text: merged, declared: null, complete: false };
-  const declaration = TOKEN_DECLARATION_RE.exec(String(next || '').trim())[0].trim();
-  return { text: `${merged}\n${declaration}`.trim(), declared: nextCount, complete: true };
+  return { text: merged, declared: nextCount ?? tokenDeclarationOf(prev), complete: false };
 }
 
-/** 六层章节引导：恒定锚 / N±3 窗口 / 滚动快照 / 累计台账 / 本章+TOKEN / 纠偏。 */
+/** 六层章节引导：恒定锚 / N±3 窗口 / 滚动快照 / 累计台账 / 本章任务 / 纠偏。 */
 export function buildChapterPromptV2({
   blueprintCore, constantAnchor, writingDirective, outlines = [], stateSummary, foreshadowLedger,
   outline, chapterNo, total, wordsPerChapter, title, correctionDirective, snapshotSchema,
@@ -806,13 +846,12 @@ ${ledger}
 
 ---
 
-## 第五层：本章任务与 TOKEN 声明
+## 第五层：本章任务
 
 **本${schema.unitName}大纲**：${outline}
 
-本${schema.unitName}字数按任务与节奏自行把控，用户参考 ${wordsPerChapter || 2000} 字但不必严格修剪。
+本${schema.unitName}按任务与节奏自行展开。${Number(wordsPerChapter) > 0 ? `用户给出的 ${wordsPerChapter} 字仅作参考，不得用于截断、补齐或验收。` : '用户未指定字数，以内容完整为准。'}
 完成《${title}》第 ${chapterNo}${schema.unitName}${total ? `（共 ${total}${schema.unitName}）` : ''}正文。
-正文最后必须单独输出声明，格式严格为：[本次续写字数：N]。N 为本次实际输出正文字符数。
 【重要】直接输出正文，不要输出「第X${schema.unitName}」标题、前言或说明。
 
 ---
@@ -820,17 +859,25 @@ ${ledger}
 ## 第六层：纠偏指令
 
 ${correctionDirective || '（本轮未触发纠偏；每 10 个结构单元只做一致性自检，不重写既有正文。）'}`;
-  return { system, user: `请写第 ${chapterNo} ${schema.unitName}正文。直接输出正文，末尾带 TOKEN_DECLARATION 声明。` };
+  return { system, user: `请写第 ${chapterNo} ${schema.unitName}正文。直接输出正文，不要附加字数或字符数声明。` };
 }
 
-/** 续写去重合并（原版 _dedup_merge：找最长重叠前缀） */
+/** 续写去重合并：线性查找不限长的“前文后缀 / 续文前缀”。 */
 export function dedupMerge(prev, next) {
   if (!prev || !next) return (prev || '') + (next || '');
-  const maxOverlap = Math.min(200, prev.length, next.length);
-  for (let n = maxOverlap; n > 10; n--) {
-    if (next.startsWith(prev.slice(-n))) return prev + next.slice(n);
+  const prefix = new Array(next.length).fill(0);
+  for (let i = 1, matched = 0; i < next.length; i++) {
+    while (matched && next[i] !== next[matched]) matched = prefix[matched - 1];
+    if (next[i] === next[matched]) matched += 1;
+    prefix[i] = matched;
   }
-  return prev + next;
+  let overlap = 0;
+  for (let i = 0; i < prev.length; i++) {
+    while (overlap && prev[i] !== next[overlap]) overlap = prefix[overlap - 1];
+    if (prev[i] === next[overlap]) overlap += 1;
+    if (overlap === next.length && i < prev.length - 1) overlap = prefix[overlap - 1];
+  }
+  return prev + next.slice(overlap);
 }
 
 // ==================== 任务状态持久化（W60b 新协议 + 旧名兼容） ====================

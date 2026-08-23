@@ -510,7 +510,7 @@ const STANDARD_METRICS = Object.freeze([
   ['production.final-quality.seal-rate', '终稿质量', 'final-quality', 'up', 'percent', 'production', 'run', 1],
   ['production.governance-dependency.matched-gap', '治理依赖度', 'governance-dependency', 'down', 'percentage-point', 'production', 'matched-pair', 2],
   ['production.reliability.completion-rate', '生产可靠性', 'reliability', 'up', 'percent', 'production', 'rolling-run', 5],
-  ['production.cost.estimated-tokens', '估算 Token 成本', 'cost', 'down', 'token', 'production', 'run', 1],
+  ['production.cost.estimated-tokens', 'Provider 实报 Token（兼容指标）', 'cost', 'down', 'token', 'production', 'run', 1],
   ['production.latency.elapsed-ms', '生产延迟', 'latency', 'down', 'ms', 'production', 'run', 1],
   ['production.revision-cost.rework-count', '返工成本', 'revision-cost', 'down', 'count', 'production', 'run', 1],
   ['production.canon-compliance.gate-pass-rate', 'Canon 合规', 'canon-compliance', 'up', 'percent', 'production', 'run', 1],
@@ -548,7 +548,7 @@ export function standardEconomicsMetricRecords(runId, { at = new Date().toISOStr
 
 export function buildW68EconomicsEvaluationBatch({
   runId, taskId, result = {}, artifactDir = '', costLedgerPath = '', findingRefs: suppliedFindingRefs = [],
-  reworkRefs = [], unitNo = 1, at = new Date().toISOString(), metricState,
+  reworkRefs = [], providerRef = '', modelRef = '', unitNo = 1, at = new Date().toISOString(), metricState,
 } = {}) {
   const taskRef = `factory-task:${asString(taskId, 240)}`; const prefix = `${runId}:unit:${unitNo}`;
   if (!runId || !taskId || !metricState?.metrics || !metricState?.formulas) throw new Error('W68 economics batch 缺 Run/Task/Metric state');
@@ -560,13 +560,22 @@ export function buildW68EconomicsEvaluationBatch({
   const evidenceRefs = [...new Set([...artifactRefs, ...strings(reworkRefs, 1000), ...(costLedgerPath ? [costLedgerPath] : [])])];
   const common = { runId, taskRef, artifactRefs, findingRefs, gateRefs, humanDecisionRefs: [], evidenceRefs, observedAt: at };
   const sample = (suffix, status, value, reason = '') => ({ sampleId: `sample:${prefix}:${suffix}`, ...common, status, value, reason });
+  const providerEntries = asArray(result.budget?.entries).filter(row => row?.source === 'provider-reported');
+  const providerUsage = providerEntries.reduce((usage, row) => ({
+    inputTokens: usage.inputTokens + Math.max(0, Number(row.inputTokens) || 0),
+    outputTokens: usage.outputTokens + Math.max(0, Number(row.outputTokens) || 0),
+    totalTokens: usage.totalTokens + Math.max(0, Number(row.tokens) || 0),
+  }), { inputTokens: 0, outputTokens: 0, totalTokens: 0 });
+  const hasProviderUsage = providerUsage.totalTokens > 0;
   const metrics = new Map([
     ['production.raw-ability.baseline-quality', sample('raw-ability', 'unknown', null, '缺少同任务无治理对照样本')],
     ['production.governance-uplift.matched-delta', sample('governance-uplift', 'unknown', null, '缺少同任务轻/标准/完整治理匹配样本')],
     ['production.final-quality.seal-rate', sample('final-quality', 'measured', result.sealed ? 100 : 0)],
     ['production.governance-dependency.matched-gap', sample('governance-dependency', 'unknown', null, '缺少同任务无治理对照样本')],
     ['production.reliability.completion-rate', sample('reliability', 'measured', result.sealed ? 100 : 0)],
-    ['production.cost.estimated-tokens', sample('cost', 'measured', Math.max(0, Number(result.budget?.usedTokens) || 0), 'W68 字符折算预算消耗，仅为估算')],
+    ['production.cost.estimated-tokens', hasProviderUsage
+      ? sample('cost', 'measured', providerUsage.totalTokens, 'Provider 实报 usage；沿用旧 metric id 仅作兼容')
+      : sample('cost', 'unknown', null, 'Provider 未返回 usage；系统不再按字符数推算 Token')],
     ['production.latency.elapsed-ms', sample('latency', 'unknown', null, '现有 W68 未记录可信起止时间')],
     ['production.revision-cost.rework-count', sample('revision-cost', 'measured', asArray(result.repairs).length)],
     ['production.canon-compliance.gate-pass-rate', gates.length ? sample('canon', 'measured', gates.filter(([, pass]) => pass).length * 100 / gates.length) : sample('canon', 'not-applicable', null, '本次没有可适用 Gate')],
@@ -574,13 +583,15 @@ export function buildW68EconomicsEvaluationBatch({
     ['audience.acceptance', sample('audience', 'unknown', null, '尚无受众反馈样本')],
   ]);
   const records = [{
-    recordId: `cost:${prefix}:review-budget-estimate`, type: 'cost-recorded',
+    recordId: `cost:${prefix}:provider-usage`, type: 'cost-recorded',
     cost: {
-      costId: `cost:${prefix}:review-budget-estimate`, runId, taskRef, kind: 'estimate', category: 'w68-review-budget',
-      providerRef: '', modelRef: '', seatRef: 'seat:factory-review',
-      usage: { status: 'estimated', totalTokens: Math.max(0, Number(result.budget?.usedTokens) || 0), unit: 'token', version: 'w68.review-budget-char-estimate/v0', sourceRef: costLedgerPath || `${artifactDir}/成本台账.json` },
+      costId: `cost:${prefix}:provider-usage`, runId, taskRef, kind: hasProviderUsage ? 'provider-reported' : 'unknown', category: 'provider-usage',
+      providerRef, modelRef, seatRef: 'seat:factory-review',
+      usage: hasProviderUsage
+        ? { status: 'reported', ...providerUsage, unit: 'token', version: 'provider.response.usage/v1', sourceRef: costLedgerPath || `${artifactDir}/成本台账.json` }
+        : { status: 'unknown', inputTokens: 0, outputTokens: 0, totalTokens: 0, unit: 'token', version: '', sourceRef: '' },
       amount: { status: 'unknown' }, priceRef: {}, observedAt: at,
-      reason: 'ReviewBudgetLedger 按字符数折算；不是 Provider usage，也没有可验证价格表。', evidenceRefs: artifactRefs,
+      reason: hasProviderUsage ? '只记录 Provider 返回的 usage；不参与流程门禁。' : 'Provider 未返回 usage；不补零、不按字符数估算，也不参与流程门禁。', evidenceRefs: artifactRefs,
     },
   }];
   for (const [metricId, oneSample] of metrics) {
@@ -591,7 +602,7 @@ export function buildW68EconomicsEvaluationBatch({
       context: {
         domain: 'content-production', workflow: 'W68', workflowVersion: 'W68a',
         governanceProfile: asString(result.ritual?.effective || result.ritual?.requested || 'unknown', 160), artifactType: 'reviewed-text',
-        seatRef: 'seat:factory-review', executorRef: '', providerRef: '', modelRef: '',
+        seatRef: 'seat:factory-review', executorRef: '', providerRef, modelRef,
         defectClass: findingRefs.length ? 'review-finding' : '',
       },
       evidenceWindow: { from: at, to: at }, samples: [oneSample], createdAt: at,

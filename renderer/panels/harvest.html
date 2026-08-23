@@ -55,8 +55,8 @@
     <div class="candidate-grid">
       <label for="candidate-kind">候选类型</label>
       <select id="candidate-kind"><option value="stage-summary">阶段总结</option><option value="decision">正式决策</option><option value="method">可复用方法</option><option value="finding">事实发现</option></select>
-      <label for="candidate-title">候选标题</label><input id="candidate-title" maxlength="500">
-      <label for="candidate-statement">候选正文</label><textarea id="candidate-statement" maxlength="100000"></textarea>
+      <label for="candidate-title">候选标题</label><input id="candidate-title">
+      <label for="candidate-statement">候选正文</label><textarea id="candidate-statement"></textarea>
     </div>
     <div class="candidate-actions"><button id="candidate-cancel">取消审阅</button><button id="candidate-reject">驳回候选</button><button class="pri" id="candidate-approve">批准入库</button></div>
     <span id="candidate-supersede-note" hidden></span>
@@ -65,7 +65,7 @@
     <div class="manager-head"><div><b>本地升格记录</b><span class="manager-note">管理人工决定与安全证据投影；这里不会把内容发布到 Hub 或公开网络。</span></div><button id="promotion-manager-close">关闭</button></div>
     <h3>升格记录</h3><div class="manager-list" id="promotion-list"><div class="manager-empty">正在读取…</div></div>
     <h3>证据投影</h3><div class="manager-list" id="projection-list"><div class="manager-empty">暂无证据投影</div></div>
-    <input class="manager-reason" id="promotion-reason" maxlength="1200" placeholder="填写本次撤销、投影或撤回原因（至少 4 个字）">
+    <input class="manager-reason" id="promotion-reason" placeholder="填写本次撤销、投影或撤回原因">
     <div class="boundary">证据投影只含身份、类型、来源摘要和哈希证据；不含正文、本地路径、来源网址或消息 ID，且始终标记“未获发布许可”。</div>
     <div class="manager-actions"><button id="promotion-refresh">刷新</button><button id="promotion-supersede-clear">取消替代标记</button><button id="promotion-supersede">下次同类批准替代所选</button><button id="promotion-project">生成证据投影</button><button class="danger" id="promotion-revoke">撤销所选</button><button class="danger" id="projection-withdraw">撤回所选投影</button></div>
   </section>
@@ -144,7 +144,7 @@ function openCandidateReview(){
   $('#candidate-kind').value=DATA.supersede?.kind||'stage-summary';
   const initialLabel=KIND_LABELS[$('#candidate-kind').value];
   $('#candidate-title').value=`${DATA.meta?.topic||DATA.meta?.title||'未命名对话'} · ${initialLabel}`;
-  $('#candidate-statement').value=messages.map(row=>`${row.roleLabel||row.role}：${row.text}`).join('\n\n').slice(0,100000);
+  $('#candidate-statement').value=messages.map(row=>`${row.roleLabel||row.role}：${row.text}`).join('\n\n');
   $('#candidate-supersede-note').hidden=!DATA.supersede;$('#candidate-supersede-note').textContent=DATA.supersede?'本次批准将替代所选同类 active 记录；旧记录保留并标记为“已替代”。':'';
   $('#candidate-review').hidden=false;$('#status').textContent='请审阅候选类型、标题与正文，再明确批准或驳回。';render();
   $('#candidate-title').focus();

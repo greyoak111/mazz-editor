@@ -13,11 +13,15 @@ export async function scenes80({ win, human, scenario, shotDir }) {
       const { normalizeFactoryEvent } = await import('./modules/factory/workshop.js');
       const ws = String(await window.mazz.invoke('workspace:get')).replace(/\\/g, '/').replace(/\/$/, '');
       const folder = `${ws}/Output/小说/20260813-活稿车间实证`;
-      const task = { id: 'w68b-live-desk', label: '活稿车间实证', folder, genreId: 'xiaoshuo', values: { 书名: '活稿车间实证' }, mode: 'max', status: 'done', doneChapters: 4, maxChapters: 4, reviewProtocol: 'W68a', reviewRitual: 'full', reviewBudgetCap: 40000, outputProtocol: 'W60b' };
+      const task = { id: 'w68b-live-desk', label: '活稿车间实证', folder, genreId: 'xiaoshuo', values: { 书名: '活稿车间实证' }, mode: 'single', status: 'done', doneChapters: 4, reviewProtocol: 'W68a', reviewRitual: 'full', outputProtocol: 'W60b' };
       fp.tasks = fp.tasks.filter(x => x.id !== task.id).concat(task); fp.persistTasks();
       await window.mazz.invoke('fs:mkdir', { path: folder });
       const mk = (unitNo) => ({
-        sealed: true, verdict: 'pass', ritual: { requested: 'full', effective: 'full' }, gates: { machine: true, point: true, external: true, final: true }, transitions: ['machine:1', 'point:1', 'review:1', 'final'], budget: { usedTokens: 3200 + unitNo },
+        sealed: true, verdict: 'pass', ritual: { requested: 'full', effective: 'full' }, gates: { machine: true, point: true, external: true, final: true }, transitions: ['machine:1', 'point:1', 'review:1', 'final'],
+        budget: {
+          capTokens: null, usedTokens: 3200 + unitNo, remainingTokens: null, source: 'provider-reported', enforced: false,
+          entries: [{ seat: 'M1', phase: 'draft', tokens: 3200 + unitNo, inputTokens: 2400 + unitNo, outputTokens: 800, source: 'provider-reported', at: `2026-08-13T11:00:0${unitNo}.000Z` }],
+        },
         schema: { lockedFacts: [{ label: '终点', value: '星港', sources: ['航海志', '信标簿'], basis: '正式抵达口径' }] }, bible: '# 圣经\n\n- 终点＝星港\n- 主角＝林澈', precedent: `### 第${unitNo}章判例\n\n- 规则：W68-R4\n- 裁决：证据充分`,
         artifacts: {
           skeleton: `# 骨架与验收点\n\n- [必达] 第${unitNo}章抵达星港`,

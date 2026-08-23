@@ -2,6 +2,7 @@
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import fs from 'node:fs';
+import { JSDOM } from 'jsdom';
 import {
   HARVEST_ADAPTERS, buildHarvestMarkdown, harvestScript, normalizeHarvestMessages, resolveHarvestAdapter,
 } from '../../renderer/modules/browser/harvester.js';
@@ -24,7 +25,7 @@ describe('W62f 对话采集纯内核', () => {
     assert.equal(resolveHarvestAdapter('https://example.org/chat').id, 'generic');
   });
 
-  test('显式角色优先，未知角色交替推断并保留问号，重复块去重', () => {
+  test('显式角色优先，未知角色交替推断并保留问号，重复正文不冒充同一消息', () => {
     const rows = normalizeHarvestMessages([
       { text: '问题一', role: 'user' },
       { text: '回答一', role: 'assistant' },
@@ -32,8 +33,9 @@ describe('W62f 对话采集纯内核', () => {
       { text: '回答二' },
       { text: '回答二' },
     ]);
-    assert.deepEqual(rows.map(row => row.role), ['user', 'assistant', 'user', 'assistant']);
-    assert.deepEqual(rows.map(row => row.uncertain), [false, false, true, true]);
+    assert.deepEqual(rows.map(row => row.role), ['user', 'assistant', 'user', 'assistant', 'user']);
+    assert.deepEqual(rows.map(row => row.uncertain), [false, false, true, true, true]);
+    assert.equal(rows.filter(row => row.text === '回答二').length, 2, '合法的重复消息正文不得按文本静默去重');
     assert.match(rows[2].roleLabel, /\?$/);
   });
 
@@ -54,6 +56,64 @@ describe('W62f 对话采集纯内核', () => {
     assert.match(md, /## 002 · AI\?/);
     assert.match(md, /先列来源。/);
   });
+
+  test('采集脚本与运行时不按消息字符数或条数丢弃对话', () => {
+    const script = harvestScript('https://chatgpt.com/c/1');
+    assert.equal(script.includes('text.length > 100000'), false);
+    assert.equal(script.includes('n < 100000'), false);
+    const runtime = src('renderer/modules/browser/harvest-runtime.js');
+    assert.equal(runtime.includes('.slice(0, 1000)'), false);
+    assert.equal(runtime.includes('500_000'), false);
+    assert.equal(runtime.includes('100_000'), false);
+  });
+
+  test('滚顶按自然稳定收敛并合并全部 selector 候选，不设固定轮次或首个两条短路', () => {
+    const source = src('renderer/modules/browser/harvester.js');
+    const script = harvestScript('https://chatgpt.com/c/1');
+    assert.equal(source.includes('maxPasses ='), false);
+    assert.equal(source.includes('Math.min(16'), false);
+    assert.match(script, /while \(stable < \d+\)/);
+    assert.match(script, /position\.key === lastPosition/);
+    assert.match(script, /selectorsUsed\.add/);
+    assert.match(script, /mergeRows\(collected, snapshot\.rows, true\)/);
+    assert.match(script, /stableKeyOf/);
+    assert.match(script, /row\.key \? 'key:' \+ row\.key : 'text:' \+ row\.text/);
+    assert.doesNotMatch(script, /unique\.length >= 2\) break/);
+    assert.doesNotMatch(script, /text\.length > best\.length/);
+    assert.match(script, /maximal\.map\(nodeText\)\.join/);
+  });
+
+  test('自然滚顶可越过旧 16 轮并保留虚拟化期间出现的全部消息', async () => {
+    const dom = new JSDOM(`<!doctype html><main role="main">
+      <article data-testid="conversation-turn-current-user"><div data-message-author-role="user">重复正文</div></article>
+      <article data-testid="conversation-turn-current-ai"><div data-message-author-role="assistant">重复正文</div></article>
+    </main>`, { url: 'https://chatgpt.com/c/1', runScripts: 'outside-only' });
+    const { window } = dom;
+    window.scrollTo = () => {};
+    const main = window.document.querySelector('main');
+    let loaded = 0;
+    Object.defineProperties(main, {
+      clientHeight: { configurable: true, get: () => 200 },
+      scrollHeight: { configurable: true, get: () => 1000 + loaded * 100 },
+      scrollTop: { configurable: true, get: () => 0, set: () => {} },
+    });
+    main.addEventListener('scroll', () => {
+      if (loaded >= 18) return;
+      loaded++;
+      const turn = window.document.createElement('article');
+      turn.dataset.testid = `conversation-turn-older-${loaded}`;
+      const message = window.document.createElement('div');
+      message.dataset.messageAuthorRole = loaded % 2 ? 'assistant' : 'user';
+      message.textContent = `历史消息 ${loaded}`;
+      turn.appendChild(message);
+      main.prepend(turn);
+    });
+    const result = await window.eval(harvestScript('https://chatgpt.com/c/1', { settleMs: 80, stablePasses: 2 }));
+    assert.ok(result.scrollPasses > 16, `自然收敛被旧轮次帽截断：${result.scrollPasses}`);
+    assert.equal(result.messages.length, 20);
+    assert.equal(result.messages.filter(row => row.text === '重复正文').length, 2);
+    dom.window.close();
+  });
 });
 
 describe('W62f 面板、回喂与正式术语接线', () => {
@@ -63,6 +123,8 @@ describe('W62f 面板、回喂与正式术语接线', () => {
     assert.ok(panel.includes('id="select-all"') && panel.includes('id="select-invert"'));
     assert.ok(panel.includes('data-role-flip'));
     assert.ok(panel.includes('harvestExport') && panel.includes('harvestStyle') && panel.includes('harvestMindmap') && panel.includes('harvestPromote') && panel.includes('harvestReviewPromotion'));
+    assert.doesNotMatch(panel, /candidate-(?:title|statement)"\s+maxlength=|promotion-reason"\s+maxlength=|slice\(0,\s*100000\)/,
+      '候选标题、正文和决定理由不得由面板字符帽截断');
   });
 
   test('浏览器、面板窗、文风素材与无损提炼回喂形成闭环', () => {

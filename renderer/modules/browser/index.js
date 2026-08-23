@@ -1018,7 +1018,7 @@ function createBrowser(container) {
   ctl.panelEl.querySelector('[data-p=insert]').addEventListener('click', () => {
     if (!ctl.lastResults) { toast('先做一次搜索'); return; }
     const { query, results } = ctl.lastResults;
-    const md = `## 搜索：${query}\n\n` + results.slice(0, 10).map(r => `- [${r.title}](${r.url})${r.content ? ' — ' + r.content.slice(0, 80) : ''}`).join('\n') + '\n';
+    const md = `## 搜索：${query}\n\n` + results.map(r => `- [${r.title}](${r.url})${r.content ? ' — ' + r.content : ''}`).join('\n') + '\n';
     window.MazzHost?.openTab('markdown', { title: `搜索_${query}.md`, content: md });
   });
 
@@ -1616,7 +1616,14 @@ export default {
           toast('正在剪藏正文并本地化图片…');
           try {
             const result = await current.clipper.clipCurrent();
-            toast(`已剪藏：${result.stem}.md · ${result.assets} 图${result.ocr ? ' · OCR 已补正文' : ''}`);
+            const failedImages = result.imageFailures?.length || 0;
+            const imageNote = failedImages
+              ? ` · ${result.localizedAssets}/${result.assets} 图已本地化，${failedImages} 图保留远程来源`
+              : ` · ${result.assets} 图已本地化`;
+            const ocrNote = result.ocr
+              ? ` · OCR 已处理 ${result.ocrProcessed - result.ocrFailed}/${result.ocrProcessed} 图像来源`
+              : (result.ocrReason ? ' · OCR 未完成，原因已写入剪藏' : '');
+            toast(`已剪藏：${result.stem}.md${imageNote}${ocrNote}`);
           } catch (error) { toast('剪藏失败：' + (error?.message || error)); }
         } },
       { id: 'browser.harvestAiChat', title: 'AI 对话整理（全量采集、导出与回喂）', icon: '☷', group: '桥接',

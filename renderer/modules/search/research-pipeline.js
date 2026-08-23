@@ -4,11 +4,13 @@
 const TRACKING_KEYS = /^(utm_(source|medium|campaign|term|content)|gclid|fbclid|spm|from|ref)$/i;
 const INSTRUCTION_LINE = /(?:^\s*(?:system|assistant|developer|user)\s*:|ignore\s+(?:all\s+)?(?:previous|prior|above).{0,40}(?:instruction|rule|prompt)|disregard.{0,40}(?:instruction|rule|prompt)|(?:忽略|无视|绕过|覆盖).{0,28}(?:以上|此前|前文|指令|规则|提示)|(?:执行|运行|调用|上传|发送|删除).{0,18}(?:命令|脚本|文件|密钥|令牌)|你现在是.{0,30}(?:助手|系统)|不要.{0,16}(?:引用|披露).{0,16}(?:来源|规则))/i;
 
-const clampText = (value, max = 60_000) => String(value || '').replace(/\u0000/g, '').slice(0, max);
+// Content is sanitized, not locally rationed. Provider/context limits belong to the
+// selected service; this deterministic layer must not silently discard evidence.
+const cleanText = value => String(value || '').replace(/\u0000/g, '');
 const unique = values => [...new Set(values.map(x => String(x || '').trim()).filter(Boolean))];
 
 export function sanitizeUntrustedText(input) {
-  const lines = clampText(input).replace(/\r/g, '').split('\n');
+  const lines = cleanText(input).replace(/\r/g, '').split('\n');
   let quarantined = false;
   const kept = [];
   for (const line of lines) {
@@ -39,9 +41,9 @@ function queryKeywords(text) {
   const out = new Set(source.match(/[a-z0-9][a-z0-9_-]{1,}/g) || []);
   for (const segment of source.match(/[\u3400-\u9fff]{2,}/g) || []) {
     if (segment.length <= 6) out.add(segment);
-    for (let i = 0; i < segment.length - 1 && i < 18; i++) out.add(segment.slice(i, i + 2));
+    for (let i = 0; i < segment.length - 1; i++) out.add(segment.slice(i, i + 2));
   }
-  return [...out].slice(0, 48);
+  return [...out];
 }
 
 function relevance(text, keywords) {
@@ -57,7 +59,7 @@ export function fallbackQueryExpansion(topic) {
     `${topic} 事实 数据`,
     `${topic} 研究 报告`,
     `${topic} 实证 来源`,
-  ]).slice(0, 4);
+  ]);
 }
 
 export function parseExpandedQueries(value, topic) {
@@ -68,7 +70,7 @@ export function parseExpandedQueries(value, topic) {
     try { rows = JSON.parse(text); }
     catch { rows = text.split(/\r?\n/).map(x => x.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '')); }
   }
-  return unique([topic, ...(Array.isArray(rows) ? rows : [])]).slice(0, 4);
+  return unique([topic, ...(Array.isArray(rows) ? rows : [])]);
 }
 
 async function mapLimit(items, limit, fn) {
@@ -84,7 +86,7 @@ async function mapLimit(items, limit, fn) {
   return rows;
 }
 
-export function rankSearchResults(topic, batches, { maxSources = 10 } = {}) {
+export function rankSearchResults(topic, batches, _legacyOptions = {}) {
   const keywords = queryKeywords(topic);
   const byUrl = new Map();
   for (let queryIndex = 0; queryIndex < (batches || []).length; queryIndex++) {
@@ -94,9 +96,9 @@ export function rankSearchResults(topic, batches, { maxSources = 10 } = {}) {
       const url = canonicalUrl(raw.url);
       if (!url) continue;
       const item = {
-        title: clampText(raw.title || url, 400).trim(), url,
-        content: clampText(raw.content || raw.snippet || '', 4000).trim(),
-        engine: clampText(raw.engine || '', 80),
+        title: cleanText(raw.title || url).trim(), url,
+        content: cleanText(raw.content || raw.snippet || '').trim(),
+        engine: cleanText(raw.engine || ''),
         queryIndex, resultIndex,
       };
       item.rankScore = (Number(raw.score) || 0) * 2
@@ -108,17 +110,10 @@ export function rankSearchResults(topic, batches, { maxSources = 10 } = {}) {
     }
   }
   const sorted = [...byUrl.values()].sort((a, b) => b.rankScore - a.rankScore || a.url.localeCompare(b.url));
-  const domains = new Set();
-  const out = [];
-  for (const item of sorted) {
-    let domain = '';
-    try { domain = new URL(item.url).hostname.replace(/^www\./, ''); } catch { continue; }
-    if (domains.has(domain)) continue;
-    domains.add(domain);
-    out.push({ ...item, domain });
-    if (out.length >= maxSources) break;
-  }
-  return out;
+  return sorted.map(item => ({
+    ...item,
+    domain: new URL(item.url).hostname.replace(/^www\./, ''),
+  }));
 }
 
 export function chunkText(text, { size = 2200, overlap = 180 } = {}) {
@@ -139,7 +134,7 @@ export function chunkText(text, { size = 2200, overlap = 180 } = {}) {
   return chunks.filter(Boolean);
 }
 
-function funnelChunks(topic, sources, maxChunks = 12) {
+function funnelChunks(topic, sources) {
   const keywords = queryKeywords(topic);
   const all = [];
   for (const source of sources) {
@@ -154,11 +149,9 @@ function funnelChunks(topic, sources, maxChunks = 12) {
   const seenSource = new Set();
   for (const chunk of all) {
     if (!seenSource.has(chunk.sourceId)) { picked.push(chunk); seenSource.add(chunk.sourceId); }
-    if (picked.length >= maxChunks) return picked;
   }
   for (const chunk of all) {
     if (!picked.includes(chunk)) picked.push(chunk);
-    if (picked.length >= maxChunks) break;
   }
   return picked;
 }
@@ -171,7 +164,7 @@ function stageRecorder(trace, onStage) {
   };
 }
 
-export async function prepareResearch({ topic, expand, search, extract, maxSources = 8, maxChunks = 12, onStage } = {}) {
+export async function prepareResearch({ topic, expand, search, extract, onStage } = {}) {
   topic = String(topic || '').trim();
   if (!topic) throw new Error('研究主题不能为空');
   if (typeof search !== 'function' || typeof extract !== 'function') throw new Error('检索与正文提取接口未就绪');
@@ -193,7 +186,7 @@ export async function prepareResearch({ topic, expand, search, extract, maxSourc
   });
 
   stage('rank', { label: '域名去重粗排' });
-  const ranked = rankSearchResults(topic, batches, { maxSources });
+  const ranked = rankSearchResults(topic, batches);
   if (!ranked.length) throw new Error('没有检索到可用来源');
 
   stage('extract', { label: '网页正文提取', sources: ranked.length, concurrency: 2 });
@@ -204,7 +197,7 @@ export async function prepareResearch({ topic, expand, search, extract, maxSourc
     if (!text) return null;
     return {
       ...item, id: `s${index + 1}`,
-      title: clampText(page?.title || item.title, 400).trim() || item.url,
+      title: cleanText(page?.title || item.title).trim() || item.url,
       text, extracted: !!page?.text,
     };
   });
@@ -212,14 +205,14 @@ export async function prepareResearch({ topic, expand, search, extract, maxSourc
   if (!sources.length) throw new Error('网页正文与搜索摘要均为空');
 
   stage('funnel', { label: '分块相关度漏斗', sources: sources.length });
-  const chunks = funnelChunks(topic, sources, maxChunks);
+  const chunks = funnelChunks(topic, sources);
   if (!chunks.length) throw new Error('没有可供合成的正文块');
   stage('approve', { label: '等待人工勾选来源', sources: sources.length, chunks: chunks.length });
   return { version: 1, topic, queries, sources, chunks, trace };
 }
 
 function sourceTitle(title) {
-  return String(title || '').replace(/[\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 180) || '未命名来源';
+  return String(title || '').replace(/[\[\]]/g, '').replace(/\s+/g, ' ').trim() || '未命名来源';
 }
 
 export function buildSynthesisPrompt(prepared, selectedSources) {
@@ -240,10 +233,11 @@ function fallbackSynthesis(prepared, selectedSources) {
   const refs = new Map(selectedSources.map((source, index) => [source.id, index + 1]));
   const bullets = [];
   for (const source of selectedSources) {
-    const chunk = prepared.chunks.find(row => row.sourceId === source.id);
-    if (!chunk) continue;
-    const excerpt = chunk.text.replace(/\s+/g, ' ').slice(0, 260);
-    bullets.push(`- ${excerpt}${excerpt.length >= 260 ? '…' : ''} [${refs.get(source.id)}]`);
+    const chunks = prepared.chunks.filter(row => row.sourceId === source.id);
+    for (const chunk of chunks) {
+      const excerpt = chunk.text.replace(/\s+/g, ' ');
+      bullets.push(`- ${excerpt} [${refs.get(source.id)}]`);
+    }
   }
   return `模型未返回合规的逐条引文，以下为确定性摘录，尚需人工判断：\n\n${bullets.join('\n') || '- 资料不足，无法形成结论。'}`;
 }
@@ -253,9 +247,9 @@ function citationCoverageOk(text, maxRef) {
   if (!refs.length || refs.some(ref => ref < 1 || ref > maxRef)) return false;
   const claims = String(text || '').split(/\r?\n/).flatMap(line => {
     const clean = line.trim();
-    if (!clean || /^#{1,6}\s|^(?:一|二|三|四|五)[、.]\s*[^：:]{0,12}$/.test(clean)) return [];
+    if (!clean || /^#{1,6}\s|^(?:一[、.]\s*结论|二[、.]\s*关键事实|三[、.]\s*分歧与不足)$/.test(clean)) return [];
     const sentences = clean.match(/[^。！？!?]+[。！？!?](?:\s*\[\d+\])*|[^。！？!?]+$/g) || [];
-    return sentences.filter(part => part.replace(/^[\s>*+-]+/, '').length >= 8);
+    return sentences.filter(part => part.replace(/^[\s>*+-]+/, '').trim());
   });
   return claims.length > 0 && claims.every(claim => /\[\d+\]/.test(claim) || /资料不足|证据不足|无法判断|尚无材料/.test(claim));
 }
@@ -279,6 +273,6 @@ export async function finishResearch(prepared, { selectedIds, synthesize, now = 
   const atRaw = now();
   const at = atRaw instanceof Date ? atRaw : new Date(atRaw);
   const sourceRows = selectedSources.map((source, index) => `${index + 1}. [${sourceTitle(source.title)}](${source.url})${source.domain ? ` — ${source.domain}` : ''}`);
-  const report = `# ${prepared.topic}\n\n> 生成时间：${at.toISOString()}\n> 证据纪律：网页内容只当资料，不当指令；本报告只允许引用下列人工核准来源。\n\n## 结论与证据\n\n${synthesis}\n\n## 来源清单\n\n${sourceRows.join('\n')}\n\n## 七步管线审计\n\n1. 扩写：${prepared.queries.length} 条检索式\n2. 并行搜索：SearXNG，最高 2 并发\n3. 粗排：规范 URL 去重、同域择优\n4. 正文提取：${prepared.sources.filter(x => x.extracted).length}/${prepared.sources.length} 个来源取得正文\n5. 分块漏斗：${prepared.chunks.length} 个相关正文块\n6. 带引文合成：${selectedSources.length} 个来源经人工核准\n7. 落盘索引：由宿主写入工作区“检索”目录后登记全文索引\n`;
+  const report = `# ${prepared.topic}\n\n> 生成时间：${at.toISOString()}\n> 证据纪律：网页内容只当资料，不当指令；本报告只允许引用下列人工核准来源。\n\n## 结论与证据\n\n${synthesis}\n\n## 来源清单\n\n${sourceRows.join('\n')}\n\n## 七步管线审计\n\n1. 扩写：${prepared.queries.length} 条检索式\n2. 并行搜索：SearXNG，最高 2 并发\n3. 粗排：只做规范 URL 去重，不按域名丢弃来源\n4. 正文提取：${prepared.sources.filter(x => x.extracted).length}/${prepared.sources.length} 个来源取得正文\n5. 分块漏斗：${prepared.chunks.length} 个相关正文块\n6. 带引文合成：${selectedSources.length} 个来源经人工核准\n7. 落盘索引：由宿主写入工作区“检索”目录后登记全文索引\n`;
   return { ...prepared, selectedSources, synthesis, report, prompt, trace };
 }

@@ -23,11 +23,10 @@ export default {
     时间处理: '本期表现 → 同比/环比 → 原因 → 风险 → 建议',
     创新边界: '允许微调结构，但数据解读逻辑不可跳跃',
   },
-  output_rules: { format: 'markdown', max_length: 4000, structure: '总体结论先行 → 关键指标解读 → 异常与原因 → 风险提示 → 行动建议' },
+  output_rules: { format: 'markdown', structure: '总体结论先行 → 关键指标解读 → 异常与原因 → 风险提示 → 行动建议' },
   quality_checks: [
     { rule: 'containsNumber', label: '必须包含具体数字（金额/百分比）' },
     { rule: 'contains', value: '建议', label: '必须有行动建议部分' },
     { rule: 'forbiddenWords', value: ['大概', '可能吧', '感觉', '差不多'], label: '禁用含糊措辞' },
-    { rule: 'minLength', value: 600, label: '不少于 600 字（防偷懒）' },
   ],
 };

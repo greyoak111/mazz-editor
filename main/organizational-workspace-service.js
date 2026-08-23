@@ -20,7 +20,7 @@ function summarize(workflow, request, plan, input) {
   const unavailable = request.capabilitySnapshot.executors.filter(row => row.status !== 'available').map(row => row.executorRef);
   return {
     schema: 'mazz.intent-organization-preview/v0', previewOnly: true, executionStarted: false,
-    intent: { goal: String(input.goal || '').slice(0, 1000), templateId: input.templateId, methodRef: request.method.methodId, budget: request.budget },
+    intent: { goal: String(input.goal || ''), templateId: input.templateId, methodRef: request.method.methodId, budget: request.budget },
     workflow: { workflowId: workflow.workflowId, version: workflow.version, name: workflow.name, domain: workflow.domain, deliverableType: workflow.deliverableType },
     organization: { teams: workflow.teams, seats: workflow.seats, gates: workflow.gates, artifacts: workflow.artifacts, authorities: workflow.authorities, recoveryPoints: workflow.recoveryPoints },
     routing: plan.routing,
@@ -64,7 +64,7 @@ class OrganizationalWorkspaceService {
       boundary = { publicationAuthorized: false, researchConclusionVerified: false };
     } else throw new Error(`未知组织模板: ${templateId}`);
     request = JSON.parse(JSON.stringify(request));
-    request.goal.statement = String(input.goal).slice(0, 1000);
+    request.goal.statement = String(input.goal);
     if (budget > 0) request.budget.limit = budget;
     const plan = kernel.compileOrganization(workflow, request);
     return { workflow, request, plan, boundary };

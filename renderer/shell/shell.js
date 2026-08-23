@@ -3602,7 +3602,7 @@ export class Shell {
             let actionReceipt = null;
             if (pl.act === 'selectGenre') {
               const g = (fp.genres || []).find(x => x.id === pl.id);
-              if (g) { fp.genre = g; fp.values = {}; fp.lengthPlan = (await import('../modules/factory/engine.js')).resolveFactoryLengthPlan({ preset: 'short' }); fp.renderForm(); fp.syncLengthControls(); }
+              if (g) { fp.genre = g; fp.values = {}; fp.resetLengthPlan(false); fp.renderForm(); fp.syncLengthControls(); }
             } else if (pl.act === 'setValue') {
               fp.values[pl.f] = pl.v;
             } else if (pl.act === 'setDump') {
@@ -3617,9 +3617,6 @@ export class Shell {
               fp.setConcurrency(pl.value);
             } else if (pl.act === 'setReviewRitual') {
               const el = fp.el.querySelector('.fc-review-ritual'); if (el) el.value = pl.value === 'full' ? 'full' : 'light';
-              fp.pushSnapshot();
-            } else if (pl.act === 'setReviewBudget') {
-              const el = fp.el.querySelector('.fc-review-budget'); if (el) el.value = String(Math.max(0, Number(pl.value) || 32000));
               fp.pushSnapshot();
             } else if (pl.act === 'fill') {
               await fp.smartFill();
@@ -3641,16 +3638,15 @@ export class Shell {
                 if (fp.genre?.id !== genre.id) { fp.genre = genre; fp.values = {}; }
               }
               fp.values = { ...(draft.values || {}) };
-              fp.lengthPlan = (await import('../modules/factory/engine.js')).resolveFactoryLengthPlan({
+              fp.setAdvisoryLengthPlan({
                 preset: draft.preset, totalWords: draft.totalWords, wordsPerUnit: draft.wordsPerUnit,
-              });
+              }, false);
               fp.renderForm();
               fp.syncLengthControls(false);
               if (fp.dumpEl) fp.dumpEl.value = String(draft.dump || '');
               const dual = fp.el.querySelector('.fc-dualloop'); if (dual) dual.checked = !!draft.dualLoop;
               const max = fp.el.querySelector('.fc-maxmode'); if (max) max.checked = !!draft.maxMode;
               const ritual = fp.el.querySelector('.fc-review-ritual'); if (ritual) ritual.value = draft.reviewRitual === 'full' ? 'full' : 'light';
-              const budget = fp.el.querySelector('.fc-review-budget'); if (budget) budget.value = String(Math.max(0, Number(draft.reviewBudgetCap) || 32000));
               fp.setAutoPreview(draft.autoPreview !== false);
               fp.setConcurrency(draft.concurrency);
               fp.setExportFormat(draft.exportFmt);
@@ -3665,8 +3661,6 @@ export class Shell {
               if (!actionReceipt) throw new Error(pl.mode === 'generate' ? '立项未开工，请检查必填项与 AI 服务' : '项目未加入队列，请检查必填项');
             } else if (pl.act === 'project') {
               await fp.openProjectWizard();
-            } else if (pl.act === 'setLengthPreset') {
-              fp.applyLengthPreset(pl.preset);
             } else if (pl.act === 'setTotalWords') {
               fp.setTotalWords(pl.value);
             } else if (pl.act === 'setWordsPerUnit') {

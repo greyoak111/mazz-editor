@@ -166,7 +166,7 @@ describe('W92 Factory 非流式 Provider 完成证据', () => {
     const chatCall = calls.find(call => call.channel === 'factory:aiChat');
     assert.equal(chatCall.payload.providerId, 'deepseek');
     assert.equal(chatCall.payload.role, 'factory_review_a');
-    assert.equal(chatCall.payload.maxTokens, 8192);
+    assert.equal(Object.prototype.hasOwnProperty.call(chatCall.payload, 'maxTokens'), false);
   });
 
   test('网页直连专业席也发送 thinking=disabled，仍只接受 stop + 非空 content', async () => {
@@ -187,7 +187,7 @@ describe('W92 Factory 非流式 Provider 完成证据', () => {
         role: 'factory_review_a', user: 'review', maxTokens: 4096,
       });
       assert.deepEqual(requestBody.thinking, { type: 'disabled' });
-      assert.equal(requestBody.max_tokens, 4096);
+      assert.equal(Object.prototype.hasOwnProperty.call(requestBody, 'max_tokens'), false);
       assert.equal(result.text, '{"objections":[]}');
       assert.equal(result.text.includes('不得成为工件'), false);
       assert.equal(result.safeToCommit, true);
@@ -865,29 +865,29 @@ describe('W92 W68 修订与封存门', () => {
     assert.doesNotMatch(index, /const snap\s*=\s*await chat\s*\(/);
   });
 
-  test('审校把正文缩成不足 10 字时暂停并保留断点，不得推进快照或伪装 done', () => {
+  test('审校只在正文为空时暂停；短正文不再被字符门限阻断', () => {
     const index = read('renderer/modules/factory/index.js');
     const maxStart = index.indexOf('async runMaxTask(');
-    const reasonAt = index.indexOf("reasonCode: 'POST_REVIEW_BODY_TOO_SHORT'", maxStart);
-    const branchAt = index.lastIndexOf('} else {', reasonAt);
+    const reasonAt = index.indexOf("reasonCode: 'POST_REVIEW_BODY_EMPTY'", maxStart);
+    const branchAt = index.lastIndexOf("if (!String(text || '').trim())", reasonAt);
     const snapshotAt = index.indexOf('// 滚动叙事状态快照', reasonAt);
-    assert(reasonAt > 0 && branchAt > 0 && snapshotAt > reasonAt, '缺少审校后短正文 fail-closed 分支');
+    assert(reasonAt > 0 && branchAt > 0 && snapshotAt > reasonAt, '缺少审校后空正文 fail-closed 分支');
     const branch = index.slice(branchAt, snapshotAt);
     assert.match(branch, /await flushCkpt\(\)/);
     assert.match(branch, /task\.status\s*=\s*'paused'/);
     assert.match(branch, /await stateFor\('stopped', i - 1\)/);
-    assert.match(branch, /reasonCode:\s*'POST_REVIEW_BODY_TOO_SHORT'/);
+    assert.match(branch, /reasonCode:\s*'POST_REVIEW_BODY_EMPTY'/);
     assert.match(branch, /return;/);
     assert.doesNotMatch(branch, /stateFor\('running'/);
 
     const singleStart = index.indexOf('async runSingleTask(');
     const single = index.slice(singleStart, maxStart);
-    assert.match(single, /const originalBody\s*=\s*nativeDeclaration\.text/);
-    assert.match(single, /if \(text\.trim\(\)\.length < 10\)/);
+    assert.match(single, /const originalBody\s*=\s*stripTokenDeclaration\(completion\.text\)/);
+    assert.match(single, /if \(!String\(text \|\| ''\)\.trim\(\)\)/);
     assert.match(single, /content:\s*originalBody/);
-    assert.match(single, /reasonCode:\s*'POST_REVIEW_BODY_TOO_SHORT'/);
+    assert.match(single, /reasonCode:\s*'POST_REVIEW_BODY_EMPTY'/);
     assert.match(single, /status:\s*'stopped',\s*currentChapter:\s*0/);
-    assert.match(single, /未生成正式正文或快照/);
+    assert.doesNotMatch(single, /length\s*<\s*10|POST_REVIEW_BODY_TOO_SHORT/);
   });
 });
 
@@ -919,10 +919,10 @@ describe('W92 发布证据原子边界', () => {
     assert.match(source, /await panel\.uncheck\('#pj-max'\)|\['#pj-max', '#pj-dual', '#pj-autopreview'\]/);
     assert.match(source, /panel\.locator\(selector\)\.dispatchEvent\('change'\)/);
     assert.match(source, /await panel\.selectOption\('#pj-review-ritual', 'light'\)/);
-    assert.match(source, /await panel\.locator\('#pj-review-budget'\)\.press\('Tab'\)/);
+    assert.doesNotMatch(source, /pj-review-budget|reviewBudgetCap/, '真实链路门不得重新注入产品 Token 预算');
     assert.match(source, /await waitForStableProjectControls\(panel, LIVE_PROJECT_COORDINATES/);
     assert.doesNotMatch(source, /querySelector\('#pj-(?:max|dual|autopreview)'\)\.checked\s*=/, '不得裸改 checked 绕过产品 change 生命周期');
-    assert.doesNotMatch(source, /querySelector\('#pj-review-(?:ritual|budget)'\)\.value\s*=/, '不得裸改审校坐标');
+    assert.doesNotMatch(source, /querySelector\('#pj-review-ritual'\)\.value\s*=/, '不得裸改审校坐标');
     assert.match(source, /matchesProjectCoordinates\(submittedProjectControls\.dom, LIVE_PROJECT_COORDINATES\)/);
     assert.match(source, /matchesProjectCoordinates\(submittedProjectControls\.authoritative, LIVE_PROJECT_COORDINATES\)/);
     assert.match(source, /receiptCoordinates\.mode === 'single'/);
@@ -930,7 +930,7 @@ describe('W92 发布证据原子边界', () => {
     assert.match(source, /dualLoop: task\.dualLoop === true/);
     assert.match(source, /autoPreview: task\.autoPreview === true/);
     assert.match(source, /reviewRitual: String\(task\.reviewRitual \|\| ''\)/);
-    assert.match(source, /reviewBudgetCap: Number\(task\.reviewBudgetCap\)/);
+    assert.match(source, /maxChapters:\s*0/);
     assert.match(source, /matchesProjectCoordinates\(receiptCoordinates, LIVE_PROJECT_COORDINATES\)/);
     assert.match(source, /matchesProjectCoordinates\(terminalCoordinates, LIVE_PROJECT_COORDINATES\)/);
     assert.match(source, /professionalArtifactsComplete: true/);

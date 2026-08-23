@@ -211,7 +211,9 @@ describe('W74c-3 既有 AI 对话整理面板接线', () => {
     ]);
     assert.ok(calls.filter(row => /revoke|manageEvidenceProjection/.test(row.channel)).every(row => row.payload.authorityRef === 'human:interactive-local-user'));
     assert.deepEqual(calls.at(-1).payload.supersedes, ['promotion:decision:old']);
-    await assert.rejects(() => runtime.revokePromotion({ promotionId: 'promotion:x', reason: '短' }), /至少 4 个字/);
+    await runtime.revokePromotion({ promotionId: 'promotion:x', reason: '短' });
+    assert.equal(calls.at(-1).channel, 'promotion:revoke');
+    assert.equal(calls.at(-1).payload.reason, '短');
   });
 
   test('同一面板具备管理、撤销、同类替代、投影/撤回与“不等于发布”说明，main/preload 只暴露三条窄 IPC', () => {

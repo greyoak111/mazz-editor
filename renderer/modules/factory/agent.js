@@ -9,17 +9,29 @@ export const AGENT_CONTROL_CARDS = Object.freeze([
 ]);
 
 const plainObject = v => !!v && typeof v === 'object' && !Array.isArray(v);
-const clip = (v, n = 1200) => String(v ?? '').slice(0, n);
+const asText = v => String(v ?? '');
+
+function stringifyToolResult(value) {
+  const seen = new WeakSet();
+  return JSON.stringify(value, (key, item) => {
+    if (typeof item === 'function') return undefined;
+    if (key === 'container' || key === 'state' || key === 'inst') return undefined;
+    if (item && typeof item === 'object') {
+      if (seen.has(item)) return '[Circular]';
+      seen.add(item);
+    }
+    return item;
+  });
+}
 
 export function normalizeLedger(raw) {
   const src = plainObject(raw) ? raw : {};
-  return { version: 1, entries: Array.isArray(src.entries) ? src.entries.slice(-120) : [] };
+  return { version: 1, entries: Array.isArray(src.entries) ? [...src.entries] : [] };
 }
 
 export function appendLedger(ledger, entry) {
   const target = normalizeLedger(ledger);
   target.entries.push({ at: Date.now(), ...entry });
-  target.entries = target.entries.slice(-120);
   return target;
 }
 
@@ -57,7 +69,7 @@ export function ledgerToMarkdown(ledger) {
   for (const e of normalizeLedger(ledger).entries) {
     const time = new Date(e.at || Date.now()).toISOString();
     if (e.type === 'user') lines.push(`## ${time} · 交办`, '', e.input || '', '');
-    else if (e.type === 'tool') lines.push(`### ${e.command || '命令'} · ${e.status || 'done'}`, '', `- 参数：\`${clip(JSON.stringify(e.args || {}), 600).replace(/`/g, '\\`')}\``, `- 结果：${clip(e.result, 1000)}`, ...(e.focus ? [`- 当前对象：${e.focus}`] : []), '');
+    else if (e.type === 'tool') lines.push(`### ${e.command || '命令'} · ${e.status || 'done'}`, '', `- 参数：\`${JSON.stringify(e.args || {}).replace(/`/g, '\\`')}\``, `- 结果：${asText(e.result)}`, ...(e.focus ? [`- 当前对象：${e.focus}`] : []), '');
     else if (e.type === 'finish') lines.push(`### 结果`, '', e.message || '', '');
   }
   return lines.join('\n').trim() + '\n';
@@ -79,8 +91,8 @@ export function parseAgentDecision(raw, cards) {
   if (value.command === 'agent.clarify') {
     if (!String(args.question || '').trim() || !Array.isArray(args.options) || args.options.length !== 2) throw new Error('agent.clarify 必须提供 question 与 A/B 两项');
     args.options = args.options.map((x, i) => plainObject(x)
-      ? { label: clip(x.label || String.fromCharCode(65 + i), 30), value: clip(x.value || x.label, 160) }
-      : { label: clip(x, 30), value: clip(x, 160) });
+      ? { label: asText(x.label ?? String.fromCharCode(65 + i)), value: asText(x.value ?? x.label) }
+      : { label: asText(x), value: asText(x) });
   }
   return { command: value.command, args };
 }
@@ -111,43 +123,36 @@ function cardsPrompt(cards) {
 }
 
 function ledgerPrompt(ledger) {
-  return normalizeLedger(ledger).entries.slice(-12).map(e => {
-    if (e.type === 'user') return `用户:${clip(e.input, 240)}`;
-    if (e.type === 'tool') return `命令:${e.command} 参数=${clip(JSON.stringify(e.args || {}), 180)} 结果=${clip(e.result, 300)}`;
-    return `${e.type}:${clip(e.message || '', 240)}`;
+  return normalizeLedger(ledger).entries.map(e => {
+    if (e.type === 'user') return `用户:${String(e.input || '')}`;
+    if (e.type === 'tool') return `命令:${e.command} 参数=${JSON.stringify(e.args || {})} 结果=${String(e.result || '')}`;
+    return `${e.type}:${String(e.message || '')}`;
   }).join('\n');
 }
 
 export async function decideAgentCommand({ input, cards, ledger, transcript = [], ask = chat }) {
   const system = `MAZZ_AGENT_ROUTER_V1\n你是 Mazz 指令台调度器，不是聊天机器人。每轮只可输出一个 JSON 对象：{"command":"闭集命令 id","args":{}}。\n规则：\n1. command 必须逐字来自工具卡或 agent.finish/agent.clarify；禁止解释、Markdown、虚构命令。\n2. 任务完成用 agent.finish；信息不足用 agent.clarify，options 必须恰好 A/B 两项。\n3. 多步任务每轮只提一个真实命令；代码会把执行结果喂回，再决定下一步。\n4. 删除、覆盖、投稿等危险命令照常提议，确认由代码闸处理，不得声称已经执行。\n\n工具闭集：\n${cardsPrompt(cards)}`;
-  const history = transcript.map(x => `${x.command}(${clip(JSON.stringify(x.args || {}), 200)}) => ${clip(x.result, 400)}`).join('\n');
+  const history = transcript.map(x => `${x.command}(${JSON.stringify(x.args || {})}) => ${String(x.result || '')}`).join('\n');
   const user = `【原始交办】\n${input}\n\n【台账最近记录】\n${ledgerPrompt(ledger) || '无'}\n\n【本次已执行步骤】\n${history || '无'}\n\n只回一个 JSON。`;
-  let raw = await ask({ role: 'agent', system, user, temperature: 0, maxTokens: 800 });
+  let raw = await ask({ role: 'agent', system, user, temperature: 0 });
   try { return parseAgentDecision(raw, cards); }
   catch (first) {
-    raw = await ask({ role: 'agent', system, user: `${user}\n\n上次输出不合格：${first.message}\n上次原文：${clip(raw, 600)}\n请严格重发一个 JSON。`, temperature: 0, maxTokens: 800 });
+    raw = await ask({ role: 'agent', system, user: `${user}\n\n上次输出不合格：${first.message}\n上次原文：${String(raw || '')}\n请严格重发一个 JSON。`, temperature: 0 });
     return parseAgentDecision(raw, cards);
   }
 }
 
 export function summarizeToolResult(value) {
   if (value == null) return '命令已执行（无返回值）';
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return clip(value);
-  if (plainObject(value?.tab) && value.tab.title) return `已打开标签：${clip(value.tab.title, 180)}`;
-  if (plainObject(value) && typeof value.path === 'string') return `命令已执行：${clip(value.path, 500)}`;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return asText(value);
   try {
-    const safe = JSON.stringify(value, (key, v) => {
-      if (typeof v === 'function') return undefined;
-      if (key === 'container' || key === 'state' || key === 'inst') return undefined;
-      return v;
-    });
-    return clip(safe || '命令已执行');
+    return stringifyToolResult(value) || '命令已执行';
   } catch { return '命令已执行（返回对象不可序列化）'; }
 }
 
 function focusOf(decision) {
   const a = decision.args || {};
-  return clip(a.path || a.filePath || a.title || a.name || decision.command, 180);
+  return asText(a.path || a.filePath || a.title || a.name || decision.command);
 }
 
 export class AgentRuntime {
@@ -251,7 +256,7 @@ export class AgentRuntime {
   async answer(value) {
     if (this.pending?.type !== 'clarify' || !this.session) return;
     const question = this.pending.decision.args.question;
-    this.session.transcript.push({ command: 'agent.clarify', args: { question }, result: `用户选择：${clip(value, 160)}` });
+    this.session.transcript.push({ command: 'agent.clarify', args: { question }, result: `用户选择：${asText(value)}` });
     this.pending = null;
     this.emit('clarified', { value });
     return this.advance();
@@ -287,10 +292,11 @@ export class AgentRuntime {
   }
 
   async finish(message, status = 'done') {
-    await this.record({ type: 'finish', message: clip(message, 1200), status });
-    this.emit('finish', { message: clip(message, 1200), status });
+    const fullMessage = asText(message);
+    await this.record({ type: 'finish', message: fullMessage, status });
+    this.emit('finish', { message: fullMessage, status });
     this.session = null; this.pending = null;
-    const result = { status, message };
+    const result = { status, message: fullMessage };
     this.settleCompletion(result);
     return result;
   }

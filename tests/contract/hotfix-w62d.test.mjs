@@ -9,6 +9,11 @@ import { serializeDoc, parseDoc } from '../../renderer/modules/mindmap/model.js'
 const blocks = captureDistillBlocks('# 总论\n- 证据甲\n  - 证据乙\n> 结论');
 assert.deepEqual(blocks.map(b => b.text), ['总论', '证据甲', '证据乙', '结论'], '仅剥结构标记，不改正文');
 
+const manyLines = Array.from({ length: 300 }, (_, index) => `块${index + 1}`).join('\n');
+const manyBlocks = captureDistillBlocks(manyLines);
+assert.equal(manyBlocks.length, 300, '提炼不得因旧 240 块门限拒绝或截断输入');
+assert.equal(manyBlocks.at(-1)?.text, '块300', '输入尾部块必须完整保留');
+
 assert.throws(
   () => validateDistillPlan([{ id: 'B001', depth: 1 }, { id: 'B001', depth: 2 }, { id: 'B003', depth: 2 }, { id: 'B004', depth: 1 }], blocks),
   /重复使用/,
@@ -52,7 +57,11 @@ assert.match(markdownSource, /previewToPlan\(area\.value, blocks\)/, '创建前�
 assert.match(mindmapSource, /return ctl;\s*\n\s*},\s*\n\s*activate\(/, 'mindmap create 必须返回 ctl 本体');
 assert.match(mindmapSource, /graftDistillRoots/);
 assert.match(mindmapSource, /mm-source-hook/);
+assert.doesNotMatch(mindmapSource, /bullets\.slice\(0,\s*12\)|split\('\\n'\)\[0\]\.slice\(0,\s*40\)/,
+  '帧转演示不得按节点条数或节点字符数裁掉导图内容');
 assert.match(providerSource, /mindmap_distill/);
+const distillSource = fs.readFileSync(new URL('../../renderer/modules/mindmap/distill.js', import.meta.url), 'utf8');
+assert.doesNotMatch(distillSource, /MAX_BLOCKS|一次最多提炼|blocks\.length\s*>/,
+  '实现不得保留业务块数门限');
 
 console.log('✓ W62d 无损提炼契约 / 一次重试 / 预览复验 / 新建嫁接 / 回跳钩');
-

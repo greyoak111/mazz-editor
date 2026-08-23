@@ -230,7 +230,7 @@ ${raw}`;
         const m = /^\s*\[(\d+)\]\s*(.+)$/.exec(line.trim());
         if (m) map.set(+m[1], m[2].trim());
       }
-      if (map.size >= Math.ceil(this.lines.length * 0.7)) {
+      if (map.size > 0) {
         this.lines = this.lines.map((l, i) => map.has(i + 1) ? { ...l, text: map.get(i + 1) } : l);
         return true;
       }

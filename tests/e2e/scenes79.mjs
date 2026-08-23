@@ -1,4 +1,4 @@
-// W68a 六席双环：真人立项控件、正式生产链、工件族、开庭、判例复用与预算降级。
+// W68a 六席双环：真人立项控件、正式生产链、工件族、开庭、判例复用与 Provider usage 观测。
 import fs from 'fs';
 import path from 'path';
 
@@ -11,7 +11,7 @@ const filesDeep = root => fs.readdirSync(root, { withFileTypes: true }).flatMap(
 export async function scenes79({ app, win, human, scenario, shotDir }) {
   let projectRoot = '';
 
-  await scenario('W68a 立项控件·轻/全仪式、预算帽与六席路由可见', async () => {
+  await scenario('W68a 立项控件·轻/全仪式、无本地 Token 预算与六席路由可见', async () => {
     await human.evaluate(async () => {
       const provider = await import('./modules/factory/provider.js');
       await provider.saveProviderConfig({ providerId: 'deepseek', name: 'W68 mock', baseURL: 'mock://w68a', model: 'w68a-six-seat', apiKey: 'w68-local-key' });
@@ -31,20 +31,17 @@ export async function scenes79({ app, win, human, scenario, shotDir }) {
     await panel.click('details.advanced summary');
     await panel.waitForSelector('#pj-review-ritual');
     const options = await panel.locator('#pj-review-ritual option').allTextContents();
-    await human.assert(options.join('|') === '轻仪式|全仪式', '仪式级别必须明确轻/全两档');
+    await human.assert(options.join('|') === '标准流程|完整流程', '审校级别必须明确标准/完整两档');
     await panel.selectOption('#pj-review-ritual', 'full');
     await panel.waitForTimeout(250);
     if (!(await panel.locator('details.advanced').evaluate(node => node.open))) await panel.click('details.advanced summary');
-    await panel.fill('#pj-review-budget', '40000');
-    await panel.dispatchEvent('#pj-review-budget', 'change');
-    await panel.waitForTimeout(250);
-    if (!(await panel.locator('details.advanced').evaluate(node => node.open))) await panel.click('details.advanced summary');
+    await human.assert(await panel.locator('#pj-review-budget').count() === 0, '立项不得暴露或预填本地 Token 预算');
     const routeState = await human.evaluate(async () => {
       const { AI_ROLES } = await import('./modules/factory/provider.js');
       return AI_ROLES.filter(x => x.id.startsWith('factory_')).map(x => x.id);
     });
     for (const id of ['factory_skeleton', 'factory_writer', 'factory_point', 'factory_review_a', 'factory_review_b', 'factory_arbiter']) await human.assert(routeState.includes(id), `缺六席路由 ${id}`);
-    await panel.screenshot({ path: path.join(shotDir, 'w68a-project-ritual-budget.png') });
+    await panel.screenshot({ path: path.join(shotDir, 'w68a-project-ritual-provider-owned.png') });
     await human.evaluate(() => window.mazz.invoke('panel:close', { kind: 'factorycfg' }));
   });
 
@@ -54,13 +51,12 @@ export async function scenes79({ app, win, human, scenario, shotDir }) {
       fp.genre = fp.genres.find(x => x.id === 'xiaoshuo');
       fp.values = {
         书名: 'W68双环实证', 作品类型: '科幻', premise: '归航员依据证据穿越雾带并抵达终点。',
-        protagonist: '林澈，归航员，坚持留下可复验记录', tone: '冷峻', pov: '第三人称限制', length: '1500字片段',
+        protagonist: '林澈，归航员，坚持留下可复验记录', tone: '冷峻', pov: '第三人称限制',
       };
       fp.renderForm();
       fp.dumpEl.value = '必须走完整六席流程；允许执笔席提出把终点改为星港的请示。';
       fp.el.querySelector('.fc-review-ritual').value = 'full';
-      fp.el.querySelector('.fc-review-budget').value = '40000';
-      const task = fp.makeTask(false, 1);
+      const task = fp.makeTask(false, 0);
       fp.tasks.push(task); fp.persistTasks();
       await fp.runTask(task);
       return { status: task.status, folder: task.folder, review: task.reviewState };
@@ -88,10 +84,14 @@ export async function scenes79({ app, win, human, scenario, shotDir }) {
     const precedent = read(path.join(projectRoot, '判例库.md'));
     const costs = JSON.parse(read(path.join(projectRoot, '成本台账.json')));
     await human.assert(bible.includes('终点＝星港') && precedent.includes('W68-R4'), '圣经与判例必须入库');
-    await human.assert(costs.units[0].ritual.effective === 'full' && costs.totalTokens > 0, '成本必须按席位/单元归因');
+    await human.assert(costs.units[0].ritual.effective === 'full'
+      && costs.units[0].budget?.enforced === false
+      && costs.units[0].budget?.usedTokens === 0
+      && costs.totalTokens === 0,
+    'mock Provider 未回供 usage 时必须保持零观测且不得估算、降级或停止');
   });
 
-  await scenario('W68a 判例复用、预算降级与封存只读语义', async () => {
+  await scenario('W68a 判例复用、Provider 原生计量不控流程与封存只读语义', async () => {
     const state = await human.evaluate(async () => {
       const fp = window.MazzShell.sideDock.factoryPanel;
       const task = fp.tasks.find(x => x.label === 'W68双环实证');
@@ -99,11 +99,21 @@ export async function scenes79({ app, win, human, scenario, shotDir }) {
       const text = `林澈再次启航并抵达星港。${'他逐项核对航海日志、信标记录与舷侧刻度，确认每个判断都有独立记录支撑。'.repeat(16)}`;
       const reused = await fp.runW68UnitReview(task, tpl, { blueprint: '- [必达] port::抵达星港::星港', outline: '第2章：判例复用', text, unitNo: 2, unitName: '章' });
       const { planReviewRitual } = await import('./modules/factory/review.js');
-      return { transitions: reused.transitions, downgrade: planReviewRitual('full', 12000), stopped: planReviewRitual('light', 7999) };
+      const { evaluateBudgetCap } = await import('./modules/factory/command-gate.js');
+      return {
+        transitions: reused.transitions,
+        full: planReviewRitual('full', 1),
+        light: planReviewRitual('light', 0),
+        usage: evaluateBudgetCap({ capTokens: 1, usedTokens: 999999, requestedRitual: 'full' }),
+      };
     });
     await human.assert(state.transitions.includes('precedent:loaded'), '第二单元必须把既有判例回供审理席');
-    await human.assert(state.downgrade.effective === 'light' && state.downgrade.downgraded, '全仪式预算不足应降为轻仪式');
-    await human.assert(state.stopped.stopped, '低于轻仪式底线必须硬停');
+    await human.assert(state.full.effective === 'full' && !state.full.downgraded && !state.full.stopped,
+      '任意本地数字都不得把专业版审校降级或硬停');
+    await human.assert(state.light.effective === 'light' && !state.light.downgraded && !state.light.stopped,
+      '标准版审校不得受本地 Token 数字控制');
+    await human.assert(state.usage.status === 'ok' && state.usage.enforcement === 'provider-native' && state.usage.actions.length === 0,
+      'Provider usage 兼容状态只能观测，不得产生本地预算动作');
     const manifests = filesDeep(projectRoot).filter(x => x.endsWith('工件清单.json')).map(read).map(JSON.parse);
     await human.assert(manifests.every(x => x.immutableAfterSeal && x.addendumRequiredForChanges), '封存原件必须只读，后续只能补遗');
     await human.evaluate(() => {

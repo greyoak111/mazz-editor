@@ -114,6 +114,15 @@ test('W82h 从 Intent 编译四行业预览，明示成本/缺件/人工 Gate �
   assert.ok(handlers['organization:preview'] && handlers['organization:save']);
 });
 
+test('W82h 长目标原样进入组织编译，不在本地截到一千字符', () => {
+  const service = new OrganizationalWorkspaceService({ bus: { handle() {} }, rootProvider: () => os.tmpdir() });
+  const marker = '组织目标尾部不可丢';
+  const goal = `${'完整目标'.repeat(400)}${marker}`;
+  const preview = service.preview({ goal, templateId: 'research-report', budget: 500 });
+  assert.equal(preview.intent.goal, goal);
+  assert.ok(service.materialize({ goal, templateId: 'research-report', budget: 500 }).request.goal.statement.endsWith(marker));
+});
+
 test('W82h 正式入口和 preload IPC 均已装配', () => {
   const app = fs.readFileSync(path.resolve('renderer/app.js'), 'utf8');
   const shell = fs.readFileSync(path.resolve('renderer/shell/shell.js'), 'utf8');

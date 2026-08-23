@@ -648,10 +648,7 @@ function registerChannels() {
     return Number.isFinite(value) ? Math.max(50, Math.min(normalMs, Math.round(value))) : normalMs;
   };
   const factoryMock = { blueprintAttempts: 0, unitNo: 0, w68Repair: 0, w68Point: 0 };
-  const factoryMockDeclared = (body) => {
-    const text = String(body || '').trim();
-    return `${text}\n[本次续写字数：${text.length}]`;
-  };
+  const factoryMockBody = body => String(body || '').trim();
   const factoryMockReply = ({ system = '', user = '', stream = false }) => {
     if (!factoryMockEnabled) return null;
     // W62d：第一次故意破坏块守恒，逼出“解析失败只重试一次”；纠错轮再按原块 ID 全量回供。
@@ -725,7 +722,7 @@ function registerChannels() {
     if (stream) {
       factoryMock.unitNo++;
       const body = `本节记录实验报告第 ${factoryMock.unitNo} 个结构单元。测量值 ${100 + factoryMock.unitNo}，术语口径沿用既定定义，论据来自模拟台架。${'这一段用于验证模型原生声明经过核验后才能可靠落盘。'.repeat(6)}`;
-      return factoryMockDeclared(body);
+      return factoryMockBody(body);
     }
     if (system.includes('一致性校验员')) return '纠偏：下一节继续沿用统一单位与实验口径，补明论据来源；既有正文不重写。';
     if (system.includes('状态记录员')) {
@@ -733,7 +730,7 @@ function registerChannels() {
     }
     return '测试响应';
   };
-  bus.handle('factory:aiChat', async ({ requestId, providerId, role, baseURL, apiKey, model, system, user, messages, temperature = 0.7, maxTokens = 8192, detailed = false }, event) => {
+  bus.handle('factory:aiChat', async ({ requestId, providerId, role, baseURL, apiKey, model, system, user, messages, temperature = 0.7, detailed = false }, event) => {
     const req = factoryAiRequests.begin(requestId || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, {
       kind: 'chat', timeoutMs: factoryTimeout('MAZZ_E2E_FACTORY_CHAT_TIMEOUT_MS', 180000), model,
       ownerId: bindFactoryOwner(event?.sender),
@@ -750,7 +747,7 @@ function registerChannels() {
       const resp = await net.fetch(aiUrl(baseURL), {
         method: 'POST', headers: aiHeaders(apiKey),
         body: JSON.stringify({
-          model, messages: msgs, temperature, max_tokens: maxTokens, stream: false,
+          model, messages: msgs, temperature, stream: false,
           ...factoryProviderGenerationOptions({ providerId, baseURL, model, role }),
         }),
         signal: req.signal,
@@ -908,7 +905,7 @@ function registerChannels() {
   bus.handle('promotion:revoke', async payload => promotionLedger.revokePromotion(payload));
   bus.handle('promotion:manageEvidenceProjection', async payload => promotionLedger.manageEvidenceProjection(payload));
   // 流式：SSE 逐 delta 广播 factory:aiChunk {requestId, delta}，结束推 done，出错推 error
-  bus.handle('factory:aiChatStream', async ({ requestId, baseURL, apiKey, model, system, user, temperature = 0.7, maxTokens = 8192 }, event) => {
+  bus.handle('factory:aiChatStream', async ({ requestId, providerId, role, baseURL, apiKey, model, system, user, temperature = 0.7 }, event) => {
     const req = factoryAiRequests.begin(requestId, {
       kind: 'stream', timeoutMs: factoryTimeout('MAZZ_E2E_FACTORY_STREAM_TIMEOUT_MS', 300000), model,
       ownerId: bindFactoryOwner(event?.sender),
@@ -935,7 +932,7 @@ function registerChannels() {
         body: JSON.stringify({
           model,
           messages: [...(system ? [{ role: 'system', content: system }] : []), { role: 'user', content: user }],
-          temperature, max_tokens: maxTokens, stream: true,
+          temperature, stream: true,
         }),
         signal: req.signal,
       });

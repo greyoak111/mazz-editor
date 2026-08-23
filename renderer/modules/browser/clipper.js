@@ -39,23 +39,23 @@ export function snapshotScript(rawUrl = '') {
     const source = cfg.content.map(s => document.querySelector(s)).find(Boolean) || document.body;
     const clone = source.cloneNode(true);
     for (const sel of cfg.remove) clone.querySelectorAll(sel).forEach(el => el.remove());
-    const text = String(clone.innerText || clone.textContent || '').replace(/[\\t ]+\\n/g, '\\n').replace(/\\n{3,}/g, '\\n\\n').trim().slice(0, 60000);
+    const text = String(clone.innerText || clone.textContent || '').replace(/[\\t ]+\\n/g, '\\n').replace(/\\n{3,}/g, '\\n\\n').trim();
     const images = [...source.querySelectorAll('img')].map((img) => {
       const raw = img.currentSrc || img.getAttribute('data-original') || img.getAttribute('data-src') || img.src || '';
       let src = '';
       try { src = new URL(raw, location.href).toString(); } catch {}
-      return { src, alt: (img.alt || '').trim().slice(0, 160), width: img.naturalWidth || img.width || 0, height: img.naturalHeight || img.height || 0 };
+      return { src, alt: (img.alt || '').trim(), width: img.naturalWidth || img.width || 0, height: img.naturalHeight || img.height || 0 };
     }).filter(x => /^https?:/i.test(x.src));
-    const unique = [...new Map(images.map(x => [x.src, x])).values()].slice(0, 24);
-    return { title: (document.title || '').trim().slice(0, 400), url: location.href, text, images: unique, adapter: cfg.id };
+    const unique = [...new Map(images.map(x => [x.src, x])).values()];
+    return { title: (document.title || '').trim(), url: location.href, text, images: unique, adapter: cfg.id };
   })()`;
 }
 
 export function shouldUseVision(page) {
-  const textLength = String(page?.text || '').replace(/\s/g, '').length;
+  const hasExtractedText = Boolean(String(page?.text || '').trim());
   const images = Array.isArray(page?.images) ? page.images : [];
   const large = images.some(image => Number(image.width) >= 640 && Number(image.height) >= 360);
-  return textLength < 280 && (large || images.length >= 1);
+  return !hasExtractedText && (large || images.length >= 1);
 }
 
 export function safeClipName(value = '', fallback = '剪藏') {
@@ -100,7 +100,7 @@ export async function runPool(items, worker, { concurrency = 2, onProgress } = {
   return results;
 }
 
-export function buildClipMarkdown({ page, assets = [], capturedAt = new Date(), ocrText = '' } = {}) {
+export function buildClipMarkdown({ page, assets = [], capturedAt = new Date(), ocrText = '', ocrNotice = '' } = {}) {
   const title = String(page?.title || '').replace(/\s+/g, ' ').trim() || '网页剪藏';
   const source = String(page?.url || '').trim();
   const adapter = String(page?.adapter || 'generic');
@@ -116,12 +116,18 @@ export function buildClipMarkdown({ page, assets = [], capturedAt = new Date(), 
   ];
   if (body) lines.push(body, '');
   if (ocrText) lines.push('## 图片页 OCR', '', String(ocrText).trim(), '');
+  if (ocrNotice) lines.push(`> OCR 未完整处理：${String(ocrNotice).replace(/[\r\n]+/g, ' ').trim()}`, '');
   if (assets.length) {
-    lines.push('## 页面图片（已本地化）', '');
+    lines.push('## 页面图片', '');
     for (const asset of assets) {
-      const target = asset.markdownPath || asset.relativePath;
+      const target = asset.markdownPath || asset.relativePath || asset.source;
+      if (!target) continue;
       lines.push(`![${String(asset.alt || '页面图片').replace(/[\[\]\r\n]/g, '')}](${target})`);
       if (asset.markdownPath && asset.relativePath) lines.push(`<!-- 本地资源：${asset.relativePath} -->`);
+      if (asset.localized === false && asset.error) {
+        const error = String(asset.error).replace(/--/g, '—').replace(/[\r\n]+/g, ' ').trim();
+        lines.push(`<!-- 图片本地化失败，保留原始来源：${error} -->`);
+      }
     }
     lines.push('');
   }

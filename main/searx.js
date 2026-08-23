@@ -149,7 +149,7 @@ function stripTags(html) {
 }
 
 function extractImageSources(html, baseUrl = '') {
-  const source = String(html || '').slice(0, 2_000_000);
+  const source = String(html || '');
   const out = [];
   for (const match of source.matchAll(/<img\b[^>]*>/gi)) {
     const tag = match[0];
@@ -166,20 +166,21 @@ function extractImageSources(html, baseUrl = '') {
       const normalized = url.toString();
       if (!out.includes(normalized)) out.push(normalized);
     } catch {}
-    if (out.length >= 24) break;
   }
   return out;
 }
 
 function extractArticleText(html, baseUrl = '') {
-  const source = String(html || '').slice(0, 2_000_000);
+  // Network fetch has an explicit transport-size failure boundary. Once content
+  // is accepted, extraction must not silently impose a second character quota.
+  const source = String(html || '');
   const titleMatch = source.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i);
   const articleMatch = source.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i);
   const mainMatch = source.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i);
   const bodyMatch = source.match(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/i);
   return {
-    title: stripTags(titleMatch?.[1] || '').slice(0, 400),
-    text: stripTags(articleMatch?.[1] || mainMatch?.[1] || bodyMatch?.[1] || source).slice(0, 60_000),
+    title: stripTags(titleMatch?.[1] || ''),
+    text: stripTags(articleMatch?.[1] || mainMatch?.[1] || bodyMatch?.[1] || source),
     images: extractImageSources(source, baseUrl),
   };
 }

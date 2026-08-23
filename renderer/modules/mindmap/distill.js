@@ -1,8 +1,6 @@
 // W62d：文档 → 导图的无损层级提炼契约。
 // AI 只返回块 ID 与层级，正文始终由本地真相源回填，结构上杜绝增删改写。
 
-const MAX_BLOCKS = 240;
-
 function semanticLine(raw) {
   return String(raw || '')
     .trim()
@@ -13,13 +11,12 @@ function semanticLine(raw) {
     .trim();
 }
 
-export function captureDistillBlocks(text, { maxBlocks = MAX_BLOCKS } = {}) {
+export function captureDistillBlocks(text) {
   const blocks = [];
   for (const raw of String(text || '').split(/\r?\n/)) {
     const value = semanticLine(raw);
     if (!value || /^[-*_]{3,}$/.test(value)) continue;
     blocks.push({ id: `B${String(blocks.length + 1).padStart(3, '0')}`, text: value });
-    if (blocks.length > maxBlocks) throw new Error(`一次最多提炼 ${maxBlocks} 个非空文本块，请缩小选区`);
   }
   if (!blocks.length) throw new Error('没有可提炼的文本');
   return blocks;
@@ -75,7 +72,7 @@ export async function distillWithRetry(text, ask) {
   let lastError = null;
   for (let attempt = 1; attempt <= 2; attempt++) {
     const user = attempt === 1 ? prompt.user : `${prompt.user}\n\n上次输出不合格：${lastError.message}\n请从头严格重发 JSON 数组。`;
-    const raw = await ask({ system: prompt.system, user, temperature: 0, maxTokens: Math.min(5000, 300 + blocks.length * 22) });
+    const raw = await ask({ system: prompt.system, user, temperature: 0 });
     try { return { blocks, plan: validateDistillPlan(raw, blocks), attempts: attempt }; }
     catch (error) { lastError = error; }
   }
@@ -122,4 +119,3 @@ export function planToRoots(plan, blocks, sourceRef = null, idSeed = Date.now().
   }
   return roots;
 }
-

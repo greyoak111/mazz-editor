@@ -26,8 +26,10 @@ class ContextCompilerService {
       title: input.title || path.basename(target), topicRef: input.topicRef || '', status: input.status || 'CURRENT',
       authorityRef: input.authorityRef || 'authority:repository', effectiveAt: input.effectiveAt || '', replacementRef: input.replacementRef || '', supersessionReason: input.supersessionReason || '',
       version: input.version || '', mtime: stat.mtime.toISOString(), hash: `sha256:${hash(body)}`,
-      tokenEstimate: Math.ceil(text.length / 4), relevance: Number(input.relevance ?? 0.8), authorityLevel: Number(input.authorityLevel ?? 80),
-      summary: input.summary || `${slash(path.relative(root, target))} · ${stat.size} bytes`, excerpt: input.includeExcerpt === true ? text.slice(0, 12000) : '',
+      // Context size is provider-owned. Keep a caller-supplied estimate only as
+      // optional telemetry; never manufacture one from character counts.
+      tokenEstimate: input.tokenEstimate ?? null, relevance: Number(input.relevance ?? 0.8), authorityLevel: Number(input.authorityLevel ?? 80),
+      summary: input.summary || `${slash(path.relative(root, target))} · ${stat.size} bytes`, excerpt: input.includeExcerpt === true ? text : '',
       sensitivity: input.sensitivity || ['internal'], provenance: { path: slash(target), size: stat.size, producer: 'w85-repository-prototype' }, mandatory: input.mandatory === true,
     };
   }
@@ -36,17 +38,17 @@ class ContextCompilerService {
     for (let i = 0; i < (request.fileSources || []).length; i++) sources.push(this.sourceFromFile(request.fileSources[i], i));
     if (request.eventQuery && this.eventService) {
       const hits = this.eventService.search(request.eventQuery);
-      for (const hit of hits.slice(0, 10)) sources.push({
+      for (const hit of hits) sources.push({
         sourceRef: `episode:${hit.episodeId}`, kind: 'workspace-event', title: hit.label, topicRef: `query:${request.eventQuery}`,
         status: 'INFERRED', authorityRef: '', version: '', mtime: hit.endedAt, hash: `sha256:${hash(Buffer.from(JSON.stringify(hit)))}`,
-        tokenEstimate: 80, relevance: Math.min(1, Number(hit.score || 0) / 2), authorityLevel: 0, summary: hit.reasons.join(' · '), excerpt: '', sensitivity: ['internal'],
+        tokenEstimate: null, relevance: Math.min(1, Number(hit.score || 0) / 2), authorityLevel: 0, summary: hit.reasons.join(' · '), excerpt: '', sensitivity: ['internal'],
         provenance: { source: 'W81', eventRefs: hit.eventRefs, authorityGranted: false }, mandatory: false,
       });
     }
     const contextPackage = compiler.compileContextPackage({
       taskId: request.taskId, seatId: request.seatId, checkpointId: request.checkpointId,
       compilerVersion: 'w85-context-compiler/0.1.0', policyVersion: request.policyVersion || 'w85-default/v0',
-      budget: request.budget || 8000, sources, obligations: request.obligations || [], constraints: request.constraints || [],
+      budget: request.budget, sources, obligations: request.obligations || [], constraints: request.constraints || [],
       recentDelta: request.recentDelta || [], unknowns: request.unknowns || [], seatPolicy: request.seatPolicy || {}, compiledAt: this.now().toISOString(),
     });
     this.fs.mkdirSync(this.folder(), { recursive: true });

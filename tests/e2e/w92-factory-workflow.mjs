@@ -47,8 +47,7 @@ function longNarrative() {
 }
 
 function nativeChapter() {
-  const body = longNarrative();
-  return `${body}\n[本次续写字数：${body.length}]`;
+  return longNarrative();
 }
 
 function blueprint() {
@@ -286,7 +285,6 @@ async function validateProjectUi(panel) {
     const style = settings ? getComputedStyle(settings) : null;
     const header = document.querySelector('#panel-head')?.getBoundingClientRect();
     const settingRect = settings?.getBoundingClientRect();
-    const medium = [...document.querySelectorAll('[data-preset]')].find(node => node.dataset.preset === 'medium')?.textContent || '';
     const staleFields = [...document.querySelectorAll('[data-p-field]')]
       .filter(node => ['length', '篇幅长短', '每章字数'].includes(node.dataset.pField))
       .map(node => ({ id: node.dataset.pField, label: node.labels?.[0]?.textContent || '', html: node.outerHTML.slice(0, 240) }));
@@ -294,7 +292,10 @@ async function validateProjectUi(panel) {
       title: document.querySelector('.head-title')?.textContent || '',
       settingBorder: style ? [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth] : [],
       settingRightAligned: !!header && !!settingRect && settingRect.left > header.left + header.width / 2,
-      medium, staleFields,
+      presetCount: document.querySelectorAll('[data-preset]').length,
+      totalValue: document.querySelector('#pj-total')?.value || '',
+      wordsValue: document.querySelector('#pj-words')?.value || '',
+      staleFields,
       labels: document.querySelectorAll('#pj-form label[for]').length,
       required: document.querySelectorAll('#pj-form [required][aria-required=true]').length,
       chapterTag: document.querySelector('#pj-chapters')?.tagName || '',
@@ -303,7 +304,8 @@ async function validateProjectUi(panel) {
   assert(structure.title === '新项目立项', `立项标题错误：${structure.title}`);
   assert(structure.settingBorder.some(value => parseFloat(value) > 0), 'AI 服务设置仍无边框');
   assert(structure.settingRightAligned, 'AI 服务设置没有移到标题右侧操作区');
-  assert(/10万字/.test(structure.medium) && !/1\s*[-—]\s*5万/.test(structure.medium), `中篇规格仍有双真值：${structure.medium}`);
+  assert(structure.presetCount === 0, '新项目仍预填短/中/长/无限篇幅档位');
+  assert(structure.totalValue === '' && structure.wordsValue === '', '新项目仍预填参考字数');
   assert(structure.staleFields.length === 0, `旧篇幅字段仍与权威方案竞争：${JSON.stringify(structure.staleFields)}`);
   assert(structure.labels >= 8 && structure.required >= 3 && structure.chapterTag === 'OUTPUT', '表单 label/required/output 语义不完整');
 
@@ -344,15 +346,12 @@ async function fillProject(panel, title, { maxMode }) {
   await panel.fill('#pj-words', '2000');
   await panel.dispatchEvent('#pj-words', 'input');
   const chapterText = await panel.textContent('#pj-chapters');
-  assert(/^1章$/.test(String(chapterText).trim()), `预计章数联动错误：${chapterText}`);
-  await panel.evaluate(enabled => {
-    const max = document.querySelector('#pj-max');
-    if (max) max.checked = enabled;
-    const preview = document.querySelector('#pj-autopreview');
-    if (preview) preview.checked = false;
-    const ritual = document.querySelector('#pj-review-ritual');
-    if (ritual) ritual.value = 'light';
-  }, maxMode);
+  assert(/^约\s*1章$/.test(String(chapterText).trim()), `参考规划预览错误：${chapterText}`);
+  if (maxMode) await panel.check('#pj-max');
+  else await panel.uncheck('#pj-max');
+  await panel.locator('details.advanced').evaluate(node => { node.open = true; });
+  await panel.uncheck('#pj-autopreview');
+  await panel.selectOption('#pj-review-ritual', 'light');
 }
 
 async function submitAndReceipt(panel, title) {
@@ -407,6 +406,8 @@ try {
   await validateProjectUi(panel);
   await fillProject(panel, 'W92真实闭环', { maxMode: true });
   positiveTask = await submitAndReceipt(panel, 'W92真实闭环');
+  assert(positiveTask.mode === 'max' && Number(positiveTask.maxChapters) === 0, `连写任务仍把参考字数换算为执行终点：${JSON.stringify({ mode: positiveTask.mode, maxChapters: positiveTask.maxChapters })}`);
+  assert(Number(positiveTask.totalWords) === 2000 && Number(positiveTask.wordsPerUnit) === 2000, '可选参考字数未按参考值持久化');
 
   await waitFor(() => ['done', 'done-warn'].includes(taskState(positiveTask.folder)?.status), '正向项目未完成', 120000, 150);
   positiveFiles = listDeep(positiveTask.folder);
@@ -438,6 +439,7 @@ try {
   const interruptedPanel = await openProjectPanel();
   await fillProject(interruptedPanel, 'W92截断安全门', { maxMode: false });
   interruptedTask = await submitAndReceipt(interruptedPanel, 'W92截断安全门');
+  assert(interruptedTask.mode === 'single' && Number(interruptedTask.maxChapters) === 0, '单篇任务仍携带固定章节终点');
   // The durable creation receipt is intentionally written as `paused` before
   // background ownership starts. Do not confuse that initial crash-safe receipt
   // with the terminal truncation result: the checkpoint is the commit boundary.

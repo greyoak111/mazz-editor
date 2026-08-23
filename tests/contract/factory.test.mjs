@@ -51,7 +51,7 @@ describe('焚诀引擎', () => {
     assert.equal(rows[1].doc_type, '请示');
   });
 
-  test('自定义文体保存结构合法', async () => {
+  test('自定义文体保存结构合法；旧数量校验只作兼容提示', async () => {
     const tpl = {
       id: 'custom_护理记录', name: '护理记录', description: 'test',
       input_fields: [{ id: 'f_患者', label: '患者', type: 'text', required: true }],
@@ -61,6 +61,7 @@ describe('焚诀引擎', () => {
     const m = eng.buildMantra(tpl, { f_患者: '张三' }, '');
     assert.ok(m.doc.includes('# 护理记录 创作模板母版'));
     const checks = eng.runQualityChecks(tpl, '短');
-    assert.equal(checks[0].pass, false);
+    assert.equal(checks[0].pass, true);
+    assert.match(checks[0].detail, /门禁移除/);
   });
 });

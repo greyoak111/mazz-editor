@@ -14,7 +14,6 @@ export const REVIEW_RULES = Object.freeze({
   evidenceAnswers: 'W68-R9',
   fourGates: 'W68-R10',
   sealedReadOnly: 'W68-R11',
-  budgetHardGate: 'W68-R12',
 });
 
 export const REVIEW_ARTIFACT_NAMES = Object.freeze({
@@ -118,7 +117,7 @@ export function buildAcceptanceSchema({ blueprint = '', outline = '', lockedFact
   // 没有显式标记时只生成“提示性”当前单元锚，不拿整本蓝图误伤每个单元。
   if (!schema.requiredBeats.length && asText(outline)) {
     const label = asText(outline).replace(/^第[^：:]+[：:]\s*/, '');
-    const keywords = label.match(/[\p{L}\p{N}]{2,8}/gu)?.slice(0, 5) || [];
+    const keywords = label.match(/[\p{L}\p{N}]{2,8}/gu) || [];
     schema.requiredBeats.push({ id: 'outline-anchor', label, patterns: keywords.length ? keywords : [label], required: false });
   }
   return schema;
@@ -265,17 +264,14 @@ export function runDeterministicInspection(text, schema = {}, { previousText = '
   findings.push(...tlc.findings);
   findings.push(...runArithmeticInspection(raw));
   const metrics = styleFingerprint(raw);
-  if (metrics.sentenceCount >= 6 && metrics.sentenceStdDev < 6) findings.push(finding('style-flat', 'warning', `句长标准差仅 ${metrics.sentenceStdDev}，节奏可能机械`, 'draft', 'W68-S2'));
-  if (metrics.psychologyPer10k > 45) findings.push(finding('style-psychology', 'warning', `心理动词密度 ${metrics.psychologyPer10k}/万字，建议改为动作或感官证据`, 'draft', 'W68-S3'));
   if (/(?:镜头|视角)(?:拉近|推进|切到|转向)/.test(raw)) findings.push(finding('style-camera', 'warning', '命中特写运镜化表述，需回到事实层', 'draft', 'W68-S4'));
-  if (metrics.sentenceCount >= 8 && !/[—]/.test(raw)) findings.push(finding('style-rhythm', 'warning', '长段落未出现破折号且句长变化偏低，需抽审节奏匀死风险', 'draft', 'W68-S5'));
   if (previousText && repairOrder) {
     const stability = validateRepairRevision(previousText, raw, repairOrder);
     findings.push(...stability.findings);
   }
   const blocking = findings.filter(x => x.severity === 'critical');
   const pressureStages = [
-    { id: 'density', label: '信息密度', pass: !findings.some(x => ['style-flat', 'style-psychology'].includes(x.id)) },
+    { id: 'density', label: '信息密度', pass: true, observationOnly: true },
     { id: 'numeric-purity', label: '数字纯度', pass: !findings.some(x => /^(?:math|source|basis|tlc-)/.test(x.id)) },
     { id: 'consistency', label: '自洽与稳定', pass: !findings.some(x => /^(?:lock|protected|ban)-/.test(x.id)) },
     { id: 'final', label: '终审态', pass: blocking.length === 0 },
@@ -833,34 +829,43 @@ export function validateObjection(objection) {
 }
 
 export class ReviewBudgetLedger {
-  constructor(capTokens = 32000) {
-    this.capTokens = Math.max(0, Number(capTokens) || 0);
+  constructor() {
+    // Compatibility envelope only: workflow execution is no longer governed by
+    // a product-estimated token cap.  We retain provider-reported usage for
+    // observability when the provider supplies it.
+    this.capTokens = null;
     this.usedTokens = 0;
     this.entries = [];
   }
-  canSpend(tokens) { return this.usedTokens + Math.max(0, tokens) <= this.capTokens; }
-  charge({ seat, phase, input = '', output = '', estimatedTokens = 0 }) {
-    const actual = Math.max(1, Math.ceil((asText(input).length + asText(output).length) / 4));
-    const tokens = Math.max(actual, Math.min(Number(estimatedTokens) || 0, actual * 2));
+  canSpend() { return true; }
+  charge({ seat, phase, usage = null }) {
+    const inputTokens = Math.max(0, Number(usage?.inputTokens) || 0);
+    const outputTokens = Math.max(0, Number(usage?.outputTokens) || 0);
+    const tokens = Math.max(0, Number(usage?.totalTokens) || inputTokens + outputTokens);
+    if (!tokens) return 0;
     this.usedTokens += tokens;
-    this.entries.push({ seat, phase, tokens, at: new Date().toISOString() });
+    this.entries.push({ seat, phase, tokens, inputTokens, outputTokens, source: 'provider-reported', at: new Date().toISOString() });
     return tokens;
   }
   summary(units = 1) {
     const bySeat = {};
     for (const entry of this.entries) bySeat[entry.seat] = (bySeat[entry.seat] || 0) + entry.tokens;
-    return { capTokens: this.capTokens, usedTokens: this.usedTokens, remainingTokens: Math.max(0, this.capTokens - this.usedTokens), bySeat, perUnit: Math.round(this.usedTokens / Math.max(1, units)), per10k: this.usedTokens ? Math.round(this.usedTokens * 10000 / Math.max(1, units * 10000)) : 0, entries: this.entries };
+    return {
+      capTokens: null,
+      usedTokens: this.usedTokens,
+      remainingTokens: null,
+      bySeat,
+      perUnit: Math.round(this.usedTokens / Math.max(1, units)),
+      per10k: 0,
+      entries: this.entries,
+      source: 'provider-reported',
+      enforced: false,
+    };
   }
 }
 
-export function planReviewRitual(requested = 'light', capTokens = 32000) {
+export function planReviewRitual(requested = 'light') {
   const ritual = requested === 'full' ? 'full' : 'light';
-  const cap = Math.max(0, Number(capTokens) || 0);
-  if (ritual === 'full' && cap < 18000) {
-    if (cap >= 8000) return { requested: ritual, effective: 'light', downgraded: true, stopped: false, reason: '预算不足以覆盖全仪式，降为轻仪式并保留外部红队席' };
-    return { requested: ritual, effective: 'stopped', downgraded: false, stopped: true, reason: '预算低于轻仪式硬底线' };
-  }
-  if (ritual === 'light' && cap < 8000) return { requested: ritual, effective: 'stopped', downgraded: false, stopped: true, reason: '预算低于轻仪式硬底线' };
   return { requested: ritual, effective: ritual, downgraded: false, stopped: false, reason: '' };
 }
 
@@ -1010,12 +1015,12 @@ function precedentMarkdown({ unitRef, objections, verdict }) {
 export async function runW68Review({
   draft = '', blueprint = '', outline = '', bible = '', unitRef = '第001单元',
   unitIndex = null,
-  ritual = 'light', budgetCap = 32000, ask, previousText = '', protectionList = [],
+  ritual = 'light', ask, previousText = '', protectionList = [],
   additionalMachineChecks = null, precedents = '', requireCompletionMetadata = false,
 } = {}) {
   if (typeof ask !== 'function') throw new Error('W68a 缺少审理调用器');
-  const ritualPlan = planReviewRitual(ritual, budgetCap);
-  const ledger = new ReviewBudgetLedger(budgetCap);
+  const ritualPlan = planReviewRitual(ritual);
+  const ledger = new ReviewBudgetLedger();
   const explicitUnitIndex = Number(unitIndex);
   const inferredUnitIndex = Number(/^第0*(\d+)/.exec(asText(unitRef))?.[1] || 0);
   const resolvedUnitIndex = Number.isInteger(explicitUnitIndex) && explicitUnitIndex > 0
@@ -1051,26 +1056,13 @@ export async function runW68Review({
     base.pass = false;
     return base;
   };
-  if (ritualPlan.stopped) {
-    const result = { protocol: W68_PROTOCOL, sealed: false, verdict: 'budget-stop', reason: ritualPlan.reason, ritual: ritualPlan, gates: { machine: false, point: false, review: false, objection: false }, text, schema, repairs, reworkHistory, pointReports, reviews, objections, answers, transitions: [...transitions, 'budget-stop'], budget: ledger.summary() };
-    result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, verdict: verdictMarkdown(result) };
-    return result;
-  }
-  const invoke = async ({ seat, role, phase, system, user, expected = 1800, required = true, temperature = 0.2, maxTokens = 4096 }) => {
-    const inputEstimate = Math.max(1, Math.ceil((asText(system).length + asText(user).length) / 4));
-    const remaining = ledger.capTokens - ledger.usedTokens;
-    const outputAllowance = remaining - inputEstimate;
-    if (!ledger.canSpend(expected) || outputAllowance < 64) {
-      if (!required) return null;
-      const error = new Error(`W68a 预算硬闸：${phase} 前余额不足`);
-      error.code = 'W68_BUDGET_STOP';
-      throw error;
-    }
-    const response = await ask({ role, system, user, temperature, maxTokens: Math.max(64, Math.min(maxTokens, outputAllowance)) });
+  const invoke = async ({ seat, role, phase, system, user, temperature = 0.2 }) => {
+    const response = await ask({ role, system, user, temperature });
     const detailed = response && typeof response === 'object' && !Array.isArray(response);
     const output = detailed ? asText(response.text) : asText(response);
     const finishReason = detailed && response.finishReason != null ? asText(response.finishReason).toLowerCase() : '';
     const trustedCompletion = detailed && response.safeToCommit === true && finishReason === 'stop' && !!output;
+    ledger.charge({ seat, phase, usage: detailed ? response.usage : null });
     if ((requireCompletionMetadata && !detailed) || (detailed && !trustedCompletion)) {
       const error = new Error(`W68a Provider 完成门关闭：${asText(response?.finishReason || response?.completionKind) || (output ? '缺少可信终态' : '空响应')}`);
       error.code = 'W68_COMPLETION_UNSAFE';
@@ -1081,7 +1073,6 @@ export async function runW68Review({
       } : { finishReason: null, completionKind: 'legacy-string', safeToCommit: false };
       throw error;
     }
-    ledger.charge({ seat, phase, input: `${system}\n${user}`, output, estimatedTokens: expected });
     return output;
   };
   try {
@@ -1096,10 +1087,10 @@ export async function runW68Review({
         transitions.push(`repair:${round}`);
         const before = text;
         const revised = await invoke({
-          seat: 'M3', role: 'factory_writer', phase: `main-repair-${round}`, expected: 2600,
+          seat: 'M3', role: 'factory_writer', phase: `main-repair-${round}`,
           system: 'MAZZ_W68_REPAIR\n你是 M3 执笔席。修订单是唯一改稿授权；只修列明项目，保护其余内容。不得解释，不得宣称自己通过验收，只输出完整修订正文。',
           user: `【骨架与验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【初稿】\n${text}\n\n【修订单】\n${repairOrderMarkdown(order)}`,
-          temperature: 0.35, maxTokens: 8192,
+          temperature: 0.35,
         });
         previousText = before;
         text = revised || text;
@@ -1115,15 +1106,14 @@ export async function runW68Review({
         transitions.push(`polish:${round}`);
         const before = text;
         const polished = await invoke({
-          seat: '润色席', role: 'factory_polish', phase: `polish-${round}`, expected: 2200,
+          seat: '润色席', role: 'factory_polish', phase: `polish-${round}`,
           system: 'MAZZ_W68_POLISH\n你是独立润色席，不得改变事实、数值、事件顺序或验收点。依次处理：删直接心理报告、打散重复段首、替换粗俗比喻、补一个不抢戏的具体死物、让结尾留有余波；对话只改语气不改信息。只输出完整正文。',
           user: `【锁定验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【正文】\n${before}`,
-          temperature: 0.3, maxTokens: 8192,
+          temperature: 0.3,
         });
         const polishedMachine = inspectText(polished);
-        const lengthStable = polished.length >= Math.max(10, before.length * 0.7);
-        const accepted = polishedMachine.pass && lengthStable;
-        polishRecord = { accepted, before: styleFingerprint(before), after: styleFingerprint(polished), reason: accepted ? '润色后确定性机检仍通过' : (!lengthStable ? '润色删改超过 30%，自动回退' : '润色引入关键机检错误，自动回退'), text: accepted ? polished : before };
+        const accepted = polishedMachine.pass;
+        polishRecord = { accepted, before: styleFingerprint(before), after: styleFingerprint(polished), reason: accepted ? '润色后确定性机检仍通过' : '润色引入关键机检错误，自动回退', text: accepted ? polished : before };
         if (accepted) {
           text = polished;
           machine = polishedMachine;
@@ -1132,7 +1122,7 @@ export async function runW68Review({
       }
       transitions.push(`point:${round}`);
       const pointRaw = await invoke({
-        seat: 'M2', role: 'factory_point', phase: `point-${round}`, expected: 1600,
+        seat: 'M2', role: 'factory_point', phase: `point-${round}`,
         system: 'MAZZ_W68_POINT\n你是 M2 对点席，与 M3 分离。不得直接改稿。只返回 JSON：{"decision":"pass|adjust|return_skeleton","findings":[{"severity":"critical|major|warning","reasonCode":"SEMANTIC_MISMATCH|OPTIONAL_ANCHOR_MISSING|REQUIRED_CONTRACT_CONFLICT|REQUIRED_CONTRACT_UNSATISFIABLE","message":"...","artifactRef":"draft:位置或skeleton:id","ruleRef":"规则编号"}],"repairItems":[{"error":"...","change":"可执行改法","position":"draft:位置","reason":"规则编号"}],"consultation":{"proposal":"","reason":"","approved":false,"skeletonPatch":"","biblePatch":""}}。规则：[建议]（required:false）缺失本身不得成为 adjust 或 return_skeleton 的唯一理由；adjust 必须至少带一项可执行且可引用的独立 finding/repairItem；return_skeleton 只用于显式 [必达]/锁定契约互相矛盾或不可满足，并以 REQUIRED_CONTRACT_CONFLICT/REQUIRED_CONTRACT_UNSATISFIABLE 和 skeleton:id 引用声明。',
         user: `【验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【正文】\n${text}\n\n【机检】\n${machineReportMarkdown(machine)}\n\n【既有判例（同规则优先复用）】\n${precedents || '无'}`,
       });
@@ -1155,7 +1145,7 @@ export async function runW68Review({
             ...list(schema.lockedFacts), ...list(schema.forbiddenBoundaries),
           ].filter(item => item?.required === true).map(item => asText(item.id)));
           const skeletonRaw = await invoke({
-            seat: 'M1', role: 'factory_skeleton', phase: `consultation-${round}`, expected: 1200,
+            seat: 'M1', role: 'factory_skeleton', phase: `consultation-${round}`,
             system: 'MAZZ_W68_CONSULTATION\n你是骨架席。请把已批准请示先合并进骨架；只输出追加的显式 [必达]/[必埋]/[锁定]/[禁越] 行，不写正文。',
             user: `【原蓝图】\n${blueprint}\n\n【请示】\n${consultationMarkdown(consultation)}\n\n【圣经】\n${bible}`,
           });
@@ -1215,10 +1205,10 @@ export async function runW68Review({
       const before = text;
       previousText = before;
       text = await invoke({
-        seat: 'M3', role: 'factory_writer', phase: `point-repair-${round}`, expected: 2600,
+        seat: 'M3', role: 'factory_writer', phase: `point-repair-${round}`,
         system: 'MAZZ_W68_REPAIR\n你是 M3 执笔席。严格依修订单最小修订；不得扩写未授权内容，只输出完整正文。',
         user: `【正文】\n${text}\n\n【修订单】\n${repairOrderMarkdown(order)}\n\n【保护项】\n${list(protectionList).join('\n')}`,
-        temperature: 0.35, maxTokens: 8192,
+        temperature: 0.35,
       }) || text;
       reworkHistory.push({
         source: order.source, stage: 'point', reasonCode: 'POINT_FINDING', order,
@@ -1263,7 +1253,7 @@ export async function runW68Review({
       : [{ seat: 'M4', role: 'factory_review_a', sampled: true }];
     const doReview = async reviewer => {
       const raw = await invoke({
-        seat: reviewer.seat, role: reviewer.role, phase: `review-${reviewer.seat}`, expected: 1600,
+        seat: reviewer.seat, role: reviewer.role, phase: `review-${reviewer.seat}`,
         system: `MAZZ_W68_REVIEW\n你是 ${reviewer.seat} 外部审理席，与执笔席分离。不得改稿。只返回 JSON：{"objections":[{"id":"O1","severity":"critical|major|minor","claim":"...","artifactRef":"draft:段落/句子或skeleton:id","ruleRef":"规则编号"}]}。每项必须同时引用工件与规则。`,
         user: `【验收点】\n${acceptanceSchemaMarkdown(schema)}\n\n【正文】\n${text}\n\n【M2 对点】\n${pointReportMarkdown(point, pointReports.length)}\n\n【既有判例】\n${precedents || '无'}`,
       });
@@ -1303,7 +1293,7 @@ export async function runW68Review({
     for (const objection of objections) {
       for (let round = 1; round <= 2 && objection.status === 'open'; round++) {
         const raw = await invoke({
-          seat: 'M2', role: 'factory_point', phase: `answer-${objection.id}-${round}`, expected: 900,
+          seat: 'M2', role: 'factory_point', phase: `answer-${objection.id}-${round}`,
           system: 'MAZZ_W68_ANSWER\n你是 M2 答辩席。只返回 JSON：{"answer":"...","evidenceRef":"工件:位置"}。没有证据不得把置信语气当证据；答辩席无权请求撤回或维持质询。',
           user: `【质询】\n${JSON.stringify(objection)}\n\n【正文】\n${text}\n\n【验收点】\n${acceptanceSchemaMarkdown(schema)}`,
         });
@@ -1318,7 +1308,7 @@ export async function runW68Review({
             valid: true,
           };
           const reconsiderRaw = await invoke({
-            seat: objection.reviewer || 'M4', role: reviewerRole, phase: `reconsider-${objection.id}-${round}`, expected: 700,
+            seat: objection.reviewer || 'M4', role: reviewerRole, phase: `reconsider-${objection.id}-${round}`,
             system: 'MAZZ_W68_RECONSIDER\n你是原质询审理席。根据答辩证据只返回 JSON：{"outcome":"withdraw|hold","reason":"..."}。撤回权属于质询席，不属于答辩席。',
             user: `【原质询】\n${JSON.stringify(objection)}\n\n【已解析答辩证据】\n${JSON.stringify(reconsiderEvidence)}`,
           });
@@ -1355,7 +1345,7 @@ export async function runW68Review({
           systemOutcome: strictText(x.outcome),
         }));
         const raw = await invoke({
-          seat: 'M6', role: 'factory_arbiter', phase: `hearing-${objection.id}`, expected: 1200,
+          seat: 'M6', role: 'factory_arbiter', phase: `hearing-${objection.id}`,
           system: 'MAZZ_W68_HEARING\n你是 M6 庭审席。只返回 JSON：{"decision":"overrule|sustain","reason":"...","ruleRef":"..."}。证据优先，不得直接改稿。',
           user: `【质询】\n${JSON.stringify(objection)}\n\n【两轮答辩】\n${JSON.stringify(hearingAnswers)}`,
         });
@@ -1390,7 +1380,7 @@ export async function runW68Review({
     } else {
       transitions.push('final:arbitration');
       const finalRaw = await invoke({
-        seat: 'M6', role: 'factory_arbiter', phase: 'final', expected: 1200,
+        seat: 'M6', role: 'factory_arbiter', phase: 'final',
         system: 'MAZZ_W68_FINAL\n你是流程仲裁席，不是第二个内容审查席，不得重做自动校验、节点验收或交叉审校。只返回 JSON：{"decision":"block","reasonCode":"CLOSED_GATE|UNRESOLVED_OBJECTION|EVIDENCE_CONFLICT|ARTIFACT_INTEGRITY","reason":"...","gateRef":"gate:machine|gate:point|gate:review|gate:objection 或空","artifactRef":"objection:<id>|conflict:<id>|artifact:bible 或空","ruleRef":"W68-GATE|W68-OBJECTION|W68-EVIDENCE|W68-INTEGRITY"}。你只能对证据包中明确列出的 unresolvedBlockers 作程序性裁决，必须逐字引用对应 gateRef 或 artifactRef；不得另造第五闸，不得以泛化的“依据不足”阻断，不得改稿。',
         user: `【程序性仲裁证据包】\n${JSON.stringify(finalEvidence)}`,
       });
@@ -1418,10 +1408,9 @@ export async function runW68Review({
     };
     return result;
   } catch (error) {
-    if (!['W68_BUDGET_STOP', 'W68_COMPLETION_UNSAFE', 'W68_REVIEW_PACKET_INVALID'].includes(error?.code)) throw error;
+    if (!['W68_COMPLETION_UNSAFE', 'W68_REVIEW_PACKET_INVALID'].includes(error?.code)) throw error;
     const unsafe = error.code === 'W68_COMPLETION_UNSAFE';
-    const invalidReview = error.code === 'W68_REVIEW_PACKET_INVALID';
-    const terminal = unsafe ? 'provider-unsafe' : invalidReview ? 'review-invalid' : 'budget-stop';
+    const terminal = unsafe ? 'provider-unsafe' : 'review-invalid';
     const result = { protocol: W68_PROTOCOL, sealed: false, verdict: terminal, reason: error.message, ritual: ritualPlan, gates: { machine: !!machine?.pass, point: point?.decision === 'pass', review: false, objection: false }, text, schema, machine, machineHistory, polishRecord, point, repairs, reworkHistory, pointReports, reviews, objections, answers, transitions: [...transitions, terminal], budget: ledger.summary(), bible, unsafeCompletion: unsafe ? error.completion : null };
     result.artifacts = { skeleton: acceptanceSchemaMarkdown(schema), draft: text, polish: polishRecordMarkdown(polishRecord), machine: machineHistory.length ? machineHistory.map(x => `## 机检轮次 ${x.round}\n\n${machineReportMarkdown(x.report)}`).join('\n\n---\n\n') : '# 机检报告\n\n- 未执行', point: pointReports.map(x => pointReportMarkdown(x, x.round)).join('\n\n') || '# 对点报告\n\n- 未执行', repair: repairs.map(repairOrderMarkdown).join('\n\n') || '# 修订单\n\n- 无', consultation: consultation ? consultationMarkdown(consultation) : '# 请示单\n\n- 无', review: reviewMarkdown(reviews), objection: objectionMarkdown(objections), answer: answerMarkdown(answers), verdict: verdictMarkdown(result) };
     return result;

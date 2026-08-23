@@ -27,6 +27,57 @@ describe('W62b 剪藏纯内核', () => {
     assert.equal(/outerHTML/.test(script), false, '不受信 HTML 不得带回应用');
   });
 
+  test('正文与图片快照不设内容数量阈值，OCR 路由不再以字数决定', async () => {
+    const clipper = await import('../../renderer/modules/browser/clipper.js');
+    const script = clipper.snapshotScript('https://example.test/article');
+    assert.equal(script.includes('slice(0, 60000)'), false);
+    assert.equal(script.includes('slice(0, 24)'), false);
+    assert.equal(clipper.shouldUseVision({ text: '有正文', images: [{ width: 1200, height: 800 }] }), false);
+    assert.equal(clipper.shouldUseVision({ text: '', images: [{ width: 1200, height: 800 }] }), true);
+  });
+
+  test('图片本地化与视觉回退逐图处理全量候选，单图失败仍保留来源', () => {
+    const runtime = src('renderer/modules/browser/clip-runtime.js');
+    assert.equal(runtime.includes('slice(0, 12)'), false);
+    assert.equal(runtime.includes('page.images?.[0]'), false);
+    assert.match(runtime, /for \(const \[index, image\] of \(Array\.isArray\(page\?\.images\)/);
+    assert.match(runtime, /runPool\(sources/);
+    const md = buildClipMarkdown({
+      page: { title: '全图剪藏', url: 'https://a.test/x' },
+      assets: [{ alt: '远程图', source: 'https://a.test/fail.png', localized: false, error: 'network failed' }],
+      ocrNotice: 'vision failed',
+    });
+    assert.match(md, /!\[远程图\]\(https:\/\/a\.test\/fail\.png\)/);
+    assert.match(md, /图片本地化失败/);
+    assert.match(md, /OCR 未完整处理：vision failed/);
+  });
+
+  test('运行时实处理超过旧 24/12 帽的全部图片', async () => {
+    const { createClipRuntime } = await import('../../renderer/modules/browser/clip-runtime.js');
+    const originalMazz = window.mazz;
+    const imageWrites = [];
+    window.mazz = {
+      invoke: async (channel, payload = {}) => {
+        if (channel === 'workspace:get') return 'D:/clip-contract';
+        if (channel === 'fs:stat') return { exists: false };
+        if (channel === 'clip:fetchImage') return { ok: true, base64: 'AA==', mime: 'image/png', url: payload.url };
+        if (channel === 'fs:writeFileBase64') imageWrites.push(payload.path);
+        return true;
+      },
+    };
+    try {
+      const runtime = createClipRuntime();
+      const images = Array.from({ length: 30 }, (_, index) => ({ src: `https://img.test/${index}.png`, alt: `图 ${index}` }));
+      const result = await runtime.savePage({ title: '三十图', url: 'https://a.test/x', text: '已有正文', images });
+      assert.equal(result.assets, 30);
+      assert.equal(result.localizedAssets, 30);
+      assert.equal(result.imageFailures.length, 0);
+      assert.equal(imageWrites.length, 30);
+    } finally {
+      window.mazz = originalMazz;
+    }
+  });
+
   test('复用并发池严格最多 2 件、保序并隔离单件失败', async () => {
     let active = 0, maxActive = 0;
     const result = await runPool([1, 2, 3, 4, 5], async n => {
@@ -42,7 +93,8 @@ describe('W62b 剪藏纯内核', () => {
 
   test('URL 清单去重、图片页判别、Markdown 本地资源引用齐套', () => {
     assert.deepEqual(parseUrlList('甲 https://a.test/x\nhttps://a.test/x\n乙：https://b.test/y。'), ['https://a.test/x', 'https://b.test/y']);
-    assert.equal(shouldUseVision({ text: '短文', images: [{ src: 'https://a.test/page.png', width: 900, height: 1200 }] }), true);
+    assert.equal(shouldUseVision({ text: '短文', images: [{ src: 'https://a.test/page.png', width: 900, height: 1200 }] }), false, '有正文时不得再按字数阈值切换 OCR');
+    assert.equal(shouldUseVision({ text: '', images: [{ src: 'https://a.test/page.png', width: 900, height: 1200 }] }), true);
     assert.equal(shouldUseVision({ text: '正文'.repeat(400), images: [] }), false);
     const md = buildClipMarkdown({
       page: { title: '证据页', url: 'https://a.test/x', text: '正文', adapter: 'generic' },

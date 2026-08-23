@@ -72,6 +72,23 @@ function decision(projectPath, packageId, overrides = {}) {
 }
 
 describe('W74b Feed 协议、变化检测与跨源热度', () => {
+  test('长标题、摘要、查询和维度不受本地字符门限拒绝或裁剪', () => withProject(async root => {
+    const marker = '尾部内容必须保留';
+    const longText = `${'完整材料'.repeat(700)}${marker}`;
+    const request = scanRequest(root, {
+      query: `${'检索主题'.repeat(120)}${marker}`,
+      dimension: `${'观察维度'.repeat(80)}${marker}`,
+      sourceBatches: [{
+        sourceId: 'search:long', sourceType: 'search',
+        items: [item('long', { title: longText, summary: longText })],
+      }],
+    });
+    const normalized = normalizeFeedScanRequest(request);
+    assert.ok(normalized.query.endsWith(marker));
+    assert.ok(normalized.dimension.endsWith(marker));
+    assert.ok(normalized.sourceBatches[0].items[0].title.endsWith(marker));
+    assert.ok(normalized.sourceBatches[0].items[0].summary.endsWith(marker));
+  }));
   test('schema/模式/secret/字段白名单和人工裁决权限严格', () => withProject(root => {
     assert.equal(normalizeFeedScanRequest(scanRequest(root)).schema, FEED_SCAN_REQUEST_SCHEMA);
     assert.throws(() => normalizeFeedScanRequest(scanRequest(root, { mode: 'magic' })), /非法 Feed mode/);
@@ -80,14 +97,17 @@ describe('W74b Feed 协议、变化检测与跨源热度', () => {
       sourceBatches: [{ sourceId: 'bad', sourceType: 'search', items: [{ ...item('bad'), cookie: 'leak' }] }],
     })), /未冻结字段|禁止 secret/);
     assert.throws(() => normalizeDecisionRequest(decision(root, 'a'.repeat(64), { authority: 'agent:auto' })), /human/);
-    assert.equal(normalizeW65FeedRequest({
+    const naturalPages = normalizeW65FeedRequest({
       schema: FEED_W65_REQUEST_SCHEMA, projectId: 'project:w65', projectPath: root,
       query: '主题', dimension: '动态', observedAt: '2026-08-19T09:00:00.000Z', sites: ['dmhy'],
-    }).maxPages, 1);
+    });
+    assert.equal(naturalPages.maxPages, null);
+    assert.equal(normalizeW65FeedRequest({ ...naturalPages, maxPages: 8 }).maxPages, 8);
+    assert.throws(() => normalizeW65FeedRequest({ ...naturalPages, maxPages: 0 }), /正整数/);
     assert.throws(() => normalizeW65FeedRequest({
       schema: FEED_W65_REQUEST_SCHEMA, projectId: 'project:w65', projectPath: root,
       query: '主题', dimension: '动态', observedAt: '2026-08-19T09:00:00.000Z', sites: ['rogue'],
-    }), /冻结 W65 站点/);
+    }), /已知 W65 站点/);
   }));
 
   test('首次产生投喂包；复扫无变化；同身份异内容只报告 changed', () => withProject(async root => {

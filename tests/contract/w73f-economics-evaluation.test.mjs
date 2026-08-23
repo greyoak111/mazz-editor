@@ -56,7 +56,7 @@ function sample(overrides = {}) {
 }
 
 describe('W73f versioned economics and local evaluation protocol', () => {
-  test('四类成本严格分桶；W68 字符折算只能是 estimate，unknown 不补零', () => {
+  test('四类成本严格分桶；W68 只认 Provider usage，unknown 不补零', () => {
     assert.deepEqual(COST_KINDS, ['estimate', 'provider-reported', 'settled-actual', 'unknown']);
     const rows = [
       estimate(),
@@ -161,7 +161,9 @@ describe('W73f append-only ledger and W68 adapter', () => {
     assert.equal(drill.runId, RUN_ID); assert.equal(drill.taskRef, 'factory-task:1');
     assert.equal(drill.artifactRefs.length > 0, true); assert.equal(drill.findingRefs.length > 0, true);
     assert.equal(drill.gateRefs.length > 0, true); assert.equal(Array.isArray(drill.humanDecisionRefs), true);
-    assert.equal(ledger.state.costs.values().next().value.kind, 'estimate');
+    const recordedCost = ledger.state.costs.values().next().value;
+    assert.equal(recordedCost.kind, 'unknown');
+    assert.match(recordedCost.reason, /不按字符数估算/);
     await ledger.dispose();
     const reopened = await openEconomicsEvaluationLedger({ io, path, runId: RUN_ID });
     assert.equal(reopened.healthSnapshot().evaluations, 11);

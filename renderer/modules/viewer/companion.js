@@ -33,10 +33,10 @@ export function normalizePersona(input) {
   const flavor = String(input.flavor || '泛式风');
   if (!FLAVOR_PACKS.includes(flavor)) throw new Error(`未知风味包：${flavor}`);
   return Object.freeze({
-    schema: 'mazz.persona/v0', id, name: name.slice(0, 80),
-    expertise: [...new Set((input.expertise || []).map(String))].slice(0, 12),
+    schema: 'mazz.persona/v0', id, name,
+    expertise: [...new Set((input.expertise || []).map(String))],
     color: /^#[0-9a-f]{6}$/i.test(input.color || '') ? input.color : '#8b86ff',
-    flavor, quadrants: Object.freeze(normalizedQuadrants), voicePrompt: String(input.voicePrompt || '').slice(0, 2_000), custom: true,
+    flavor, quadrants: Object.freeze(normalizedQuadrants), voicePrompt: String(input.voicePrompt || ''), custom: true,
   });
 }
 
@@ -45,14 +45,12 @@ export function evaluatePersonaSample(text) {
   const findings = [];
   if (/(?:作为一个AI|很高兴为您|请问还有什么可以帮您|希望以上内容)/i.test(source)) findings.push('客服腔');
   if (/(?:我们应该|你要明白|这告诉我们|总而言之)/.test(source)) findings.push('说教腔');
-  if (source.length > 500) findings.push('单次话量过长');
   return Object.freeze({ pass: findings.length === 0, findings });
 }
 
-export function estimateCompanionCost({ durationSeconds = 0, intervalSeconds = 25, inputTokens = 700, outputTokens = 180, pricePerMillion = 1 } = {}) {
+export function estimateCompanionCost({ durationSeconds = 0, intervalSeconds = 25 } = {}) {
   const calls = Math.max(0, Math.ceil(Number(durationSeconds) / Math.max(20, Number(intervalSeconds) || 25)));
-  const tokens = calls * (Math.max(0, Number(inputTokens)) + Math.max(0, Number(outputTokens)));
-  return Object.freeze({ calls, tokens, estimatedCost: Number((tokens / 1_000_000 * Math.max(0, Number(pricePerMillion))).toFixed(4)), currency: 'provider-configured' });
+  return Object.freeze({ calls, tokens: null, estimatedCost: null, accounting: 'provider-reported' });
 }
 
 function timestamp(ms) {
@@ -119,14 +117,13 @@ export class CompanionSession {
   }
 
   addMessage({ role, speaker = '', text, mediaTimeMs }) {
-    const entry = { role, speaker, text: String(text || '').slice(0, 20_000), mediaTimeMs: Math.max(0, Math.floor(Number(mediaTimeMs) || 0)), createdAt: this.now() };
+    const entry = { role, speaker, text: String(text || ''), mediaTimeMs: Math.max(0, Math.floor(Number(mediaTimeMs) || 0)), createdAt: this.now() };
     this.messages.push(entry);
-    if (this.messages.length > 2_000) this.messages.splice(0, this.messages.length - 2_000);
     return entry;
   }
 
   contextAt(mediaTimeMs) {
-    return this.messages.filter(message => message.mediaTimeMs <= mediaTimeMs).slice(-24);
+    return this.messages.filter(message => message.mediaTimeMs <= mediaTimeMs);
   }
 
   prompt({ mediaTimeMs, beat, userText = '', speaker }) {
@@ -235,12 +232,12 @@ export function mountCompanion({ root, media, mediaName, mediaPath, sampleRms = 
         const cfg = await getProviderConfig(role);
         if (!providerReady(cfg)) throw new Error(`${speaker.name}尚未分配 AI 模型`);
         const prompt = session.prompt({ mediaTimeMs, beat, userText, speaker });
-        const answer = await chat({ cfg, role, ...prompt, maxTokens: 360, temperature: 0.75, signal: abortController.signal });
+        const answer = await chat({ cfg, role, ...prompt, temperature: 0.75, signal: abortController.signal });
         return { speaker, locked: enforceSpoilerLock(answer, mediaTimeMs) };
       }));
       for (const reply of replies) {
         if (reply.status === 'fulfilled') {
-          const cited = `↳ 你：“${userText.slice(0, 60)}”\n${reply.value.locked.text}`;
+          const cited = `↳ 你：“${userText}”\n${reply.value.locked.text}`;
           renderMessage(session.addMessage({ role: 'assistant', speaker: reply.value.speaker.name, text: cited, mediaTimeMs }));
         } else if (reply.reason?.name !== 'AbortError') {
           renderMessage(session.addMessage({ role: 'system', speaker: '陪看', text: `暂时没接上：${reply.reason?.message || reply.reason}`, mediaTimeMs }));
@@ -267,7 +264,7 @@ export function mountCompanion({ root, media, mediaName, mediaPath, sampleRms = 
       if (!panel.hidden) {
         active = true;
         const estimate = estimateCompanionCost({ durationSeconds: Number.isFinite(media.duration) ? media.duration : 0 });
-        statusLabel.textContent = `防剧透锁：开 · 观剧档：开 · 拍点档预计 ${estimate.calls} 次 / ${estimate.tokens} tokens（价格按所选 Provider）`;
+        statusLabel.textContent = `防剧透锁：开 · 观剧档：开 · 拍点档约 ${estimate.calls} 次请求；token 与费用以 Provider 实际回报为准`;
         observe();
         input.focus();
       }

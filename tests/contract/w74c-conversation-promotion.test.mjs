@@ -82,6 +82,17 @@ describe('W74c-1 严格本地 Promotion 契约', () => {
     assert.throws(() => normalizeCommand(command(root, fakeAsset, 'promotion:a', { action: 'publish' })), /非法 Promotion action/);
   }));
 
+  test('长对话正文、标题和人工理由完整进入升格请求', () => withProject(root => {
+    const marker = '对话正文尾部不可丢';
+    const markdown = `${'# 对话\n\n'}${'正文'.repeat(250_100)}${marker}`;
+    const title = `${'长标题'.repeat(180)}标题尾部`;
+    const reason = `${'人工理由'.repeat(350)}理由尾部`;
+    const normalized = normalizeConversationPromotionRequest(conversationRequest(root, { markdown, title, reason }));
+    assert.equal(normalized.markdown, markdown);
+    assert.equal(normalized.title, title);
+    assert.equal(normalized.reason, reason);
+  }));
+
   test('supersedes/revoke 状态机要求 active 前态，批准不授予 Publication', async () => withProject(async root => {
     const ledger = new PromotionLedger();
     const a = await ingestAsset(root, 'asset:test:a');

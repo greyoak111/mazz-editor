@@ -1,4 +1,4 @@
-// renderer/modules/factory/command-gate.js —— W68c 指令闸、终审卡、预算帽与健康看板纯内核
+// renderer/modules/factory/command-gate.js —— W68c 指令闸、终审卡与健康看板纯内核
 // 不碰 DOM/文件系统；Factory Desk 与契约测试共用同一套确定性规则。
 
 export const FACTORY_COMMAND_FAMILIES = Object.freeze(['production', 'legislation', 'quality', 'chat']);
@@ -80,10 +80,11 @@ export function evaluateBudgetCap({ capTokens = 0, usedTokens = 0, requestedRitu
   const cap = Math.max(0, Number(capTokens) || 0);
   const used = Math.max(0, Number(usedTokens) || 0);
   const remaining = Math.max(0, cap - used);
-  if (cap < 8000 || remaining < 1000) return { status: 'stop', label: '预算硬停', capTokens: cap, usedTokens: used, remainingTokens: remaining, actions: ['degrade', 'stop'], reason: '余额低于轻仪式安全底线' };
-  if (requestedRitual === 'full' && cap < 18000) return { status: 'degrade', label: '建议降级', capTokens: cap, usedTokens: used, remainingTokens: remaining, actions: ['degrade', 'stop'], reason: '预算不足以覆盖全仪式；可降为轻仪式并保留外部红队席' };
-  if (cap && remaining / cap < 0.15) return { status: 'degrade', label: '余额告急', capTokens: cap, usedTokens: used, remainingTokens: remaining, actions: ['degrade', 'stop'], reason: '预算余额低于 15%' };
-  return { status: 'ok', label: '预算正常', capTokens: cap, usedTokens: used, remainingTokens: remaining, actions: [], reason: '' };
+  return {
+    status: 'ok', label: '厂商计量', capTokens: cap, usedTokens: used, remainingTokens: remaining,
+    actions: [], reason: '', requestedRitual: requestedRitual === 'full' ? 'full' : 'light',
+    enforcement: 'provider-native',
+  };
 }
 
 export function makeBudgetCard(budget = {}) {

@@ -43,6 +43,12 @@ function requireText(value, label, max = 500) {
   return text;
 }
 
+function requireContent(value, label) {
+  const text = String(value || '').trim();
+  if (!text) throw new Error(`${label} 必填`);
+  return text;
+}
+
 function normalizeSource(input, { now = () => new Date().toISOString() } = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('持续投喂来源必须是对象');
   for (const key of Object.keys(input)) {
@@ -60,7 +66,7 @@ function normalizeSource(input, { now = () => new Date().toISOString() } = {}) {
   if (!Number.isInteger(intervalMinutes) || intervalMinutes < 5 || intervalMinutes > 10_080) {
     throw new Error('intervalMinutes 必须是 5–10080 的整数');
   }
-  const dimension = requireText(input.dimension, 'dimension', 120);
+  const dimension = requireContent(input.dimension, 'dimension');
   let location = String(input.location || '').trim();
   let query = String(input.query || '').trim();
   if (kind === 'local') {
@@ -76,7 +82,7 @@ function normalizeSource(input, { now = () => new Date().toISOString() } = {}) {
     url.password = '';
     location = url.toString();
   } else {
-    query = requireText(query, 'query', 300);
+    query = requireContent(query, 'query');
     location = '';
   }
   if (automation === 'queue' && input.factoryQueueAuthorized !== true) {
@@ -87,7 +93,7 @@ function normalizeSource(input, { now = () => new Date().toISOString() } = {}) {
   if (!/^feed:[a-z0-9._:-]{3,120}$/i.test(sourceId)) throw new Error('sourceId 必须使用 feed: 前缀且只含安全字符');
   return Object.freeze({
     schema: SOURCE_SCHEMA, sourceId, projectId, projectPath, kind,
-    label: String(input.label || query || path.basename(location) || sourceId).trim().slice(0, 160),
+    label: String(input.label || query || path.basename(location) || sourceId).trim(),
     location, query, dimension, automation, intervalMinutes,
     enabled: input.enabled !== false,
     factoryQueueAuthorized: automation === 'queue' && input.factoryQueueAuthorized === true,
@@ -116,9 +122,9 @@ function xmlText(block, names) {
 }
 
 function parseSyndication(xml, baseUrl, observedAt) {
-  const source = String(xml || '').slice(0, 2_000_000);
+  const source = String(xml || '');
   const blocks = source.match(/<(?:item|entry)\b[\s\S]*?<\/(?:item|entry)\s*>/gi) || [];
-  return blocks.slice(0, 200).map((block, index) => {
+  return blocks.map((block, index) => {
     const title = xmlText(block, ['title']) || `订阅条目 ${index + 1}`;
     let link = xmlText(block, ['link']);
     if (!link) link = /<link\b[^>]*href=["']([^"']+)["']/i.exec(block)?.[1] || '';
@@ -128,9 +134,9 @@ function parseSyndication(xml, baseUrl, observedAt) {
     const guid = xmlText(block, ['guid', 'id']);
     return {
       itemId: guid || link || `entry:${sha256(`${title}\n${index}`).slice(0, 24)}`,
-      title: title.slice(0, 500), url: link,
+      title, url: link,
       publishedAt: Number.isFinite(dateMs) ? new Date(dateMs).toISOString() : observedAt,
-      summary: xmlText(block, ['summary', 'description', 'content']).slice(0, 2_000),
+      summary: xmlText(block, ['summary', 'description', 'content']),
       canonicalKey: guid || link,
     };
   });
@@ -139,7 +145,7 @@ function parseSyndication(xml, baseUrl, observedAt) {
 function localItems(source, observedAt) {
   const stat = fs.statSync(source.location);
   const paths = stat.isDirectory()
-    ? fs.readdirSync(source.location, { withFileTypes: true }).filter(entry => entry.isFile()).slice(0, 200).map(entry => path.join(source.location, entry.name))
+    ? fs.readdirSync(source.location, { withFileTypes: true }).filter(entry => entry.isFile()).map(entry => path.join(source.location, entry.name))
     : [source.location];
   return paths.map(filePath => {
     const fileStat = fs.statSync(filePath);
@@ -150,6 +156,19 @@ function localItems(source, observedAt) {
       summary: `${relative} · ${fileStat.size} bytes`, canonicalKey: `local:${relative}`,
     };
   });
+}
+
+function canonicalSearchUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    if (!/^https?:$/.test(url.protocol)) return '';
+    url.hash = '';
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^(utm_|spm$|from$|ref$|gclid$|fbclid$)/i.test(key)) url.searchParams.delete(key);
+    }
+    url.searchParams.sort();
+    return url.toString();
+  } catch { return ''; }
 }
 
 class ContinuousFeedService {
@@ -211,13 +230,31 @@ class ContinuousFeedService {
     if (source.kind === 'local') return localItems(source, observedAt);
     if (source.kind === 'subscription') return parseSyndication(await this.fetchSubscription(source.location), source.location, observedAt);
     if (!this.searxService) throw new Error('SearXNG 搜索服务尚未就绪');
-    const result = await this.searxService.search({ query: source.query, pageno: 1 });
-    if (!result?.ok) throw new Error(result?.error || '搜索来源失败');
-    return (result.results || []).slice(0, 200).map((item, index) => ({
-      itemId: item.url || `search:${sha256(`${source.query}\n${item.title}\n${index}`).slice(0, 24)}`,
-      title: item.title || '未命名搜索结果', url: item.url || '', publishedAt: observedAt,
-      summary: String(item.content || '').slice(0, 2_000), canonicalKey: item.url || '',
-    }));
+    const items = [];
+    const seenSearchIdentities = new Set();
+    for (let pageno = 1; ; pageno += 1) {
+      const result = await this.searxService.search({ query: source.query, pageno });
+      if (!result?.ok) throw new Error(result?.error || `搜索来源第 ${pageno} 页失败`);
+      const page = Array.isArray(result.results) ? result.results : [];
+      if (!page.length) break;
+      let newIdentities = 0;
+      for (const item of page) {
+        const canonicalUrl = canonicalSearchUrl(item.url);
+        const fallbackHash = sha256(`${String(item.title || '')}\n${String(item.content || '')}`);
+        const identity = canonicalUrl ? `url:${canonicalUrl}` : `content:${fallbackHash}`;
+        if (seenSearchIdentities.has(identity)) continue;
+        seenSearchIdentities.add(identity);
+        newIdentities += 1;
+        items.push({
+          itemId: canonicalUrl || `search:${fallbackHash.slice(0, 24)}`,
+          title: item.title || '未命名搜索结果', url: canonicalUrl, publishedAt: observedAt,
+          summary: String(item.content || ''), canonicalKey: canonicalUrl,
+        });
+      }
+      // 不以“短页”猜测终点；只有空页或本页没有任何新稳定身份才自然收口。
+      if (!newIdentities) break;
+    }
+    return items;
   }
 
   _writeState(source, patch) {
@@ -324,5 +361,5 @@ class ContinuousFeedService {
 
 module.exports = {
   AUTOMATION_LEVELS, ContinuousFeedService, SOURCE_KINDS, SOURCE_SCHEMA,
-  feedControlPaths, localItems, normalizeSource, parseSyndication,
+  canonicalSearchUrl, feedControlPaths, localItems, normalizeSource, parseSyndication,
 };

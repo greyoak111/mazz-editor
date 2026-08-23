@@ -188,11 +188,12 @@ class TorrentSites {
     });
   }
 
-  async searchMany({ sites, kw, pageMap = {}, maxPages = 2 } = {}) {
+  async searchMany({ sites, kw, pageMap = {}, maxPages = null } = {}) {
     const keyword = String(kw || '').trim();
     const cursorMode = pageMap && Object.keys(pageMap).length > 0;
-    const selected = [...new Set((Array.isArray(sites) ? sites : []).filter((id) => SITES[id] && (!cursorMode || Object.hasOwn(pageMap, id))))].slice(0, 4);
-    const boundedPages = Math.max(1, Math.min(3, Number.parseInt(maxPages, 10) || 1));
+    const selected = [...new Set((Array.isArray(sites) ? sites : []).filter((id) => SITES[id] && (!cursorMode || Object.hasOwn(pageMap, id))))];
+    const pageLimit = maxPages == null || maxPages === '' ? null : Number(maxPages);
+    if (pageLimit != null && (!Number.isInteger(pageLimit) || pageLimit < 1)) throw new Error('maxPages 如提供，必须是正整数');
     if (!keyword || !selected.length) return { rows: [], aggregates: [], perSite: {}, nextPages: {}, kw: keyword };
     const entries = await Promise.all(selected.map(async (siteId) => {
       const adapter = this.#site(siteId);
@@ -201,7 +202,7 @@ class TorrentSites {
       const rows = [];
       let current = null;
       try {
-        for (let offset = 0; offset < boundedPages; offset += 1) {
+        for (let offset = 0; pageLimit == null || offset < pageLimit; offset += 1) {
           current = await this.#searchPage(adapter, keyword, startPage + offset, generation);
           rows.push(...current.rows);
           if (!current.hasMore) break;

@@ -49,20 +49,20 @@ function result() {
     ritual: { requested: 'light', effective: 'light' },
     gates: { machine: true, point: true, review: true, objection: true },
     repairs: [{ round: 1 }], objections: [{ id: 'O1' }],
-    budget: { capTokens: 32000, usedTokens: 2400, entries: [{ seat: 'M1', phase: 'draft', tokens: 2400, at: NOW }] },
+    budget: { capTokens: null, usedTokens: 2400, source: 'provider-reported', entries: [{ seat: 'M1', phase: 'draft', tokens: 2400, inputTokens: 1800, outputTokens: 600, source: 'provider-reported', at: NOW }] },
   };
 }
 
 describe('W73f Factory same-Run integration', () => {
-  test('ensure 自动建立版本目录；W68 预算只按 estimate 落账并把成本/评估引用归入 Production Run', async () => {
+  test('ensure 自动建立版本目录；只按 Provider 实报 usage 落账并把成本/评估引用归入 Production Run', async () => {
     const { panel, files } = specimen(); const target = task();
     const run = await panel.ensureProductionRun(target, { id: 'novel' });
     const economics = panel.economicsEvaluationLedgers.get(target.id);
     assert.equal(economics.healthSnapshot().metrics, 18);
     assert.equal(economics.healthSnapshot().formulas, 18);
     const output = await panel.appendW73fEconomics(target, result(), { artifactDir: 'D:/Factory/W73f/审理工件/001', unitNo: 1 });
-    assert.equal(output.health.costKinds.estimate, 1);
-    assert.equal(output.health.costKinds['provider-reported'], 0);
+    assert.equal(output.health.costKinds.estimate, 0);
+    assert.equal(output.health.costKinds['provider-reported'], 1);
     assert.equal(output.health.costKinds['settled-actual'], 0);
     assert.equal(output.health.evaluations, 11);
     assert.equal(run.snapshot.economicsRefs.length, 1);
@@ -70,8 +70,8 @@ describe('W73f Factory same-Run integration', () => {
     assert.equal(target.economicsCostCount, 1);
     assert.equal(target.economicsEvaluationCount, 11);
     const text = files.get(run.paths.economics);
-    assert.match(text, /w68\.review-budget-char-estimate\/v0/);
-    assert.doesNotMatch(text, /TOP-SECRET-KEY|settled-actual|provider-reported/);
+    assert.match(text, /provider\.response\.usage\/v1/);
+    assert.doesNotMatch(text, /TOP-SECRET-KEY|settled-actual|char-estimate/);
     assert.equal([...economics.state.evaluations.values()].find(row => row.metricRef.id === 'production.raw-ability.baseline-quality').result.status, 'unknown');
     assert.equal([...economics.state.evaluations.values()].find(row => row.metricRef.id === 'production.reliability.completion-rate').result.status, 'insufficient-sample');
   });

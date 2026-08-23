@@ -27,6 +27,11 @@ describe('B11 内录录制中实况流', () => {
     assert.ok(html.includes('id="live"') && html.includes('recFrame'), '实况 img 必须有');
     assert.ok(html.includes("img.style.display = 'none'"), '停止收图必须有');
   });
+  test('字幕 AI 润色不以本地覆盖比例门限拒绝有效回包', () => {
+    const rec = readSrc('renderer/lib/recorder.js');
+    assert.ok(rec.includes('if (map.size > 0)'), '任一合法行都应落回，其余行保留原文');
+    assert.equal(rec.includes('this.lines.length * 0.7'), false, '不得以 70% 本地数量门限影响润色工作流');
+  });
 });
 
 describe('B4/B6 新形态验收钉点', () => {

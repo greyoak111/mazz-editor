@@ -23,11 +23,10 @@ export default {
     时间处理: '按课堂进程线性推进',
     创新边界: '严守教案体例（目标/重难点/准备/过程/板书/作业/反思）',
   },
-  output_rules: { format: 'markdown', max_length: 3500, structure: '教学目标（三维可测） → 重难点 → 教学准备 → 教学过程（导入-新授-巩固-小结-作业） → 板书设计 → 教学反思留白' },
+  output_rules: { format: 'markdown', structure: '教学目标（三维可测） → 重难点 → 教学准备 → 教学过程（导入-新授-巩固-小结-作业） → 板书设计 → 教学反思留白' },
   quality_checks: [
     { rule: 'contains', value: '教学目标', label: '必须有教学目标' },
     { rule: 'contains', value: '教学过程', label: '必须有教学过程' },
     { rule: 'contains', value: '评价', label: '必须含评价设计' },
-    { rule: 'minLength', value: 700, label: '不少于 700 字' },
   ],
 };

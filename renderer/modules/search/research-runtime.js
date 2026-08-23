@@ -1,6 +1,6 @@
 // renderer/modules/search/research-runtime.js —— W62 桌面运行时：模型路由、IPC 与工作区落盘
 import { chat } from '../factory/provider.js';
-import { finishResearch, prepareResearch } from './research-pipeline.js';
+import { canonicalUrl, finishResearch, prepareResearch } from './research-pipeline.js';
 
 const defaultInvoke = (channel, payload) => window.mazz.invoke(channel, payload);
 
@@ -15,24 +15,63 @@ function timestamp(date = new Date()) {
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}-${String(date.getMilliseconds()).padStart(3, '0')}`;
 }
 
-export async function prepareWebResearch(topic, { onStage, invoke = defaultInvoke, chatFn = chat } = {}) {
-  return prepareResearch({
+function throwIfAborted(signal) {
+  if (!signal?.aborted) return;
+  if (signal.reason instanceof Error) throw signal.reason;
+  const error = new Error(String(signal.reason || '检索已取消'));
+  error.name = 'AbortError';
+  throw error;
+}
+
+/**
+ * Fetch one query page-by-page until SearXNG itself reaches a natural end.
+ * There is deliberately no local page ceiling: the provider owns result volume.
+ */
+export async function searchAllSearxPages(query, { invoke = defaultInvoke, signal } = {}) {
+  const results = [];
+  const seenUrls = new Set();
+  let page = 1;
+
+  for (;;) {
+    throwIfAborted(signal);
+    const out = await invoke('searx:search', {
+      query, categories: 'general', language: 'auto', pageno: page,
+    });
+    throwIfAborted(signal);
+    if (!out?.ok) throw new Error(out?.error || 'SearXNG 检索失败');
+
+    const rows = Array.isArray(out.results) ? out.results : [];
+    if (!rows.length) break;
+    results.push(...rows);
+
+    let added = 0;
+    for (const row of rows) {
+      const url = canonicalUrl(row?.url);
+      if (url && !seenUrls.has(url)) { seenUrls.add(url); added++; }
+    }
+    if (!added) break;
+    page++;
+  }
+  return results;
+}
+
+export async function prepareWebResearch(topic, { onStage, invoke = defaultInvoke, chatFn = chat, signal } = {}) {
+  throwIfAborted(signal);
+  const prepared = await prepareResearch({
     topic, onStage,
     expand: async subject => chatFn({
-      role: 'search', temperature: 0.1, maxTokens: 500,
-      system: '你是检索式扩写器。只返回 JSON 字符串数组，最多 4 条；覆盖原题、事实数据、研究报告与反方/限制，不作答。',
-      user: subject,
+      role: 'search', temperature: 0.1,
+      system: '你是检索式扩写器。只返回 JSON 字符串数组；覆盖原题、事实数据、研究报告与反方/限制，不作答。按主题实际需要给出检索式，不设本地产出的数量门限。',
+      user: subject, signal,
     }),
-    search: async query => {
-      const out = await invoke('searx:search', { query, categories: 'general', language: 'auto' });
-      if (!out?.ok) throw new Error(out?.error || 'SearXNG 检索失败');
-      return out.results || [];
-    },
+    search: query => searchAllSearxPages(query, { invoke, signal }),
     extract: async source => {
       const out = await invoke('searx:extract', { url: source.url });
       return out?.ok ? out : { title: source.title, text: '' };
     },
   });
+  throwIfAborted(signal);
+  return prepared;
 }
 
 export async function finishWebResearch(prepared, { selectedIds, onStage, invoke = defaultInvoke, chatFn = chat, now = () => new Date() } = {}) {
@@ -41,7 +80,7 @@ export async function finishWebResearch(prepared, { selectedIds, onStage, invoke
   const done = await finishResearch(prepared, {
     selectedIds, onStage, now: () => savedAt,
     synthesize: prompt => chatFn({
-      role: 'research', temperature: 0.15, maxTokens: 5000,
+      role: 'research', temperature: 0.15,
       system: prompt.system, user: prompt.user,
     }),
   });

@@ -31,10 +31,9 @@ const LIVE_PROJECT_COORDINATES = Object.freeze({
   dualLoop: false,
   autoPreview: false,
   reviewRitual: 'light',
-  reviewBudgetCap: 12000,
   totalWords: LIVE_BODY_CHARS,
   wordsPerUnit: LIVE_BODY_CHARS,
-  maxChapters: 1,
+  maxChapters: 0,
 });
 const REQUIRED_PROFESSIONAL_ARTIFACTS = Object.freeze([
   '01-骨架与验收点.md',
@@ -67,8 +66,8 @@ const liveGenre = {
     // short project title.
     { id: 'review_anchor', label: '专业流程验收点', type: 'textarea', required: false },
   ],
-  system_prompt: `你正在执行连接验收。正文必须逐字复制以下 ${LIVE_BODY_CHARS} 个字符，不得添加标题、解释、引号或空行：${LIVE_BODY} 随后严格按系统要求另起一行输出原生字数声明。`,
-  output_rules: { format: 'markdown', max_length: LIVE_BODY_CHARS + 48, structure: `固定正文：${LIVE_BODY}` },
+  system_prompt: `你正在执行连接验收。正文必须逐字复制以下参考文本，不得添加标题、解释、引号、空行或字数声明：${LIVE_BODY}`,
+  output_rules: { format: 'markdown', structure: `固定正文：${LIVE_BODY}` },
   quality_checks: [{ rule: 'contains', value: LIVE_BODY, label: '必须包含完整固定验收正文' }],
 };
 
@@ -128,17 +127,15 @@ async function readProjectControls(panel) {
         dualLoop: document.querySelector('#pj-dual')?.checked === true,
         autoPreview: document.querySelector('#pj-autopreview')?.checked === true,
         reviewRitual: String(document.querySelector('#pj-review-ritual')?.value || ''),
-        reviewBudgetCap: numberValue('#pj-review-budget'),
         totalWords: domTotal,
         wordsPerUnit: domWords,
-        maxChapters: Math.ceil(domTotal / Math.max(1, domWords)),
+        maxChapters: Number(snapshot.maxChapters),
       },
       authoritative: {
         maxMode: snapshot.maxMode === true,
         dualLoop: snapshot.dualLoop === true,
         autoPreview: snapshot.autoPreview === true,
         reviewRitual: String(snapshot.reviewRitual || ''),
-        reviewBudgetCap: Number(snapshot.reviewBudgetCap),
         totalWords: Number(plan.totalWords),
         wordsPerUnit: Number(plan.wordsPerUnit),
         maxChapters: Number(snapshot.maxChapters),
@@ -354,7 +351,7 @@ async function panelWindow() {
   await panel.fill('#pj-words', String(LIVE_BODY_CHARS));
   await panel.locator('#pj-words').press('Tab');
   await waitForStableProjectControls(panel, {
-    totalWords: LIVE_BODY_CHARS, wordsPerUnit: LIVE_BODY_CHARS, maxChapters: 1,
+    totalWords: LIVE_BODY_CHARS, wordsPerUnit: LIVE_BODY_CHARS, maxChapters: 0,
   }, { label: '单篇字数规格' });
 
   const advanced = panel.locator('details.advanced');
@@ -368,8 +365,6 @@ async function panelWindow() {
     await panel.locator(selector).dispatchEvent('change');
   }
   await panel.selectOption('#pj-review-ritual', 'light');
-  await panel.fill('#pj-review-budget', String(LIVE_PROJECT_COORDINATES.reviewBudgetCap));
-  await panel.locator('#pj-review-budget').press('Tab');
   const submittedProjectControls = await waitForStableProjectControls(panel, LIVE_PROJECT_COORDINATES, {
     label: '单篇立项完整坐标', consecutive: 4,
   });
@@ -413,7 +408,6 @@ async function panelWindow() {
     dualLoop: task.dualLoop === true,
     autoPreview: task.autoPreview === true,
     reviewRitual: String(task.reviewRitual || ''),
-    reviewBudgetCap: Number(task.reviewBudgetCap),
     totalWords: Number(task.totalWords),
     wordsPerUnit: Number(task.wordsPerUnit),
     maxChapters: Number(task.maxChapters),
@@ -488,7 +482,6 @@ async function panelWindow() {
     wordsPerUnit: Number(terminal.wordsPerUnit),
     maxChapters: Number(terminal.maxChapters),
     reviewRitual: String(terminal.reviewRitual || ''),
-    reviewBudgetCap: Number(terminal.reviewBudgetCap),
   };
   assert(matchesProjectCoordinates(terminalCoordinates, LIVE_PROJECT_COORDINATES), `磁盘终态偏离单篇立项坐标：${JSON.stringify(terminalCoordinates)}`);
   const checkpointFile = artifacts.find(file => /\.checkpoint$/i.test(file));
@@ -514,7 +507,7 @@ async function panelWindow() {
         id: row.id, mode: row.mode, maxChapters: row.maxChapters,
         totalWords: row.totalWords, wordsPerUnit: row.wordsPerUnit,
         status: row.status, genreId: row.genreId, reviewProtocol: row.reviewProtocol,
-        reviewRitual: row.reviewRitual, reviewBudgetCap: row.reviewBudgetCap,
+        reviewRitual: row.reviewRitual,
         autoPreview: row.autoPreview, reviewState: row.reviewState,
       } : null,
       logs: [...document.querySelectorAll('.fc-log-line')].slice(-8).map(node => node.textContent || ''),
@@ -549,7 +542,7 @@ async function panelWindow() {
   const singleUnitOutline = fs.readFileSync(path.join(task.folder, '章节大纲.md'), 'utf8').trim();
   assert(singleUnitOutline === `第1节：${task.label}`, '单篇 live 坐标的本地单元索引不得冒充 Provider 连写大纲');
   assert(!names.some(name => /\.checkpoint$/i.test(name)), '真实 Provider 完成后仍遗留 checkpoint');
-  assert(runtimeSummary.task?.mode === 'single' && Number(runtimeSummary.task?.maxChapters) === 1, '终态任务偏离单篇收据');
+  assert(runtimeSummary.task?.mode === 'single' && Number(runtimeSummary.task?.maxChapters) === 0, '终态任务仍携带固定内容单元终点');
   assert(Number(runtimeSummary.task?.totalWords) === LIVE_BODY_CHARS && Number(runtimeSummary.task?.wordsPerUnit) === LIVE_BODY_CHARS, '终态任务偏离 121/121 字数规格');
   const professionalGateStatus = {
     machine: terminal.reviewState?.gates?.machine === true,

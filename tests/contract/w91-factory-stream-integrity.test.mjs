@@ -242,23 +242,28 @@ describe('W91 renderer detailed API', () => {
   });
 });
 
-describe('W91 原生续写声明与术语收口', () => {
-  test('Provider 安全且模型声明精确匹配时才可提交', () => {
+describe('W91 旧字数声明迁移与术语收口', () => {
+  test('提交只依赖 Provider 安全终态和非空正文；旧声明仅作诊断', () => {
     const valid = engine.validateNativeContinuationDeclaration('正文甲乙\n[本次续写字数：4]', { safeToCommit: true });
     assert.equal(valid.safeToCommit, true);
     assert.equal(valid.text, '正文甲乙');
     assert.equal(valid.actualCharacters, 4);
 
-    assert.equal(engine.validateNativeContinuationDeclaration('正文甲乙', { safeToCommit: true }).reason, 'missing-native-declaration');
-    assert.equal(engine.validateNativeContinuationDeclaration('正文甲乙\n[本次续写字数：3]', { safeToCommit: true }).reason, 'declaration-length-mismatch');
+    const missing = engine.validateNativeContinuationDeclaration('正文甲乙', { safeToCommit: true });
+    assert.equal(missing.safeToCommit, true);
+    assert.equal(missing.declarationPresent, false);
+    const mismatch = engine.validateNativeContinuationDeclaration('正文甲乙\n[本次续写字数：3]', { safeToCommit: true });
+    assert.equal(mismatch.safeToCommit, true);
+    assert.equal(mismatch.declarationMatches, false);
     assert.equal(engine.validateNativeContinuationDeclaration('正文甲乙\n[本次续写字数：4]', { safeToCommit: false }).reason, 'provider-unsafe');
   });
 
-  test('旧任务合并保留原生声明数字，不按合并总长伪造新证据', () => {
+  test('旧任务合并清理声明后继续，不把字符数字带入正式正文', () => {
     const merged = engine.mergeDeclaredContinuation('前文', '正文甲乙\n[本次续写字数：4]');
     assert.equal(merged.declared, 4);
-    assert.equal(engine.tokenDeclarationOf(merged.text), 4);
-    assert.equal(merged.text.endsWith('[本次续写字数：4]'), true);
+    assert.equal(engine.tokenDeclarationOf(merged.text), null);
+    assert.equal(merged.text, '前文正文甲乙');
+    assert.equal(merged.complete, false);
   });
 
   test('状态写失败不再被空 catch 吞掉', async () => {

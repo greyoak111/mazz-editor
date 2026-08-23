@@ -228,9 +228,8 @@ function evaluateCandidate(request, candidate) {
   if (candidate.backpressure.active >= candidate.backpressure.maxActive) excluded.push(exclusion('EXECUTOR_BACKPRESSURE', '执行器已达并发上限'));
   else reasons.push(`CAPACITY:${candidate.backpressure.active}/${candidate.backpressure.maxActive}`);
   if (request.backpressure.active >= request.backpressure.maxActive) excluded.push(exclusion('POOL_BACKPRESSURE', 'Factory worker pool 已达并发上限'));
-  if (candidate.estimatedCost.status !== 'unknown' && request.budget.remainingTokens > 0 && candidate.estimatedCost.tokens > request.budget.remainingTokens) {
-    excluded.push(exclusion('BUDGET_INSUFFICIENT', `预计 ${candidate.estimatedCost.tokens} token 超过余额 ${request.budget.remainingTokens}`, [candidate.estimatedCost.sourceRef]));
-  } else reasons.push(candidate.estimatedCost.status === 'unknown' ? 'COST_UNKNOWN' : 'BUDGET_WITHIN_LIMIT');
+  // Token 数只作供应商成本观测，不参与候选排除。上下文与输出能力由 Provider 自己负责。
+  reasons.push(candidate.estimatedCost.status === 'unknown' ? 'COST_UNKNOWN' : 'COST_RECORDED_NOT_GATED');
   if (riskRank(candidate.risk.level) > riskRank(request.risk.maxLevel)) excluded.push(exclusion('RISK_EXCEEDS_LIMIT', `风险 ${candidate.risk.level} 超过上限 ${request.risk.maxLevel}`, [candidate.risk.evidenceRef]));
   else reasons.push(`RISK_WITHIN_LIMIT:${candidate.risk.level}`);
   return { candidate, reasons, excluded };
@@ -243,8 +242,6 @@ function compareCandidates(left, right) {
     (health[a.health.status] || 0) - (health[b.health.status] || 0),
     riskRank(a.risk.level) - riskRank(b.risk.level),
     (a.backpressure.active / a.backpressure.maxActive) - (b.backpressure.active / b.backpressure.maxActive),
-    (a.estimatedCost.status === 'unknown' ? 1 : 0) - (b.estimatedCost.status === 'unknown' ? 1 : 0),
-    a.estimatedCost.tokens - b.estimatedCost.tokens,
     (a.estimatedLatency.status === 'unknown' ? 1 : 0) - (b.estimatedLatency.status === 'unknown' ? 1 : 0),
     a.estimatedLatency.ms - b.estimatedLatency.ms,
     b.confidence - a.confidence,

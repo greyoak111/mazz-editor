@@ -190,7 +190,7 @@ try {
       const requestId = `w71-packaged-factory-${index}`;
       const factoryRequest = window.mazz.invoke('factory:aiChatStream', {
         requestId, baseURL: 'mock://w71-packaged', apiKey: 'local-test-key', model: 'w71-local',
-        user: `Factory lifecycle ${index}`, temperature: 0, maxTokens: 200,
+        user: `Factory lifecycle ${index}`, temperature: 0,
       });
       factoryDuring = await waitFor(value => value.byType['factory-ai-request'] === 1,
         `Factory AI 第 ${index + 1} 次未进入资源账本`);

@@ -55,7 +55,7 @@ function validateManifest(input) {
   }) : [];
   return {
     schema: MAZ_MANIFEST_SCHEMA, containerVersion: '0.1-local', semanticId: String(input.semanticId), version: String(input.version),
-    profile, name: String(input.name).slice(0, 300), description: String(input.description || '').slice(0, 2000),
+    profile, name: String(input.name), description: String(input.description || ''),
     entry: String(input.entry || ''), permissions, dependencies,
     provenance: isPlainObject(input.provenance) ? input.provenance : {},
     rightsRef: String(input.rightsRef || ''), integrityRef: 'package.index.json',
@@ -250,7 +250,7 @@ function issueEntitlement({ entitlementId, subjectId, blockPaths, notBefore, exp
 
 function revokeEntitlement(entitlement, reason) {
   if (!String(reason || '').trim()) throw new Error('撤销 Entitlement 需要理由');
-  return { ...entitlement, status: 'revoked', revokedAt: new Date().toISOString(), revocationReason: String(reason).slice(0, 500) };
+  return { ...entitlement, status: 'revoked', revokedAt: new Date().toISOString(), revocationReason: String(reason) };
 }
 
 function rotateKeyEnvelopes(payload, { sourceRecipientId, sourcePrivateKey, recipients }) {

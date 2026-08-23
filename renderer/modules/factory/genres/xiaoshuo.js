@@ -15,9 +15,6 @@ export default {
     { id: 'protagonist', label: '主角', type: 'text', required: true, placeholder: '姓名、身份、性格缺口' },
     { id: 'tone', label: '基调', type: 'select', options: ['冷峻', '温情', '悬疑', '荒诞', '史诗'], default: '冷峻' },
     { id: 'pov', label: '视角', type: 'select', options: ['第一人称', '第三人称限制', '全知'], default: '第三人称限制' },
-    { id: 'length', label: '篇幅', type: 'select', options: ['3000字短篇', '1500字片段', '800字场景'], default: '1500字片段', uiOwner: 'lengthPlan' },
-    { id: '篇幅长短', label: '连写篇幅', type: 'select', options: ['短篇（1万字以内）', '中篇（1-5万字）', '长篇（5万字以上）'], default: '短篇（1万字以内）', uiOwner: 'lengthPlan' },
-    { id: '每章字数', label: '每章目标字数', type: 'text', default: '2000', uiOwner: 'lengthPlan' },
     { id: 'must_avoid', label: '绝对避免', type: 'textarea', placeholder: '例如：不要大段心理独白、不要解释性对话' },
   ],
   supportsPlugins: true,
@@ -31,10 +28,8 @@ export default {
     时间处理: '场景驱动，必要时序跳跃',
     创新边界: '鼓励结构与意象创新',
   },
-  output_rules: { format: 'markdown', max_length: 4000, structure: '开场钩子 → 冲突升级 → 转折 → 回响式收尾' },
+  output_rules: { format: 'markdown', structure: '开场钩子 → 冲突升级 → 转折 → 回响式收尾' },
   quality_checks: [
     { rule: 'forbiddenWords', value: ['他感到', '她觉得', '他意识到', '忽然觉得'], label: '禁用直接心理报告' },
-    { rule: 'minLength', value: 500, label: '不少于 500 字（防梗概化）' },
-    { rule: 'notAllDialog', label: '不能全篇都是对话' },
   ],
 };

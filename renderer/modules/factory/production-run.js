@@ -126,8 +126,8 @@ export function createProductionRunSnapshot(input = {}, { clock = Date.now } = {
     workflowVersion: asString(input.workflowVersion || 'W68a', 120),
     governanceProfile: asString(input.governanceProfile || 'light', 120),
     budgetProfile: {
-      kind: 'token-cap',
-      capTokens: Math.max(0, Number(input.budgetProfile?.capTokens) || 0),
+      kind: 'provider-managed',
+      capTokens: null,
       actualStatus: 'UNKNOWN',
     },
     inputArtifactRefs: uniqueRefs(input.inputArtifactRefs),

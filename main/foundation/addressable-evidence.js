@@ -230,9 +230,9 @@ function parseLiveReferences(markdown, sourceAssetId) {
       mediaType: 'markdown',
       logicalLocation: block.explicit
         ? { kind: 'markdown-block', blockId: block.explicit }
-        : { kind: 'markdown-quote', textQuote: block.block.trim().slice(0, 500) || match[0] },
+        : { kind: 'markdown-quote', textQuote: block.block.trim() || match[0] },
       physicalLocation: { charRange: [block.blockStart, block.blockEnd] },
-      quote: block.block.trim().slice(0, 500),
+      quote: block.block.trim(),
       provenance: { source: 'w63-markdown-parser', syntax: match[0] },
       resolver: { strategy: block.explicit ? 'block-id-then-quote' : 'quote-then-context' },
       status: 'active',

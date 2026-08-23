@@ -9,7 +9,7 @@ import {
 } from './workshop.js';
 import {
   FACTORY_COMMAND_LABELS, buildLockedBibleProposal, classifyFactoryInstruction,
-  computeFactoryHealth, evaluateBudgetCap, makeBudgetCard, makeClarificationCard,
+  computeFactoryHealth, makeClarificationCard,
   makeDiffConfirmationCard,
 } from './command-gate.js';
 import {
@@ -110,7 +110,7 @@ function makeRoot(container) {
       </div>
       <label class="fd-search">${iconHtml('🔍')}<input placeholder="窗内搜索并展开…" spellcheck="false"><span></span></label>
       <button class="fd-icon" data-a="refresh" title="从创作流档案重载">${iconHtml('↻')}</button>
-      <button class="fd-icon" data-a="economics" aria-label="成本对账" title="实收、结算、月度对账与配额">${iconHtml('📈')}</button>
+      <button class="fd-icon" data-a="economics" aria-label="成本对账" title="Provider 实报 usage 与实际结算">${iconHtml('📈')}</button>
       <button class="fd-icon" data-a="mobile" title="生成手机审批同步包（客户端条件门）">${iconHtml('▣')}</button>
     </header>
     <section class="fd-pins">
@@ -230,7 +230,6 @@ function createDesk(container) {
     if (!resolution && e.card?.kind === 'diff-confirm') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="diff:confirm">确认写入设定集</button><button data-card-action="diff:reject">拒绝变更</button></div>';
     if (!resolution && e.card?.kind === 'bible-conflict') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="conflict:human">保留人工版本</button><button class="danger" data-card-action="conflict:ai">以 AI 提案覆盖</button></div>';
     if (!resolution && e.card?.kind === 'final-review') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="final:seal">入库定本</button><button class="danger" data-card-action="final:return">退回修订</button><button data-card-action="final:hold">暂缓</button></div>';
-    if (!resolution && e.card?.kind === 'budget') actions = '<div class="fd-card-actions"><button class="primary" data-card-action="budget:degrade">降级继续</button><button class="danger" data-card-action="budget:stop">暂停</button></div>';
     if (!resolution && e.card?.kind === 'help-moment') actions = '<div class="fd-card-actions"><button data-card-action="help:approve">批准升级</button><button data-card-action="help:return">退回修订</button><button data-card-action="help:evidence">要求补证</button></div>';
     return `<article class="fd-card type-${e.type} tone-${e.tone || 'plain'}" data-event="${esc(e.id)}" data-item="${esc(item.id)}"><header><button class="fd-fold" title="折叠">${iconHtml('⌄')}</button><span class="fd-tag">${esc(typeLabel[e.type])}</span><b>${esc(productDisplayText(e.title))}</b>${continuation}${threadBadge}<time>${esc(String(e.createdAt).slice(0, 16).replace('T', ' '))}</time></header>${progress}<div class="fd-md">${renderMarkdown(productProtocolText(item.content), ctl.query)}</div>${e.artifactPath ? `<button class="fd-artifact" draggable="true" data-path="${esc(e.artifactPath)}" data-live-path="${esc(e.artifactPath)}" title="打开；也可拖入 Markdown 成为块级活引用"><span>产物</span>${iconHtml('↗')}<span>${esc(productFileName(pathName(e.artifactPath)))}</span></button>` : ''}${resolved}${actions}</article>`;
   }
@@ -273,14 +272,14 @@ function createDesk(container) {
         .sort((a, b) => ctl.events.findIndex(x => x.id === a.id) - ctl.events.findIndex(x => x.id === b.id));
       rows.forEach((event, index) => ctl.threadMap.set(event.id, { id: thread.id, index, total: rows.length, rows }));
     }
-    ctl.items = buildFactoryVirtualItems(ctl.events, ctl.memory, { view: ctl.view, chunkChars: 12000, keepRecentUnits: 2 });
+    ctl.items = buildFactoryVirtualItems(ctl.events, ctl.memory, { view: ctl.view, chunkChars: Number.POSITIVE_INFINITY, keepRecentUnits: 2 });
     renderDirectory(); renderVirtual();
     if (focusId) setTimeout(() => jumpToEvent(focusId, false), 20);
   }
 
   function jumpToEvent(id, expand) {
     if (!id) return;
-    if (expand) { ctl.memory[id] = false; saveMemory(); ctl.items = buildFactoryVirtualItems(ctl.events, ctl.memory, { view: ctl.view, chunkChars: 12000, keepRecentUnits: 2 }); }
+    if (expand) { ctl.memory[id] = false; saveMemory(); ctl.items = buildFactoryVirtualItems(ctl.events, ctl.memory, { view: ctl.view, chunkChars: Number.POSITIVE_INFINITY, keepRecentUnits: 2 }); }
     const index = ctl.items.findIndex(item => item.eventId === id);
     if (index < 0) return;
     let top = 0;
@@ -309,17 +308,35 @@ function createDesk(container) {
       btn.classList.toggle('changed', !!old && old !== hash);
     };
     setPin('bible', bible); setPin('precedent', precedent);
-    const legacyEstimates = (costs.units || []).map((row, index) => ({
-      kind: 'estimate', taskRef: ctl.task?.id || 'factory-project', totalTokens: Number(row.budget?.usedTokens) || 0,
-      observedAt: row.at || new Date(0).toISOString(), sourceRef: `${ctl.folder}/成本台账.json#unit-${row.unitNo || index + 1}`,
-    })).filter(row => row.totalTokens);
-    ctl.reconciliation = reconcileMonthlyUsage([...(costs.usageRecords || []), ...legacyEstimates], {
-      quotaTokens: costs.monthlyQuotaTokens || null,
+    const unitCosts = Array.isArray(costs.units) ? costs.units : [];
+    const providerUsage = unitCosts.flatMap((row, index) => (Array.isArray(row.budget?.entries) ? row.budget.entries : [])
+      .filter(entry => entry?.source === 'provider-reported' && Number(entry.tokens) > 0)
+      .map(entry => ({
+        kind: 'provider-reported', taskRef: ctl.task?.id || 'factory-project',
+        inputTokens: Number(entry.inputTokens) || 0, outputTokens: Number(entry.outputTokens) || 0,
+        totalTokens: Number(entry.tokens) || 0, observedAt: entry.at || row.at || new Date(0).toISOString(),
+        sourceRef: `${ctl.folder}/成本台账.json#unit-${row.unitNo || index + 1}`,
+      })));
+    const legacyUnknownUnits = unitCosts.flatMap((row, index) => {
+      const entries = Array.isArray(row.budget?.entries) ? row.budget.entries : [];
+      if (entries.some(entry => entry?.source === 'provider-reported') || !(Number(row.budget?.usedTokens) > 0)) return [];
+      return [{
+        kind: 'unknown', taskRef: ctl.task?.id || 'factory-project',
+        observedAt: row.at || new Date(0).toISOString(), sourceRef: `${ctl.folder}/成本台账.json#unit-${row.unitNo || index + 1}`,
+        reason: '旧单元成本只有汇总数，没有 Provider 原生 usage 来源，故不采信其 token 数',
+      }];
     });
+    const persistedUsage = (Array.isArray(costs.usageRecords) ? costs.usageRecords : []).flatMap(row => {
+      if (row?.kind === 'estimate') return [{ ...row, kind: 'unknown', reason: row.reason || '旧成本记录未声明 Provider 原生 usage 来源' }];
+      return ['provider-reported', 'settled-actual', 'unknown'].includes(row?.kind) ? [row] : [];
+    });
+    const usageRows = persistedUsage.some(row => row.kind === 'provider-reported')
+      ? [...persistedUsage, ...legacyUnknownUnits]
+      : [...persistedUsage, ...providerUsage, ...legacyUnknownUnits];
+    ctl.reconciliation = reconcileMonthlyUsage(usageRows);
     const actual = ctl.reconciliation.tokensByKind['provider-reported'];
-    const estimated = ctl.reconciliation.tokensByKind.estimate;
     root.querySelector('[data-stat=cost]').textContent = actual ? actual.toLocaleString() : '—';
-    root.querySelector('[data-stat=cost-note]').textContent = actual ? `本月实收 · 估算 ${estimated.toLocaleString()}` : `实收待回供 · 估算 ${estimated.toLocaleString()}`;
+    root.querySelector('[data-stat=cost-note]').textContent = actual ? '本月 Provider 实报 usage' : 'Provider usage 待回供';
     const verdictUnits = new Set(ctl.events.filter(e => e.type === 'verdict').map(e => e.unitNo || e.id));
     const returnedUnits = new Set(ctl.events.filter(e => e.tone === 'disagreement' || (e.stage === 'repair' && !/(?:^|\n)\s*-\s*(?:无|本轮未执行)/.test(e.content))).map(e => e.unitNo || e.id));
     root.querySelector('[data-stat=return]').textContent = verdictUnits.size ? `${Math.min(100, Math.round(returnedUnits.size / verdictUnits.size * 100))}%` : '0%';
@@ -336,8 +353,7 @@ function createDesk(container) {
     const drillPath = row => [...ctl.events].reverse().find(event => stageMap[row.id]?.includes(event.stage) && event.artifactPath)?.artifactPath || `${ctl.folder}/${FACTORY_ARCHIVE_FILE}`;
     const metrics = rows.map(row => `<button class="fd-health-metric trend-${row.trend}" data-drill-path="${esc(drillPath(row))}" title="钻取到本指标对应工件或创作流原文"><i>${esc(productText(row.label))}</i><b>${esc(row.display)}</b><span>${esc(productText(row.target))}</span><small>${row.trend === 'good' ? '趋势改善' : row.trend === 'bad' ? '趋势需看' : '本周基线'} · 点开原文</small></button>`);
     const account = ctl.reconciliation || reconcileMonthlyUsage([]);
-    metrics.push(`<button class="fd-health-metric" data-drill-path="${esc(`${ctl.folder}/成本台账.json`)}"><i>本月 Provider 实收</i><b>${account.tokensByKind['provider-reported'].toLocaleString()}</b><span>估算 ${account.tokensByKind.estimate.toLocaleString()} · 结算凭据 ${Object.keys(account.amountsByKind['settled-actual']).length}</span><small>分栏对账 · 点开原始台账</small></button>`);
-    metrics.push(`<button class="fd-health-metric quota-${account.quota.state}" data-drill-path="${esc(`${ctl.folder}/成本台账.json`)}"><i>月度配额</i><b>${account.quota.state === 'gray' ? '—' : account.quota.remainingTokens.toLocaleString()}</b><span>${account.quota.state === 'gray' ? '未配置/未回供，明确灰显' : `余量 token · ${account.quota.state}`}</span><small>不以 unknown 补零</small></button>`);
+    metrics.push(`<button class="fd-health-metric" data-drill-path="${esc(`${ctl.folder}/成本台账.json`)}"><i>本月 Provider 实报</i><b>${account.tokensByKind['provider-reported'].toLocaleString()}</b><span>结算凭据 ${Object.keys(account.amountsByKind['settled-actual']).length} · unknown ${account.unknownCount}</span><small>只读 usage · 点开原始台账</small></button>`);
     host.innerHTML = metrics.join('');
     host.querySelectorAll('[data-drill-path]').forEach(button => button.addEventListener('click', () => openCompare(button.dataset.drillPath)));
   }
@@ -407,22 +423,14 @@ function createDesk(container) {
 
   async function openEconomicsDialog() {
     if (!ctl.folder) return;
-    const account = ctl.reconciliation || reconcileMonthlyUsage(ctl.costs.usageRecords || [], { quotaTokens: ctl.costs.monthlyQuotaTokens || null });
+    const account = ctl.reconciliation || reconcileMonthlyUsage(ctl.costs.usageRecords || []);
     const settled = Object.entries(account.amountsByKind['settled-actual']).map(([currency, amount]) => `${currency} ${amount.toFixed(2)}`).join(' / ') || '尚无结算凭据';
     const m = modal('Factory 成本对账');
     m.body.innerHTML = `<div style="min-width:420px;display:grid;gap:10px">
-      <div><b>${esc(account.month)} 月度对账</b><p>Provider 实收 ${account.tokensByKind['provider-reported'].toLocaleString()} token；估算 ${account.tokensByKind.estimate.toLocaleString()} token；差额 ${account.estimatedVarianceTokens == null ? '待实收' : account.estimatedVarianceTokens.toLocaleString()}。</p><p>实际结算：${esc(settled)}；unknown ${account.unknownCount} 条保持未知。</p></div>
-      <div><b>配额：${account.quota.state === 'gray' ? '未配置/未回供（灰显）' : `${account.quota.usedTokens.toLocaleString()} / ${account.quota.capTokens.toLocaleString()} token`}</b></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="rb-btn" data-e="ledger">打开原始台账</button><button class="rb-btn" data-e="quota">设置月度配额</button><button class="rb-btn" data-e="settle">登记实际结算</button></div>
+      <div><b>${esc(account.month)} 月度对账</b><p>Provider 实报 usage ${account.tokensByKind['provider-reported'].toLocaleString()} token。</p><p>实际结算：${esc(settled)}；来源不明的旧记录 ${account.unknownCount} 条保持 unknown。</p></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="rb-btn" data-e="ledger">打开原始台账</button><button class="rb-btn" data-e="settle">登记实际结算</button></div>
     </div>`;
     m.body.querySelector('[data-e=ledger]').addEventListener('click', () => { openCompare(`${ctl.folder}/成本台账.json`); m.close(); });
-    m.body.querySelector('[data-e=quota]').addEventListener('click', async () => {
-      const value = await inputModal('月度 Token 配额（留空取消；只影响灰显/告警，不绕过人工 Gate）', String(ctl.costs.monthlyQuotaTokens || ''));
-      if (value == null) return;
-      const quota = Number(value);
-      if (!Number.isFinite(quota) || quota <= 0) { toast('配额必须是正数'); return; }
-      await writeCosts({ ...ctl.costs, monthlyQuotaTokens: quota }); m.close();
-    });
     m.body.querySelector('[data-e=settle]').addEventListener('click', async () => {
       const amountText = await inputModal('输入本月已结算实际金额', '');
       if (amountText == null) return;
@@ -562,13 +570,6 @@ function createDesk(container) {
       await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: `人工终审 · ${labels[value]}`, content: `@human 对「${target.title}」作出：**${labels[value]}**。`, unitNo: target.unitNo, unitName: target.unitName, stage: 'final-human', refId: target.id, tone: 'verdict' }));
       return true;
     }
-    if (kind === 'budget') {
-      if (!['degrade', 'stop'].includes(value)) return false;
-      if (value === 'degrade') updateTask({ reviewRitual: 'light', reviewBudgetDecision: 'degrade' });
-      else updateTask({ status: 'paused', reviewBudgetDecision: 'stop' });
-      await appendEvents(normalizeFactoryEvent({ type: 'verdict', title: value === 'degrade' ? '预算上限 · 降级继续' : '预算上限 · 暂停', content: value === 'degrade' ? '改用标准流程，保留外部反向核查；不绕过交叉审校。' : '创作已暂停；待补预算或人工改令。', stage: 'budget-decision', refId: target.id, tone: 'verdict' }));
-      return true;
-    }
     if (kind === 'help') {
       if (!['approve', 'return', 'evidence'].includes(value)) return false;
       const labels = { approve: '批准升级', return: '退回修订', evidence: '要求补证' };
@@ -580,11 +581,13 @@ function createDesk(container) {
 
   async function openBudgetCard() {
     if (!ctl.folder) return;
-    const latest = (ctl.costs.units || []).at(-1) || {};
-    const budget = evaluateBudgetCap({ capTokens: latest.budget?.capTokens || ctl.task?.reviewBudgetCap || 32000, usedTokens: latest.budget?.usedTokens || 0, requestedRitual: ctl.task?.reviewRitual || latest.ritual?.requested || 'light' });
-    if (budget.status === 'ok') { toast(`预算正常：余 ${budget.remainingTokens.toLocaleString()} token`); return; }
-    const card = makeBudgetCard({ ...budget, requestedRitual: ctl.task?.reviewRitual || 'light' });
-    await appendEvents(normalizeFactoryEvent({ id: `w68c-budget-manual-${ctl.task?.id || tinyHash(ctl.folder)}-${budget.capTokens}-${budget.usedTokens}`, type: 'help', title: `${budget.label} · 请选择`, content: `- 上限：${budget.capTokens.toLocaleString()} token\n- 已用：${budget.usedTokens.toLocaleString()} token\n- 余额：${budget.remainingTokens.toLocaleString()} token\n\n${productText(budget.reason)}`, stage: 'budget-pending', card }));
+    const latest = (Array.isArray(ctl.costs.units) ? ctl.costs.units : []).at(-1) || {};
+    const usedTokens = (Array.isArray(latest.budget?.entries) ? latest.budget.entries : [])
+      .filter(entry => entry?.source === 'provider-reported')
+      .reduce((sum, entry) => sum + Math.max(0, Number(entry.tokens) || 0), 0);
+    toast(usedTokens
+      ? `Provider usage：${usedTokens.toLocaleString()} token（只读；不会降级或暂停创作）`
+      : 'Provider usage 尚未回供（保持 unknown；不会补零、降级或暂停创作）');
   }
 
   async function submitInstruction() {

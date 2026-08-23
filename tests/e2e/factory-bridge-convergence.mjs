@@ -36,13 +36,24 @@ try {
     const ws = String(await window.mazz.invoke('workspace:get')).replace(/\\/g, '/').replace(/\/$/, '');
     const folder = `${ws}/Output/FactoryBridge`;
     const artifactPath = `${folder}/正文.md`;
-    const task = { id: 'factory-bridge-e2e', label: 'Factory 桥接实证', folder, genreId: 'tongyong', values: {}, status: 'done', mode: 'single', reviewProtocol: 'W68a', reviewState: { finalStatus: 'sealed' }, finalDecision: 'sealed', reviewBudgetCap: 20000 };
+    const task = { id: 'factory-bridge-e2e', label: 'Factory 桥接实证', folder, genreId: 'tongyong', values: {}, status: 'done', mode: 'single', reviewProtocol: 'W68a', reviewState: { finalStatus: 'sealed' }, finalDecision: 'sealed' };
     fp.tasks = fp.tasks.filter(row => row.id !== task.id).concat(task); fp.persistTasks();
     await window.mazz.invoke('fs:mkdir', { path: folder });
     await window.mazz.invoke('fs:writeFile', { path: artifactPath, content: '# 正文\n\n已入库文本。\n' });
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/圣经.md`, content: '# 圣经\n\n- 旧口径\n' });
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/判例库.md`, content: '# 判例库\n' });
-    await window.mazz.invoke('fs:writeFile', { path: `${folder}/成本台账.json`, content: JSON.stringify({ protocol: 'W68a', units: [{ unitNo: 1, budget: { usedTokens: 100 }, at: new Date().toISOString() }], usageRecords: [] }, null, 2) });
+    const observedAt = new Date().toISOString();
+    await window.mazz.invoke('fs:writeFile', { path: `${folder}/成本台账.json`, content: JSON.stringify({
+      protocol: 'W68a',
+      units: [{
+        unitNo: 1, at: observedAt,
+        budget: {
+          capTokens: null, usedTokens: 100, remainingTokens: null, source: 'provider-reported', enforced: false,
+          entries: [{ seat: 'M1', phase: 'draft', tokens: 100, inputTokens: 60, outputTokens: 40, source: 'provider-reported', at: observedAt }],
+        },
+      }],
+      usageRecords: [],
+    }, null, 2) });
     const { normalizeFactoryEvent } = await import('./modules/factory/workshop.js');
     await fp.appendWorkshop(task, normalizeFactoryEvent({ id: 'factory-bridge-artifact', type: 'body', title: '入库正文', content: '供拖拽和看板钻取的真实工件。', stage: 'draft', artifactPath }));
     await window.MazzCommands.execute('factory.openDesk', { taskId: task.id, folder, title: 'Factory 桥接实证' });

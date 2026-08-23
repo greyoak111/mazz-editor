@@ -162,4 +162,15 @@ describe('全局搜索：索引与查询', () => {
     assert.ok(html.includes('&lt;b&gt;'), 'HTML 应转义');
     assert.ok(!html.includes('<b>'));
   });
+
+  test('超过旧 200 万字符线的文档仍完整进入索引', async () => {
+    const store = createMemoryStore();
+    const idx = new SearchIndex(store);
+    const path = WS + '/long.md';
+    const tail = '超长文档尾部检索证据';
+    writeMock(path, `${'正文'.repeat(1_000_010)}\n${tail}`);
+    await idx.updateFile(path);
+    assert.equal(idx.mem.get(path)?.content.endsWith(tail), true);
+    assert.equal(idx.query(tail).results[0]?.path, path);
+  });
 });

@@ -150,13 +150,13 @@ function jaccard(left, right) {
 function normalizeItem(input, sourceId, observedAt, index) {
   if (!isPlainObject(input)) throw new Error(`sourceBatches.${sourceId}.items[${index}] 必须是对象`);
   assertKnownKeys(input, ITEM_FIELDS, `sourceBatches.${sourceId}.items[${index}]`);
-  const title = boundedString(input.title, 'item.title', 500, { required: true });
+  const title = requiredString(input.title, 'item.title');
   const url = normalizeUrl(input.url, 'item.url');
   const canonicalKey = boundedString(input.canonicalKey, 'item.canonicalKey', 500);
   const itemId = boundedString(input.itemId, 'item.itemId', 500)
     || canonicalKey || url || `derived:${sha256(`${sourceId}\n${normalizeTitle(title)}`).slice(0, 32)}`;
   const publishedAt = input.publishedAt ? normalizeIso(input.publishedAt, 'item.publishedAt') : observedAt;
-  const summary = boundedString(input.summary, 'item.summary', 2_000);
+  const summary = optionalString(input.summary);
   const tokens = titleTokens(title);
   const normalized = {
     sourceId, itemId, title, url, publishedAt, summary,
@@ -178,15 +178,15 @@ function normalizeFeedScanRequest(input) {
   }
   const projectId = boundedString(input.projectId, 'projectId', 200, { required: true });
   const projectPath = path.resolve(requiredString(input.projectPath, 'projectPath'));
-  const query = boundedString(input.query, 'query', 300, { required: true });
-  const dimension = boundedString(input.dimension, 'dimension', 120, { required: true });
+  const query = requiredString(input.query, 'query');
+  const dimension = requiredString(input.dimension, 'dimension');
   const mode = requiredString(input.mode, 'mode');
   if (!FEED_MODES.includes(mode)) throw new Error(`非法 Feed mode：${mode}`);
   const observedAt = normalizeIso(input.observedAt, 'observedAt');
   const windowHours = input.windowHours == null ? 24 : Number(input.windowHours);
   if (!Number.isInteger(windowHours) || windowHours < 1 || windowHours > 168) throw new Error('windowHours 必须是 1–168 的整数');
-  if (!Array.isArray(input.sourceBatches) || !input.sourceBatches.length || input.sourceBatches.length > 16) {
-    throw new Error('sourceBatches 必须包含 1–16 个来源');
+  if (!Array.isArray(input.sourceBatches) || !input.sourceBatches.length) {
+    throw new Error('sourceBatches 必须包含至少一个来源');
   }
   const seen = new Set();
   const sourceBatches = input.sourceBatches.map((batch, batchIndex) => {
@@ -197,7 +197,7 @@ function normalizeFeedScanRequest(input) {
     seen.add(sourceId);
     const sourceType = requiredString(batch.sourceType, 'sourceType');
     if (!SOURCE_TYPES.includes(sourceType)) throw new Error(`非法 sourceType：${sourceType}`);
-    if (!Array.isArray(batch.items) || batch.items.length > 200) throw new Error(`${sourceId}.items 必须是最多 200 项的数组`);
+    if (!Array.isArray(batch.items)) throw new Error(`${sourceId}.items 必须是数组`);
     return deepFreeze({
       sourceId,
       sourceType,
@@ -228,7 +228,7 @@ function normalizeDecisionRequest(input) {
     packageId,
     action,
     authority,
-    reason: boundedString(input.reason, 'reason', 500, { required: true }),
+    reason: requiredString(input.reason, 'reason'),
     decidedAt: normalizeIso(input.decidedAt, 'decidedAt'),
   });
 }
@@ -244,16 +244,16 @@ function normalizeW65FeedRequest(input) {
   if (!FEED_MODES.includes(mode)) throw new Error(`非法 Feed mode：${mode}`);
   const windowHours = input.windowHours == null ? 24 : Number(input.windowHours);
   if (!Number.isInteger(windowHours) || windowHours < 1 || windowHours > 168) throw new Error('windowHours 必须是 1–168 的整数');
-  const maxPages = input.maxPages == null ? 1 : Number(input.maxPages);
-  if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 3) throw new Error('maxPages 必须是 1–3 的整数');
+  const maxPages = input.maxPages == null || input.maxPages === '' ? null : Number(input.maxPages);
+  if (maxPages != null && (!Number.isInteger(maxPages) || maxPages < 1)) throw new Error('maxPages 如提供，必须是正整数');
   const sites = [...new Set((Array.isArray(input.sites) ? input.sites : []).map(value => String(value || '').trim()))];
-  if (!sites.length || sites.length > 4 || sites.some(site => !W65_SITE_IDS.has(site))) throw new Error('sites 必须是 1–4 个冻结 W65 站点');
+  if (!sites.length || sites.some(site => !W65_SITE_IDS.has(site))) throw new Error('sites 必须是已知 W65 站点');
   return deepFreeze({
     schema: FEED_W65_REQUEST_SCHEMA,
     projectId: boundedString(input.projectId, 'projectId', 200, { required: true }),
     projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
-    query: boundedString(input.query, 'query', 300, { required: true }),
-    dimension: boundedString(input.dimension, 'dimension', 120, { required: true }),
+    query: requiredString(input.query, 'query'),
+    dimension: requiredString(input.dimension, 'dimension'),
     mode,
     windowHours,
     observedAt: normalizeIso(input.observedAt, 'observedAt'),
@@ -340,7 +340,10 @@ function clusterItems(items, windowHours) {
     const ordered = [...cluster.items].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.sourceId.localeCompare(b.sourceId));
     const sources = [...new Set(ordered.map(item => item.sourceId))].sort();
     const times = ordered.map(item => Date.parse(item.publishedAt));
-    const spanHours = Math.round(((Math.max(...times) - Math.min(...times)) / 3_600_000) * 100) / 100;
+    let earliest = Infinity;
+    let latest = -Infinity;
+    for (const time of times) { if (time < earliest) earliest = time; if (time > latest) latest = time; }
+    const spanHours = Math.round(((latest - earliest) / 3_600_000) * 100) / 100;
     const changedCount = ordered.filter(item => item.change === 'changed').length;
     const withinWindow = spanHours <= windowHours;
     const hot = sources.length >= 2 && withinWindow;

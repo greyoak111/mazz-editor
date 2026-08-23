@@ -79,7 +79,7 @@ describe('W73e deterministic joint scheduler', () => {
     assert.equal(first.candidates.every(row => Array.isArray(row.routeReasons) && row.routeReasons.length >= 5), true);
   });
 
-  test('Seat/Capability/Qualification/Health/Budget/Backpressure/Risk/手工锁均给显式排除理由', () => {
+  test('Seat/Capability/Qualification/Health/Backpressure/Risk/手工锁均给显式排除理由，Token 不参与排除', () => {
     const rows = [
       candidate('seat', { seatRefs: ['seat:other'] }),
       candidate('cap', { capabilityProviders: [capability({ id: 'other.capability' })] }),
@@ -94,8 +94,23 @@ describe('W73e deterministic joint scheduler', () => {
     }));
     assert.equal(proposal.status, 'blocked');
     const codes = new Set(proposal.exclusions.flatMap(row => row.reasons.map(reason => reason.code)));
-    for (const code of ['SEAT_MISMATCH', 'CAPABILITY_MISSING', 'QUALIFICATION_REVOKED', 'BUDGET_INSUFFICIENT', 'EXECUTOR_BACKPRESSURE', 'RISK_EXCEEDS_LIMIT', 'PROVIDER_BANNED', 'MANUAL_CANDIDATE_LOCK']) assert.equal(codes.has(code), true, code);
+    for (const code of ['SEAT_MISMATCH', 'CAPABILITY_MISSING', 'QUALIFICATION_REVOKED', 'EXECUTOR_BACKPRESSURE', 'RISK_EXCEEDS_LIMIT', 'PROVIDER_BANNED', 'MANUAL_CANDIDATE_LOCK']) assert.equal(codes.has(code), true, code);
+    assert.equal(codes.has('BUDGET_INSUFFICIENT'), false);
     assert.equal(proposal.reasonCode, 'NO_QUALIFIED_EXECUTOR');
+  });
+
+  test('估算 Token 超出旧余额也不会阻断或改变路由优先级', () => {
+    const proposal = createScheduleProposal(request({
+      budget: { remainingTokens: 1 },
+      candidates: [
+        candidate('b', { estimatedCost: { status: 'estimated', tokens: 999999, sourceRef: 'evidence:b:cost' } }),
+        candidate('a', { estimatedCost: { status: 'estimated', tokens: 1, sourceRef: 'evidence:a:cost' } }),
+      ],
+    }));
+    assert.equal(proposal.status, 'ready');
+    assert.equal(proposal.exclusions.length, 0);
+    assert.equal(proposal.candidates.every(row => row.routeReasons.includes('COST_RECORDED_NOT_GATED')), true);
+    assert.deepEqual(new Set(proposal.candidates.map(row => row.candidateId)), new Set(['a', 'b']));
   });
 
   test('AUTO 只提议；最终决定必须是 human，可选备选但必须写覆盖理由', () => {

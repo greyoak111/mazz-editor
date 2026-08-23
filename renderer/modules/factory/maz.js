@@ -15,7 +15,7 @@ export async function exportMaz(tpl) {
   zip.file('prompt.txt', tpl.system_prompt || '你是一名资深写作专家。');
   zip.file('meta.json', JSON.stringify({
     name: tpl.name, key: tpl.id, version: '1.0', author: 'Mazz Editor',
-    description: (tpl.description || '').slice(0, 200), icon: tpl.icon || '📄', mazz_version: '1.0',
+    description: tpl.description || '', icon: tpl.icon || '📄', mazz_version: '1.0',
   }, null, 2));
   if (tpl.quality_checks?.length) {
     zip.file('rules/checks.json', JSON.stringify(tpl.quality_checks, null, 2));
@@ -61,7 +61,7 @@ export async function importMaz(buffer) {
     input_fields: fields,
     system_prompt: prompt.trim() || '你是一名资深写作专家。',
     meta_vars: {},
-    output_rules: { format: 'markdown', max_length: 3000 },
+    output_rules: { format: 'markdown' },
     quality_checks: checks,
     custom: true, fromMaz: true,
   };

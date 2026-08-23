@@ -131,7 +131,6 @@ export class SearchIndex {
     let content = '';
     try { content = (await window.mazz.invoke('fs:readFile', { path })) || ''; }
     catch { return; }
-    if (content.length > 2_000_000) return; // 超大文件不索引
     const name = path.replace(/[\\/]/g, '/').split('/').pop();
     const entry = { path, name, ext: extOf(name), content, updatedAt: Date.now() };
     this.mem.set(path, entry);

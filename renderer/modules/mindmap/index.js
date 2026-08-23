@@ -2390,7 +2390,7 @@ function createMindmap(container) {
       const out = [];
       const dfs = (n) => {
         if (!n) return;
-        if (hit.has(n.id)) out.push((n.text || '').trim().split('\n')[0].slice(0, 40));
+        if (hit.has(n.id)) out.push((n.text || '').trim().split('\n')[0]);
         for (const k of (n.children || [])) dfs(k);
       };
       for (const r of (ctl.doc.roots || [])) dfs(r);
@@ -2399,7 +2399,7 @@ function createMindmap(container) {
     for (const fr of frames) {
       const bullets = inFrame(fr);
       const items = [createSlItem('text', { text: fr.title || '帧', style: { size: 40, bold: true, align: 'center' }, left: 10, top: 8, width: 80, height: 14 })];
-      if (bullets.length) items.push(createSlItem('text', { left: 12, top: 28, width: 76, height: 62, list: { items: bullets.slice(0, 12).map(t => ({ text: t, icon: '•' })) }, style: { size: 22 } }));
+      if (bullets.length) items.push(createSlItem('text', { left: 12, top: 28, width: 76, height: 62, list: { items: bullets.map(t => ({ text: t, icon: '•' })) }, style: { size: 22 } }));
       addSlideToDoc(doc2, createV2Slide(null, { notes: fr.note || '', items }));
     }
     window.MazzHost?.openTab('slide', { title: doc2.name + '.mazzslide', content: serializeSlDoc(doc2) });

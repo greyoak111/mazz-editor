@@ -2,7 +2,7 @@
 export async function scenes74({ app, win, human, WS, scenario, shotDir }) {
   const wait = ms => win.waitForTimeout(ms);
 
-  await scenario('日常车间无常驻表单·独立立项向导四卡联动', async () => {
+  await scenario('日常车间无常驻表单·独立立项向导可选篇幅参考', async () => {
     await human.evaluate(async () => {
       await window.mazz.invoke('settings:set', { key: 'factory.provider', value: { baseURL: 'mock://w60b', model: 'w60b-local' } });
       await window.mazz.invoke('secret:set', { key: 'factory.apiKey', value: 'local-test-key' });
@@ -36,7 +36,7 @@ export async function scenes74({ app, win, human, WS, scenario, shotDir }) {
       sel.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await project.waitForTimeout(500);
-    await project.waitForSelector('[data-preset=short]');
+    await project.waitForSelector('#pj-length-custom');
     const geometry = [];
     for (const [width, height] of [[920, 720], [761, 720], [760, 600], [520, 480], [480, 360]]) {
       await project.setViewportSize({ width, height });
@@ -73,17 +73,16 @@ export async function scenes74({ app, win, human, WS, scenario, shotDir }) {
       legacy: [...document.querySelectorAll('[data-p-field]')].filter(el => ['length', '篇幅长短', '每章字数'].includes(el.dataset.pField)).length,
       labels: [...document.querySelectorAll('#pj-form input,#pj-form select,#pj-form textarea')]
         .filter(el => !el.labels?.length && !el.getAttribute('aria-label') && !el.getAttribute('aria-labelledby')).map(el => el.id),
-      cards: [...document.querySelectorAll('[data-preset]')].map(el => el.textContent.replace(/\s/g, '')),
+      presetCount: document.querySelectorAll('[data-preset]').length,
+      total: document.querySelector('#pj-total')?.value || '',
+      words: document.querySelector('#pj-words')?.value || '',
     }));
     await human.assert(lengthShape.legacy === 0, '小说三个旧篇幅字段不得在新立项表单重复出现');
     await human.assert(lengthShape.labels.length === 0, `立项控件必须全部具名（${lengthShape.labels.join(',')}）`);
-    for (const label of ['1万字', '10万字', '50万字', '不限']) await human.assert(lengthShape.cards.some(text => text.includes(label)), `篇幅卡缺 ${label}`);
-    const cardCount = await project.locator('.length-card').count();
-    await human.assert(cardCount === 4, '立项向导必须有短/中/长/无限四卡');
+    await human.assert(lengthShape.presetCount === 0 && lengthShape.total === '' && lengthShape.words === '', '新项目不得预填篇幅档位或参考字数');
     await project.fill('#pj-total', '100000');
     await project.fill('#pj-words', '8000');
-    await human.assert((await project.textContent('#pj-chapters')).trim() === '13章', '100000÷8000 必须显示预计 13 章');
-    await human.assert(await project.locator('[data-preset][aria-pressed=true]').count() === 0, '自定义总字数/每章目标不得继续冒充固定预设');
+    await human.assert((await project.textContent('#pj-chapters')).trim() === '约 13章', '可选参考应只显示约 13 章预览');
     await project.focus('#pj-words');
     await project.dispatchEvent('#pj-words', 'change');
     await project.waitForTimeout(350);
@@ -91,10 +90,11 @@ export async function scenes74({ app, win, human, WS, scenario, shotDir }) {
     await project.fill('#pj-total', '2000');
     await project.dispatchEvent('#pj-total', 'change');
     await project.waitForTimeout(300);
-    await project.click('[data-words="2000"]');
+    await project.fill('#pj-words', '2000');
+    await project.dispatchEvent('#pj-words', 'change');
     await project.waitForTimeout(300);
     const linked = (await project.textContent('#pj-chapters')).trim();
-    await human.assert(linked === '1章', '总字数÷每章字数必须联动为 1 章');
+    await human.assert(linked === '约 1章', '参考值只能给出约 1 章预览，不得成为执行终点');
     await project.fill('#pj-batch', 'W60b实证书\nW60b批量二\nW60b批量三');
     const put = async (id, value) => {
       const sel = `[data-p-field="${id}"]`;

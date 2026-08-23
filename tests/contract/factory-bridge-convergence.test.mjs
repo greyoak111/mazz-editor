@@ -75,7 +75,9 @@ test('usage 实收、估算、结算、unknown 分栏对账，缺配额明确灰
   assert.equal(gray.estimatedVarianceTokens, 20);
   assert.equal(gray.unknownCount, 1);
   assert.equal(gray.quota.state, 'gray');
-  assert.equal(reconcileMonthlyUsage(rows, { month: '2026-08', quotaTokens: 100 }).quota.state, 'blocked');
+  const tracked = reconcileMonthlyUsage(rows, { month: '2026-08', quotaTokens: 100 });
+  assert.equal(tracked.quota.state, 'tracked');
+  assert.equal(tracked.quota.hardStopAuthorized, false);
   assert.throws(() => normalizeFactoryUsageRecord({ kind: 'provider-reported', totalTokens: 1 }), /sourceRef/);
 });
 

@@ -164,7 +164,7 @@ function normalizeCommand(input) {
     action,
     candidate,
     authorityRef,
-    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    reason: requiredString(input.reason, 'reason'),
     decidedAt: iso(input.decidedAt, 'decidedAt'),
     supersedes,
   };
@@ -362,7 +362,7 @@ function normalizeRevokeRequest(input) {
     projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
     promotionId: safeId(input.promotionId, 'promotionId'),
     authorityRef,
-    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    reason: requiredString(input.reason, 'reason'),
     decidedAt: iso(input.decidedAt, 'decidedAt'),
   });
 }
@@ -433,7 +433,7 @@ function normalizeProjectionRequest(input) {
     promotionId,
     projectionId,
     authorityRef,
-    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    reason: requiredString(input.reason, 'reason'),
     decidedAt: iso(input.decidedAt, 'decidedAt'),
   };
   request.commandId = `command:${action}:${sha256(stableJson({ projectId, promotionId, projectionId })).slice(0, 32)}`;
@@ -732,7 +732,6 @@ function normalizeConversationPromotionRequest(input) {
   rejectEmbeddedBody(input.sourceRef, 'sourceRef');
   const markdown = String(input.markdown ?? '').replace(/\r\n?/g, '\n');
   if (!markdown.trim()) throw new Error('对话资产正文不能为空');
-  if (markdown.length > 500_000) throw new Error('对话资产超过 50 万字符');
   const authorityRef = safeId(input.authorityRef, 'authorityRef');
   if (!authorityRef.startsWith('human:')) throw new Error('对话升格必须由 human:* Authority 明确触发');
   const supersedes = [...new Set((Array.isArray(input.supersedes) ? input.supersedes : [])
@@ -741,12 +740,12 @@ function normalizeConversationPromotionRequest(input) {
     schema: CONVERSATION_PROMOTION_REQUEST_SCHEMA,
     projectId: safeId(input.projectId, 'projectId'),
     projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
-    title: requiredString(input.title, 'title').slice(0, 500),
+    title: requiredString(input.title, 'title'),
     markdown,
     sourceRef: clonePlain(input.sourceRef, 'sourceRef'),
     capturedAt: iso(input.capturedAt, 'capturedAt'),
     authorityRef,
-    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    reason: requiredString(input.reason, 'reason'),
     decidedAt: iso(input.decidedAt, 'decidedAt'),
     supersedes,
   });
@@ -767,7 +766,6 @@ function normalizeStructuredPromotionReviewRequest(input) {
   rejectEmbeddedBody(input.sourceRef, 'sourceRef');
   const markdown = String(input.markdown ?? '').replace(/\r\n?/g, '\n');
   if (!markdown.trim()) throw new Error('结构化候选正文不能为空');
-  if (markdown.length > 500_000) throw new Error('结构化候选超过 50 万字符');
   const proposedBy = safeId(input.proposedBy, 'proposedBy');
   if (!/^(?:system|human):/.test(proposedBy)) throw new Error('proposedBy 必须是 system:* 或 human:*');
   const authorityRef = safeId(input.authorityRef, 'authorityRef');
@@ -780,14 +778,14 @@ function normalizeStructuredPromotionReviewRequest(input) {
     projectId: safeId(input.projectId, 'projectId'),
     projectPath: path.resolve(requiredString(input.projectPath, 'projectPath')),
     kind,
-    title: requiredString(input.title, 'title').slice(0, 500),
+    title: requiredString(input.title, 'title'),
     markdown,
     sourceRef: clonePlain(input.sourceRef, 'sourceRef'),
     proposedBy,
     proposedAt: iso(input.proposedAt, 'proposedAt'),
     action,
     authorityRef,
-    reason: requiredString(input.reason, 'reason').slice(0, 1200),
+    reason: requiredString(input.reason, 'reason'),
     decidedAt: iso(input.decidedAt, 'decidedAt'),
     supersedes,
   });

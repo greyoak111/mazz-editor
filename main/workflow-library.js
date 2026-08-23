@@ -165,7 +165,7 @@ class WorkflowLibrary {
     if (!String(authorityRef).startsWith('human:') || !String(reason || '').trim()) throw new Error('Deprecate 需要 human Authority 和理由');
     const file = this.recordPath(workflowId, version);
     const record = readJson(file);
-    const updated = { ...record, status: 'DEPRECATED', deprecatedAt: this.now(), deprecationReason: String(reason).slice(0, 500) };
+    const updated = { ...record, status: 'DEPRECATED', deprecatedAt: this.now(), deprecationReason: String(reason) };
     atomicWrite(file, `${JSON.stringify(updated, null, 2)}\n`);
     const index = this.loadIndex();
     const row = index.records.find(item => item.workflowId === workflowId && item.version === version);

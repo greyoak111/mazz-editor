@@ -119,6 +119,15 @@ describe('W77 Shadow Relation 与人工 Promotion', () => {
 });
 
 describe('W78 Multimodal Addressable Evidence', () => {
+  test('Markdown 长块证据锚保留完整引文，不以 500 字符裁断', () => {
+    const shared = '证据正文'.repeat(180);
+    const first = evidence.parseLiveReferences(`${shared}甲尾 {{ref:asset:target!anchor:one}}`, 'asset:source');
+    const second = evidence.parseLiveReferences(`${shared}乙尾 {{ref:asset:target!anchor:one}}`, 'asset:source');
+    assert.equal(first.length, 1);
+    assert.equal(second.length, 1);
+    assert.notEqual(first[0].sourceAnchorId, second[0].sourceAnchorId, '500 字后的不同尾部也必须参与锚点身份');
+  });
+
   test('EPUB 字号/页宽重排只改变 physical location，不改变逻辑 Anchor ID', () => {
     const anchor = evidence.createContentAnchor({
       assetId: 'asset:epub:book', mediaType: 'epub',

@@ -36,12 +36,11 @@ function explicitRole(value) {
 }
 
 export function normalizeHarvestMessages(rows = []) {
-  const output = [], seen = new Set();
+  const output = [];
   let previous = '';
   for (const raw of Array.isArray(rows) ? rows : []) {
     const text = String(raw?.text || '').replace(/\u00a0/g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{4,}/g, '\n\n\n').trim();
-    if (!text || seen.has(text)) continue;
-    seen.add(text);
+    if (!text) continue;
     const direct = explicitRole(raw?.role) || explicitRole(raw?.roleHint);
     const role = direct || (previous === 'user' ? 'assistant' : previous === 'assistant' ? 'user' : (output.length % 2 ? 'assistant' : 'user'));
     const uncertain = raw?.uncertain === true || !direct;
@@ -77,7 +76,7 @@ export function buildHarvestMarkdown(meta = {}, rows = []) {
   return lines.join('\n').trimEnd() + '\n';
 }
 
-export function harvestScript(url, { maxPasses = 8, settleMs = 280 } = {}) {
+export function harvestScript(url, { settleMs = 280, stablePasses = 3 } = {}) {
   const adapter = resolveHarvestAdapter(url);
   const cfg = JSON.stringify({
     id: adapter.id, name: adapter.name,
@@ -85,8 +84,8 @@ export function harvestScript(url, { maxPasses = 8, settleMs = 280 } = {}) {
     contentSelectors: adapter.contentSelectors,
     genericSelectors: GENERIC_ADAPTER.messageSelectors,
   });
-  const passes = Math.max(1, Math.min(16, Number(maxPasses) || 8));
   const settle = Math.max(80, Math.min(1200, Number(settleMs) || 280));
+  const stableNeeded = Math.max(2, Math.min(6, Number(stablePasses) || 3));
   return `(async () => {
     const cfg = ${cfg};
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -118,62 +117,15 @@ export function harvestScript(url, { maxPasses = 8, settleMs = 280 } = {}) {
       if (node.shadowRoot) text = clean(text + '\\n' + (node.shadowRoot.innerText || node.shadowRoot.textContent || ''));
       return text;
     };
-    const messageCount = () => {
-      let best = 0;
-      for (const selector of [...cfg.messageSelectors, ...cfg.genericSelectors]) {
-        const count = deepQuery(selector).filter(node => {
-          const n = nodeText(node).length;
-          return n > 0 && n < 100000;
-        }).length;
-        best = Math.max(best, count);
-      }
-      return best;
+    const visible = node => {
+      try { return getComputedStyle(node).display !== 'none' && getComputedStyle(node).visibility !== 'hidden'; }
+      catch { return true; }
     };
+    const messageNodes = selector => deepQuery(selector).filter(node => nodeText(node) && visible(node));
     const scrollTargets = () => {
       const all = [document.scrollingElement, ...deepQuery('main, [role="main"], [class*="scroll"], [class*="conversation"], [class*="chat"]')].filter(Boolean);
       return [...new Set(all)].filter(node => Number(node.scrollHeight) > Number(node.clientHeight) + 48);
     };
-    let scrollPasses = 0, stable = 0;
-    let lastSignal = clean(document.body?.innerText).length + messageCount() * 1000;
-    for (let pass = 0; pass < ${passes}; pass++) {
-      for (const target of scrollTargets()) {
-        try { target.scrollTop = 0; target.dispatchEvent(new Event('scroll', { bubbles: true })); } catch {}
-      }
-      try { window.scrollTo(0, 0); } catch {}
-      scrollPasses++;
-      await sleep(${settle});
-      const signal = clean(document.body?.innerText).length + messageCount() * 1000;
-      stable = signal <= lastSignal ? stable + 1 : 0;
-      lastSignal = Math.max(lastSignal, signal);
-      if (stable >= 2) break;
-    }
-    const messageNodes = selector => deepQuery(selector).filter(node => {
-      const text = nodeText(node);
-      if (!text || text.length > 100000) return false;
-      try { return getComputedStyle(node).display !== 'none' && getComputedStyle(node).visibility !== 'hidden'; } catch { return true; }
-    });
-    let chosen = [], chosenSelector = '';
-    for (const selector of [...cfg.messageSelectors, ...cfg.genericSelectors]) {
-      const rows = messageNodes(selector);
-      const unique = rows.filter((node, index) => rows.findIndex(other => nodeText(other) === nodeText(node)) === index);
-      if (unique.length > chosen.length) { chosen = unique; chosenSelector = selector; }
-      if (cfg.id !== 'generic' && unique.length >= 2) break;
-    }
-    if (chosen.length < 2) {
-      let best = [];
-      for (const parent of deepQuery('main, [role="main"], body')) {
-        const groups = new Map();
-        for (const child of [...(parent.children || [])]) {
-          const signature = child.tagName + '|' + [...child.classList].slice(0, 3).sort().join('.');
-          const text = nodeText(child);
-          if (text.length < 2 || text.length > 100000) continue;
-          const group = groups.get(signature) || [];
-          group.push(child); groups.set(signature, group);
-        }
-        for (const group of groups.values()) if (group.length >= 2 && group.length > best.length) best = group;
-      }
-      if (best.length > chosen.length) { chosen = best; chosenSelector = 'repeated-isomorphic-blocks'; }
-    }
     const roleOf = (node, index, previous) => {
       const attrs = [];
       let cur = node;
@@ -186,32 +138,157 @@ export function harvestScript(url, { maxPasses = 8, settleMs = 280 } = {}) {
       const role = previous === 'user' ? 'assistant' : previous === 'assistant' ? 'user' : (index % 2 ? 'assistant' : 'user');
       return { role, uncertain: true, roleHint: hint };
     };
+    const stableKeyOf = node => {
+      let cur = node;
+      for (let depth = 0; cur && depth < 8; depth++) {
+        for (const name of ['data-message-id', 'data-turn-id', 'data-id', 'data-testid', 'id']) {
+          const value = clean(name === 'id' ? cur.id : cur.getAttribute?.(name));
+          if (!value || /^(?:app|root|main|content|conversation|chat)$/i.test(value)) continue;
+          if (name !== 'data-testid' || /(?:message|turn|conversation|chat).*(?:\d|[a-f0-9]{8})|(?:\d|[a-f0-9]{8}).*(?:message|turn|conversation|chat)/i.test(value)) {
+            return name + ':' + value;
+          }
+        }
+        const parent = cur.parentElement;
+        cur = parent || cur.getRootNode?.().host || null;
+      }
+      return '';
+    };
     const contentOf = node => {
-      let best = '';
+      const candidates = [], seen = new Set();
       for (const selector of cfg.contentSelectors) {
         try {
           for (const child of node.querySelectorAll(selector)) {
-            const text = nodeText(child);
-            if (text.length > best.length) best = text;
+            if (!seen.has(child) && visible(child) && nodeText(child)) { seen.add(child); candidates.push(child); }
           }
         } catch {}
       }
-      return best || nodeText(node);
+      const maximal = candidates.filter(child => !candidates.some(other => other !== child && other.contains?.(child)));
+      const order = new Map(candidates.map((child, index) => [child, index]));
+      maximal.sort((left, right) => {
+        try {
+          const relation = left.compareDocumentPosition(right);
+          if (relation & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+          if (relation & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+        } catch {}
+        return order.get(left) - order.get(right);
+      });
+      return clean(maximal.map(nodeText).join('\\n\\n')) || nodeText(node);
     };
-    const messages = [], seenText = new Set();
-    let previous = '';
-    for (const node of chosen) {
-      const text = contentOf(node);
-      if (!text || seenText.has(text)) continue;
-      seenText.add(text);
-      const role = roleOf(node, messages.length, previous);
-      messages.push({ id: 'M' + String(messages.length + 1).padStart(3, '0'), text, ...role });
-      previous = role.role;
+    const candidateSnapshot = () => {
+      const selectors = [...new Set([...cfg.messageSelectors, ...cfg.genericSelectors])];
+      const encountered = [], origins = new Map();
+      for (const selector of selectors) {
+        for (const node of messageNodes(selector)) {
+          if (!origins.has(node)) { origins.set(node, new Set()); encountered.push(node); }
+          origins.get(node).add(selector);
+        }
+      }
+      if (encountered.length < 2) {
+        let best = [];
+        for (const parent of deepQuery('main, [role="main"], body')) {
+          const groups = new Map();
+          for (const child of [...(parent.children || [])]) {
+            const signature = child.tagName + '|' + [...child.classList].slice(0, 3).sort().join('.');
+            if (nodeText(child).length < 2 || !visible(child)) continue;
+            const group = groups.get(signature) || [];
+            group.push(child); groups.set(signature, group);
+          }
+          for (const group of groups.values()) if (group.length >= 2 && group.length > best.length) best = group;
+        }
+        for (const node of best) {
+          if (!origins.has(node)) { origins.set(node, new Set()); encountered.push(node); }
+          origins.get(node).add('repeated-isomorphic-blocks');
+        }
+      }
+      const chosen = encountered.filter(node => {
+        const own = contentOf(node);
+        const nested = encountered.filter(other => other !== node && node.contains?.(other)).map(contentOf).filter(Boolean);
+        if (new Set(nested).size >= 2) return false;
+        return !nested.some(text => text === own);
+      });
+      const order = new Map(encountered.map((node, index) => [node, index]));
+      chosen.sort((left, right) => {
+        if (left === right) return 0;
+        try {
+          const relation = left.compareDocumentPosition(right);
+          if (relation & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+          if (relation & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+        } catch {}
+        return order.get(left) - order.get(right);
+      });
+      const rows = [];
+      let previous = '';
+      for (const node of chosen) {
+        const text = contentOf(node);
+        if (!text) continue;
+        const role = roleOf(node, rows.length, previous);
+        rows.push({ text, key: stableKeyOf(node), ...role });
+        previous = role.role;
+      }
+      return { rows, selectors: [...new Set(chosen.flatMap(node => [...(origins.get(node) || [])]))] };
+    };
+    const rowSignature = row => row.key ? 'key:' + row.key : 'text:' + row.text;
+    const containsSequence = (whole, part) => {
+      if (!part.length) return 0;
+      const w = whole.map(rowSignature), p = part.map(rowSignature);
+      outer: for (let start = 0; start <= w.length - p.length; start++) {
+        for (let i = 0; i < p.length; i++) if (w[start + i] !== p[i]) continue outer;
+        return start + 1;
+      }
+      return 0;
+    };
+    const overlap = (left, right) => {
+      const a = left.map(rowSignature), b = right.map(rowSignature);
+      for (let size = Math.min(a.length, b.length); size > 0; size--) {
+        let same = true;
+        for (let i = 0; i < size; i++) if (a[a.length - size + i] !== b[i]) { same = false; break; }
+        if (same) return size;
+      }
+      return 0;
+    };
+    const mergeRows = (current, incoming, preferPrepend = false) => {
+      if (!current.length) return incoming.slice();
+      if (!incoming.length || containsSequence(current, incoming)) return current;
+      if (containsSequence(incoming, current)) return incoming.slice();
+      const appendOverlap = overlap(current, incoming);
+      if (appendOverlap) return [...current, ...incoming.slice(appendOverlap)];
+      const prependOverlap = overlap(incoming, current);
+      if (prependOverlap) return [...incoming, ...current.slice(prependOverlap)];
+      return preferPrepend ? [...incoming, ...current] : [...current, ...incoming];
+    };
+    const positionState = () => {
+      const targets = scrollTargets();
+      const values = targets.map(target => [Math.round(Number(target.scrollTop) || 0), Number(target.scrollHeight) || 0, Number(target.clientHeight) || 0].join(':'));
+      values.push(['window', Math.round(Number(window.scrollY) || 0), Number(document.documentElement?.scrollHeight) || 0].join(':'));
+      return { key: values.join('|'), atStart: targets.every(target => Math.abs(Number(target.scrollTop) || 0) <= 1) && Math.abs(Number(window.scrollY) || 0) <= 1 };
+    };
+    let snapshot = candidateSnapshot();
+    let collected = snapshot.rows, selectorsUsed = new Set(snapshot.selectors);
+    let scrollPasses = 0, stable = 0;
+    let lastPosition = positionState().key;
+    while (stable < ${stableNeeded}) {
+      const before = collected.length;
+      for (const target of scrollTargets()) {
+        try { target.scrollTop = 0; target.dispatchEvent(new Event('scroll', { bubbles: true })); } catch {}
+      }
+      try { window.scrollTo(0, 0); } catch {}
+      scrollPasses++;
+      await sleep(${settle});
+      snapshot = candidateSnapshot();
+      snapshot.selectors.forEach(selector => selectorsUsed.add(selector));
+      collected = mergeRows(collected, snapshot.rows, true);
+      const position = positionState();
+      stable = collected.length === before && position.atStart && position.key === lastPosition ? stable + 1 : 0;
+      lastPosition = position.key;
     }
+    const messages = collected.map((row, index) => {
+      const { key, ...message } = row;
+      return { ...message, id: 'M' + String(index + 1).padStart(3, '0') };
+    });
     return {
-      adapterId: cfg.id, site: cfg.name, selector: chosenSelector,
+      adapterId: cfg.id, site: cfg.name, selector: [...selectorsUsed].join(' | '),
       title: clean(document.title),
-      topic: clean(document.querySelector('h1')?.innerText || document.title || '未命名对话').slice(0, 120),
+      topic: clean(document.querySelector('h1')?.innerText || document.title || '未命名对话'),
       url: location.href, capturedAt: new Date().toISOString(), scrollPasses, messages,
     };
   })()`;

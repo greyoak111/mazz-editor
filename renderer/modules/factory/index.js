@@ -2,7 +2,7 @@
 // 任务队列中心（原版 PySide 思路）：创作模板 → 需求澄清 → 任务队列 → 主控台日志 → 连写快照/断点续写
 import { toast, modal, inputModal } from '../../shell/shell.js';
 import { menus } from '../../core/menu-service.js';
-import { listGenres, saveCustomGenre, buildMantra, runQualityChecks, parseCsvTasks, fieldValue, buildStateSummaryPrompt, readMaxTaskProgress, renderPluginPrompt, buildEmbedBlocks, buildBlueprintPrompt, blueprintFamily, blueprintStructureOk, getSnapshotSchema, canUseUnlimited, buildFallbackBlueprint, parseChapterOutlines, extractBlueprintCore, extractWritingDirective, buildConstantAnchor, extractLedgerFromSnapshot, stripMdFence, buildChapterPromptV2, writeTaskState, scanResumableTasks, mergeDeclaredContinuation, stripTokenDeclaration, validateNativeContinuationDeclaration, FACTORY_LENGTH_PRESETS, resolveFactoryLengthPlan, factoryBatchGate, buildFactoryOutputFolder, buildFactoryUnitStem, factoryExportSpec, serializeFactoryText } from './engine.js';
+import { listGenres, saveCustomGenre, buildMantra, runQualityChecks, parseCsvTasks, fieldValue, buildStateSummaryPrompt, readMaxTaskProgress, renderPluginPrompt, buildEmbedBlocks, buildBlueprintPrompt, blueprintFamily, blueprintStructureOk, getSnapshotSchema, parseChapterOutlines, extractBlueprintCore, extractWritingDirective, buildConstantAnchor, extractLedgerFromSnapshot, stripMdFence, buildChapterPromptV2, writeTaskState, scanResumableTasks, mergeDeclaredContinuation, stripTokenDeclaration, buildFactoryOutputFolder, buildFactoryUnitStem, factoryExportSpec, serializeFactoryText } from './engine.js';
 import { getProviderConfig, saveProviderConfig, providerReady, chat, chatDetailed, chatStreamDetailed, extractFields, PRESETS } from './provider.js';
 import { NOVEL_PLUGINS } from './plugins.js';
 import { listStyles, uploadStyleFile, queryOnlineStyle, deleteStyle, assembleStylePackage } from './style-studio.js';
@@ -13,7 +13,7 @@ import { commands } from '../../core/command-registry.js';
 import { AGENT_LEDGER_KEY, AgentRuntime, frequentLedgerInputs, ledgerToMarkdown, normalizeLedger } from './agent.js';
 import { REVIEW_ARTIFACT_NAMES, W68_PROTOCOL, reviewArtifactManifest, runW68Review } from './review.js';
 import { FACTORY_ARCHIVE_FILE, appendFactoryArchiveText, factoryArtifactEvent, normalizeFactoryEvent } from './workshop.js';
-import { detectHumanHelpMoments, evaluateBudgetCap, makeBudgetCard, makeFinalReviewCard } from './command-gate.js';
+import { detectHumanHelpMoments, makeFinalReviewCard } from './command-gate.js';
 import { PRODUCTION_RUN_SCHEMA, createProductionRunId, openProductionRunLedger } from './production-run.js';
 import { buildW68AuditBatch, openReworkAuditLedger } from './rework-audit.js';
 import {
@@ -46,7 +46,7 @@ import {
   FACTORY_TASKS_KEY, FACTORY_RESUMABLE_DISMISSALS_KEY,
   dismissFactoryResumables, factoryTaskState, makeRecoveredFactoryTask, mergeFactoryResumables,
   normalizeFactoryFolder, pruneFactoryResumableDismissals, resumableRecoveryKey,
-  visibleFactoryResumables,
+  shouldContinueFactoryUnits, visibleFactoryResumables,
 } from './task-registry.js';
 
 const TASKS_KEY = FACTORY_TASKS_KEY;
@@ -57,12 +57,30 @@ const PROVIDER_USAGE_KEY = 'mazz.factory.providerUsage.v0';
 const FACTORY_EXPORT_FORMATS = ['md', 'docx', 'epub', 'txt', 'html', 'odt', 'rtf', 'rst', 'adoc', 'textile', 'opml', 'org', 'mw'];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const W74A_INGESTION_REQUEST_SCHEMA = 'mazz.ingestion-request/v0';
+const LEGACY_QUANTITY_CHECK_RULES = new Set(['minLength', 'maxLength', 'maxParagraphs', 'notAllDialog']);
+const LEGACY_QUANTITY_OUTPUT_KEYS = new Set(['min_length', 'max_length', 'target_length', 'minLength', 'maxLength', 'targetLength', 'max_paragraphs']);
 
-export function resolveReviewBudgetCap(value, fallback = 32000) {
-  const fallbackValue = Number.isFinite(Number(fallback)) ? Math.max(0, Number(fallback)) : 32000;
-  if (value === undefined || value === null || value === '') return fallbackValue;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallbackValue;
+function unspecifiedLengthPlan() {
+  return { preset: 'custom', totalWords: 0, wordsPerUnit: 0, maxChapters: 0, maxMode: false };
+}
+
+// Old templates remain readable/exportable, but their quantity gates must not
+// enter prompts, machine-review artifacts, status, or production logs.
+function runtimeTemplate(tpl = {}) {
+  const outputRules = { ...(tpl.output_rules || {}) };
+  for (const key of LEGACY_QUANTITY_OUTPUT_KEYS) delete outputRules[key];
+  return {
+    ...tpl,
+    output_rules: outputRules,
+    quality_checks: (tpl.quality_checks || []).filter(check => !LEGACY_QUANTITY_CHECK_RULES.has(String(check?.rule || ''))),
+  };
+}
+
+function providerCompletionReady(completion = {}) {
+  const body = stripTokenDeclaration(completion.text || '');
+  return completion.safeToCommit === true
+    && String(completion.finishReason || '').trim().toLowerCase() === 'stop'
+    && !!body.trim();
 }
 
 function createMaterialAssetId() {
@@ -225,7 +243,7 @@ export class FactoryPanel {
     this.backgroundRunQueue = [];
     this.backgroundQueuedIds = new Set();
     this.backgroundDrainPromise = null;
-    this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
+    this.lengthPlan = unspecifiedLengthPlan();
     this.agentLedger = normalizeLedger(this.loadJSON(AGENT_LEDGER_KEY, null));
     this.agentRuntime = null;
     this.taskUpdateListener = event => {
@@ -351,16 +369,15 @@ export class FactoryPanel {
       dump: this.el.querySelector('.fc-dump-text')?.value || '',
       dualLoop: !!this.el.querySelector('.fc-dualloop')?.checked,
       reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
-      reviewBudgetCap: +(this.el.querySelector('.fc-review-budget')?.value || 32000),
       maxMode: !!this.el.querySelector('.fc-maxmode')?.checked,
       maxChapters: +(this.el.querySelector('.fc-maxchapters')?.value || 0),
       autoPreview: this.autoPreview,
       concurrency: this.concurrency,
       runningCount: this.runningTasks.size,
       lengthPlan: { ...this.lengthPlan },
-      lengthPresets: FACTORY_LENGTH_PRESETS.map(x => ({ ...x })),
-      wordsPerUnitChips: [2000, 4000, 6000, 8000],
-      unlimitedAllowed: canUseUnlimited(this.genre || {}),
+      lengthPresets: [],
+      wordsPerUnitChips: [],
+      unlimitedAllowed: true,
       unitName: getSnapshotSchema(this.genre || {}).unitName,
       exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
       exportFormats: FACTORY_EXPORT_FORMATS.map(id => ({ id, ext: factoryExportSpec(id).ext })),
@@ -413,7 +430,7 @@ export class FactoryPanel {
             dimension: this.feedPrepared.package.dimension,
             clusterCount: this.feedPrepared.package.clusters.length,
             hotClusterCount: this.feedPrepared.package.clusters.filter(cluster => cluster.heat.hot).length,
-            clusters: this.feedPrepared.package.clusters.slice(0, 6).map(cluster => ({
+            clusters: this.feedPrepared.package.clusters.map(cluster => ({
               clusterId: cluster.clusterId,
               title: cluster.title,
               sources: [...cluster.sources],
@@ -528,26 +545,21 @@ export class FactoryPanel {
           <textarea class="fc-dump-text" rows="4" placeholder="补充想法、要求和限制条件，系统会自动整理到对应字段。"></textarea>
         </div>
         <div class="fc-length-planner">
-          <div class="fc-label">篇幅档 <span>立项后自动换算内容单元数</span></div>
-          <div class="fc-length-cards">
-            ${FACTORY_LENGTH_PRESETS.map(x => `<button type="button" data-length="${x.id}"><b>${x.label}</b><span>${x.id === 'unlimited' ? '写到手动终止' : (x.totalWords / 10000) + ' 万字'}</span></button>`).join('')}
-          </div>
+          <div class="fc-label">篇幅参考 <span>默认不指定，不参与提交门</span></div>
           <div class="fc-length-smart">
-            <label>总字数 <input class="fc-totalwords" type="number" min="1" step="1000" value="${this.lengthPlan.totalWords}"></label>
+            <label>总字数 <input class="fc-totalwords" type="number" min="0" step="1000" value="" placeholder="未指定"></label>
             <span>÷</span>
-            <label>每单元 <input class="fc-wordsperunit" type="number" min="100" step="100" value="${this.lengthPlan.wordsPerUnit}"></label>
+            <label>每单元 <input class="fc-wordsperunit" type="number" min="0" step="100" value="" placeholder="未指定"></label>
             <span>=</span>
-            <label>单元数 <input class="fc-maxchapters" type="number" min="0" max="999" value="${this.lengthPlan.maxChapters}" readonly></label>
+            <label>单元数 <input class="fc-maxchapters" type="number" min="0" value="0" readonly></label>
           </div>
-          <div class="fc-length-chips">${[2000, 4000, 6000, 8000].map(n => `<button type="button" data-words="${n}">${n}</button>`).join('')}</div>
         </div>
         <details class="fc-extra">
           <summary>高级设置 <span class="fc-extra-badge"></span></summary>
           <div class="fc-sec fc-advanced-row">
             <label class="fc-check" title="二次校验：生成后自检并修订一轮"><input type="checkbox" class="fc-dualloop"> 二次校验</label>
             <label class="fc-check" title="智能创作专业流程">审校 <select class="fc-review-ritual"><option value="light">标准版</option><option value="full">专业版</option></select></label>
-            <label class="fc-check" title="每个项目的审校 token 上限；额度不足时自动降级，低于 8000 暂停">预算 <input type="number" class="fc-review-budget" min="8000" step="1000" value="32000" style="width:72px"> token</label>
-            <label class="fc-check" title="由篇幅档决定是否连写"><input type="checkbox" class="fc-maxmode" checked> 连写模式</label>
+            <label class="fc-check" title="明确开启后才连续生成；未指定单元数时持续到手动停止"><input type="checkbox" class="fc-maxmode"> 连写模式</label>
             <label class="fc-check" title="每个任务自动打开独立只读预览窗"><input type="checkbox" class="fc-autopreview" ${this.autoPreview ? 'checked' : ''}> 生成自动开预览</label>
             <label class="fc-check" title="任务并发额度 1～4；默认 1 最稳">并发 <input type="number" class="fc-concurrency" min="1" max="4" step="1" value="${this.concurrency}" style="width:46px"> 路</label>
             <select class="fc-exportfmt" title="内容单元导出格式">
@@ -696,7 +708,7 @@ export class FactoryPanel {
     this.genreSel.addEventListener('change', () => {
       this.genre = this.genres.find(g => g.id === this.genreSel.value) || this.genres[0];
       this.values = {};
-      this.lengthPlan = resolveFactoryLengthPlan({ preset: 'short' });
+      this.resetLengthPlan(false);
       this.renderForm();
       this.syncLengthControls();
     });
@@ -719,8 +731,6 @@ export class FactoryPanel {
       this.persistTasks();
     });
     this.el.querySelector('[data-a=clearlog]').addEventListener('click', () => { this.logEl.innerHTML = ''; });
-    this.el.querySelectorAll('[data-length]').forEach(b => b.addEventListener('click', () => this.applyLengthPreset(b.dataset.length)));
-    this.el.querySelectorAll('[data-words]').forEach(b => b.addEventListener('click', () => this.setWordsPerUnit(+b.dataset.words)));
     this.el.querySelector('.fc-totalwords').addEventListener('change', e => this.setTotalWords(+e.target.value));
     this.el.querySelector('.fc-wordsperunit').addEventListener('change', e => this.setWordsPerUnit(+e.target.value));
     this.el.querySelector('.fc-autopreview').addEventListener('change', e => this.setAutoPreview(e.target.checked));
@@ -962,7 +972,7 @@ export class FactoryPanel {
     // 文风 chips
     const sb = this.el.querySelector('.fc-styles');
     sb.innerHTML = this.styles.length
-      ? this.styles.map(s => `<button class="fc-chip ${this.styleIds.has(s.id) ? 'on' : ''}" data-s="${s.id}" title="${(s.analysis || s.textPreview || '').slice(0, 120)}">${s.label}</button>`).join('') +
+      ? this.styles.map(s => `<button class="fc-chip ${this.styleIds.has(s.id) ? 'on' : ''}" data-s="${s.id}" title="${escapeHtml(s.analysis || s.textPreview || '')}">${s.label}</button>`).join('') +
         `<button class="fc-chip fc-chip-ghost" data-smgr>管理</button>`
       : `<span class="fc-empty">（暂无素材——上传范文或在线查询作家风格）</span>`;
     sb.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => {
@@ -1075,8 +1085,7 @@ export class FactoryPanel {
     if (!p) return;
     try {
       const { extractText } = await import('./style-studio.js');
-      let text = await extractText(p);
-      if (text.length > 8000) text = text.slice(0, 8000) + '\n[截断至8000字]';
+      const text = await extractText(p);
       this.embeds.push({
         assetId: createMaterialAssetId(), name: p.split(/[\\/]/).pop(), text,
         sourcePath: p, sourceKind: 'local-file', provenanceSource: 'factory.embed',
@@ -1095,9 +1104,8 @@ export class FactoryPanel {
       const stat = await window.mazz.invoke('fs:stat', { path: p });
       if (!stat?.exists || stat.isDir) throw new Error('目标不是可读取文件');
       const { extractText } = await import('./style-studio.js');
-      let text = await extractText(p);
+      const text = await extractText(p);
       if (!String(text).trim()) throw new Error('没有提取到可投喂文本');
-      if (text.length > 8000) text = text.slice(0, 8000) + '\n[预览截断至8000字；立项时由 W74a 从 sourcePath 重读全文]';
       const envelope = createFactoryFeedEnvelope({ assetPath: p, title: p.split(/[\\/]/).pop(), requestedBy });
       if (!this.embeds.some(row => row.feedEnvelope?.envelopeId === envelope.envelopeId)) {
         this.embeds.push({
@@ -1224,7 +1232,7 @@ export class FactoryPanel {
       });
       this.embeds.push({
         assetId: createMaterialAssetId(), name: `证据检索：${this.researchPrepared.topic}`,
-        text: done.report.slice(0, 20_000), note: done.path, sourcePath: done.path,
+        text: done.report, note: done.path, sourcePath: done.path,
         sourceKind: 'approved-local-report', provenanceSource: 'factory.research',
         layer: 'derived', importedAt: new Date().toISOString(),
       });
@@ -1256,7 +1264,7 @@ export class FactoryPanel {
     }
     const packageValue = prepared.package;
     const decision = prepared.decision || '';
-    const clusters = packageValue.clusters.slice(0, 6);
+    const clusters = packageValue.clusters;
     box.innerHTML = `
       <div class="fc-feed-summary">
         <span>${packageValue.clusters.length} 组变化 · ${prepared.changedItemCount} 条新料</span>
@@ -1268,7 +1276,6 @@ export class FactoryPanel {
           <div class="fc-dim">${escapeHtml(cluster.heat.explanation)} · ${escapeHtml(cluster.sources.join(' / '))}</div>
         </div>`).join('')}
       </div>
-      ${packageValue.clusters.length > clusters.length ? `<div class="fc-dim">另有 ${packageValue.clusters.length - clusters.length} 组已完整写入素材包。</div>` : ''}
       <div class="fc-feed-decision">
         <span class="fc-dim">${escapeHtml(this.feedStatus || '素材包只作为派生材料；核准不会自动启动智能创作。')}</span>
         <span>
@@ -1343,7 +1350,7 @@ export class FactoryPanel {
       const result = await window.mazz.invoke('feed:scanW65', {
         schema: 'mazz.feed-w65-request/v0', projectId: 'project:workspace-feed:v0', projectPath,
         query, dimension, mode: 'approval', windowHours: 24, observedAt: new Date().toISOString(),
-        sites: ['dmhy', 'mikan', 'kisssub', 'comicat'], maxPages: 1,
+        sites: ['dmhy', 'mikan', 'kisssub', 'comicat'],
       });
       const failedSources = (result.sourceStatus || []).filter(source => !source.ok);
       const note = failedSources.length ? `；${failedSources.length}/${result.sourceStatus.length} 个来源失败，未把缺失冒充无变化` : '';
@@ -1382,7 +1389,7 @@ export class FactoryPanel {
           this.embeds.push({
             assetId: result.materialRef.id,
             name: `素材订阅：${prepared.package.dimension}`,
-            text: String(result.report || '').slice(0, 20_000),
+            text: String(result.report || ''),
             note: prepared.reportPath,
             sourcePath: '',
             sourceKind: 'feed-package',
@@ -1485,7 +1492,6 @@ export class FactoryPanel {
       outputProtocol: recovered.outputProtocol || task.outputProtocol,
       reviewProtocol: recovered.reviewProtocol || task.reviewProtocol,
       reviewRitual: recovered.reviewRitual || task.reviewRitual,
-      reviewBudgetCap: recovered.reviewBudgetCap ?? task.reviewBudgetCap,
       dualLoop: typeof recovered.dualLoop === 'boolean' ? recovered.dualLoop : task.dualLoop,
       autoPreview: typeof recovered.autoPreview === 'boolean' ? recovered.autoPreview : task.autoPreview,
       status: 'running', doneChapters: st.currentChapter ?? task.doneChapters ?? 0,
@@ -1925,7 +1931,7 @@ export class FactoryPanel {
           taskId: task.id, projectId: task.id, title: task.label,
           domain: 'content-production', taskType: 'factory.single.w68',
           workflowRef: 'W68', workflowVersion: 'W68a', governanceProfile: task.reviewRitual || 'light',
-          budgetProfile: { capTokens: resolveReviewBudgetCap(task.reviewBudgetCap) }, previousRunId,
+          previousRunId,
           inputArtifactRefs: Array.isArray(task.materialRefs) ? task.materialRefs : [],
           provenance: { source: 'mazz.factory', protocol: 'W73b' },
         });
@@ -2062,6 +2068,8 @@ export class FactoryPanel {
     const records = buildW68EconomicsEvaluationBatch({
       runId: runLedger.runId, taskId: task.id, result, artifactDir, costLedgerPath: `${task.folder}/成本台账.json`,
       findingRefs, reworkRefs, unitNo, at,
+      providerRef: this.cfg?.providerId ? `provider:${this.cfg.providerId}` : '',
+      modelRef: this.cfg?.model ? `model:${this.cfg.model}` : '',
       metricState: economics.state,
     });
     await economics.appendBatch(records);
@@ -2069,7 +2077,7 @@ export class FactoryPanel {
     const evaluationRefs = records.filter(row => row.type === 'evaluation-recorded').map(row => row.evaluation.evaluationId);
     if (costRefs.length) await this.appendProductionRun(task, {
       type: 'economics-recorded', reasonCode: 'W73F_COST_ESTIMATE_RECORDED',
-      message: 'W68 字符折算预算已按 estimate 记账；未伪装为 Provider usage 或结算实付', economicsRefs: costRefs,
+      message: 'W68 Provider usage 已按原生回供记账；未知值不补零，也不参与流程门禁', economicsRefs: costRefs,
     });
     if (evaluationRefs.length) await this.appendProductionRun(task, {
       type: 'evaluation-recorded', reasonCode: 'W73F_LOCAL_EVALUATION_RECORDED',
@@ -2188,13 +2196,13 @@ export class FactoryPanel {
       capabilityProviders: [{
         schema: 'mazz.capability-provider/v0', capabilityId, providerId: 'mazz.factory.w68-runtime',
         displayName: 'Mazz Factory W68 Runtime', inputTypes: ['factory-task'], outputTypes: ['factory-artifact'],
-        agentUsable: false, execution: { mode: 'embedded' }, cost: { type: 'api', note: '受 W68 token cap 约束' },
+        agentUsable: false, execution: { mode: 'embedded' }, cost: { type: 'api', note: 'Provider 实收仅作观测，不参与调度门禁' },
         health: { status: healthStatus, checkedAt: requestedAt, reason: healthStatus === 'available' ? '当前 Factory Provider 配置可用' : '当前 Factory Provider 未配置' },
         provenance: { source: 'mazz.factory', protocol: 'W72/W73e' },
       }],
       certificateRef, qualification: { restricted, ok: qualification.ok === true, code: qualification.code || '', evidenceRef: certificateRef },
       health: { status: healthStatus, checkedAt: requestedAt, reason: healthStatus === 'available' ? 'Factory runtime ready' : 'Factory Provider unavailable' },
-      estimatedCost: { status: 'bounded', tokens: Number(options.estimatedTokens ?? task?.reviewBudgetCap) || 0, sourceRef: `${task?.folder || ''}/成本台账.json` },
+      estimatedCost: { status: 'unknown', sourceRef: `${task?.folder || ''}/成本台账.json` },
       estimatedLatency: { status: 'unknown', ms: 0, sourceRef: '' },
       backpressure: { active: coordinator.active, maxActive: coordinator.capacity, queued: Math.max(0, Number(options.queued) || 0) },
       risk: { level: options.riskLevel || 'normal', reason: 'W68 单次正式主链', evidenceRef: task?.productionRunPath || '' },
@@ -2218,7 +2226,7 @@ export class FactoryPanel {
       seatRequirement: options.seatRequirement || 'seat:factory-production',
       capabilityRequirements: options.capabilityRequirements || ['factory.w68.execute'],
       qualificationRequired: options.qualificationRequired === true,
-      budget: { remainingTokens: Number(options.remainingTokens ?? task.reviewBudgetCap) || 0 },
+      budget: {},
       priority: options.priority ?? this.schedulerPriority(task),
       backpressure: { active: coordinator.active, maxActive: coordinator.capacity, queued: Math.max(0, Number(options.queued) || 0) },
       risk: { maxLevel: options.maxRisk || 'normal', reason: options.riskReason || '', evidenceRef: options.riskEvidenceRef || '' },
@@ -2319,48 +2327,48 @@ export class FactoryPanel {
   }
 
   syncLengthControls(push = true) {
-    const p = this.lengthPlan;
+    const p = this.lengthPlan || unspecifiedLengthPlan();
     const total = this.el.querySelector('.fc-totalwords');
     const words = this.el.querySelector('.fc-wordsperunit');
     const chapters = this.el.querySelector('.fc-maxchapters');
-    const maxMode = this.el.querySelector('.fc-maxmode');
-    if (total) { total.value = p.totalWords || ''; total.disabled = p.preset === 'unlimited'; }
-    if (words) words.value = p.wordsPerUnit;
-    if (chapters) chapters.value = p.maxChapters;
-    if (maxMode) maxMode.checked = true;
-    this.el.querySelectorAll('[data-length]').forEach(b => {
-      b.classList.toggle('on', b.dataset.length === p.preset);
-      b.disabled = b.dataset.length === 'unlimited' && !canUseUnlimited(this.genre || {});
-    });
-    this.el.querySelectorAll('[data-words]').forEach(b => b.classList.toggle('on', +b.dataset.words === p.wordsPerUnit));
-    this.values['每章字数'] = String(p.wordsPerUnit);
-    const lengthName = { short: '短篇（1万字以内）', medium: '中篇（1-5万字）', long: '长篇（5万字以上）', unlimited: '无限' }[p.preset];
-    if (lengthName) this.values['篇幅长短'] = lengthName;
-    const perUnitField = this.formEl?.querySelector('[data-f="每章字数"]');
-    if (perUnitField) perUnitField.value = String(p.wordsPerUnit);
-    const lengthField = this.formEl?.querySelector('[data-f="篇幅长短"]');
-    if (lengthField && [...lengthField.options].some(o => o.value === lengthName)) lengthField.value = lengthName;
+    if (total) { total.value = p.totalWords || ''; total.disabled = false; }
+    if (words) words.value = p.wordsPerUnit || '';
+    if (chapters) chapters.value = p.maxChapters || 0;
     if (push) this.pushSnapshot();
   }
 
-  applyLengthPreset(preset) {
-    if (preset === 'unlimited' && !canUseUnlimited(this.genre || {})) {
-      toast(`${this.genre?.name || '当前文体'}属于说明类结构单元，不能选择无限档`);
-      return false;
-    }
-    this.lengthPlan = resolveFactoryLengthPlan({ preset });
-    this.syncLengthControls();
-    return true;
+  resetLengthPlan(push = true) {
+    this.lengthPlan = unspecifiedLengthPlan();
+    const maxMode = this.el.querySelector('.fc-maxmode');
+    if (maxMode) maxMode.checked = false;
+    this.syncLengthControls(push);
+  }
+
+  setAdvisoryLengthPlan({ totalWords = 0, wordsPerUnit = 0 } = {}, push = true) {
+    const total = Number.isFinite(Number(totalWords)) && Number(totalWords) > 0 ? Math.round(Number(totalWords)) : 0;
+    const perUnit = Number.isFinite(Number(wordsPerUnit)) && Number(wordsPerUnit) > 0 ? Math.round(Number(wordsPerUnit)) : 0;
+    this.lengthPlan = { preset: 'custom', totalWords: total, wordsPerUnit: perUnit, maxMode: false, maxChapters: 0 };
+    this.syncLengthControls(push);
+    return this.lengthPlan;
   }
 
   setTotalWords(totalWords) {
-    const preset = this.lengthPlan.preset === 'unlimited' ? 'short' : this.lengthPlan.preset;
-    this.lengthPlan = resolveFactoryLengthPlan({ ...this.lengthPlan, preset, totalWords });
+    const value = Number.isFinite(Number(totalWords)) && Number(totalWords) > 0 ? Math.round(Number(totalWords)) : 0;
+    const wordsPerUnit = Number(this.lengthPlan?.wordsPerUnit) > 0 ? Number(this.lengthPlan.wordsPerUnit) : 0;
+    this.lengthPlan = {
+      ...this.lengthPlan, preset: 'custom', totalWords: value, wordsPerUnit,
+      maxChapters: 0,
+    };
     this.syncLengthControls();
   }
 
   setWordsPerUnit(wordsPerUnit) {
-    this.lengthPlan = resolveFactoryLengthPlan({ ...this.lengthPlan, wordsPerUnit });
+    const value = Number.isFinite(Number(wordsPerUnit)) && Number(wordsPerUnit) > 0 ? Math.round(Number(wordsPerUnit)) : 0;
+    const totalWords = Number(this.lengthPlan?.totalWords) > 0 ? Number(this.lengthPlan.totalWords) : 0;
+    this.lengthPlan = {
+      ...this.lengthPlan, preset: 'custom', totalWords, wordsPerUnit: value,
+      maxChapters: 0,
+    };
     this.syncLengthControls();
   }
 
@@ -2458,7 +2466,7 @@ export class FactoryPanel {
   // ==================== 模板母版输出 ====================
   currentMantra() {
     this.collectValues();
-    return buildMantra(this.genre, this.values, this.dumpEl.value);
+    return buildMantra(runtimeTemplate(this.genre), this.values, this.dumpEl.value);
   }
 
   async copyMantra() {
@@ -2531,7 +2539,7 @@ export class FactoryPanel {
         outputProtocol: task.outputProtocol || 'W60b', totalWords: task.totalWords,
         wordsPerUnit: task.wordsPerUnit, lengthPreset: task.lengthPreset, exportFmt: task.exportFmt || 'md',
         reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual,
-        reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState,
+        reviewState: task.reviewState,
       });
       await writeTaskState(task.folder, state);
     } catch (error) {
@@ -2617,11 +2625,12 @@ export class FactoryPanel {
 
   makeTask(maxMode, maxChapters, valueOverrides = null) {
     this.collectValues();
-    if (maxMode && maxChapters === 0 && !canUseUnlimited(this.genre)) {
-      toast(`${this.genre.name}属于说明类结构单元，不能无限连写；已按 10 ${getSnapshotSchema(this.genre).unitName}执行`);
-      maxChapters = 10;
-    }
     const values = { ...this.values, ...(valueOverrides || {}) };
+    const advisoryTargets = {
+      ...(this.lengthPlan.totalWords > 0 ? { totalWords: this.lengthPlan.totalWords } : {}),
+      ...(this.lengthPlan.wordsPerUnit > 0 ? { wordsPerUnit: this.lengthPlan.wordsPerUnit } : {}),
+      ...(maxMode && maxChapters > 0 ? { plannedUnits: maxChapters } : {}),
+    };
     return {
       id: 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       createdAt: Date.now(),
@@ -2630,10 +2639,11 @@ export class FactoryPanel {
       values,
       dump: this.dumpEl.value,
       mode: maxMode ? 'max' : 'single',
-      maxChapters: maxMode ? maxChapters : 1,
+      maxChapters: maxMode ? Math.max(0, maxChapters) : 0,
       totalWords: this.lengthPlan.totalWords,
       wordsPerUnit: this.lengthPlan.wordsPerUnit,
-      lengthPreset: this.lengthPlan.preset,
+      lengthPreset: '',
+      advisoryTargets: Object.keys(advisoryTargets).length ? advisoryTargets : undefined,
       status: 'pending',
       doneChapters: 0,
       // 创作增强随行
@@ -2643,7 +2653,6 @@ export class FactoryPanel {
       embeds: this.embeds.map(e => ({ ...e })),
       reviewProtocol: W68_PROTOCOL,
       reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
-      reviewBudgetCap: Math.max(0, +(this.el.querySelector('.fc-review-budget')?.value || 32000)),
       dualLoop: !!this.el.querySelector('.fc-dualloop')?.checked,
       exportFmt: this.el.querySelector('.fc-exportfmt')?.value || 'md',
       autoPreview: this.autoPreview,
@@ -2965,13 +2974,13 @@ export class FactoryPanel {
         });
         if (scheduleDispatch?.status === 'blocked') {
           task.status = 'paused';
-          if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
+          if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
           this.log(`⚠ 任务「${task.label}」调度阻断：${scheduleDispatch.code}`);
           await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '联合调度已阻断', content: `BLOCKED: ${scheduleDispatch.code}\n\n没有暗降到任意模型或执行器。`, stage: 'scheduler-blocked', progress: 100 })).catch(() => {});
           return false;
         }
       }
-      await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务开工', content: `「${task.label}」进入智能创作专业流程。\n\n- 模式：${task.mode === 'max' ? '连写' : '单次'}\n- 档位：${task.reviewRitual === 'full' ? '专业版' : '标准版'}\n- 预算：${resolveReviewBudgetCap(task.reviewBudgetCap)} token`, stage: 'start', progress: 0 }));
+      await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务开工', content: `「${task.label}」进入智能创作专业流程。\n\n- 模式：${task.mode === 'max' ? '连写' : '单次'}\n- 档位：${task.reviewRitual === 'full' ? '专业版' : '标准版'}`, stage: 'start', progress: 0 }));
       if (task.mode === 'max') await this.runMaxTask(task, tpl, dual);
       else await this.runSingleTask(task, tpl, dual);
       if (task.status === 'done' || task.status === 'done-warn') await this.finishTaskPreview(task);
@@ -2988,7 +2997,7 @@ export class FactoryPanel {
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '项目材料需要人工裁决', content: `${e.message}${e.conflictPath ? `\n\n冲突证据：${e.conflictPath}` : ''}`, stage: 'material-conflict', progress: 100 })).catch(() => {});
       } else if (['W73_AUDIT_RECOVERY_REQUIRED', 'W73D_LEDGER_RECOVERY_REQUIRED', 'W73E_SCHEDULER_RECOVERY_REQUIRED', 'W73F_ECONOMICS_RECOVERY_REQUIRED', 'W73_RUNTIME_RECOVERY_REQUIRED', 'RUN_OWNER_ACTIVE'].includes(e?.code)) {
         task.status = 'paused';
-        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
+        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'blocked', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
         this.log(`⚠ 任务「${task.label}」因事实账恢复要求保持阻断：${e.message}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'help', title: '事实账需要人工恢复', content: e.message, stage: 'ledger-recovery-required', progress: 100 })).catch(() => {});
       } else if (this.taskShouldStop(task) || e?.name === 'AbortError') {
@@ -2998,13 +3007,13 @@ export class FactoryPanel {
           ? { type: 'run-cancelled', toStatus: 'cancelled', reasonCode: 'TASK_DELETED', message: '任务由维护者删除；现有工件保持不变' }
           : { type: 'run-paused', toStatus: 'paused', reasonCode: 'TASK_STOPPED', message: '任务暂停；现有工件保持不变' }
         ).catch(error => this.log(`⚠ Production Run ${cancelled ? '取消' : '暂停'}记账失败：${error.message}`));
-        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: cancelled ? 'cancelled' : 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
+        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: cancelled ? 'cancelled' : 'stopped', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
         this.log(`${cancelled ? '✕' : '⏹'} 任务「${task.label}」已${cancelled ? '取消' : '停止并保留断点'}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: cancelled ? '任务已取消' : '任务已暂停', content: cancelled ? '执行已取消；现有工件保持不变。' : '请求已取消；现有断点与工件保持不变。', stage: cancelled ? 'cancelled' : 'stopped', progress: 100 })).catch(() => {});
       } else {
         task.status = 'failed';
         await this.appendProductionRun(task, { type: 'run-failed', toStatus: 'failed', reasonCode: e.code || 'TASK_FAILED', message: this.redactProductionRunMessage(e.message) }).catch(error => this.log(`⚠ Production Run 失败记账失败：${error.message}`));
-        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
+        if (task.folder) await writeTaskState(task.folder, factoryTaskState(task, { status: 'failed', values: task.values, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewState: task.reviewState, ...this.productionRunState(task) })).catch(() => {});
         this.log(`✗ 任务「${task.label}」失败：${e.message}`);
         await this.appendWorkshop(task, normalizeFactoryEvent({ type: 'system', title: '任务中断', content: e.message, stage: 'failed', progress: 100 })).catch(() => {});
         await this.finishTaskPreview(task, e.message).catch(() => {});
@@ -3091,14 +3100,6 @@ export class FactoryPanel {
     costs.units.push({ unitNo, unitName, outline, ritual: result.ritual, verdict: result.verdict, sealed: result.sealed, budget: result.budget, at: new Date().toISOString() });
     costs.totalTokens = costs.units.reduce((sum, x) => sum + (Number(x.budget?.usedTokens) || 0), 0);
     await window.mazz.invoke('fs:writeFile', { path: costPath, content: JSON.stringify(costs, null, 2) });
-    const budgetGate = evaluateBudgetCap({ capTokens: resolveReviewBudgetCap(result.budget?.capTokens, resolveReviewBudgetCap(task.reviewBudgetCap)), usedTokens: result.budget?.usedTokens || 0, requestedRitual: result.ritual?.requested || task.reviewRitual || 'light' });
-    if (result.ritual?.downgraded || result.verdict === 'budget-stop' || budgetGate.status !== 'ok') {
-      workshopEvents.push(normalizeFactoryEvent({
-        id: `w68c-budget-${task.id}-${unitNo}`, type: 'help', title: `${budgetGate.label} · 人工选择`,
-        content: `- 上限：${budgetGate.capTokens} token\n- 已用：${budgetGate.usedTokens} token\n- 余额：${budgetGate.remainingTokens} token\n\n${productText(result.ritual?.reason || budgetGate.reason)}`,
-        unitNo, unitName, stage: 'budget-pending', card: makeBudgetCard({ ...budgetGate, requestedRitual: result.ritual?.requested || task.reviewRitual || 'light' }),
-      }));
-    }
     for (const moment of detectHumanHelpMoments(result)) {
       workshopEvents.push(normalizeFactoryEvent({
         id: `w68c-help-${task.id}-${unitNo}-${moment.id}`, type: 'help', title: `@human · ${productText(moment.label)}`,
@@ -3143,7 +3144,7 @@ export class FactoryPanel {
     this.log(`⚖ ${unitName} ${unitNo} 进入智能创作专业流程 · ${task.reviewRitual === 'full' ? '专业版' : '标准版'}…`);
     const result = await runW68Review({
       draft: text, blueprint, outline, bible, unitRef: `第${String(unitNo).padStart(3, '0')}${unitName}`, unitIndex: unitNo,
-      ritual: task.reviewRitual || 'light', budgetCap: resolveReviewBudgetCap(task.reviewBudgetCap), precedents,
+      ritual: task.reviewRitual || 'light', precedents,
       protectionList: [task.label, ...(task.values?.['主要人物'] ? [task.values['主要人物']] : [])].filter(Boolean),
       additionalMachineChecks: current => runQualityChecks(tpl, current),
       requireCompletionMetadata: true,
@@ -3181,11 +3182,12 @@ export class FactoryPanel {
   }
 
   async runSingleTask(task, tpl, dual) {
+    tpl = runtimeTemplate(tpl);
     dual = typeof task.dualLoop === 'boolean' ? task.dualLoop : !!dual;
     const folder = await this.ensureTaskFolder(task, tpl);
     const m = buildMantra(tpl, task.values, task.dump);
     await window.mazz.invoke('fs:writeFile', { path: `${folder}/创作蓝图.md`, content: m.doc });
-    await writeTaskState(folder, factoryTaskState(task, { status: 'running', currentChapter: 0, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) }));
+    await writeTaskState(folder, factoryTaskState(task, { status: 'running', currentChapter: 0, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) }));
     await this.openTaskPreview(task, tpl, folder);
     // 创作增强注入：嵌入资料（最高优先级）+ 插件规则 + 文风包
     const embedBlocks = buildEmbedBlocks(task.embeds || []);
@@ -3200,8 +3202,7 @@ export class FactoryPanel {
     const extra = [embedBlocks, plugBlocks && `## 创作插件规则\n${plugBlocks}`,
       stylePkg.includes('未提供') ? '' : `## 文风参考素材\n${stylePkg}`].filter(Boolean).join('\n\n');
     if (extra) m.user += `\n\n${extra}`;
-    m.system += '\n\n【完成证据】正文末尾必须由你原样输出 [本次续写字数：N]，其中 N 必须严格等于声明行之前正文的 JavaScript 字符长度；不得估算或省略。';
-    if (task.reviewProtocol === W68_PROTOCOL) m.system += '\n\n【W68a 防偷懒协议】动笔前通读全部锁定材料；每个内容单元达到项目配额；本单元重新读取验收点，不得凭上单元惯性续写。';
+    if (task.reviewProtocol === W68_PROTOCOL) m.system += '\n\n【W68a 执行协议】动笔前通读全部锁定材料；完整完成当前内容单元；本单元重新读取验收点，不得凭上单元惯性续写。用户字数目标只作规划参考，不作为提交门。';
     this.log('⚡ AI 生成中…');
     // 单次模式同样走流式直播（此前用非流式 chat 干等全文=「没办法实时看到进度」总根）
     this.liveStart(task, 1, '');
@@ -3214,7 +3215,7 @@ export class FactoryPanel {
     let completion = null;
     try {
       completion = await chatStreamDetailed({
-        cfg: this.cfg, role: 'chapter', system: m.system, user: m.user, temperature: 0.8, maxTokens: 8192,
+        cfg: this.cfg, role: 'chapter', system: m.system, user: m.user, temperature: 0.8,
         signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
         onChunk: (_, f) => { full = f; this.liveUpdate(task, full); },
       });
@@ -3234,17 +3235,16 @@ export class FactoryPanel {
       this.log(`⏹ 任务「${task.label}」已终止，未把流式半稿冒充成正式成稿`);
       return;
     }
-    const nativeDeclaration = validateNativeContinuationDeclaration(completion?.text, completion || {});
-    if (nativeDeclaration.safeToCommit !== true) {
-      const checkpointText = nativeDeclaration.text || stripTokenDeclaration(full);
+    if (!providerCompletionReady(completion)) {
+      const checkpointText = stripTokenDeclaration(full);
       if (checkpointText.trim()) await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: checkpointText }).catch(() => {});
       task.status = 'paused';
-      await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'UNSAFE_STREAM_COMPLETION', message: `Provider 终态与模型原生字数声明未同时通过（${nativeDeclaration.reason}）；半稿只存断点` });
+      await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'UNSAFE_STREAM_COMPLETION', message: `Provider 未返回 finish_reason=stop 的非空完成态；半稿只存断点` });
       await writeTaskState(folder, factoryTaskState(task, { status: 'stopped', currentChapter: 0, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState, unsafeCompletion: { finishReason: completion?.finishReason || null, completionKind: completion?.completionKind || '' }, ...this.productionRunState(task) }));
-      this.log(`⏸ 任务「${task.label}」未通过双证据完成门（${nativeDeclaration.reason}），半稿已保留为断点，未进入审校或正式落盘`);
+      this.log(`⏸ 任务「${task.label}」未通过 Provider 完成门，半稿已保留为断点，未进入审校或正式落盘`);
       return;
     }
-    const originalBody = nativeDeclaration.text;
+    const originalBody = stripTokenDeclaration(completion.text);
     text = originalBody;
     let reviewedResult = null;
     if (task.reviewProtocol === W68_PROTOCOL) {
@@ -3262,15 +3262,11 @@ export class FactoryPanel {
         checks = runQualityChecks(tpl, text);
       }
     }
-    if (text.trim().length < 10) {
+    if (!String(text || '').trim()) {
       if (originalBody.trim()) await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: originalBody }).catch(() => {});
       task.status = 'paused';
-      await this.appendProductionRun(task, {
-        type: 'run-paused', toStatus: 'paused', reasonCode: 'POST_REVIEW_BODY_TOO_SHORT',
-        message: `审校/勘误后的正文仅 ${text.trim().length} 字，拒绝作为正式内容单元`,
-      }).catch(() => {});
+      await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'POST_REVIEW_BODY_EMPTY', message: '审校/勘误返回空正文；原流稿只存断点' }).catch(() => {});
       await writeTaskState(folder, factoryTaskState(task, { status: 'stopped', currentChapter: 0, values: task.values, reviewProtocol: task.reviewProtocol, reviewState: task.reviewState, ...this.productionRunState(task) }));
-      this.log(`⏸ 任务「${task.label}」审校后正文过短，保留原流稿断点并暂停；未生成正式正文或快照`);
       return;
     }
     const fails = checks.filter(c => !c.pass);
@@ -3295,36 +3291,39 @@ export class FactoryPanel {
     });
     await this.ensureW73gProtocolAssets(task, this.productionRunLedgers.get(task.id))
       .catch(error => this.log(`⚠ W73g 终态投影待重开重建：${error.message}`));
-    await writeTaskState(folder, factoryTaskState(task, { status: 'done', currentChapter: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewBudgetCap: task.reviewBudgetCap, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) }));
+    await writeTaskState(folder, factoryTaskState(task, { status: 'done', currentChapter: 1, values: task.values, exportFmt: task.exportFmt, reviewProtocol: task.reviewProtocol, reviewRitual: task.reviewRitual, reviewState: task.reviewState, manualRevision: task.manualRevision, ...this.productionRunState(task) }));
     task.status = fails.length ? 'done-warn' : 'done';
     this.log(fails.length ? `⚠ 完成但有 ${fails.length} 项校验未过：${fails[0].label}` : `✅ 完成，全部校验通过（${text.length} 字）`);
   }
 
   async runMaxTask(task, tpl, dual, resumeFrom = null, retryChapter = null) {
+    tpl = runtimeTemplate(tpl);
     dual = typeof task.dualLoop === 'boolean' ? task.dualLoop : !!dual;
     const folder = await this.ensureTaskFolder(task, tpl);
-    const total = task.maxChapters || (canUseUnlimited(tpl) ? 0 : 10);
-    if (!task.maxChapters && total) task.maxChapters = total; // 执行层再钉：旧任务/恢复态不得绕过说明类无限连写禁令
+    const legacyMaxChapters = Math.max(0, Math.trunc(Number(task.maxChapters) || 0));
+    const wordDerivedPlan = Number(task.totalWords) > 0 || Number(task.wordsPerUnit) > 0
+      || ['short', 'medium', 'long'].includes(String(task.lengthPreset || ''));
+    const explicitPlannedUnits = wordDerivedPlan ? 0 : legacyMaxChapters;
+    const unlimited = task.mode === 'max' && task.lengthPreset === 'unlimited';
     const family = blueprintFamily(tpl);
     const snapshotSchema = getSnapshotSchema(tpl);
     const unitName = snapshotSchema.unitName;
     await this.openTaskPreview(task, tpl, folder);
     const stateFor = (status, ch) => writeTaskState(folder, factoryTaskState(task, {
       status,
-      currentChapter: ch ?? task.doneChapters ?? 0, maxChapters: total,
+      currentChapter: ch ?? task.doneChapters ?? 0, maxChapters: legacyMaxChapters,
       values: task.values, dump: task.dump, pluginSel: task.pluginSel,
       pluginValues: task.pluginValues, styleIds: task.styleIds, embeds: task.embeds,
       createdAt: task.createdAt, outputProtocol: task.outputProtocol || 'legacy',
       totalWords: task.totalWords, wordsPerUnit: task.wordsPerUnit, lengthPreset: task.lengthPreset,
       reviewProtocol: task.reviewProtocol,
       reviewRitual: task.reviewRitual,
-      reviewBudgetCap: task.reviewBudgetCap,
       reviewState: task.reviewState,
       exportFmt: task.exportFmt || 'md',
       manualRevision: task.manualRevision,
     }));
 
-    // ══ 阶段一：全书蓝图（原版蓝图生成器：插件+文风+嵌入注入，结构校验+3次重试+兜底） ══
+    // ══ 阶段一：全书蓝图（插件+文风+嵌入注入，Provider 完成门+结构协议校验） ══
     let blueprint = '';
     const bpPath = `${folder}/创作蓝图.md`;
     blueprint = await readOptionalFile(bpPath);
@@ -3340,8 +3339,8 @@ export class FactoryPanel {
       const embedBlocks = buildEmbedBlocks(task.embeds || []);
       const bpUser = buildBlueprintPrompt(tpl, task.values, {
         stylePackage: stylePkg, pluginBlocks, embedBlocks,
-        maxMode: !total, chapters: total || task.values['计划章节数'] || 10,
-        wordsPerChapter: task.values['每章字数'],
+        maxMode: !explicitPlannedUnits, chapters: explicitPlannedUnits || undefined,
+        wordsPerChapter: task.wordsPerUnit || undefined,
       });
       this.log('📐 正在生成全书蓝图（流式）…');
       let ok = false;
@@ -3354,7 +3353,7 @@ export class FactoryPanel {
         let completion;
         try {
           completion = await chatStreamDetailed({
-            cfg: this.cfg, role: 'blueprint', user: bpUser, temperature: 0.7, maxTokens: 8192,
+            cfg: this.cfg, role: 'blueprint', user: bpUser, temperature: 0.7,
             signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
             onChunk: (_, full) => {
               lastBlueprintDraft = full;
@@ -3368,15 +3367,15 @@ export class FactoryPanel {
         }
         lastBlueprintDraft = completion.text;
         blueprint = stripMdFence(completion.text);
-        const completionSafe = completion.safeToCommit === true;
+        const completionSafe = providerCompletionReady(completion);
         safeCompletionSeen ||= completionSafe;
-        ok = completionSafe && blueprint.length >= 500 && blueprintStructureOk(blueprint, family);
+        ok = completionSafe && blueprintStructureOk(blueprint, family);
         if (!ok && lastBlueprintDraft.trim()) await window.mazz.invoke('fs:writeFile', { path: bpCheckpointPath, content: lastBlueprintDraft }).catch(() => {});
         this.log(ok
           ? `✅ 蓝图完整（${blueprint.length} 字，结构通过）`
           : !completionSafe
             ? `⚠ 蓝图流未安全结束（${completion.finishReason || completion.completionKind || 'unknown'}），${attempt < 3 ? '重试 ' + attempt + '/3' : '暂停待续'}`
-            : `⚠ 蓝图结构不完整（长度 ${blueprint.length}），${attempt < 3 ? '重试 ' + attempt + '/3' : '启用本地兜底'}`);
+            : `⚠ 蓝图结构不完整，${attempt < 3 ? '重试 ' + attempt + '/3' : '暂停待修订'}`);
       }
       if (!ok && !safeCompletionSeen) {
         task.status = 'paused';
@@ -3385,8 +3384,10 @@ export class FactoryPanel {
         return;
       }
       if (!ok) {
-        blueprint = buildFallbackBlueprint(task, total, tpl);
-        this.log('🔧 已使用兜底蓝图');
+        task.status = 'paused';
+        await stateFor('stopped', 0);
+        this.log('⏸ 蓝图未通过结构协议；半稿只保留为断点，未用固定单元数兜底');
+        return;
       }
       await window.mazz.invoke('fs:writeFile', { path: bpPath, content: blueprint });
       await window.mazz.invoke('fs:delete', { path: bpCheckpointPath }).catch(() => {});
@@ -3401,15 +3402,17 @@ export class FactoryPanel {
     const rawOutline = await readOptionalFile(`${folder}/章节大纲.md`);
     outlines = rawOutline.split('\n').map(l => l.trim()).filter(Boolean);
     if (!outlines.length) {
-      outlines = parseChapterOutlines(blueprint, total || 10, tpl);
-      if (total) {
-        if (outlines.length > total) { this.log(`⚡ 蓝图含 ${outlines.length} 章，截取前 ${total} 章`); outlines = outlines.slice(0, total); }
-        else while (outlines.length < total) outlines.push(`第${outlines.length + 1}${unitName}：根据内容发展自然推进`);
-      }
+      outlines = parseChapterOutlines(blueprint, 0, tpl);
       await window.mazz.invoke('fs:writeFile', { path: `${folder}/章节大纲.md`, content: outlines.join('\n') });
       await this.refreshTaskPreview(task);
     }
-    const chapterCount = total || 999999; // 0 = max 模式写到手动终止（上限 999 章防失控）
+    if (!outlines.length) {
+      task.status = 'paused';
+      await stateFor('stopped', 0);
+      this.log(`⏸ 蓝图没有可执行的${unitName}大纲；按结构协议暂停，不以固定数量补齐`);
+      return;
+    }
+    const plannedUnits = explicitPlannedUnits || outlines.length;
     const bpCore = extractBlueprintCore(blueprint);
     const directive = extractWritingDirective(blueprint);
     const constantAnchor = buildConstantAnchor(bpCore, directive);
@@ -3425,9 +3428,10 @@ export class FactoryPanel {
     } else {
       stateSummary = await this.loadSnapshot(folder, 0, snapshotSchema);
     }
-    const endAt = retryChapter > 0 ? retryChapter : chapterCount;
-
-    for (let i = startAt; i <= endAt; i++) {
+    for (let i = startAt; shouldContinueFactoryUnits({
+      unlimited, unitNo: i, maxChapters: plannedUnits, retryChapter,
+      shouldStop: () => this.taskShouldStop(task),
+    }); i++) {
       if (this.taskShouldStop(task)) { this.log(`■ 任务「${task.label}」在第 ${i} ${unitName}前被手动终止`); task.status = 'paused'; await stateFor('stopped', i - 1); return; }
       // max 模式自动续大纲
       if (i > outlines.length) {
@@ -3447,10 +3451,10 @@ export class FactoryPanel {
       previous = await readOptionalFile(ckptPath);
       if (!previous && retryChapter !== i) {
         const existing = await readOptionalFile(mdPath);
-        if (existing.trim().length >= 100) {
+        if (existing.trim() && Number(task.doneChapters) >= i) {
           task.doneChapters = Math.max(task.doneChapters || 0, i);
           await stateFor('running', i);
-          this.log(`第 ${i} ${unitName}已存在（${existing.length} 字），跳过`);
+          this.log(`第 ${i} ${unitName}已有完成状态与正式工件，跳过`);
           continue;
         }
         if (existing.trim()) previous = existing;
@@ -3464,7 +3468,7 @@ export class FactoryPanel {
             cfg: this.cfg, role: 'snapshot',
             system: '你是长篇一致性校验员。只指出下一个结构单元需要纠正的偏差；禁止改写既有正文。',
             user: `【恒定锚】\n${constantAnchor}\n\n【滚动快照】\n${stateSummary}\n\n【下一${unitName}任务】\n${outline}`,
-            temperature: 0.1, maxTokens: 1200, signal: this.taskSignal(task),
+            temperature: 0.1, signal: this.taskSignal(task),
           }, `第 ${i} ${unitName}纠偏指令`);
         } catch (error) {
           // 纠偏是可选上下文；没有安全终态时宁可忽略，也不把半条指令污染正文提示。
@@ -3474,21 +3478,21 @@ export class FactoryPanel {
       }
       const cp = buildChapterPromptV2({
         blueprintCore: bpCore, constantAnchor, writingDirective: directive, outlines, stateSummary,
-        foreshadowLedger: extractLedgerFromSnapshot(stateSummary, snapshotSchema), outline, chapterNo: i, total: total || 0,
-        wordsPerChapter: task.values['每章字数'], title: task.label,
+        foreshadowLedger: extractLedgerFromSnapshot(stateSummary, snapshotSchema), outline, chapterNo: i, total: unlimited ? 0 : plannedUnits,
+        wordsPerChapter: task.wordsPerUnit || undefined, title: task.label,
         correctionDirective, snapshotSchema,
       });
-      if (task.reviewProtocol === W68_PROTOCOL) cp.system += '\n\n【W68a 防偷懒协议】续写前通读恒定锚、滚动快照与当前验收点；完成本单元配额；逐单元重置锚点，禁止沿用未经登记的上一单元惯性。';
+      if (task.reviewProtocol === W68_PROTOCOL) cp.system += '\n\n【W68a 执行协议】续写前通读恒定锚、滚动快照与当前验收点；完整完成本单元；逐单元重置锚点，禁止沿用未经登记的上一单元惯性。用户字数目标只作规划参考，不作为提交门。';
       if (previous) {
         const declared = mergeDeclaredContinuation(previous, '');
         if (declared.complete) {
           previous = stripTokenDeclaration(declared.text);
-          this.log(`⚠ 第 ${i} ${unitName}旧断点带有未验证声明；已去除声明，继续生成并重新通过双证据完成门`);
+          this.log(`⚠ 第 ${i} ${unitName}旧断点带有旧版字数声明；已去除声明并按正文继续生成`);
         }
-        cp.user = `你之前已经写完了本${unitName}的前半部分，内容如下：\n\n---\n${previous.slice(-800)}\n---\n\n请从断点处继续往下写，完成本${unitName}剩余部分。不要重复已有内容。直接续写正文，末尾带 [本次续写字数：N] 声明。`;
+        cp.user = `你之前已经写完了本${unitName}的前半部分，内容如下：\n\n---\n${previous}\n---\n\n请从断点处继续往下写，完成本${unitName}剩余部分。不要重复已有内容，直接续写正文。`;
         this.log(`⚡ 防线1触发：第 ${i} ${unitName}断点续写（已有 ${previous.length} 字）`);
       } else {
-        this.log(`⚡ 正在生成第 ${i} ${unitName}${total ? ' / 共 ' + total + ' ' + unitName : ''}…`);
+        this.log(`⚡ 正在生成第 ${i} ${unitName}${unlimited ? '' : ' / 共 ' + plannedUnits + ' ' + unitName}…`);
       }
 
       // 流式生成 + checkpoint 节流写（800ms 一次，避开原版每 token 写盘的 IO 风暴）+ 实时预览直播
@@ -3500,10 +3504,9 @@ export class FactoryPanel {
         await window.mazz.invoke('fs:writeFile', { path: ckptPath, content: full }).catch(() => {});
       };
       let completion = null;
-      let nativeDeclaration = null;
       try {
         completion = await chatStreamDetailed({
-          cfg: this.cfg, role: 'chapter', system: cp.system, user: cp.user, temperature: 0.8, maxTokens: 8192,
+          cfg: this.cfg, role: 'chapter', system: cp.system, user: cp.user, temperature: 0.8,
           signal: this.taskSignal(task), shouldStop: () => this.taskShouldStop(task),
           onChunk: (_, f) => {
             // Provider 终态尚未验证前，checkpoint 绝不保存可能伪装完成的尾声明。
@@ -3512,8 +3515,7 @@ export class FactoryPanel {
             if (Date.now() - lastFlush > 800) flushCkpt();
           },
         });
-        nativeDeclaration = validateNativeContinuationDeclaration(completion.text, completion);
-        full = mergeDeclaredContinuation(previous, nativeDeclaration.text).text;
+        full = mergeDeclaredContinuation(previous, stripTokenDeclaration(completion.text)).text;
       } catch (e) {
         await flushCkpt();
         throw e;
@@ -3526,14 +3528,14 @@ export class FactoryPanel {
         return;
       }
 
-      if (nativeDeclaration?.safeToCommit !== true) {
+      if (!providerCompletionReady(completion)) {
         await flushCkpt();
         task.status = 'paused';
         await stateFor('stopped', i - 1);
-        this.log(`⏸ 第 ${i} ${unitName}未通过双证据完成门（${nativeDeclaration?.reason || completion?.finishReason || completion?.completionKind || 'unknown'}）；${full.length} 字仅保留断点，未进入审校或正式落盘`);
+        this.log(`⏸ 第 ${i} ${unitName}未通过 Provider 完成门；当前正文仅保留断点，未进入审校或正式落盘`);
         await this.appendProductionRun(task, {
           type: 'run-paused', toStatus: 'paused', reasonCode: 'UNSAFE_CHAPTER_COMPLETION',
-          message: `Provider 终态与模型原生字数声明未同时通过：${nativeDeclaration?.reason || 'unknown'}`,
+          message: `Provider 未返回 finish_reason=stop 的非空完成态`,
         }).catch(() => {});
         return;
       }
@@ -3554,35 +3556,32 @@ export class FactoryPanel {
         }
       }
 
-      if (text.trim().length >= 10) {
-        const mdContent = `# ${task.label} 第${i}${unitName}\n\n${text}`;
-        await window.mazz.invoke('fs:writeFile', { path: mdPath, content: mdContent });
-        if (reviewedResult) await this.appendW68FinalReview(task, reviewedResult, { unitNo: i, unitName, targetPath: mdPath, targetPrefix: `# ${task.label} 第${i}${unitName}\n\n` });
-        await window.mazz.invoke('fs:delete', { path: ckptPath }).catch(() => {});
-        this.liveDone(task, i, mdPath, mdContent, unitName);
-        // 多格式导出（pandoc 可用时）
-        if (task.exportFmt && task.exportFmt !== 'md') {
-          try {
-            await this.exportTaskFormat(task, mdContent, `${folder}/${stem}`);
-            this.log(`✓ 第 ${i} ${unitName} ${task.exportFmt.toUpperCase()} 已导出`);
-          } catch (e) { this.log(`⚠ 第 ${i} ${unitName} ${task.exportFmt} 导出跳过：${e.message}`); }
-        }
-        task.doneChapters = i;
-        this.renderTasks();
-        this.log(`✓ 第 ${i} ${unitName}落盘（${text.length} 字）`);
-        if (!this.previewEnabled(task) && (i === startAt || (total && i === total))) {
-          this.shell.openTab('markdown', { title: `${stem}.md`, filePath: mdPath, content: mdContent });
-        }
-      } else {
+      if (!String(text || '').trim()) {
+        full = stripTokenDeclaration(full);
         await flushCkpt();
         task.status = 'paused';
         await stateFor('stopped', i - 1);
-        this.log(`⏸ 第 ${i} ${unitName}审校后正文过短，保留原稿断点并暂停；未生成快照、未推进完成数`);
-        await this.appendProductionRun(task, {
-          type: 'run-paused', toStatus: 'paused', reasonCode: 'POST_REVIEW_BODY_TOO_SHORT',
-          message: `审校/勘误后的正文仅 ${text.trim().length} 字，拒绝作为正式内容单元`,
-        }).catch(() => {});
+        await this.appendProductionRun(task, { type: 'run-paused', toStatus: 'paused', reasonCode: 'POST_REVIEW_BODY_EMPTY', message: `第 ${i} ${unitName}审校/勘误返回空正文；原流稿只存断点` }).catch(() => {});
         return;
+      }
+
+      const mdContent = `# ${task.label} 第${i}${unitName}\n\n${text}`;
+      await window.mazz.invoke('fs:writeFile', { path: mdPath, content: mdContent });
+      if (reviewedResult) await this.appendW68FinalReview(task, reviewedResult, { unitNo: i, unitName, targetPath: mdPath, targetPrefix: `# ${task.label} 第${i}${unitName}\n\n` });
+      await window.mazz.invoke('fs:delete', { path: ckptPath }).catch(() => {});
+      this.liveDone(task, i, mdPath, mdContent, unitName);
+      // 多格式导出（pandoc 可用时）
+      if (task.exportFmt && task.exportFmt !== 'md') {
+        try {
+          await this.exportTaskFormat(task, mdContent, `${folder}/${stem}`);
+          this.log(`✓ 第 ${i} ${unitName} ${task.exportFmt.toUpperCase()} 已导出`);
+        } catch (e) { this.log(`⚠ 第 ${i} ${unitName} ${task.exportFmt} 导出跳过：${e.message}`); }
+      }
+      task.doneChapters = i;
+      this.renderTasks();
+      this.log(`✓ 第 ${i} ${unitName}落盘（${text.length} 字）`);
+      if (!this.previewEnabled(task) && (i === startAt || (!unlimited && i === plannedUnits))) {
+        this.shell.openTab('markdown', { title: `${stem}.md`, filePath: mdPath, content: mdContent });
       }
 
       if (this.taskShouldStop(task)) { task.status = 'paused'; await stateFor('stopped', i); return; }
@@ -3604,6 +3603,12 @@ export class FactoryPanel {
       }
       await stateFor('running', i);
       if (retryChapter > 0) break; // 单章重试只写一章
+    }
+
+    if (this.taskShouldStop(task)) {
+      task.status = 'paused';
+      await stateFor('stopped', task.doneChapters || 0);
+      return;
     }
 
     task.status = 'done';
@@ -3771,17 +3776,10 @@ export class FactoryPanel {
     const duplicates = key ? this.tasks.filter(task => task.batchRequestId === key) : [];
     if (duplicates.length) return duplicates;
     const titles = (names || []).map(x => String(x || '').trim()).filter(Boolean);
-    const gate = factoryBatchGate(titles.length);
-    if (!gate.allowed) { toast(gate.message); return []; }
     if (!titles.length) {
       const receipt = this.addTask({ requestId: key });
       return receipt ? [this.tasks.find(task => task.id === receipt.taskId)].filter(Boolean) : [];
     }
-    if (!(await this.confirmBatchImport(gate))) return [];
-    // Confirmation yields to the event loop; a correlated replay may have
-    // committed while the dialog was open, so re-check before allocating IDs.
-    const committedDuringConfirmation = key ? this.tasks.filter(task => task.batchRequestId === key) : [];
-    if (committedDuringConfirmation.length) return committedDuringConfirmation;
     this.collectValues();
     const fields = this.genre?.input_fields || [];
     const titleField = fields.find(f => /^(书名|标题|title|subject|task|premise)$/i.test(String(f.id || '')) || /书名|标题/.test(String(f.label || '')));
@@ -3914,48 +3912,34 @@ export class FactoryPanel {
     }
   }
 
-  confirmBatchImport(gate) {
-    if (!gate?.warning || !gate.allowed) return Promise.resolve(!!gate?.allowed);
-    return new Promise(resolve => {
-      const m = modal('批量名单软提示');
-      let settled = false;
-      m.body.innerHTML = `<div style="min-width:360px"><p>${gate.message}</p><p style="color:var(--fg-dim);font-size:12px">大批任务会拉长队列执行时间，可分批导入；继续不会突破 100 条硬顶。</p><div style="display:flex;justify-content:flex-end;gap:8px"><button class="rb-btn" data-b="cancel">取消</button><button class="rb-btn" data-b="ok" style="background:var(--accent);color:var(--accent-fg)">确认导入</button></div></div>`;
-      const done = value => { if (settled) return; settled = true; resolve(value); m.close(); };
-      m.body.querySelector('[data-b=cancel]').addEventListener('click', () => done(false));
-      m.body.querySelector('[data-b=ok]').addEventListener('click', () => done(true));
-      const obs = new MutationObserver(() => {
-        if (!document.body.contains(m.el)) { obs.disconnect(); if (!settled) { settled = true; resolve(false); } }
-      });
-      obs.observe(document.body, { childList: true });
-    });
-  }
-
   async importCsv() {
     const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: 'CSV', extensions: ['csv', 'tsv'] }] }).catch(() => null);
     if (!p) return;
     try {
       const text = await window.mazz.invoke('fs:readFile', { path: p });
       const rows = parseCsvTasks(text, this.genre);
-      const gate = factoryBatchGate(rows.length);
-      if (!(await this.confirmBatchImport(gate))) return;
       const baseTime = Date.now();
       const maxMode = this.el.querySelector('.fc-maxmode').checked;
       const maxChapters = +this.el.querySelector('.fc-maxchapters').value || 0;
       const exportFmt = this.el.querySelector('.fc-exportfmt')?.value || 'md';
       const dualLoop = !!this.el.querySelector('.fc-dualloop')?.checked;
       for (const [i, rowValues] of rows.entries()) {
-        const values = { ...rowValues, 每章字数: rowValues['每章字数'] || String(this.lengthPlan.wordsPerUnit) };
+        const values = { ...rowValues };
+        const advisoryTargets = {
+          ...(this.lengthPlan.totalWords > 0 ? { totalWords: this.lengthPlan.totalWords } : {}),
+          ...(this.lengthPlan.wordsPerUnit > 0 ? { wordsPerUnit: this.lengthPlan.wordsPerUnit } : {}),
+          ...(maxMode && maxChapters > 0 ? { plannedUnits: maxChapters } : {}),
+        };
         this.tasks.push({
           id: 't' + (baseTime + i).toString(36) + Math.random().toString(36).slice(2, 5),
           createdAt: baseTime + i,
           genreId: this.genre.id,
           label: fieldValue(this.genre, values, '书名', 'title', 'subject', 'task', 'premise') || this.genre.name,
-          values, dump: '', mode: maxMode ? 'max' : 'single', maxChapters: maxMode ? maxChapters : 1, status: 'pending', doneChapters: 0,
+          values, dump: '', mode: maxMode ? 'max' : 'single', maxChapters: maxMode ? maxChapters : 0, status: 'pending', doneChapters: 0,
           totalWords: this.lengthPlan.totalWords, wordsPerUnit: this.lengthPlan.wordsPerUnit,
-          lengthPreset: this.lengthPlan.preset, exportFmt, autoPreview: this.autoPreview, dualLoop,
+          lengthPreset: '', advisoryTargets: Object.keys(advisoryTargets).length ? advisoryTargets : undefined, exportFmt, autoPreview: this.autoPreview, dualLoop,
           reviewProtocol: W68_PROTOCOL,
           reviewRitual: this.el.querySelector('.fc-review-ritual')?.value || 'light',
-          reviewBudgetCap: Math.max(0, +(this.el.querySelector('.fc-review-budget')?.value || 32000)),
         });
       }
       this.persistTasks();
@@ -4082,8 +4066,8 @@ export class FactoryPanel {
       const st = g('#pv-status');
       st.textContent = '测试中…';
       try {
-        const r = await chat({ cfg: { baseURL: g('#pv-base').value.trim(), model: g('#pv-model').value.trim(), apiKey: g('#pv-key').value.trim() }, user: '回复"ok"两个字即可', maxTokens: 200, temperature: 0 });
-        st.textContent = '✅ 连接成功：' + r.slice(0, 40);
+        const r = await chat({ cfg: { baseURL: g('#pv-base').value.trim(), model: g('#pv-model').value.trim(), apiKey: g('#pv-key').value.trim() }, user: '回复 ok 即可', temperature: 0 });
+        st.textContent = '✅ 连接成功：' + r;
       } catch (e) { st.textContent = '✗ ' + e.message; }
     });
     g('#pv-save').addEventListener('click', async () => {
@@ -4114,9 +4098,8 @@ export class FactoryPanel {
 记录类型|text|选填</textarea>
         <div style="font-size:12.5px;margin:8px 0 4px">系统提示词（角色与文风要求）</div>
         <textarea id="ge-sys" rows="3" class="rb-input" style="width:100%" spellcheck="false">你是一名资深…</textarea>
-        <div style="font-size:12.5px;margin:8px 0 4px">质量校验（每行一条：描述|规则:值，如 不少于500字|minLength:500）</div>
-        <textarea id="ge-checks" rows="3" class="rb-input" style="width:100%" spellcheck="false">不少于 500 字|minLength:500
-必须包含签名|contains:签名</textarea>
+        <div style="font-size:12.5px;margin:8px 0 4px">质量校验（可选；每行一条：描述|规则:值）</div>
+        <textarea id="ge-checks" rows="3" class="rb-input" style="width:100%" spellcheck="false" placeholder="例如：必须包含签名|contains:签名"></textarea>
         <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="ge-save" class="rb-btn" style="flex-direction:row;background:var(--accent);color:var(--accent-fg)">保存到工作区</button></div>
       </div>`;
     const g = (id) => m.body.querySelector(id);
@@ -4130,13 +4113,13 @@ export class FactoryPanel {
       const checks = g('#ge-checks').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
         const [label, rule] = l.split('|').map(x => x.trim());
         const [r, v] = (rule || '').split(':');
-        return { label, rule: r || 'minLength', value: isNaN(+v) ? v : +v };
+        return { label, rule: r || 'none', value: isNaN(+v) ? v : +v };
       });
       const tpl = {
         id: 'custom_' + name, name, description: g('#ge-desc').value.trim(),
         input_fields: fields.length ? fields : [{ id: 'f_需求', label: '需求', type: 'textarea', required: true }],
         system_prompt: g('#ge-sys').value.trim() || '你是一名资深写作专家。',
-        meta_vars: {}, output_rules: { format: 'markdown', max_length: 3000 },
+        meta_vars: {}, output_rules: { format: 'markdown' },
         quality_checks: checks,
       };
       await saveCustomGenre(tpl);
@@ -4169,7 +4152,7 @@ export function registerFactoryExtras(commands) {
       const out = await chatForArtifactCommit({
         cfg, role: 'chapter',
         system: tpl.system_prompt + `\n你现在的任务是${mode}用户选中的文字。保持原意与事实，只输出${mode}后的文字本身。`,
-        user: `【待${mode}的文字】\n${selText}\n\n【要求】\n${mode === '改写' ? '更通顺、更精炼、更贴合语境；长度与原文相当。' : '在原意基础上扩写充实细节与层次，篇幅约为原文 2-3 倍；保持上下文衔接。'}`,
+        user: `【待${mode}的文字】\n${selText}\n\n【要求】\n${mode === '改写' ? '更通顺、更精炼、更贴合语境；按内容需要完整表达。' : '在原意基础上扩写充实必要细节与层次；保持上下文衔接，写到表达完整为止。'}`,
       }, `智能${mode}正文`);
       const tr = mode === '改写'
         ? state.tr.replaceSelectionWith(state.schema.text(out))

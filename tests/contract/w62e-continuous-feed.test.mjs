@@ -54,13 +54,20 @@ describe('W62e 持续投喂来源协议', () => {
     assert.throws(() => normalizeSource(source(root, { kind: 'local', query: '', location: path.dirname(root) })), /当前项目内/);
   }));
 
-  test('RSS/Atom 归一保留稳定 ID、链接、时间和有界摘要', () => {
+  test('RSS/Atom 归一保留稳定 ID、链接、时间和完整摘要', () => {
     const items = parseSyndication(`<?xml version="1.0"?><feed><entry><id>tag:test,1</id><title>版本 &amp; 发布</title><link href="/post/1"/><updated>2026-08-19T09:00:00Z</updated><summary><![CDATA[短摘要]]></summary></entry></feed>`, 'https://example.test/feed.xml', '2026-08-19T10:00:00.000Z');
     assert.equal(items.length, 1);
     assert.equal(items[0].itemId, 'tag:test,1');
     assert.equal(items[0].title, '版本 & 发布');
     assert.equal(items[0].url, 'https://example.test/post/1');
     assert.equal(items[0].publishedAt, '2026-08-19T09:00:00.000Z');
+  });
+
+  test('订阅摘要不受本地 2000 字符门限裁剪', () => {
+    const marker = '尾部材料必须保留';
+    const summary = `${'长摘要'.repeat(670_000)}${marker}`;
+    const items = parseSyndication(`<feed><entry><id>tag:long,1</id><title>长材料</title><summary><![CDATA[${summary}]]></summary></entry></feed>`, 'https://example.test/feed.xml', '2026-08-19T10:00:00.000Z');
+    assert.ok(items[0].summary.endsWith(marker));
   });
 });
 

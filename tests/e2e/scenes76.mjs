@@ -9,13 +9,13 @@ export async function scenes76({ app, win, human, scenario, shotDir, fs }) {
     await fp.reload();
     const tpl = fp.genres.find(g => /小说/.test(g.name)) || fp.genres[0];
     fp.genre = tpl;
-    fp.values = { 书名: `${prefix}一号`, 作品类型: '科幻', premise: '并行调度与人工修订实证。', protagonist: '林澈，海洋观测员', 每章字数: '2000' };
+    fp.values = { 书名: `${prefix}一号`, 作品类型: '科幻', premise: '并行调度与人工修订实证。', protagonist: '林澈，海洋观测员' };
     fp.dumpEl.value = 'W61b 编辑回写与调度实证';
     fp.setAutoPreview(true);
     const initialConcurrency = fp.concurrency;
     fp.setConcurrency(concurrency);
     const make = (suffix, label) => {
-      const task = fp.makeTask(false, 1);
+      const task = fp.makeTask(false, 0);
       task.id = `${prefix}-${suffix}`; task.label = label;
       task.values = { ...task.values, 书名: label, 作品类型: '科幻' }; task.autoPreview = true;
       return task;

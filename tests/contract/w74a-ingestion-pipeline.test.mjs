@@ -67,6 +67,15 @@ describe('W74a Ingestion Request 与确定性切片', () => {
     assert.equal(chunks.at(-1).endOffset, text.length);
     assert.ok(chunks.every((row, index) => row.index === index && row.schema === 'mazz.ingestion-chunk/v0'));
   });
+
+  test('旧 200 万字符门不再拒绝完整材料', () => withProject(root => {
+    const marker = '尾部材料必须保留';
+    const text = `${'材料'.repeat(1_000_100)}${marker}`;
+    const normalized = normalizeIngestionRequest(request(root, { text }));
+    assert.equal(normalized.text.length, text.length);
+    assert.ok(normalized.text.endsWith(marker));
+    assert.equal(chunkMaterialText(normalized.text, normalized.contentHash).map(row => row.text).join(''), text);
+  }));
 });
 
 describe('W74a 项目材料区、目录与冲突', () => {

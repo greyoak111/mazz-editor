@@ -65,14 +65,25 @@ describe('W85 Context Compiler 与 Supersession', () => {
     }
   });
 
-  test('固定预算与 Seat 权限会显式排除，mandatory 溢出有标记', () => {
+  test('旧 token 预算只观测不丢上下文，Seat 权限仍显式排除', () => {
     const pkg = compile({
-      budget: 100, sources: [source('mandatory', { tokenEstimate: 150, mandatory: true }), source('budget', { tokenEstimate: 80 }), source('secret-seat', { tokenEstimate: 10, sensitivity: ['sensitive'] })],
-      seatPolicy: { allowedSensitivity: ['internal'], deniedKinds: [], maxSourceTokens: 100 },
+      budget: 1, sources: [source('mandatory', { tokenEstimate: 150, mandatory: true }), source('budget', { tokenEstimate: 80 }), source('secret-seat', { tokenEstimate: 10, sensitivity: ['sensitive'] })],
+      seatPolicy: { allowedSensitivity: ['internal'], deniedKinds: [], maxSourceTokens: 1 },
     });
-    assert.equal(pkg.overflow, true); assert.equal(pkg.used, 150);
-    assert.ok(pkg.excludedRefs.some(row => row.ref === 'source:budget' && row.reason === 'BUDGET_EXCEEDED'));
+    assert.equal(pkg.overflow, false); assert.equal(pkg.used, 230);
+    assert.deepEqual(pkg.authoritativeRefs.map(row => row.sourceRef).sort(), ['source:budget', 'source:mandatory']);
+    assert.equal(pkg.excludedRefs.some(row => /TOKEN|BUDGET/.test(row.reason)), false);
     assert.ok(pkg.excludedRefs.some(row => row.ref === 'source:secret-seat' && row.reason.startsWith('SEAT_PERMISSION')));
+    assert.equal(pkg.provenance.tokenPolicy, 'provider-owned');
+    assert.equal(pkg.provenance.legacyBudgetObserved, 1); assert.equal(pkg.provenance.legacyMaxSourceTokensObserved, 1);
+  });
+
+  test('来源摘要与正文不按本地字符门限截断，tokenEstimate 可省略', () => {
+    const summary = '摘'.repeat(1500); const excerpt = '文'.repeat(13000);
+    const row = context.normalizeContextSource({ ...source('full'), summary, excerpt, tokenEstimate: null });
+    assert.equal(row.summary, summary); assert.equal(row.excerpt, excerpt); assert.equal(row.tokenEstimate, null);
+    const pkg = compile({ budget: 1, sources: [row], seatPolicy: { allowedSensitivity: ['internal'], maxSourceTokens: 1 } });
+    assert.equal(pkg.authoritativeRefs[0].excerpt.length, 13000); assert.equal(pkg.excludedRefs.length, 0);
   });
 
   test('相同 topic 的多个 CURRENT 冲突必须公开，不能静默选边', () => {
@@ -106,7 +117,8 @@ describe('W85 Wave Graph / Coverage Accounting', () => {
       seatPolicy: { allowedSensitivity: ['internal'], deniedKinds: [], maxSourceTokens: 160 },
     });
     assert.equal(pkg.coverageSnapshot.total, 47); assert.equal(pkg.coverageSnapshot.obligations.length, 47); assert.equal(pkg.coverageSnapshot.silentlyDropped, 0);
-    assert.ok(pkg.excludedRefs.some(row => row.ref === 'source:huge' && row.reason === 'SOURCE_TOKEN_LIMIT'));
+    assert.ok(pkg.authoritativeRefs.some(row => row.sourceRef === 'source:huge'));
+    assert.equal(pkg.excludedRefs.some(row => /TOKEN|BUDGET/.test(row.reason)), false);
     assert.equal(pkg.coverageSnapshot.counts.SUPERSEDED, 2); assert.equal(pkg.coverageSnapshot.counts.EVIDENCED, 1);
     assert.equal(pkg.recentDelta.length, 3); assert.equal(pkg.knownConflicts.length, 1);
   });
@@ -131,10 +143,12 @@ describe('W85 Repository Prototype / Harness Injection', () => {
   test('仓库文件必须在 workspace 内，Package 落盘可检查并接 W81 候选', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w85-'));
     try {
-      fs.writeFileSync(path.join(root, 'spec.md'), '# current spec\n', 'utf8');
-      const service = new ContextCompilerService({ rootProvider: () => root, now: () => new Date(NOW), eventService: { search: () => [{ episodeId: 'e1', label: 'VPS 配置', score: 1.5, reasons: ['term:vps'], eventRefs: ['event:1'], endedAt: NOW }] } });
-      const result = service.compile({ taskId: 'task:repo', seatId: 'seat:developer', checkpointId: 'checkpoint:fresh', budget: 1000, fileSources: [{ path: 'spec.md', mandatory: true }], eventQuery: 'VPS', obligations: [obligation(1)], constraints: [], seatPolicy: { allowedSensitivity: ['internal'], deniedKinds: [], maxSourceTokens: 1000 } });
-      assert.equal(fs.existsSync(result.packagePath), true); assert.equal(result.contextPackage.authoritativeRefs.length, 1); assert.equal(result.contextPackage.relevantRefs[0].status, 'INFERRED'); assert.equal(result.contextPackage.relevantRefs[0].authorityRef, '');
+      const fullText = '# current spec\n' + '完整上下文'.repeat(3000);
+      fs.writeFileSync(path.join(root, 'spec.md'), fullText, 'utf8');
+      const service = new ContextCompilerService({ rootProvider: () => root, now: () => new Date(NOW), eventService: { search: () => Array.from({ length: 12 }, (_, index) => ({ episodeId: `e${index + 1}`, label: `VPS 配置 ${index + 1}`, score: 1.5, reasons: ['term:vps'], eventRefs: [`event:${index + 1}`], endedAt: NOW })) } });
+      const result = service.compile({ taskId: 'task:repo', seatId: 'seat:developer', checkpointId: 'checkpoint:fresh', budget: 1, fileSources: [{ path: 'spec.md', mandatory: true, includeExcerpt: true }], eventQuery: 'VPS', obligations: [obligation(1)], constraints: [], seatPolicy: { allowedSensitivity: ['internal'], deniedKinds: [], maxSourceTokens: 1 } });
+      assert.equal(fs.existsSync(result.packagePath), true); assert.equal(result.contextPackage.authoritativeRefs.length, 1); assert.equal(result.contextPackage.authoritativeRefs[0].excerpt, fullText); assert.equal(result.contextPackage.authoritativeRefs[0].tokenEstimate, null);
+      assert.equal(result.contextPackage.relevantRefs.length, 12); assert.equal(result.contextPackage.relevantRefs[0].status, 'INFERRED'); assert.equal(result.contextPackage.relevantRefs[0].authorityRef, '');
       assert.throws(() => service.sourceFromFile({ path: '../outside.md' }), /越出/);
       assert.equal(service.list().length, 1);
     } finally { fs.rmSync(root, { recursive: true, force: true }); }

@@ -468,14 +468,18 @@ describe('W91 立刻开工事务与关联回执源码合同', () => {
     }
   });
 
-  test('所有流式正式产物均改走 detailed；章节双证据失败关闭', async () => {
+  test('所有流式正式产物均改走 detailed；Provider 不安全终态失败关闭', async () => {
     const text = await source('renderer/modules/factory/index.js');
     assert(!/\bchatStream\s*\(/.test(text), '仍调用旧字符串流 API');
     assert(!/ensureTokenDeclaration\s*\(/.test(text), '仍补造模型完成声明');
     assert((text.match(/chatStreamDetailed\s*\(/g) || []).length === 3, '单次/蓝图/章节未全部切到 detailed');
-    assert((text.match(/validateNativeContinuationDeclaration\s*\(/g) || []).length >= 2, '单次与连写没有同时要求模型原生声明');
-    assert(text.includes('UNSAFE_STREAM_COMPLETION') && text.includes('未通过双证据完成门'), '单次生成没有 fail-closed 到断点暂停');
-    assert(text.includes("nativeDeclaration?.safeToCommit !== true") && text.includes("UNSAFE_CHAPTER_COMPLETION"), '章节没有 fail-closed 到断点暂停');
+    assert(!text.includes('validateNativeContinuationDeclaration'), '仍把模型自报字数声明当成完成证据');
+    assert(text.includes('function providerCompletionReady')
+      && text.includes('completion.safeToCommit === true')
+      && text.includes("String(completion.finishReason || '').trim().toLowerCase() === 'stop'")
+      && text.includes('!!body.trim()'), 'Provider stop + 非空 final 完成门不完整');
+    assert(text.includes('UNSAFE_STREAM_COMPLETION') && text.includes('未通过 Provider 完成门'), '单次生成没有 fail-closed 到断点暂停');
+    assert(text.includes('UNSAFE_CHAPTER_COMPLETION') && text.includes('未通过 Provider 完成门'), '章节没有 fail-closed 到断点暂停');
     assert(!text.includes('断点已带 TOKEN 声明，直接收口'), '旧断点的未验证声明仍可绕过 Provider 终态');
   });
 
@@ -595,7 +599,7 @@ describe('W91 立刻开工事务与关联回执源码合同', () => {
     const importEnd = text.indexOf('\n  \/\/ ====================', importStart);
     const csv = text.slice(importStart, importEnd);
     assert.match(csv, /const dualLoop = !!this\.el\.querySelector\('\.fc-dualloop'\)\?\.checked/);
-    assert.match(csv, /maxChapters: maxMode \? maxChapters : 1/);
+    assert.match(csv, /maxChapters: maxMode \? maxChapters : 0/);
     assert.match(csv, /autoPreview: this\.autoPreview, dualLoop/);
 
     const retryStart = text.indexOf("this.taskListEl.querySelectorAll('[data-retry]')");
@@ -604,20 +608,19 @@ describe('W91 立刻开工事务与关联回执源码合同', () => {
     assert.match(retry, /typeof task\.dualLoop === 'boolean'[\s\S]*\? task\.dualLoop[\s\S]*runMaxTask\(task, tpl, dual/);
   });
 
-  test('显式零审校预算贯穿事实账、开工记录、预算门与 W68 执行，不得偷换满额', async () => {
-    const { resolveReviewBudgetCap } = await import('../../renderer/modules/factory/index.js');
+  test('旧审校预算值只作兼容输入，不得降级、硬停或进入 W68 控制流', async () => {
     const { evaluateBudgetCap } = await import('../../renderer/modules/factory/command-gate.js');
-    assert.equal(resolveReviewBudgetCap(0), 0);
-    assert.equal(resolveReviewBudgetCap('0'), 0);
-    assert.equal(resolveReviewBudgetCap(-1), 0);
-    for (const value of [undefined, null, '', 'bad']) assert.equal(resolveReviewBudgetCap(value), 32000);
-    assert.equal(evaluateBudgetCap({ capTokens: resolveReviewBudgetCap(0) }).status, 'stop');
+    for (const capTokens of [0, 1, 32000, Number.MAX_SAFE_INTEGER]) {
+      const state = evaluateBudgetCap({ capTokens, usedTokens: capTokens + 1, requestedRitual: 'full' });
+      assert.equal(state.status, 'ok');
+      assert.deepEqual(state.actions, []);
+      assert.equal(state.enforcement, 'provider-native');
+    }
 
     const text = await source('renderer/modules/factory/index.js');
-    assert(!/reviewBudgetCap\)?\s*\|\|\s*32000/.test(text), '执行路径仍会把显式 0 预算偷换成 32000');
-    assert.match(text, /budgetProfile:\s*\{\s*capTokens:\s*resolveReviewBudgetCap\(task\.reviewBudgetCap\)/);
-    assert.match(text, /budgetCap:\s*resolveReviewBudgetCap\(task\.reviewBudgetCap\)/);
-    assert.match(text, /capTokens:\s*resolveReviewBudgetCap\(result\.budget\?\.capTokens, resolveReviewBudgetCap\(task\.reviewBudgetCap\)\)/);
+    assert(!text.includes('resolveReviewBudgetCap'), '执行层仍保留产品 Token 预算解析器');
+    assert(!text.includes('reviewBudgetCap'), '新任务/执行/日志仍携带产品 Token 预算');
+    assert(!text.includes('advisoryBudgetTokens'), 'W68 仍收到产品预算参数');
   });
 
   test('忽略中断任务不再把磁盘状态伪造为 done，Desk 打开会先合并磁盘注册表', async () => {

@@ -22,6 +22,12 @@ describe('markdown→页本体（死转现状）', () => {
     assert.ok(src.includes('match(/\\[[\\s\\S]*\\]/)'), '必须宽容解析（剥围栏抓数组）');
     assert.ok(src.includes('skipConfirm'), 'autoConfirm 测试口必须有（原生确认框不阻塞自动化）');
     assert.ok(src.includes('AI 拆段完成'), '完工必须明白话报数');
+    assert.ok(src.includes('不设页数、每页要点数或文字长度限制'), '提示词必须把业务数量交还给内容');
+    assert.ok(src.includes("user: String(md || ''),"), '必须向 Provider 提交完整原文');
+    assert.ok(src.includes('for (const p of pages)') && src.includes('const bl = Array.isArray(p.bullets) ? p.bullets.filter(Boolean) : [];'),
+      '必须保留全部页和全部要点');
+    assert.doesNotMatch(src, /pages\.slice\(0,\s*12\)|bullets\s*\|\|\s*\[\]\)\.filter\(Boolean\)\.slice|String\(md\s*\|\|\s*''\)\.slice|String\(p\.title\)\.slice|String\(t\)\.slice/,
+      '不得按输入字符、页数、要点数或标题/正文字符截断');
   });
 });
 

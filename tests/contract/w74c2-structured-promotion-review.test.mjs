@@ -51,6 +51,17 @@ describe('W74c-2 结构化候选严格合同', () => {
     assert.throws(() => normalizeStructuredPromotionReviewRequest(reviewRequest(root, { sourceRef: { apiKey: 'secret' } })), /禁止 secret/);
   }));
 
+  test('长结构化候选、标题与理由不受本地字符帽影响', () => withProject(root => {
+    const marker = '候选尾部不可丢';
+    const markdown = `${'# 候选\n\n'}${'材料'.repeat(250_100)}${marker}`;
+    const title = `${'候选标题'.repeat(150)}标题尾部`;
+    const reason = `${'审阅理由'.repeat(350)}理由尾部`;
+    const normalized = normalizeStructuredPromotionReviewRequest(reviewRequest(root, { markdown, title, reason }));
+    assert.equal(normalized.markdown, markdown);
+    assert.equal(normalized.title, title);
+    assert.equal(normalized.reason, reason);
+  }));
+
   test('批准与驳回都登记 W74a 证据，但只有批准为 active，Promotion 账不含正文', async () => withProject(async root => {
     const ledger = new PromotionLedger();
     const ingestion = new IngestionPipeline();

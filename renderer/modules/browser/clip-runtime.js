@@ -25,7 +25,7 @@ async function imagePayload(url) {
 }
 
 async function localizeImages(page, { assetDir, stem, concurrency = 2 } = {}) {
-  const images = (Array.isArray(page?.images) ? page.images : []).filter(image => /^https?:/i.test(image?.src || image)).slice(0, 12);
+  const images = (Array.isArray(page?.images) ? page.images : []).filter(image => /^https?:/i.test(image?.src || image));
   if (!images.length) return [];
   await invoke('fs:mkdir', { path: assetDir });
   const results = await runPool(images, async (image, index) => {
@@ -37,36 +37,62 @@ async function localizeImages(page, { assetDir, stem, concurrency = 2 } = {}) {
     await invoke('fs:writeFileBase64', { path: absolutePath, base64: payload.base64 });
     return {
       alt: image.alt || `页面图片 ${index + 1}`, source: src, relativePath: `assets/${filename}`,
+      localized: true,
       // 工作区协议避免绝对盘符：LAN 同步到另一台电脑后仍按对端工作区根开图。
       markdownPath: `mazz-res://workspace/${encodeURIComponent(`网页剪藏/assets/${filename}`)}`,
     };
   }, { concurrency });
-  return results.filter(result => result.ok).map(result => result.value);
+  return results.map((result, index) => result.ok ? result.value : {
+    alt: images[index]?.alt || `页面图片 ${index + 1}`,
+    source: images[index]?.src || images[index],
+    localized: false,
+    error: result.error,
+  });
 }
 
-async function maybeVisionOcr(page, { viewId } = {}) {
+async function maybeVisionOcr(page, { viewId, concurrency = 2 } = {}) {
   if (!shouldUseVision(page)) return { text: '', used: false };
   try {
     const cfg = await getProviderConfig('vision');
     if (!providerReady(cfg)) return { text: '', used: false, reason: '未配置视觉模型' };
-    let dataUrl = '';
+    const sources = [];
     if (viewId) {
       const png = await invoke('bv:capture', { tabId: viewId }).catch(() => null);
-      if (png) dataUrl = `data:image/png;base64,${png}`;
+      if (png) sources.push({
+        label: '网页截图',
+        dataUrl: `data:image/png;base64,${png}`,
+      });
     }
-    if (!dataUrl) {
-      const first = page.images?.[0];
-      if (first) {
-        const payload = await imagePayload(first.src || first);
+    for (const [index, image] of (Array.isArray(page?.images) ? page.images : []).entries()) {
+      const src = image?.src || image;
+      if (!/^https?:/i.test(src || '')) continue;
+      sources.push({ label: image?.alt || `页面图片 ${index + 1}`, src });
+    }
+    if (!sources.length) return { text: '', used: false, reason: '没有可识别的页面图像' };
+    const results = await runPool(sources, async (source, index) => {
+      let dataUrl = source.dataUrl || '';
+      if (!dataUrl) {
+        const payload = await imagePayload(source.src);
         dataUrl = `data:${payload.mime};base64,${payload.base64}`;
       }
-    }
-    if (!dataUrl) return { text: '', used: false, reason: '没有可识别的页面图像' };
-    const text = await visionChat({
-      cfg, role: 'vision', imageDataUrl: dataUrl, maxTokens: 6000,
-      prompt: 'MAZZ_WEB_CLIP_OCR_V1\n请按阅读顺序精确识别这张网页截图中的正文。保留标题、段落与表格；不要解释、评价或补写，不要输出导航栏和广告。',
-    });
-    return { text: String(text || '').trim(), used: true };
+      const text = String(await visionChat({
+        cfg, role: 'vision', imageDataUrl: dataUrl,
+        prompt: `MAZZ_WEB_CLIP_OCR_V1\n这是待处理的第 ${index + 1}/${sources.length} 张图（${source.label}）。请按阅读顺序精确识别其中的正文。保留标题、段落与表格；不要解释、评价或补写，不要输出导航栏和广告。`,
+      }) || '').trim();
+      if (!text) throw new Error('视觉模型未返回可用文字');
+      return { label: source.label, text };
+    }, { concurrency });
+    const blocks = results.flatMap(result => result.ok
+      ? [`### ${String(result.value.label || '页面图片').replace(/[\r\n]+/g, ' ').trim()}`, '', result.value.text, '']
+      : []);
+    const failures = results.filter(result => !result.ok).map(result => result.error);
+    return {
+      text: blocks.join('\n').trim(),
+      used: blocks.length > 0,
+      processed: sources.length,
+      failed: failures.length,
+      reason: failures.length ? failures.join('；') : '',
+    };
   } catch (error) {
     return { text: '', used: false, reason: error?.message || String(error) };
   }
@@ -83,11 +109,17 @@ export function createClipRuntime({ ctl, toast } = {}) {
     try {
       const [assets, ocr] = await Promise.all([
         localizeImages(page, { assetDir, stem: unique.stem, concurrency: imageConcurrency }),
-        maybeVisionOcr(page, { viewId }),
+        maybeVisionOcr(page, { viewId, concurrency: imageConcurrency }),
       ]);
-      const markdown = buildClipMarkdown({ page, assets, ocrText: ocr.text });
+      const markdown = buildClipMarkdown({ page, assets, ocrText: ocr.text, ocrNotice: ocr.reason });
       await invoke('fs:writeFile', { path: unique.path, content: markdown });
-      return { ...unique, title: page.title || unique.stem, assets: assets.length, ocr: ocr.used, ocrReason: ocr.reason || '', markdown };
+      const localizedAssets = assets.filter(asset => asset.localized !== false).length;
+      const imageFailures = assets.filter(asset => asset.localized === false).map(asset => ({ source: asset.source, error: asset.error }));
+      return {
+        ...unique, title: page.title || unique.stem,
+        assets: assets.length, localizedAssets, imageFailures,
+        ocr: ocr.used, ocrProcessed: ocr.processed || 0, ocrFailed: ocr.failed || 0, ocrReason: ocr.reason || '', markdown,
+      };
     } finally { reservedClipPaths.delete(unique.path); }
   }
 

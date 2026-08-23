@@ -71,11 +71,11 @@ describe('创作插件库（原版移植）', () => {
 });
 
 describe('嵌入资料块（最高优先级）', () => {
-  test('含优先级声明与文件清单，超长截断', () => {
+  test('含优先级声明与文件清单，长资料完整注入', () => {
     const s = eng.buildEmbedBlocks([{ name: '大纲.md', text: '甲'.repeat(9000) }]);
     assert(s.includes('最高优先级'), '缺优先级声明');
     assert(s.includes('大纲.md'), '缺文件名');
-    assert(s.length < 9200, '未截断');
+    assert(s.includes('甲'.repeat(9000)), '长资料不得被产品侧截断');
   });
   test('空嵌入返回空串', () => assert(eng.buildEmbedBlocks([]) === '', '应为空串'));
 });
@@ -89,7 +89,7 @@ describe('全书蓝图 prompt 与校验', () => {
     });
     assert(p.includes('测试之书') && p.includes('何为人性') && p.includes('科幻'), '缺核心信息');
     assert(p.includes('风格包内容') && p.includes('插件规则A') && p.includes('嵌入块内容'), '缺增强块');
-    assert(p.includes('恰好是12章'), '缺章节约束');
+    assert(p.includes('12 章仅作结构规划参考') && !p.includes('恰好'), '章节数只能作参考，不能形成硬约束');
     assert(p.includes('创作启动指令'), '缺启动指令要求');
   });
   test('max 模式章节约束不同', () => {
@@ -98,7 +98,7 @@ describe('全书蓝图 prompt 与校验', () => {
     assert(!p.includes('恰好是'), 'max 模式不应有固定章数');
   });
   test('blueprintStructureOk 正反例', () => {
-    const good = '# 蓝图\n故事标题 简介 核心价值 主角 配角 世界观 三幕 章节 文风 节奏';
+    const good = '# 蓝图\n第1章：降临\n## 创作启动指令';
     assert(eng.blueprintStructureOk(good), '完整蓝图应通过');
     assert(!eng.blueprintStructureOk('随便两句话'), '碎片不应通过');
     assert(!eng.blueprintStructureOk(''), '空不应通过');
@@ -109,11 +109,11 @@ describe('全书蓝图 prompt 与校验', () => {
     assert(out.length === 3, '应解析 3 章，实际 ' + out.length);
     assert(out[0].includes('降临'), '首章内容错误');
     const fb = eng.parseChapterOutlines('没有任何大纲', 5);
-    assert(fb.length === 5, '退化应给 5 章占位');
+    assert(fb.length === 0, '不得按旧 fallbackCount 补造固定数量单元');
     // 散文句防误匹配（原版场景式蓝图真实案例：'第一人称有限视角让读者…'）
     const prose = '### 视角\n第一人称有限视角让读者能亲历全过程，是最合适的\n一些别的分析';
     const out2 = eng.parseChapterOutlines(prose, 4);
-    assert(out2.length === 4 && out2[0] === '第1章', '散文行不应误判为大纲：' + out2[0]);
+    assert(out2.length === 0, '散文行不应误判，也不得补造固定数量大纲：' + out2[0]);
   });
   test('蓝图核心/启动指令切分', () => {
     const longCore = '设定A' + '世界观细节。'.repeat(60); // 超过 200 字才不触发全文退化
@@ -122,9 +122,9 @@ describe('全书蓝图 prompt 与校验', () => {
     assert(!eng.extractBlueprintCore(bp).includes('规则B'), '核心不应含指令');
     const d = eng.extractWritingDirective(bp);
     assert(d.includes('规则B') && d.includes('规则C'), '指令提取失败');
-    // 核心过短（<200字）退化为全文——防止 AI 只输出指令时核心丢失
+    // 核心不再因产品侧字符阈值退化为全文。
     const short = '设定很短\n## 创作启动指令\n规则B';
-    assert(eng.extractBlueprintCore(short).includes('规则B'), '短核心应退化全文');
+    assert(!eng.extractBlueprintCore(short).includes('规则B'), '短核心不得因字符阈值混入启动指令');
   });
   test('stripMdFence 去围栏', () => {
     assert(eng.stripMdFence('```markdown\n# 甲\n```') === '# 甲', 'markdown 围栏未去');
@@ -162,7 +162,7 @@ describe('文风包组装', () => {
     const pkg = assembleStylePackage({ traditional: '鲁迅', styleIds: ['a', 'b'], styles });
     assert(pkg.includes('鲁迅'), '缺手填参照');
     assert(pkg.includes('范文.txt') && pkg.includes('重点学对话') && pkg.includes('分析A'), '缺本地素材');
-    assert(pkg.includes('原文片段'), '本地素材缺原文片段');
+    assert(pkg.includes('**原文**') && pkg.includes('原文内容'.repeat(500)), '本地素材原文不得被裁剪');
     assert(pkg.includes('余华') && pkg.includes('分析B'), '缺在线素材');
   });
   test('空素材兜底文案', () => {

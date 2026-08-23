@@ -280,12 +280,11 @@ export function classifyFactoryCompletion({ finishReason = null, completionKind 
   return { safeToCommit: false, reason: 'missing-finish-reason' };
 }
 
-// DeepSeek v4 defaults to thinking mode.  Governed Factory seats need the
-// bounded token allowance for their final manuscript/JSON artifact; otherwise
-// reasoning_content can consume it completely and produce a length stop with
-// no committable content.  This never promotes reasoning_content—the request is
-// made direct-output instead, and the existing completion gate stays closed on
-// every non-stop or empty response.
+// DeepSeek v4 defaults to thinking mode. Governed Factory seats request a
+// tightly-scoped final manuscript/JSON artifact; implicit reasoning can consume
+// the provider's output window and leave no committable content. This never
+// promotes reasoning_content—the request is made direct-output instead, and the
+// completion gate stays closed on every non-stop or empty response.
 export const FACTORY_DIRECT_OUTPUT_ROLES = Object.freeze([
   'factory_skeleton',
   'factory_writer',
@@ -441,7 +440,7 @@ export async function chat(options) {
  * Revisions and review decisions must require safeToCommit before they replace
  * an artifact or open a seal gate.
  */
-export async function chatDetailed({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, signal }) {
+export async function chatDetailed({ cfg, role = '', system, user, temperature = 0.7, signal }) {
   cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
     const requestId = aiRequestId('chat');
@@ -449,7 +448,7 @@ export async function chatDetailed({ cfg, role = '', system, user, temperature =
       requestId,
       providerId: cfg.providerId || cfg.id || '', role,
       baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
-      system, user, temperature, maxTokens, detailed: true,
+      system, user, temperature, detailed: true,
     }, signal);
     if (!result || typeof result !== 'object') {
       return detailedCompletion(typeof result === 'string' ? result : '', {
@@ -458,11 +457,11 @@ export async function chatDetailed({ cfg, role = '', system, user, temperature =
     }
     return detailedCompletion(result.text, result);
   }
-  return await chatDirectDetailed({ cfg, role, system, user, temperature, maxTokens, signal });
+  return await chatDirectDetailed({ cfg, role, system, user, temperature, signal });
 }
 
 /** 网页预览直连（受目标 API CORS 限制，桌面端不走这里） */
-async function chatDirectDetailed({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, signal }) {
+async function chatDirectDetailed({ cfg, role = '', system, user, temperature = 0.7, signal }) {
   const url = joinProviderAiEndpoint(cfg.baseURL, 'chat/completions');
   const scope = createAbortScope({ signal, timeoutMs: 180000 });
   try {
@@ -476,7 +475,6 @@ async function chatDirectDetailed({ cfg, role = '', system, user, temperature = 
           { role: 'user', content: user },
         ],
         temperature,
-        max_tokens: maxTokens,
         stream: false,
         ...factoryProviderGenerationOptions({ ...cfg, role }),
       }),
@@ -522,7 +520,7 @@ export async function chatStream(options) {
  * The caller receives provider-native termination metadata and must commit only
  * when safeToCommit is true; interruption deliberately returns a partial, unsafe result.
  */
-export async function chatStreamDetailed({ cfg, role = '', system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
+export async function chatStreamDetailed({ cfg, role = '', system, user, temperature = 0.7, onChunk, shouldStop, signal }) {
   cfg = await routedConfig(cfg, role);
   if (window.mazz?.isElectron) {
     if (signal?.aborted || shouldStop?.()) {
@@ -574,7 +572,8 @@ export async function chatStreamDetailed({ cfg, role = '', system, user, tempera
       });
       window.mazz.invoke('factory:aiChatStream', {
         requestId, baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
-        system, user, temperature, maxTokens,
+        providerId: cfg.providerId || cfg.id || '', role,
+        system, user, temperature,
       }).then(result => {
         if (!settled && result?.ok === false) {
           if (result.cancelled && result.reason !== 'timeout') finish(resolve, detailedCompletion(full, {
@@ -589,7 +588,7 @@ export async function chatStreamDetailed({ cfg, role = '', system, user, tempera
       }).catch(error => finish(reject, error));
     });
   }
-  return await chatStreamDirectDetailed({ cfg, system, user, temperature, maxTokens, onChunk, shouldStop, signal });
+  return await chatStreamDirectDetailed({ cfg, role, system, user, temperature, onChunk, shouldStop, signal });
 }
 
 function streamDeltaText(message) {
@@ -605,7 +604,7 @@ function normalizedStreamUsage(raw) {
 }
 
 /** 网页预览直连流式；EOF without a native completion marker is returned unsafe. */
-export async function chatStreamDirectDetailed({ cfg, system, user, temperature = 0.7, maxTokens = 8192, onChunk, shouldStop, signal }) {
+export async function chatStreamDirectDetailed({ cfg, role = '', system, user, temperature = 0.7, onChunk, shouldStop, signal }) {
   const url = joinProviderAiEndpoint(cfg.baseURL, 'chat/completions');
   const scope = createAbortScope({ signal, timeoutMs: 300000, shouldStop });
   let reader = null;
@@ -625,7 +624,7 @@ export async function chatStreamDirectDetailed({ cfg, system, user, temperature 
           ...(system ? [{ role: 'system', content: system }] : []),
           { role: 'user', content: user },
         ],
-        temperature, max_tokens: maxTokens, stream: true,
+        temperature, stream: true,
       }),
       signal: scope.signal,
     });
@@ -708,7 +707,7 @@ export async function chatStreamDirectDetailed({ cfg, system, user, temperature 
 }
 
 /** 多模态识别（vision）：图片 + 提示词 → 文本（OpenAI 兼容 vision 消息格式） */
-export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, temperature = 0.2, maxTokens = 4096, signal }) {
+export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, temperature = 0.2, signal }) {
   cfg = await routedConfig(cfg, role);
   const messages = [{
     role: 'user',
@@ -722,7 +721,7 @@ export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, t
     return await invokeCancelable('factory:aiChat', {
       requestId,
       baseURL: cfg.baseURL, apiKey: cfg.apiKey, model: cfg.model,
-      messages, temperature, maxTokens,
+      messages, temperature,
     }, signal);
   }
   // 网页桥直连
@@ -732,7 +731,7 @@ export async function visionChat({ cfg, role = 'vision', prompt, imageDataUrl, t
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + cfg.apiKey },
-      body: JSON.stringify({ model: cfg.model, messages, temperature, max_tokens: maxTokens, stream: false }),
+      body: JSON.stringify({ model: cfg.model, messages, temperature, stream: false }),
       signal: scope.signal,
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}：${(await resp.text().catch(() => '')).slice(0, 300)}`);
@@ -749,7 +748,7 @@ export async function extractFields({ cfg, tpl, dump }) {
     const schema = tpl.input_fields.map(f => `- ${f.id}（${f.label}${f.required ? '，必填' : ''}）`).join('\n');
     const sys = '你是需求分析助手。从用户的原始想法中提取要素，只输出 JSON 对象，键为字段 id，值为字符串。不确定的字段留空字符串。不要输出其他内容。';
     const usr = `字段清单：\n${schema}\n\n用户想法：\n${dump}`;
-    const text = await chat({ cfg, role: 'blueprint', system: sys, user: usr, temperature: 0.2, maxTokens: 2000 });
+    const text = await chat({ cfg, role: 'blueprint', system: sys, user: usr, temperature: 0.2 });
     const m = /\{[\s\S]*\}/.exec(text);
     if (m) { try { return JSON.parse(m[0]); } catch {} }
     throw new Error('智能填充解析失败，请手动填写');

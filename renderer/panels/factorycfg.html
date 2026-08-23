@@ -51,24 +51,14 @@
   .project-field-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:8px; }
   .project-field-row .project-field { margin-bottom:0; }
   .project-field-row .btn { min-height:32px; margin-bottom:1px; }
-  .length-fieldset { min-width:0; margin:0; padding:0; border:0; }
-  .length-fieldset > legend { width:100%; padding:0; }
-  .length-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
-  .length-card { min-width:0; min-height:56px; border:1px solid var(--border); border-radius:9px; background:var(--bg); color:var(--fg); padding:8px 7px; cursor:pointer; text-align:left; font-family:var(--font-ui); }
-  .length-card b, .length-card span { display:block; }
-  .length-card span { color:var(--fg-dim); font-size:10.5px; margin-top:2px; }
-  .length-card.on { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
-  .length-card:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-  .length-card:disabled { opacity:.58; cursor:not-allowed; }
   .length-custom { min-height:18px; margin-top:5px; color:var(--fg-dim); font-size:11px; }
   .length-custom.on { color:var(--accent); font-weight:600; }
   .smart-row { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:end; gap:7px; margin-top:10px; color:var(--fg-dim); }
   .smart-row label, .smart-label { display:block; font-size:11px; }
   .smart-row input { width:100%; display:block; margin-top:3px; }
   .smart-output { min-height:31px; display:flex; align-items:center; margin-top:3px; border:1px solid var(--border); border-radius:7px; padding:6px 8px; background:var(--bg); color:var(--fg); font:12.5px var(--font-ui); }
-  .word-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
-  .word-chips button, .choice-chip { border:1px solid var(--border); border-radius:999px; padding:3px 9px; background:var(--bg); color:var(--fg-dim); font:11px var(--font-ui); cursor:pointer; }
-  .word-chips button.on, .choice-chip.on { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+  .choice-chip { border:1px solid var(--border); border-radius:999px; padding:3px 9px; background:var(--bg); color:var(--fg-dim); font:11px var(--font-ui); cursor:pointer; }
+  .choice-chip.on { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
   .lbl { display:block; color:var(--fg-dim); font-size:11.5px; }
   .ta { width:100%; margin-top:4px; resize:vertical; border:1px solid var(--border); background:var(--bg); color:var(--fg); border-radius:7px; padding:6px 8px; font:12.5px/1.5 var(--font-ui); }
   .ta:focus { border-color:var(--accent); outline:none; }
@@ -126,16 +116,12 @@
     .service-status { display:none; }
     .head-settings { padding-inline:8px; }
     .project-head { display:none; }
-    .length-cards { gap:5px; }
     .project-plan { padding:10px; }
-    .length-card { min-height:48px; padding:5px; text-align:center; }
     .length-custom { min-height:14px; margin-top:2px; }
     .smart-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); gap:6px; margin-top:6px; }
     .smart-row > .equation { display:none; }
     .smart-row label { min-width:0; }
     .project-plan > .hint { margin-top:4px; }
-    .word-chips { flex-wrap:nowrap; overflow-x:auto; margin-top:4px; padding-bottom:2px; }
-    .word-chips button { flex:none; }
     .project-actions { bottom:0; gap:5px; margin-top:7px; padding-block:8px; }
     .project-actions .btn { min-width:0; padding-inline:5px; }
   }
@@ -175,7 +161,7 @@ function renderHead() {
   const status = providerStatusInfo();
   if (tab === 'project') {
     head.innerHTML = `
-      <div class="head-primary"><h1 class="head-title">新项目立项</h1><span class="head-subtitle">先定材料与篇幅，再进入智能创作执行台</span></div>
+      <div class="head-primary"><h1 class="head-title">新项目立项</h1><span class="head-subtitle">先定材料与结构；篇幅只作可选参考</span></div>
       <div class="head-actions"><span class="service-status" role="status"><i class="key-dot ${status.ready ? 'on' : ''}"></i>${esc(status.text)}</span><button type="button" class="btn head-settings" id="head-provider" data-t="provider" ${projectSubmitTxn ? 'disabled' : ''}>AI 服务设置</button></div>`;
   } else {
     const title = tab === 'provider' ? 'AI 服务设置' : '新建创作模板';
@@ -250,20 +236,22 @@ function isLengthOnlySnapshot(previous, next) {
   return !!previous && !!next && previous.genreId === next.genreId && snapshotWithoutLength(previous) === snapshotWithoutLength(next);
 }
 
-function matchingPreset(plan, presets) {
-  return (presets || []).find(p => p.id === plan.preset
-    && Number(p.totalWords || 0) === Number(plan.totalWords || 0)
-    && Number(p.wordsPerUnit || 0) === Number(plan.wordsPerUnit || 0)) || null;
-}
-
-function formatPresetTotal(preset) {
-  if (preset.id === 'unlimited' || !Number(preset.totalWords)) return '不限';
-  const total = Number(preset.totalWords);
-  return total % 10000 === 0 ? `${total / 10000}万字` : `${total.toLocaleString('zh-CN')}字`;
-}
-
 function chapterText(plan, unitName) {
-  return Number(plan.totalWords) > 0 ? `${Math.ceil(Number(plan.totalWords) / Math.max(1, Number(plan.wordsPerUnit) || 1))}${unitName}` : '不限';
+  const total = Number(plan.totalWords);
+  const words = Number(plan.wordsPerUnit);
+  return total > 0 && words > 0 ? `约 ${Math.ceil(total / words)}${unitName}` : '由内容决定';
+}
+
+function optionalGuidanceNumber(value) {
+  const raw = String(value ?? '').trim();
+  const parsed = Number(raw);
+  return raw && Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0;
+}
+
+const legacyLengthFieldIds = new Set(['length', '篇幅', '篇幅长短', '每章字数', '目标总字数', 'totalWords', 'wordsPerUnit']);
+
+function isProjectContentField(field = {}) {
+  return field.uiOwner !== 'lengthPlan' && !legacyLengthFieldIds.has(String(field.id || ''));
 }
 
 function captureProjectView() {
@@ -359,18 +347,18 @@ function makeRequestId() {
 function submitProject(mode) {
   const m = $('#m');
   const form = $('#pj-form');
-  const plan = projectSnapshot?.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000 };
+  const plan = projectSnapshot?.lengthPlan || { preset: 'custom', totalWords: 0, wordsPerUnit: 0 };
   const retryTxn = projectSubmitTxn?.retryable ? projectSubmitTxn : null;
   if (!form || (projectSubmitTxn && !retryTxn)) return;
   const submitMode = retryTxn?.mode || mode;
   if (!form.reportValidity()) {
-    showProjectStatus('请补齐必填项，并检查字数范围。', 'err');
+    showProjectStatus('请补齐必填项，并检查字段格式。', 'err');
     return;
   }
   const values = { ...projectValues };
   m.querySelectorAll('[data-p-field]').forEach(el => { values[el.dataset.pField] = el.value; });
-  const total = $('#pj-total').disabled ? 0 : Math.max(1, +$('#pj-total').value || plan.totalWords || 1);
-  const words = Math.max(100, +$('#pj-words').value || plan.wordsPerUnit || 100);
+  const total = $('#pj-total').disabled ? 0 : optionalGuidanceNumber($('#pj-total').value);
+  const words = optionalGuidanceNumber($('#pj-words').value);
   const draft = {
     values, dump: $('#pj-dump').value,
     preset: plan.preset,
@@ -378,7 +366,6 @@ function submitProject(mode) {
     wordsPerUnit: words,
     dualLoop: $('#pj-dual').checked, maxMode: $('#pj-max').checked,
     reviewRitual: $('#pj-review-ritual').value,
-    reviewBudgetCap: Math.max(0, +$('#pj-review-budget').value || 32000),
     autoPreview: $('#pj-autopreview').checked,
     concurrency: +$('#pj-concurrency').value || 1,
     exportFmt: $('#pj-format').value,
@@ -396,41 +383,28 @@ function submitProject(mode) {
   }).catch(error => finishProjectSubmit({ requestId, ok: false, message: '立项提交失败：' + (error?.message || error) }));
 }
 
-function updateLengthPreview(clearPreset = true) {
+function updateLengthPreview() {
   const s = projectSnapshot;
-  const total = $('#pj-total')?.disabled ? 0 : Math.max(0, +$('#pj-total')?.value || 0);
-  const words = Math.max(1, +$('#pj-words')?.value || 1);
+  const total = $('#pj-total')?.disabled ? 0 : optionalGuidanceNumber($('#pj-total')?.value);
+  const words = optionalGuidanceNumber($('#pj-words')?.value);
   const output = $('#pj-chapters');
-  if (output) output.textContent = total > 0 ? `${Math.ceil(total / words)}${s?.unitName || '章'}` : '不限';
-  if (clearPreset) {
-    document.querySelectorAll('[data-preset]').forEach(button => { button.classList.remove('on'); button.setAttribute('aria-pressed', 'false'); });
-    $('#pj-length-custom')?.classList.add('on');
-    if ($('#pj-length-custom')) $('#pj-length-custom').textContent = '自定义篇幅';
-  }
-  document.querySelectorAll('[data-words]').forEach(button => button.classList.toggle('on', +button.dataset.words === words));
+  if (output) output.textContent = total > 0 && words > 0 ? `约 ${Math.ceil(total / words)}${s?.unitName || '章'}` : '由内容决定';
+  $('#pj-length-custom')?.classList.add('on');
 }
 
 function updateProjectLengthState(snapshot) {
   if (!$('#pj-form')) { renderProject(); return; }
-  const plan = snapshot.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000, maxChapters: 5 };
-  const presets = snapshot.lengthPresets || [];
-  const activePreset = matchingPreset(plan, presets);
+  const plan = snapshot.lengthPlan || { preset: 'custom', totalWords: 0, wordsPerUnit: 0, maxChapters: 0 };
   const total = $('#pj-total');
   const words = $('#pj-words');
   const unlimited = plan.preset === 'unlimited' && Number(plan.totalWords) === 0;
   if (total && document.activeElement !== total) total.value = unlimited ? '' : String(plan.totalWords || '');
   if (total) total.disabled = unlimited;
   if (words && document.activeElement !== words) words.value = String(plan.wordsPerUnit || '');
-  document.querySelectorAll('[data-preset]').forEach(button => {
-    const on = button.dataset.preset === activePreset?.id;
-    button.classList.toggle('on', on);
-    button.setAttribute('aria-pressed', on ? 'true' : 'false');
-  });
   const custom = $('#pj-length-custom');
-  if (custom) { custom.classList.toggle('on', !activePreset); custom.textContent = activePreset ? '选择预设后仍可微调' : '自定义篇幅'; }
+  if (custom) { custom.classList.add('on'); custom.textContent = '可选参考；留空即由内容决定'; }
   const output = $('#pj-chapters');
   if (output) output.textContent = chapterText(plan, snapshot.unitName || '章');
-  document.querySelectorAll('[data-words]').forEach(button => button.classList.toggle('on', +button.dataset.words === Number(plan.wordsPerUnit)));
 }
 
 function renderProject() {
@@ -439,10 +413,8 @@ function renderProject() {
   if (!s) { m.innerHTML = '<div class="hint" role="status">正在读取智能创作立项状态…</div>'; return; }
   const view = captureProjectView();
   const advancedOpen = view.advancedOpen;
-  const plan = s.lengthPlan || { preset: 'short', totalWords: 10000, wordsPerUnit: 2000, maxChapters: 5 };
-  const presets = s.lengthPresets || [];
-  const activePreset = matchingPreset(plan, presets);
-  const visibleFields = (s.fields || []).filter(field => field.uiOwner !== 'lengthPlan');
+  const plan = s.lengthPlan || { preset: 'custom', totalWords: 0, wordsPerUnit: 0, maxChapters: 0 };
+  const visibleFields = (s.fields || []).filter(isProjectContentField);
   const unitName = s.unitName || '章';
   const unlimited = plan.preset === 'unlimited' && Number(plan.totalWords) === 0;
   const busy = !!projectSubmitTxn;
@@ -466,30 +438,24 @@ function renderProject() {
           <div class="acts"><button type="button" class="btn" id="pj-fill">智能填充到字段</button></div>
         </section>
         <aside class="project-card project-plan" aria-labelledby="pj-length-title">
-          <fieldset class="length-fieldset"><legend class="project-title" id="pj-length-title">篇幅与内容单元</legend>
-            <div class="length-cards">${presets.map(p => {
-              const on = p.id === activePreset?.id;
-              const disabled = p.id === 'unlimited' && !s.unlimitedAllowed;
-              return `<button type="button" class="length-card ${on ? 'on' : ''}" data-preset="${attr(p.id)}" aria-pressed="${on ? 'true' : 'false'}" aria-label="${attr(`${p.label}，${formatPresetTotal(p)}`)}" ${disabled ? 'disabled title="当前文体不可无限连写"' : ''}><b>${esc(p.label)}</b><span>${esc(formatPresetTotal(p))}</span></button>`;
-            }).join('')}</div>
-          </fieldset>
-          <div class="length-custom ${activePreset ? '' : 'on'}" id="pj-length-custom" aria-live="polite">${activePreset ? '选择预设后仍可微调' : '自定义篇幅'}</div>
+          <div class="project-title" id="pj-length-title">篇幅参考与内容单元</div>
+          <div class="length-custom on" id="pj-length-custom" aria-live="polite">可选参考；留空即由内容决定</div>
+          <div class="inline-row project-mode"><span>创作方式</span><label><input id="pj-max" type="checkbox" ${s.maxMode ? 'checked' : ''}> 连写（关闭即单篇）</label></div>
           <div class="smart-row">
-            <label for="pj-total">目标总字数<input id="pj-total" class="inp" type="number" min="1" step="1" value="${unlimited ? '' : plan.totalWords || ''}" ${unlimited ? 'disabled' : 'required aria-required="true"'}></label><span class="equation" aria-hidden="true">÷</span>
-            <label for="pj-words">每${esc(unitName)}目标<input id="pj-words" class="inp" type="number" min="100" step="1" value="${plan.wordsPerUnit}" required aria-required="true"></label><span class="equation" aria-hidden="true">=</span>
-            <div class="smart-cell"><span class="smart-label" id="pj-chapters-label">预计${esc(unitName)}数</span><output id="pj-chapters" class="smart-output" aria-labelledby="pj-chapters-label" aria-describedby="pj-chapter-rule" aria-live="polite">${esc(chapterText(plan, unitName))}</output></div>
+            <label for="pj-total">参考总字数（可选）<input id="pj-total" class="inp" type="number" step="1" value="${unlimited ? '' : plan.totalWords || ''}" placeholder="不指定" ${unlimited ? 'disabled' : ''}></label><span class="equation" aria-hidden="true">÷</span>
+            <label for="pj-words">每${esc(unitName)}参考（可选）<input id="pj-words" class="inp" type="number" step="1" value="${plan.wordsPerUnit || ''}" placeholder="不指定"></label><span class="equation" aria-hidden="true">=</span>
+            <div class="smart-cell"><span class="smart-label" id="pj-chapters-label">规划${esc(unitName)}数</span><output id="pj-chapters" class="smart-output" aria-labelledby="pj-chapters-label" aria-describedby="pj-chapter-rule" aria-live="polite">${esc(chapterText(plan, unitName))}</output></div>
           </div>
-          <div class="hint" id="pj-chapter-rule">向上取整，末${esc(unitName)}按剩余字数安排。</div>
-          <div class="word-chips" aria-label="每${esc(unitName)}目标字数快捷值">${(s.wordsPerUnitChips || []).map(n => `<button type="button" class="${n === plan.wordsPerUnit ? 'on' : ''}" data-words="${n}">${n} 字/${esc(unitName)}</button>`).join('')}</div>
+          <div class="hint" id="pj-chapter-rule">数值只用于预览内容单元规划；生成与验收不会按字数、字符数、段数或对话比例卡住。</div>
           <div class="project-actions"><button type="button" class="btn" id="pj-copy" ${busy ? 'disabled' : ''}>复制模板母版</button><button type="button" class="btn" id="pj-add" ${busy ? 'disabled' : ''}>加入队列</button><button type="submit" class="btn pri" id="pj-generate" ${busy ? 'disabled' : ''}>立刻开工</button></div>
           <div class="project-status ${projectNotice.tone}" id="pj-status" role="status" aria-live="polite">${esc(projectNotice.message)}</div>
           <label class="lbl" for="pj-batch" style="margin-top:10px">批量书名名单（可选；一行一本，共用本表设置）</label>
           <textarea id="pj-batch" class="ta" rows="3" placeholder="星海回声\n月面来信\n北向洋流">${esc(projectBatch)}</textarea>
-          <div class="hint">31～100 本会先给出软提示；超过 100 本拒绝入队。</div>
+          <div class="hint">所有格式合法的书名都会入队；数量只影响实际执行时间。</div>
           <details class="advanced" ${advancedOpen ? 'open' : ''}>
             <summary>高级设置</summary>
             <div class="advanced-body">
-              <div class="inline-row"><label><input id="pj-dual" type="checkbox" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label><input id="pj-max" type="checkbox" ${s.maxMode ? 'checked' : ''}> 连写模式</label><label>交叉审校 <select id="pj-review-ritual" class="sel"><option value="light" ${(s.reviewRitual || 'light') === 'light' ? 'selected' : ''}>标准流程</option><option value="full" ${s.reviewRitual === 'full' ? 'selected' : ''}>完整流程</option></select></label><label>审校预算 <input id="pj-review-budget" class="inp" type="number" min="8000" step="1000" value="${s.reviewBudgetCap || 32000}" style="width:90px"> token</label><label><input id="pj-autopreview" type="checkbox" ${s.autoPreview !== false ? 'checked' : ''}> 生成自动开预览</label><label>并发 <select id="pj-concurrency" class="sel" title="同时运行的独立任务数；默认 1">${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === (s.concurrency || 1) ? 'selected' : ''}>${n} 路</option>`).join('')}</select></label><label>导出 <select id="pj-format" class="sel">${(s.exportFormats || []).map(x => `<option value="${attr(x.id)}" ${x.id === s.exportFmt ? 'selected' : ''}>.${esc(x.ext)}</option>`).join('')}</select></label></div>
+              <div class="inline-row"><label><input id="pj-dual" type="checkbox" ${s.dualLoop ? 'checked' : ''}> 旧任务快速勘误</label><label>交叉审校 <select id="pj-review-ritual" class="sel"><option value="light" ${(s.reviewRitual || 'light') === 'light' ? 'selected' : ''}>标准流程</option><option value="full" ${s.reviewRitual === 'full' ? 'selected' : ''}>完整流程</option></select></label><label><input id="pj-autopreview" type="checkbox" ${s.autoPreview !== false ? 'checked' : ''}> 生成自动开预览</label><label>并发 <select id="pj-concurrency" class="sel" title="同时运行的独立任务数；默认 1">${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === (s.concurrency || 1) ? 'selected' : ''}>${n} 路</option>`).join('')}</select></label><label>导出 <select id="pj-format" class="sel">${(s.exportFormats || []).map(x => `<option value="${attr(x.id)}" ${x.id === s.exportFmt ? 'selected' : ''}>.${esc(x.ext)}</option>`).join('')}</select></label></div>
               <div class="sec">创作插件 <button type="button" class="btn" data-pa="plugcfg">配置字段</button></div>
               <div class="chip-row">${(s.extras?.plugins || []).map(x => `<button type="button" class="choice-chip ${x.on ? 'on' : ''}" data-pa="togglePlugin" data-id="${attr(x.id)}">${esc(x.name)}</button>`).join('') || '<span class="hint">当前文体无插件</span>'}</div>
               <div class="sec">文风素材 <button type="button" class="btn" data-pa="styleup">上传</button> <button type="button" class="btn" data-pa="styleonline">在线查询</button></div>
@@ -515,20 +481,13 @@ function renderProject() {
   $('#pj-dump').addEventListener('input', e => { projectDump = e.target.value; projectAct('setDump', { v: e.target.value }); });
   $('#pj-batch').addEventListener('input', e => { projectBatch = e.target.value; });
   $('#pj-fill').addEventListener('click', () => projectAct('fill'));
-  m.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => projectAct('setLengthPreset', { preset: button.dataset.preset })));
-  m.querySelectorAll('[data-words]').forEach(button => button.addEventListener('click', () => {
-    $('#pj-words').value = button.dataset.words;
-    updateLengthPreview(true);
-    projectAct('setWordsPerUnit', { value: +button.dataset.words });
-  }));
-  $('#pj-total').addEventListener('input', () => updateLengthPreview(true));
-  $('#pj-words').addEventListener('input', () => updateLengthPreview(true));
+  $('#pj-total').addEventListener('input', () => updateLengthPreview());
+  $('#pj-words').addEventListener('input', () => updateLengthPreview());
   $('#pj-total').addEventListener('change', e => projectAct('setTotalWords', { value: +e.target.value }));
   $('#pj-words').addEventListener('change', e => projectAct('setWordsPerUnit', { value: +e.target.value }));
   $('#pj-dual').addEventListener('change', e => projectAct('setFlag', { k: 'dualLoop', v: e.target.checked }));
   $('#pj-max').addEventListener('change', e => projectAct('setFlag', { k: 'maxMode', v: e.target.checked }));
   $('#pj-review-ritual').addEventListener('change', e => projectAct('setReviewRitual', { value: e.target.value }));
-  $('#pj-review-budget').addEventListener('change', e => projectAct('setReviewBudget', { value: +e.target.value }));
   $('#pj-autopreview').addEventListener('change', e => projectAct('setAutoPreview', { value: e.target.checked }));
   $('#pj-concurrency').addEventListener('change', e => projectAct('setConcurrency', { value: +e.target.value }));
   $('#pj-format').addEventListener('change', e => projectAct('setExportFmt', { value: e.target.value }));
@@ -614,7 +573,7 @@ async function renderProvider() {
   g('#pv-test').addEventListener('click', async () => {
     g('#pv-status').textContent = '测试中…';
     try {
-      await window.mazz.invoke('factory:aiChat', { baseURL: g('#pv-base').value.trim(), apiKey: g('#pv-key').value, model: g('#pv-model').value.trim(), system: '你是助手', user: '用四个字回答：连接正常', maxTokens: 32 });
+      await window.mazz.invoke('factory:aiChat', { baseURL: g('#pv-base').value.trim(), apiKey: g('#pv-key').value, model: g('#pv-model').value.trim(), system: '你是助手', user: '请回答：连接正常' });
       g('#pv-status').textContent = '✓ 连接正常';
     } catch (e) { g('#pv-status').textContent = '✗ ' + (e.message || e); }
   });
@@ -652,14 +611,11 @@ function renderGenre() {
     <div class="set-row"><label for="ge-name">名称 <b class="required-mark">*</b></label><input id="ge-name" class="inp" placeholder="护理记录" required></div>
     <div class="set-row"><label for="ge-desc">描述</label><input id="ge-desc" class="inp" placeholder="简短说明"></div>
     <label class="sec" for="ge-fields">输入字段（每行一个：标签|类型|必填。类型：text/textarea/select）</label>
-    <textarea id="ge-fields" rows="4" class="inp" spellcheck="false">患者姓名|text|必填
-护理要点|textarea|必填
-记录类型|text|选填</textarea>
+    <textarea id="ge-fields" rows="4" class="inp" spellcheck="false" placeholder="例如：主题|text|必填\n核心材料|textarea|必填"></textarea>
     <label class="sec" for="ge-sys">系统提示词（角色与文风要求）</label>
-    <textarea id="ge-sys" rows="3" class="inp" spellcheck="false">你是一名资深…</textarea>
-    <label class="sec" for="ge-checks">质量校验（每行一条：描述|规则:值，如 不少于500字|minLength:500）</label>
-    <textarea id="ge-checks" rows="3" class="inp" spellcheck="false">不少于 500 字|minLength:500
-必须包含签名|contains:签名</textarea>
+    <textarea id="ge-sys" rows="3" class="inp" spellcheck="false" placeholder="描述专业角色、受众和定性写作要求"></textarea>
+    <label class="sec" for="ge-checks">质量校验（每行一条：描述|规则:值。字数/段数/对话比例规则不作为门禁）</label>
+    <textarea id="ge-checks" rows="3" class="inp" spellcheck="false" placeholder="例如：必须包含签名|contains:签名"></textarea>
     <div class="acts"><button type="button" class="btn pri" id="ge-save">保存到工作区</button></div>
     <div id="ge-status" class="hint" role="status" aria-live="polite"></div></section>`;
   const g = (id) => m.querySelector(id);
@@ -673,13 +629,13 @@ function renderGenre() {
     const checks = g('#ge-checks').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
       const [label, rule] = l.split('|').map(x => x.trim());
       const [r, v] = (rule || '').split(':');
-      return { label, rule: r || 'minLength', value: isNaN(+v) ? v : +v };
+      return { label, rule: r || 'contains', value: v === undefined || v === '' ? '' : (isNaN(+v) ? v : +v) };
     });
     const tpl = {
       id: 'custom_' + name, name, description: g('#ge-desc').value.trim(),
       input_fields: fields.length ? fields : [{ id: 'f_需求', label: '需求', type: 'textarea', required: true }],
       system_prompt: g('#ge-sys').value.trim() || '你是一名资深写作专家。',
-      meta_vars: {}, output_rules: { format: 'markdown', max_length: 3000 },
+      meta_vars: {}, output_rules: { format: 'markdown' },
       quality_checks: checks,
     };
     window.mazz.invoke('panel:action', { type: 'genreSave', tpl }).catch(() => {});

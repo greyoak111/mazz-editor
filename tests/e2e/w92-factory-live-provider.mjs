@@ -185,10 +185,6 @@ const watchProcess = processHandle => {
       system: '你是连接检测助手。',
       user: '只回复“连接正常”，不要补充其他内容。',
       temperature: 0,
-      // Reasoning-capable models may consume an internal budget before they
-      // emit final content.  A tiny 24-token cap tests truncation, not provider
-      // connectivity, so the live ping owns a bounded but realistic allowance.
-      maxTokens: 4096,
     });
     if (completion?.safeToCommit !== true) {
       throw new Error(`真实 Provider 连通请求没有安全终态（finish_reason=${completion?.finishReason || 'missing'}）`);

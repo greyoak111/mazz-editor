@@ -145,12 +145,13 @@ export function reconcileMonthlyUsage(values = [], { month = '', quotaTokens = n
   for (const row of rows) if (row.amount != null) amountsByKind[row.kind][row.currency] = (amountsByKind[row.kind][row.currency] || 0) + row.amount;
   const actualTokens = tokensByKind['provider-reported'];
   const quota = Number.isFinite(Number(quotaTokens)) && Number(quotaTokens) > 0 ? Number(quotaTokens) : null;
-  const quotaState = quota == null ? 'gray' : actualTokens >= quota ? 'blocked' : actualTokens / quota >= 0.85 ? 'warning' : 'ok';
+  // Provider usage is accounting evidence only. Product code must not turn token counts into a workflow gate.
+  const quotaState = quota == null ? 'gray' : 'tracked';
   return Object.freeze({
     schema: 'mazz.factory-monthly-reconciliation/v0', month: wantedMonth, recordCount: rows.length, tokensByKind, amountsByKind,
     estimatedVarianceTokens: actualTokens && tokensByKind.estimate ? actualTokens - tokensByKind.estimate : null,
     unknownCount: rows.filter(row => row.kind === 'unknown').length,
-    quota: { capTokens: quota, usedTokens: actualTokens, remainingTokens: quota == null ? null : Math.max(0, quota - actualTokens), state: quotaState, hardStopAuthorized: quotaState === 'blocked' },
+    quota: { capTokens: quota, usedTokens: actualTokens, remainingTokens: quota == null ? null : Math.max(0, quota - actualTokens), state: quotaState, hardStopAuthorized: false },
     note: 'estimate、Provider 实收与 settled actual 分栏；unknown 不补零，不把 Token 冒充货币。',
   });
 }

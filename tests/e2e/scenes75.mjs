@@ -12,11 +12,11 @@ export async function scenes75({ app, win, human, scenario, shotDir }) {
       await fp.reload();
       const tpl = fp.genres.find(g => /小说/.test(g.name)) || fp.genres[0];
       fp.genre = tpl;
-      fp.values = { 书名: 'W61a北向一号', 作品类型: '科幻', premise: '一名观测员追踪失落的北向洋流信号。', protagonist: '林澈，海洋观测员', 每章字数: '2000' };
+      fp.values = { 书名: 'W61a北向一号', 作品类型: '科幻', premise: '一名观测员追踪失落的北向洋流信号。', protagonist: '林澈，海洋观测员' };
       fp.dumpEl.value = 'W61a 只读预览实证';
       fp.setAutoPreview(true);
       const make = (id, label) => {
-        const t = fp.makeTask(false, 1);
+        const t = fp.makeTask(false, 0);
         t.id = id; t.label = label; t.values = { ...t.values, 书名: label, 作品类型: '科幻' }; t.autoPreview = true;
         return t;
       };

@@ -55,15 +55,31 @@ describe('W64 人格调谐、记忆、成本与观剧档', () => {
     assert.throws(() => normalizePersona({ ...persona, schema: 'bad' }), /schema|未冻结字段/);
   });
 
-  test('会话取回永不越过当前播放进度，成本估算可检查', () => {
+  test('会话取回永不越过当前播放进度，token 只认 Provider 实报', () => {
     const session = new CompanionSession({ mediaName: 'sample.mp4', mediaPath: 'D:/sample.mp4', now: () => '2026-08-19T10:00:00.000Z' });
     session.addMessage({ role: 'assistant', speaker: '甲', text: '前段', mediaTimeMs: 5_000 });
     session.addMessage({ role: 'assistant', speaker: '乙', text: '后段', mediaTimeMs: 50_000 });
     assert.deepEqual(session.contextAt(10_000).map(row => row.text), ['前段']);
     assert.deepEqual(estimateCompanionCost({ durationSeconds: 100, intervalSeconds: 25, inputTokens: 100, outputTokens: 50, pricePerMillion: 2 }), {
-      calls: 4, tokens: 600, estimatedCost: 0.0012, currency: 'provider-configured',
+      calls: 4, tokens: null, estimatedCost: null, accounting: 'provider-reported',
     });
   });
+
+  test('长消息、完整历史与归档正文不受本地字数/条数门限裁剪', () => withWorkspace(root => {
+    const longText = `开头-${'陪看原文'.repeat(6_000)}-尾部`;
+    const session = new CompanionSession({ mediaName: 'sample.mp4', mediaPath: 'D:/sample.mp4', now: () => '2026-08-19T10:00:00.000Z' });
+    for (let index = 0; index < 30; index++) session.addMessage({ role: 'user', speaker: '你', text: index === 0 ? longText : `消息${index}`, mediaTimeMs: index });
+    assert.equal(session.contextAt(100).length, 30, '不得只给模型最近 24 条');
+    assert.ok(session.contextAt(100)[0].text.endsWith('尾部'), '长消息尾部必须保留');
+
+    const service = new AccompanyService({ rootProvider: () => root });
+    const archived = service.archive(session.archivePayload('beat'));
+    const memory = service.memory({ mediaName: 'sample.mp4', mediaPath: 'D:/sample.mp4' });
+    assert.equal(memory.exists, true);
+    assert.equal(memory.text, memory.tail, '兼容 tail 不得再暗中只返回后 40k');
+    assert.ok(memory.text.includes(longText));
+    assert.equal(archived.messageCount, 30);
+  }));
 
   test('关窗观剧档原子追加，一剧一档多场保留完整对话', () => withWorkspace(root => {
     const service = new AccompanyService({ rootProvider: () => root });

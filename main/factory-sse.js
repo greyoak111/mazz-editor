@@ -5,9 +5,9 @@ const MAX_SSE_LINE_CHARS = 2 * 1024 * 1024;
 
 // DeepSeek v4 enables thinking by default.  For the professional Factory seats
 // the requested artifact is already a tightly-scoped final manuscript or JSON
-// decision, and the small per-seat output allowance belongs to that artifact.
-// Leaving implicit thinking enabled can spend the whole max_tokens budget in
-// reasoning_content and return finish_reason=length with empty content.  Keep
+// decision. Leaving implicit thinking enabled can spend the provider's output
+// window in reasoning_content and return finish_reason=length with empty
+// content. Keep
 // the policy deliberately narrow so ordinary chat/research calls retain the
 // provider default, while every governed Factory seat gets a direct final
 // answer.  reasoning_content remains private and is never used as a fallback.
