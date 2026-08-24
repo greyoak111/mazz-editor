@@ -3,6 +3,18 @@
 const chokidar = require('chokidar');
 const path = require('path');
 
+// Internal durability ledgers are not user-authored documents. Broadcasting
+// every atomic job/inbox write would repeatedly rebuild the file tree while a
+// Library acquisition is progressing. Keep the ignore predicate narrow:
+// actual books below `书库/` must continue to produce external-change events.
+function shouldIgnoreWatchPath(value) {
+  const normalized = String(value || '').replace(/\\/g, '/');
+  if (/(^|\/)\.git(?:\/|$)/i.test(normalized)) return true;
+  if (/(^|\/)node_modules(?:\/|$)/i.test(normalized)) return true;
+  if (/(^|\/)\.mazz\/temp(?:\/|$)/i.test(normalized)) return true;
+  return /(^|\/)书库\/\.resources(?:\/|$)/i.test(normalized);
+}
+
 class FileWatcher {
   constructor({
     bus,
@@ -130,8 +142,7 @@ class FileWatcher {
   _createWatcher(roots) {
     const watcher = this.watchFactory(roots, {
       ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-      depth: 8,
-      ignored: /(^|[/\\])\.(git|mazz[/\\]temp)|node_modules/,
+      ignored: shouldIgnoreWatchPath,
     });
     this.watcher = watcher;
     // 创建成功仍只是 starting；只有真实 ready 且无 fatal 才能转为 watching。
@@ -307,3 +318,4 @@ class FileWatcher {
   }
 }
 module.exports = FileWatcher;
+module.exports.shouldIgnoreWatchPath = shouldIgnoreWatchPath;

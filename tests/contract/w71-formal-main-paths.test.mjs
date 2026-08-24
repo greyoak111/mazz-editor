@@ -10,20 +10,26 @@ const settings = new Map();
 const files = new Map();
 let failWrites = false;
 let writeDelayMs = 0;
-let downloadListeners = 0;
+let acquisitionInboxListeners = 0;
 const dirtyStates = [];
 const titles = [];
 
 window.mazz = {
   isElectron: true,
   on(channel) {
-    if (channel === 'library:download') downloadListeners++;
-    return () => { if (channel === 'library:download') downloadListeners--; };
+    if (channel === 'library:acquisitionInboxReady') acquisitionInboxListeners++;
+    return () => { if (channel === 'library:acquisitionInboxReady') acquisitionInboxListeners--; };
   },
   async invoke(channel, payload = {}) {
     if (channel === 'settings:get') return settings.get(payload.key);
     if (channel === 'settings:set') { settings.set(payload.key, payload.value); return true; }
     if (channel === 'workspace:get') return WS;
+    if (channel === 'library:acquisitionInboxList') return {
+      workspacePath: WS,
+      workspaceIdentity: 'workspace-w71-formal',
+      workspaceToken: 'workspace-token-w71-formal',
+      receipts: [],
+    };
     if (channel === 'fs:readFileBase64') return Buffer.from(files.get(payload.path) || '', 'utf8').toString('base64');
     if (channel === 'fs:readFile') {
       if (!files.has(payload.path)) throw new Error('ENOENT');
@@ -129,7 +135,7 @@ describe('W71 C2 正式主链收敛', () => {
       }
       await tick();
       assert.equal(libraryModule._forTests.instances.size, 0);
-      assert.equal(downloadListeners, 0);
+      assert.equal(acquisitionInboxListeners, 0);
       assert.equal(selectionCounts.add, selectionCounts.remove);
     } finally {
       document.addEventListener = add;

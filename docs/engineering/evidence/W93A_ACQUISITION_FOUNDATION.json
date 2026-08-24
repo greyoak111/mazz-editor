@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "schema": "mazz.w93a-wave-evidence/v1",
+  "generatedAt": "2026-08-24T12:39:00.6979480Z",
+  "wave": "W93A",
+  "result": "PASS",
+  "hashSemantics": "W93A close-time snapshot; later authorized waves may update shared roadmap, cumulative test registry, audit census and W93A foundation modules without rewriting this historical evidence.",
+  "base": {
+    "gitHead": "9300ed333dea4e9447c41bcf87067bfad0972085",
+    "workingTree": "dirty-authorized-wave",
+    "researchSha256": "a953b4e48e624d10548191bf543a18b0d8af794dbfd3fa69b72312a427ca6818",
+    "researchDocumentRole": "requirements-source-only"
+  },
+  "scope": {
+    "factoryModified": false,
+    "defaultNetworkUsed": false,
+    "liveProviderUsed": false,
+    "dependenciesAdded": [],
+    "runtimeRegistrationAdded": false,
+    "sourcePackagedGate": {
+      "result": "NOT_APPLICABLE",
+      "reason": "W93A adds dormant main-process contracts/store and a watcher predicate only; it registers no IPC, transport, UI, adapter or runtime service. Source/Packaged acquisition closure remains a W93E/W93G gate."
+    }
+  },
+  "verification": {
+    "syntax": {
+      "command": "node --check <contract|store|watcher>",
+      "passed": 3,
+      "failed": 0
+    },
+    "targeted": [
+      {
+        "command": "node tests/contract/w93a-library-resource-foundation.test.mjs",
+        "passed": 35,
+        "failed": 0
+      },
+      {
+        "command": "node tests/contract/w71-lifecycle-security.test.mjs",
+        "passed": 12,
+        "failed": 0
+      },
+      {
+        "command": "node tests/contract/w71-external-change.test.mjs",
+        "passed": 6,
+        "failed": 0
+      },
+      {
+        "command": "node tests/contract/library-atomic-import.test.mjs",
+        "passed": 5,
+        "failed": 0
+      },
+      {
+        "command": "node tests/contract/library-atomic-import-renderer.test.mjs",
+        "passed": 2,
+        "failed": 0
+      },
+      {
+        "command": "node tests/contract/library-repository.test.mjs",
+        "passed": 19,
+        "failed": 0
+      },
+      {
+        "command": "node tests/contract/library-w88-security.test.mjs",
+        "passed": 13,
+        "failed": 0
+      }
+    ],
+    "adjacentTotal": {
+      "passed": 57,
+      "failed": 0
+    },
+    "fullSuite": {
+      "command": "node tests/run.js",
+      "passedTestFiles": 261,
+      "failedTestFiles": 0,
+      "exitCode": 0
+    },
+    "build": {
+      "command": "npm run build",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "provenance": {
+      "command": "npm run audit:provenance",
+      "result": "CURRENT",
+      "exitCode": 0
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "result": "PASS",
+      "exitCode": 0,
+      "warnings": [
+        "existing LF-to-CRLF conversion notices"
+      ]
+    },
+    "independentReviews": [
+      {
+        "reviewer": "w93a_final_gate",
+        "result": "CLEAR",
+        "openP0": 0,
+        "openP1": 0
+      },
+      {
+        "reviewer": "w93a_release_review",
+        "result": "CLEAR",
+        "openP0": 0,
+        "openP1": 0
+      }
+    ],
+    "operatorCorrections": [
+      {
+        "kind": "mistyped-test-path",
+        "count": 2,
+        "effect": "No product assertion ran; both commands were rerun with repository filenames and passed. The 261-file full suite was unaffected."
+      }
+    ]
+  },
+  "invariants": {
+    "workspaceBound": true,
+    "candidateSnapshotBound": true,
+    "rightsFailClosed": true,
+    "intentSelectionExactlyOnce": true,
+    "atomicPublicationFailClosed": true,
+    "corruptionRetained": true,
+    "restartRecoveryExplicitOwnerOnly": true,
+    "secretAndAbsolutePathPersistenceRejected": true,
+    "internalLedgerWatcherSilent": true,
+    "actualLibraryAssetsObservable": true,
+    "businessCountTextTokenFileSizeLimits": false
+  },
+  "files": {
+    "main/library-resource-contract.js": {
+      "bytes": 57938,
+      "sha256": "b3edd0e4948d283c9496d8c09c37950608572b4ce91e180e6ab9fd5a543627e4"
+    },
+    "main/library-acquisition-store.js": {
+      "bytes": 44389,
+      "sha256": "a9af95fd72724222a92763b5eb632380877bf8394b19db84b497c56b8ceabe39"
+    },
+    "main/file-watcher.js": {
+      "bytes": 12648,
+      "sha256": "8abe1766bf146b5a958fcc53e2d0445dfdd7dfb220d41c2e33ddf36b0b1ecaf9"
+    },
+    "tests/contract/w93a-library-resource-foundation.test.mjs": {
+      "bytes": 80928,
+      "sha256": "bf88ea0f7a38f64d0492bbbad1dc29e50e46c7b760373d4bd2cb339ad86e2626"
+    },
+    "tests/run.js": {
+      "bytes": 13065,
+      "sha256": "f5ac396cc2ec7bd5b1052b0bdfc4db50b0545dfa3bd0aa75bf3d11b94307c518"
+    },
+    "docs/plans/W93_LIBRARY_RESOURCE_FREEDOM.md": {
+      "bytes": 19785,
+      "sha256": "4af3aedb597f701a6446b015c1d58463edfc455ba404ea023d5061af0db396b5"
+    },
+    "docs/engineering/W93A_ACQUISITION_FOUNDATION_SPEC.md": {
+      "bytes": 11465,
+      "sha256": "3399f59b37031592ae03b6685675105211e3721b9facd8bf78d9c6e97d2fbd9a"
+    },
+    "docs/engineering/W93A_ACQUISITION_FOUNDATION_CHECKPOINT_2026-08-24.md": {
+      "bytes": 6763,
+      "sha256": "ad4a103391c7be1e5d8066ca1137a4edf77db469576782aeafcda01ca7f8a440"
+    },
+    "docs/plans/README.md": {
+      "bytes": 9536,
+      "sha256": "5239a090a19312fa957865df4f04b86c1584cb5bb2d5e6270b674a4cf6880442"
+    },
+    ".mazz/audit/surface-census.json": {
+      "bytes": 20841,
+      "sha256": "6a637b0c7e9f6812af630a0636294cdb80ca1023b7d2d096bd0c352849eb29cb"
+    },
+    "package.json": {
+      "bytes": 7674,
+      "sha256": "91d5cf05c9dcd563af692d30a05412f8e0d4a20d05a65ad77e3bd4679d2a0ae5"
+    }
+  },
+  "excluded": [
+    "HTTP transfer and resume",
+    "DNS and redirect SSRF enforcement",
+    "OPDS or remote source adapters",
+    "Library resource UI and shelf consumer",
+    "Torrent transport",
+    "Range-aware EPUB or CBZ reading"
+  ],
+  "nextWave": {
+    "id": "W93B",
+    "name": "Main Transfer & Atomic Promotion",
+    "authorized": true
+  }
+}

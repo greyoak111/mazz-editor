@@ -125,8 +125,8 @@ describe('W87i Window and Panel policy', () => {
     assert.match(tray, /nativeTheme\.on\('updated', this\.onNativeThemeUpdated\)/);
     assert.match(tray, /nativeTheme\.removeListener\('updated', this\.onNativeThemeUpdated\)/);
     assert.match(tray, /themeListenerAttached = false[\s\S]*if \(!this\.themeListenerAttached\)[\s\S]*this\.themeListenerAttached = true/);
-    assert.match(mainProcess, /app\.on\('will-quit', \(\) => tray\.destroy\(\)\)/,
-      'tray may release only after renderer close durability has committed');
+    assert.match(mainProcess, /app\.on\('will-quit',[\s\S]*?tray\.destroy\(\)/,
+      'tray may release only inside the post-renderer durable will-quit gate');
     assert.doesNotMatch(mainProcess, /app\.on\('before-quit', \(\) => tray\.destroy\(\)\)/,
       'a vetoed dirty close must not strand the live app without its tray');
   });

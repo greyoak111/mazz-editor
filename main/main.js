@@ -99,6 +99,17 @@ let mazzResHandler = null;
 const Store = require('./store');
 const IpcBus = require('./ipc-bus');
 const LibraryImportService = require('./library-import-service');
+const LibraryAcquisitionService = require('./library-acquisition-service');
+const LibraryBrowserAcquisitionBridge = require('./library-browser-acquisition-bridge');
+const {
+  createNodeResolver: createLibraryAcquisitionResolver,
+  createNodeHttpsRequester: createLibraryAcquisitionRequester,
+} = require('./library-http-acquisition');
+const { createSingleInstanceOwnerCapability } = require('./library-acquisition-store');
+const {
+  registerLibraryAcquisitionIpc,
+  initializeCurrentLibraryAcquisition,
+} = require('./library-acquisition-ipc');
 const WindowManager = require('./window-manager');
 const TrayService = require('./tray-service');
 const GlobalShortcuts = require('./global-shortcuts');
@@ -213,6 +224,21 @@ const bus = new IpcBus();
 let crashRecovery = null;
 const libraryImportService = new LibraryImportService();
 const resourceLedger = new ResourceLedger();
+const libraryAcquisitionOwner = createSingleInstanceOwnerCapability();
+let libraryBrowserAcquisition = null;
+let libraryAcquisitionStartupReady = false;
+let libraryAcquisitionStartupError = null;
+let libraryAcquisitionStartupSettled = false;
+const libraryAcquisitionService = new LibraryAcquisitionService({
+  promoter: libraryImportService,
+  resolver: createLibraryAcquisitionResolver(),
+  requester: createLibraryAcquisitionRequester(),
+  resourceLedger,
+  singleInstanceOwnerCapability: libraryAcquisitionOwner,
+  // This is only a wake-up hint. Renderer consumers always re-list the
+  // durable Inbox; no artifact path is accepted from the event payload.
+  onInboxReady: event => wm.broadcastShells('library:acquisitionInboxReady', event),
+});
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
 const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
 const ingestionPipeline = new IngestionPipeline();
@@ -306,6 +332,17 @@ app.on('second-instance', (_e, argv) => {
   const files = extractOpenFiles(argv);
   const imports = Importer.extractImportPaths(argv);
   const protocolUrls = extractProtocolUrls(argv);
+  // A second launch can arrive while app.whenReady() is awaiting acquisition
+  // recovery. It may enqueue user intent, but it is not a second authority to
+  // create the first shell before startup reaches READY or durable HOLD.
+  if (!libraryAcquisitionStartupSettled) {
+    pendingOpenFiles.push(...files);
+    pendingImports.push(...imports);
+    for (const url of protocolUrls) {
+      if (!pendingProtocolUrls.includes(url)) pendingProtocolUrls.push(url);
+    }
+    return;
+  }
   if (wm.main) { wm.main.show(); wm.main.focus(); }
   else wm.createMain();
   files.forEach(f => wm.broadcast('file:open', { path: f }));
@@ -353,6 +390,29 @@ function addRecent(filePath) {
 
 // ---------- 白名单通道注册 ----------
 function registerChannels() {
+  registerLibraryAcquisitionIpc({
+    bus,
+    service: libraryAcquisitionService,
+    currentWorkspace: () => store.get('workspace'),
+    isStartupReady: () => libraryAcquisitionStartupReady,
+    isTrustedSender: event => {
+      const sender = event?.sender;
+      const senderFrame = event?.senderFrame;
+      if (!sender || !senderFrame || senderFrame !== sender.mainFrame) return false;
+      const win = BrowserWindow.fromWebContents(sender);
+      if (!win || (win !== wm.main && !wm.children.has(win))) return false;
+      if (win !== wm.main && win.__handoffReady === false) return false;
+      try {
+        const senderUrl = new URL(String(senderFrame.url || sender.getURL?.() || ''));
+        return senderUrl.protocol === 'mazz-res:'
+          && senderUrl.hostname === 'app'
+          && senderUrl.pathname === '/index.html'
+          && !senderUrl.username && !senderUrl.password && !senderUrl.port;
+      } catch {
+        return false;
+      }
+    },
+  });
   const bindFactoryOwner = sender => {
     if (!sender || factoryRuntimeOwners.has(sender)) return String(sender?.id || '');
     factoryRuntimeOwners.add(sender);
@@ -2055,7 +2115,7 @@ function applySettings() {
 // GPU 异常环境（远程桌面/老显卡/虚拟机）可用 --disable-gpu 兜底；虚拟显示默认走保留视频解码的兼容合成。
 if (GRAPHICS_MODE.safe) console.log(`[mazz] 安全图形模式：${GRAPHICS_MODE.reason}；GPU 子进程/系统错误框已禁用`);
 else if (GRAPHICS_MODE.mode === 'compatibility') console.log(`[mazz] 远程图形兼容模式：${GRAPHICS_MODE.reason}；保留硬件视频解码并禁用 DirectComposition 视频叠加层`);
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Windows 辅助技术与自动化必须拿到 Chromium 的完整 UIA provider。
   // Electron 要求 ready 之后调用；同时必须早于首个 BrowserWindow 创建。
   if (process.platform === 'win32') app.setAccessibilitySupportEnabled(true);
@@ -2064,6 +2124,23 @@ app.whenReady().then(() => {
   registerChannels();
   crashRecovery = new CrashRecovery({ app, bus });
   watcher = new FileWatcher({ bus, windowManager: wm, resourceLedger });
+
+  // Single-instance startup is the only authority that may repair dead
+  // acquisition locks or turn interrupted active Jobs into durable paused
+  // facts. This path is entirely local and must never start DNS/network I/O.
+  try {
+    await initializeCurrentLibraryAcquisition({
+      service: libraryAcquisitionService,
+      currentWorkspace: () => store.get('workspace'),
+    });
+    libraryAcquisitionStartupReady = true;
+    libraryAcquisitionStartupError = null;
+  } catch (error) {
+    libraryAcquisitionStartupReady = false;
+    libraryAcquisitionStartupError = error;
+    console.warn('[library-acquisition] startup hold:', error?.code || 'LIBRARY_ACQUISITION_STARTUP_FAILED');
+  }
+  libraryAcquisitionStartupSettled = true;
 
   wm.createMain();
   memoryGovernor.start();
@@ -2075,7 +2152,42 @@ app.whenReady().then(() => {
   // tray there would leave a live app without its tray if a dirty/failed save
   // keeps the window open.  will-quit only runs after every window close gate
   // has committed.
-  app.on('will-quit', () => tray.destroy());
+  // Acquisition shutdown is a second-stage durability gate. It deliberately
+  // runs in will-quit, after every renderer close transaction has committed;
+  // unlike generic process cleanup it is never released by a timeout.
+  let libraryAcquisitionQuitReady = false;
+  let libraryAcquisitionQuitPending = null;
+  app.on('will-quit', event => {
+    if (libraryAcquisitionQuitReady) {
+      tray.destroy();
+      return;
+    }
+    event.preventDefault();
+    if (libraryAcquisitionQuitPending) return;
+    libraryAcquisitionQuitPending = (async () => {
+      await libraryBrowserAcquisition?.dispose?.();
+      await libraryAcquisitionService.shutdown();
+      const bridgeState = libraryBrowserAcquisition?.snapshot?.() || {
+        activeItemCount: 0, pendingCompletionCount: 0,
+      };
+      const serviceState = libraryAcquisitionService.snapshot();
+      if (bridgeState.activeItemCount !== 0 || bridgeState.pendingCompletionCount !== 0
+          || serviceState.activeCount !== 0) {
+        const error = new Error('Library acquisition owners did not reach the durable quit boundary');
+        error.code = 'LIBRARY_ACQUISITION_QUIT_BOUNDARY_FAILED';
+        throw error;
+      }
+    })()
+      .then(() => {
+        libraryAcquisitionQuitReady = true;
+        libraryAcquisitionQuitPending = null;
+        app.quit();
+      })
+      .catch(error => {
+        libraryAcquisitionQuitPending = null;
+        console.error('[library-acquisition] quit hold:', error?.code || 'LIBRARY_ACQUISITION_QUIT_FAILED');
+      });
+  });
   globalShortcuts.registerAll();
 
   // —— 隐私浏览器：独立会话 + 搜索服务（主进程专属，实例凭据不出主进程）——
@@ -2168,25 +2280,20 @@ app.whenReady().then(() => {
     pwList: () => (store.get('passwords', [])).map(e => ({ id: e.id, site: e.site, username: e.username, password: __pwDecrypt(e.password) })) }); // W48 自动填充/修改识别取数
   visualComposition.attachBrowserViews(browserViews);
 
-  // —— 投稿会话（persist:mazz-author）：电子书站登录态下载 → 自动存工作区书库并入库 ——
+  // —— 投稿会话（persist:mazz-author）：普通下载保持 Electron 默认；只有
+  // 已持久授权并预登记的 Library intent 才进入 Job staging → verify → Inbox。
   try {
     const authorSess = session.fromPartition('persist:mazz-author');
-    const EBOOK_EXTS = ['epub', 'mobi', 'azw3', 'azw', 'pdf', 'txt', 'cbz', 'fb2'];
-    authorSess.on('will-download', (_e, item) => {
-      const name = item.getFilename() || 'download';
-      const ext = (name.split('.').pop() || '').toLowerCase();
-      if (!EBOOK_EXTS.includes(ext)) return; // 非电子书格式走系统默认下载
-      const dir = path.join(store.get('workspace'), '书库');
-      fs.mkdirSync(dir, { recursive: true });
-      let dest = path.join(dir, name);
-      for (let i = 1; fs.existsSync(dest); i++) dest = path.join(dir, name.replace(/(\.\w+)$/, ` (${i})$1`));
-      item.setSavePath(dest);
-      item.once('done', (_ev, state) => {
-        if (state === 'completed' && wm.main && !wm.main.isDestroyed()) {
-          bus.send(wm.main, 'library:download', { path: toSlash(dest), name });
-        }
+    if (libraryAcquisitionStartupReady) {
+      libraryBrowserAcquisition = new LibraryBrowserAcquisitionBridge({
+        acquisitionService: libraryAcquisitionService,
+        session: authorSess,
+        onWake: event => wm.broadcastShells('library:acquisitionInboxReady', event),
       });
-    });
+    } else {
+      console.warn('[author-sess] Library acquisition remains on startup hold:',
+        libraryAcquisitionStartupError?.code || 'LIBRARY_ACQUISITION_STARTUP_FAILED');
+    }
   } catch (e) { console.warn('[author-sess]', e.message); }
 
   // —— W71 资源账本 + W66 Agent Harness Foundation ——
@@ -2261,7 +2368,9 @@ app.whenReady().then(() => {
     event.preventDefault();
     let timeoutId;
     const timeout = new Promise(resolve => { timeoutId = setTimeout(() => resolve('timeout'), 5000); });
-    Promise.race([Promise.all([harness.killAll(), externalTools.disposeAll('app-quit')]).then(() => 'done'), timeout])
+    Promise.race([Promise.all([
+      harness.killAll(), externalTools.disposeAll('app-quit'),
+    ]).then(() => 'done'), timeout])
       .then(status => { if (status === 'timeout') console.warn('[harness] quit cleanup timed out'); })
       .catch(e => console.warn('[harness] quit cleanup:', e.message))
       .finally(() => { clearTimeout(timeoutId); harnessQuitReady = true; app.quit(); });

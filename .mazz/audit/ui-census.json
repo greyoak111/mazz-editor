@@ -13,8 +13,8 @@
       ".js",
       ".svg"
     ],
-    "scannedFiles": 246,
-    "scannedLines": 78597
+    "scannedFiles": 247,
+    "scannedLines": 79145
   },
   "thresholds": {
     "normalTextContrast": 4.5,
@@ -3039,649 +3039,649 @@
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/library/index.js",
-        "line": 168,
+        "line": 146,
         "sample": "// A successful MOBI parser already rejects skeleton/junk streams. Any"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 181,
-        "sample": "<button class=\"rb-btn\" data-a=\"dl-site\" title=\"打开电子书站（投稿会话登录后，下载自动入库）\" style=\"font-size:11.5px\">${iconHtml('⬇')} 下载站</button>"
+        "line": 159,
+        "sample": "<button class=\"rb-btn\" data-a=\"dl-site\" title=\"打开电子书站（普通下载；入库需明确授权或手动导入）\" style=\"font-size:11.5px\">${iconHtml('⬇')} 下载站</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 181,
-        "sample": "<button class=\"rb-btn\" data-a=\"dl-site\" title=\"打开电子书站（投稿会话登录后，下载自动入库）\" style=\"font-size:11.5px\">${iconHtml('⬇')} 下载站</button>"
+        "line": 159,
+        "sample": "<button class=\"rb-btn\" data-a=\"dl-site\" title=\"打开电子书站（普通下载；入库需明确授权或手动导入）\" style=\"font-size:11.5px\">${iconHtml('⬇')} 下载站</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 183,
+        "line": 161,
         "sample": "<select class=\"lib-cat-filter rb-select\" title=\"按分类筛选\"></select>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 184,
+        "line": 162,
         "sample": "<button class=\"rb-btn\" data-a=\"newcat\" title=\"分类管理（新建/删除）\">${iconHtml('✚')} 分类</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 185,
+        "line": 163,
         "sample": "<span style=\"flex:1\"></span>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 186,
+        "line": 164,
         "sample": "<button class=\"rb-btn\" data-a=\"batch\" title=\"批量管理（多选删除）\">${iconHtml('☑')} 批量管理</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 187,
+        "line": 165,
         "sample": "<button class=\"rb-btn\" data-a=\"import\">${iconHtml('＋')} 导入书籍</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 188,
+        "line": 166,
         "sample": "<button class=\"rb-btn\" data-a=\"import-folder\" title=\"把一个图片文件夹当漫画看（每话=一个图片子文件夹）\">${iconHtml('🗂')} 导入漫画文件夹</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 191,
+        "line": 169,
         "sample": "<label class=\"lib-shelf-query-wrap\">${iconHtml('🔍')}<span class=\"sr-only\">搜索书架</span><input class=\"lib-shelf-query rb-input\" type=\"search\" placeholder=\"搜索书名、作者、分类…\" autocomplete=\"off\" spellcheck=\"false\"></label>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 192,
+        "line": 170,
         "sample": "<select class=\"lib-shelf-sort rb-select\" title=\"书架排序\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 196,
+        "line": 174,
         "sample": "<button class=\"rb-btn lib-shelf-favorite\" data-a=\"shelf-favorite\" aria-pressed=\"false\" title=\"只看收藏\">${iconHtml('☆')}<span>收藏</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 197,
+        "line": 175,
         "sample": "<select class=\"lib-shelf-format rb-select\" title=\"按格式筛选\"><option value=\"\">全部格式</option></select>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 198,
+        "line": 176,
         "sample": "<select class=\"lib-shelf-missing rb-select\" title=\"按源文件状态筛选\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 203,
+        "line": 181,
         "sample": "<div class=\"lib-batch-bar\" style=\"display:none\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 205,
+        "line": 183,
         "sample": "<button class=\"rb-btn\" data-a=\"sel-all\">全选</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 206,
+        "line": 184,
         "sample": "<button class=\"rb-btn\" data-a=\"sel-none\">全不选</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 207,
+        "line": 185,
         "sample": "<button class=\"rb-btn\" data-a=\"sel-moveto\">移到分类…</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 208,
+        "line": 186,
         "sample": "<button class=\"rb-btn\" data-a=\"sel-del\" style=\"color:var(--danger)\">删除所选</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 208,
+        "line": 186,
         "sample": "<button class=\"rb-btn\" data-a=\"sel-del\" style=\"color:var(--danger)\">删除所选</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 209,
+        "line": 187,
         "sample": "<button class=\"rb-btn\" data-a=\"sel-done\">完成</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 212,
+        "line": 190,
         "sample": "<div class=\"lib-reader\" style=\"display:none\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 214,
+        "line": 192,
         "sample": "<button class=\"rb-btn\" data-a=\"back\">${iconHtml('←')}<span>书架</span></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 216,
+        "line": 194,
         "sample": "<span style=\"flex:1\"></span>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 217,
+        "line": 195,
         "sample": "<button class=\"rb-btn\" data-a=\"toc\" title=\"大纲/目录\">${iconHtml('≡')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 218,
+        "line": 196,
         "sample": "<button class=\"rb-btn\" data-a=\"search\" title=\"书内搜索\">${iconHtml('🔍')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 219,
+        "line": 197,
         "sample": "<button class=\"rb-btn\" data-a=\"mark\" title=\"添加书签\">${iconHtml('🔖')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 220,
+        "line": 198,
         "sample": "<button class=\"rb-btn\" data-a=\"marks\" title=\"书签列表\">${iconHtml('☰')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 221,
+        "line": 199,
         "sample": "<button class=\"rb-btn\" data-a=\"clip\" title=\"选中文字摘录到书摘笔记\">${iconHtml('✍')} 摘录</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 222,
+        "line": 200,
         "sample": "<button class=\"rb-btn\" data-a=\"evidence\" title=\"复制可重新定位的证据引用\">${iconHtml('⌖')} 证据定位</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 223,
+        "line": 201,
         "sample": "<button class=\"rb-btn\" data-a=\"export-md\" title=\"整书导出为 Markdown 笔记\">${iconHtml('⇪')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 224,
+        "line": 202,
         "sample": "<button class=\"rb-btn\" data-a=\"direction\" title=\"翻页方向：左到右 / 右到左（日漫习惯）\">${iconHtml('⇄')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 225,
+        "line": 203,
         "sample": "<select class=\"lib-mode rb-select\" title=\"阅读模式\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 228,
+        "line": 206,
         "sample": "<select class=\"lib-read-theme rb-select\" title=\"阅读主题\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 231,
+        "line": 209,
         "sample": "<button class=\"rb-btn\" data-a=\"font-minus\" title=\"字号减小\"><span data-ui-icon-text>A</span>${iconHtml('―')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 232,
+        "line": 210,
         "sample": "<button class=\"rb-btn\" data-a=\"font-plus\" title=\"字号增大\"><span data-ui-icon-text>A</span>${iconHtml('+')}</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 233,
+        "line": 211,
         "sample": "<select class=\"lib-pagew rb-select\" title=\"纸张宽度（版心留白另行设置）\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 238,
+        "line": 216,
         "sample": "<select class=\"lib-margin rb-select\" title=\"版心留白（独立于纸张宽度）\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 242,
+        "line": 220,
         "sample": "<select class=\"lib-zh rb-select\" title=\"简繁转换（OpenCC 字表+高频词纠偏，随书记忆）\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 245,
+        "line": 223,
         "sample": "<button class=\"rb-btn\" data-a=\"clean-rules\" title=\"净化规则（替换/删除，字面或正则，全书或本书——网文广告/水印清洗）\">${iconHtml('⛨')} 净化</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 248,
+        "line": 226,
         "sample": "<div class=\"lib-toc\" style=\"display:none\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 252,
+        "line": 230,
         "sample": "<button class=\"rb-btn lib-progress-nav\" type=\"button\" data-a=\"prev\" aria-label=\"上一页\" title=\"上一页\">‹</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 257,
+        "line": 235,
         "sample": "<button class=\"rb-btn lib-progress-nav\" type=\"button\" data-a=\"next\" aria-label=\"下一页\" title=\"下一页\">›</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 258,
+        "line": 236,
         "sample": "<button class=\"rb-btn lib-progress-toggle\" type=\"button\" data-a=\"prog-fold\" aria-expanded=\"true\" aria-label=\"收起阅读进度栏\" title=\"收起阅读进度栏\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 367,
+        "line": 346,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 368,
+        "line": 347,
         "sample": "<input class=\"rb-input lib-owned-input\" style=\"flex:1;padding:6px 8px\" value=\"${escapeHtml(initial)}\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 368,
+        "line": 347,
         "sample": "<input class=\"rb-input lib-owned-input\" style=\"flex:1;padding:6px 8px\" value=\"${escapeHtml(initial)}\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 369,
+        "line": 348,
         "sample": "<button class=\"rb-btn lib-owned-input-ok\" style=\"flex-direction:row\">确定</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 369,
+        "line": 348,
         "sample": "<button class=\"rb-btn lib-owned-input-ok\" style=\"flex-direction:row\">确定</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 850,
+        "line": 906,
         "sample": "<div style=\"min-width:340px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 851,
+        "line": 907,
         "sample": "<div class=\"set-row\"><label>书名</label><input id=\"bm-title\" class=\"rb-input\" style=\"width:64%\" value=\"${escapeHtml(book.title || '')}\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 851,
+        "line": 907,
         "sample": "<div class=\"set-row\"><label>书名</label><input id=\"bm-title\" class=\"rb-input\" style=\"width:64%\" value=\"${escapeHtml(book.title || '')}\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 852,
+        "line": 908,
         "sample": "<div class=\"set-row\"><label>作者</label><input id=\"bm-author\" class=\"rb-input\" style=\"width:64%\" value=\"${escapeHtml(book.author || '')}\" placeholder=\"可留空\"></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 852,
+        "line": 908,
         "sample": "<div class=\"set-row\"><label>作者</label><input id=\"bm-author\" class=\"rb-input\" style=\"width:64%\" value=\"${escapeHtml(book.author || '')}\" placeholder=\"可留空\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 853,
+        "line": 909,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"bm-ok\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button></div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 853,
+        "line": 909,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"bm-ok\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 931,
+        "line": 987,
         "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 933,
+        "line": 989,
         "sample": "<div style=\"display:flex;flex-direction:column;gap:6px;margin-top:10px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 934,
+        "line": 990,
         "sample": "${cats.map(c => `<button class=\"rb-btn\" data-c=\"${escapeHtml(c)}\" style=\"flex-direction:row;justify-content:flex-start\">${(book.category || '未分类') === c ? iconHtml('✓') : ''}<span>${escapeHtml(c)}</span></button>`).join('')}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 934,
+        "line": 990,
         "sample": "${cats.map(c => `<button class=\"rb-btn\" data-c=\"${escapeHtml(c)}\" style=\"flex-direction:row;justify-content:flex-start\">${(book.category || '未分类') === c ? iconHtml('✓') : ''}<span>${escapeHtml(c)}</span></button>`).join('')}"
       },
       {
         "rule": "loading-state-term",
         "file": "renderer/modules/library/index.js",
-        "line": 1829,
+        "line": 1885,
         "sample": ".lib-text-slot.is-loading::after{content:'正在排版…';position:absolute;top:32px;left:50%;transform:translateX(-50%);opacity:.5;font-size:12px;}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 2868,
+        "line": 2924,
         "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:320px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 2870,
+        "line": 2926,
         "sample": "<div style=\"display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:50vh;overflow-y:auto\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 2871,
+        "line": 2927,
         "sample": "${list.map((mk, i) => `<div style=\"display:flex;gap:6px;align-items:center\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 2872,
+        "line": 2928,
         "sample": "<button class=\"rb-btn\" data-i=\"${i}\" style=\"flex:1;flex-direction:row;justify-content:flex-start\">${iconHtml('🔖')}<span>${escapeHtml(mk.name)}</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 2872,
+        "line": 2928,
         "sample": "<button class=\"rb-btn\" data-i=\"${i}\" style=\"flex:1;flex-direction:row;justify-content:flex-start\">${iconHtml('🔖')}<span>${escapeHtml(mk.name)}</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 2873,
+        "line": 2929,
         "sample": "<button class=\"rb-btn\" data-del=\"${i}\" title=\"删除\" aria-label=\"删除书签\">${iconHtml('✕')}</button></div>`).join('')}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 2907,
+        "line": 2963,
         "sample": "bar.innerHTML = `<input class=\"rb-input\" placeholder=\"书内搜索…\" spellcheck=\"false\"><button class=\"rb-btn\">搜</button><button class=\"rb-btn lib-search-close\" title=\"关闭搜索\" aria-label=\"关闭搜索\">${iconHtml('✕')}</button>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 2932,
+        "line": 2988,
         "sample": ": '<div style=\"padding:8px;color:var(--fg-dim)\">无结果</div>';"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3303,
+        "line": 3367,
         "sample": "return `<div style=\"display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd,#eee)\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3304,
+        "line": 3368,
         "sample": "<span style=\"flex:1\">${escapeHtml(c)} <span style=\"color:var(--fg-dim);font-size:11px\">（${n} 本）</span></span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3305,
+        "line": 3369,
         "sample": "<button class=\"fc-mini\" data-delcat=\"${escapeHtml(c)}\" style=\"color:var(--danger)\">删除</button></div>`;"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3305,
+        "line": 3369,
         "sample": "<button class=\"fc-mini\" data-delcat=\"${escapeHtml(c)}\" style=\"color:var(--danger)\">删除</button></div>`;"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3306,
+        "line": 3370,
         "sample": "}).join('') || '<div style=\"color:var(--fg-dim);padding:8px 0\">还没有自定义分类</div>';"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3312,
+        "line": 3376,
         "sample": "<div style=\"min-width:340px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3314,
+        "line": 3378,
         "sample": "<div style=\"display:flex;gap:6px;margin-top:10px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3315,
+        "line": 3379,
         "sample": "<input class=\"rb-input cat-newname\" placeholder=\"新分类名\" style=\"flex:1\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3315,
+        "line": 3379,
         "sample": "<input class=\"rb-input cat-newname\" placeholder=\"新分类名\" style=\"flex:1\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3316,
+        "line": 3380,
         "sample": "<button class=\"rb-btn cat-add\" style=\"flex-direction:row\">${iconHtml('＋')}<span>新建</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3316,
+        "line": 3380,
         "sample": "<button class=\"rb-btn cat-add\" style=\"flex-direction:row\">${iconHtml('＋')}<span>新建</span></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3318,
+        "line": 3382,
         "sample": "<div style=\"font-size:11px;color:var(--fg-dim);margin-top:6px\">删除分类不会删书，书自动归到「未分类」。</div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3386,
+        "line": 3450,
         "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\"><b>${selectedIds.size} 本移到分类</b>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3387,
+        "line": 3451,
         "sample": "<div style=\"display:flex;flex-direction:column;gap:6px;margin-top:10px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3388,
+        "line": 3452,
         "sample": "${cats.map(c => `<button class=\"rb-btn\" data-c=\"${escapeHtml(c)}\" style=\"flex-direction:row;justify-content:flex-start\">${escapeHtml(c)}</button>`).join('')}"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3388,
+        "line": 3452,
         "sample": "${cats.map(c => `<button class=\"rb-btn\" data-c=\"${escapeHtml(c)}\" style=\"flex-direction:row;justify-content:flex-start\">${escapeHtml(c)}</button>`).join('')}"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3587,
+        "line": 3651,
         "sample": "<div style=\"display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd,#eee);font-size:12.5px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3588,
+        "line": 3652,
         "sample": "<span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"${escapeHtml(r.pattern || '')}\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3590,
+        "line": 3654,
         "sample": "<span style=\"color:var(--fg-dim);font-size:11px\">${r.match === 'regex' ? '正则' : '字面'} · ${r.scope === 'all' ? '全书' : '本书'}${r.type !== 'delete' && r.replacement ? ' → ' + escapeHtml(r.replacement) : ''}</span>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3592,
+        "line": 3656,
         "sample": "<button class=\"fc-mini\" data-delrule=\"${i}\" style=\"color:var(--danger)\">删除</button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3592,
+        "line": 3656,
         "sample": "<button class=\"fc-mini\" data-delrule=\"${i}\" style=\"color:var(--danger)\">删除</button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3593,
+        "line": 3657,
         "sample": "</div>`).join('') || '<div style=\"color:var(--fg-dim);padding:8px 0\">还没有规则——网文广告与站点水印的清洗层</div>';"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3618,
+        "line": 3682,
         "sample": "<div style=\"min-width:480px;max-width:620px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3619,
+        "line": 3683,
         "sample": "<div class=\"cr-list\" style=\"max-height:32vh;overflow-y:auto\"></div>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3620,
+        "line": 3684,
         "sample": "<div style=\"display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3621,
+        "line": 3685,
         "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3621,
+        "line": 3685,
         "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3622,
+        "line": 3686,
         "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3622,
+        "line": 3686,
         "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3623,
+        "line": 3687,
         "sample": "<select class=\"rb-select cr-match\"><option value=\"plain\">字面</option><option value=\"regex\">正则</option></select>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3624,
+        "line": 3688,
         "sample": "<select class=\"rb-select cr-type\"><option value=\"delete\">删除</option><option value=\"replace\">替换为</option></select>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3625,
+        "line": 3689,
         "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3625,
+        "line": 3689,
         "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3626,
+        "line": 3690,
         "sample": "<select class=\"rb-select cr-scope\"><option value=\"all\">全书</option><option value=\"book\">本书</option></select>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3627,
+        "line": 3691,
         "sample": "<button class=\"rb-btn cr-add\" style=\"flex-direction:row\">${iconHtml('＋')}<span>添加</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 3627,
+        "line": 3691,
         "sample": "<button class=\"rb-btn cr-add\" style=\"flex-direction:row\">${iconHtml('＋')}<span>添加</span></button>"
       },
       {
         "rule": "inline-style-attribute",
         "file": "renderer/modules/library/index.js",
-        "line": 3629,
+        "line": 3693,
         "sample": "<div style=\"font-size:11px;color:var(--fg-dim);margin-top:6px\">规则按序生效；作用于文本节点（永不碰标签结构）；坏正则会自动跳过。</div>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 4173,
+        "line": 4233,
         "sample": "<button class=\"rb-btn\" data-command=\"library.import\"><i class=\"ico\">${iconHtml('＋')}</i><span>导入书籍</span></button>"
       },
       {
         "rule": "native-form-control",
         "file": "renderer/modules/library/index.js",
-        "line": 4174,
+        "line": 4234,
         "sample": "<button class=\"rb-btn\" data-command=\"library.exportMd\"><i class=\"ico\">${iconHtml('⇪')}</i><span>导出MD</span></button>"
       },
       {
@@ -15214,277 +15214,277 @@
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 180,
+        "line": 158,
         "sample": "<b>${iconHtml('📚')} 我的书库</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 180,
+        "line": 158,
         "sample": "<b>${iconHtml('📚')} 我的书库</b>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 181,
-        "sample": "<button class=\"rb-btn\" data-a=\"dl-site\" title=\"打开电子书站（投稿会话登录后，下载自动入库）\" style=\"font-size:11.5px\">${iconHtml('⬇')} 下载站</button>"
+        "line": 159,
+        "sample": "<button class=\"rb-btn\" data-a=\"dl-site\" title=\"打开电子书站（普通下载；入库需明确授权或手动导入）\" style=\"font-size:11.5px\">${iconHtml('⬇')} 下载站</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 184,
+        "line": 162,
         "sample": "<button class=\"rb-btn\" data-a=\"newcat\" title=\"分类管理（新建/删除）\">${iconHtml('✚')} 分类</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 184,
+        "line": 162,
         "sample": "<button class=\"rb-btn\" data-a=\"newcat\" title=\"分类管理（新建/删除）\">${iconHtml('✚')} 分类</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 186,
+        "line": 164,
         "sample": "<button class=\"rb-btn\" data-a=\"batch\" title=\"批量管理（多选删除）\">${iconHtml('☑')} 批量管理</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 186,
+        "line": 164,
         "sample": "<button class=\"rb-btn\" data-a=\"batch\" title=\"批量管理（多选删除）\">${iconHtml('☑')} 批量管理</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 187,
+        "line": 165,
         "sample": "<button class=\"rb-btn\" data-a=\"import\">${iconHtml('＋')} 导入书籍</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 188,
+        "line": 166,
         "sample": "<button class=\"rb-btn\" data-a=\"import-folder\" title=\"把一个图片文件夹当漫画看（每话=一个图片子文件夹）\">${iconHtml('🗂')} 导入漫画文件夹</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 188,
+        "line": 166,
         "sample": "<button class=\"rb-btn\" data-a=\"import-folder\" title=\"把一个图片文件夹当漫画看（每话=一个图片子文件夹）\">${iconHtml('🗂')} 导入漫画文件夹</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 191,
+        "line": 169,
         "sample": "<label class=\"lib-shelf-query-wrap\">${iconHtml('🔍')}<span class=\"sr-only\">搜索书架</span><input class=\"lib-shelf-query rb-input\" type=\"search\" placeholder=\"搜索书名、作者、分类…\" autocomplete=\"off\" spellcheck=\"false\"></label>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 191,
+        "line": 169,
         "sample": "<label class=\"lib-shelf-query-wrap\">${iconHtml('🔍')}<span class=\"sr-only\">搜索书架</span><input class=\"lib-shelf-query rb-input\" type=\"search\" placeholder=\"搜索书名、作者、分类…\" autocomplete=\"off\" spellcheck=\"false\"></label>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 196,
+        "line": 174,
         "sample": "<button class=\"rb-btn lib-shelf-favorite\" data-a=\"shelf-favorite\" aria-pressed=\"false\" title=\"只看收藏\">${iconHtml('☆')}<span>收藏</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 196,
+        "line": 174,
         "sample": "<button class=\"rb-btn lib-shelf-favorite\" data-a=\"shelf-favorite\" aria-pressed=\"false\" title=\"只看收藏\">${iconHtml('☆')}<span>收藏</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 214,
+        "line": 192,
         "sample": "<button class=\"rb-btn\" data-a=\"back\">${iconHtml('←')}<span>书架</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 217,
+        "line": 195,
         "sample": "<button class=\"rb-btn\" data-a=\"toc\" title=\"大纲/目录\">${iconHtml('≡')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 218,
+        "line": 196,
         "sample": "<button class=\"rb-btn\" data-a=\"search\" title=\"书内搜索\">${iconHtml('🔍')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 218,
+        "line": 196,
         "sample": "<button class=\"rb-btn\" data-a=\"search\" title=\"书内搜索\">${iconHtml('🔍')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 219,
+        "line": 197,
         "sample": "<button class=\"rb-btn\" data-a=\"mark\" title=\"添加书签\">${iconHtml('🔖')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 219,
+        "line": 197,
         "sample": "<button class=\"rb-btn\" data-a=\"mark\" title=\"添加书签\">${iconHtml('🔖')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 220,
+        "line": 198,
         "sample": "<button class=\"rb-btn\" data-a=\"marks\" title=\"书签列表\">${iconHtml('☰')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 220,
+        "line": 198,
         "sample": "<button class=\"rb-btn\" data-a=\"marks\" title=\"书签列表\">${iconHtml('☰')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 221,
+        "line": 199,
         "sample": "<button class=\"rb-btn\" data-a=\"clip\" title=\"选中文字摘录到书摘笔记\">${iconHtml('✍')} 摘录</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 221,
+        "line": 199,
         "sample": "<button class=\"rb-btn\" data-a=\"clip\" title=\"选中文字摘录到书摘笔记\">${iconHtml('✍')} 摘录</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 222,
+        "line": 200,
         "sample": "<button class=\"rb-btn\" data-a=\"evidence\" title=\"复制可重新定位的证据引用\">${iconHtml('⌖')} 证据定位</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 223,
+        "line": 201,
         "sample": "<button class=\"rb-btn\" data-a=\"export-md\" title=\"整书导出为 Markdown 笔记\">${iconHtml('⇪')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 224,
+        "line": 202,
         "sample": "<button class=\"rb-btn\" data-a=\"direction\" title=\"翻页方向：左到右 / 右到左（日漫习惯）\">${iconHtml('⇄')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 231,
+        "line": 209,
         "sample": "<button class=\"rb-btn\" data-a=\"font-minus\" title=\"字号减小\"><span data-ui-icon-text>A</span>${iconHtml('―')}</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 232,
+        "line": 210,
         "sample": "<button class=\"rb-btn\" data-a=\"font-plus\" title=\"字号增大\"><span data-ui-icon-text>A</span>${iconHtml('+')}</button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 245,
+        "line": 223,
         "sample": "<button class=\"rb-btn\" data-a=\"clean-rules\" title=\"净化规则（替换/删除，字面或正则，全书或本书——网文广告/水印清洗）\">${iconHtml('⛨')} 净化</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 245,
+        "line": 223,
         "sample": "<button class=\"rb-btn\" data-a=\"clean-rules\" title=\"净化规则（替换/删除，字面或正则，全书或本书——网文广告/水印清洗）\">${iconHtml('⛨')} 净化</button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 259,
+        "line": 237,
         "sample": "<span class=\"lib-progress-toggle-icon\" aria-hidden=\"true\">${iconHtml('▾')}</span>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 934,
+        "line": 990,
         "sample": "${cats.map(c => `<button class=\"rb-btn\" data-c=\"${escapeHtml(c)}\" style=\"flex-direction:row;justify-content:flex-start\">${(book.category || '未分类') === c ? iconHtml('✓') : ''}<span>${escapeHtml(c)}</span></button>`).join('')}"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 934,
+        "line": 990,
         "sample": "${cats.map(c => `<button class=\"rb-btn\" data-c=\"${escapeHtml(c)}\" style=\"flex-direction:row;justify-content:flex-start\">${(book.category || '未分类') === c ? iconHtml('✓') : ''}<span>${escapeHtml(c)}</span></button>`).join('')}"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 2872,
+        "line": 2928,
         "sample": "<button class=\"rb-btn\" data-i=\"${i}\" style=\"flex:1;flex-direction:row;justify-content:flex-start\">${iconHtml('🔖')}<span>${escapeHtml(mk.name)}</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 2872,
+        "line": 2928,
         "sample": "<button class=\"rb-btn\" data-i=\"${i}\" style=\"flex:1;flex-direction:row;justify-content:flex-start\">${iconHtml('🔖')}<span>${escapeHtml(mk.name)}</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 2873,
+        "line": 2929,
         "sample": "<button class=\"rb-btn\" data-del=\"${i}\" title=\"删除\" aria-label=\"删除书签\">${iconHtml('✕')}</button></div>`).join('')}"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 2873,
+        "line": 2929,
         "sample": "<button class=\"rb-btn\" data-del=\"${i}\" title=\"删除\" aria-label=\"删除书签\">${iconHtml('✕')}</button></div>`).join('')}"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 2907,
+        "line": 2963,
         "sample": "bar.innerHTML = `<input class=\"rb-input\" placeholder=\"书内搜索…\" spellcheck=\"false\"><button class=\"rb-btn\">搜</button><button class=\"rb-btn lib-search-close\" title=\"关闭搜索\" aria-label=\"关闭搜索\">${iconHtml('✕')}</button>`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 2907,
+        "line": 2963,
         "sample": "bar.innerHTML = `<input class=\"rb-input\" placeholder=\"书内搜索…\" spellcheck=\"false\"><button class=\"rb-btn\">搜</button><button class=\"rb-btn lib-search-close\" title=\"关闭搜索\" aria-label=\"关闭搜索\">${iconHtml('✕')}</button>`;"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 3316,
+        "line": 3380,
         "sample": "<button class=\"rb-btn cat-add\" style=\"flex-direction:row\">${iconHtml('＋')}<span>新建</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 3627,
+        "line": 3691,
         "sample": "<button class=\"rb-btn cr-add\" style=\"flex-direction:row\">${iconHtml('＋')}<span>添加</span></button>"
       },
       {
         "rule": "emoji-or-symbol-literal",
         "file": "renderer/modules/library/index.js",
-        "line": 4082,
+        "line": 4142,
         "sample": "icon: '📚',"
       },
       {
         "rule": "icon-metadata",
         "file": "renderer/modules/library/index.js",
-        "line": 4082,
+        "line": 4142,
         "sample": "icon: '📚',"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 4173,
+        "line": 4233,
         "sample": "<button class=\"rb-btn\" data-command=\"library.import\"><i class=\"ico\">${iconHtml('＋')}</i><span>导入书籍</span></button>"
       },
       {
         "rule": "icon-html-adapter",
         "file": "renderer/modules/library/index.js",
-        "line": 4174,
+        "line": 4234,
         "sample": "<button class=\"rb-btn\" data-command=\"library.exportMd\"><i class=\"ico\">${iconHtml('⇪')}</i><span>导出MD</span></button>"
       },
       {
@@ -24701,205 +24701,205 @@
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/library/index.js",
-        "line": 54,
+        "line": 53,
         "sample": "paper: { name: '纸白', bg: '#fbf8f0', fg: '#3d3627' },"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/library/index.js",
-        "line": 55,
+        "line": 54,
         "sample": "sepia: { name: '羊皮纸', bg: '#f1e8d0', fg: '#4a3d28' },"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/library/index.js",
-        "line": 56,
+        "line": 55,
         "sample": "night: { name: '墨夜', bg: '#1c1f26', fg: '#c9cdd6' },"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 208,
+        "line": 186,
         "sample": "<button class=\"rb-btn\" data-a=\"sel-del\" style=\"color:var(--danger)\">删除所选</button>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 853,
+        "line": 909,
         "sample": "<div style=\"display:flex;justify-content:flex-end;margin-top:10px\"><button id=\"bm-ok\" class=\"rb-btn\" style=\"flex-direction:row;background:var(--accent);color:var(--accent-fg)\">保存</button></div>"
       },
       {
         "rule": "font-family",
         "file": "renderer/modules/library/index.js",
-        "line": 1803,
+        "line": 1859,
         "sample": "const ff = ctl.fontFamily ? `font-family:${ctl.fontFamily};` : '';"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1806,
+        "line": 1862,
         "sample": "body{--reader-paper:${t.bg};--reader-ink:${t.fg};--reader-stage:color-mix(in srgb,${t.bg} 94%,${t.fg} 6%);--reader-stage-block:12px;color:${t.fg};background:var(--reader-stage);font-size:${ctl.fontSize}px;line-height:${ctl.lineHeight};${ff}box-sizing:border-box;overflow:hidden;padding:var(--reader-stage-block) 0;}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1807,
+        "line": 1863,
         "sample": "body.lib-scroll{overflow-y:auto;padding:var(--reader-stage-block) 0 54px;background:var(--reader-stage);}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1809,
+        "line": 1865,
         "sample": ".lib-flow-wrap{position:relative;height:100%;overflow:hidden;margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transparent);border-radius:2px;box-shadow:0 1px 2px color-mix(in srgb,var(--reader-ink) 8%,transparent),0 12px 34px color-mix(in srgb,var(--reader-ink) 10%,t"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/library/index.js",
-        "line": 1809,
+        "line": 1865,
         "sample": ".lib-flow-wrap{position:relative;height:100%;overflow:hidden;margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transparent);border-radius:2px;box-shadow:0 1px 2px color-mix(in srgb,var(--reader-ink) 8%,transparent),0 12px 34px color-mix(in srgb,var(--reader-ink) 10%,t"
       },
       {
         "rule": "box-shadow",
         "file": "renderer/modules/library/index.js",
-        "line": 1809,
+        "line": 1865,
         "sample": ".lib-flow-wrap{position:relative;height:100%;overflow:hidden;margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transparent);border-radius:2px;box-shadow:0 1px 2px color-mix(in srgb,var(--reader-ink) 8%,transparent),0 12px 34px color-mix(in srgb,var(--reader-ink) 10%,t"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1810,
+        "line": 1866,
         "sample": ".lib-flow-wrap::after{content:'';position:absolute;z-index:3;pointer-events:none;top:0;bottom:0;left:50%;width:var(--reader-spread-gutter,0px);transform:translateX(-50%);opacity:0;background:linear-gradient(90deg,color-mix(in srgb,var(--reader-ink) 8%,transparent),transparent 36%,transparent 64%,color-mix(in srgb,var(-"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1813,
+        "line": 1869,
         "sample": ".lib-flow{position:relative;z-index:1;height:100%;box-sizing:border-box;padding:var(--reader-pad-block,36px) var(--reader-pad-inline,44px);will-change:transform;overflow-wrap:break-word;}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1816,
+        "line": 1872,
         "sample": ".lib-flow :where(blockquote){margin:1em 1.4em;padding-inline-start:1em;border-inline-start:2px solid color-mix(in srgb,var(--reader-ink) 24%,transparent);opacity:.9;}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1823,
+        "line": 1879,
         "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
       },
       {
         "rule": "border-radius",
         "file": "renderer/modules/library/index.js",
-        "line": 1823,
+        "line": 1879,
         "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
       },
       {
         "rule": "box-shadow",
         "file": "renderer/modules/library/index.js",
-        "line": 1823,
+        "line": 1879,
         "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 1825,
+        "line": 1881,
         "sample": ".lib-text-section-content{box-sizing:border-box;width:100%;padding:var(--reader-scroll-pad-block,36px) var(--reader-scroll-pad-inline,44px) calc(var(--reader-scroll-pad-block,36px) + 18px);margin:0 auto;overflow-wrap:break-word;}"
       },
       {
         "rule": "hardcoded-rgb-hsl",
         "file": "renderer/modules/library/index.js",
-        "line": 1828,
+        "line": 1884,
         "sample": ".lib-text-placeholder{display:block;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(127,127,127,.035),transparent);}"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/library/index.js",
-        "line": 1830,
+        "line": 1886,
         "sample": ".lib-text-slot.is-error::after{content:'本节加载失败';position:absolute;top:32px;left:50%;transform:translateX(-50%);color:#b42318;font-size:12px;}"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/library/index.js",
-        "line": 1831,
+        "line": 1887,
         "sample": "hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 2932,
+        "line": 2988,
         "sample": ": '<div style=\"padding:8px;color:var(--fg-dim)\">无结果</div>';"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3303,
+        "line": 3367,
         "sample": "return `<div style=\"display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd,#eee)\">"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/library/index.js",
-        "line": 3303,
+        "line": 3367,
         "sample": "return `<div style=\"display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd,#eee)\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3304,
+        "line": 3368,
         "sample": "<span style=\"flex:1\">${escapeHtml(c)} <span style=\"color:var(--fg-dim);font-size:11px\">（${n} 本）</span></span>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3305,
+        "line": 3369,
         "sample": "<button class=\"fc-mini\" data-delcat=\"${escapeHtml(c)}\" style=\"color:var(--danger)\">删除</button></div>`;"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3306,
+        "line": 3370,
         "sample": "}).join('') || '<div style=\"color:var(--fg-dim);padding:8px 0\">还没有自定义分类</div>';"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3318,
+        "line": 3382,
         "sample": "<div style=\"font-size:11px;color:var(--fg-dim);margin-top:6px\">删除分类不会删书，书自动归到「未分类」。</div>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3587,
+        "line": 3651,
         "sample": "<div style=\"display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd,#eee);font-size:12.5px\">"
       },
       {
         "rule": "hardcoded-hex-color",
         "file": "renderer/modules/library/index.js",
-        "line": 3587,
+        "line": 3651,
         "sample": "<div style=\"display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd,#eee);font-size:12.5px\">"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3590,
+        "line": 3654,
         "sample": "<span style=\"color:var(--fg-dim);font-size:11px\">${r.match === 'regex' ? '正则' : '字面'} · ${r.scope === 'all' ? '全书' : '本书'}${r.type !== 'delete' && r.replacement ? ' → ' + escapeHtml(r.replacement) : ''}</span>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3592,
+        "line": 3656,
         "sample": "<button class=\"fc-mini\" data-delrule=\"${i}\" style=\"color:var(--danger)\">删除</button>"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3593,
+        "line": 3657,
         "sample": "</div>`).join('') || '<div style=\"color:var(--fg-dim);padding:8px 0\">还没有规则——网文广告与站点水印的清洗层</div>';"
       },
       {
         "rule": "semantic-token-use",
         "file": "renderer/modules/library/index.js",
-        "line": 3629,
+        "line": 3693,
         "sample": "<div style=\"font-size:11px;color:var(--fg-dim);margin-top:6px\">规则按序生效；作用于文本节点（永不碰标签结构）；坏正则会自动跳过。</div>"
       },
       {
@@ -43541,147 +43541,147 @@
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 367,
+        "line": 346,
         "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 850,
+        "line": 906,
         "sample": "<div style=\"min-width:340px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 931,
+        "line": 987,
         "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\">"
       },
       {
         "rule": "position-absolute",
         "provisionalClass": "D",
         "file": "renderer/modules/library/index.js",
-        "line": 1810,
+        "line": 1866,
         "sample": ".lib-flow-wrap::after{content:'';position:absolute;z-index:3;pointer-events:none;top:0;bottom:0;left:50%;width:var(--reader-spread-gutter,0px);transform:translateX(-50%);opacity:0;background:linear-gradient(90deg,color-mix(in srgb,var(--reader-ink) 8%,transparent),transparent 36%,transparent 64%,color-mix(in srgb,var(-"
       },
       {
         "rule": "calc-viewport-or-container",
         "provisionalClass": "E",
         "file": "renderer/modules/library/index.js",
-        "line": 1818,
+        "line": 1874,
         "sample": ".lib-flow :where(img,svg){display:block;margin:.65em auto;max-height:calc(100% - 1.3em);object-fit:contain;}"
       },
       {
         "rule": "calc-viewport-or-container",
         "provisionalClass": "E",
         "file": "renderer/modules/library/index.js",
-        "line": 1823,
+        "line": 1879,
         "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
       },
       {
         "rule": "position-absolute",
         "provisionalClass": "D",
         "file": "renderer/modules/library/index.js",
-        "line": 1829,
+        "line": 1885,
         "sample": ".lib-text-slot.is-loading::after{content:'正在排版…';position:absolute;top:32px;left:50%;transform:translateX(-50%);opacity:.5;font-size:12px;}"
       },
       {
         "rule": "position-absolute",
         "provisionalClass": "D",
         "file": "renderer/modules/library/index.js",
-        "line": 1830,
+        "line": 1886,
         "sample": ".lib-text-slot.is-error::after{content:'本节加载失败';position:absolute;top:32px;left:50%;transform:translateX(-50%);color:#b42318;font-size:12px;}"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/library/index.js",
-        "line": 2343,
+        "line": 2399,
         "sample": "if (typeof ResizeObserver !== 'undefined') {"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/library/index.js",
-        "line": 2345,
+        "line": 2401,
         "sample": "ctl._flowRO = new ResizeObserver(() => {"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/library/index.js",
-        "line": 2470,
+        "line": 2526,
         "sample": "// ResizeObserver fires after Chromium has already committed the changed"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/library/index.js",
-        "line": 2717,
+        "line": 2773,
         "sample": "if (typeof ResizeObserver !== 'undefined') {"
       },
       {
         "rule": "resize-js-layout",
         "provisionalClass": "E",
         "file": "renderer/modules/library/index.js",
-        "line": 2719,
+        "line": 2775,
         "sample": "ctl._flowRO = new ResizeObserver(() => {"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 2868,
+        "line": 2924,
         "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:320px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 3312,
+        "line": 3376,
         "sample": "<div style=\"min-width:340px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 3386,
+        "line": 3450,
         "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\"><b>${selectedIds.size} 本移到分类</b>"
       },
       {
         "rule": "white-space-nowrap",
         "provisionalClass": "A",
         "file": "renderer/modules/library/index.js",
-        "line": 3588,
+        "line": 3652,
         "sample": "<span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"${escapeHtml(r.pattern || '')}\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 3618,
+        "line": 3682,
         "sample": "<div style=\"min-width:480px;max-width:620px\">"
       },
       {
         "rule": "fixed-width-px",
         "provisionalClass": "D",
         "file": "renderer/modules/library/index.js",
-        "line": 3621,
+        "line": 3685,
         "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
       },
       {
         "rule": "fixed-min-width",
         "provisionalClass": "B",
         "file": "renderer/modules/library/index.js",
-        "line": 3622,
+        "line": 3686,
         "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
       },
       {
         "rule": "fixed-width-px",
         "provisionalClass": "D",
         "file": "renderer/modules/library/index.js",
-        "line": 3625,
+        "line": 3689,
         "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
       },
       {

@@ -73,7 +73,7 @@ describe('R1+R2 进度接力与通知中心', () => {
     for (const src of [text, md, code]) assert.ok(src.includes("progressKind: 'editor'"), '三个编辑内核都应接光标接力');
   });
 
-  test('通知抽屉准入、持久化、五类完工汇流与点击跳转', () => {
+  test('通知抽屉准入、持久化、完工汇流、书库持久 Inbox 唤醒与点击跳转', () => {
     const panelWin = read('main/panel-windows.js');
     const preload = read('preload/bridge.js');
     const shell = read('renderer/shell/shell.js');
@@ -86,7 +86,7 @@ describe('R1+R2 进度接力与通知中心', () => {
       ['renderer/modules/viewer/index.js', "source: 'transcode'"],
       ['renderer/modules/factory/index.js', "source: 'factory'"],
       ['renderer/shell/shell.js', "source: 'sync'"],
-      ['renderer/modules/library/index.js', "source: 'download'"],
+      ['renderer/modules/library/index.js', "'library:acquisitionInboxReady'"],
       ['renderer/shell/shell.js', "source: 'archive'"],
     ];
     for (const [file, token] of sources) assert.ok(read(file).includes(token), `${file} 缺 ${token}`);

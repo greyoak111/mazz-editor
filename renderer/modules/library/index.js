@@ -15,6 +15,7 @@ import { planSpread } from './spread-planner.js';
 import { COVER_LIMITS, persistCover } from './cover-cache.js';
 import { createLibraryLocatorStore, mergeLocatorRecords } from './locator-store.js';
 import { canonicalWorkspace, createLibraryRepository } from './repository.js';
+import { drainAcquisitionInbox } from './acquisition-inbox.js';
 import { createReaderInput } from './reader-input.js';
 import { createReaderPreferencesStore, appearanceForReaderController } from './reader-prefs.js';
 import { createShelfViewModel } from './shelf-model.js';
@@ -35,8 +36,6 @@ import {
 const MODULE = 'library';
 const instances = new Map();
 let current = null;
-let sharedDownloadOff = null;
-const downloadInFlight = new Map();
 // Import work is shared across every Library tab in this renderer. A source
 // path and, after hashing, a content fingerprint both converge to one durable
 // receipt; otherwise two tabs can return different ids for the same copy.
@@ -99,27 +98,6 @@ async function shortFingerprint(bytes) {
     return (h >>> 0).toString(16).padStart(8, '0');
   }
 }
-function ensureDownloadCoordinator() {
-  if (sharedDownloadOff || !window.mazz?.on) return;
-  sharedDownloadOff = window.mazz.on('library:download', async ({ path, name }) => {
-    if (!path) return;
-    const liveWorkspace = canonicalWorkspace(await window.mazz.invoke('workspace:get').catch(() => ''));
-    const candidates = [...instances.values()].filter(ctl => !ctl._destroyed && ctl.importDownloaded);
-    await Promise.all(candidates.map(ctl => ctl.repository?.init?.().catch(() => null)));
-    const active = current && !current._destroyed && current.repository?.identity?.canonical === liveWorkspace
-      ? current
-      : null;
-    const owner = active || candidates.find(ctl => ctl.repository?.identity?.canonical === liveWorkspace);
-    if (!owner) return;
-    const key = `${liveWorkspace}\u0000${normalizedPath(path)}`;
-    if (downloadInFlight.has(key)) return downloadInFlight.get(key);
-    const task = Promise.resolve(owner.importDownloaded({ path, name }))
-      .finally(() => downloadInFlight.delete(key));
-    downloadInFlight.set(key, task);
-    return task;
-  });
-}
-
 function importOwnerError() {
   return Object.assign(new Error('工作区已切换；请在当前工作区重新执行导入'), {
     code: 'LIBRARY_WORKSPACE_OWNER_CHANGED',
@@ -178,7 +156,7 @@ function createLibrary(container) {
     <div class="lib-shelf-view">
       <div class="lib-shelf-head">
         <b>${iconHtml('📚')} 我的书库</b>
-        <button class="rb-btn" data-a="dl-site" title="打开电子书站（投稿会话登录后，下载自动入库）" style="font-size:11.5px">${iconHtml('⬇')} 下载站</button>
+        <button class="rb-btn" data-a="dl-site" title="打开电子书站（普通下载；入库需明确授权或手动导入）" style="font-size:11.5px">${iconHtml('⬇')} 下载站</button>
         <span class="lib-count"></span>
         <select class="lib-cat-filter rb-select" title="按分类筛选"></select>
         <button class="rb-btn" data-a="newcat" title="分类管理（新建/删除）">${iconHtml('✚')} 分类</button>
@@ -292,6 +270,7 @@ function createLibrary(container) {
     _handoffProvisional: false, _handoffDiscardable: false,
     _openGen: 0, _searchGen: 0, _exportGen: 0,
     _lifecycleGen: 0, _ownedOverlays: new Set(),
+    _acquisitionInboxOff: null,
   };
 
   // Back, workspace hand-off and tab destruction are independent async
@@ -406,6 +385,8 @@ function createLibrary(container) {
       locatorStore: null,
       pending: new Set(),
       retiring: false,
+      acquisitionAbortController: new AbortController(),
+      acquisitionDrain: null,
     };
     // Locator durability is deliberately closed over this repository rather
     // than the mutable active binding. A final position captured for workspace
@@ -500,6 +481,81 @@ function createLibrary(container) {
   const getAllRules = (binding = repositoryBinding) => readRepository(repo => repo.getValue('cleanRules'), binding);
   const mutateAllRules = (updater, binding = repositoryBinding) => mutateRepository('cleanRules', updater, binding);
   installRepositoryBinding(repositoryBinding);
+
+  function acquisitionBindingHasWriteAuthority(owner) {
+    return owner === repositoryBinding
+      && !owner.retiring
+      && !ctl._destroyed
+      && !ctl._destroying
+      && !ctl._workspaceRebinding
+      && !ctl._handoffProvisional
+      && !ctl._handoffDiscardable;
+  }
+
+  function acquisitionBindingIsCurrent(owner) {
+    return acquisitionBindingHasWriteAuthority(owner)
+      && !owner.acquisitionAbortController?.signal.aborted;
+  }
+
+  function abortAcquisitionBinding(binding, reason) {
+    const controller = binding?.acquisitionAbortController;
+    if (!controller || controller.signal.aborted) return false;
+    const error = Object.assign(new Error(`Library Inbox replay stopped: ${reason}`), {
+      name: 'AbortError',
+      code: 'ABORT_ERR',
+    });
+    controller.abort(error);
+    return true;
+  }
+
+  function resumePendingAcquisition(binding = repositoryBinding) {
+    if (!acquisitionBindingHasWriteAuthority(binding)) return Promise.resolve(null);
+    const aborted = binding.acquisitionAbortController?.signal.aborted === true;
+    if (!binding.acquisitionAbortController || aborted) {
+      binding.acquisitionAbortController = new AbortController();
+    }
+    if (aborted && binding.acquisitionDrain) {
+      const previous = binding.acquisitionDrain;
+      return Promise.resolve(previous).catch(() => null).then(() => (
+        acquisitionBindingIsCurrent(binding) ? drainPendingAcquisition(binding) : null
+      ));
+    }
+    return drainPendingAcquisition(binding);
+  }
+
+  function drainPendingAcquisition(binding = repositoryBinding) {
+    if (!acquisitionBindingIsCurrent(binding)) return Promise.resolve(null);
+    if (binding.acquisitionDrain) return binding.acquisitionDrain;
+    const operation = drainAcquisitionInbox({
+      bridge: { invoke: window.mazz.invoke.bind(window.mazz) },
+      repository: binding.repository,
+      binding,
+      bindingVerifier: ({ binding: owner }) => acquisitionBindingIsCurrent(owner),
+      signal: binding.acquisitionAbortController.signal,
+    }).then(async result => {
+      // A shelf CAS may have succeeded even when the main-process completion
+      // response failed. Any completed drain/list is therefore a reason to
+      // re-read the durable shelf instead of trusting an earlier warm snapshot.
+      if (result && acquisitionBindingIsCurrent(binding)) {
+        await renderShelf({ reload: true }).catch(() => null);
+      }
+      return result;
+    }).catch(error => {
+      if (error?.name === 'AbortError' || error?.code === 'ABORT_ERR'
+          || error?.stale || error?.code === 'LIBRARY_INBOX_STALE_BINDING'
+          || !acquisitionBindingHasWriteAuthority(binding)) return null;
+      console.warn('[library-acquisition] Inbox replay:', error?.code || 'LIBRARY_INBOX_REPLAY_FAILED');
+      return null;
+    });
+    const tracked = trackBindingOperation(binding, operation);
+    binding.acquisitionDrain = tracked;
+    tracked.finally(() => {
+      if (binding.acquisitionDrain === tracked) binding.acquisitionDrain = null;
+    }).catch(() => {});
+    return tracked;
+  }
+
+  ctl.resumePendingAcquisition = () => resumePendingAcquisition(repositoryBinding);
 
   function readerAppearanceSnapshot() {
     return {
@@ -3003,6 +3059,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     const binding = repositoryBinding;
     binding.retiring = true;
     ctl._workspaceRebinding = true;
+    abortAcquisitionBinding(binding, 'workspace-retirement');
     acquireLifecycleInert('workspace');
     root.dataset.workspaceRebinding = 'true';
 
@@ -3121,6 +3178,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     } else if (readerView.style.display === 'none') {
       await renderShelf({ reload: true }).catch(() => null);
     }
+    void resumePendingAcquisition(retirement.binding);
     if (error) toast('书库切换工作区失败，已保留原工作区：' + (error?.message || error));
     return false;
   }
@@ -3225,6 +3283,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
         ctl.shelf.progress = shelfProgressProjection(progress);
         ctl.shelf.model = createShelfViewModel({ records: books, progress: ctl.shelf.progress });
         const painted = paintShelfState({ resetScroll: true });
+        void drainPendingAcquisition(next);
         return !ctl._destroyed && request === workspaceRebindRequest && !!painted;
       } catch (error) {
         if (next) next.retiring = true;
@@ -3249,6 +3308,11 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
       void requestWorkspaceRebind(path).catch(error => {
         if (!ctl._destroyed) toast('书库切换工作区失败：' + (error?.message || error));
       });
+    });
+    // Wake payloads are intentionally ignored. The durable main-process list
+    // is the only source of receipt path/hash/Workspace truth.
+    ctl._acquisitionInboxOff = window.mazz.on('library:acquisitionInboxReady', () => {
+      void resumePendingAcquisition(repositoryBinding);
     });
   }
 
@@ -3825,12 +3889,14 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
   }
   pageEl.addEventListener('contextmenu', (e) => onReaderContext(e));
 
-  // 「下载站」：投稿会话打开电子书站（cookie 持久，下载的 epub/mobi/pdf 自动存工作区书库并入库）
+  // 「下载站」：投稿会话保留登录态。普通站点下载仍由 Electron
+  // 正常处理；只有未来资源面预登记的 Rights-authorized intent 才进入
+  // W93 acquisition staging/Inbox，点击下载本身绝不等于版权结论。
   root.querySelector('[data-a=dl-site]')?.addEventListener('click', async () => {
     if (ctl._destroyed) return;
     const lifecycleGen = ctl._lifecycleGen;
     const alive = () => !ctl._destroyed && ctl._lifecycleGen === lifecycleGen;
-    // 预置公版/正版电子书站（投稿会话打开，cookie 持久；下载自动入库）
+    // 这些是人工浏览入口，不是机器可判权的 Source Adapter。
     const { showDomMenu } = await import('../../lib/dom-menu.js');
     if (!alive()) return;
     const SITES = [
@@ -3853,28 +3919,10 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
         if (!alive()) return;
         window.MazzShell.openTab('browser', { title: '电子书下载站', content: '' });
         setTimeout(() => { if (alive()) window.__activeBrowserCtl?.openTabRaw(target, { partition: 'persist:mazz-author' }); }, 800);
-        toast('在打开的站点里登录并下载——电子书会自动入库');
+        toast('站点下载仍按普通下载处理；需要入库时请使用“导入书籍”');
       },
     })), rect.left, rect.bottom + 4));
   });
-
-  // 自动下载入库由模块级单例协调；开 3 个书库签也只消费一次事件。
-  ctl.importDownloaded = async ({ path, name }) => {
-    if (ctl._destroyed) return null;
-    try {
-      const bookId = await importPath(path, { silent: true });
-      if (ctl._destroyed) return null;
-      if (!bookId) throw new Error('文件未能写入书架');
-      toast(`已自动入库：${name || path.split(/[\\/]/).pop()}`);
-      window.MazzActivity?.publish?.({ id: `download-${path}`, source: 'download', title: '下载已入书库', detail: name || path.split(/[\\/]/).pop(), status: 'done', target: { kind: 'library', bookId, path } });
-      renderShelf();
-      return bookId;
-    } catch (e) {
-      toast('入库失败：' + e.message);
-      window.MazzActivity?.publish?.({ id: `download-${path}`, source: 'download', title: '下载入库失败', detail: e.message, status: 'failed', target: { kind: 'file', path } });
-      return null;
-    }
-  };
 
   ctl.importBook = importBook;
   ctl.importPath = importPath;
@@ -3896,6 +3944,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     ctl._handoffProvisional = !!enabled;
     if (enabled) {
       ctl._handoffDiscardable = true;
+      abortAcquisitionBinding(repositoryBinding, 'handoff-provisional');
       acquireLifecycleInert('handoff-provisional');
     } else {
       releaseLifecycleInert('handoff-provisional');
@@ -3904,12 +3953,14 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
   };
   ctl.finalizeHandoff = () => {
     ctl._handoffDiscardable = false;
+    void resumePendingAcquisition(repositoryBinding);
     return true;
   };
   ctl.discardHandoff = () => {
     if (!ctl._handoffDiscardable) return Promise.resolve(false);
     if (ctl._handoffDiscardPromise) return ctl._handoffDiscardPromise;
     ctl._destroying = true;
+    abortAcquisitionBinding(repositoryBinding, 'handoff-discard');
     acquireLifecycleInert('handoff-discard');
     readerInput.cancelFocusRequest();
     closeOwnedOverlays();
@@ -3928,6 +3979,8 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
       // flush and no normal durable destroy path.
       ctl._destroyed = true;
       ctl.detachWorkspaceRebind?.();
+      try { ctl._acquisitionInboxOff?.(); } catch {}
+      ctl._acquisitionInboxOff = null;
       ctl._lifecycleGen++;
       clearTimeout(progTimer);
       clearTimeout(ctl.shelf.queryTimer);
@@ -3962,6 +4015,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     ctl._resolveDestroyOutcome?.('aborted');
     ctl._resolveDestroyOutcome = null;
     ctl._destroyOutcomePromise = null;
+    void resumePendingAcquisition(repositoryBinding);
     return true;
   };
 
@@ -3970,6 +4024,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     if (ctl._destroyReceipt) return Promise.resolve(ctl._destroyReceipt);
     if (ctl._destroyPromise) return ctl._destroyPromise;
     ctl._destroying = true;
+    abortAcquisitionBinding(repositoryBinding, 'destroy-preflight');
     acquireLifecycleInert('destroy');
     readerInput.cancelFocusRequest();
     ctl._destroyOutcomePromise = new Promise(resolve => { ctl._resolveDestroyOutcome = resolve; });
@@ -4039,6 +4094,8 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     if (!receipt || receipt !== ctl._destroyReceipt || receipt.owner !== ctl) return false;
     ctl._destroyed = true;
     ctl.detachWorkspaceRebind?.();
+    try { ctl._acquisitionInboxOff?.(); } catch {}
+    ctl._acquisitionInboxOff = null;
     ctl._lifecycleGen++;
     clearTimeout(progTimer);
     clearTimeout(ctl.shelf.queryTimer);
@@ -4074,6 +4131,9 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
   };
 
   renderShelf();
+  void repositoryReady.then(() => drainPendingAcquisition(repositoryBinding)).catch(error => {
+    if (!ctl._destroyed) console.warn('[library-acquisition] initial Inbox replay:', error?.code || 'LIBRARY_INBOX_REPLAY_FAILED');
+  });
   return ctl;
 }
 
@@ -4096,9 +4156,9 @@ export default {
     const ctl = instances.get(container);
     if (!ctl) return;
     current = ctl;
-    ensureDownloadCoordinator();
     window.__activeLibraryCtl = ctl;
     contextKeys.set('module', MODULE);
+    void ctl.resumePendingAcquisition?.();
   },
   deactivate(container) {
     const ctl = instances.get(container);

@@ -8,6 +8,7 @@ const INVOKE_CHANNELS = new Set([
   'fs:readFile', 'fs:writeFile', 'fs:listDir', 'fs:stat', 'fs:mkdir', 'fs:rename', 'fs:delete',
   'fs:readFileBase64', 'fs:writeFileBase64', 'fs:probeFile',
   'library:importMaterialize', 'library:importFinalize',
+  'library:acquisitionInboxList', 'library:acquisitionInboxCommit',
   'evidence:scanWorkspace', 'evidence:fileRelations', 'evidence:createAnchorForPath', 'evidence:invalidate',
   'context:snapshot', 'context:addSubject', 'context:removePlacement', 'context:updatePlacement',
   'context:addShadowEdge', 'context:dismissShadowEdge', 'context:promoteEdge',
@@ -90,7 +91,8 @@ const INVOKE_CHANNELS = new Set([
 const EVENT_CHANNELS = new Set([
   'file:open', 'file:changed', 'file:watch-error', 'file:import', 'command:invoke', 'menu:clicked',
   'protocol:open', 'power:resumed', 'quicknote:focus', 'theme:changed', 'window:handoff', 'window:role', 'window:durability-failed',
-  'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'factory:aiUsage', 'library:download',
+  'browser:openUrl', 'term:data', 'term:exit', 'debug:event', 'factory:aiChunk', 'factory:aiUsage',
+  'library:acquisitionInboxReady',
   'harness:event',
   'workspace:changed', 'window:fullscreen', 'window:maximize-state', 'bv:event', 'bv:frame', 'slideRemote:cmd', 'slideRemote:client',
   'panel:changed', 'panel:action', 'panel:push', 'dock:snapHint',
