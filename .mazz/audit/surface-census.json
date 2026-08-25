@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 110,
-    "scannedLines": 34604
+    "scannedFiles": 111,
+    "scannedLines": 35629
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -103,73 +103,73 @@
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 408,
+      "line": 413,
       "sample": "const win = BrowserWindow.fromWebContents(sender);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 439,
+      "line": 444,
       "sample": "sender.on('render-process-gone', () => {"
     },
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 1204,
+      "line": 1209,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1246,
+      "line": 1251,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1263,
+      "line": 1268,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1276,
+      "line": 1281,
       "sample": "try { record.target.webContents.removeListener('render-process-gone', record.onTargetGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1278,
+      "line": 1283,
       "sample": "try { record.source?.removeListener('render-process-gone', record.onSourceGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1356,
+      "line": 1361,
       "sample": "target.webContents.once('render-process-gone', record.onTargetGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1358,
+      "line": 1363,
       "sample": "source?.once('render-process-gone', record.onSourceGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 1810,
+      "line": 1815,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2224,
+      "line": 2232,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2316,
+      "line": 2324,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -473,17 +473,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 1998,
+          "line": 2003,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 2091,
+          "line": 2096,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 2120,
+          "line": 2125,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -521,7 +521,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 2226,
+          "line": 2234,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]

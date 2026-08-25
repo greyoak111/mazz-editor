@@ -997,147 +997,147 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 410,
+      "line": 420,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 981,
+      "line": 991,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 1062,
+      "line": 1072,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\">"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1942,
+      "line": 1952,
       "sample": ".lib-flow-wrap::after{content:'';position:absolute;z-index:3;pointer-events:none;top:0;bottom:0;left:50%;width:var(--reader-spread-gutter,0px);transform:translateX(-50%);opacity:0;background:linear-gradient(90deg,color-mix(in srgb,var(--reader-ink) 8%,transparent),transparent 36%,transparent 64%,color-mix(in srgb,var(-"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 1950,
+      "line": 1960,
       "sample": ".lib-flow :where(img,svg){display:block;margin:.65em auto;max-height:calc(100% - 1.3em);object-fit:contain;}"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 1955,
+      "line": 1965,
       "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1961,
+      "line": 1971,
       "sample": ".lib-text-slot.is-loading::after{content:'正在排版…';position:absolute;top:32px;left:50%;transform:translateX(-50%);opacity:.5;font-size:12px;}"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1962,
+      "line": 1972,
       "sample": ".lib-text-slot.is-error::after{content:'本节加载失败';position:absolute;top:32px;left:50%;transform:translateX(-50%);color:#b42318;font-size:12px;}"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2475,
+      "line": 2485,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2477,
+      "line": 2487,
       "sample": "ctl._flowRO = new ResizeObserver(() => {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2602,
+      "line": 2612,
       "sample": "// ResizeObserver fires after Chromium has already committed the changed"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2849,
+      "line": 2859,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2851,
+      "line": 2861,
       "sample": "ctl._flowRO = new ResizeObserver(() => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3000,
+      "line": 3010,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:320px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3479,
+      "line": 3489,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3553,
+      "line": 3563,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\"><b>${selectedIds.size} 本移到分类</b>"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/library/index.js",
-      "line": 3755,
+      "line": 3765,
       "sample": "<span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"${escapeHtml(r.pattern || '')}\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3785,
+      "line": 3795,
       "sample": "<div style=\"min-width:480px;max-width:620px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3788,
+      "line": 3798,
       "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3789,
+      "line": 3799,
       "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3792,
+      "line": 3802,
       "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
     },
     {
@@ -3615,1386 +3615,1386 @@
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1043,
+      "line": 1046,
       "sample": ".lib-reader-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--bd, #e0ded8); flex-shrink: 0; overflow-x: auto; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1044,
+      "line": 1047,
       "sample": ".lib-reader-bar > :not(.lib-book-title) { flex-shrink: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1045,
+      "line": 1048,
       "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1045,
+      "line": 1048,
       "sample": ".lib-book-title { flex: 0 1 34%; min-width: 80px; font-weight: 700; font-size: 13.5px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34%; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1046,
+      "line": 1049,
       "sample": ".lib-pos { font-size: 12px; color: var(--fg-dim, #a3a19a); min-width: 52px; text-align: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1048,
+      "line": 1051,
       "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1048,
+      "line": 1051,
       "sample": ".lib-toc { width: 220px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); overflow-y: auto; padding: 6px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1049,
+      "line": 1052,
       "sample": ".lib-toc-item { padding: 6px 10px; border-radius: 6px; font-size: 12.5px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1077,
+      "line": 1080,
       "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1077,
+      "line": 1080,
       "sample": ".cm-panel { border-left: 1px solid var(--bd, #e0ded8); width: 240px; flex-shrink: 0; overflow-y: auto; padding: 8px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1080,
+      "line": 1083,
       "sample": ".cm-item .cm-quote { color: var(--fg-dim, #a3a19a); font-size: 11.5px; border-left: 3px solid #eab308; padding-left: 6px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1089,
+      "line": 1092,
       "sample": ".help-side { width: 250px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; }"
     },
     {
       "rule": "flex-shrink-zero",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1089,
+      "line": 1092,
       "sample": ".help-side { width: 250px; flex-shrink: 0; border-right: 1px solid var(--bd, #e0ded8); display: flex; flex-direction: column; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1095,
+      "line": 1098,
       "sample": ".help-toc-item { padding: 7px 10px; border-radius: 7px; font-size: 12.5px; cursor: pointer; color: var(--fg, #2c2c2a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1100,
+      "line": 1103,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1100,
+      "line": 1103,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1100,
+      "line": 1103,
       "sample": ".help-close { position: absolute; top: 12px; right: 12px; z-index: 2; min-width: 30px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1119,
+      "line": 1122,
       "sample": ".sidebar.floating { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: 10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1119,
+      "line": 1122,
       "sample": ".sidebar.floating { position: absolute; top: 0; left: 0; bottom: 0; z-index: 40; box-shadow: 10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1120,
+      "line": 1123,
       "sample": ".sidebar-grip { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 6; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1122,
+      "line": 1125,
       "sample": ".sidebar-rail { width: 30px; flex: none; border: 0; border-right: 1px solid var(--border, #e0ded8); background: var(--bg-elev, #f7f6f3); color: var(--fg-dim, #a3a19a); font-size: 15px; padding-top: 12px; cursor: pointer; align-items: flex-start; justify-content: center; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1122,
+      "line": 1125,
       "sample": ".sidebar-rail { width: 30px; flex: none; border: 0; border-right: 1px solid var(--border, #e0ded8); background: var(--bg-elev, #f7f6f3); color: var(--fg-dim, #a3a19a); font-size: 15px; padding-top: 12px; cursor: pointer; align-items: flex-start; justify-content: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1128,
+      "line": 1131,
       "sample": ".ribbon-grip { position: absolute; left: 0; right: 0; bottom: -3px; height: 7px; cursor: row-resize; z-index: 6; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1134,
+      "line": 1137,
       "sample": "[dir=\"rtl\"] .sidebar.floating { box-shadow: -10px 0 28px rgba(0,0,0,.22); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1138,
+      "line": 1141,
       "sample": "[dir=\"rtl\"] .help-close { right: auto; left: 12px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1143,
+      "line": 1146,
       "sample": "[dir=\"rtl\"] .mm-hint { left: auto; right: 12px; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1144,
+      "line": 1147,
       "sample": "[dir=\"rtl\"] .notes-graph-legend { left: auto; right: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1154,
+      "line": 1157,
       "sample": ".ft-more { display: block; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--fg-dim); font-size: 14px; width: 22px; height: 22px; border-radius: 5px; cursor: pointer; padding: 0; opacity: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1154,
+      "line": 1157,
       "sample": ".ft-more { display: block; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--fg-dim); font-size: 14px; width: 22px; height: 22px; border-radius: 5px; cursor: pointer; padding: 0; opacity: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1166,
+      "line": 1169,
       "sample": ".ft-rename-input { flex: 1; min-width: 40px; border: 1px solid var(--accent, #4f46e5); border-radius: 4px; padding: 2px 6px; font-size: 12.5px; font-family: inherit; background: var(--bg, #fff); color: var(--fg, #2c2c2a); outline: none; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1183,
+      "line": 1186,
       "sample": ".sg-hcell .sg-rz { position: absolute; z-index: 5; opacity: 0; transition: opacity .1s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1188,
+      "line": 1191,
       "sample": ".sg-hcell { position: absolute; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1191,
+      "line": 1194,
       "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: var(--accent-fg, #fff); border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1191,
+      "line": 1194,
       "sample": ".sl-rotate { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: var(--accent, #4f46e5); color: var(--accent-fg, #fff); border-radius: 50%; font-size: 11px; line-height: 16px; text-align: center; cursor: grab; z-index: 10; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1196,
+      "line": 1199,
       "sample": ".rb-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 84px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1200,
+      "line": 1203,
       "sample": ".sidebar .ft-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1211,
+      "line": 1214,
       "sample": ".mm-sb-color { width: 26px; height: 24px; padding: 0; border: 1px solid var(--bd, #e0ded8); border-radius: 5px; background: none; cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1219,
+      "line": 1222,
       "sample": ".draw-tool-row2 input[type=range] { width: 76px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1224,
+      "line": 1227,
       "sample": ".draw-collapse-ts { position: absolute; top: 8px; right: 8px; z-index: 12; border: 1px solid var(--bd,#e0ded8); background: var(--bg-elev,#fff); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; color: var(--fg-dim); padding: 0; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1224,
+      "line": 1227,
       "sample": ".draw-collapse-ts { position: absolute; top: 8px; right: 8px; z-index: 12; border: 1px solid var(--bd,#e0ded8); background: var(--bg-elev,#fff); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; color: var(--fg-dim); padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1228,
+      "line": 1231,
       "sample": ".draw-side.collapsed { width: 22px !important; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1238,
+      "line": 1241,
       "sample": ".viewer-pct { min-width: 44px; text-align: center; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1239,
+      "line": 1242,
       "sample": ".viewer-name { margin-left: auto; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1247,
+      "line": 1250,
       "sample": "body.tab-dragging .editor-area::after { content: ''; position: absolute; inset: 0; z-index: 40; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1253,
+      "line": 1256,
       "sample": ".sl-zoomctl { position: absolute; right: 14px; bottom: 12px; z-index: 30; display: flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1253,
+      "line": 1256,
       "sample": ".sl-zoomctl { position: absolute; right: 14px; bottom: 12px; z-index: 30; display: flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; font-size: 12px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1256,
+      "line": 1259,
       "sample": ".sl-zoomctl span { min-width: 38px; text-align: center; color: var(--fg-dim); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1260,
+      "line": 1263,
       "sample": ".appwin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 18px 60px rgba(0, 0, 0, .28); overflow: hidden; }"
     },
     {
       "rule": "width-100vw",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1261,
+      "line": 1264,
       "sample": ".appwin.max { left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; transform: none; border-radius: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1264,
+      "line": 1267,
       "sample": ".appwin-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1266,
+      "line": 1269,
       "sample": ".appwin-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; width: 28px; height: 24px; cursor: pointer; font-size: 12px; line-height: 1; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1269,
+      "line": 1272,
       "sample": ".appwin-resize { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; z-index: 5; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 65%, transparent 65%, transparent 72%, var(--fg-dim, #a3a19a) 72%, var(--fg-dim, #a3a19a) 82%, tra"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1269,
+      "line": 1272,
       "sample": ".appwin-resize { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; z-index: 5; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 65%, transparent 65%, transparent 72%, var(--fg-dim, #a3a19a) 72%, var(--fg-dim, #a3a19a) 82%, tra"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1274,
+      "line": 1277,
       "sample": ".viewer-audio-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 30px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; min-width: 340px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1284,
+      "line": 1287,
       "sample": ".w-openwith { flex: none; width: 300px; background: color-mix(in srgb, var(--accent) 6%, var(--bg-elev)); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border)); border-radius: 14px; padding: 16px 16px 14px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1311,
+      "line": 1314,
       "sample": ".fc-daily-hint { color: var(--fg-dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1314,
+      "line": 1317,
       "sample": ".fc-role-pickers .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1333,
+      "line": 1336,
       "sample": ".fc-agent-role .ai-role-picker { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1348,
+      "line": 1351,
       "sample": ".fc-agent-inputrow .fc-btn { flex: none; width: 58px; padding: 5px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1350,
+      "line": 1353,
       "sample": ".fc-agent-chip { border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg-dim); padding: 2px 7px; font: 10.5px var(--font-ui); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1388,
+      "line": 1391,
       "sample": ".fc-task-label, .fc-his-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1411,
+      "line": 1414,
       "sample": ".side-dock.collapsed { width: 36px !important; min-width: 36px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1411,
+      "line": 1414,
       "sample": ".side-dock.collapsed { width: 36px !important; min-width: 36px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1413,
+      "line": 1416,
       "sample": ".sd-rail { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 36px; border: 0; background: var(--bg-elev); color: var(--fg-dim); cursor: pointer; border-radius: 12px 0 0 12px; align-items: center; justify-content: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1413,
+      "line": 1416,
       "sample": ".sd-rail { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 36px; border: 0; background: var(--bg-elev); color: var(--fg-dim); cursor: pointer; border-radius: 12px 0 0 12px; align-items: center; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1426,
+      "line": 1429,
       "sample": ".sd-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg-dim); border-radius: 5px; width: 22px; height: 20px; cursor: pointer; font-size: 11px; line-height: 1; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1428,
+      "line": 1431,
       "sample": ".sd-zoom { font-size: 11px; color: var(--fg-dim); min-width: 32px; text-align: center; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1430,
+      "line": 1433,
       "sample": ".sd-grip { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 5; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1448,
+      "line": 1451,
       "sample": ".sd-tool-text b { font-size: 12px; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1449,
+      "line": 1452,
       "sample": ".sd-tool-text i { font-size: 10.5px; color: var(--fg-dim); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1457,
+      "line": 1460,
       "sample": ".annotate-canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; pointer-events: auto; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1462,
+      "line": 1465,
       "sample": ".an-fold { border: 0; background: none; color: var(--fg-dim); cursor: pointer; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1464,
+      "line": 1467,
       "sample": ".an-c { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1467,
+      "line": 1470,
       "sample": ".an-size { width: 80px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1476,
+      "line": 1479,
       "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; max-width: 86px; background: var(--accent); color: var(--accent-fg); font-size: 10px; border-radius: 4px; padding: 1px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1476,
+      "line": 1479,
       "sample": ".lib-card-cat { position: absolute; left: 6px; top: 6px; max-width: 86px; background: var(--accent); color: var(--accent-fg); font-size: 10px; border-radius: 4px; padding: 1px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1480,
+      "line": 1483,
       "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1480,
+      "line": 1483,
       "sample": ".lib-card-cb { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1488,
+      "line": 1491,
       "sample": ".lib-progress .rb-btn { flex: none; min-width: 32px; min-height: 30px; padding: 4px 7px; flex-direction: row; justify-content: center; gap: 4px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1490,
+      "line": 1493,
       "sample": "position: relative; flex: 1 1 120px; min-width: 48px; height: 20px; cursor: pointer; border-radius: 10px;"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1495,
+      "line": 1498,
       "sample": ".lib-prog-fill { position: absolute; inset-inline-start: 0; top: 7px; height: 6px; width: 0%; background: var(--accent); border-radius: 3px; transition: width .2s; pointer-events: none; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1496,
+      "line": 1499,
       "sample": ".lib-pos { flex: 0 1 180px; min-width: 0; display: flex; align-items: baseline; justify-content: flex-end; font-size: 12px; color: var(--fg-dim); white-space: nowrap; text-align: right; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1507,
+      "line": 1510,
       "sample": ".lib-search-bar { position: absolute; right: 8px; top: 100%; z-index: 30; display: flex; gap: 6px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1524,
+      "line": 1527,
       "sample": ".mz-empty { position: absolute; inset: 0; display: grid; place-items: center; background: #101014; z-index: 3; transition: right .15s ease; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1525,
+      "line": 1528,
       "sample": ".mz-empty-in { max-width: min(420px, calc(100% - 40px)); padding: 20px; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.6; background: none; border: 0; box-shadow: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1527,
+      "line": 1530,
       "sample": ".mz-empty-ico .mz-ico { width: 32px; height: 32px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1535,
+      "line": 1538,
       "sample": ".mz-spectrum { position: absolute; inset: auto 0 0 0; bottom: 0; width: 100%; height: 42%; opacity: .85; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1536,
+      "line": 1539,
       "sample": ".mz-audio-art { position: relative; z-index: 1; width: clamp(168px, 24vmin, 272px); max-width: calc(100% - 48px); aspect-ratio: 1 / 1; overflow: hidden; isolation: isolate; color: color-mix(in srgb, var(--accent) 82%, var(--fg)); background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 17%, var(--bg-elev)) "
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1537,
+      "line": 1540,
       "sample": ".mz-audio-art::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.12), transparent 42%), radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 36%); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1538,
+      "line": 1541,
       "sample": ".mz-audio-art-fallback { position: absolute; inset: 0; display: grid; place-items: center; opacity: 1; transition: opacity 200ms ease; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1539,
+      "line": 1542,
       "sample": ".mz-audio-art-fallback::before { content: ''; position: absolute; inset: 12%; border: 1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius: 12px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1541,
+      "line": 1544,
       "sample": ".mz-audio-art > img { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 200ms ease; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1547,
+      "line": 1550,
       "sample": ".mz-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 14px 24px; background: linear-gradient(180deg, rgba(10,12,18,.82) 0%, rgba(10,12,18,.48) 58%, transparent 100%); transition: opacity .3s; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1550,
+      "line": 1553,
       "sample": ".mz-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46%; color: var(--mz-overlay-fg); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1551,
+      "line": 1554,
       "sample": ".mz-meta { font-size: 11px; color: var(--mz-overlay-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1554,
+      "line": 1557,
       "sample": ".mz-controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; min-width: 0; padding: 6px 14px 10px; background: transparent; transition: opacity .3s; container: player-controls / inline-size; } /* W87e：按真实 control seat 宽度退化，不再让 max-content 越过窗格 */"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1563,
+      "line": 1566,
       "sample": ".mz-seek-track::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1567,
+      "line": 1570,
       "sample": ".mz-seek-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000 10%)); border-radius: 3px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1568,
+      "line": 1571,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1568,
+      "line": 1571,
       "sample": ".mz-seek-knob { position: absolute; top: 50%; left: 0%; width: 12px; height: 12px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,.5); opacity: 0; transition: opacity .15s; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1570,
+      "line": 1573,
       "sample": ".mz-thumb { position: absolute; bottom: 40px; z-index: 6; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 5px; box-shadow: var(--shadow); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1581,
+      "line": 1584,
       "sample": ".ie-size { width: 70px; accent-color: var(--accent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1582,
+      "line": 1585,
       "sample": ".ie-chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #e81123; border: 1px solid var(--border); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1583,
+      "line": 1586,
       "sample": ".ie-hist { font-size: 11px; color: var(--fg-dim); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1588,
+      "line": 1591,
       "sample": ".ie-crop { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; z-index: 4; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1589,
+      "line": 1592,
       "sample": ".ie-crop .ie-ch { position: absolute; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1601,
+      "line": 1604,
       "sample": ".mz-bar > .mz-btn { width: 32px; height: 32px; padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1602,
+      "line": 1605,
       "sample": ".mz-bar > .mz-btn.mz-play { width: 38px; height: 34px; padding: 0; font-size: 18px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1603,
+      "line": 1606,
       "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1603,
+      "line": 1606,
       "sample": ".mz-time { min-width: 10.5ch; height: 32px; display: inline-flex; align-items: center; line-height: 1; white-space: nowrap; font-size: 12px; color: var(--mz-overlay-dim); font-variant-numeric: tabular-nums; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1604,
+      "line": 1607,
       "sample": ".mz-vol { width: 74px; height: 20px; margin: 0; vertical-align: middle; accent-color: var(--accent); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1607,
+      "line": 1610,
       "sample": ".mz-more-dot { position: absolute; right: 4px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--mz-overlay-bg); }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1611,
+      "line": 1614,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1611,
+      "line": 1614,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1611,
+      "line": 1614,
       "sample": ".mz-control-center { position: absolute; right: 14px; bottom: 68px; z-index: 14; width: min(360px, calc(100% - 28px)); max-height: min(520px, 66%); display: flex; flex-direction: column; overflow: hidden; color: var(--fg); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 14px; back"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1616,
+      "line": 1619,
       "sample": ".mz-control-density { font-size: 10.5px; color: var(--fg-dim); white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1617,
+      "line": 1620,
       "sample": ".mz-control-center > header button { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--fg-dim); cursor: pointer; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1629,
+      "line": 1632,
       "sample": ".mz-control-center .mz-overflow-item.mz-btn > .mz-control-glyph { width: 20px; display: inline-flex; align-items: center; justify-content: center; color: currentColor; font: 700 10px/1 var(--font-ui); letter-spacing: -.03em; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1630,
+      "line": 1633,
       "sample": ".mz-control-center .mz-overflow-item.mz-btn::after { content: attr(data-player-label); grid-column: 2; grid-row: 1; align-self: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; line-height: 1.2; text-align: left; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1636,
+      "line": 1639,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-control-center { right: calc(var(--mz-side-w) + 14px); width: min(360px, calc(100% - var(--mz-side-w) - 28px)); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1645,
+      "line": 1648,
       "sample": ".mz-bar > .mz-btn { width: 30px; padding: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1646,
+      "line": 1649,
       "sample": ".mz-bar > .mz-btn.mz-play { width: 34px; padding: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1658,
+      "line": 1661,
       "sample": ".mz-bar .mz-btn { min-width: 40px; min-height: 40px; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1661,
+      "line": 1664,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1661,
+      "line": 1664,
       "sample": ".mz-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--mz-side-w); max-width: 30%; min-width: 150px; z-index: 8; display: none; flex-direction: column; background: color-mix(in srgb, var(--bg-elev) 96%, transparent); border-left: 1px solid var(--border); } /* W58f+58h：右栏列表自适应让位——30% 封顶与拖拽上界同函数（极限拖拽不脱同"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1665,
+      "line": 1668,
       "sample": ".mz-stage.side-open:not(.side-overlay) .mz-media, .mz-stage.side-open:not(.side-overlay) .mz-audio-wrap, .mz-stage.side-open:not(.side-overlay) .mz-sub-host { width: calc(100% - var(--mz-side-w)); }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1668,
+      "line": 1671,
       "sample": ".mz-side-grip { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 9; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1671,
+      "line": 1674,
       "sample": ".mz-stream-err { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 12%; text-align: center; background: color-mix(in srgb, #000 72%, transparent); color: #eee; pointer-events: none; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1676,
+      "line": 1679,
       "sample": ".mz-decode-actions .rb-btn { min-width: 112px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1686,
+      "line": 1689,
       "sample": ".mz-ml-caret { flex: none; width: 14px; text-align: center; opacity: .7; font-size: 10px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1687,
+      "line": 1690,
       "sample": ".mz-ml-dname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1692,
+      "line": 1695,
       "sample": ".mz-li { padding: 6px 9px; font-size: 12px; color: var(--fg-dim); border-radius: 6px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1721,
+      "line": 1724,
       "sample": ".fc-feed-cluster-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1727,
+      "line": 1730,
       "sample": ".fc-hit-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1744,
+      "line": 1747,
       "sample": ".lib-progress.collapsed .lib-progress-toggle { min-width: 68px; color: var(--accent); background: var(--accent-soft); }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1750,
+      "line": 1753,
       "sample": ".lib-progress:not(.collapsed) .lib-progress-toggle { min-width: 32px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1768,
+      "line": 1771,
       "sample": ".lib-comic-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fg-dim); font: 600 12px/1 system-ui; opacity: .55; background: color-mix(in srgb, var(--card) 72%, transparent); }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1770,
+      "line": 1773,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1770,
+      "line": 1773,
       "sample": ".lib-comic-slot.is-loading::after { content: ''; position: absolute; top: 50%; width: 24px; height: 24px; border: 2px solid color-mix(in srgb, var(--acc) 22%, transparent); border-top-color: var(--acc); border-radius: 50%; animation: spin .7s linear infinite; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1771,
+      "line": 1774,
       "sample": ".lib-comic-slot.is-error::after { content: '本页解码失败'; position: absolute; top: 50%; color: var(--danger-fg, var(--danger)); font-size: 12px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1785,
+      "line": 1788,
       "sample": ".sd-grip-b { position: absolute; left: 0; right: 0; bottom: -4px; height: 8px; cursor: ns-resize; z-index: 5; display: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1786,
+      "line": 1789,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1786,
+      "line": 1789,
       "sample": ".sd-grip-c { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 6; display: none; border-radius: 0 0 8px 0; background: linear-gradient(135deg, transparent 55%, var(--fg-dim, #a3a19a) 55%, var(--fg-dim, #a3a19a) 62%, transparent 62%); opacity: .7; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1805,
+      "line": 1808,
       "sample": ".mz-ico { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1806,
+      "line": 1809,
       "sample": ".rb-btn .mz-ico { width: 17px; height: 17px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1807,
+      "line": 1810,
       "sample": ".mazz-menu-icon .mz-ico { width: 15px; height: 15px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1811,
+      "line": 1814,
       "sample": ".w-card .mz-ico { width: 20px; height: 20px; color: var(--accent); vertical-align: -4px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1815,
+      "line": 1818,
       "sample": ".ribbon-tab-ico .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1817,
+      "line": 1820,
       "sample": ".tab-pin .mz-ico { width: 12px; height: 12px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1820,
+      "line": 1823,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1820,
+      "line": 1823,
       "sample": ".sidebar-head .acts button .mz-ico { width: 14px; height: 14px; vertical-align: -2px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1828,
+      "line": 1831,
       "sample": ".sb-tab { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; border: 0; background: none; color: var(--fg-dim); font-size: 11.5px; padding: 5px 2px; cursor: pointer; border-radius: 6px; font-family: var(--font-ui); white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1829,
+      "line": 1832,
       "sample": ".sb-tab > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1832,
+      "line": 1835,
       "sample": ".sb-tab-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1833,
+      "line": 1836,
       "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
     },
     {
       "rule": "sidebar-pixel-coupling",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1834,
+      "line": 1837,
       "sample": "@container workspace-sidebar (max-width: 260px) {"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1842,
+      "line": 1845,
       "sample": ".sb-tbtn .mz-ico { width: 13px; height: 13px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1849,
+      "line": 1852,
       "sample": ".sb-item .mz-ico { width: 14px; height: 14px; flex: none; color: var(--fg-dim); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1850,
+      "line": 1853,
       "sample": ".sb-item-t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1856,
+      "line": 1859,
       "sample": ".sb-ol-arrow { font-style: normal; color: var(--fg-dim); width: 14px; text-align: center; cursor: pointer; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1863,
+      "line": 1866,
       "sample": ".sb-tag-head .mz-ico { width: 14px; height: 14px; color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1877,
+      "line": 1880,
       "sample": ".ft-dir { margin-left: auto; padding-left: 6px; padding-right: 26px; font-size: 10px; color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38%; direction: rtl; text-align: right; flex: none; pointer-events: none; position: relative; z-index: 0; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1886,
+      "line": 1889,
       "sample": ".mz-bright { width: 56px; accent-color: var(--accent); }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1906,
+      "line": 1909,
       "sample": ".selmenu-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1910,
+      "line": 1913,
       "sample": ".sb-ws-btn .selmenu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1925,
+      "line": 1928,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 1925,
+      "line": 1928,
       "sample": ".notes-side.folded { width: 34px; min-width: 34px; overflow: hidden; }"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1930,
+      "line": 1933,
       "sample": ".fs-exit { position: fixed; right: 18px; bottom: 18px; z-index: 9999; border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); color: var(--fg); border-radius: 999px; padding: 8px 18px; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/styles/base.css",
-      "line": 1936,
+      "line": 1939,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 1936,
+      "line": 1939,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1936,
+      "line": 1939,
       "sample": ".mz-companion { position:absolute; right:16px; bottom:68px; z-index:12; width:min(360px,calc(100% - 32px)); max-height:min(520px,70%); display:flex; flex-direction:column; overflow:hidden; border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--bg-elev"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1951,
+      "line": 1954,
       "sample": ".mz-companion-compose .mz-companion-send { flex:none; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; padding:0; border:0; border-radius:7px; background:var(--accent); color:var(--accent-fg); cursor:pointer; transition:filter .15s ease, transform .15s ease; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1952,
+      "line": 1955,
       "sample": ".mz-companion-compose .mz-companion-send .mz-ico { width:17px; height:17px; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1956,
+      "line": 1959,
       "sample": ".mz-danmaku-canvas { position:absolute; inset:0; z-index:6; pointer-events:none; width:100%; height:100%; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1957,
+      "line": 1960,
       "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1957,
-      "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
       "line": 1960,
-      "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1961,
-      "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
-    },
-    {
-      "rule": "fixed-width-px",
-      "provisionalClass": "A",
-      "file": "renderer/styles/base.css",
-      "line": 1962,
-      "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
+      "sample": ".mz-danmaku-a11y { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 1963,
-      "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
+      "sample": ".mz-ico { width: 14px; height: 14px; flex: none; vertical-align: -2px; display: inline-block; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 1964,
-      "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
+      "sample": ".rb-btn .mz-ico, .fc-mini .mz-ico, .sb-tbtn .mz-ico, .mz-btn .mz-ico, .sd-tool-ico .mz-ico, .lib-reader-bar .mz-ico { width: 14px; height: 14px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1965,
+      "sample": ".ribbon-tab-ico .mz-ico, .w-card .mz-ico { width: 16px; height: 16px; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
       "line": 1966,
+      "sample": ".ft-ico .mz-ico { width: 13px; height: 13px; vertical-align: -1px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1967,
+      "sample": ".sb-tab .mz-ico { width: 14px; height: 14px; }"
+    },
+    {
+      "rule": "fixed-width-px",
+      "provisionalClass": "A",
+      "file": "renderer/styles/base.css",
+      "line": 1969,
       "sample": ".ft-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; flex: none; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1968,
+      "line": 1971,
       "sample": ".sd-tool-ico { display: inline-flex; align-items: center; justify-content: center; width: 18px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1977,
+      "line": 1980,
       "sample": ".mz-src-tab { flex: none; white-space: nowrap; border: 0; background: transparent; color: var(--fg-dim); font-size: 11.5px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 1983,
+      "line": 1986,
       "sample": ".mz-ml-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 1997,
+      "line": 2000,
       "sample": ".mz-site-health .mz-site-check { min-width: 0; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 2004,
+      "line": 2007,
       "sample": ".mz-site-health small { flex: none; white-space: nowrap; opacity: .72; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 2006,
+      "line": 2009,
       "sample": ".mz-site-health-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 2006,
+      "line": 2009,
       "sample": ".mz-site-health-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/styles/base.css",
-      "line": 2008,
+      "line": 2011,
       "sample": ".mz-mikan-season { min-width: 116px; max-width: 170px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 2014,
+      "line": 2017,
       "sample": ".mz-wr-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 2015,
+      "line": 2018,
       "sample": ".mz-wr-size, .mz-wr-up { color: var(--fg-dim); font-size: 11px; white-space: nowrap; }"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/styles/base.css",
-      "line": 2019,
+      "line": 2022,
       "sample": ".mz-web-more { width: calc(100% - 20px); margin: 8px 10px; justify-content: center; }"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 2023,
+      "line": 2026,
       "sample": ".mz-catalog-cover { position: relative; display: grid; place-items: center; width: 34px; height: 46px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, var(--bg-soft)); color: var(--accent); font-size: 14px; font-weight: 650; }"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/styles/base.css",
-      "line": 2024,
+      "line": 2027,
       "sample": ".mz-catalog-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--bg-soft); opacity: 0; transition: opacity .12s ease; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 2028,
+      "line": 2031,
       "sample": ".mz-catalog-item b, .mz-catalog-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 2034,
+      "line": 2037,
       "sample": ".mz-download header b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/styles/base.css",
-      "line": 2040,
+      "line": 2043,
       "sample": ".mz-watch-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }"
     },
     {

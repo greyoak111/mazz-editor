@@ -18,6 +18,8 @@ const { LibraryResourceCatalogStore } = require('./library-resource-catalog-stor
 const CONFIG_SCHEMA = 'mazz.library-resource-surface-config/v1';
 const CONFIG_KEY = 'libraryResourceSurface';
 const ACTIONS = new Set(['pause', 'resume', 'retry', 'cancel']);
+const TORRENT_PROVIDER_ID = 'manual-torrent';
+const TORRENT_POLICY_CHECKED_AT = '2026-08-25T00:00:00.000Z';
 
 function codedError(code, message, details) {
   return Object.assign(new Error(message), { code }, details || {});
@@ -136,6 +138,119 @@ function descriptorForManual(at) {
   }, { now: at });
 }
 
+function descriptorForTorrent(jurisdiction) {
+  return source.normalizeDescriptor({
+    schema: source.DESCRIPTOR_SCHEMA,
+    providerId: TORRENT_PROVIDER_ID,
+    displayName: '手动 Torrent',
+    adapterVersion: 'manual-torrent-v1',
+    capabilities: [],
+    policy: {
+      policyVersion: 'manual-torrent-user-owned-v1',
+      checkedAt: TORRENT_POLICY_CHECKED_AT,
+      jurisdictions: [jurisdiction],
+      rightsModes: ['user-owned'],
+      termsUrl: '',
+      rightsUrl: '',
+    },
+  }, { now: TORRENT_POLICY_CHECKED_AT });
+}
+
+function torrentCandidateFromInspection(inspection, {
+  jurisdiction,
+  observedAt,
+  snapshotId,
+} = {}) {
+  const infoHash = contract.normalizeInfoHash(inspection.infoHash, 'torrent infoHash');
+  if (!/^[a-f0-9]{40}$/.test(infoHash) || !Array.isArray(inspection.files) || !inspection.files.length) {
+    throw codedError('LIBRARY_RESOURCE_TORRENT_METADATA_INVALID', 'Torrent metadata did not pass the resource contract');
+  }
+  const title = typeof inspection.title === 'string'
+    ? inspection.title.normalize('NFC').replace(/[\u0000-\u001f\u007f]/g, ' ').trim()
+    : '';
+  if (/\b(?:https?|file|data|magnet|urn):/i.test(title)
+    || /[A-Za-z]:[\\/]/.test(title) || /\\\\[^\\/]+[\\/]/.test(title)
+    || /^\/(?:[^/]+\/)+/.test(title)) {
+    throw codedError('LIBRARY_RESOURCE_TORRENT_METADATA_INVALID', 'Torrent title contains a non-display transport or path coordinate');
+  }
+  const providerId = TORRENT_PROVIDER_ID;
+  const torrentResourceId = `torrent-${infoHash}`;
+  const work = {
+    workId: contract.deriveWorkId({ identifiers: {}, providerId, resourceId: torrentResourceId }),
+    title: title || 'Torrent book',
+    authors: [],
+    languages: [],
+    subjects: [],
+    identifiers: {},
+  };
+  const editions = [];
+  const offers = [];
+  for (const [index, item] of inspection.files.entries()) {
+    if (!item || Object.getPrototypeOf(item) !== Object.prototype
+      || typeof item.path !== 'string' || !Number.isSafeInteger(item.size) || item.size < 0
+      || !contract.FORMATS.includes(item.format)) {
+      throw codedError('LIBRARY_RESOURCE_TORRENT_METADATA_INVALID', `Torrent file ${index} is invalid`);
+    }
+    const selectedPath = contract.normalizeRelativePosixPath(item.path, `torrent files[${index}]`);
+    if (selectedPath !== item.path || path.posix.extname(selectedPath).slice(1).toLowerCase() !== item.format) {
+      throw codedError('LIBRARY_RESOURCE_TORRENT_METADATA_INVALID', `Torrent file ${index} is not canonical`);
+    }
+    const resourceId = `torrent-file-${crypto.createHash('sha256')
+      .update(`${infoHash}\0${selectedPath}`, 'utf8').digest('hex')}`;
+    const editionId = contract.deriveEditionId({ identifiers: {}, providerId, resourceId });
+    const offer = {
+      offerId: '',
+      editionId,
+      providerId,
+      resourceId,
+      format: item.format,
+      transport: 'magnet',
+      size: item.size,
+      checksum: '',
+      infoHash,
+      sourceUrl: '',
+      acquisitionRef: '',
+      selectableFiles: [selectedPath],
+    };
+    offer.offerId = contract.deriveOfferId(offer);
+    editions.push({
+      editionId,
+      title: path.posix.basename(selectedPath),
+      language: '',
+      publisher: '',
+      publishedAt: '',
+      identifiers: {},
+      description: '',
+    });
+    offers.push(offer);
+  }
+  const snapshotMaterial = `${infoHash}\0${observedAt}\0${snapshotId}`;
+  return contract.normalizeCandidate({
+    schema: contract.CANDIDATE_SCHEMA,
+    candidateId: `candidate-torrent-${crypto.createHash('sha256').update(snapshotMaterial, 'utf8').digest('hex')}`,
+    work,
+    editions,
+    offers,
+    rights: {
+      status: 'user-owned',
+      licenseId: '',
+      rightsStatement: '',
+      jurisdiction,
+      evidenceUrl: '',
+      assertedBy: '',
+      checkedAt: TORRENT_POLICY_CHECKED_AT,
+      confidence: null,
+    },
+    provenance: [{
+      providerId,
+      resourceId: torrentResourceId,
+      pageUrl: '',
+      observedAt,
+      adapterVersion: 'manual-torrent-v1',
+    }],
+  });
+}
+
 function descriptorForOpds(config, at) {
   return {
     schema: source.DESCRIPTOR_SCHEMA,
@@ -177,6 +292,7 @@ function candidateProjection(record) {
       transport: offer.transport,
       size: offer.size,
       selectableFileCount: offer.selectableFiles.length,
+      selectableFiles: Object.freeze([...offer.selectableFiles]),
     }))),
   });
 }
@@ -224,6 +340,7 @@ class LibraryResourceSurfaceService {
     exactKeys(options, new Set([
       'acquisitionService', 'settings', 'resolver', 'requester', 'productToken',
       'now', 'randomId', 'onChanged', 'catalogStoreFactory', 'checkpointStoreFactory',
+      'torrentTransport',
     ]), 'LibraryResourceSurfaceService options');
     if (!options.acquisitionService || typeof options.acquisitionService.openWorkspace !== 'function') {
       throw new TypeError('LibraryResourceSurfaceService requires acquisitionService');
@@ -235,6 +352,7 @@ class LibraryResourceSurfaceService {
       throw new TypeError('LibraryResourceSurfaceService requires resolver/requester');
     }
     this.acquisition = options.acquisitionService;
+    this.torrentTransport = options.torrentTransport || null;
     this.settings = options.settings;
     this.resolver = options.resolver;
     this.requester = options.requester;
@@ -251,6 +369,7 @@ class LibraryResourceSurfaceService {
     this.operations = new Set();
     this.background = new Set();
     this.controllers = new Set();
+    this.torrentInspectors = new Map();
     this.accepting = true;
   }
 
@@ -304,6 +423,7 @@ class LibraryResourceSurfaceService {
   _buildSources(context) {
     const config = this.config();
     context.descriptors.set('manual-https', descriptorForManual(nowIso(this.now)));
+    context.descriptors.set(TORRENT_PROVIDER_ID, descriptorForTorrent(config.jurisdiction || 'unspecified'));
     if (!config.contact) return;
     const client = new LibraryCatalogHttpClient({
       resolver: this.resolver,
@@ -462,6 +582,147 @@ class LibraryResourceSurfaceService {
     );
   }
 
+  async inspectTorrent(workspacePath, input, { signal } = {}) {
+    exactKeys(input, new Set(['inspectionId', 'magnet', 'p2pConsent']), 'torrent inspect');
+    if (input.p2pConsent !== true) {
+      throw codedError('LIBRARY_TORRENT_P2P_CONSENT_REQUIRED', '检查 Torrent 前必须明确同意 P2P 网络暴露');
+    }
+    if (!this.torrentTransport || typeof this.torrentTransport.inspect !== 'function') {
+      throw codedError('LIBRARY_RESOURCE_TORRENT_UNAVAILABLE', 'Torrent transport 尚未装配');
+    }
+    const context = await this._workspace(workspacePath);
+    const inspectionId = opaqueId(input.inspectionId, 'inspectionId');
+    const inspectionKey = `${context.workspaceIdentity}:${inspectionId}`;
+    if (this.torrentInspectors.has(inspectionKey)) {
+      throw codedError('LIBRARY_RESOURCE_TORRENT_BUSY', '同一 Torrent 检查已在执行');
+    }
+    const controller = new AbortController();
+    this.controllers.add(controller);
+    this.torrentInspectors.set(inspectionKey, controller);
+    const abort = () => controller.abort();
+    signal?.addEventListener('abort', abort, { once: true });
+    try {
+      const inspection = await this._track(this.torrentTransport.inspect({
+        magnet: exactString(input.magnet, 'magnet'),
+        p2pConsent: true,
+        signal: controller.signal,
+      }));
+      const observedAt = nowIso(this.now);
+      const config = this.config();
+      const jurisdiction = config.jurisdiction || 'unspecified';
+      const candidate = torrentCandidateFromInspection(inspection, {
+        jurisdiction,
+        observedAt,
+        snapshotId: this.randomId(),
+      });
+      const descriptor = context.descriptors.get(TORRENT_PROVIDER_ID);
+      const record = context.catalog.put(candidate, descriptor).record;
+      this._wake('torrent-inspected');
+      return candidateProjectionWithDecision(record, config, this.now);
+    } finally {
+      signal?.removeEventListener('abort', abort);
+      this.controllers.delete(controller);
+      this.torrentInspectors.delete(inspectionKey);
+    }
+  }
+
+  async cancelTorrentInspect(workspacePath, input) {
+    exactKeys(input, new Set(['inspectionId']), 'torrent inspect cancel');
+    const context = await this._workspace(workspacePath);
+    const inspectionId = opaqueId(input.inspectionId, 'inspectionId');
+    const controller = this.torrentInspectors.get(`${context.workspaceIdentity}:${inspectionId}`);
+    if (controller) controller.abort();
+    return Object.freeze({ cancelled: Boolean(controller) });
+  }
+
+  async acquireTorrent(workspacePath, input) {
+    exactKeys(input, new Set([
+      'candidateId', 'candidateFingerprint', 'offerId', 'selectedFile', 'intentId',
+      'p2pConsent', 'rightsConfirmed',
+    ]), 'torrent acquire');
+    if (input.p2pConsent !== true || input.rightsConfirmed !== true) {
+      throw codedError(
+        'LIBRARY_TORRENT_CONFIRMATION_REQUIRED',
+        'Torrent 取得需要当次 P2P 知情确认和自有/获准取得声明',
+      );
+    }
+    const context = await this._workspace(workspacePath);
+    const record = context.catalog.get(
+      opaqueId(input.candidateId, 'candidateId'),
+      exactString(input.candidateFingerprint, 'candidateFingerprint'),
+    );
+    if (!record || record.descriptor.providerId !== TORRENT_PROVIDER_ID) {
+      throw codedError('LIBRARY_RESOURCE_SURFACE_CANDIDATE_NOT_FOUND', 'Torrent Candidate 不存在或已变化');
+    }
+    const offerId = opaqueId(input.offerId, 'offerId');
+    const offer = record.candidate.offers.find(item => item.offerId === offerId);
+    const selectedFile = exactString(input.selectedFile, 'selectedFile');
+    if (!offer || offer.transport !== 'magnet' || offer.selectableFiles.length !== 1
+      || offer.selectableFiles[0] !== selectedFile) {
+      throw codedError('LIBRARY_ACQUISITION_SELECTION_INVALID', '所选书文件不属于冻结的 Torrent 目录');
+    }
+    const intentId = input.intentId === undefined
+      ? `intent-${this.randomId()}` : opaqueId(input.intentId, 'intentId');
+    const at = nowIso(this.now);
+    const jurisdiction = this.config().jurisdiction || 'unspecified';
+    const userAssertion = {
+      schema: rights.USER_ASSERTION_SCHEMA,
+      authority: 'user',
+      candidateFingerprint: record.candidateFingerprint,
+      jurisdiction,
+      declarationId: `declaration-${this.randomId()}`,
+      confirmedAt: at,
+    };
+    const decision = rights.evaluateRights({
+      candidate: record.candidate,
+      descriptor: record.descriptor,
+      jurisdiction,
+      userAssertion,
+      now: at,
+    });
+    if (decision.outcome !== 'pass') {
+      throw codedError('LIBRARY_RIGHTS_REQUIRED', 'Torrent Candidate 未通过明确的 Rights 裁决');
+    }
+    const job = rights.prepareAcquisitionJob({
+      jobId: `job-${this.randomId()}`,
+      intentId,
+      workspaceIdentity: context.workspaceIdentity,
+      workspacePath: context.workspacePath,
+      candidate: record.candidate,
+      offerId,
+      descriptor: record.descriptor,
+      jurisdiction,
+      userAssertion,
+      decision,
+      selectedFiles: [],
+      createdAt: at,
+    });
+    const created = this.acquisition.createJob(context.workspaceIdentity, job, { candidate: record.candidate });
+    let durable = created?.job || created;
+    if (durable.state === 'awaiting-selection') {
+      durable = this.acquisition.finalizeSelection(context.workspaceIdentity, durable.jobId, {
+        expectedRevision: durable.revision,
+        candidate: record.candidate,
+        selectedFiles: [selectedFile],
+      });
+    } else if (durable.selectedFiles.length !== 1 || durable.selectedFiles[0] !== selectedFile) {
+      throw codedError('LIBRARY_ACQUISITION_SELECTION_CONFLICT', '同一 intent 已绑定另一 Torrent 文件');
+    }
+    if (durable.state === 'queued') {
+      try {
+        this._background(this.acquisition.startTorrent(context.workspaceIdentity, durable.jobId, {
+          expectedRevision: durable.revision,
+          candidate: record.candidate,
+          p2pConsent: true,
+        }));
+      } catch (error) {
+        if (error?.code !== 'LIBRARY_ACQUISITION_BUSY') throw error;
+      }
+    }
+    this._wake('torrent-acquisition-created');
+    return Object.freeze({ decision, job: jobProjection(durable) });
+  }
+
   async acquire(workspacePath, input) {
     exactKeys(input, new Set(['candidateId', 'candidateFingerprint', 'offerId', 'intentId']), 'resource acquire');
     const context = await this._workspace(workspacePath);
@@ -513,7 +774,7 @@ class LibraryResourceSurfaceService {
   }
 
   async action(workspacePath, input) {
-    exactKeys(input, new Set(['jobId', 'expectedRevision', 'action']), 'resource action');
+    exactKeys(input, new Set(['jobId', 'expectedRevision', 'action', 'p2pConsent']), 'resource action');
     const context = await this._workspace(workspacePath);
     const jobId = opaqueId(input.jobId, 'jobId');
     if (!Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 1) {
@@ -532,9 +793,16 @@ class LibraryResourceSurfaceService {
     else {
       const record = context.catalog.get(current.candidateId, current.candidateFingerprint);
       if (!record) throw codedError('LIBRARY_RESOURCE_SURFACE_CANDIDATE_NOT_FOUND', '恢复所需 Candidate 快照不存在');
-      const operation = this.acquisition.resumeHttp(context.workspaceIdentity, jobId, {
+      const resume = current.transport === 'magnet'
+        ? this.acquisition.resumeTorrent.bind(this.acquisition)
+        : this.acquisition.resumeHttp.bind(this.acquisition);
+      if (current.transport === 'magnet' && input.p2pConsent !== true) {
+        throw codedError('LIBRARY_TORRENT_P2P_CONSENT_REQUIRED', '继续 Torrent 任务需要重新确认 P2P 网络暴露');
+      }
+      const operation = resume(context.workspaceIdentity, jobId, {
         expectedRevision: current.revision,
         candidate: record.candidate,
+        ...(current.transport === 'magnet' ? { p2pConsent: true } : {}),
       });
       this._background(operation);
       result = current;
@@ -552,6 +820,9 @@ class LibraryResourceSurfaceService {
   }
 
   snapshotResources() {
+    const torrent = this.torrentTransport?.snapshot?.() || {
+      activeCount: 0, inspectCount: 0, downloadCount: 0,
+    };
     return Object.freeze({
       accepting: this.accepting,
       contextCount: this.contexts.size,
@@ -560,6 +831,10 @@ class LibraryResourceSurfaceService {
       controllerCount: this.controllers.size,
       timerCount: 0,
       listenerCount: 0,
+      torrentActiveCount: torrent.activeCount,
+      torrentInspectCount: torrent.inspectCount,
+      torrentDownloadCount: torrent.downloadCount,
+      torrentInspectorCount: this.torrentInspectors.size,
     });
   }
 
@@ -588,4 +863,6 @@ module.exports = {
   normalizeConfig,
   candidateProjection,
   jobProjection,
+  descriptorForTorrent,
+  torrentCandidateFromInspection,
 };

@@ -100,6 +100,7 @@ const Store = require('./store');
 const IpcBus = require('./ipc-bus');
 const LibraryImportService = require('./library-import-service');
 const LibraryAcquisitionService = require('./library-acquisition-service');
+const LibraryTorrentBookTransport = require('./library-torrent-book-transport');
 const LibraryBrowserAcquisitionBridge = require('./library-browser-acquisition-bridge');
 const {
   createNodeResolver: createLibraryAcquisitionResolver,
@@ -226,6 +227,7 @@ const bus = new IpcBus();
 let crashRecovery = null;
 const libraryImportService = new LibraryImportService();
 const resourceLedger = new ResourceLedger();
+const libraryTorrentTransport = new LibraryTorrentBookTransport({ resourceLedger });
 const libraryAcquisitionOwner = createSingleInstanceOwnerCapability();
 let libraryBrowserAcquisition = null;
 let libraryAcquisitionStartupReady = false;
@@ -236,6 +238,7 @@ const libraryAcquisitionService = new LibraryAcquisitionService({
   resolver: createLibraryAcquisitionResolver(),
   requester: createLibraryAcquisitionRequester(),
   resourceLedger,
+  torrentTransport: libraryTorrentTransport,
   singleInstanceOwnerCapability: libraryAcquisitionOwner,
   // This is only a wake-up hint. Renderer consumers always re-list the
   // durable Inbox; no artifact path is accepted from the event payload.
@@ -247,6 +250,7 @@ const libraryResourceSurface = new LibraryResourceSurfaceService({
   resolver: createLibraryAcquisitionResolver(),
   requester: createLibraryAcquisitionRequester(),
   productToken: 'Mazz-Editor/0.2.0',
+  torrentTransport: libraryTorrentTransport,
   onChanged: event => wm.broadcastShells('library:resourceChanged', event),
 });
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
@@ -278,6 +282,7 @@ if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_PROMOTION_LEDGER__ = promotionLedger;
   globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
   globalThis.__MAZZ_E2E_LIBRARY_RESOURCE_SURFACE__ = libraryResourceSurface;
+  globalThis.__MAZZ_E2E_LIBRARY_TORRENT_TRANSPORT__ = libraryTorrentTransport;
 }
 const factoryRuntimeOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
@@ -2188,17 +2193,20 @@ app.whenReady().then(async () => {
       await libraryBrowserAcquisition?.dispose?.();
       await libraryAcquisitionService.shutdown();
       await libraryResourceSurface.shutdown();
+      await libraryTorrentTransport.shutdown();
       const bridgeState = libraryBrowserAcquisition?.snapshot?.() || {
         activeItemCount: 0, pendingCompletionCount: 0,
       };
       const serviceState = libraryAcquisitionService.snapshot();
       const resourceSurfaceState = libraryResourceSurface.snapshotResources();
+      const torrentState = libraryTorrentTransport.snapshot();
       if (bridgeState.activeItemCount !== 0 || bridgeState.pendingCompletionCount !== 0
           || serviceState.activeCount !== 0
           || resourceSurfaceState.contextCount !== 0
           || resourceSurfaceState.operationCount !== 0
           || resourceSurfaceState.backgroundCount !== 0
-          || resourceSurfaceState.controllerCount !== 0) {
+          || resourceSurfaceState.controllerCount !== 0
+          || torrentState.activeCount !== 0) {
         const error = new Error('Library acquisition owners did not reach the durable quit boundary');
         error.code = 'LIBRARY_ACQUISITION_QUIT_BOUNDARY_FAILED';
         throw error;

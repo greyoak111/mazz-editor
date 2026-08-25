@@ -240,6 +240,16 @@ function createLibrary(container) {
           </div>
           <p class="lib-resource-note">手动地址只建立候选，默认 Rights=unknown；本波不会把“有 URL”当成“有权获取”。</p>
         </details>
+        <details class="lib-resource-torrent">
+          <summary>Torrent / Magnet（public DHT）</summary>
+          <div class="lib-resource-form-grid">
+            <input class="rb-input lib-resource-torrent-magnet" placeholder="magnet:?xt=urn:btih:…（不接受 tracker/webseed）">
+            <label class="lib-resource-confirm"><input type="checkbox" class="lib-resource-p2p-consent"> 我知道 P2P 会向 DHT/peer 暴露公网 IP，下载期间可能上传已取得的 piece</label>
+            <label class="lib-resource-confirm"><input type="checkbox" class="lib-resource-rights-confirm"> 我确认只取得自己拥有或已获明确许可的所选文件</label>
+            <button class="rb-btn" data-resource-torrent-inspect>检查书籍目录</button>
+          </div>
+          <p class="lib-resource-note">首期只接不带 tracker/webseed 的 public-DHT magnet；检查阶段默认不选文件，不自动下载整种。P2P 只是运输，不构成版权依据。</p>
+        </details>
         <section class="lib-resource-section">
           <h3>候选与版本</h3>
           <div class="lib-resource-candidates"></div>

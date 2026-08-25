@@ -410,6 +410,7 @@ class LibraryAcquisitionService {
     storeFactory = options => new LibraryAcquisitionStore(options),
     httpAcquisition = null,
     httpFactory = null,
+    torrentTransport = null,
     requester = null,
     resolver = null,
     promoter = null,
@@ -428,6 +429,7 @@ class LibraryAcquisitionService {
       requester, resolver, fsImpl, now, randomId,
     }));
     this.promoter = promoter;
+    this.torrentTransport = torrentTransport;
     this.fs = fsImpl;
     this.now = now;
     this.randomId = randomId;
@@ -634,7 +636,7 @@ class LibraryAcquisitionService {
     return { context: this._workspace(selector), jobId: safeInternalId(jobId, 'jobId'), options: options || {} };
   }
 
-  _assertStart(context, jobId, options) {
+  _assertStart(context, jobId, options, requiredTransport = 'https') {
     if (!this.accepting) throw codedError('LIBRARY_ACQUISITION_SHUTTING_DOWN', 'acquisition coordinator is stopping');
     if (!Number.isSafeInteger(options.expectedRevision)) {
       throw codedError('LIBRARY_ACQUISITION_EXPECTED_REVISION_REQUIRED', 'starting a Job requires its expected revision');
@@ -666,8 +668,13 @@ class LibraryAcquisitionService {
       || contract.deriveTransportIdentity(offer) !== job.transportIdentity) {
       throw codedError('LIBRARY_ACQUISITION_OFFER_MISMATCH', 'Candidate Offer does not match the durable Job');
     }
-    if (offer.transport !== 'https' || !offer.sourceUrl) {
-      throw codedError('LIBRARY_ACQUISITION_HTTPS_OFFER_REQUIRED', 'W93B can start only an explicit HTTPS source URL');
+    if (offer.transport !== requiredTransport
+      || (requiredTransport === 'https' && !offer.sourceUrl)
+      || (requiredTransport === 'magnet' && !offer.infoHash)) {
+      throw codedError(
+        'LIBRARY_ACQUISITION_TRANSPORT_OFFER_REQUIRED',
+        `acquisition Job requires an explicit ${requiredTransport} Offer`,
+      );
     }
     if (!job.rightsReceipt || !contract.PASSING_RIGHTS_STATUSES.includes(job.rightsReceipt.decision)
       || job.rightsStatus === 'restricted') {
@@ -707,6 +714,7 @@ class LibraryAcquisitionService {
       offer: intent.offer,
       controller,
       requested: null,
+      transport: 'https',
       phase: 'starting',
       resourceKey: null,
       promise: null,
@@ -737,15 +745,98 @@ class LibraryAcquisitionService {
     return this.startHttp(selector, jobId, options);
   }
 
+  finalizeSelection(selector, jobId, { expectedRevision, candidate, selectedFiles } = {}) {
+    const context = this._workspace(selector);
+    const id = safeInternalId(jobId, 'jobId');
+    if (!Number.isSafeInteger(expectedRevision)) {
+      throw codedError('LIBRARY_ACQUISITION_EXPECTED_REVISION_REQUIRED', 'selection requires its expected revision');
+    }
+    let normalizedCandidate;
+    try { normalizedCandidate = contract.normalizeCandidate(candidate); }
+    catch { throw codedError('LIBRARY_ACQUISITION_CANDIDATE_INVALID', 'selection Candidate is invalid'); }
+    let normalizedFiles;
+    try { normalizedFiles = contract.normalizeSelectedFiles(selectedFiles); }
+    catch { throw codedError('LIBRARY_ACQUISITION_SELECTION_INVALID', 'selection contains an unsafe file path'); }
+    if (normalizedFiles.length !== 1) {
+      throw codedError('LIBRARY_ACQUISITION_SELECTION_INVALID', 'book acquisition requires exactly one selected file');
+    }
+    return context.store.transitionJob(id, 'queued', {
+      expectedRevision,
+      candidate: normalizedCandidate,
+      patch: { selectedFiles: normalizedFiles, error: null },
+    });
+  }
+
+  startTorrent(selector, jobId, options) {
+    const parsed = this._parseStartArgs(selector, jobId, options);
+    const { context } = parsed;
+    const intent = this._assertStart(context, parsed.jobId, parsed.options, 'magnet');
+    if (intent.terminal) return Promise.resolve(intent.job);
+    if (!this.torrentTransport || typeof this.torrentTransport.download !== 'function') {
+      throw codedError('LIBRARY_ACQUISITION_TORRENT_REQUIRED', 'torrent acquisition requires its isolated transport');
+    }
+    if (parsed.options.p2pConsent !== true) {
+      throw codedError('LIBRARY_TORRENT_P2P_CONSENT_REQUIRED', 'torrent acquisition requires explicit P2P consent');
+    }
+    if (intent.job.selectedFiles.length !== 1
+      || !intent.offer.selectableFiles.includes(intent.job.selectedFiles[0])) {
+      throw codedError('LIBRARY_ACQUISITION_SELECTION_INVALID', 'torrent Job has no exact frozen book selection');
+    }
+    const activeKey = `${context.workspaceIdentity}:${parsed.jobId}`;
+    if (this.active.has(activeKey) || this.browserDownloadByJob.has(activeKey)) {
+      throw codedError('LIBRARY_ACQUISITION_BUSY', 'this acquisition Job already has an active owner');
+    }
+    const controller = new AbortController();
+    const record = {
+      key: activeKey,
+      context,
+      jobId: parsed.jobId,
+      candidate: intent.candidate,
+      offer: intent.offer,
+      controller,
+      requested: null,
+      transport: 'magnet',
+      p2pConsent: true,
+      phase: 'starting',
+      resourceKey: null,
+      promise: null,
+    };
+    record.resourceKey = this.resourceLedger?.register?.({
+      type: 'library-acquisition',
+      id: parsed.jobId,
+      owner: `library-acquisition:${context.workspaceIdentity}`,
+      state: 'starting',
+      meta: { transport: 'magnet' },
+    }) || null;
+    this.active.set(activeKey, record);
+    record.promise = this._executeTorrent(record, intent.job)
+      .finally(() => {
+        this.active.delete(activeKey);
+        if (record.resourceKey) {
+          this.resourceLedger?.release?.(record.resourceKey, {
+            reason: record.requested || 'settled',
+            state: 'released',
+          });
+          record.resourceKey = null;
+        }
+      });
+    return record.promise;
+  }
+
+  resumeTorrent(selector, jobId, options) {
+    return this.startTorrent(selector, jobId, options);
+  }
+
   _stagingPaths(context, job, offer) {
     const jobRoot = path.join(context.store.paths.stagingRoot, safeInternalId(job.jobId, 'jobId'));
     context.store._assertPhysicalBoundary(context.store.paths.stagingRoot, jobRoot);
     const payloadPath = path.join(jobRoot, `payload.${offer.format}.part`);
     const metadataPath = path.join(jobRoot, 'transfer.json');
+    const pieceStorePath = path.join(jobRoot, 'torrent-pieces.bin');
     if (job.stagingPath && path.resolve(job.stagingPath) !== path.resolve(payloadPath)) {
       throw codedError('LIBRARY_ACQUISITION_STAGING_MISMATCH', 'durable staging path differs from the Job-owned path');
     }
-    return { jobRoot, payloadPath, metadataPath };
+    return { jobRoot, payloadPath, metadataPath, pieceStorePath };
   }
 
   _captureStagingPayload(context, payloadPath, expectedIdentity = null) {
@@ -908,7 +999,7 @@ class LibraryAcquisitionService {
         integrity: {
           sha256: verified.sha256,
           declaredChecksum: offer.checksum,
-          pieceVerified: false,
+          pieceVerified: transfer.pieceVerified === true,
         },
         bytes: { received: verified.size, total: verified.size },
       },
@@ -1021,6 +1112,139 @@ class LibraryAcquisitionService {
         throw failure;
       }
       throw this._publicError(error, 'LIBRARY_ACQUISITION_FAILED');
+    }
+  }
+
+  async _executeTorrent(record, initialJob) {
+    const { context, candidate, offer, controller } = record;
+    const staging = this._stagingPaths(context, initialJob, offer);
+    const restarting = initialJob.state === 'paused' || initialJob.state === 'failed';
+    let job = this._transitionToDownloading(context, initialJob, staging.payloadPath, { restartFresh: true });
+    record.phase = 'downloading';
+    this.resourceLedger?.update?.(record.resourceKey, { state: 'downloading' });
+    let payloadFd = null;
+    let received = 0;
+    let payloadDurable = false;
+    try {
+      // Publish the fresh zero-byte downloading intent before retiring stale
+      // staging. A crash at either side therefore reopens to a truthful
+      // downloading→paused fact instead of a paused receipt naming deleted
+      // resumable bytes.
+      if (restarting) this._cleanupStaging(context, initialJob.jobId);
+      this._prepareStaging(context, staging);
+      context.store._assertPhysicalBoundary(context.store.paths.stagingRoot, staging.payloadPath);
+      payloadFd = this.fs.openSync(staging.payloadPath, 'wx');
+      record.stagingIdentity = this._captureStagingPayload(context, staging.payloadPath);
+      const writeChunk = async (chunk, progress) => {
+        if (controller.signal.aborted) {
+          throw codedError('LIBRARY_TORRENT_ABORTED', 'torrent download was interrupted');
+        }
+        const before = this._captureStagingPayload(
+          context, staging.payloadPath, record.stagingIdentity,
+        );
+        let offset = 0;
+        while (offset < chunk.length) {
+          const written = this.fs.writeSync(payloadFd, chunk, offset, chunk.length - offset, received + offset);
+          if (!written) throw codedError('LIBRARY_TORRENT_WRITE_FAILED', 'torrent staging write made no progress');
+          offset += written;
+        }
+        this.fs.fsyncSync(payloadFd);
+        received += chunk.length;
+        const after = this._captureStagingPayload(context, staging.payloadPath, before);
+        if (!sameStagingOwner(before, after) || after.size !== received) {
+          throw codedError(
+            'LIBRARY_ACQUISITION_STAGING_IDENTITY_CHANGED',
+            'torrent staging payload changed during its durable checkpoint',
+            { quarantine: true },
+          );
+        }
+        record.stagingIdentity = after;
+        payloadDurable = true;
+        job = this._updateProgress(context, job.jobId, {
+          received: progress.received,
+          total: progress.total,
+        });
+      };
+      const transfer = await this.torrentTransport.download({
+        infoHash: offer.infoHash,
+        selectedFile: job.selectedFiles[0],
+        pieceStorePath: staging.pieceStorePath,
+        p2pConsent: record.p2pConsent,
+        signal: controller.signal,
+        onChunk: writeChunk,
+      });
+      this.fs.fsyncSync(payloadFd);
+      payloadDurable = true;
+      this.fs.closeSync(payloadFd);
+      payloadFd = null;
+      const closedIdentity = this._captureStagingPayload(
+        context, staging.payloadPath, record.stagingIdentity,
+      );
+      if (!sameStableStaging(record.stagingIdentity, closedIdentity)
+        || closedIdentity.size !== transfer.bytes) {
+        throw codedError(
+          'LIBRARY_ACQUISITION_STAGING_IDENTITY_CHANGED',
+          'torrent staging payload changed at writer close',
+          { quarantine: true },
+        );
+      }
+      record.stagingIdentity = closedIdentity;
+      return await this._finishStaged(record, job, staging, transfer);
+    } catch (error) {
+      let settlementError = error;
+      if (payloadFd !== null) {
+        try {
+          this.fs.fsyncSync(payloadFd);
+          payloadDurable = true;
+        } catch (fsyncError) {
+          settlementError = fsyncError;
+        }
+        try { this.fs.closeSync(payloadFd); }
+        catch (closeError) {
+          attachCleanupError(settlementError, closeError);
+          if (settlementError === error && error?.code === 'LIBRARY_TORRENT_ABORTED') {
+            settlementError = closeError;
+          }
+        }
+        payloadFd = null;
+      }
+      const current = context.store.getJob(initialJob.jobId);
+      if (record.requested === 'cancel') {
+        this._cleanupStaging(context, initialJob.jobId);
+        if (current && !contract.isTerminalJobState(current.state) && current.state !== 'awaiting-import') {
+          return context.store.transitionJob(current.jobId, 'cancelled', { expectedRevision: current.revision });
+        }
+      }
+      const requestedPause = record.requested === 'pause' || record.requested === 'shutdown';
+      if (requestedPause && settlementError === error
+        && error?.code === 'LIBRARY_TORRENT_ABORTED' && payloadDurable && !error.cleanupError) {
+        if (current?.state === 'downloading') {
+          return context.store.transitionJob(current.jobId, 'paused', {
+            expectedRevision: current.revision,
+            retryFrom: 'downloading',
+            patch: { error: null },
+          });
+        }
+      }
+      if (current?.state === 'downloading') {
+        let quarantined = false;
+        if (error?.quarantine === true) {
+          try { quarantined = Boolean(await this._quarantine(context, current, staging)); }
+          catch (quarantineError) { settlementError = quarantineError; }
+        }
+        const failed = context.store.transitionJob(current.jobId, 'failed', {
+          expectedRevision: current.revision,
+          retryFrom: 'downloading',
+          patch: {
+            error: toJobError(settlementError, 'LIBRARY_TORRENT_DOWNLOAD_FAILED'),
+            ...(quarantined ? { stagingPath: '' } : {}),
+          },
+        });
+        const failure = this._publicError(settlementError, 'LIBRARY_TORRENT_DOWNLOAD_FAILED');
+        this._markDurableCompletion(failure, failed);
+        throw failure;
+      }
+      throw this._publicError(settlementError, 'LIBRARY_TORRENT_ACQUISITION_FAILED');
     }
   }
 
@@ -1519,7 +1743,8 @@ class LibraryAcquisitionService {
       throw codedError('LIBRARY_ACQUISITION_UNSAFE_STAGING', 'Job staging cleanup target is unsafe');
     }
     for (const name of this.fs.readdirSync(jobRoot)) {
-      if (!/^payload\.(?:epub|cbz|txt|mobi|azw3|pdf)\.part$/.test(name) && name !== 'transfer.json') continue;
+      if (!/^payload\.(?:epub|cbz|txt|mobi|azw3|pdf)\.part$/.test(name)
+        && name !== 'transfer.json' && name !== 'torrent-pieces.bin') continue;
       const target = path.join(jobRoot, name);
       context.store._assertPhysicalBoundary(context.store.paths.stagingRoot, target);
       const child = this.fs.lstatSync(target);
@@ -1546,7 +1771,7 @@ class LibraryAcquisitionService {
     if (active) {
       const current = context.store.getJob(id);
       if (current?.state !== 'downloading') {
-        throw codedError('LIBRARY_ACQUISITION_PHASE_NOT_PAUSABLE', 'only an active HTTP transfer can be paused');
+        throw codedError('LIBRARY_ACQUISITION_PHASE_NOT_PAUSABLE', 'only an active transfer can be paused');
       }
       active.requested = 'pause';
       this.resourceLedger?.update?.(active.resourceKey, { state: 'pausing' });
@@ -1906,10 +2131,12 @@ class LibraryAcquisitionService {
   }
 
   snapshot() {
+    const activeRecords = [...this.active.values()];
     return Object.freeze({
       accepting: this.accepting,
       activeCount: this.active.size + this.browserDownloads.size,
-      httpActiveCount: this.active.size,
+      httpActiveCount: activeRecords.filter(record => record.transport === 'https').length,
+      torrentActiveCount: activeRecords.filter(record => record.transport === 'magnet').length,
       browserActiveCount: this.browserDownloads.size,
       workspaces: Object.freeze([...this.workspaces.values()].map(context => Object.freeze({
         workspaceIdentity: context.workspaceIdentity,

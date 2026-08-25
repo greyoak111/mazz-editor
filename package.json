@@ -19,6 +19,8 @@
     "test:w93d:runtime": "node tests/e2e/w93d-library-source-runtime.mjs",
     "test:w93e:library": "node tests/contract/w93e-library-resource-surface.test.mjs",
     "test:w93e:runtime": "node tests/e2e/w93e-library-resource-runtime.mjs",
+    "test:w93f:library": "node tests/contract/w93f-torrent-book-transport.test.mjs",
+    "test:w93f:runtime": "node tests/e2e/w93f-library-torrent-runtime.mjs",
     "smoke": "node tests/e2e/smoke.js",
     "dist": "node scripts/build.js && electron-builder",
     "dist:dir": "node scripts/build.js && electron-builder --dir --win",

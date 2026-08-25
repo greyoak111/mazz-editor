@@ -214,6 +214,8 @@ test('snapshot is offline without contact and projections contain no URL, path, 
     assert.deepEqual(service.snapshotResources(), {
       accepting: false, contextCount: 0, operationCount: 0, backgroundCount: 0,
       controllerCount: 0, timerCount: 0, listenerCount: 0,
+      torrentActiveCount: 0, torrentInspectCount: 0, torrentDownloadCount: 0,
+      torrentInspectorCount: 0,
     });
   });
 });

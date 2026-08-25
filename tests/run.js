@@ -203,6 +203,7 @@ const files = [
   'tests/contract/w93c-rights-source-adapter.test.mjs',
   'tests/contract/w93d-library-source-pack.test.mjs',
   'tests/contract/w93e-library-resource-surface.test.mjs',
+  'tests/contract/w93f-torrent-book-transport.test.mjs',
   'tests/contract/library-locator-store.test.mjs',
   'tests/contract/library-book-operations.test.mjs',
   'tests/contract/library-manga.test.mjs',

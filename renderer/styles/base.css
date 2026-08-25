@@ -1028,6 +1028,9 @@ body.pane-resizing .pane-divider { pointer-events: auto !important; }
 .lib-resource-empty { min-height: 76px; display: grid; place-items: center; text-align: center; color: var(--fg-dim, #77746c); border: 1px dashed var(--bd, #e0ded8); border-radius: 9px; padding: 16px; font-size: 12px; }
 .lib-resource-view.is-loading .lib-resource-searchbar { opacity: .68; pointer-events: none; }
 .lib-resource-view.has-corruption [data-resource-repair] { color: #b42318; border-color: #ef4444; }
+.lib-resource-confirm { display: flex; align-items: flex-start; gap: 7px; grid-column: 1 / -1; font-size: 12px; line-height: 1.45; }
+.lib-resource-confirm input { margin-top: 2px; }
+.lib-resource-torrent-magnet { grid-column: 1 / -1; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 @container pane (max-width: 720px) {
   .lib-resource-card { flex-direction: column; }
   .lib-resource-card-side { align-items: flex-start; text-align: left; }

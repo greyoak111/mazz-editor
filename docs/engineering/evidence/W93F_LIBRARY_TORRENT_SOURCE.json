@@ -1,0 +1,30 @@
+{
+  "schema": "mazz.w93f-library-torrent-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "product": "source",
+  "transport": "magnet-public-dht-fixture",
+  "p2pConsentRequired": true,
+  "rightsConfirmationRequired": true,
+  "metadataDeselect": true,
+  "selectedFiles": [
+    "books/w93f-fixture.txt"
+  ],
+  "inspectedFiles": 1,
+  "bytes": 56,
+  "pieceVerified": true,
+  "finalState": "imported",
+  "persistedAcrossRestart": true,
+  "publicNetworkCalls": 0,
+  "ownerFinal": {
+    "torrentActiveCount": 0,
+    "operationCount": 0,
+    "backgroundCount": 0,
+    "controllerCount": 0
+  },
+  "runtimeErrors": [],
+  "evidenceScreenshot": "W93F_LIBRARY_TORRENT_SOURCE.png",
+  "executableSha256": null,
+  "rendererBundleSha256": "e4dae56fa63648c9d0848b3bd5ac81b2395b0fc6e4ca54a25fbf39504f7ca7ef",
+  "generatedAt": "2026-08-25T11:34:36.680Z"
+}

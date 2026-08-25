@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "schema": "mazz.w93f-wave-evidence/v1",
+  "generatedAt": "2026-08-25T11:45:11.149Z",
+  "wave": "W93F",
+  "result": "PASS",
+  "base": {
+    "gitHead": "128059b",
+    "workingTree": "dirty-authorized-wave",
+    "researchSha256": "a953b4e48e624d10548191bf543a18b0d8af794dbfd3fa69b72312a427ca6818",
+    "researchDocumentRole": "requirements-source-only"
+  },
+  "scope": {
+    "factoryModified": false,
+    "playerTorrentModified": false,
+    "realBookSourceNetworkUsed": false,
+    "realDhtTrackerPeerUsed": false,
+    "realBookDownloaded": false,
+    "sourceBrowserWindow": true,
+    "packagedBrowserWindow": true,
+    "fakeSwarm": true,
+    "subagentsUsed": false
+  },
+  "verification": {
+    "targeted": {
+      "command": "npm run test:w93f:library",
+      "passed": 9,
+      "failed": 0
+    },
+    "adjacent": {
+      "w93a": { "passed": 35, "failed": 0 },
+      "w93b": { "passed": 82, "failed": 0 },
+      "w93c": { "passed": 14, "failed": 0 },
+      "w93d": { "passed": 12, "failed": 0 },
+      "w93e": { "passed": 10, "failed": 0 }
+    },
+    "sourceRuntime": {
+      "command": "npm run test:w93f:runtime -- --mode=source",
+      "result": "PASS",
+      "transport": "magnet-public-dht-fixture",
+      "inspectedFiles": 1,
+      "selectedFiles": ["books/w93f-fixture.txt"],
+      "bytes": 56,
+      "pieceVerified": true,
+      "finalState": "imported",
+      "persistedAcrossRestart": true,
+      "publicNetworkCalls": 0,
+      "runtimeErrors": [],
+      "cleanup": true,
+      "evidence": "W93F_LIBRARY_TORRENT_SOURCE.json",
+      "screenshot": "W93F_LIBRARY_TORRENT_SOURCE.png"
+    },
+    "packagedRuntime": {
+      "command": "npm run test:w93f:runtime -- --mode=packaged --executable <release/win-unpacked/Mazz Editor.exe>",
+      "result": "PASS",
+      "transport": "magnet-public-dht-fixture",
+      "inspectedFiles": 1,
+      "selectedFiles": ["books/w93f-fixture.txt"],
+      "bytes": 56,
+      "pieceVerified": true,
+      "finalState": "imported",
+      "persistedAcrossRestart": true,
+      "publicNetworkCalls": 0,
+      "runtimeErrors": [],
+      "cleanup": true,
+      "evidence": "W93F_LIBRARY_TORRENT_PACKAGED.json",
+      "screenshot": "W93F_LIBRARY_TORRENT_PACKAGED.png"
+    },
+    "fullSuite": {
+      "command": "node tests/run.js",
+      "passedTestFiles": 270,
+      "failedTestFiles": 0,
+      "exitCode": 0,
+      "note": "首轮 268/270 仅因 W71 release audit 与 W72 provenance 账本陈旧；使用既有确定性生成器更新同代账本后第二轮全绿"
+    },
+    "build": { "command": "npm run build", "result": "PASS", "exitCode": 0 },
+    "packagedDirectory": { "command": "npm run dist:dir", "result": "PASS", "exitCode": 0 },
+    "releaseAudit": { "command": "npm run audit:release", "result": "PASS", "exitCode": 0 },
+    "provenance": { "command": "npm run audit:provenance", "result": "CURRENT", "exitCode": 0 },
+    "syntax": { "command": "node --check <W93F main/renderer/e2e files>", "result": "PASS" },
+    "diffCheck": { "command": "git diff --check", "result": "PASS", "warnings": ["existing LF-to-CRLF conversion notices"] },
+    "privacy": {
+      "runtimeJsonSensitiveHits": 0,
+      "sourceScreenshotReviewed": true,
+      "packagedScreenshotReviewed": true
+    },
+    "resourceBoundary": {
+      "w93fTempDirectories": 0,
+      "w93fProductProcesses": 0,
+      "torrentActiveCount": 0,
+      "torrentInspectCount": 0,
+      "torrentDownloadCount": 0,
+      "surfaceOperationCount": 0,
+      "surfaceBackgroundCount": 0,
+      "surfaceControllerCount": 0,
+      "surfaceTorrentInspectorCount": 0
+    }
+  },
+  "invariants": {
+    "strictSingleBtihMagnet": true,
+    "trackerWebseedPrivateCoordinatesRejected": true,
+    "originalMagnetNotDurable": true,
+    "metadataDeselect": true,
+    "metadataInspectionSelectsZeroFiles": true,
+    "singleFrozenBookSelection": true,
+    "explicitP2pConsentPerOperation": true,
+    "userOwnedRightsConfirmationRequired": true,
+    "progressDurableOnlyAfterPayloadFsync": true,
+    "pauseRestartResumeDurable": true,
+    "fullShaFormatAndPromotionStillRequired": true,
+    "inboxAndShelfExactlyOnce": true,
+    "rendererReceivesNoMagnetInfoHashTrackerPeerOrAbsolutePath": true,
+    "inspectionCancellationReleasesOwners": true,
+    "noBusinessCountTextTokenOrFileSizeLimit": true,
+    "factoryFrozen": true,
+    "playerTorrentUnchanged": true
+  },
+  "files": {
+    "main/library-torrent-book-transport.js": { "bytes": 19657, "sha256": "72bbcae43ec409cfa7b4e73a23e69346f5da3a686031b6ba9237f054702f73a2" },
+    "main/library-acquisition-service.js": { "bytes": 97654, "sha256": "84c4135c02a50699e990389b0c62475dceb3056d3d0af9b0b6f07ad486b4a183" },
+    "main/library-resource-surface-service.js": { "bytes": 35576, "sha256": "aef523a8ee1593105b29a5dc54a97c3576a9e61a1387ac19d734540474dd56fe" },
+    "main/library-resource-surface-ipc.js": { "bytes": 8781, "sha256": "364b46d3f08466cdb22bc24c731ce4db5a2b09765a21ecc349f992e377853ed8" },
+    "main/main.js": { "bytes": 138886, "sha256": "767efac980cc3fd9ca201b1550d7fe73c15be6216e2ee4999dd32be7edfe258d" },
+    "preload/bridge.js": { "bytes": 8855, "sha256": "8307b8e1b58353492773b63f851c4fb18abf41f4e6775225284c815566cc03e1" },
+    "renderer/modules/library/index.js": { "bytes": 214464, "sha256": "5bd91464bab53df5d51a459da1ab064ac5a285813021ce9e61b36f130a87b851" },
+    "renderer/modules/library/resource-surface.js": { "bytes": 20017, "sha256": "4adce59c58267a2985f6c44411607668994ffaefb1118bc13d152c97ecbfa97e" },
+    "renderer/styles/base.css": { "bytes": 190055, "sha256": "732b9a638004aa30782f9b065783bb09538483b6c4eaaa4ba66146cd8e1ab968" },
+    "tests/contract/w93f-torrent-book-transport.test.mjs": { "bytes": 20129, "sha256": "504ac9552376d8c4e9c2c81063a5fe4b910aca6a90794b97e92efbccd432ed4b" },
+    "tests/e2e/w93f-library-torrent-runtime.mjs": { "bytes": 11545, "sha256": "1554450f74a0b2592ae95f4717b72aa4a859e04bdcb8ac5756657b04eedfa548" },
+    "docs/engineering/W93F_TORRENT_BOOK_TRANSPORT_SPEC.md": { "bytes": 9843, "sha256": "d4d91b3373cffe7f651af377a1dc9c79d1ad51e2cb523ccd57130d1bb06429f9" },
+    "docs/engineering/W93F_TORRENT_BOOK_TRANSPORT_CHECKPOINT_2026-08-25.md": { "bytes": 5947, "sha256": "9f650d0cb46880b65af3ac6ad17c9df1413872c492da0134e2f200621d9bd7a5" },
+    "docs/plans/W93_LIBRARY_RESOURCE_FREEDOM.md": { "bytes": 21699, "sha256": "535e380335f041238040589a1a9b0ae45757a5747039d66cd5995e6ec1a0408f" },
+    "docs/plans/README.md": { "bytes": 11021, "sha256": "122a08fbc625ddfaceb10c920363161199dcb5c1ce36ba7642c95780657345e5" },
+    "docs/engineering/evidence/W93F_LIBRARY_TORRENT_SOURCE.json": { "bytes": 842, "sha256": "bcd324886c54f0b9fd924a59c0b78e8fc3cf1f855b3eb1abc1cb5644b0192578" },
+    "docs/engineering/evidence/W93F_LIBRARY_TORRENT_SOURCE.png": { "bytes": 71669, "sha256": "3a6cc6994d01fe927855a5f90f6b367e82121a403b6cf18c93f41c8feb508c0b" },
+    "docs/engineering/evidence/W93F_LIBRARY_TORRENT_PACKAGED.json": { "bytes": 914, "sha256": "752cdd99f6059ef621c4a48d2ca14a9e83fee91b964649f62df536e22f804276" },
+    "docs/engineering/evidence/W93F_LIBRARY_TORRENT_PACKAGED.png": { "bytes": 80171, "sha256": "067921f89ce1bf6846b98b159764a2351f54a6a64b02e8b51dd3f3ec8c9243a4" },
+    "release/win-unpacked/Mazz Editor.exe": { "bytes": 188784128, "sha256": "fb3cf6fcc17754a565fd2fcc6d9d84284a31adaa774fb37f3312ab86c2e61962" },
+    "release/win-unpacked/resources/app.asar": { "bytes": 261504392, "sha256": "c579c631426d0cf1da2005c89c3a5db353bff2c20cfd40fbf0fc2bc7ccc5d092" },
+    "renderer/dist/app.js": { "bytes": 2429568, "sha256": "e4dae56fa63648c9d0848b3bd5ac81b2395b0fc6e4ca54a25fbf39504f7ca7ef" },
+    ".mazz/audit/oss-provenance-ledger.json": { "bytes": 828060, "sha256": "66c9891b4832ee0df740941fa08e9f54eb3979a404a3ee209a4250258e0d3a29" },
+    "docs/engineering/evidence/W71_RELEASE_BASELINE.json": { "bytes": 209976, "sha256": "b3f9cb4e2f2bc9e3349bd9e0d014eb0e16d0fd182057ee8029999599b9dfab23" }
+  },
+  "excluded": [
+    "real DHT, tracker, peer, live swarm or real book network",
+    "tracker-bearing magnet, webseed, private torrent and .torrent file",
+    "batch all-files acquisition and automatic seeding",
+    "DRM, controlled lending, login or CAPTCHA handling",
+    "player Torrent queue changes",
+    "Factory changes"
+  ],
+  "review": {
+    "mode": "single-owner-freeze-review",
+    "subagentsUsed": false,
+    "reproducibleP0P1": 0,
+    "result": "CLEAR"
+  },
+  "nextWave": {
+    "id": "W93G",
+    "name": "Portability and Convergence",
+    "status": "NEXT_NOT_STARTED"
+  }
+}

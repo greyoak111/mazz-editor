@@ -61,6 +61,7 @@ export function createLibraryResourceSurface({
   let continuations = [];
   let visible = false;
   let destroyed = false;
+  let torrentInspectionId = null;
 
   const workspacePayload = () => {
     const workspacePath = exactWorkspace(getWorkspacePath());
@@ -74,6 +75,16 @@ export function createLibraryResourceSurface({
     if (!authority()) return Promise.reject(Object.assign(new Error('资源页当前没有写权'), { stale: true }));
     return track(invoke(channel, payload));
   };
+
+  function cancelTorrentInspection() {
+    const inspectionId = torrentInspectionId;
+    if (!inspectionId) return;
+    torrentInspectionId = null;
+    let payload;
+    try { payload = { ...workspacePayload(), inspectionId }; }
+    catch { return; }
+    void track(invoke('library:resourceTorrentCancelInspect', payload)).catch(() => {});
+  }
 
   function renderProviders(items) {
     providers.innerHTML = asList(items).map(item => `
@@ -98,13 +109,18 @@ export function createLibraryResourceSurface({
     }
     candidateList.innerHTML = rows.map(candidate => {
       const offers = asList(candidate.offers).map(offer => {
-        const pass = candidate.decision?.outcome === 'pass' && offer.transport === 'https';
+        const torrent = offer.transport === 'magnet' && candidate.rights?.status === 'user-owned';
+        const pass = (candidate.decision?.outcome === 'pass' && offer.transport === 'https') || torrent;
+        const selectedFile = torrent && asList(offer.selectableFiles).length === 1
+          ? offer.selectableFiles[0] : '';
         return `<button class="rb-btn lib-resource-offer" data-resource-acquire="1"
           data-candidate-id="${escapeHtml(candidate.candidateId)}"
           data-candidate-fingerprint="${escapeHtml(candidate.candidateFingerprint)}"
-          data-offer-id="${escapeHtml(offer.offerId)}" ${pass ? '' : 'disabled'}
-          title="${escapeHtml(pass ? '创建持久取得任务' : decisionText(candidate))}">
-          ${escapeHtml(String(offer.format || '').toUpperCase())} · ${escapeHtml(byteText(offer.size))}
+          data-offer-id="${escapeHtml(offer.offerId)}"
+          data-offer-transport="${escapeHtml(offer.transport)}"
+          data-selected-file="${escapeHtml(selectedFile)}" ${pass ? '' : 'disabled'}
+          title="${escapeHtml(torrent ? '确认 P2P 与自有权利后，只取得这个文件' : (pass ? '创建持久取得任务' : decisionText(candidate)))}">
+          ${escapeHtml(String(offer.format || '').toUpperCase())} · ${escapeHtml(byteText(offer.size))}${selectedFile ? ` · ${escapeHtml(selectedFile)}` : ''}
         </button>`;
       }).join('');
       return `<article class="lib-resource-card" data-candidate="${escapeHtml(candidate.candidateId)}">
@@ -129,7 +145,8 @@ export function createLibraryResourceSurface({
     if (job.state === 'failed' && job.retryFrom === 'downloading') buttons.push(['retry', '重试']);
     if (!['imported', 'cancelled', 'awaiting-import', 'materializing'].includes(job.state)) buttons.push(['cancel', '取消']);
     return buttons.map(([action, label]) => `<button class="rb-btn" data-resource-action="${action}"
-      data-job-id="${escapeHtml(job.jobId)}" data-job-revision="${escapeHtml(job.revision)}">${label}</button>`).join('');
+      data-job-id="${escapeHtml(job.jobId)}" data-job-revision="${escapeHtml(job.revision)}"
+      data-job-transport="${escapeHtml(job.transport)}">${label}</button>`).join('');
   }
 
   function renderJobs(items) {
@@ -273,20 +290,59 @@ export function createLibraryResourceSurface({
       toast?.('已保存手动候选；权利未知，不会自动下载');
     } catch (error) { toast?.(`添加失败：${error?.message || error}`); }
   });
+  view.querySelector('[data-resource-torrent-inspect]').addEventListener('click', async () => {
+    const consent = view.querySelector('.lib-resource-p2p-consent');
+    const magnet = view.querySelector('.lib-resource-torrent-magnet');
+    if (!consent.checked) { toast?.('请先阅读并确认 P2P 网络暴露'); return; }
+    if (!magnet.value) { toast?.('请粘贴 public-DHT magnet'); return; }
+    if (torrentInspectionId) { toast?.('Torrent 目录正在检查'); return; }
+    const inspectionId = `inspection-${crypto.randomUUID()}`;
+    torrentInspectionId = inspectionId;
+    try {
+      await call('library:resourceTorrentInspect', {
+        ...workspacePayload(),
+        inspectionId,
+        magnet: magnet.value,
+        p2pConsent: true,
+      });
+      if (torrentInspectionId !== inspectionId || !authority()) return;
+      magnet.value = '';
+      await refresh();
+      toast?.('已冻结可读书籍目录；请选择一本并确认权利');
+    } catch (error) {
+      if (torrentInspectionId === inspectionId && authority()) {
+        toast?.(`Torrent 检查失败：${error?.message || error}`);
+      }
+    } finally {
+      if (torrentInspectionId === inspectionId) torrentInspectionId = null;
+    }
+  });
   candidateList.addEventListener('click', async event => {
     const button = event.target.closest('[data-resource-acquire]');
     if (!button || button.disabled) return;
     button.disabled = true;
     try {
-      await call('library:resourceAcquire', {
+      const torrent = button.dataset.offerTransport === 'magnet';
+      if (torrent && !view.querySelector('.lib-resource-p2p-consent').checked) {
+        toast?.('继续前请重新确认 P2P 网络暴露'); return;
+      }
+      if (torrent && !view.querySelector('.lib-resource-rights-confirm').checked) {
+        toast?.('请确认所选文件属于你或你已获明确许可'); return;
+      }
+      await call(torrent ? 'library:resourceTorrentAcquire' : 'library:resourceAcquire', {
         ...workspacePayload(),
         candidateId: button.dataset.candidateId,
         candidateFingerprint: button.dataset.candidateFingerprint,
         offerId: button.dataset.offerId,
         intentId: `intent-${crypto.randomUUID()}`,
+        ...(torrent ? {
+          selectedFile: button.dataset.selectedFile,
+          p2pConsent: true,
+          rightsConfirmed: true,
+        } : {}),
       });
       await refresh();
-      toast?.('取得任务已建立');
+      toast?.(torrent ? 'Torrent 单文件取得任务已建立' : '取得任务已建立');
     } catch (error) { toast?.(`无法取得：${error?.message || error}`); }
     finally { if (button.isConnected) button.disabled = false; }
   });
@@ -295,11 +351,17 @@ export function createLibraryResourceSurface({
     if (!button) return;
     button.disabled = true;
     try {
+      const torrent = button.dataset.jobTransport === 'magnet';
+      const needsConsent = torrent && ['resume', 'retry'].includes(button.dataset.resourceAction);
+      if (needsConsent && !view.querySelector('.lib-resource-p2p-consent').checked) {
+        toast?.('继续 Torrent 前请重新确认 P2P 网络暴露'); return;
+      }
       await call('library:resourceAction', {
         ...workspacePayload(),
         jobId: button.dataset.jobId,
         expectedRevision: Number(button.dataset.jobRevision),
         action: button.dataset.resourceAction,
+        ...(needsConsent ? { p2pConsent: true } : {}),
       });
       await refresh();
     } catch (error) { toast?.(`任务操作失败：${error?.message || error}`); }
@@ -320,6 +382,7 @@ export function createLibraryResourceSurface({
     generation += 1;
     controller?.abort();
     controller = null;
+    cancelTorrentInspection();
     view.style.display = 'none';
     if (showShelf && !destroyed) shelfView.style.display = 'flex';
     return true;
@@ -329,6 +392,7 @@ export function createLibraryResourceSurface({
     generation += 1;
     controller?.abort();
     controller = null;
+    cancelTorrentInspection();
   }
 
   function resume() {

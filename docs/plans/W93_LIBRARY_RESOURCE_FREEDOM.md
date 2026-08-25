@@ -1,7 +1,7 @@
 # W93 Library Resource Freedom / 书库资源自由
 
-> 状态：**W93A–E PASS / W93F NEXT**
-> 版本：v0.6
+> 状态：**W93A–F PASS / W93G NEXT**
+> 版本：v0.7
 > 日期：2026-08-25
 > 代码基线：`main@9300ed3`（写入总设计前工作树 clean）
 > 用户目标：工厂保持冻结；把书库建设为像播放器 + WebTorrent 一样来源可替换、取得可恢复、内容由用户自持的资源系统。
@@ -258,7 +258,7 @@ cancel()
 | W93c · Rights & Adapter Foundation · **PASS** | 注册 SourceAdapter 与权利判定，不接真实默认网络 | [W93C 规格](../engineering/W93C_RIGHTS_SOURCE_ADAPTER_SPEC.md)、registry、fixture adapter、rights receipt、[检查点](../engineering/W93C_RIGHTS_SOURCE_ADAPTER_CHECKPOINT_2026-08-25.md)、[证据](../engineering/evidence/W93C_RIGHTS_SOURCE_ADAPTER.json) | 默认离线；五态权利矩阵、57 页自然收敛、durable Job roundtrip、Source + Packaged 模块运行门通过；W93C 14/14、全量 267/267、build/dist/provenance/资源归零全绿 |
 | W93d · First Source Pack & Federated Discovery · **PASS** | Gutenberg、通用 OPDS、手动 HTTPS URL；无固定页/条目裁剪 | [W93D 规格](../engineering/W93D_LIBRARY_SOURCE_PACK_SPEC.md)、catalog client、OPDS1/2 adapter、联邦聚合、durable checkpoint、[检查点](../engineering/W93D_LIBRARY_SOURCE_PACK_CHECKPOINT_2026-08-25.md)、[证据](../engineering/evidence/W93D_LIBRARY_SOURCE_PACK.json) | 官方协议 fixture、333 次显式续页、部分来源失败、取消与脱敏全绿；Source + Packaged 离线运行门通过，实际网络 0；W93D 12/12、W93A 35/35、W93B 82/82、W93C 14/14、全量 268/268、build/dist/provenance/资源归零全绿；按用户要求本波单 owner 冻结审查 CLEAR |
 | W93e · Library Resource UI & Repair · **PASS** | 书库“资源”页、候选/版本/格式/许可/队列/修复；原子升格闭环 | [W93E 规格](../engineering/W93E_LIBRARY_RESOURCE_SURFACE_SPEC.md)、durable Candidate catalog、main-owned resource service/IPC、Library Resource Panel、[检查点](../engineering/W93E_LIBRARY_RESOURCE_SURFACE_CHECKPOINT_2026-08-25.md)、[证据](../engineering/evidence/W93E_LIBRARY_RESOURCE_SURFACE.json) | 手动 HTTPS unknown 权利候选、awaiting-rights Job、重启重放、修复与零传输完成 Source + Packaged BrowserWindow E2E；W93E 10/10、W93A 35/35、W93B 82/82、W93C 14/14、W93D 12/12、全量 269/269、build/dist/provenance/资源归零全绿；单 owner 冻结复核 CLEAR |
-| W93f · Torrent Book Transport | Torrent inspect、选择性文件、持久恢复；协议、路径、Tracker 与 P2P 告知收紧 | `W93F_TORRENT_BOOK_TRANSPORT_SPEC`、Torrent adapter、ReadableAsset | 默认 deselect；恶意路径/私有 tracker/取消/重启/哈希错全绿；P2P 告知可见；独立审计 CLEAR |
+| W93f · Torrent Book Transport · **PASS** | Torrent inspect、选择性文件、持久恢复；协议、路径、Tracker 与 P2P 告知收紧 | [W93F 规格](../engineering/W93F_TORRENT_BOOK_TRANSPORT_SPEC.md)、独立书库 Torrent transport、持久 Acquisition/Inbox、资源页入口、[检查点](../engineering/W93F_TORRENT_BOOK_TRANSPORT_CHECKPOINT_2026-08-25.md)、[证据](../engineering/evidence/W93F_LIBRARY_TORRENT_TRANSPORT.json) | public-DHT magnet 严格解析、metadata `deselect:true`、只选单书、P2P/用户自有双确认、pause/restart/Inbox/书架完成 Source + Packaged fake-swarm E2E；实际公网 0；W93F 9/9、W93A 35/35、W93B 82/82、W93C 14/14、W93D 12/12、W93E 10/10、全量 270/270、build/dist/release/provenance/资源归零全绿；单 owner 冻结复核 CLEAR |
 | W93g · Portability & Convergence | Workspace catalog 重建、迁移/重新定位、PDF Range、缓存治理与发布级封板 | `W93G_LIBRARY_RESOURCE_CONVERGENCE_SPEC`、catalog rebuild、repair、GC | 拷贝 Workspace 可重建；缺档可换源；资源回线；Source/Packaged、全量、build、release/provenance；最终审计 CLEAR |
 
 不允许为了“按时过波”把未完成项写成 PASS。若某子项需要拆分，必须先更新本文件并说明新边界，再施工。

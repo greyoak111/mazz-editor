@@ -136,6 +136,48 @@ function registerLibraryResourceSurfaceIpc({
     return result;
   });
 
+  bus.handle('library:resourceTorrentInspect', async (payload, event) => {
+    const { request, before } = await gate(payload, event, new Set([
+      'workspacePath', 'inspectionId', 'magnet', 'p2pConsent',
+    ]), 'torrent inspect');
+    const result = await service.inspectTorrent(before.owned, {
+      inspectionId: request.inspectionId,
+      magnet: request.magnet,
+      p2pConsent: request.p2pConsent,
+    });
+    assertStillCurrent(before);
+    return result;
+  });
+
+  bus.handle('library:resourceTorrentCancelInspect', async (payload, event) => {
+    const { request, before } = await gate(payload, event, new Set([
+      'workspacePath', 'inspectionId',
+    ]), 'torrent inspect cancel');
+    const result = await service.cancelTorrentInspect(before.owned, {
+      inspectionId: request.inspectionId,
+    });
+    assertStillCurrent(before);
+    return result;
+  });
+
+  bus.handle('library:resourceTorrentAcquire', async (payload, event) => {
+    const { request, before } = await gate(payload, event, new Set([
+      'workspacePath', 'candidateId', 'candidateFingerprint', 'offerId', 'selectedFile',
+      'intentId', 'p2pConsent', 'rightsConfirmed',
+    ]), 'torrent acquire');
+    const result = await service.acquireTorrent(before.owned, {
+      candidateId: request.candidateId,
+      candidateFingerprint: request.candidateFingerprint,
+      offerId: request.offerId,
+      selectedFile: request.selectedFile,
+      ...(request.intentId === undefined ? {} : { intentId: request.intentId }),
+      p2pConsent: request.p2pConsent,
+      rightsConfirmed: request.rightsConfirmed,
+    });
+    assertStillCurrent(before);
+    return result;
+  });
+
   bus.handle('library:resourceAcquire', async (payload, event) => {
     const { request, before } = await gate(payload, event, new Set([
       'workspacePath', 'candidateId', 'candidateFingerprint', 'offerId', 'intentId',
@@ -152,12 +194,13 @@ function registerLibraryResourceSurfaceIpc({
 
   bus.handle('library:resourceAction', async (payload, event) => {
     const { request, before } = await gate(payload, event, new Set([
-      'workspacePath', 'jobId', 'expectedRevision', 'action',
+      'workspacePath', 'jobId', 'expectedRevision', 'action', 'p2pConsent',
     ]), 'resource action');
     const result = await service.action(before.owned, {
       jobId: request.jobId,
       expectedRevision: request.expectedRevision,
       action: request.action,
+      ...(request.p2pConsent === undefined ? {} : { p2pConsent: request.p2pConsent }),
     });
     assertStillCurrent(before);
     return result;
@@ -175,6 +218,9 @@ function registerLibraryResourceSurfaceIpc({
     'library:resourceConfigure',
     'library:resourceSearch',
     'library:resourceManual',
+    'library:resourceTorrentInspect',
+    'library:resourceTorrentCancelInspect',
+    'library:resourceTorrentAcquire',
     'library:resourceAcquire',
     'library:resourceAction',
     'library:resourceRepair',
