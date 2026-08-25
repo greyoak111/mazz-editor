@@ -1,7 +1,7 @@
 # W93 Library Resource Freedom / 书库资源自由
 
-> 状态：**W93A PASS / W93B PARTIAL-HOLD / 2026-08-26 RESUME**
-> 版本：v0.3
+> 状态：**W93A–C PASS / W93D NEXT**
+> 版本：v0.4
 > 日期：2026-08-25
 > 代码基线：`main@9300ed3`（写入总设计前工作树 clean）
 > 用户目标：工厂保持冻结；把书库建设为像播放器 + WebTorrent 一样来源可替换、取得可恢复、内容由用户自持的资源系统。
@@ -254,8 +254,8 @@ cancel()
 | 波次 | 目标 | 主要产物 | 退出门 |
 |---|---|---|---|
 | W93a · Contract & Durable Job Foundation · **PASS** | 冻结 Candidate/Rights/Job/Identity/格式、安全与持久任务合同 | [W93A 规格](../engineering/W93A_ACQUISITION_FOUNDATION_SPEC.md)、纯数据模块、schema normalizer、原子 job/inbox store、[检查点](../engineering/W93A_ACQUISITION_FOUNDATION_CHECKPOINT_2026-08-24.md) | 合同、roundtrip、损坏恢复、全量、build 全绿；无 secret；标题不误合；两轮独立审计 CLEAR |
-| W93b · Main Transfer & Atomic Promotion · **PARTIAL / HOLD；2026-08-26 RESUME** | Workspace 绑定、流式 `materializePath`、Browser 下载持久回收、Inbox→书架 receipt | [W93B 规格](../engineering/W93B_STREAMING_ACQUISITION_SPEC.md)、主进程 service/IPC、path import、[暂停检查点](../engineering/W93B_STREAMING_ACQUISITION_CHECKPOINT_2026-08-25.md) | 主体与代码审计已收敛；仍须封住 Windows Playwright 退出壳，重跑 Source、Packaged、最终全量/build/provenance 并生成证据。当前不准写 PASS，不准进入 W93C |
-| W93c · Rights & Adapter Foundation | 注册 SourceAdapter 与权利判定，不接真实默认网络 | `W93C_RIGHTS_SOURCE_ADAPTER_SPEC`、registry、fixture adapter、rights receipt | 默认离线；PD/open/user-owned/unknown/restricted 全矩阵；政策 checkedAt；独立审计 CLEAR |
+| W93b · Main Transfer & Atomic Promotion · **PASS** | Workspace 绑定、流式 `materializePath`、Browser 下载持久回收、Inbox→书架 receipt | [W93B 规格](../engineering/W93B_STREAMING_ACQUISITION_SPEC.md)、主进程 service/IPC、path import、[检查点](../engineering/W93B_STREAMING_ACQUISITION_CHECKPOINT_2026-08-25.md)、[证据](../engineering/evidence/W93B_STREAMING_ACQUISITION.json) | Source + Packaged 离线真实 `DownloadItem`、Inbox→书架、双阶段退出 PASS；W93B 82/82、全量 266/266、build/dist/provenance/资源归零全绿 |
+| W93c · Rights & Adapter Foundation · **PASS** | 注册 SourceAdapter 与权利判定，不接真实默认网络 | [W93C 规格](../engineering/W93C_RIGHTS_SOURCE_ADAPTER_SPEC.md)、registry、fixture adapter、rights receipt、[检查点](../engineering/W93C_RIGHTS_SOURCE_ADAPTER_CHECKPOINT_2026-08-25.md)、[证据](../engineering/evidence/W93C_RIGHTS_SOURCE_ADAPTER.json) | 默认离线；五态权利矩阵、57 页自然收敛、durable Job roundtrip、Source + Packaged 模块运行门通过；W93C 14/14、全量 267/267、build/dist/provenance/资源归零全绿 |
 | W93d · First Source Pack & Federated Discovery | Gutenberg、通用 OPDS、手动 HTTPS URL；无固定页/条目裁剪 | `W93D_LIBRARY_SOURCE_PACK_SPEC`、分页/checkpoint/cache/聚合 | 官方协议 fixture、自然终止、部分来源失败、取消、脱敏全绿；显式 live 才联网；独立审计 CLEAR |
 | W93e · Library Resource UI & Repair | 书库“资源”页、候选/版本/格式/许可/队列/修复；原子升格闭环 | `W93E_LIBRARY_RESOURCE_SURFACE_SPEC`、Resource Panel、Activity、shelf provenance | Source + Packaged E2E；未开书库/多窗/Workspace 切换 exactly-once；独立审计 CLEAR |
 | W93f · Torrent Book Transport | Torrent inspect、选择性文件、持久恢复；协议、路径、Tracker 与 P2P 告知收紧 | `W93F_TORRENT_BOOK_TRANSPORT_SPEC`、Torrent adapter、ReadableAsset | 默认 deselect；恶意路径/私有 tracker/取消/重启/哈希错全绿；P2P 告知可见；独立审计 CLEAR |

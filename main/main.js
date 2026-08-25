@@ -2181,7 +2181,11 @@ app.whenReady().then(async () => {
       .then(() => {
         libraryAcquisitionQuitReady = true;
         libraryAcquisitionQuitPending = null;
-        app.quit();
+        // Do not re-enter Electron's quit sequence while the first will-quit
+        // dispatch is still unwinding. A fast, already-idle acquisition close
+        // can resolve in the same turn; Electron ignores that nested quit and
+        // leaves the process alive until another caller happens to retry.
+        setImmediate(() => app.quit());
       })
       .catch(error => {
         libraryAcquisitionQuitPending = null;

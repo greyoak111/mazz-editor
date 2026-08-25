@@ -13,6 +13,8 @@
     "test": "node tests/run.js",
     "test:w93b:library": "node tests/contract/w93b-acquisition-core.test.mjs && node tests/contract/w93b-path-promotion.test.mjs && node tests/contract/w93b-browser-acquisition-bridge.test.mjs && node tests/contract/w93b-inbox-saga.test.mjs && node tests/contract/w93b-runtime-ipc.test.mjs",
     "test:w93b:runtime": "node tests/e2e/w93b-library-acquisition-runtime.mjs",
+    "test:w93c:library": "node tests/contract/w93c-rights-source-adapter.test.mjs",
+    "test:w93c:runtime": "node tests/e2e/w93c-library-source-runtime.mjs",
     "smoke": "node tests/e2e/smoke.js",
     "dist": "node scripts/build.js && electron-builder",
     "dist:dir": "node scripts/build.js && electron-builder --dir --win",

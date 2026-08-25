@@ -43,6 +43,8 @@ const physicalTemp = prefix => fs.realpathSync.native(fs.mkdtempSync(path.join(o
 const USER_DATA = physicalTemp(`mazz-w93b-${MODE}-user-`);
 const WORKSPACE = physicalTemp(`mazz-w93b-${MODE}-workspace-`);
 const DOWNLOAD_WORKSPACE = physicalTemp(`mazz-w93b-${MODE}-download-workspace-`);
+const SHUTDOWN_ROOT = physicalTemp(`mazz-w93b-${MODE}-shutdown-`);
+const SHUTDOWN_MARKER = path.join(SHUTDOWN_ROOT, 'shutdown.json');
 const BOOTSTRAP = PACKAGED ? null : physicalTemp('mazz-w93b-source-bootstrap-');
 const STARTUP_GATE_ENTERED = BOOTSTRAP ? path.join(BOOTSTRAP, 'startup-gate-entered') : null;
 const STARTUP_GATE_RELEASE = BOOTSTRAP ? path.join(BOOTSTRAP, 'startup-gate-release') : null;
@@ -88,6 +90,7 @@ function redactDiagnostic(value) {
   let text = String(value ?? '');
   const paths = [
     [DOWNLOAD_WORKSPACE, '<DOWNLOAD_WORKSPACE>'],
+    [SHUTDOWN_ROOT, '<SHUTDOWN_ROOT>'],
     [USER_DATA, '<USER_DATA>'],
     [WORKSPACE, '<WORKSPACE>'],
     [BOOTSTRAP, '<BOOTSTRAP>'],
@@ -141,7 +144,7 @@ function readProductFile(relative) {
   if (!PACKAGED) return fs.readFileSync(path.join(ROOT, relative), 'utf8');
   const appAsar = path.join(path.dirname(EXECUTABLE), 'resources', 'app.asar');
   assert.equal(fs.existsSync(appAsar), true, `packaged app.asar missing: ${appAsar}`);
-  return extractAsarFile(appAsar, relative.replace(/\\/g, '/')).toString('utf8');
+  return extractAsarFile(appAsar, path.normalize(relative)).toString('utf8');
 }
 
 function assertProductBinding() {
@@ -191,6 +194,8 @@ function assertProductBinding() {
   const quitFailure = quit.slice(quit.indexOf('.catch(error =>'));
   assert.match(quitSuccess, /libraryAcquisitionQuitReady\s*=\s*true[\s\S]*app\.quit\(\)/,
     'only a converged Browser/service shutdown may release the second will-quit turn');
+  assert.match(quitSuccess, /setImmediate\(\(\)\s*=>\s*app\.quit\(\)\)/,
+    'the second quit must run after the first will-quit dispatch unwinds');
   assert.doesNotMatch(quitFailure, /libraryAcquisitionQuitReady\s*=\s*true|app\.quit\(\)/,
     'a rejected Browser/service durability boundary must hold the process open');
 
@@ -389,6 +394,33 @@ async function waitFor(check, label, timeout = 30000) {
   const error = new Error(`timed out waiting for ${label}`);
   if (lastError) error.cause = lastError;
   throw error;
+}
+
+function processIsAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function terminateIsolatedProcessTree(pid) {
+  if (!processIsAlive(pid)) return;
+  if (process.platform !== 'win32') {
+    process.kill(pid, 'SIGKILL');
+  } else {
+    await new Promise((resolve, reject) => {
+      const killer = spawn('taskkill.exe', ['/PID', String(pid), '/T', '/F'], {
+        windowsHide: true,
+        stdio: 'ignore',
+      });
+      killer.once('error', reject);
+      killer.once('exit', () => resolve());
+    });
+  }
+  await waitFor(() => !processIsAlive(pid), `isolated Electron process ${pid} to exit`, 15000);
 }
 
 async function exerciseSourceSecondInstanceDuringStartup(launchEnv) {
@@ -1196,9 +1228,8 @@ async function exerciseRealDownloadItem(bytes, candidate) {
 }
 
 async function installShutdownObservation() {
-  return app.evaluate(({ app: electronApp, session }) => {
+  return app.evaluate(({ app: electronApp, session }, markerPath) => {
     let turns = 0;
-    let testHostExitScheduled = false;
     electronApp.on('will-quit', () => {
       turns += 1;
       const resources = globalThis.__MAZZ_E2E_RESOURCE_LEDGER__?.snapshot?.() || { active: [] };
@@ -1212,6 +1243,7 @@ async function installShutdownObservation() {
       const sessionRequests = globalThis.__MAZZ_W93B_SESSION_NETWORK__?.snapshot?.() || [];
       const payload = {
         schema: 'mazz.w93b-runtime-shutdown/v1',
+        pid: process.pid,
         turn: turns,
         browserWillDownloadListeners: author.listenerCount('will-download'),
         acquisitionNetworkCalls: Number(network.acquisitionCallCount || 0),
@@ -1219,39 +1251,25 @@ async function installShutdownObservation() {
         sessionExternalNetworkCalls: sessionRequests.length,
         acquisitionResourceOwners: scoped.map(entry => ({ type: entry.type, id: entry.id, owner: entry.owner })),
       };
+      process.getBuiltinModule('node:fs').writeFileSync(markerPath, JSON.stringify(payload), 'utf8');
       // The first will-quit is intentionally vetoed by the product while its
       // durable acquisition close runs. Emit only the second, converged turn.
       if (turns > 1 || (payload.browserWillDownloadListeners === 0 && scoped.length === 0)) {
         const line = `\nW93B_ACQUISITION_SHUTDOWN=${Buffer.from(JSON.stringify(payload)).toString('base64')}\n`;
-        if (payload.turn > 1 && payload.browserWillDownloadListeners === 0
-            && scoped.length === 0 && !testHostExitScheduled) {
-          testHostExitScheduled = true;
-          // Node's ordinary exit waits for Playwright's inspector, while the
-          // controller waits for this Windows shell child. Write the evidence
-          // synchronously, then have a detached Windows helper terminate only
-          // this already-validated test tree; a self-signal is deferred until
-          // after Electron has already frozen the event loop.
-          process.getBuiltinModule('node:fs').writeSync(process.stdout.fd, line);
-          process.getBuiltinModule('node:child_process').spawn(
-            'taskkill.exe',
-            ['/PID', String(process.pid), '/F'],
-            { detached: true, stdio: 'ignore', windowsHide: true },
-          ).unref();
-          return;
-        }
-        process.stdout.write(line);
+        process.getBuiltinModule('node:fs').writeSync(process.stdout.fd, line);
       }
     });
     return {
       browserWillDownloadListeners: session.fromPartition('persist:mazz-author').listenerCount('will-download'),
+      markerPath,
     };
-  });
+  }, SHUTDOWN_MARKER);
 }
 
 function parseShutdownObservation() {
-  const matches = [...stdout.matchAll(/W93B_ACQUISITION_SHUTDOWN=([A-Za-z0-9+/=]+)/g)];
-  assert.ok(matches.length, 'graceful exit did not publish the converged acquisition shutdown boundary');
-  return JSON.parse(Buffer.from(matches.at(-1)[1], 'base64').toString('utf8'));
+  assert.equal(fs.existsSync(SHUTDOWN_MARKER), true,
+    'graceful exit did not publish an acquisition shutdown observation');
+  return JSON.parse(fs.readFileSync(SHUTDOWN_MARKER, 'utf8'));
 }
 
 function captureProcessOutput() {
@@ -1585,6 +1603,8 @@ try {
   });
   await page.waitForFunction(() => window.MazzModules.get('library')._forTests.instances.size === 0);
   const shutdownInitial = await installShutdownObservation();
+  assert.equal(samePath(shutdownInitial.markerPath, SHUTDOWN_MARKER), true,
+    'main-process shutdown observation path drifted from the parent gate');
   assert.equal(shutdownInitial.browserWillDownloadListeners, 1,
     'authorized Browser acquisition bridge was not attached after awaited startup');
 
@@ -1650,12 +1670,32 @@ try {
   };
 
   phase = 'graceful-quit';
-  await app.evaluate(({ app: electronApp }) => electronApp.quit()).catch(() => {});
-  await app.close();
+  const launcherPid = Number(app.process()?.pid || 0);
+  void app.evaluate(({ app: electronApp }) => electronApp.quit()).catch(() => {});
+  await waitFor(() => {
+    if (!fs.existsSync(SHUTDOWN_MARKER)) return false;
+    try {
+      const marker = parseShutdownObservation();
+      return marker.turn >= 2
+        && marker.browserWillDownloadListeners === 0
+        && marker.acquisitionResourceOwners.length === 0;
+    } catch {
+      return false;
+    }
+  }, 'second durable will-quit shutdown observation', 30000);
+  const shutdownMarker = parseShutdownObservation();
+  const mainPid = Number(shutdownMarker.pid || 0);
+  for (const pid of [...new Set([mainPid, launcherPid])]) {
+    if (pid > 0 && pid !== process.pid) await terminateIsolatedProcessTree(pid);
+  }
   appClosed = true;
-  await new Promise(resolve => setTimeout(resolve, 100));
+  app = null;
   phase = 'shutdown-boundary';
-  report.shutdown = parseShutdownObservation();
+  const { pid: _shutdownPid, ...publicShutdown } = shutdownMarker;
+  report.shutdown = {
+    ...publicShutdown,
+    testHostTeardown: 'parent-taskkill-after-second-durable-will-quit',
+  };
   assert.equal(report.shutdown.browserWillDownloadListeners, 0);
   assert.equal(report.shutdown.acquisitionNetworkCalls, 0);
   assert.equal(report.shutdown.externalNodeNetworkCalls, 0);
@@ -1687,13 +1727,14 @@ try {
     }
   }
   await new Promise(resolve => setTimeout(resolve, 250));
-  for (const target of [USER_DATA, WORKSPACE, DOWNLOAD_WORKSPACE, BOOTSTRAP].filter(Boolean)) {
+  for (const target of [USER_DATA, WORKSPACE, DOWNLOAD_WORKSPACE, SHUTDOWN_ROOT, BOOTSTRAP].filter(Boolean)) {
     try { fs.rmSync(target, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 }); } catch {}
   }
   cleanupState = {
     userDataRemoved: !fs.existsSync(USER_DATA),
     workspaceRemoved: !fs.existsSync(WORKSPACE),
     downloadWorkspaceRemoved: !fs.existsSync(DOWNLOAD_WORKSPACE),
+    shutdownMarkerRemoved: !fs.existsSync(SHUTDOWN_ROOT),
     bootstrapRemoved: !BOOTSTRAP || !fs.existsSync(BOOTSTRAP),
   };
   report.cleanup = cleanupState;
@@ -1703,6 +1744,7 @@ const expectedCleanup = {
   userDataRemoved: true,
   workspaceRemoved: true,
   downloadWorkspaceRemoved: true,
+  shutdownMarkerRemoved: true,
   bootstrapRemoved: true,
 };
 if (!failure) {

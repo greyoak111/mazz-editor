@@ -1,12 +1,12 @@
 # W93B Streaming Acquisition / 主进程流式取得与原子升格规格
 
-> 状态：**PARTIAL / HOLD；2026-08-26 RESUME / W93A CLEAR**
+> 状态：**PASS / W93C NEXT / W93A CLEAR**
 > 日期：2026-08-25
 > 上位规格：[W93 Library Resource Freedom](../plans/W93_LIBRARY_RESOURCE_FREEDOM.md)
 > 前置合同：[W93A Acquisition Foundation](./W93A_ACQUISITION_FOUNDATION_SPEC.md)
 > 范围：主进程流式 HTTP acquisition、创建时 Workspace 绑定、原子 materialize/promote、持久 Job/Inbox 与书架 CAS 接线；不做新 UI、不注册真实来源、不默认联网、不接 Torrent、不改 Factory。
 
-> 暂停说明：2026-08-25 按用户要求先提交推送，次日续作。主体实现与代码审计已收敛，但 Source 最终退出门、Packaged runtime、最新树全量回归和最终 evidence/checkpoint 尚未全部通过，因此本规格不得标记 PASS，W93C 不得提前启动。精确续作入口见 [W93B 暂停检查点](./W93B_STREAMING_ACQUISITION_CHECKPOINT_2026-08-25.md)。
+> 封板说明：2026-08-25 主体、Source/Packaged runtime、默认全量、build、provenance、故障与资源终态全部通过；精确结果见 [W93B 检查点](./W93B_STREAMING_ACQUISITION_CHECKPOINT_2026-08-25.md) 与 [权威 JSON 证据](./evidence/W93B_STREAMING_ACQUISITION.json)。
 
 ## 1. 本波目标
 

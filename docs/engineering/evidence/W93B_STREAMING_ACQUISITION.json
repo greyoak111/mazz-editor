@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "schema": "mazz.w93b-wave-evidence/v1",
+  "generatedAt": "2026-08-25T09:08:02.3505778Z",
+  "wave": "W93B",
+  "result": "PASS",
+  "base": {
+    "gitHead": "8372579468d5212be5fbf7b01502e3bbc2683229",
+    "workingTree": "dirty-authorized-wave",
+    "researchSha256": "a953b4e48e624d10548191bf543a18b0d8af794dbfd3fa69b72312a427ca6818",
+    "researchDocumentRole": "requirements-source-only"
+  },
+  "scope": {
+    "factoryModified": false,
+    "defaultNetworkUsed": false,
+    "liveProviderUsed": false,
+    "realBookSourceUsed": false,
+    "dependenciesAdded": [],
+    "sourceRuntime": true,
+    "packagedRuntime": true,
+    "fixtureTransport": "isolated-session-memory-https-protocol"
+  },
+  "verification": {
+    "targeted": {
+      "command": "npm run test:w93b:library",
+      "passed": 82,
+      "failed": 0,
+      "groups": {
+        "acquisitionCore": 36,
+        "pathPromotion": 13,
+        "browserBridge": 13,
+        "inboxSaga": 13,
+        "runtimeIpc": 7
+      }
+    },
+    "sourceRuntime": {
+      "command": "npm run test:w93b:runtime",
+      "result": "PASS",
+      "startupRecoveryBeforeFirstWindow": true,
+      "secondInstanceQueuedDuringStartup": true,
+      "realElectronDownloadItem": true,
+      "syntheticHttpsRequests": 1,
+      "unexpectedHttpRequests": 0,
+      "downloadBytes": 1271,
+      "chromiumIdentityHandoff": true,
+      "inboxPendingToAcknowledged": true,
+      "jobAwaitingImportToImported": true,
+      "shelfBooks": 1,
+      "shutdownWillQuitTurn": 2,
+      "runtimeErrors": [],
+      "networkCalls": 0,
+      "finalOwners": 0
+    },
+    "packagedRuntime": {
+      "command": "node tests/e2e/w93b-library-acquisition-runtime.mjs --executable <release/win-unpacked/Mazz Editor.exe>",
+      "result": "PASS",
+      "realElectronDownloadItem": true,
+      "syntheticHttpsRequests": 1,
+      "unexpectedHttpRequests": 0,
+      "downloadBytes": 1271,
+      "chromiumIdentityHandoff": true,
+      "inboxPendingToAcknowledged": true,
+      "jobAwaitingImportToImported": true,
+      "shelfBooks": 1,
+      "shutdownWillQuitTurn": 2,
+      "runtimeErrors": [],
+      "networkCalls": 0,
+      "finalOwners": 0
+    },
+    "fullSuite": {
+      "command": "npm test",
+      "passedTestFiles": 266,
+      "failedTestFiles": 0,
+      "exitCode": 0
+    },
+    "build": {
+      "command": "npm run build",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "packagedDirectory": {
+      "command": "npm run dist:dir",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "provenance": {
+      "command": "npm run audit:provenance",
+      "result": "CURRENT",
+      "exitCode": 0
+    },
+    "syntax": {
+      "command": "node --check <W93B main|renderer bridge|runtime e2e files>",
+      "result": "PASS"
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "result": "PASS",
+      "warnings": [
+        "existing LF-to-CRLF conversion notices"
+      ]
+    },
+    "resourceBoundary": {
+      "w93bTempDirectories": 0,
+      "w93bElectronOrNodeProcesses": 0,
+      "browserDownloadListeners": 0,
+      "acquisitionOwners": 0,
+      "testHostTeardown": "parent-taskkill-after-second-durable-will-quit",
+      "teardownSemantics": "The parent terminates only the verified isolated test PID tree after product durability and owner gates pass; this is not claimed as product self-exit."
+    }
+  },
+  "invariants": {
+    "workspaceBound": true,
+    "perWorkspaceRestartRecoverySingleFlight": true,
+    "rendererBase64AcquisitionPathUsed": false,
+    "streamingBackpressure": true,
+    "partialPayloadDurableBeforePaused": true,
+    "redirectRepresentationDriftFailClosed": true,
+    "ssrfEveryHopFailClosed": true,
+    "stagingIdentityLocked": true,
+    "promotionExpectedHashSizeIdentityBound": true,
+    "inboxIsDurableTruth": true,
+    "shelfCommitExactlyOnce": true,
+    "provisionalRendererHasNoWriteAuthority": true,
+    "businessFailureSeparatedFromDurabilityFailure": true,
+    "quitRequiresZeroOwners": true,
+    "businessCountTextTokenFileSizeLimits": false
+  },
+  "files": {
+    "main/main.js": {"bytes": 137114, "sha256": "f9925d9cff119541881afe2a6af1d7f629f540e311deda3373f355bc4e4b1421"},
+    "main/library-acquisition-service.js": {"bytes": 87572, "sha256": "2d088f710e68f26367d3b1af646b08628b737df4bb4579dd29d18dd9225e7ef8"},
+    "main/library-acquisition-ipc.js": {"bytes": 8224, "sha256": "7fc9b78ca01113b2c170fece3bc3992f591e74eb5fbba41c698ca248c3acfbce"},
+    "main/library-http-acquisition.js": {"bytes": 50162, "sha256": "bcaca723d01baf74e8fef37de7f1b7bddc67ea3e335e23ecc9312204ccd781e8"},
+    "main/library-browser-acquisition-bridge.js": {"bytes": 25050, "sha256": "f1dfb57dff3040cb2520b32b61b597f1d8246bfd74ed139126adcf178195d98f"},
+    "main/library-import-service.js": {"bytes": 32131, "sha256": "9afd3ab9b0b976fe6ef13c7823f49802d2ffff44bb68fde464f5818f7e104bfc"},
+    "renderer/modules/library/acquisition-inbox.js": {"bytes": 18410, "sha256": "ddefa67e5a66f477453d95b2fabf0d9d9c71c7cd878a03941e52e8eda5ac18a5"},
+    "tests/e2e/w93b-library-acquisition-runtime.mjs": {"bytes": 76124, "sha256": "32558c047737644b9c84e6424180049e1d39f342fe428b7e28b0b187a2d8506a"},
+    "release/win-unpacked/resources/app.asar": {"bytes": 261235277, "sha256": "5cae4a0e6a461f548bf3d68e95f766ba26b5913f940744ce002c1607aa9b760a"},
+    "release/win-unpacked/Mazz Editor.exe": {"bytes": 188784128, "sha256": "8d3370026241af4fefd9c4ef20b5481c000505b2b94bf520c17715fee87c8b84"},
+    "renderer/dist/app.js": {"bytes": 2399288, "sha256": "2771ab7353aa00ff73d24303c9c0d806eedfd9a3daafc89a6e30dc2208b7426f"},
+    "docs/engineering/W93B_STREAMING_ACQUISITION_SPEC.md": {"bytes": 29467, "sha256": "c0407816c6d41cbf6547290c238e7438297e808184044a5a69d0a66278418d12"},
+    "docs/engineering/W93B_STREAMING_ACQUISITION_CHECKPOINT_2026-08-25.md": {"bytes": 4174, "sha256": "a93d336d9f4d1a6b719e5bca4ce08ee5854f4a56181898c91e1d1927f7b90763"}
+  },
+  "excluded": [
+    "real Gutenberg, OPDS, Internet Archive or other source adapters",
+    "Library resource discovery UI",
+    "Torrent transport",
+    "progressive EPUB, CBZ, MOBI or AZW3 reading",
+    "DRM or controlled lending"
+  ],
+  "nextWave": {
+    "id": "W93C",
+    "name": "Rights & Source Adapter Foundation",
+    "authorized": true,
+    "networkDefault": "offline-fixture-only"
+  }
+}

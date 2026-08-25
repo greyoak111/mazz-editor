@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "schema": "mazz.w93c-wave-evidence/v1",
+  "generatedAt": "2026-08-25T09:39:04.4582155Z",
+  "wave": "W93C",
+  "result": "PASS",
+  "base": {
+    "gitHead": "8372579468d5212be5fbf7b01502e3bbc2683229",
+    "workingTree": "dirty-authorized-wave",
+    "researchSha256": "a953b4e48e624d10548191bf543a18b0d8af794dbfd3fa69b72312a427ca6818",
+    "researchDocumentRole": "requirements-source-only"
+  },
+  "scope": {
+    "factoryModified": false,
+    "defaultNetworkUsed": false,
+    "liveProviderUsed": false,
+    "realBookSourceUsed": false,
+    "dependenciesAdded": [],
+    "sourceRuntime": true,
+    "packagedRuntime": true,
+    "runtimeKind": "electron-run-as-node-module-binding",
+    "fixtureAdapter": "in-memory-only"
+  },
+  "verification": {
+    "targeted": {
+      "command": "npm run test:w93c:library",
+      "passed": 14,
+      "failed": 0
+    },
+    "adjacent": {
+      "w93a": {"passed": 35, "failed": 0},
+      "w93b": {"passed": 82, "failed": 0}
+    },
+    "sourceRuntime": {
+      "command": "npm run test:w93c:runtime",
+      "result": "PASS",
+      "pages": 57,
+      "candidates": 57,
+      "discoverCalls": 57,
+      "decision": "pass",
+      "durableState": "queued",
+      "receiptBound": true,
+      "network": {"http": 0, "https": 0, "net": 0},
+      "runtimeErrors": [],
+      "finalOwners": 0,
+      "cleanup": true
+    },
+    "packagedRuntime": {
+      "command": "node tests/e2e/w93c-library-source-runtime.mjs --executable <release/win-unpacked/Mazz Editor.exe>",
+      "result": "PASS",
+      "pages": 57,
+      "candidates": 57,
+      "discoverCalls": 57,
+      "decision": "pass",
+      "durableState": "queued",
+      "receiptBound": true,
+      "network": {"http": 0, "https": 0, "net": 0},
+      "runtimeErrors": [],
+      "finalOwners": 0,
+      "cleanup": true
+    },
+    "fullSuite": {
+      "command": "npm test",
+      "passedTestFiles": 267,
+      "failedTestFiles": 0,
+      "exitCode": 0,
+      "firstRunExpectedAuditDrift": {
+        "passedTestFiles": 265,
+        "failedTestFiles": 2,
+        "failed": [
+          "tests/contract/w71-release-foundation.test.mjs",
+          "tests/contract/w72c-oss-provenance.test.mjs"
+        ],
+        "resolution": "official surface census and OSS provenance generators updated, then targeted audits and full suite rerun"
+      }
+    },
+    "build": {"command": "npm run build", "result": "PASS", "exitCode": 0},
+    "packagedDirectory": {"command": "npm run dist:dir", "result": "PASS", "exitCode": 0},
+    "provenance": {"command": "npm run audit:provenance", "result": "CURRENT", "exitCode": 0},
+    "releaseSurface": {"command": "npm run audit:w71:census", "result": "UPDATED_AND_TARGETED_GATE_PASS"},
+    "syntax": {
+      "command": "node --check <W93C main and test files>",
+      "result": "PASS"
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "result": "PASS",
+      "warnings": ["existing LF-to-CRLF conversion notices"]
+    },
+    "resourceBoundary": {
+      "w93cTempDirectories": 0,
+      "w93cElectronOrNodeProcesses": 0,
+      "registeredAdapters": 0,
+      "activeCalls": 0,
+      "timers": 0,
+      "listeners": 0,
+      "networkOwners": 0
+    }
+  },
+  "invariants": {
+    "strictDescriptorPageDecisionSchemas": true,
+    "candidateProviderVersionPolicyBound": true,
+    "sameIdentityConflictFailClosed": true,
+    "naturalPaginationWithoutBusinessCap": true,
+    "rightsFiveStateMatrix": true,
+    "unknownNeverUpgraded": true,
+    "restrictedNeverUpgraded": true,
+    "userOwnedRequiresBoundAssertion": true,
+    "decisionRecomputedBeforeJob": true,
+    "receiptAllowlistOnly": true,
+    "durableJobRoundtrip": true,
+    "defaultNetworkOwners": 0,
+    "businessCountTextTokenFileSizeLimits": false
+  },
+  "files": {
+    "main/library-source-registry.js": {"bytes": 20068, "sha256": "4092c934acd5617e75d900b5c29e5a4991c2af2429e9e036ba4193c590cbc0e9"},
+    "main/library-rights-policy.js": {"bytes": 17124, "sha256": "3061108fdffbdbd5f2ab11e7b895d436de3ea521b6b4e080d48f8cac0ab847ff"},
+    "tests/contract/w93c-rights-source-adapter.test.mjs": {"bytes": 23829, "sha256": "6138514f786233ecb0e78f683e4145869dd6ac5fd310f218ac7b83629d7b8d26"},
+    "tests/e2e/w93c-library-source-runtime.mjs": {"bytes": 10667, "sha256": "feadc360751907eb521f0a5758ab8005b762ace65362e7866e7e165f5f844630"},
+    "package.json": {"bytes": 8203, "sha256": "083389f2f33a3c78a1496ff0c328a728a6f6fbda0bc4744f00cd1d6f5a86ce63"},
+    "tests/run.js": {"bytes": 13373, "sha256": "ff13dec899c195bc30c691c06b223a94e9523a02f977b02914da416873bc84cd"},
+    "docs/engineering/W93C_RIGHTS_SOURCE_ADAPTER_SPEC.md": {"bytes": 9936, "sha256": "5d3ed66e4fb54ddac75aac394a0ea366fe7a3199c79b682dbe30d5c12d4e74a3"},
+    "docs/engineering/W93C_RIGHTS_SOURCE_ADAPTER_CHECKPOINT_2026-08-25.md": {"bytes": 4673, "sha256": "c45f25e001455df297f03d188f35591881239b6b712da5cfb92bb56b9383da8d"},
+    "release/win-unpacked/resources/app.asar": {"bytes": 261273013, "sha256": "f2848f4f2e3ecd3a7977971495df5b57380bb8d0d0157151c9a87ecf67cfb6b1"},
+    "release/win-unpacked/Mazz Editor.exe": {"bytes": 188784128, "sha256": "5e3df2e94fbb1c5d2592113b2629adec3f92bc9edfd13a30b89fa01da4167398"},
+    "renderer/dist/app.js": {"bytes": 2399288, "sha256": "2771ab7353aa00ff73d24303c9c0d806eedfd9a3daafc89a6e30dc2208b7426f"},
+    ".mazz/audit/surface-census.json": {"bytes": 21014, "sha256": "88bd51daeae652110e119299c8c20ff50579564010a81b1dd986a610e010e1ce"},
+    ".mazz/audit/oss-provenance-ledger.json": {"bytes": 828061, "sha256": "5c7d65fcf8f29b1d62ef5f1484c74c8d600f18f92e427c761e7abcf69ec49f25"}
+  },
+  "excluded": [
+    "real Gutenberg, OPDS, Internet Archive, Standard Ebooks or other source adapters",
+    "live network, ToS, robots or current licensing verification",
+    "Library resource discovery UI",
+    "Torrent transport",
+    "progressive Reader ingestion",
+    "DRM or controlled lending"
+  ],
+  "nextWave": {
+    "id": "W93D",
+    "name": "First Source Pack & Federated Discovery",
+    "authorized": false,
+    "prerequisite": "write W93D spec and perform current source-policy verification",
+    "networkDefault": "offline-fixture-first; live requires explicit opt-in"
+  }
+}

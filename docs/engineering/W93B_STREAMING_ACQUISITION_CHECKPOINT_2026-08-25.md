@@ -1,48 +1,49 @@
-# W93B Streaming Acquisition 暂停检查点（2026-08-25）
+# W93B Streaming Acquisition 检查点（2026-08-25）
 
-> 结论：**PARTIAL / HOLD；2026-08-26 RESUME**
-> 用户裁决：先提交并推送当前状态，明天继续。
-> 准入边界：W93B 尚未 PASS；W93C 不得启动。
-> 运行边界：默认离线，不访问真实书源、不读取 Provider Key、不修改 Factory。
+> 结论：**PASS / W93C NEXT**
+> 上位规格：[W93 Library Resource Freedom](../plans/W93_LIBRARY_RESOURCE_FREEDOM.md)
+> 波次规格：[W93B Streaming Acquisition](./W93B_STREAMING_ACQUISITION_SPEC.md)
+> 权威证据：[W93B_STREAMING_ACQUISITION.json](./evidence/W93B_STREAMING_ACQUISITION.json)
+> 运行边界：默认离线；没有访问真实书源、没有读取 Provider Key、没有修改 Factory。
 
-## 1. 当前完成面
+## 1. 本波交付
 
-- 主进程 `LibraryAcquisitionService`、HTTP 流式取得、Range/恢复、Workspace 单飞恢复与持久 Job/Inbox 已落地。
-- `LibraryImportService.materializePath()` 已形成不经 Renderer/Base64 的流式完整哈希与排他升格路径。
-- Browser Download 预登记、真实 `DownloadItem` 完成事实、Chromium 临时文件到最终文件的身份交接及完成后身份锁定已接线。
-- Renderer Inbox 只从主进程持久事实重放，书架 CAS、ack、重复消费、多窗口与 Workspace 切换按 receipt 收敛。
-- 启动恢复、second-instance、provisional handoff、退出耐久门、路径/重定向/地址/哈希/目录 fsync 故障均已有定向合同。
-- W93B 代码审计当前未留下已知 P0/P1；此前全量曾达到 `266/266`、build 曾通过。
+- 主进程 `LibraryAcquisitionService` 持久绑定创建时 Workspace，HTTP 字节以 backpressure 流入 staging；Range/If-Range、重定向表示漂移、SSRF、暂停、取消和重启恢复均 fail-closed。
+- `LibraryImportService.materializePath()` 以流式完整 SHA-256、源身份锁、长度/格式/容器校验和排他 publication 把已验证文件升格到正式书库；正式路径不走 Renderer/Base64。
+- Browser Download 必须先有持久 Candidate/Rights/Job；真实 `DownloadItem` 的完成事实进入同一校验、升格和 Inbox 链，Chromium 临时文件到最终文件的合法身份交接有显式边界。
+- 持久 Inbox 是事实源，Renderer 事件只作唤醒；未打开 Library、重复 wake、响应丢失、两窗口、Workspace 切换与 provisional handoff 均通过 receipt + shelf CAS 收敛。
+- App 首窗前完成当前 Workspace 恢复；后来首次打开其他 Workspace 时按 identity 单飞恢复。退出按 Browser writer → acquisition service → owner 归零的两阶段耐久门执行。
 
-上述事实只证明主体实现与定向收敛，不等于本波发布门已经完成。最新 Chromium DownloadItem 身份交接补丁之后，最终全量仍须重跑。
+## 2. 必查结果
 
-## 2. 尚未完成的发布门
+| Gate | 结果 |
+| --- | --- |
+| W93B 定向合同 | `npm run test:w93b:library`：**82/82 PASS** |
+| Source Electron | 启动恢复、真实离线 `DownloadItem`、Inbox→书架、双阶段退出：**PASS** |
+| Packaged Electron | 同代 `win-unpacked` 坐标：**PASS** |
+| 默认全量 | `npm test`：**266/266 个测试文件 PASS** |
+| Build | `npm run build`：**PASS** |
+| Packaged 目录 | `npm run dist:dir`：**PASS** |
+| Provenance | `npm run audit:provenance`：**CURRENT** |
+| 语法 / diff | W93B 主文件与 E2E `node --check`、`git diff --check`：**PASS** |
+| 资源终态 | W93B Electron/Node 产品进程 `0`；`mazz-w93b-*` 临时目录 `0` |
 
-1. Windows Playwright Electron 使用 shell/Node inspector 时，产品完成两阶段 `will-quit` 耐久门后，测试壳仍可能收不到 `close`；当前 child-side `taskkill` 临时方案不得作为最终证据。
-2. Source runtime 尚未生成最终 PASS 证据；已跑通取得、校验、Inbox、书架与 owner 归零的主体坐标，但退出壳未封板。
-3. 最新代码尚未执行最终 `dist:dir` 与 Packaged runtime。
-4. 最新树必须重新执行 W93B 全套、`node tests/run.js`、`npm run build`、provenance 与 `git diff --check`。
-5. `docs/engineering/evidence/W93B_STREAMING_ACQUISITION.json` 尚不存在；不得补写推测结果或提前生成 PASS checkpoint。
+Source 与 Packaged 都使用隔离 Session 的内存 HTTPS protocol fixture；真实网络调用为 `0`。真实 Electron `DownloadItem` 完成 1 个 1271-byte EPUB fixture，HTTP(S) 意外请求为 `0`，书架最终 1 本、Inbox acknowledged、Job imported，Browser/Service owner 最终均为 `0`。
 
-## 3. 2026-08-26 唯一续作入口
+## 3. 退出门口径
 
-按以下顺序继续，不扩波、不微调其他模块：
+产品主进程在第二阶段 `will-quit` 同步写出仅含 owner/network/count 的观察事实。父测试进程先验证 `turn >= 2`、Browser listener 为 `0`、acquisition owner 为 `0`，再按已验证的隔离 PID 清理测试 Electron 树；这一步是测试宿主收尸，不冒充产品自行退出。产品门证明的是在允许退出前 durability 与 owner 已经收敛。
 
-1. 将 runtime E2E 改为“主进程写入第二阶段耐久 shutdown marker；父测试进程核验 marker 后只清理该隔离 Electron 测试树”。删除 child-side 退出/调试器绕行。
-2. 跑 Source runtime，要求启动恢复、真实离线 `DownloadItem`、Inbox→书架、退出 marker、网络计数与 owner 终态全部 PASS。
-3. 执行 `npm run dist:dir`，再跑同代 Packaged runtime。
-4. 重跑 W93B 定向、默认全量、build、provenance、diff-check，并确认没有 W93B 进程或临时目录遗留。
-5. 只有全部为绿，才生成 W93B JSON evidence、将本文件结论改为 PASS，并把总设计/README 推进到 `W93B PASS / W93C NEXT`。
+## 4. 故障与安全闭环
 
-## 4. 当前禁止声明
+- 同源/跨源 redirect 不携带旧 Range/If-Range；曾发生 redirect 的部分传输恢复时从 durable 0 fresh start，不能拼接不同表示。
+- pause/shutdown 在 partial、EOF、final hash、verify/materialize 各窗口都能收敛；业务失败已持久后允许退出，目录 fsync/Store publication 失败继续 HOLD。
+- HTTP 与 Browser staging 在验证前后锁定文件身份；verify→promotion 还绑定 expected hash/size/identity，竞态替换不得生成正式文件。
+- Reserved/本地地址、每跳 DNS/redirect、路径穿越、junction/reparse、ADS/设备名、链接与容器结构均 fail-closed。
+- Inbox commit 绑定 main-owned Workspace identity/token 与持久 artifact；Windows 分隔符往返按同一物理路径校验，不接受 Renderer 任意路径。
 
-- 不得声明 W93B PASS、Source PASS、Packaged PASS 或 release clear。
-- 不得把测试壳强杀冒充产品正常退出。
-- 不得启动 W93C、真实来源 Adapter、真实网络、Torrent 或新 UI。
-- 不得把此前某一旧快照的 `266/266` 与 build 结果冒充最新冻结树的最终全量。
+## 5. 边界与下一波
 
-## 5. 回滚与恢复
+W93B 没有接入 Gutenberg、OPDS 或其他真实来源，没有资源 UI、Torrent、渐进阅读或任意自动抓取。Reader 现有解析是否整本驻留不在本波冒充解决。
 
-- 本次推送是可恢复的开发检查点，不是发布标签。
-- 明天从该 Git 提交继续；若 runtime harness 修改失败，只回滚 harness 的未提交增量，不回滚已通过定向合同的 acquisition 主体。
-- 任一 Source/Packaged、全量、build、provenance 或资源终态门为红，本波继续保持 **PARTIAL / HOLD**。
+**Final Gate：PASS。允许开始 W93C Rights & Source Adapter Foundation；W93C 仍必须默认离线、只接 fixture adapter，不得提前进入真实来源包。**

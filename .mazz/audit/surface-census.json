@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "scannedFiles": 101,
-    "scannedLines": 30735
+    "scannedFiles": 103,
+    "scannedLines": 31642
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -163,13 +163,13 @@
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2194,
+      "line": 2198,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2286,
+      "line": 2290,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -521,7 +521,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 2196,
+          "line": 2200,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]
