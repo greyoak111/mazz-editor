@@ -112,8 +112,8 @@
       {
         "path": "package.json",
         "present": true,
-        "bytes": 8496,
-        "sha256": "B0FCF99A2D6F33EA2EBBEC8101DA56519C505C993900EB1B4D7735A1697AA65C"
+        "bytes": 8660,
+        "sha256": "E0E26BC8DDCF052898F13FB127408369D8FC612462905D3D75F6FDE2677530DC"
       },
       {
         "path": "patches/chokidar+3.6.0.patch",

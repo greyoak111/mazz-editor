@@ -16,6 +16,7 @@ import { COVER_LIMITS, persistCover } from './cover-cache.js';
 import { createLibraryLocatorStore, mergeLocatorRecords } from './locator-store.js';
 import { canonicalWorkspace, createLibraryRepository } from './repository.js';
 import { drainAcquisitionInbox } from './acquisition-inbox.js';
+import { createLibraryResourceSurface } from './resource-surface.js';
 import { createReaderInput } from './reader-input.js';
 import { createReaderPreferencesStore, appearanceForReaderController } from './reader-prefs.js';
 import { createShelfViewModel } from './shelf-model.js';
@@ -156,6 +157,10 @@ function createLibrary(container) {
     <div class="lib-shelf-view">
       <div class="lib-shelf-head">
         <b>${iconHtml('📚')} 我的书库</b>
+        <div class="lib-view-switch" role="tablist" aria-label="书库视图">
+          <button class="rb-btn on" role="tab" aria-selected="true" data-a="view-shelf">书架</button>
+          <button class="rb-btn" role="tab" aria-selected="false" data-a="view-resource">资源</button>
+        </div>
         <button class="rb-btn" data-a="dl-site" title="打开电子书站（普通下载；入库需明确授权或手动导入）" style="font-size:11.5px">${iconHtml('⬇')} 下载站</button>
         <span class="lib-count"></span>
         <select class="lib-cat-filter rb-select" title="按分类筛选"></select>
@@ -185,6 +190,64 @@ function createLibrary(container) {
         <button class="rb-btn" data-a="sel-moveto">移到分类…</button>
         <button class="rb-btn" data-a="sel-del" style="color:var(--danger)">删除所选</button>
         <button class="rb-btn" data-a="sel-done">完成</button>
+      </div>
+      </div>
+    <div class="lib-resource-view" style="display:none">
+      <div class="lib-resource-head">
+        <button class="rb-btn" data-resource-back>${iconHtml('←')} 书架</button>
+        <div>
+          <b>资源</b>
+          <span class="lib-resource-summary">正在读取持久资源账…</span>
+        </div>
+        <span style="flex:1"></span>
+        <button class="rb-btn" data-resource-refresh>刷新</button>
+        <button class="rb-btn" data-resource-repair>修复状态</button>
+      </div>
+      <div class="lib-resource-searchbar">
+        <input class="rb-input lib-resource-query" type="search" placeholder="搜索官方目录中的书名或作者…" autocomplete="off" spellcheck="false">
+        <div class="lib-resource-providers"></div>
+        <button class="rb-btn" data-resource-search>搜索</button>
+        <button class="rb-btn" data-resource-more hidden>继续下一页</button>
+      </div>
+      <div class="lib-resource-scroll">
+        <details class="lib-resource-config">
+          <summary>来源与法域设置</summary>
+          <div class="lib-resource-form-grid">
+            <label>Catalog contact<input class="rb-input lib-resource-contact" placeholder="email 或公共 HTTPS 联系页"></label>
+            <label>法域<select class="rb-select lib-resource-jurisdiction"><option value="">未指定</option><option value="US">US</option></select></label>
+            <button class="rb-btn" data-resource-save-config>保存基本设置</button>
+          </div>
+          <div class="lib-resource-opds-list"></div>
+          <div class="lib-resource-form-grid lib-resource-opds-form">
+            <input class="rb-input lib-resource-opds-provider" placeholder="provider-id">
+            <input class="rb-input lib-resource-opds-name" placeholder="显示名称">
+            <input class="rb-input lib-resource-opds-root" placeholder="https://…/catalog">
+            <input class="rb-input lib-resource-opds-search" placeholder="https://…?q={query}">
+            <select class="rb-select lib-resource-opds-version"><option value="1.2">OPDS 1.2</option><option value="2.0">OPDS 2.0</option></select>
+            <button class="rb-btn" data-resource-add-opds>添加自有 OPDS</button>
+          </div>
+          <p class="lib-resource-note">只接受无凭据的公共 HTTPS OPDS；自有 OPDS 的权利状态始终为“未知”，不会因配置来源而自动授权下载。</p>
+        </details>
+        <details class="lib-resource-manual">
+          <summary>手动 HTTPS 候选</summary>
+          <div class="lib-resource-form-grid">
+            <input class="rb-input lib-resource-manual-url" placeholder="https://…/book.epub">
+            <input class="rb-input lib-resource-manual-title" placeholder="书名">
+            <input class="rb-input lib-resource-manual-authors" placeholder="作者（逗号分隔）">
+            <input class="rb-input lib-resource-manual-language" placeholder="语言（可空）">
+            <select class="rb-select lib-resource-manual-format"><option>epub</option><option>pdf</option><option>txt</option><option>mobi</option><option>azw3</option><option>cbz</option></select>
+            <button class="rb-btn" data-resource-add-manual>保存候选</button>
+          </div>
+          <p class="lib-resource-note">手动地址只建立候选，默认 Rights=unknown；本波不会把“有 URL”当成“有权获取”。</p>
+        </details>
+        <section class="lib-resource-section">
+          <h3>候选与版本</h3>
+          <div class="lib-resource-candidates"></div>
+        </section>
+        <section class="lib-resource-section">
+          <h3>取得与修复</h3>
+          <div class="lib-resource-jobs"></div>
+        </section>
       </div>
     </div>
     <div class="lib-reader" style="display:none">
@@ -271,6 +334,7 @@ function createLibrary(container) {
     _openGen: 0, _searchGen: 0, _exportGen: 0,
     _lifecycleGen: 0, _ownedOverlays: new Set(),
     _acquisitionInboxOff: null,
+    _resourceChangedOff: null,
   };
 
   // Back, workspace hand-off and tab destruction are independent async
@@ -498,6 +562,7 @@ function createLibrary(container) {
   }
 
   function abortAcquisitionBinding(binding, reason) {
+    ctl.resourceSurface?.abort?.();
     const controller = binding?.acquisitionAbortController;
     if (!controller || controller.signal.aborted) return false;
     const error = Object.assign(new Error(`Library Inbox replay stopped: ${reason}`), {
@@ -556,6 +621,16 @@ function createLibrary(container) {
   }
 
   ctl.resumePendingAcquisition = () => resumePendingAcquisition(repositoryBinding);
+
+  const resourceSurface = createLibraryResourceSurface({
+    root,
+    invoke: window.mazz.invoke.bind(window.mazz),
+    getWorkspacePath: () => repositoryBinding.repository.identity?.canonical || '',
+    canUse: () => acquisitionBindingHasWriteAuthority(repositoryBinding),
+    track: operation => trackBindingOperation(repositoryBinding, operation),
+    toast,
+  });
+  ctl.resourceSurface = resourceSurface;
 
   function readerAppearanceSnapshot() {
     return {
@@ -1493,6 +1568,7 @@ function createLibrary(container) {
         ctl._pendingAnchor = progress[id]?.anchor || null;
         ctl._procCache = {};
         ctl._chapSizes = [];
+        resourceSurface.hide({ showShelf: false });
         shelfView.style.display = 'none';
         readerView.style.display = 'flex';
         root.querySelector('.lib-book-title').textContent = book.title;
@@ -3089,6 +3165,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     // owner/locator capture to drainRetiringBinding().
     const retirement = {
       binding,
+      resourceWasVisible: resourceSurface.isVisible(),
       openCommit: ctl._openCommitTail,
       readerAction: ctl._readerActionTail,
       prepared: false,
@@ -3179,6 +3256,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
       await renderShelf({ reload: true }).catch(() => null);
     }
     void resumePendingAcquisition(retirement.binding);
+    if (retirement.resourceWasVisible) void resourceSurface.resume();
     if (error) toast('书库切换工作区失败，已保留原工作区：' + (error?.message || error));
     return false;
   }
@@ -3191,6 +3269,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     if (ctl._destroyed || ctl._destroying || retirement !== ctl._workspaceRetirement
         || !retirement.prepared || ctl.book !== retirement.retiring) return false;
     const retiring = retirement.retiring;
+    const resumeResource = retirement.resourceWasVisible;
     // Only now is old durability proven and the new repository initialized.
     // Release every old visual/resource owner before making the new binding
     // observable to shelf actions.
@@ -3211,6 +3290,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     ctl._workspaceRebinding = false;
     releaseLifecycleInert('workspace');
     delete root.dataset.workspaceRebinding;
+    if (resumeResource) resourceSurface.show();
     return true;
   }
 
@@ -3314,9 +3394,32 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     ctl._acquisitionInboxOff = window.mazz.on('library:acquisitionInboxReady', () => {
       void resumePendingAcquisition(repositoryBinding);
     });
+    ctl._resourceChangedOff = window.mazz.on('library:resourceChanged', () => {
+      void resourceSurface.resume();
+    });
   }
 
   // ==================== 事件 ====================
+  root.querySelector('[data-a=view-shelf]').addEventListener('click', () => {
+    resourceSurface.hide();
+    root.querySelector('[data-a=view-shelf]').classList.add('on');
+    root.querySelector('[data-a=view-shelf]').setAttribute('aria-selected', 'true');
+    root.querySelector('[data-a=view-resource]').classList.remove('on');
+    root.querySelector('[data-a=view-resource]').setAttribute('aria-selected', 'false');
+  });
+  root.querySelector('[data-a=view-resource]').addEventListener('click', () => {
+    if (!resourceSurface.show()) return;
+    root.querySelector('[data-a=view-shelf]').classList.remove('on');
+    root.querySelector('[data-a=view-shelf]').setAttribute('aria-selected', 'false');
+    root.querySelector('[data-a=view-resource]').classList.add('on');
+    root.querySelector('[data-a=view-resource]').setAttribute('aria-selected', 'true');
+  });
+  root.querySelector('[data-resource-back]').addEventListener('click', () => {
+    root.querySelector('[data-a=view-shelf]').classList.add('on');
+    root.querySelector('[data-a=view-shelf]').setAttribute('aria-selected', 'true');
+    root.querySelector('[data-a=view-resource]').classList.remove('on');
+    root.querySelector('[data-a=view-resource]').setAttribute('aria-selected', 'false');
+  });
   root.querySelector('.lib-cat-filter').addEventListener('change', (e) => {
     ctl.catFilter = e.target.value;
     paintShelfState({ resetScroll: true });
@@ -3954,6 +4057,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
   ctl.finalizeHandoff = () => {
     ctl._handoffDiscardable = false;
     void resumePendingAcquisition(repositoryBinding);
+    void resourceSurface.resume();
     return true;
   };
   ctl.discardHandoff = () => {
@@ -3981,6 +4085,9 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
       ctl.detachWorkspaceRebind?.();
       try { ctl._acquisitionInboxOff?.(); } catch {}
       ctl._acquisitionInboxOff = null;
+      try { ctl._resourceChangedOff?.(); } catch {}
+      ctl._resourceChangedOff = null;
+      resourceSurface.destroy();
       ctl._lifecycleGen++;
       clearTimeout(progTimer);
       clearTimeout(ctl.shelf.queryTimer);
@@ -4016,6 +4123,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     ctl._resolveDestroyOutcome = null;
     ctl._destroyOutcomePromise = null;
     void resumePendingAcquisition(repositoryBinding);
+    void resourceSurface.resume();
     return true;
   };
 
@@ -4096,6 +4204,9 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     ctl.detachWorkspaceRebind?.();
     try { ctl._acquisitionInboxOff?.(); } catch {}
     ctl._acquisitionInboxOff = null;
+    try { ctl._resourceChangedOff?.(); } catch {}
+    ctl._resourceChangedOff = null;
+    resourceSurface.destroy();
     ctl._lifecycleGen++;
     clearTimeout(progTimer);
     clearTimeout(ctl.shelf.queryTimer);
@@ -4159,6 +4270,7 @@ export default {
     window.__activeLibraryCtl = ctl;
     contextKeys.set('module', MODULE);
     void ctl.resumePendingAcquisition?.();
+    void ctl.resourceSurface?.resume?.();
   },
   deactivate(container) {
     const ctl = instances.get(container);

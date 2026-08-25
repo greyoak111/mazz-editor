@@ -1,0 +1,31 @@
+{
+  "schema": "mazz.w93e-library-resource-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "product": "win-unpacked",
+  "candidateCount": 1,
+  "candidateRights": "unknown",
+  "candidateDecision": "awaiting-rights",
+  "jobCount": 1,
+  "jobState": "awaiting-rights",
+  "persistedAcrossRestart": true,
+  "acquireButtonDisabled": true,
+  "transportStarted": false,
+  "repairInvoked": true,
+  "catalogFacts": {
+    "candidateRecords": 1,
+    "jobRecords": 1
+  },
+  "resources": {
+    "discoveryActive": 0,
+    "catalogActive": 0,
+    "backgroundActive": 0,
+    "operationCount": 0,
+    "controllerCount": 0
+  },
+  "runtimeErrors": [],
+  "evidenceScreenshot": "W93E_LIBRARY_RESOURCE_PACKAGED.png",
+  "executableSha256": "8f5ddf0707c715a8aca8af7193e08e882acccd699d24c2c46e03a6d65c0ef109",
+  "rendererBundleSha256": "351e70d9a8ece7ae5ca44d503c7e2c642d915608d91b1e5c66097e22e1c5cf7f",
+  "generatedAt": "2026-08-25T10:56:29.436Z"
+}

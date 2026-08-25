@@ -17,6 +17,8 @@
     "test:w93c:runtime": "node tests/e2e/w93c-library-source-runtime.mjs",
     "test:w93d:library": "node tests/contract/w93d-library-source-pack.test.mjs",
     "test:w93d:runtime": "node tests/e2e/w93d-library-source-runtime.mjs",
+    "test:w93e:library": "node tests/contract/w93e-library-resource-surface.test.mjs",
+    "test:w93e:runtime": "node tests/e2e/w93e-library-resource-runtime.mjs",
     "smoke": "node tests/e2e/smoke.js",
     "dist": "node scripts/build.js && electron-builder",
     "dist:dir": "node scripts/build.js && electron-builder --dir --win",

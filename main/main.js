@@ -110,6 +110,8 @@ const {
   registerLibraryAcquisitionIpc,
   initializeCurrentLibraryAcquisition,
 } = require('./library-acquisition-ipc');
+const { LibraryResourceSurfaceService } = require('./library-resource-surface-service');
+const { registerLibraryResourceSurfaceIpc } = require('./library-resource-surface-ipc');
 const WindowManager = require('./window-manager');
 const TrayService = require('./tray-service');
 const GlobalShortcuts = require('./global-shortcuts');
@@ -239,6 +241,14 @@ const libraryAcquisitionService = new LibraryAcquisitionService({
   // durable Inbox; no artifact path is accepted from the event payload.
   onInboxReady: event => wm.broadcastShells('library:acquisitionInboxReady', event),
 });
+const libraryResourceSurface = new LibraryResourceSurfaceService({
+  acquisitionService: libraryAcquisitionService,
+  settings: store,
+  resolver: createLibraryAcquisitionResolver(),
+  requester: createLibraryAcquisitionRequester(),
+  productToken: 'Mazz-Editor/0.2.0',
+  onChanged: event => wm.broadcastShells('library:resourceChanged', event),
+});
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
 const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
 const ingestionPipeline = new IngestionPipeline();
@@ -267,6 +277,7 @@ if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_FEED_PIPELINE__ = feedPipeline;
   globalThis.__MAZZ_E2E_PROMOTION_LEDGER__ = promotionLedger;
   globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
+  globalThis.__MAZZ_E2E_LIBRARY_RESOURCE_SURFACE__ = libraryResourceSurface;
 }
 const factoryRuntimeOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
@@ -390,28 +401,36 @@ function addRecent(filePath) {
 
 // ---------- 白名单通道注册 ----------
 function registerChannels() {
+  const isTrustedLibraryShellSender = event => {
+    const sender = event?.sender;
+    const senderFrame = event?.senderFrame;
+    if (!sender || !senderFrame || senderFrame !== sender.mainFrame) return false;
+    const win = BrowserWindow.fromWebContents(sender);
+    if (!win || (win !== wm.main && !wm.children.has(win))) return false;
+    if (win !== wm.main && win.__handoffReady === false) return false;
+    try {
+      const senderUrl = new URL(String(senderFrame.url || sender.getURL?.() || ''));
+      return senderUrl.protocol === 'mazz-res:'
+        && senderUrl.hostname === 'app'
+        && senderUrl.pathname === '/index.html'
+        && !senderUrl.username && !senderUrl.password && !senderUrl.port;
+    } catch {
+      return false;
+    }
+  };
   registerLibraryAcquisitionIpc({
     bus,
     service: libraryAcquisitionService,
     currentWorkspace: () => store.get('workspace'),
     isStartupReady: () => libraryAcquisitionStartupReady,
-    isTrustedSender: event => {
-      const sender = event?.sender;
-      const senderFrame = event?.senderFrame;
-      if (!sender || !senderFrame || senderFrame !== sender.mainFrame) return false;
-      const win = BrowserWindow.fromWebContents(sender);
-      if (!win || (win !== wm.main && !wm.children.has(win))) return false;
-      if (win !== wm.main && win.__handoffReady === false) return false;
-      try {
-        const senderUrl = new URL(String(senderFrame.url || sender.getURL?.() || ''));
-        return senderUrl.protocol === 'mazz-res:'
-          && senderUrl.hostname === 'app'
-          && senderUrl.pathname === '/index.html'
-          && !senderUrl.username && !senderUrl.password && !senderUrl.port;
-      } catch {
-        return false;
-      }
-    },
+    isTrustedSender: isTrustedLibraryShellSender,
+  });
+  registerLibraryResourceSurfaceIpc({
+    bus,
+    service: libraryResourceSurface,
+    currentWorkspace: () => store.get('workspace'),
+    isStartupReady: () => libraryAcquisitionStartupReady,
+    isTrustedSender: isTrustedLibraryShellSender,
   });
   const bindFactoryOwner = sender => {
     if (!sender || factoryRuntimeOwners.has(sender)) return String(sender?.id || '');
@@ -2165,14 +2184,21 @@ app.whenReady().then(async () => {
     event.preventDefault();
     if (libraryAcquisitionQuitPending) return;
     libraryAcquisitionQuitPending = (async () => {
+      libraryResourceSurface.stopAccepting();
       await libraryBrowserAcquisition?.dispose?.();
       await libraryAcquisitionService.shutdown();
+      await libraryResourceSurface.shutdown();
       const bridgeState = libraryBrowserAcquisition?.snapshot?.() || {
         activeItemCount: 0, pendingCompletionCount: 0,
       };
       const serviceState = libraryAcquisitionService.snapshot();
+      const resourceSurfaceState = libraryResourceSurface.snapshotResources();
       if (bridgeState.activeItemCount !== 0 || bridgeState.pendingCompletionCount !== 0
-          || serviceState.activeCount !== 0) {
+          || serviceState.activeCount !== 0
+          || resourceSurfaceState.contextCount !== 0
+          || resourceSurfaceState.operationCount !== 0
+          || resourceSurfaceState.backgroundCount !== 0
+          || resourceSurfaceState.controllerCount !== 0) {
         const error = new Error('Library acquisition owners did not reach the durable quit boundary');
         error.code = 'LIBRARY_ACQUISITION_QUIT_BOUNDARY_FAILED';
         throw error;

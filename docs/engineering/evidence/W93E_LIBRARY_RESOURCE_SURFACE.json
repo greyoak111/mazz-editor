@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "schema": "mazz.w93e-wave-evidence/v1",
+  "generatedAt": "2026-08-25T10:58:00.000Z",
+  "wave": "W93E",
+  "result": "PASS",
+  "base": {
+    "gitHead": "33c6fc3",
+    "workingTree": "dirty-authorized-wave",
+    "researchSha256": "a953b4e48e624d10548191bf543a18b0d8af794dbfd3fa69b72312a427ca6818",
+    "researchDocumentRole": "requirements-source-only"
+  },
+  "scope": {
+    "factoryModified": false,
+    "defaultBookSourceNetworkUsed": false,
+    "liveProviderUsed": false,
+    "realBookDownloaded": false,
+    "sourceBrowserWindow": true,
+    "packagedBrowserWindow": true,
+    "torrentImplemented": false,
+    "subagentsUsed": false
+  },
+  "verification": {
+    "targeted": {
+      "command": "npm run test:w93e:library",
+      "passed": 10,
+      "failed": 0
+    },
+    "adjacent": {
+      "w93a": { "passed": 35, "failed": 0 },
+      "w93b": { "passed": 82, "failed": 0 },
+      "w93c": { "passed": 14, "failed": 0 },
+      "w93d": { "passed": 12, "failed": 0 }
+    },
+    "sourceRuntime": {
+      "command": "npm run test:w93e:runtime",
+      "result": "PASS",
+      "candidateCount": 1,
+      "candidateRights": "unknown",
+      "candidateDecision": "awaiting-rights",
+      "jobCount": 1,
+      "jobState": "awaiting-rights",
+      "persistedAcrossRestart": true,
+      "transportStarted": false,
+      "runtimeErrors": [],
+      "cleanup": true,
+      "evidence": "W93E_LIBRARY_RESOURCE_SOURCE.json",
+      "screenshot": "W93E_LIBRARY_RESOURCE_SOURCE.png"
+    },
+    "packagedRuntime": {
+      "command": "npm run test:w93e:runtime -- --executable <release/win-unpacked/Mazz Editor.exe>",
+      "result": "PASS",
+      "candidateCount": 1,
+      "candidateRights": "unknown",
+      "candidateDecision": "awaiting-rights",
+      "jobCount": 1,
+      "jobState": "awaiting-rights",
+      "persistedAcrossRestart": true,
+      "transportStarted": false,
+      "runtimeErrors": [],
+      "cleanup": true,
+      "evidence": "W93E_LIBRARY_RESOURCE_PACKAGED.json",
+      "screenshot": "W93E_LIBRARY_RESOURCE_PACKAGED.png"
+    },
+    "fullSuite": {
+      "command": "npm test",
+      "passedTestFiles": 269,
+      "failedTestFiles": 0,
+      "exitCode": 0,
+      "note": "首轮 267/269 仅因 W71 census 与 W72 provenance 账本陈旧；更新同代账本后第二轮全绿"
+    },
+    "build": { "command": "npm run build", "result": "PASS", "exitCode": 0 },
+    "packagedDirectory": { "command": "npm run dist:dir", "result": "PASS", "exitCode": 0 },
+    "provenance": { "command": "npm run audit:provenance", "result": "CURRENT", "exitCode": 0 },
+    "releaseSurface": { "command": "npm run audit:w71:census", "result": "UPDATED_AND_RELEASE_CONTRACT_PASS" },
+    "syntax": { "command": "node --check <W93E main/renderer/e2e files>", "result": "PASS" },
+    "diffCheck": { "command": "git diff --check", "result": "PASS", "warnings": ["existing LF-to-CRLF conversion notices"] },
+    "resourceBoundary": {
+      "w93eTempDirectories": 0,
+      "w93eProductProcesses": 0,
+      "discoveryActive": 0,
+      "catalogActive": 0,
+      "backgroundActive": 0,
+      "operationCount": 0,
+      "controllerCount": 0
+    }
+  },
+  "invariants": {
+    "durableCandidateSnapshots": true,
+    "historicalFingerprintRetained": true,
+    "candidateAndJobRestartReplay": true,
+    "manualHttpsRightsUnknown": true,
+    "unknownRightsNeverStartsTransport": true,
+    "rendererCannotSubmitCandidateOrPath": true,
+    "trustedMainFrameAndCurrentWorkspaceOnly": true,
+    "wakePayloadIsHintOnly": true,
+    "provisionalHandoffHasNoWriteAuthority": true,
+    "repairIsDurableAndTransportFree": true,
+    "projectionContainsNoArtifactPathOrRemoteBody": true,
+    "noBusinessCountTextTokenOrFileSizeLimit": true,
+    "torrentOutOfScope": true
+  },
+  "files": {
+    "main/library-resource-catalog-store.js": { "bytes": 14169, "sha256": "66cbcaeb2c8239f5234a9239acdcb7358f9b3b1d418b9cefe45084743d68b8d7" },
+    "main/library-resource-surface-service.js": { "bytes": 24061, "sha256": "01a50bf6dd1f62b2e4b1cf76de075be937d1c18bb6d15205eeb58ad71e863cfe" },
+    "main/library-resource-surface-ipc.js": { "bytes": 6902, "sha256": "82de023d6f2aa7696a3ba4929c2a5c37a3d9532872a3a09302782e1cac152ba7" },
+    "renderer/modules/library/resource-surface.js": { "bytes": 16758, "sha256": "3a0d5fbf58b14d73be6883cd491daa06cd25adf163f04aa16d5d427c3cd48374" },
+    "renderer/modules/library/index.js": { "bytes": 213455, "sha256": "f9ff777e32af0947250fb130f38715a4929b92bcff8a9c98e8b6373b8e4a8556" },
+    "renderer/styles/base.css": { "bytes": 189755, "sha256": "27ea68d60205f789ecf84cb6c37410f63db1c9807078f9191f3885887c2b12bf" },
+    "preload/bridge.js": { "bytes": 8745, "sha256": "031ecd84c1d1f32a472ffcf0672893f182b2c3f887f20fe739976f9c549729c1" },
+    "main/main.js": { "bytes": 138396, "sha256": "c96be3ac8fc1f470bab3f6fffb7f695a7bcdde50a6c789ca4c3f3e68b962067b" },
+    "tests/contract/w93e-library-resource-surface.test.mjs": { "bytes": 18188, "sha256": "f79012b60f4796e0f8c0cfc5c4ac9dcd2b616ef1d24ad6ad11a5e8b30a17ce6c" },
+    "tests/e2e/w93e-library-resource-runtime.mjs": { "bytes": 10210, "sha256": "e6526bb9725f7f018988826159402a5df459c9a2e27d4ad7ab3213b4bc34a484" },
+    "docs/engineering/W93E_LIBRARY_RESOURCE_SURFACE_SPEC.md": { "bytes": 8502, "sha256": "2addff70b0efe5c71495f04da0be539b92ed276e6b15bea59e70d543d1c91dcc" },
+    "docs/engineering/W93E_LIBRARY_RESOURCE_SURFACE_CHECKPOINT_2026-08-25.md": { "bytes": 5656, "sha256": "51b450128849aecb6c006f950c33c5e088317738b2df2a182d8aeef5216c6a25" },
+    "docs/engineering/evidence/W93E_LIBRARY_RESOURCE_SOURCE.json": { "bytes": 858, "sha256": "6c75fba97a4f52bc68de5d9e256e407ef2fb92f9522387547dfdb8090e0986a5" },
+    "docs/engineering/evidence/W93E_LIBRARY_RESOURCE_SOURCE.png": { "bytes": 70000, "sha256": "fc98ea4c494fb30d8c65966f7520cf09e8e2517feb788db684db8e6906568af4" },
+    "docs/engineering/evidence/W93E_LIBRARY_RESOURCE_PACKAGED.json": { "bytes": 930, "sha256": "97755ff77eb79ecb0e9ffb3c2152dbfbd2572079bdd2bfabf4bb740ee3752f44" },
+    "docs/engineering/evidence/W93E_LIBRARY_RESOURCE_PACKAGED.png": { "bytes": 77061, "sha256": "4c228ffde87f1736764082d8c67eaa3f3bc38b3cd48d64925f289763260a5a1a" },
+    "release/win-unpacked/Mazz Editor.exe": { "bytes": 188784128, "sha256": "8f5ddf0707c715a8aca8af7193e08e882acccd699d24c2c46e03a6d65c0ef109" },
+    "release/win-unpacked/resources/app.asar": { "bytes": 261450816, "sha256": "a9437f6b6764b76386d160dbe550f2e193adcd5514cacf66cb03e72417d2bd35" },
+    "renderer/dist/app.js": { "bytes": 2424573, "sha256": "351e70d9a8ece7ae5ca44d503c7e2c642d915608d91b1e5c66097e22e1c5cf7f" },
+    ".mazz/audit/surface-census.json": { "bytes": 21014, "sha256": "ac1dd4e40ca860d73dd78f4fae7b8d1716d5ce60597bab357db087bc0d17c025" },
+    ".mazz/audit/oss-provenance-ledger.json": { "bytes": 828060, "sha256": "ec0d40af3a2155e449776e21b27578209b1858d05380bdc7e7d776607d118848" }
+  },
+  "excluded": [
+    "real Gutenberg or OPDS live network",
+    "automatic acquisition for unknown or restricted Rights",
+    "renderer-supplied Candidate, header, cookie, path or source capability",
+    "Torrent, Magnet, DHT, Tracker and P2P upload",
+    "DRM, controlled lending, login or CAPTCHA handling",
+    "Factory changes"
+  ],
+  "review": {
+    "mode": "single-owner-freeze-review",
+    "subagentsUsed": false,
+    "reproducibleP0P1": 0,
+    "result": "CLEAR"
+  },
+  "nextWave": {
+    "id": "W93F",
+    "name": "Torrent Book Transport",
+    "status": "NEXT_NOT_STARTED"
+  }
+}
