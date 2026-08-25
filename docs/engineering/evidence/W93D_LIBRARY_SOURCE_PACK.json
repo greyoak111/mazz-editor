@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "schema": "mazz.w93d-wave-evidence/v1",
+  "generatedAt": "2026-08-25T10:24:56.5933332Z",
+  "wave": "W93D",
+  "result": "PASS",
+  "base": {
+    "gitHead": "5cc09f0f16a299e8019810316e92bbcd53ce0e62",
+    "workingTree": "dirty-authorized-wave",
+    "researchSha256": "a953b4e48e624d10548191bf543a18b0d8af794dbfd3fa69b72312a427ca6818",
+    "researchDocumentRole": "requirements-source-only"
+  },
+  "scope": {
+    "factoryModified": false,
+    "defaultNetworkUsed": false,
+    "liveProviderUsed": false,
+    "realBookSourceUsed": false,
+    "sourceRuntime": true,
+    "packagedRuntime": true,
+    "runtimeKind": "electron-run-as-node-module-binding",
+    "dependenciesAdded": [
+      {
+        "name": "saxes",
+        "version": "5.0.1",
+        "purpose": "namespace-aware OPDS XML parsing",
+        "provenance": "CURRENT"
+      }
+    ]
+  },
+  "policyVerification": {
+    "checkedAt": "2026-08-25",
+    "sources": [
+      "https://www.gutenberg.org/policy/robot_access.html",
+      "https://www.gutenberg.org/policy/terms_of_use.html",
+      "https://www.gutenberg.org/ebooks/offline_catalogs.html",
+      "https://specs.opds.io/opds-1.2",
+      "https://specs.opds.io/opds-2.0"
+    ],
+    "gutenbergHtmlCrawler": false,
+    "gutenbergOpdsMode": "user-driven-one-page-per-action",
+    "contactUserAgentRequired": true,
+    "bulkCatalogRoute": "official RDF/CSV/mirrors",
+    "usRightsClaimIsNotGlobalDecision": true
+  },
+  "verification": {
+    "targeted": {
+      "command": "npm run test:w93d:library",
+      "passed": 12,
+      "failed": 0
+    },
+    "adjacent": {
+      "w93a": {"passed": 35, "failed": 0},
+      "w93b": {"passed": 82, "failed": 0},
+      "w93c": {"passed": 14, "failed": 0}
+    },
+    "sourceRuntime": {
+      "command": "npm run test:w93d:runtime",
+      "result": "PASS",
+      "candidates": 2,
+      "groups": 1,
+      "durableContinuations": 1,
+      "gutenbergRights": "public-domain",
+      "manualRights": "unknown",
+      "fixtureRequests": 4,
+      "network": {"http": 0, "https": 0, "net": 0},
+      "runtimeErrors": [],
+      "cleanup": true
+    },
+    "packagedRuntime": {
+      "command": "npm run test:w93d:runtime -- --executable <release/win-unpacked/Mazz Editor.exe>",
+      "result": "PASS",
+      "candidates": 2,
+      "groups": 1,
+      "durableContinuations": 1,
+      "gutenbergRights": "public-domain",
+      "manualRights": "unknown",
+      "fixtureRequests": 4,
+      "network": {"http": 0, "https": 0, "net": 0},
+      "runtimeErrors": [],
+      "cleanup": true
+    },
+    "fullSuite": {
+      "command": "npm test",
+      "passedTestFiles": 268,
+      "failedTestFiles": 0,
+      "exitCode": 0
+    },
+    "build": {"command": "npm run build", "result": "PASS", "exitCode": 0},
+    "packagedDirectory": {"command": "npm run dist:dir", "result": "PASS", "exitCode": 0},
+    "provenance": {"command": "npm run audit:provenance", "result": "CURRENT", "exitCode": 0},
+    "releaseSurface": {"command": "npm run audit:w71:census", "result": "UPDATED_AND_TARGETED_GATE_PASS"},
+    "syntax": {
+      "command": "node --check <W93D main files>",
+      "result": "PASS"
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "result": "PASS",
+      "warnings": ["existing LF-to-CRLF conversion notices"]
+    },
+    "resourceBoundary": {
+      "w93dTempDirectories": 0,
+      "w93dProductProcesses": 0,
+      "registeredAdapters": 0,
+      "activeCalls": 0,
+      "activeRequests": 0,
+      "queuedProviders": 0,
+      "timers": 0,
+      "listeners": 0,
+      "networkOwners": 0
+    }
+  },
+  "invariants": {
+    "strictOpds1AndOpds2": true,
+    "xmlDtdEntityAndProcessingInstructionRejected": true,
+    "supportedAcquisitionOffersOnly": true,
+    "manualHttpsRightsUnknown": true,
+    "gutenbergUserDrivenOnly": true,
+    "gutenbergConflictDowngradesToUnknown": true,
+    "federationGroupsOnlyStrongWorkIdentity": true,
+    "sameTitleDoesNotMerge": true,
+    "onePagePerProviderPerCall": true,
+    "explicit333PageContinuationComplete": true,
+    "cancelAndFailureDoNotAdvanceCheckpoint": true,
+    "workspaceCheckpointCasAndCorruptionHold": true,
+    "publicDnsAndRedirectValidation": true,
+    "redirectValidatorsStripped": true,
+    "secretsAndResponseBodiesAbsentFromEvidence": true,
+    "defaultNetworkOwners": 0,
+    "businessCountTextTokenFileSizeLimits": false
+  },
+  "files": {
+    "main/library-source-registry.js": {"bytes": 21927, "sha256": "6194cad3b372e9d1e084c7fa3fb8f1b90dc75fc77d2d96416495fd60fbabe610"},
+    "main/library-catalog-http-client.js": {"bytes": 13202, "sha256": "923d05f1c7262e6121d5e4af09c5ad78971e09bb6b7a944c4a599c520e489b26"},
+    "main/library-source-pack.js": {"bytes": 33175, "sha256": "7371dbc532224db995aed09b15aa81ca8308340d6f8cdfe94b1ff4c1056b35d4"},
+    "main/library-source-checkpoint-store.js": {"bytes": 16911, "sha256": "e0aac24ec7f9c4a3e86c6ccb44ed203936e6df42bc72747d0f5c23db726db4fc"},
+    "main/library-federated-discovery.js": {"bytes": 9725, "sha256": "e6de4702e1594561a195b34766c97f15361521b4ed07050f126425093a642d34"},
+    "tests/contract/w93d-library-source-pack.test.mjs": {"bytes": 25467, "sha256": "5ec11263a6c7c067c95376175b81f6102d0c220ad1e0dfca6d1ec9bef5a495c7"},
+    "tests/e2e/w93d-library-source-runtime.mjs": {"bytes": 13117, "sha256": "c9cbbd0c53e84be0ea04aeb728d5d4c63dcbe1f9fcdfc179cde510b73220a076"},
+    "package.json": {"bytes": 8496, "sha256": "b0fcf99a2d6f33ea2ebbec8101da56519c505c993900eb1b4d7735a1697aa65c"},
+    "package-lock.json": {"bytes": 374792, "sha256": "32678023547d9e8361b74f7c323abfc01bf55dc0c7edb1911a7054b31c30f945"},
+    "tests/run.js": {"bytes": 13427, "sha256": "5d67396695954981cae0b79c34849d6ae3f0512d831794e7406bc20fc757ffd9"},
+    "docs/engineering/W93D_LIBRARY_SOURCE_PACK_SPEC.md": {"bytes": 10076, "sha256": "ede7ad22341fbf911781bf7b6900f0a0aa48054690cfb16f63812ed904a310a9"},
+    "docs/engineering/W93D_LIBRARY_SOURCE_PACK_CHECKPOINT_2026-08-25.md": {"bytes": 5156, "sha256": "c06da97127ca1c13b04b0a4f15318b7300ebcc241bf875490f489db982ce4f5b"},
+    "release/win-unpacked/resources/app.asar": {"bytes": 261349007, "sha256": "93e1bcfdeaa7c64f5e2f67ce4e3e24bc9855be265b29532c3323e33e7129ab0b"},
+    "release/win-unpacked/Mazz Editor.exe": {"bytes": 188784128, "sha256": "1d67877949652e5b57a1b318363ff2a16a4ff3581a703fe946c1655aa30392fe"},
+    "renderer/dist/app.js": {"bytes": 2399288, "sha256": "2771ab7353aa00ff73d24303c9c0d806eedfd9a3daafc89a6e30dc2208b7426f"},
+    ".mazz/audit/surface-census.json": {"bytes": 21014, "sha256": "d1fba313030c445f556c8344cb0c367531ac89c61d4ee4d8f5a027f3176cc974"},
+    ".mazz/audit/oss-provenance-ledger.json": {"bytes": 828060, "sha256": "ce0ecf1be329617525e150451ead854986a5eb5eda5ec8aa3d868fbfaacfa921"}
+  },
+  "excluded": [
+    "Library resource discovery UI and repair surface",
+    "real Gutenberg, OPDS or other source live network",
+    "automatic acquisition or shelf import",
+    "Internet Archive, Standard Ebooks, OAPEN and OpenStax adapters",
+    "Torrent transport",
+    "DRM, controlled lending, login or CAPTCHA handling"
+  ],
+  "review": {
+    "mode": "single-owner-freeze-review",
+    "subagentsUsed": false,
+    "reproducibleP0P1": 0,
+    "result": "CLEAR"
+  },
+  "nextWave": {
+    "id": "W93E",
+    "name": "Library Resource UI & Repair",
+    "authorized": false,
+    "prerequisite": "explicit user continuation after W93D PASS",
+    "networkDefault": "offline-fixture-first; live requires explicit opt-in"
+  }
+}

@@ -234,6 +234,10 @@ class LibrarySourceRegistry {
       throw codedError('LIBRARY_SOURCE_ADAPTER_INVALID', 'SourceAdapter 必须提供 descriptor()');
     }
     const descriptor = normalizeDescriptor(adapter.descriptor(), { now: this.now });
+    const paginationMode = adapter.paginationMode === undefined ? 'automatic' : adapter.paginationMode;
+    if (!['automatic', 'user-driven'].includes(paginationMode)) {
+      throw codedError('LIBRARY_SOURCE_ADAPTER_INVALID', 'SourceAdapter paginationMode 非法');
+    }
     for (const capability of descriptor.capabilities) {
       if (typeof adapter[capability] !== 'function') {
         throw codedError('LIBRARY_SOURCE_ADAPTER_INVALID', `SourceAdapter 缺少 ${capability}()`);
@@ -247,7 +251,7 @@ class LibrarySourceRegistry {
       }
       throw codedError('LIBRARY_SOURCE_PROVIDER_CONFLICT', 'providerId 已被另一 SourceAdapter 注册');
     }
-    this.entries.set(descriptor.providerId, { adapter, descriptor });
+    this.entries.set(descriptor.providerId, { adapter, descriptor, paginationMode });
     return descriptor;
   }
 
@@ -268,6 +272,33 @@ class LibrarySourceRegistry {
     const entry = this.entries.get(opaqueId(providerId, 'providerId'));
     if (!entry) throw codedError('LIBRARY_SOURCE_NOT_FOUND', 'SourceAdapter 未注册');
     return entry.descriptor;
+  }
+
+  paginationMode(providerId) {
+    this._assertOpen();
+    const entry = this.entries.get(opaqueId(providerId, 'providerId'));
+    if (!entry) throw codedError('LIBRARY_SOURCE_NOT_FOUND', 'SourceAdapter 未注册');
+    return entry.paginationMode;
+  }
+
+  cursorRecord(providerId, cursor) {
+    this._assertOpen();
+    const entry = this.entries.get(opaqueId(providerId, 'providerId'));
+    if (!entry) throw codedError('LIBRARY_SOURCE_NOT_FOUND', 'SourceAdapter 未注册');
+    if (typeof entry.adapter.cursorRecord !== 'function') {
+      throw codedError('LIBRARY_SOURCE_CURSOR_UNAVAILABLE', 'SourceAdapter 不支持 durable cursor');
+    }
+    return entry.adapter.cursorRecord(exactString(cursor, 'cursor'));
+  }
+
+  restoreCursor(providerId, record) {
+    this._assertOpen();
+    const entry = this.entries.get(opaqueId(providerId, 'providerId'));
+    if (!entry) throw codedError('LIBRARY_SOURCE_NOT_FOUND', 'SourceAdapter 未注册');
+    if (typeof entry.adapter.restoreCursor !== 'function') {
+      throw codedError('LIBRARY_SOURCE_CURSOR_UNAVAILABLE', 'SourceAdapter 不支持 durable cursor');
+    }
+    return entry.adapter.restoreCursor(record);
   }
 
   async _call(providerId, capability, request, signal) {
@@ -348,6 +379,15 @@ class LibrarySourceRegistry {
     plainRecord(options, 'collect options', ['query', 'cursor', 'signal'], { scanSecrets: false });
     if (!['search', 'discover'].includes(method)) {
       throw codedError('LIBRARY_SOURCE_CAPABILITY_UNAVAILABLE', 'collect 仅支持 search/discover');
+    }
+    const id = opaqueId(providerId, 'providerId');
+    const entry = this.entries.get(id);
+    if (!entry) throw codedError('LIBRARY_SOURCE_NOT_FOUND', 'SourceAdapter 未注册');
+    if (entry.paginationMode === 'user-driven') {
+      throw codedError(
+        'LIBRARY_SOURCE_USER_DRIVEN_PAGINATION',
+        '该来源只允许用户明确继续下一页，禁止后台自动 collect',
+      );
     }
     const seenCursors = new Set();
     const candidates = new Map();

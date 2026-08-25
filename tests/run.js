@@ -201,6 +201,7 @@ const files = [
   'tests/contract/w93b-inbox-saga.test.mjs',
   'tests/contract/w93b-runtime-ipc.test.mjs',
   'tests/contract/w93c-rights-source-adapter.test.mjs',
+  'tests/contract/w93d-library-source-pack.test.mjs',
   'tests/contract/library-locator-store.test.mjs',
   'tests/contract/library-book-operations.test.mjs',
   'tests/contract/library-manga.test.mjs',

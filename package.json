@@ -15,6 +15,8 @@
     "test:w93b:runtime": "node tests/e2e/w93b-library-acquisition-runtime.mjs",
     "test:w93c:library": "node tests/contract/w93c-rights-source-adapter.test.mjs",
     "test:w93c:runtime": "node tests/e2e/w93c-library-source-runtime.mjs",
+    "test:w93d:library": "node tests/contract/w93d-library-source-pack.test.mjs",
+    "test:w93d:runtime": "node tests/e2e/w93d-library-source-runtime.mjs",
     "smoke": "node tests/e2e/smoke.js",
     "dist": "node scripts/build.js && electron-builder",
     "dist:dir": "node scripts/build.js && electron-builder --dir --win",
@@ -173,6 +175,7 @@
     "pptxgenjs": "^4.0.1",
     "prosemirror-tables": "^1.8.5",
     "qrcode": "^1.5.4",
+    "saxes": "5.0.1",
     "tesseract.js": "^7.0.0",
     "webtorrent": "2.8.5",
     "xlsx": "^0.18.5"

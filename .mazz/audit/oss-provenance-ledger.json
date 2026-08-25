@@ -106,14 +106,14 @@
       {
         "path": "package-lock.json",
         "present": true,
-        "bytes": 374765,
-        "sha256": "EC066E9FCDFDE21509D442A15C5686A0B0A684E82556F9DF2D37899E6822E080"
+        "bytes": 374792,
+        "sha256": "32678023547D9E8361B74F7C323ABFC01BF55DC0C7EDB1911A7054B31C30F945"
       },
       {
         "path": "package.json",
         "present": true,
-        "bytes": 8203,
-        "sha256": "083389F2F33A3C78A1496FF0C328A728A6F6FBDA0BC4744F00CD1D6F5A86CE63"
+        "bytes": 8496,
+        "sha256": "B0FCF99A2D6F33EA2EBBEC8101DA56519C505C993900EB1B4D7735A1697AA65C"
       },
       {
         "path": "patches/chokidar+3.6.0.patch",
@@ -16966,7 +16966,7 @@
         "name": "saxes",
         "version": "5.0.1",
         "scope": "runtime-graph-candidate",
-        "direct": false,
+        "direct": true,
         "optional": false,
         "distributionStatus": "VERIFY_IN_PACKAGED_SPECIMEN",
         "source": {
@@ -20549,7 +20549,7 @@
     "lockedPackages": 801,
     "runtimeGraphCandidates": 380,
     "developmentPackages": 421,
-    "directRuntimeDependencies": 22,
+    "directRuntimeDependencies": 23,
     "packagesWithDeclaredModifications": 2,
     "manualLicenseOverridesApplied": 1,
     "missingLicense": 0,
