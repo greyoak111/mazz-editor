@@ -41,6 +41,7 @@ export function createLibraryResourceSurface({
   canUse,
   track,
   toast,
+  onRepair,
 } = {}) {
   if (!root || typeof invoke !== 'function' || typeof getWorkspacePath !== 'function'
       || typeof canUse !== 'function' || typeof track !== 'function') {
@@ -253,7 +254,12 @@ export function createLibraryResourceSurface({
   });
   view.querySelector('[data-resource-refresh]').addEventListener('click', () => void refresh().catch(error => toast?.(`刷新失败：${error?.message || error}`)));
   view.querySelector('[data-resource-repair]').addEventListener('click', async () => {
-    try { await call('library:resourceRepair', workspacePayload()); await refresh(); toast?.('取得账本已完成恢复与对账'); }
+    try {
+      await call('library:resourceRepair', workspacePayload());
+      const portable = typeof onRepair === 'function' ? await onRepair() : null;
+      await refresh();
+      toast?.(`取得账本已完成恢复与对账${portable?.repaired ? `；重新定位 ${portable.repaired} 本` : ''}`);
+    }
     catch (error) { toast?.(`修复未完成：${error?.message || error}`); }
   });
   view.querySelector('[data-resource-save-config]').addEventListener('click', () => {

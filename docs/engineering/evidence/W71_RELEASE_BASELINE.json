@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "generatedAt": "2026-08-25T11:38:58.538Z",
+  "generatedAt": "2026-08-25T12:29:21.160Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -8019,7 +8019,7 @@
     "provenanceLedger": {
       "present": true,
       "path": ".mazz/audit/oss-provenance-ledger.json",
-      "sha256": "66C9891B4832EE0DF740941FA08E9F54EB3979A404A3EE209A4250258E0D3A29",
+      "sha256": "E896D2382087DAC62EC7A6B1F46E3206DC37F0840540E5AFCF2F0C120F0D7E01",
       "schema": "mazz.oss-provenance-ledger/v0",
       "status": "PASS_REPOSITORY_PROVENANCE_BASELINE",
       "current": true,
@@ -8040,11 +8040,11 @@
   },
   "rendererSourceMaps": {
     "count": 211,
-    "bytes": 59881145,
+    "bytes": 59902147,
     "files": [
       {
         "path": "renderer/dist/app.js.map",
-        "bytes": 4181633
+        "bytes": 4202635
       },
       {
         "path": "renderer/dist/chunks/abap-G2Z2H6CX.js.map",
@@ -9107,12 +9107,12 @@
     "present": true,
     "unpacked": {
       "count": 437,
-      "bytes": 568700689
+      "bytes": 568758739
     },
     "asar": {
       "present": true,
-      "bytes": 261504392,
-      "entries": 9612,
+      "bytes": 261562442,
+      "entries": 9615,
       "sourceMaps": 0,
       "sourceMapBytes": 0,
       "sourceMapFiles": [],

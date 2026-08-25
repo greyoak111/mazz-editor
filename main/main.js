@@ -113,6 +113,8 @@ const {
 } = require('./library-acquisition-ipc');
 const { LibraryResourceSurfaceService } = require('./library-resource-surface-service');
 const { registerLibraryResourceSurfaceIpc } = require('./library-resource-surface-ipc');
+const { LibraryWorkspaceConvergenceService } = require('./library-workspace-convergence');
+const { registerLibraryWorkspaceConvergenceIpc, workspaceToken: libraryWorkspaceToken } = require('./library-workspace-convergence-ipc');
 const WindowManager = require('./window-manager');
 const TrayService = require('./tray-service');
 const GlobalShortcuts = require('./global-shortcuts');
@@ -253,6 +255,7 @@ const libraryResourceSurface = new LibraryResourceSurfaceService({
   torrentTransport: libraryTorrentTransport,
   onChanged: event => wm.broadcastShells('library:resourceChanged', event),
 });
+const libraryWorkspaceConvergence = new LibraryWorkspaceConvergenceService();
 const factoryAiRequests = new FactoryAiRequestRegistry({ resourceLedger });
 const factoryRunOwners = new FactoryRunOwnerRegistry({ resourceLedger });
 const ingestionPipeline = new IngestionPipeline();
@@ -283,6 +286,7 @@ if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
   globalThis.__MAZZ_E2E_LIBRARY_RESOURCE_SURFACE__ = libraryResourceSurface;
   globalThis.__MAZZ_E2E_LIBRARY_TORRENT_TRANSPORT__ = libraryTorrentTransport;
+  globalThis.__MAZZ_E2E_LIBRARY_CONVERGENCE__ = libraryWorkspaceConvergence;
 }
 const factoryRuntimeOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
@@ -433,6 +437,13 @@ function registerChannels() {
   registerLibraryResourceSurfaceIpc({
     bus,
     service: libraryResourceSurface,
+    currentWorkspace: () => store.get('workspace'),
+    isStartupReady: () => libraryAcquisitionStartupReady,
+    isTrustedSender: isTrustedLibraryShellSender,
+  });
+  registerLibraryWorkspaceConvergenceIpc({
+    bus,
+    service: libraryWorkspaceConvergence,
     currentWorkspace: () => store.get('workspace'),
     isStartupReady: () => libraryAcquisitionStartupReady,
     isTrustedSender: isTrustedLibraryShellSender,
@@ -1684,6 +1695,38 @@ function registerChannels() {
         if (!mime) return new Response('unsupported', { status: 415 });
         const buf = fs.readFileSync(full);
         return new Response(buf, { headers: { 'Content-Type': mime, 'Content-Length': String(buf.length), 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-cache' } });
+      }
+      // W93G: Library-owned PDF endpoint. Unlike media/, the renderer cannot
+      // smuggle an arbitrary absolute path: URL creation is current-Workspace
+      // scoped, and every request revalidates the Workspace token plus physical
+      // relative-path containment before opening the stream.
+      if (rel.startsWith('library/')) {
+        const remainder = rel.slice('library/'.length);
+        const separator = remainder.indexOf('/');
+        if (separator <= 0) return new Response('invalid library asset', { status: 400 });
+        const token = remainder.slice(0, separator);
+        const relativePath = remainder.slice(separator + 1);
+        const workspace = store.get('workspace');
+        const native = fs.realpathSync?.native;
+        const physicalWorkspace = path.resolve(typeof native === 'function'
+          ? native(path.resolve(workspace)) : fs.realpathSync(path.resolve(workspace)));
+        if (token !== libraryWorkspaceToken(physicalWorkspace)) {
+          return new Response('stale library workspace', { status: 409 });
+        }
+        let asset;
+        try { asset = libraryWorkspaceConvergence.openReadableAsset(physicalWorkspace, relativePath); }
+        catch (error) {
+          return new Response(error?.code === 'LIBRARY_CONVERGENCE_ASSET_MISSING' ? 'not found' : 'forbidden', {
+            status: error?.code === 'LIBRARY_CONVERGENCE_ASSET_MISSING' ? 404 : 403,
+          });
+        }
+        const result = asset.createResponse({ range: req.headers.get('range') || '', method: req.method });
+        const headers = {
+          ...result.headers,
+          'Access-Control-Allow-Origin': '*',
+          'Cross-Origin-Resource-Policy': 'cross-origin',
+        };
+        return new Response(result.body ? Readable.toWeb(result.body) : null, { status: result.status, headers });
       }
       // —— media/ 分支：本地媒体文件 range 流（页面同源化后 file:// 视频反被拦——媒体全走协议同源自洽，
       //    连带白拿：同源 video 画 canvas 不污染（截图/GIF 录制命门）；range 206 是 mp4 非 faststart/seek 的命脉；

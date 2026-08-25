@@ -12,6 +12,8 @@ const INVOKE_CHANNELS = new Set([
   'library:resourceSnapshot', 'library:resourceConfigure', 'library:resourceSearch',
   'library:resourceManual', 'library:resourceTorrentInspect', 'library:resourceTorrentCancelInspect', 'library:resourceTorrentAcquire',
   'library:resourceAcquire', 'library:resourceAction', 'library:resourceRepair',
+  'library:portableCatalogSave', 'library:portableCatalogRebuild',
+  'library:derivedCachePlan', 'library:derivedCacheCommit', 'library:portableAssetUrl',
   'evidence:scanWorkspace', 'evidence:fileRelations', 'evidence:createAnchorForPath', 'evidence:invalidate',
   'context:snapshot', 'context:addSubject', 'context:removePlacement', 'context:updatePlacement',
   'context:addShadowEdge', 'context:dismissShadowEdge', 'context:promoteEdge',

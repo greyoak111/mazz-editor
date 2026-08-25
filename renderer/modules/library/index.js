@@ -15,6 +15,7 @@ import { planSpread } from './spread-planner.js';
 import { COVER_LIMITS, persistCover } from './cover-cache.js';
 import { createLibraryLocatorStore, mergeLocatorRecords } from './locator-store.js';
 import { canonicalWorkspace, createLibraryRepository } from './repository.js';
+import { createPortableCatalogCheckpoint, repairPortableCatalog, restorePortableCatalog } from './portable-catalog.js';
 import { drainAcquisitionInbox } from './acquisition-inbox.js';
 import { createLibraryResourceSurface } from './resource-surface.js';
 import { createReaderInput } from './reader-input.js';
@@ -90,14 +91,11 @@ const insideWorkspace = (file, workspace) => {
   return !!root && (child === root || child.startsWith(root + '/'));
 };
 async function shortFingerprint(bytes) {
-  try {
-    const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-    return [...hash.subarray(0, 10)].map(n => n.toString(16).padStart(2, '0')).join('');
-  } catch {
-    let h = 2166136261;
-    for (const n of bytes) { h ^= n; h = Math.imul(h, 16777619); }
-    return (h >>> 0).toString(16).padStart(8, '0');
-  }
+  if (!crypto?.subtle?.digest) throw Object.assign(new Error('当前环境不支持完整 SHA-256'), {
+    code: 'LIBRARY_SHA256_UNAVAILABLE',
+  });
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  return [...hash].map(n => n.toString(16).padStart(2, '0')).join('');
 }
 function importOwnerError() {
   return Object.assign(new Error('工作区已切换；请在当前工作区重新执行导入'), {
@@ -461,6 +459,8 @@ function createLibrary(container) {
       retiring: false,
       acquisitionAbortController: new AbortController(),
       acquisitionDrain: null,
+      portableCatalog: null,
+      portableRestore: null,
     };
     // Locator durability is deliberately closed over this repository rather
     // than the mutable active binding. A final position captured for workspace
@@ -474,16 +474,24 @@ function createLibrary(container) {
         if (!bookId || !patch?.record || typeof patch.record !== 'object' || Array.isArray(patch.record)) {
           throw new Error('Library locator patch 无效');
         }
-        return repository.mutate('progress', draft => {
+        const receipt = await repository.mutate('progress', draft => {
           draft[bookId] = JSON.parse(JSON.stringify(patch.record));
           return draft;
         });
+        binding.portableCatalog?.request?.();
+        return receipt;
       }
       return window.mazz.invoke(channel, payload);
     };
     binding.locatorStore = createLibraryLocatorStore({
       invoke: scopedProgressInvoke,
       progress: window.MazzProgress,
+    });
+    binding.portableCatalog = createPortableCatalogCheckpoint({
+      invoke: window.mazz.invoke.bind(window.mazz),
+      repository,
+      canUse: () => acquisitionBindingHasWriteAuthority(binding),
+      track: operation => trackBindingOperation(binding, operation),
     });
     return binding;
   }
@@ -537,7 +545,9 @@ function createLibrary(container) {
     await binding.ready;
     requireActiveBinding(binding);
     const operation = binding.repository.mutate(partition, updater);
-    return (await trackBindingOperation(binding, operation)).value;
+    const value = (await trackBindingOperation(binding, operation)).value;
+    binding.portableCatalog?.request?.();
+    return value;
   }
 
   const getShelf = (binding = repositoryBinding) => readRepository(repo => repo.listBooks(), binding);
@@ -545,11 +555,15 @@ function createLibrary(container) {
     requireActiveBinding(binding);
     await binding.ready;
     requireActiveBinding(binding);
-    return (await trackBindingOperation(binding, binding.repository.mutateBooks(updater))).value;
+    const value = (await trackBindingOperation(binding, binding.repository.mutateBooks(updater))).value;
+    binding.portableCatalog?.request?.();
+    return value;
   };
   const settleRetiringShelf = async (updater, binding) => {
     await binding.ready;
-    return (await trackBindingOperation(binding, binding.repository.mutateBooks(updater))).value;
+    const value = (await trackBindingOperation(binding, binding.repository.mutateBooks(updater))).value;
+    binding.portableCatalog?.request?.();
+    return value;
   };
   const getCats = (binding = repositoryBinding) => readRepository(repo => repo.getValue('categories'), binding);
   const getAllRules = (binding = repositoryBinding) => readRepository(repo => repo.getValue('cleanRules'), binding);
@@ -598,6 +612,29 @@ function createLibrary(container) {
     return drainPendingAcquisition(binding);
   }
 
+  function resumePortableCatalog(binding = repositoryBinding) {
+    if (!acquisitionBindingHasWriteAuthority(binding)) return Promise.resolve(null);
+    if (binding.portableRestore) return binding.portableRestore;
+    const operation = restorePortableCatalog({
+      invoke: window.mazz.invoke.bind(window.mazz),
+      repository: binding.repository,
+    }).then(async result => {
+      if (result?.restored && acquisitionBindingHasWriteAuthority(binding)) {
+        await renderShelf({ reload: true }).catch(() => null);
+      }
+      if (acquisitionBindingHasWriteAuthority(binding)) binding.portableCatalog?.request?.();
+      return result;
+    }).catch(error => {
+      if (!acquisitionBindingHasWriteAuthority(binding)) return null;
+      console.warn('[library-portable] catalog convergence:', error?.code || 'LIBRARY_PORTABLE_FAILED');
+      return null;
+    });
+    const tracked = trackBindingOperation(binding, operation);
+    binding.portableRestore = tracked;
+    tracked.finally(() => { if (binding.portableRestore === tracked) binding.portableRestore = null; }).catch(() => {});
+    return tracked;
+  }
+
   function drainPendingAcquisition(binding = repositoryBinding) {
     if (!acquisitionBindingIsCurrent(binding)) return Promise.resolve(null);
     if (binding.acquisitionDrain) return binding.acquisitionDrain;
@@ -631,6 +668,7 @@ function createLibrary(container) {
   }
 
   ctl.resumePendingAcquisition = () => resumePendingAcquisition(repositoryBinding);
+  ctl.resumePortableCatalog = () => resumePortableCatalog(repositoryBinding);
 
   const resourceSurface = createLibraryResourceSurface({
     root,
@@ -638,6 +676,31 @@ function createLibrary(container) {
     getWorkspacePath: () => repositoryBinding.repository.identity?.canonical || '',
     canUse: () => acquisitionBindingHasWriteAuthority(repositoryBinding),
     track: operation => trackBindingOperation(repositoryBinding, operation),
+    onRepair: async () => {
+      const binding = requireActiveBinding(repositoryBinding);
+      const portable = await trackBindingOperation(binding, repairPortableCatalog({
+        invoke: window.mazz.invoke.bind(window.mazz), repository: binding.repository,
+      }));
+      const liveBookIds = (portable.books || await binding.repository.listBooks()).map(book => book.id);
+      const plan = await window.mazz.invoke('library:derivedCachePlan', {
+        workspacePath: binding.repository.identity.canonical, liveBookIds,
+      });
+      if (plan?.entries?.length) {
+        const confirmed = await window.mazz.invoke('dialog:confirm', {
+          title: '清理书库派生缓存',
+          message: `发现 ${plan.entries.length} 个已无书目引用的派生缓存，是否清理？`,
+          buttons: ['清理', '保留'],
+        });
+        if (confirmed === 0) await window.mazz.invoke('library:derivedCacheCommit', {
+          workspacePath: binding.repository.identity.canonical,
+          planId: plan.planId,
+          liveBookIds,
+        });
+      }
+      binding.portableCatalog?.request?.();
+      if (acquisitionBindingHasWriteAuthority(binding)) await renderShelf({ reload: true });
+      return portable;
+    },
     toast,
   });
   ctl.resourceSurface = resourceSurface;
@@ -1231,7 +1294,12 @@ function createLibrary(container) {
         const initialBooks = await getShelf(binding);
         const initialDuplicate = initialBooks.find(book => book.sourceHash === fingerprint
           || normalizedPath(book.sourcePath || book.path) === normalizedPath(p));
-        if (initialDuplicate) return { id: initialDuplicate.id, title: initialDuplicate.title, duplicate: true };
+        if (initialDuplicate) {
+          const duplicateStat = await window.mazz.invoke('fs:stat', { path: initialDuplicate.path }).catch(() => null);
+          if (!isExplicitMissingSourceStat(duplicateStat) && duplicateStat?.exists !== false) {
+            return { id: initialDuplicate.id, title: initialDuplicate.title, duplicate: true };
+          }
+        }
 
         let meta;
         let coverSpec = null;
@@ -1290,8 +1358,11 @@ function createLibrary(container) {
           const duplicate = currentBooks.find(book => book.sourceHash === fingerprint
             || normalizedPath(book.sourcePath || book.path) === normalizedPath(p));
           if (duplicate) {
-            await cleanupImportPaths(createdPaths);
-            return { id: duplicate.id, title: duplicate.title, duplicate: true };
+            const duplicateStat = await window.mazz.invoke('fs:stat', { path: duplicate.path }).catch(() => null);
+            if (!isExplicitMissingSourceStat(duplicateStat) && duplicateStat?.exists !== false) {
+              await cleanupImportPaths(createdPaths);
+              return { id: duplicate.id, title: duplicate.title, duplicate: true };
+            }
           }
 
           let dest = p;
@@ -1312,16 +1383,29 @@ function createLibrary(container) {
           const durableBooks = await mutateShelf(books => {
             const existingBook = books.find(book => book.sourceHash === authoritativeFingerprint
               || normalizedPath(book.sourcePath || book.path) === normalizedPath(p));
-            return existingBook ? books : [...books, record];
+            if (!existingBook) return [...books, record];
+            if (!duplicate || existingBook.id !== duplicate.id) return books;
+            return books.map(book => book.id === duplicate.id ? {
+              ...book,
+              path: dest,
+              sourcePath: p,
+              sourceHash: authoritativeFingerprint,
+              format: ext,
+              missing: false,
+              repositoryScope: (!workspace || !insideWorkspace(dest, workspace)) ? 'external' : undefined,
+            } : book);
           }, binding);
           const durable = durableBooks.find(book => book.sourceHash === authoritativeFingerprint
             || normalizedPath(book.sourcePath || book.path) === normalizedPath(p));
 
           if (durable?.id !== id) {
-            await finalizeWorkspaceImport(importReceipt, false).catch(() => null);
+            const repaired = !!duplicate && durable?.id === duplicate.id
+              && normalizedPath(durable.path) === normalizedPath(dest);
+            await finalizeWorkspaceImport(importReceipt, repaired).catch(() => null);
             importReceipt = null;
-            await cleanupImportPaths(createdPaths);
-            return { id: durable?.id, title: durable?.title || meta.title, duplicate: true };
+            if (!repaired) await cleanupImportPaths(createdPaths);
+            return { id: durable?.id, title: durable?.title || meta.title,
+              duplicate: !repaired, repaired };
           }
 
           try { await captureImportWorkspace(binding); }
@@ -1481,7 +1565,10 @@ function createLibrary(container) {
         const flatCount = candidate.manga.chapters.reduce((sum, chapter) => sum + chapter.pages.length, 0);
         nextPage = Math.max(0, Math.min(Number(progress[id]?.page) || 0, Math.max(0, flatCount - 1)));
       } else if (book.format === 'pdf') {
-        if (window.mazz?.isElectron) candidate.pdf = { url: 'mazz-res://media/' + encodeURIComponent(book.path.replace(/\\/g, '/')) };
+        if (window.mazz?.isElectron) candidate.pdf = { url: await window.mazz.invoke('library:portableAssetUrl', {
+          workspacePath: binding.repository.identity.canonical,
+          path: book.path,
+        }) };
         else {
           const objectUrl = URL.createObjectURL(new Blob([(await readBytes()).buffer], { type: 'application/pdf' }));
           candidate.pdf = { url: objectUrl, _objectUrl: objectUrl };
@@ -3266,6 +3353,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
       await renderShelf({ reload: true }).catch(() => null);
     }
     void resumePendingAcquisition(retirement.binding);
+    void resumePortableCatalog(retirement.binding);
     if (retirement.resourceWasVisible) void resourceSurface.resume();
     if (error) toast('书库切换工作区失败，已保留原工作区：' + (error?.message || error));
     return false;
@@ -3374,6 +3462,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
         ctl.shelf.model = createShelfViewModel({ records: books, progress: ctl.shelf.progress });
         const painted = paintShelfState({ resetScroll: true });
         void drainPendingAcquisition(next);
+        void resumePortableCatalog(next);
         return !ctl._destroyed && request === workspaceRebindRequest && !!painted;
       } catch (error) {
         if (next) next.retiring = true;
@@ -4067,6 +4156,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
   ctl.finalizeHandoff = () => {
     ctl._handoffDiscardable = false;
     void resumePendingAcquisition(repositoryBinding);
+    void resumePortableCatalog(repositoryBinding);
     void resourceSurface.resume();
     return true;
   };
@@ -4133,6 +4223,7 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
     ctl._resolveDestroyOutcome = null;
     ctl._destroyOutcomePromise = null;
     void resumePendingAcquisition(repositoryBinding);
+    void resumePortableCatalog(repositoryBinding);
     void resourceSurface.resume();
     return true;
   };
@@ -4255,6 +4346,9 @@ hr.lib-page-sep{border:0;border-top:1px dashed #0002;margin:0;}
   void repositoryReady.then(() => drainPendingAcquisition(repositoryBinding)).catch(error => {
     if (!ctl._destroyed) console.warn('[library-acquisition] initial Inbox replay:', error?.code || 'LIBRARY_INBOX_REPLAY_FAILED');
   });
+  void repositoryReady.then(() => resumePortableCatalog(repositoryBinding)).catch(error => {
+    if (!ctl._destroyed) console.warn('[library-portable] initial convergence:', error?.code || 'LIBRARY_PORTABLE_FAILED');
+  });
   return ctl;
 }
 
@@ -4280,6 +4374,7 @@ export default {
     window.__activeLibraryCtl = ctl;
     contextKeys.set('module', MODULE);
     void ctl.resumePendingAcquisition?.();
+    void ctl.resumePortableCatalog?.();
     void ctl.resourceSurface?.resume?.();
   },
   deactivate(container) {

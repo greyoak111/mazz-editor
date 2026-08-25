@@ -1,0 +1,35 @@
+{
+  "schema": "mazz.w93g-library-convergence-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "product": "win-unpacked",
+  "portableCatalogPrivate": true,
+  "copiedWorkspaceRestored": true,
+  "stableBookId": "w93g-stable-text",
+  "relocatedLeaf": "renamed.txt",
+  "fullSha256": "a09be6988d73ceab88412237ff098e2eb82a0a4ab37dbb9d4330099bceaa6898",
+  "progressRestored": true,
+  "bookmarksRestored": true,
+  "pdfRange": {
+    "status": 206,
+    "contentRange": "bytes 5-8/20",
+    "body": "0123"
+  },
+  "cacheGc": {
+    "planned": 1,
+    "deleted": 1,
+    "formalAssetsRetained": true
+  },
+  "networkCalls": 0,
+  "resources": {
+    "gcPlanCount": 0,
+    "timerCount": 0,
+    "listenerCount": 0,
+    "networkOwnerCount": 0
+  },
+  "runtimeErrors": [],
+  "screenshot": "W93G_LIBRARY_CONVERGENCE_PACKAGED.png",
+  "rendererBundleSha256": "7bee0e3ebe874febeaa7fbfb9455c89fdf340ad1bc9d47ac2c7c5416da5e9e73",
+  "executableSha256": "9292c91d4ab3d5b73a5b50f0184a67168f637b4e99f11b527cf261aaa2295612",
+  "generatedAt": "2026-08-25T12:21:10.256Z"
+}

@@ -982,6 +982,78 @@ export class LibraryRepository {
       throw Object.assign(new Error('Library mutateBooks CAS exhausted'), { code: 'LIBRARY_CAS_EXHAUSTED' });
     });
   }
+
+  /**
+   * Restore one portable Workspace snapshot only when every owned target
+   * partition is still empty. The five envelopes are committed by the
+   * main-process multi-key CAS in one turn; existing Library facts are never
+   * overwritten by a moved/copy catalog.
+   */
+  async restorePortableSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+      throw new TypeError('portable Library snapshot must be an object');
+    }
+    if (snapshot.authority !== 'main-process-library-convergence') {
+      throw Object.assign(new Error('portable Library snapshot lacks main-process authority'), {
+        code: 'LIBRARY_PORTABLE_AUTHORITY_REQUIRED',
+      });
+    }
+    await this._ensureMigrated();
+    return this._withKeyQueue(this.booksQueueKey(), async () => {
+      await this._recoverBooksJournalUnlocked();
+      const books = normalizeBooks(snapshot.books, 'portable catalog restore');
+      const local = [];
+      for (const book of books) {
+        const record = cloneJson(book, {});
+        delete record.repositoryScope;
+        delete record.repositoryWorkspace;
+        local.push(record);
+      }
+      const proposed = {
+        shelf: local,
+        external: [],
+        categories: Array.isArray(snapshot.categories) ? cloneJson(snapshot.categories, []) : [],
+        progress: snapshot.progress && typeof snapshot.progress === 'object' && !Array.isArray(snapshot.progress)
+          ? cloneJson(snapshot.progress, {}) : {},
+        bookmarks: snapshot.bookmarks && typeof snapshot.bookmarks === 'object' && !Array.isArray(snapshot.bookmarks)
+          ? cloneJson(snapshot.bookmarks, {}) : {},
+      };
+      const partitions = ['shelf', 'external', 'categories', 'progress', 'bookmarks'];
+      for (let attempt = 0; attempt < CAS_RETRY_LIMIT; attempt++) {
+        const current = {};
+        for (const partition of partitions) {
+          current[partition] = await this._rawGet(this.key(partition));
+          assertMissingOrValidEnvelope(current[partition], this.identity, partition);
+        }
+        const values = Object.fromEntries(partitions.map(partition => [partition,
+          validEnvelope(current[partition], this.identity, partition)
+            ? current[partition].value : defaultValue(partition)]));
+        const nonempty = values.shelf.length || values.external.length || values.categories.length
+          || Object.keys(values.progress).length || Object.keys(values.bookmarks).length;
+        if (nonempty) return { ok: false, conflict: true, restored: false,
+          value: normalizeBooks([...(values.shelf || []), ...(values.external || [])]) };
+        const entries = partitions.map(partition => ({
+          key: this.key(partition),
+          expected: current[partition],
+          value: this._envelope(partition, proposed[partition],
+            (validEnvelope(current[partition], this.identity, partition) ? Number(current[partition].revision) : 0) + 1,
+            { fromSchema: 'mazz.library-portable-catalog/v1', at: this.now() }),
+        }));
+        let result;
+        try { result = await this.invoke('settings:compareAndSet', { entries }); }
+        catch (error) {
+          throw Object.assign(new Error(`portable Library restore requires main-process CAS: ${error?.message || error}`), {
+            code: 'LIBRARY_PORTABLE_CAS_REQUIRED', cause: error,
+          });
+        }
+        if (result?.ok === true) return { ok: true, atomic: true, restored: true, value: normalizeBooks(local) };
+        if (!result || typeof result.ok !== 'boolean') {
+          throw Object.assign(new Error('portable Library restore received invalid CAS receipt'), { code: 'LIBRARY_PORTABLE_CAS_REQUIRED' });
+        }
+      }
+      throw Object.assign(new Error('portable Library restore CAS exhausted'), { code: 'LIBRARY_CAS_EXHAUSTED' });
+    });
+  }
 }
 
 export function createLibraryRepository(options) {

@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "schema": "mazz.w93g-wave-evidence/v1",
+  "generatedAt": "2026-08-25T12:33:38.595Z",
+  "wave": "W93G",
+  "result": "PASS",
+  "base": {
+    "gitHead": "fc2e9dd",
+    "workingTree": "dirty-authorized-wave",
+    "researchSha256": "a953b4e48e624d10548191bf543a18b0d8af794dbfd3fa69b72312a427ca6818",
+    "researchDocumentRole": "requirements-source-only"
+  },
+  "scope": {
+    "factoryModified": false,
+    "playerTorrentModified": false,
+    "sourceAdaptersModified": false,
+    "realBookSourceNetworkUsed": false,
+    "realBookDownloaded": false,
+    "sourceBrowserWindow": true,
+    "packagedBrowserWindow": true,
+    "offlineFixturesOnly": true,
+    "subagentsUsed": false
+  },
+  "verification": {
+    "targeted": {
+      "command": "npm run test:w93g:library",
+      "passed": 12,
+      "failed": 0
+    },
+    "adjacentW93": {
+      "w93a": { "passed": 35, "failed": 0 },
+      "w93b": { "passed": 82, "failed": 0 },
+      "w93c": { "passed": 14, "failed": 0 },
+      "w93d": { "passed": 12, "failed": 0 },
+      "w93e": { "passed": 10, "failed": 0 },
+      "w93f": { "passed": 9, "failed": 0 },
+      "total": { "passed": 162, "failed": 0 }
+    },
+    "adjacentLibrary": {
+      "security": { "passed": 13, "failed": 0 },
+      "finalGates": { "passed": 17, "failed": 0 },
+      "openTransaction": { "passed": 6, "failed": 0 },
+      "disposeDurability": { "passed": 24, "failed": 0 },
+      "w89b": { "passed": 11, "failed": 0 },
+      "repository": { "passed": 19, "failed": 0 },
+      "atomicMain": { "passed": 5, "failed": 0 },
+      "atomicRenderer": { "passed": 2, "failed": 0 },
+      "total": { "passed": 97, "failed": 0 }
+    },
+    "sourceRuntime": {
+      "command": "npm run test:w93g:runtime",
+      "result": "PASS",
+      "portableCatalogPrivate": true,
+      "copiedWorkspaceRestored": true,
+      "stableBookId": "w93g-stable-text",
+      "uniqueHashRelocation": "renamed.txt",
+      "progressRestored": true,
+      "bookmarksRestored": true,
+      "pdfRangeStatus": 206,
+      "derivedCachePlanned": 1,
+      "derivedCacheDeleted": 1,
+      "formalAssetsRetained": true,
+      "networkCalls": 0,
+      "runtimeErrors": [],
+      "cleanup": true,
+      "evidence": "W93G_LIBRARY_CONVERGENCE_SOURCE.json",
+      "screenshot": "W93G_LIBRARY_CONVERGENCE_SOURCE.png"
+    },
+    "packagedRuntime": {
+      "command": "node tests/e2e/w93g-library-convergence-runtime.mjs --executable <release/win-unpacked/Mazz Editor.exe>",
+      "result": "PASS",
+      "portableCatalogPrivate": true,
+      "copiedWorkspaceRestored": true,
+      "stableBookId": "w93g-stable-text",
+      "uniqueHashRelocation": "renamed.txt",
+      "progressRestored": true,
+      "bookmarksRestored": true,
+      "pdfRangeStatus": 206,
+      "derivedCachePlanned": 1,
+      "derivedCacheDeleted": 1,
+      "formalAssetsRetained": true,
+      "networkCalls": 0,
+      "runtimeErrors": [],
+      "cleanup": true,
+      "evidence": "W93G_LIBRARY_CONVERGENCE_PACKAGED.json",
+      "screenshot": "W93G_LIBRARY_CONVERGENCE_PACKAGED.png"
+    },
+    "fullSuite": {
+      "command": "node tests/run.js",
+      "passedTestFiles": 271,
+      "failedTestFiles": 0,
+      "exitCode": 0,
+      "note": "首轮 269/271 仅因 W71 release baseline 与 W72 provenance 账本陈旧；使用既有确定性生成器更新同代账本后第二轮全绿"
+    },
+    "build": { "command": "npm run build", "result": "PASS", "exitCode": 0 },
+    "packagedDirectory": { "command": "npm run dist:dir", "result": "PASS", "exitCode": 0 },
+    "releaseAudit": { "command": "npm run audit:release", "result": "PASS", "exitCode": 0 },
+    "provenance": { "command": "npm run audit:provenance", "result": "CURRENT", "exitCode": 0 },
+    "syntax": { "command": "node --check <11 W93G main/renderer/test files>", "result": "PASS" },
+    "diffCheck": { "command": "git diff --check", "result": "PASS", "warnings": ["existing LF-to-CRLF conversion notices"] },
+    "packageBinding": {
+      "criticalFilesCompared": 10,
+      "criticalFilesMatched": 10,
+      "sourceBundleEqualsPackagedBundle": true
+    },
+    "privacy": {
+      "runtimeJsonSensitiveHits": 0,
+      "sourceScreenshotReviewed": true,
+      "packagedScreenshotReviewed": true
+    },
+    "resourceBoundary": {
+      "w93gTempDirectories": 0,
+      "productElectronProcesses": 0,
+      "gcPlanCount": 0,
+      "timerCount": 0,
+      "listenerCount": 0,
+      "networkOwnerCount": 0
+    }
+  },
+  "invariants": {
+    "portableCatalogUsesRelativePathsOnly": true,
+    "fullSha256Identity": true,
+    "copiedWorkspaceRestoresShelfProgressAndBookmarks": true,
+    "uniqueHashRelocationOnly": true,
+    "zeroAndAmbiguousMatchesNeverGuessed": true,
+    "sameHashMissingBookRepairKeepsBookId": true,
+    "pdfUsesMainProcessStrictRange": true,
+    "rendererPdfWholeBase64Removed": true,
+    "derivedCacheGcIsTwoPhase": true,
+    "formalFactsNeverEnterGc": true,
+    "noAutomaticNetworkRepair": true,
+    "noBusinessCountTextTokenOrFileSizeLimit": true,
+    "factoryFrozen": true,
+    "playerTorrentUnchanged": true
+  },
+  "files": {
+    "main/library-workspace-convergence.js": { "bytes": 24211, "sha256": "8c75068949ac6ebd5042518293f7081eead252c01139cb3243126f20a0a468f9" },
+    "main/library-workspace-convergence-ipc.js": { "bytes": 5150, "sha256": "23b37a61cb132424f31d79d44ebc640c3b1d05ed031b738d409ab4c6ca06b3a4" },
+    "main/library-import-service.js": { "bytes": 32105, "sha256": "e17339637c2e0ea29f645346f753f2a8fdd7754d2838c3d860d6b4cc0207bae0" },
+    "main/main.js": { "bytes": 141365, "sha256": "f6475f89c883e982e862e1ffdd64739d8931d59f7a29e1e3cffff15d37c58ba8" },
+    "preload/bridge.js": { "bytes": 9010, "sha256": "958e8166c38cc6ca0fc7a18b0e8c2bb4d25ae8b1b3ec3764c3ca80689fd3e137" },
+    "renderer/modules/library/portable-catalog.js": { "bytes": 3616, "sha256": "8142acc5dc489e67dbbf9bcff52f3ed5f3b13f70832a64f54702a75d0e2786ac" },
+    "renderer/modules/library/index.js": { "bytes": 219278, "sha256": "3d3b981dc4a2ca6de959489fe9e33c4625989bc35e342370487089c0ecf822db" },
+    "renderer/modules/library/repository.js": { "bytes": 46958, "sha256": "c84994ec56e67fb46fd0ed33474f8320a60bf18e33fbefd7e2b289d5114c3395" },
+    "renderer/modules/library/resource-surface.js": { "bytes": 20203, "sha256": "6bd67a2e35299705cfda9427f9d63cd2ca7e064ed9142542067a96546d0468f7" },
+    "tests/contract/w93g-library-convergence.test.mjs": { "bytes": 14292, "sha256": "7d05799d751ca35350822d2ea8c8ae130ccf0bcc97549e99328bf174d61265cc" },
+    "tests/e2e/w93g-library-convergence-runtime.mjs": { "bytes": 10286, "sha256": "d74c38b0dbe2fc6a55d1c502f598db1c22d2718e92c1f7588c9c0de61c133410" },
+    "docs/engineering/W93G_LIBRARY_RESOURCE_CONVERGENCE_SPEC.md": { "bytes": 6887, "sha256": "676a94b6550bb7733fabb53ca786f69c94ac001a2449d0283bdcdae24e55f3e0" },
+    "docs/engineering/W93G_LIBRARY_RESOURCE_CONVERGENCE_CHECKPOINT_2026-08-25.md": { "bytes": 5888, "sha256": "61550ccf00a5377e83e66238cece316d2e295548c23980a09ea18f97726fca63" },
+    "docs/engineering/W93_LIBRARY_RESOURCE_FREEDOM_FINAL_CHECKPOINT_2026-08-25.md": { "bytes": 4093, "sha256": "836cedbf0daf46863164a94945c6603ace8a9da0f2df78fc0bca0f3eb34976da" },
+    "docs/plans/W93_LIBRARY_RESOURCE_FREEDOM.md": { "bytes": 22209, "sha256": "6ad8d2a05085b17593ea6318c0fe80865fcc01a3fa9a3c028a96e817c9494c76" },
+    "docs/plans/README.md": { "bytes": 10573, "sha256": "8eb39f7d70a92caf3d0a8114a7d2656cb42639cc369c2dc375c1942c94741b9e" },
+    "docs/engineering/evidence/W93G_LIBRARY_CONVERGENCE_SOURCE.json": { "bytes": 970, "sha256": "08c186f2a38d8d7f61194e3e289d9f563b5e025a6b56defbee8e7f2a5af24bb4" },
+    "docs/engineering/evidence/W93G_LIBRARY_CONVERGENCE_SOURCE.png": { "bytes": 62067, "sha256": "6a4dd43f2df2ac8881023b4ceec93ccfa7ff1a5276bbdf52567feed1cd268b31" },
+    "docs/engineering/evidence/W93G_LIBRARY_CONVERGENCE_PACKAGED.json": { "bytes": 1042, "sha256": "6c9938d1ffec545d29471134989ec82e959d7392128f532f3c35b70e7f88d5af" },
+    "docs/engineering/evidence/W93G_LIBRARY_CONVERGENCE_PACKAGED.png": { "bytes": 67165, "sha256": "59f274eb8d55e2494c00e28fc8085c5d51501554dca6f2ca5846e73b5dab973b" },
+    "release/win-unpacked/Mazz Editor.exe": { "bytes": 188784128, "sha256": "9292c91d4ab3d5b73a5b50f0184a67168f637b4e99f11b527cf261aaa2295612" },
+    "release/win-unpacked/resources/app.asar": { "bytes": 261562442, "sha256": "7e884ef0a41234cf7eb346208cc25ca88e37f19befec1eb4ff560dc041a54763" },
+    "renderer/dist/app.js": { "bytes": 2442355, "sha256": "7bee0e3ebe874febeaa7fbfb9455c89fdf340ad1bc9d47ac2c7c5416da5e9e73" },
+    ".mazz/audit/oss-provenance-ledger.json": { "bytes": 828060, "sha256": "e896d2382087dac62ec7a6b1f46e3206dc37f0840540e5afcf2f0c120f0d7e01" },
+    "docs/engineering/evidence/W71_RELEASE_BASELINE.json": { "bytes": 209976, "sha256": "3eb7b5d068d305ccdcd71433a82b8231b80e13b8acab41a864d4112fdf6077b6" }
+  },
+  "excluded": [
+    "real book-source network and real book acquisition",
+    "real DHT, tracker, peer or live swarm",
+    "automatic online source repair",
+    "EPUB or CBZ progressive open before complete verification",
+    "DRM, controlled lending, login or CAPTCHA handling",
+    "new source adapters",
+    "player Torrent queue changes",
+    "Factory changes"
+  ],
+  "review": {
+    "mode": "single-owner-freeze-review",
+    "subagentsUsed": false,
+    "reproducibleP0P1": 0,
+    "result": "CLEAR"
+  },
+  "final": {
+    "w93Status": "COMPLETE",
+    "nextWave": null,
+    "futureExpansionRequiresNewAuthorization": true
+  }
+}

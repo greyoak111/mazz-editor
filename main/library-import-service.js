@@ -417,7 +417,7 @@ class LibraryImportService {
             });
             return {
               path: candidate, created: true, receiptId,
-              sourceHash: digest.slice(0, 20), size: bytes.byteLength,
+              sourceHash: digest, size: bytes.byteLength,
             };
           } catch (error) {
             if (error?.code !== 'EEXIST') throw error;
@@ -426,7 +426,7 @@ class LibraryImportService {
               tempExists = false;
               return {
                 path: candidate, created: false, receiptId: null, reused: true,
-                sourceHash: digest.slice(0, 20), size: bytes.byteLength,
+                sourceHash: digest, size: bytes.byteLength,
               };
             }
             serial++;

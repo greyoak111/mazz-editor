@@ -997,147 +997,147 @@
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 420,
+      "line": 418,
       "sample": "<div style=\"display:flex;gap:8px;align-items:center;min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 991,
+      "line": 1054,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 1072,
+      "line": 1135,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\">"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1952,
+      "line": 2039,
       "sample": ".lib-flow-wrap::after{content:'';position:absolute;z-index:3;pointer-events:none;top:0;bottom:0;left:50%;width:var(--reader-spread-gutter,0px);transform:translateX(-50%);opacity:0;background:linear-gradient(90deg,color-mix(in srgb,var(--reader-ink) 8%,transparent),transparent 36%,transparent 64%,color-mix(in srgb,var(-"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 1960,
+      "line": 2047,
       "sample": ".lib-flow :where(img,svg){display:block;margin:.65em auto;max-height:calc(100% - 1.3em);object-fit:contain;}"
     },
     {
       "rule": "calc-viewport-or-container",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 1965,
+      "line": 2052,
       "sample": ".lib-text-reel{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;width:min(var(--reader-scroll-sheet,760px),calc(100% - 20px));min-height:calc(100vh - var(--reader-stage-block) * 2);margin:0 auto;background:var(--reader-paper);border:1px solid color-mix(in srgb,var(--reader-ink) 11%,transpare"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1971,
+      "line": 2058,
       "sample": ".lib-text-slot.is-loading::after{content:'正在排版…';position:absolute;top:32px;left:50%;transform:translateX(-50%);opacity:.5;font-size:12px;}"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 1972,
+      "line": 2059,
       "sample": ".lib-text-slot.is-error::after{content:'本节加载失败';position:absolute;top:32px;left:50%;transform:translateX(-50%);color:#b42318;font-size:12px;}"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2485,
+      "line": 2572,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2487,
+      "line": 2574,
       "sample": "ctl._flowRO = new ResizeObserver(() => {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2612,
+      "line": 2699,
       "sample": "// ResizeObserver fires after Chromium has already committed the changed"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2859,
+      "line": 2946,
       "sample": "if (typeof ResizeObserver !== 'undefined') {"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/library/index.js",
-      "line": 2861,
+      "line": 2948,
       "sample": "ctl._flowRO = new ResizeObserver(() => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3010,
+      "line": 3097,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:320px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3489,
+      "line": 3578,
       "sample": "<div style=\"min-width:340px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3563,
+      "line": 3652,
       "sample": "m.innerHTML = `<div class=\"mazz-palette\" style=\"padding:16px 18px;min-width:280px\"><b>${selectedIds.size} 本移到分类</b>"
     },
     {
       "rule": "white-space-nowrap",
       "provisionalClass": "A",
       "file": "renderer/modules/library/index.js",
-      "line": 3765,
+      "line": 3854,
       "sample": "<span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\" title=\"${escapeHtml(r.pattern || '')}\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3795,
+      "line": 3884,
       "sample": "<div style=\"min-width:480px;max-width:620px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3798,
+      "line": 3887,
       "sample": "<input class=\"rb-input cr-name\" placeholder=\"规则名（可空）\" style=\"width:110px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/library/index.js",
-      "line": 3799,
+      "line": 3888,
       "sample": "<input class=\"rb-input cr-pattern\" placeholder=\"匹配内容（如：广告|水印网址）\" style=\"flex:1;min-width:150px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/library/index.js",
-      "line": 3802,
+      "line": 3891,
       "sample": "<input class=\"rb-input cr-rep\" placeholder=\"替换为（删除留空）\" style=\"width:120px\">"
     },
     {
