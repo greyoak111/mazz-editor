@@ -8,6 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const contract = require('./library-resource-contract');
+const { captureDomainEvent } = require('./foundation/domain-event-capture');
 const LibraryAcquisitionStoreModule = require('./library-acquisition-store');
 const LibraryAcquisitionStore = LibraryAcquisitionStoreModule.LibraryAcquisitionStore
   || LibraryAcquisitionStoreModule;
@@ -420,6 +421,7 @@ class LibraryAcquisitionService {
     resourceLedger = null,
     singleInstanceOwnerCapability = null,
     onInboxReady = null,
+    eventService = null,
   } = {}) {
     if (typeof storeFactory !== 'function') {
       throw codedError('LIBRARY_ACQUISITION_STORE_FACTORY_REQUIRED', 'acquisition service requires a Store factory');
@@ -436,6 +438,7 @@ class LibraryAcquisitionService {
     this.resourceLedger = resourceLedger;
     this.singleInstanceOwnerCapability = singleInstanceOwnerCapability;
     this.onInboxReady = typeof onInboxReady === 'function' ? onInboxReady : null;
+    this.eventService = eventService;
     this.workspaces = new Map();
     this.workspacePaths = new Map();
     // A Workspace that was not current during process startup can still carry
@@ -482,6 +485,20 @@ class LibraryAcquisitionService {
   getDurableCompletionReceipt(error) {
     if (!error || (typeof error !== 'object' && typeof error !== 'function')) return null;
     return this.durableCompletionReceipts.get(error) || null;
+  }
+
+  _event(job, outcome, action = 'transport') {
+    if (!job) return { recorded: false, reason: 'NO_JOB' };
+    return captureDomainEvent(this.eventService, {
+      domain: 'library',
+      action,
+      outcome,
+      actorType: 'system',
+      subjectId: job.jobId,
+      objectId: job.candidateId || '',
+      contextId: job.workspaceIdentity || '',
+      idempotencyKey: `w94e:library:${action}:${outcome}:${job.workspaceIdentity}:${job.jobId}:${job.revision}`,
+    });
   }
 
   _registerStore(store) {
@@ -989,6 +1006,7 @@ class LibraryAcquisitionService {
           ...(quarantined ? { stagingPath: '' } : {}),
         },
       });
+      this._event(failed, 'failed');
       this._markDurableCompletion(error, failed);
       throw error;
     }
@@ -1020,6 +1038,7 @@ class LibraryAcquisitionService {
         retryFrom: 'materializing',
         patch: { error: toJobError(error, 'LIBRARY_ACQUISITION_PROMOTION_FAILED') },
       });
+      this._event(failed, 'failed');
       this._markDurableCompletion(error, failed);
       throw error;
     }
@@ -1036,7 +1055,9 @@ class LibraryAcquisitionService {
       this._markDurableCompletion(error, job);
       throw error;
     }
-    return context.store.getJob(job.jobId);
+    const settled = context.store.getJob(job.jobId);
+    this._event(settled, 'success');
+    return settled;
   }
 
   async _executeHttp(record, initialJob) {
@@ -1070,18 +1091,22 @@ class LibraryAcquisitionService {
       if (record.requested === 'cancel') {
         this._cleanupStaging(context, initialJob.jobId);
         if (current && !contract.isTerminalJobState(current.state) && current.state !== 'awaiting-import') {
-          return context.store.transitionJob(current.jobId, 'cancelled', { expectedRevision: current.revision });
+          const cancelled = context.store.transitionJob(current.jobId, 'cancelled', { expectedRevision: current.revision });
+          this._event(cancelled, 'cancelled', 'cancel');
+          return cancelled;
         }
       }
       const requestedPause = record.requested === 'pause' || record.requested === 'shutdown';
       if (requestedPause && error?.code === 'LIBRARY_ACQUISITION_ABORTED'
         && error?.partialDurable === true) {
         if (current?.state === 'downloading') {
-          return context.store.transitionJob(current.jobId, 'paused', {
+          const paused = context.store.transitionJob(current.jobId, 'paused', {
             expectedRevision: current.revision,
             retryFrom: 'downloading',
             patch: { error: null },
           });
+          this._event(paused, 'partial', 'pause');
+          return paused;
         }
       }
       // Verification and materialization failures are persisted at their
@@ -1107,6 +1132,7 @@ class LibraryAcquisitionService {
             ...(quarantined ? { stagingPath: '' } : {}),
           },
         });
+        this._event(failed, 'failed');
         const failure = this._publicError(transportError, 'LIBRARY_ACQUISITION_DOWNLOAD_FAILED');
         this._markDurableCompletion(failure, failed);
         throw failure;
@@ -1212,18 +1238,22 @@ class LibraryAcquisitionService {
       if (record.requested === 'cancel') {
         this._cleanupStaging(context, initialJob.jobId);
         if (current && !contract.isTerminalJobState(current.state) && current.state !== 'awaiting-import') {
-          return context.store.transitionJob(current.jobId, 'cancelled', { expectedRevision: current.revision });
+          const cancelled = context.store.transitionJob(current.jobId, 'cancelled', { expectedRevision: current.revision });
+          this._event(cancelled, 'cancelled', 'cancel');
+          return cancelled;
         }
       }
       const requestedPause = record.requested === 'pause' || record.requested === 'shutdown';
       if (requestedPause && settlementError === error
         && error?.code === 'LIBRARY_TORRENT_ABORTED' && payloadDurable && !error.cleanupError) {
         if (current?.state === 'downloading') {
-          return context.store.transitionJob(current.jobId, 'paused', {
+          const paused = context.store.transitionJob(current.jobId, 'paused', {
             expectedRevision: current.revision,
             retryFrom: 'downloading',
             patch: { error: null },
           });
+          this._event(paused, 'partial', 'pause');
+          return paused;
         }
       }
       if (current?.state === 'downloading') {
@@ -1240,6 +1270,7 @@ class LibraryAcquisitionService {
             ...(quarantined ? { stagingPath: '' } : {}),
           },
         });
+        this._event(failed, 'failed');
         const failure = this._publicError(settlementError, 'LIBRARY_TORRENT_DOWNLOAD_FAILED');
         this._markDurableCompletion(failure, failed);
         throw failure;
@@ -1324,6 +1355,7 @@ class LibraryAcquisitionService {
         retryFrom: 'downloading',
         patch: { error: toJobError(error, 'LIBRARY_ACQUISITION_BROWSER_PREPARE_FAILED') },
       });
+      this._event(failed, 'failed');
       const failure = this._publicError(error, 'LIBRARY_ACQUISITION_BROWSER_PREPARE_FAILED');
       this._markDurableCompletion(failure, failed);
       throw failure;
@@ -1529,10 +1561,12 @@ class LibraryAcquisitionService {
 
       if (validated.state === 'cancelled') {
         this._cleanupStaging(record.context, record.jobId);
-        return record.context.store.transitionJob(job.jobId, 'cancelled', { expectedRevision: job.revision });
+        const cancelled = record.context.store.transitionJob(job.jobId, 'cancelled', { expectedRevision: job.revision });
+        this._event(cancelled, 'cancelled', 'cancel');
+        return cancelled;
       }
       if (validated.state === 'interrupted') {
-        return record.context.store.transitionJob(job.jobId, 'paused', {
+        const paused = record.context.store.transitionJob(job.jobId, 'paused', {
           expectedRevision: job.revision,
           retryFrom: 'downloading',
           patch: {
@@ -1542,9 +1576,11 @@ class LibraryAcquisitionService {
             },
           },
         });
+        this._event(paused, 'partial', 'pause');
+        return paused;
       }
       if (validated.state === 'failed') {
-        return record.context.store.transitionJob(job.jobId, 'failed', {
+        const failed = record.context.store.transitionJob(job.jobId, 'failed', {
           expectedRevision: job.revision,
           retryFrom: 'downloading',
           patch: {
@@ -1554,6 +1590,8 @@ class LibraryAcquisitionService {
             },
           },
         });
+        this._event(failed, 'failed');
+        return failed;
       }
       if (!this.fs.existsSync(record.staging.payloadPath)) {
         throw codedError('LIBRARY_ACQUISITION_BROWSER_PAYLOAD_MISSING', 'completed Browser download has no staging payload');
@@ -1567,6 +1605,7 @@ class LibraryAcquisitionService {
           retryFrom: 'downloading',
           patch: { error: toJobError(error, 'LIBRARY_ACQUISITION_BROWSER_COMPLETE_FAILED') },
         });
+        this._event(failed, 'failed');
         this._markDurableCompletion(error, failed);
       }
       throw this._publicError(error, 'LIBRARY_ACQUISITION_BROWSER_COMPLETE_FAILED');
@@ -1784,11 +1823,13 @@ class LibraryAcquisitionService {
     if (!['queued', 'downloading'].includes(job.state)) {
       throw codedError('LIBRARY_ACQUISITION_INVALID_STATE', 'Job cannot be paused from its current state');
     }
-    return context.store.transitionJob(id, 'paused', {
+    const paused = context.store.transitionJob(id, 'paused', {
       expectedRevision: job.revision,
       retryFrom: job.state,
       patch: { error: null },
     });
+    this._event(paused, 'partial', 'pause');
+    return paused;
   }
 
   async cancel(selector, jobId) {
@@ -1816,7 +1857,9 @@ class LibraryAcquisitionService {
       throw codedError('LIBRARY_ACQUISITION_IMPORT_PENDING', 'published Library assets require an explicit discard transaction');
     }
     this._cleanupStaging(context, id);
-    return context.store.transitionJob(id, 'cancelled', { expectedRevision: job.revision });
+    const cancelled = context.store.transitionJob(id, 'cancelled', { expectedRevision: job.revision });
+    this._event(cancelled, 'cancelled', 'cancel');
+    return cancelled;
   }
 
   _validateShelfCommit(context, receipt, commit) {

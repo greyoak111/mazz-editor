@@ -55,7 +55,7 @@ await test('SSE 与 CLI JSONL 的无换行输入有硬上限', () => {
   assert.equal(jsonl.buffer, '');
 });
 
-await test('Python、Torrent 内联、终端、索引、结果缓存均声明固定预算', () => {
+await test('传输与资源安全预算保留，Calc 结果不再按固定条数驱逐', () => {
   assert.equal(PythonKernel.MAX_OUTPUT_CHARS, 16 * 1024 * 1024);
   assert.equal(PythonKernel.MAX_QUEUE, 64);
   assert.equal(TorrentDaemon.MAX_INLINE_FILE_BYTES, 32 * 1024 * 1024);
@@ -66,7 +66,7 @@ await test('Python、Torrent 内联、终端、索引、结果缓存均声明固
   const browser = fs.readFileSync(path.join(ROOT, 'renderer/modules/browser/index.js'), 'utf8');
   assert.match(terminal, /scrollback:\s*5000/);
   assert.match(indexer, /MAX_INDEX_FILES\s*=\s*10_000/);
-  assert.match(calc, /RESULT_CACHE_LIMIT\s*=\s*128/);
+  assert.doesNotMatch(calc, /RESULT_CACHE_LIMIT|resultCache\.size\s*>|\.delete\(resultCache\.keys\(\)\.next\(\)\.value\)/);
   assert.match(image, /constructor\(maxSize = 15\)/);
   assert.match(browser, /history = ctl\.history\.slice\(0, 200\)/);
 });

@@ -1,0 +1,42 @@
+{
+  "schema": "mazz.w94e-relation-branch-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "workspaceId": "workspace:a63f3f45c0866d2b1c5f028a6ada0c14e06ba7b97b7aa3e84019ab0368b8ca3a",
+  "retrieval": {
+    "candidates": 1,
+    "explanations": 1,
+    "rejectedAfterReplay": true
+  },
+  "events": {
+    "domains": [
+      "factory",
+      "library",
+      "player",
+      "calc",
+      "chart",
+      "canvas",
+      "blender",
+      "world"
+    ],
+    "count": 8
+  },
+  "branch": {
+    "branches": 3,
+    "conflictCountBeforeResolution": 1,
+    "conflictCountAfterResolution": 0,
+    "resolvedRevision": "rev:right"
+  },
+  "stateFacts": {
+    "count": 1,
+    "separateFrameTrack": true,
+    "offline": true
+  },
+  "resources": {
+    "activeCount": 4
+  },
+  "networkCalls": 0,
+  "runtimeErrors": [],
+  "executableSha256": "a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9",
+  "generatedAt": "2026-08-26T18:12:35.109Z"
+}

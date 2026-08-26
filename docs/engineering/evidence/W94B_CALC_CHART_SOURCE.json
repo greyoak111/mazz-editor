@@ -1,0 +1,68 @@
+{
+  "schema": "mazz.w94b-calc-chart-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "product": "source",
+  "capabilities": [
+    "mazz.blender.external",
+    "mazz.calc.python-expression",
+    "mazz.chart.svg"
+  ],
+  "calc": {
+    "proposalId": "proposal-sha256-01465ebe29d4c50ab8cae83ad201fd9355a937aa3ff8683baf5335a090d51c08",
+    "receiptId": "receipt-5a40734b-ab6b-4f5a-8f5e-c14e94dcb9cb",
+    "artifactId": "artifact-sha256-a2489e86b62072094a2cbfd6b4bde3597d03ce3e3d1c5bfa4c0a9c9667b17e0a",
+    "contentHash": "sha256-a2489e86b62072094a2cbfd6b4bde3597d03ce3e3d1c5bfa4c0a9c9667b17e0a",
+    "typedResult": {
+      "schema": "mazz.calc-result/v1",
+      "valueType": "number",
+      "value": 5
+    }
+  },
+  "chart": {
+    "proposalId": "proposal-sha256-7d4edf832fb9d41d09b86766b759070ff0de29dfd1fa10cc456b96185a97fc68",
+    "receiptId": "receipt-15c5de3a-8e5f-41ac-bed1-4e75d03932be",
+    "artifacts": [
+      {
+        "artifactId": "artifact-sha256-df9340e175b2f149f52ddb7e93eb53fd661b2da8f0c5b0009aa199734e44a06b",
+        "contentHash": "sha256-df9340e175b2f149f52ddb7e93eb53fd661b2da8f0c5b0009aa199734e44a06b",
+        "contentSchema": "mazz.chart-spec/v1"
+      },
+      {
+        "artifactId": "artifact-sha256-867cc53df73ff25d3fdf4ac2249281adfc6ae9ee88ce44b0c55267db05475209",
+        "contentHash": "sha256-867cc53df73ff25d3fdf4ac2249281adfc6ae9ee88ce44b0c55267db05475209",
+        "contentSchema": "mazz.chart-svg/v1"
+      }
+    ],
+    "deterministicSvg": true
+  },
+  "exactReplay": true,
+  "restartReopen": true,
+  "persistedCounts": {
+    "proposals": 2,
+    "receipts": 2,
+    "artifacts": 3,
+    "blobs": 3
+  },
+  "artifactProtocol": {
+    "streamed": true,
+    "singleUse": true,
+    "grantsFinal": 0,
+    "streamsFinal": 0
+  },
+  "fileTreeInternalEvents": 0,
+  "networkCalls": 0,
+  "resources": {
+    "capabilityExecutionOwners": 0,
+    "artifactStreamOwners": 0,
+    "pythonProcessOwners": 0,
+    "serviceActiveCount": 0,
+    "durabilityFailureCount": 0,
+    "artifactStagingCount": 0
+  },
+  "runtimeErrors": [],
+  "stateSha256": "2e8b849150e8eaddfd816f1957a28f28aa03b051191279c9799e5f0aae3e5713",
+  "rendererBundleSha256": "5516bc920c1314969f8024ec723d5d2c9555b679926ac1335c43e2c0586cec57",
+  "executableSha256": null,
+  "generatedAt": "2026-08-26T18:07:20.642Z"
+}

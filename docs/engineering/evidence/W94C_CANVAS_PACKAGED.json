@@ -1,0 +1,17 @@
+{
+  "schema": "mazz.w94c-canvas-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "documentId": "canvas-doc-runtime",
+  "revision": 5,
+  "exportId": "canvas-export-fd82ced0-fbe7-488d-ac2d-c518939677b7",
+  "artifact": {
+    "contentHash": "sha256-96565899cd632672fb9364ac8a4406b46ae7808a5037fc3e9652ed97ed0d6410",
+    "storageRef": "capability-blob:96565899cd632672fb9364ac8a4406b46ae7808a5037fc3e9652ed97ed0d6410",
+    "size": 384,
+    "contentSchema": "mazz.canvas-svg/v1"
+  },
+  "grantSingleUse": true,
+  "networkCalls": 0,
+  "runtimeErrors": []
+}

@@ -14,6 +14,7 @@ const {
   createManualHttpsCandidate,
 } = require('./library-source-pack');
 const { LibraryResourceCatalogStore } = require('./library-resource-catalog-store');
+const { captureDomainEvent } = require('./foundation/domain-event-capture');
 
 const CONFIG_SCHEMA = 'mazz.library-resource-surface-config/v1';
 const CONFIG_KEY = 'libraryResourceSurface';
@@ -340,7 +341,7 @@ class LibraryResourceSurfaceService {
     exactKeys(options, new Set([
       'acquisitionService', 'settings', 'resolver', 'requester', 'productToken',
       'now', 'randomId', 'onChanged', 'catalogStoreFactory', 'checkpointStoreFactory',
-      'torrentTransport',
+      'torrentTransport', 'eventService',
     ]), 'LibraryResourceSurfaceService options');
     if (!options.acquisitionService || typeof options.acquisitionService.openWorkspace !== 'function') {
       throw new TypeError('LibraryResourceSurfaceService requires acquisitionService');
@@ -353,6 +354,7 @@ class LibraryResourceSurfaceService {
     }
     this.acquisition = options.acquisitionService;
     this.torrentTransport = options.torrentTransport || null;
+    this.eventService = options.eventService || null;
     this.settings = options.settings;
     this.resolver = options.resolver;
     this.requester = options.requester;
@@ -373,6 +375,12 @@ class LibraryResourceSurfaceService {
     this.accepting = true;
   }
 
+  _event(action, outcome, subjectId = 'library:workspace', objectId = '', actorType = 'system') {
+    return captureDomainEvent(this.eventService, {
+      domain: 'library', action, outcome, subjectId, objectId, actorType,
+    });
+  }
+
   config() {
     return normalizeConfig(this.settings.get(CONFIG_KEY, {}), { now: this.now });
   }
@@ -387,6 +395,7 @@ class LibraryResourceSurfaceService {
     this.contexts.clear();
     this.settings.set(CONFIG_KEY, JSON.parse(JSON.stringify(normalized)));
     this._wake('configured');
+    this._event('configure', 'success', 'library:configuration', '', 'human');
     return normalized;
   }
 
@@ -558,12 +567,17 @@ class LibraryResourceSurfaceService {
         const stored = context.catalog.put(candidate, descriptor).record;
         projected.push(candidateProjectionWithDecision(stored, this.config(), this.now));
       }
-      return Object.freeze({
+      const result = Object.freeze({
         query: page.query,
         candidates: Object.freeze(projected),
         continuations: page.continuations,
         failures: page.failures,
       });
+      this._event('search', 'success', 'library:catalog');
+      return result;
+    } catch (error) {
+      this._event('search', signal?.aborted ? 'cancelled' : 'failed', 'library:catalog');
+      throw error;
     } finally {
       signal?.removeEventListener('abort', abort);
       this.controllers.delete(controller);
@@ -575,11 +589,18 @@ class LibraryResourceSurfaceService {
     const context = await this._workspace(workspacePath);
     const candidate = createManualHttpsCandidate({ ...input, observedAt: this.now });
     const descriptor = context.descriptors.get('manual-https');
-    return candidateProjectionWithDecision(
-      context.catalog.put(candidate, descriptor).record,
-      this.config(),
-      this.now,
-    );
+    try {
+      const result = candidateProjectionWithDecision(
+        context.catalog.put(candidate, descriptor).record,
+        this.config(),
+        this.now,
+      );
+      this._event('add-manual', 'success', result.candidateId);
+      return result;
+    } catch (error) {
+      this._event('add-manual', 'failed', 'library:candidate');
+      throw error;
+    }
   }
 
   async inspectTorrent(workspacePath, input, { signal } = {}) {
@@ -618,7 +639,12 @@ class LibraryResourceSurfaceService {
       const descriptor = context.descriptors.get(TORRENT_PROVIDER_ID);
       const record = context.catalog.put(candidate, descriptor).record;
       this._wake('torrent-inspected');
-      return candidateProjectionWithDecision(record, config, this.now);
+      const result = candidateProjectionWithDecision(record, config, this.now);
+      this._event('inspect', 'success', result.candidateId, inspectionId);
+      return result;
+    } catch (error) {
+      this._event('inspect', signal?.aborted ? 'cancelled' : 'failed', `inspection-${inspectionId}`);
+      throw error;
     } finally {
       signal?.removeEventListener('abort', abort);
       this.controllers.delete(controller);
@@ -632,6 +658,7 @@ class LibraryResourceSurfaceService {
     const inspectionId = opaqueId(input.inspectionId, 'inspectionId');
     const controller = this.torrentInspectors.get(`${context.workspaceIdentity}:${inspectionId}`);
     if (controller) controller.abort();
+    this._event('inspect-cancel', controller ? 'cancelled' : 'unknown', `inspection-${inspectionId}`);
     return Object.freeze({ cancelled: Boolean(controller) });
   }
 
@@ -683,6 +710,7 @@ class LibraryResourceSurfaceService {
     if (decision.outcome !== 'pass') {
       throw codedError('LIBRARY_RIGHTS_REQUIRED', 'Torrent Candidate 未通过明确的 Rights 裁决');
     }
+    this._event('approve', 'approval', record.candidate.candidateId, offerId, 'human');
     const job = rights.prepareAcquisitionJob({
       jobId: `job-${this.randomId()}`,
       intentId,
@@ -720,7 +748,9 @@ class LibraryResourceSurfaceService {
       }
     }
     this._wake('torrent-acquisition-created');
-    return Object.freeze({ decision, job: jobProjection(durable) });
+    const result = Object.freeze({ decision, job: jobProjection(durable) });
+    this._event('acquire', 'success', record.candidate.candidateId, durable.jobId, 'human');
+    return result;
   }
 
   async acquire(workspacePath, input) {
@@ -770,7 +800,9 @@ class LibraryResourceSurfaceService {
       }
     }
     this._wake('acquisition-created');
-    return Object.freeze({ decision, job: jobProjection(durable) });
+    const result = Object.freeze({ decision, job: jobProjection(durable) });
+    this._event('acquire', 'success', record.candidate.candidateId, durable.jobId, 'human');
+    return result;
   }
 
   async action(workspacePath, input) {
@@ -808,7 +840,9 @@ class LibraryResourceSurfaceService {
       result = current;
     }
     this._wake(`action-${action}`);
-    return jobProjection(result);
+    const projection = jobProjection(result);
+    this._event(action, action === 'cancel' ? 'cancelled' : 'success', jobId, '', 'human');
+    return projection;
   }
 
   async repair(workspacePath) {
@@ -816,7 +850,9 @@ class LibraryResourceSurfaceService {
     const recovery = await this.acquisition.ensureWorkspaceRecovery(context.workspaceIdentity);
     const actions = await this.acquisition.reconcileWorkspace(context.workspaceIdentity);
     this._wake('repair');
-    return Object.freeze({ recovery, actions, snapshot: await this.snapshot(context.workspacePath) });
+    const result = Object.freeze({ recovery, actions, snapshot: await this.snapshot(context.workspacePath) });
+    this._event('repair', 'success', 'library:workspace');
+    return result;
   }
 
   snapshotResources() {

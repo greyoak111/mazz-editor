@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import tls from 'node:tls';
 
 const require = createRequire(import.meta.url);
 const LanSync = require('../../main/lansync.js');
@@ -192,6 +193,89 @@ describe('局域网同步', () => {
     assert.ok(result.positions >= 1, '位置对象应随 manifest 合入');
     const got = sB.getPosition({ kind: 'editor', path: path.join(wsB, '文稿', '接力.md') });
     assert.equal(got.value.from, 321, '对端按自己的工作区根应取到同一光标');
+  });
+
+  test('W94E 真 TCP state-fact 轨：冲突保留、乱序重复重连收敛且坏签名拒绝', async () => {
+    const ws = mkWorkspace('state-facts');
+    const storeA = memStore();
+    const storeB = memStore();
+    const sA = new LanSync({ store: storeA, workspace: ws });
+    const sB = new LanSync({ store: storeB, workspace: ws });
+    try {
+      const a = sA.putStateFact({ factKind: 'branch', factId: 'branch:shared', revision: 'rev:a', payloadRef: 'artifact:a' }).fact;
+      const b = sB.putStateFact({ factKind: 'branch', factId: 'branch:shared', revision: 'rev:b', payloadRef: 'artifact:b' }).fact;
+      assert.equal(a.workspaceId, b.workspaceId, '同一工作区的两端必须共享 state-fact identity');
+      const host = await sA.host({ port: 0 });
+      const first = await sB.join({ host: '127.0.0.1', port: host.port, pairCode: host.pairCode });
+      await sA.stopHost();
+      assert.equal(first.sent, 0);
+      assert.equal(first.received, 0);
+      assert.ok(first.stateFactConflicts.some(row => row.key === 'branch:branch:shared'), '真实 TCP 合并必须保留冲突');
+      assert.equal(sB.stateFacts().length, 2, '冲突两份事实都必须耐久保留');
+
+      const host2 = await sA.host({ port: 0 });
+      const replay = await sB.join({ host: '127.0.0.1', port: host2.port, pairCode: host2.pairCode });
+      await sA.stopHost();
+      assert.equal(replay.stateFactConflicts.length, 0, '重连乱序重复只应产生 duplicate，不应制造二次冲突');
+      assert.equal(sB.stateFacts().length, 2);
+      const rejected = sB.mergeStateFacts([{ ...a, signature: 'tampered' }]);
+      assert.equal(rejected.rejected.length, 1, '坏签名必须在 state-fact 轨拒绝');
+    } finally {
+      await sA.stop();
+      await sB.stop();
+      fs.rmSync(ws, { recursive: true, force: true });
+    }
+  });
+
+  test('W94E 真 TCP 中途断线 fail-closed；跨帧乱序仍可重放收敛', async () => {
+    const ws = mkWorkspace('state-facts-disconnect');
+    const sA = new LanSync({ store: memStore(), workspace: ws });
+    try {
+      const host = await sA.host({ port: 0 });
+      const raw = tls.connect({ host: '127.0.0.1', port: host.port, rejectUnauthorized: false });
+      await new Promise((resolve, reject) => {
+        raw.once('secureConnect', resolve);
+        raw.once('error', reject);
+      });
+      const closed = new Promise(resolve => raw.once('close', resolve));
+      raw.write(encodeFrame({ op: 'hello', pairCode: host.pairCode, deviceId: 'fixture-disconnect' }));
+      const decoder = makeDecoder(msg => {
+        // Destroy after the host has entered the real sync session and sent
+        // its first frame. This is an actual TLS socket interruption, not a
+        // direct callback shortcut.
+        if (msg.op === 'manifest' || msg.op === 'state-facts') raw.destroy();
+      });
+      raw.on('data', decoder);
+      await closed;
+      await new Promise(resolve => setTimeout(resolve, 20));
+      assert.equal(sA.lastResult?.error, '连接中断', '中途断线必须进入明确失败事实');
+
+      // Protocol-level reorder fixture: state-facts is delivered before the
+      // manifest, then duplicate/out-of-order control frames are replayed.
+      const fact = sA.putStateFact({ factKind: 'event', factId: 'event:reorder', revision: 'rev:1', payloadRef: 'artifact:reorder' }).fact;
+      const writes = [];
+      const listeners = new Map();
+      const socket = {
+        write(frame) { writes.push(JSON.parse(frame.subarray(4).toString('utf8'))); },
+        on(name, cb) { listeners.set(name, cb); return this; },
+      };
+      let settled;
+      let failed;
+      const session = sA.createSyncSession(socket, value => { settled = value; }, error => { failed = error; });
+      session.push({ op: 'state-facts', workspaceId: sA.workspaceIdentity(), facts: [fact] });
+      session.push({ op: 'manifest', files: [], positions: [] });
+      session.push({ op: 'state-facts', workspaceId: sA.workspaceIdentity(), facts: [fact] });
+      session.push({ op: 'want', paths: [] });
+      session.push({ op: 'files', items: [] });
+      session.push({ op: 'done', result: { stateFacts: 1 } });
+      assert.equal(failed, undefined);
+      assert.ok(settled, '重排控制帧仍应完成会话');
+      assert.ok(writes.some(row => row.op === 'state-fact-ack'));
+      assert.equal(sA.stateFacts().filter(row => row.factId === 'event:reorder').length, 1, '重复事实只保留一份');
+    } finally {
+      await sA.stop();
+      fs.rmSync(ws, { recursive: true, force: true });
+    }
   });
 });
 

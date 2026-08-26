@@ -6,6 +6,7 @@ const {
   shell, powerSaveBlocker, powerMonitor, session, safeStorage, BrowserWindow, desktopCapturer,
 } = require('electron');
 const fs = require('fs');
+const crypto = require('crypto');
 const { Readable } = require('stream'); // mazz-res media/ 分支：range 流式响应（GB 级不整读）
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -115,6 +116,19 @@ const { LibraryResourceSurfaceService } = require('./library-resource-surface-se
 const { registerLibraryResourceSurfaceIpc } = require('./library-resource-surface-ipc');
 const { LibraryWorkspaceConvergenceService } = require('./library-workspace-convergence');
 const { registerLibraryWorkspaceConvergenceIpc, workspaceToken: libraryWorkspaceToken } = require('./library-workspace-convergence-ipc');
+const { CapabilityExecutionService } = require('./capability-execution-service');
+const capabilityContract = require('./capability-execution-contract');
+const { createCapabilityExecutionOwnerCapability } = require('./capability-execution-store');
+const {
+  registerCapabilityExecutionIpc,
+  initializeCurrentCapabilityExecution,
+} = require('./capability-execution-ipc');
+const { createFixtureCapabilityAdapter } = require('./capabilities/fixture-capability-adapter');
+const { createCalcPythonAdapter } = require('./capabilities/calc-python-adapter');
+const { createChartSvgAdapter } = require('./capabilities/chart-svg-adapter');
+const { createBlenderExternalCapabilityAdapter } = require('./capabilities/blender-external-adapter');
+const { CanvasDocumentService } = require('./canvas-document-service');
+const { registerCanvasDocumentIpc } = require('./canvas-document-ipc');
 const WindowManager = require('./window-manager');
 const TrayService = require('./tray-service');
 const GlobalShortcuts = require('./global-shortcuts');
@@ -178,6 +192,8 @@ const {
 const { AddressableEvidenceService } = require('./addressable-evidence-service');
 const { ContextRelationService } = require('./context-relation-service');
 const { WorkspaceEventService } = require('./workspace-event-service');
+const { RelationRetrievalService } = require('./relation-retrieval-service');
+const { BranchEffectiveStateService } = require('./branch-effective-state-service');
 const { ContextCompilerService } = require('./context-compiler-service');
 const { CognitionService } = require('./cognition-service');
 const { CivilizationModelService } = require('./civilization-model-service');
@@ -229,6 +245,19 @@ const bus = new IpcBus();
 let crashRecovery = null;
 const libraryImportService = new LibraryImportService();
 const resourceLedger = new ResourceLedger();
+const capabilityExecutionOwner = createCapabilityExecutionOwnerCapability();
+const capabilityExecutionService = new CapabilityExecutionService({
+  resourceLedger,
+  ownerCapability: capabilityExecutionOwner,
+});
+capabilityExecutionService.register(createCalcPythonAdapter({ resourceLedger }));
+capabilityExecutionService.register(createChartSvgAdapter());
+const canvasDocumentService = new CanvasDocumentService({ rootProvider: () => store.get('workspace'), resourceLedger });
+let capabilityExecutionStartupReady = false;
+let capabilityExecutionStartupError = null;
+if (process.env.NODE_ENV === 'test' && process.env.MAZZ_E2E_CAPABILITY_FIXTURE === '1') {
+  capabilityExecutionService.register(createFixtureCapabilityAdapter());
+}
 const libraryTorrentTransport = new LibraryTorrentBookTransport({ resourceLedger });
 const libraryAcquisitionOwner = createSingleInstanceOwnerCapability();
 let libraryBrowserAcquisition = null;
@@ -270,9 +299,20 @@ const contextRelations = new ContextRelationService({
   rootProvider: () => store.get('workspace'), store, evidenceService: addressableEvidence,
 });
 const workspaceEvents = new WorkspaceEventService({ rootProvider: () => store.get('workspace'), store });
+// W94E domain producers share the one Workspace Event Ledger.  The services
+// are constructed earlier for their startup registration, so attach the
+// already-created ledger here before any IPC or recovery path can run.
+capabilityExecutionService.eventService = workspaceEvents;
+canvasDocumentService.eventService = workspaceEvents;
+libraryAcquisitionService.eventService = workspaceEvents;
+libraryResourceSurface.eventService = workspaceEvents;
+const relationRetrieval = new RelationRetrievalService({
+  rootProvider: () => store.get('workspace'), eventService: workspaceEvents, contextService: contextRelations,
+});
+const branchEffectiveState = new BranchEffectiveStateService({ rootProvider: () => store.get('workspace') });
 const contextCompiler = new ContextCompilerService({ rootProvider: () => store.get('workspace'), eventService: workspaceEvents });
 const cognitionService = new CognitionService({ rootProvider: () => store.get('workspace'), evidenceService: addressableEvidence, eventService: workspaceEvents });
-const civilizationModel = new CivilizationModelService();
+const civilizationModel = new CivilizationModelService({ eventService: workspaceEvents, rootProvider: () => store.get('workspace') });
 const accompanyService = new AccompanyService({ rootProvider: () => store.get('workspace') });
 const organizationalWorkspace = new OrganizationalWorkspaceService({ bus, rootProvider: () => store.get('workspace') });
 new MazAssetService({ bus });
@@ -287,6 +327,71 @@ if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_LIBRARY_RESOURCE_SURFACE__ = libraryResourceSurface;
   globalThis.__MAZZ_E2E_LIBRARY_TORRENT_TRANSPORT__ = libraryTorrentTransport;
   globalThis.__MAZZ_E2E_LIBRARY_CONVERGENCE__ = libraryWorkspaceConvergence;
+  globalThis.__MAZZ_E2E_CAPABILITY_EXECUTION__ = capabilityExecutionService;
+  globalThis.__MAZZ_E2E_RELATION_RETRIEVAL__ = relationRetrieval;
+  globalThis.__MAZZ_E2E_BRANCH_EFFECTIVE_STATE__ = branchEffectiveState;
+  globalThis.__MAZZ_E2E_SEED_ARTIFACT__ = async ({ workspacePath, bytesBase64, kind, mediaType, contentSchema } = {}) => {
+    const store = capabilityExecutionService._store(workspacePath);
+    const artifactStore = capabilityExecutionService._artifactStore(store);
+    const bytes = Buffer.from(String(bytesBase64 || ''), 'base64');
+    const publication = await artifactStore.publishBytes(bytes);
+    const existing = store.snapshot().artifacts.find(row => row.contentHash === publication.contentHash);
+    if (existing) return existing;
+    const at = new Date().toISOString();
+    const proposal = capabilityContract.normalizeProposal({
+      schema: capabilityContract.EXECUTION_PROPOSAL_SCHEMA,
+      workspaceIdentity: store.workspaceIdentity,
+      taskId: `task:artifact-import:${publication.contentHash}`, seatId: 'seat:human-maintainer',
+      capabilityId: 'mazz.artifact.import', capabilityVersion: '1.0.0', adapterId: 'mazz.artifact.import',
+      inputs: [], parameters: { kind: String(kind || 'source-artifact'), contentSchema: String(contentSchema || 'mazz.source/v1') },
+      expectedOutputs: [String(contentSchema || 'mazz.source/v1')], constraints: {}, authorityRef: 'human:w94d-fixture',
+      determinism: 'external', state: 'completed', revision: 1, createdAt: at, updatedAt: at,
+      activeLeaseId: '', receiptIds: [], artifactIds: [], failureCode: '',
+    }, { durable: true });
+    const leaseId = `lease-seed-${crypto.randomUUID()}`;
+    const receiptId = `receipt-seed-${crypto.randomUUID()}`;
+    const artifact = capabilityContract.normalizeArtifact({
+      schema: capabilityContract.ARTIFACT_SCHEMA,
+      artifactId: `artifact-${publication.contentHash}`,
+      workspaceIdentity: store.workspaceIdentity,
+      kind: String(kind || 'source-artifact'), mediaType: String(mediaType || 'application/octet-stream'),
+      contentSchema: String(contentSchema || 'mazz.source/v1'), contentHash: publication.contentHash,
+      definitionHash: '', storageRef: publication.storageRef, createdByReceiptId: receiptId,
+      sourceArtifacts: [], rightsRef: '', mutableHead: false, revision: 1, createdAt: at,
+    }, { durable: true });
+    const lease = capabilityContract.normalizeLease({
+      schema: capabilityContract.EXECUTION_LEASE_SCHEMA, leaseId, workspaceIdentity: store.workspaceIdentity,
+      proposalId: proposal.proposalId, ownerKind: 'main-process', ownerId: `process:${process.pid}`,
+      state: 'released', acquiredAt: at, heartbeatAt: at, cancelRequestedAt: '', releasedAt: at,
+      releaseReason: 'SOURCE_ARTIFACT_IMPORTED', revision: 1,
+    }, { durable: true });
+    const receipt = capabilityContract.normalizeReceipt({
+      schema: capabilityContract.EXECUTION_RECEIPT_SCHEMA, receiptId, proposalId: proposal.proposalId,
+      leaseId, workspaceIdentity: store.workspaceIdentity,
+      capability: { id: 'mazz.artifact.import', version: '1.0.0', adapterId: 'mazz.artifact.import' },
+      state: 'completed', inputFacts: [], outputFacts: [artifact.artifactId],
+      environment: { runtime: 'main', mode: 'source-artifact-import' }, determinism: 'external', seed: null,
+      startedAt: at, finishedAt: at, diagnostics: { code: 'SOURCE_ARTIFACT_IMPORTED', summaryRef: 'diagnostic:w94d-seed' },
+      resourceFinal: {}, provenance: { authorityRef: 'human:w94d-fixture' }, revision: 1,
+    }, { durable: true });
+    const completedProposal = capabilityContract.normalizeProposal({
+      ...proposal, receiptIds: [receipt.receiptId], artifactIds: [artifact.artifactId], updatedAt: at, revision: 2,
+    }, { durable: true });
+    store.transact({ apply: state => {
+      state.proposals.push(completedProposal);
+      state.leases.push(lease);
+      state.receipts.push(receipt);
+      state.artifacts.push(artifact);
+      return state;
+    } });
+    return artifact;
+  };
+  globalThis.__MAZZ_E2E_SEED_CURRENT_ARTIFACT__ = async () => globalThis.__MAZZ_E2E_SEED_ARTIFACT__({
+    workspacePath: process.env.MAZZ_E2E_WORKSPACE,
+    bytesBase64: fs.readFileSync(path.join(process.env.MAZZ_E2E_WORKSPACE, 'w94d-seed-input.bin')).toString('base64'),
+    kind: 'blender-scene', mediaType: 'application/x-blender', contentSchema: 'mazz.blender-scene/v1',
+  });
+  globalThis.__MAZZ_E2E_CANVAS_DOCUMENT__ = canvasDocumentService;
 }
 const factoryRuntimeOwners = new WeakSet();
 const wm = new WindowManager({ store, iconPath: path.join(__dirname, '..', 'resources', 'icons', 'app.png'), resourceLedger });
@@ -448,6 +553,20 @@ function registerChannels() {
     isStartupReady: () => libraryAcquisitionStartupReady,
     isTrustedSender: isTrustedLibraryShellSender,
   });
+  registerCapabilityExecutionIpc({
+    bus,
+    service: capabilityExecutionService,
+    currentWorkspace: () => store.get('workspace'),
+    isStartupReady: () => capabilityExecutionStartupReady,
+    isTrustedSender: isTrustedLibraryShellSender,
+  });
+  registerCanvasDocumentIpc({
+    bus,
+    service: canvasDocumentService,
+    currentWorkspace: () => store.get('workspace'),
+    isStartupReady: () => capabilityExecutionStartupReady,
+    isTrustedSender: isTrustedLibraryShellSender,
+  });
   const bindFactoryOwner = sender => {
     if (!sender || factoryRuntimeOwners.has(sender)) return String(sender?.id || '');
     factoryRuntimeOwners.add(sender);
@@ -507,6 +626,20 @@ function registerChannels() {
   bus.handle('events:setEnabled', async ({ enabled } = {}) => workspaceEvents.setEnabled(enabled));
   bus.handle('events:applyRetention', async payload => workspaceEvents.applyRetention(payload));
   bus.handle('events:clear', async payload => workspaceEvents.clear(payload));
+  bus.handle('relation:query', async payload => relationRetrieval.query(payload));
+  bus.handle('relation:snapshot', async () => relationRetrieval.snapshot());
+  bus.handle('relation:rejectCandidate', async payload => relationRetrieval.rejectCandidate(payload));
+  bus.handle('relation:reject-candidate', async payload => relationRetrieval.rejectCandidate(payload));
+  bus.handle('relation:rebuild', async () => relationRetrieval.rebuild());
+  bus.handle('branch:snapshot', async () => branchEffectiveState.snapshot());
+  bus.handle('branch:create', async payload => branchEffectiveState.create(payload));
+  bus.handle('branch:attachParent', async payload => branchEffectiveState.attachParent(payload));
+  bus.handle('branch:attach-parent', async payload => branchEffectiveState.attachParent(payload));
+  bus.handle('branch:setRevision', async payload => branchEffectiveState.setRevision(payload));
+  bus.handle('branch:set-revision', async payload => branchEffectiveState.setRevision(payload));
+  bus.handle('branch:resolveConflict', async payload => branchEffectiveState.resolveConflict(payload));
+  bus.handle('branch:resolve-conflict', async payload => branchEffectiveState.resolveConflict(payload));
+  bus.handle('branch:rebuild', async () => branchEffectiveState.rebuild());
   bus.handle('contextPackage:compile', async payload => contextCompiler.compile(payload));
   bus.handle('contextPackage:list', async () => contextCompiler.list());
   bus.handle('cognition:list', async () => cognitionService.list());
@@ -1590,6 +1723,32 @@ function registerChannels() {
     try {
       // 自定义协议 URL 首段是 host 不是 path：mazz-res://lib/x → host=lib（丢段 404 实锤）——host+pathname 拼回全路径
       const u = new URL(req.url);
+      if (u.host === 'artifact') {
+        const token = decodeURIComponent(u.pathname.replace(/^\/+/, ''));
+        const opened = await capabilityExecutionService.openArtifactGrant(token);
+        if (req.method === 'HEAD') opened.stream.destroy();
+        const body = req.method === 'HEAD' ? null : Readable.toWeb(opened.stream);
+        return new Response(body, { status: 200, headers: {
+          'Content-Type': opened.mediaType,
+          'Content-Length': String(opened.size),
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Cross-Origin-Resource-Policy': 'same-origin',
+        } });
+      }
+      if (u.host === 'canvas-artifact') {
+        const token = decodeURIComponent(u.pathname.replace(/^\/+/, ''));
+        const opened = await canvasDocumentService.openExportGrant(token);
+        if (req.method === 'HEAD') opened.stream.destroy();
+        const body = req.method === 'HEAD' ? null : Readable.toWeb(opened.stream);
+        return new Response(body, { status: 200, headers: {
+          'Content-Type': 'image/svg+xml',
+          'Content-Length': String(opened.size),
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Cross-Origin-Resource-Policy': 'same-origin',
+        } });
+      }
       if (u.host === 'audio-artwork') {
         const artworkPath = audioArtworkPathFromResourceUrl(u);
         return serveAudioArtwork(artworkPath, { method: req.method, signal: req.signal });
@@ -2192,6 +2351,40 @@ app.whenReady().then(async () => {
   crashRecovery = new CrashRecovery({ app, bus });
   watcher = new FileWatcher({ bus, windowManager: wm, resourceLedger });
 
+  // External process supervisors and the Blender capability are created
+  // before capability recovery so W94D participates in the same startup gate
+  // as Calc, Chart and Canvas.  The executable is probed only; Blender is
+  // never downloaded or installed by Mazz.
+  const cliSupervisor = new CliSupervisor({ resourceLedger });
+  const externalToolSupervisor = new CliSupervisor({
+    resourceLedger,
+    resourceType: 'external-tool-process',
+    handleOwnerTool: 'external-tool-supervisor',
+    forceKillTreeOnTerminate: true,
+  });
+  const blenderFixtureNode = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_NODE || '') : '';
+  const blenderFixture = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_FIXTURE || '') : '';
+  const blenderScriptPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'resources', 'tools', 'blender', 'mazz_blender_capability.py')
+    : path.join(app.getAppPath(), 'resources', 'tools', 'blender', 'mazz_blender_capability.py');
+  const externalTools = new ExternalToolService({
+    bus,
+    adapters: [createBlenderHeadlessAdapter({
+      supervisor: externalToolSupervisor,
+      scriptPath: app.isPackaged
+        ? path.join(process.resourcesPath, 'app.asar.unpacked', 'resources', 'tools', 'blender', 'mazz_render_frame.py')
+        : path.join(app.getAppPath(), 'resources', 'tools', 'blender', 'mazz_render_frame.py'),
+      allowedRootsProvider: () => [store.get('workspace', '')],
+      ...(blenderFixtureNode && blenderFixture ? { executablePath: blenderFixtureNode, commandPrefix: [blenderFixture] } : {}),
+    })],
+  });
+  capabilityExecutionService.register(createBlenderExternalCapabilityAdapter({
+    supervisor: externalToolSupervisor,
+    scriptPath: blenderScriptPath,
+    allowedRootsProvider: () => [store.get('workspace', '')],
+    ...(blenderFixtureNode && blenderFixture ? { executablePath: blenderFixtureNode, commandPrefix: [blenderFixture] } : {}),
+  }));
+
   // Single-instance startup is the only authority that may repair dead
   // acquisition locks or turn interrupted active Jobs into durable paused
   // facts. This path is entirely local and must never start DNS/network I/O.
@@ -2206,6 +2399,22 @@ app.whenReady().then(async () => {
     libraryAcquisitionStartupReady = false;
     libraryAcquisitionStartupError = error;
     console.warn('[library-acquisition] startup hold:', error?.code || 'LIBRARY_ACQUISITION_STARTUP_FAILED');
+  }
+
+  // W94A capability recovery shares the single-instance startup authority.
+  // It is entirely local: interrupted Leases become durable paused facts and
+  // are never automatically replayed before the first app shell exists.
+  try {
+    await initializeCurrentCapabilityExecution({
+      service: capabilityExecutionService,
+      currentWorkspace: () => store.get('workspace'),
+    });
+    capabilityExecutionStartupReady = true;
+    capabilityExecutionStartupError = null;
+  } catch (error) {
+    capabilityExecutionStartupReady = false;
+    capabilityExecutionStartupError = error;
+    console.warn('[capability-execution] startup hold:', error?.code || 'CAPABILITY_STARTUP_FAILED');
   }
   libraryAcquisitionStartupSettled = true;
 
@@ -2237,19 +2446,24 @@ app.whenReady().then(async () => {
       await libraryAcquisitionService.shutdown();
       await libraryResourceSurface.shutdown();
       await libraryTorrentTransport.shutdown();
+      await canvasDocumentService.shutdown();
+      await capabilityExecutionService.shutdown('app-quit');
       const bridgeState = libraryBrowserAcquisition?.snapshot?.() || {
         activeItemCount: 0, pendingCompletionCount: 0,
       };
       const serviceState = libraryAcquisitionService.snapshot();
       const resourceSurfaceState = libraryResourceSurface.snapshotResources();
       const torrentState = libraryTorrentTransport.snapshot();
+      const capabilityState = capabilityExecutionService.snapshot();
       if (bridgeState.activeItemCount !== 0 || bridgeState.pendingCompletionCount !== 0
           || serviceState.activeCount !== 0
           || resourceSurfaceState.contextCount !== 0
           || resourceSurfaceState.operationCount !== 0
           || resourceSurfaceState.backgroundCount !== 0
           || resourceSurfaceState.controllerCount !== 0
-          || torrentState.activeCount !== 0) {
+          || torrentState.activeCount !== 0
+          || capabilityState.activeCount !== 0
+          || capabilityState.durabilityFailureCount !== 0) {
         const error = new Error('Library acquisition owners did not reach the durable quit boundary');
         error.code = 'LIBRARY_ACQUISITION_QUIT_BOUNDARY_FAILED';
         throw error;
@@ -2309,6 +2523,7 @@ app.whenReady().then(async () => {
   const torrentDaemon = new TorrentDaemon({
     bus, workspace: () => store.get('workspace'), session: browserSess, resourceLedger,
   });
+  if (process.env.NODE_ENV === 'test') globalThis.__MAZZ_E2E_TORRENT_DAEMON__ = torrentDaemon;
   app.on('before-quit', () => torrentDaemon.destroy().catch(e => console.warn('[torrent] quit cleanup:', e.message)));
   app.on('before-quit', () => factoryAiRequests.destroy('app-quit').catch(e => console.warn('[factory-ai] quit cleanup:', e.message)));
   app.on('before-quit', () => factoryRunOwners.destroy('app-quit'));
@@ -2378,13 +2593,6 @@ app.whenReady().then(async () => {
   } catch (e) { console.warn('[author-sess]', e.message); }
 
   // —— W71 资源账本 + W66 Agent Harness Foundation ——
-  const cliSupervisor = new CliSupervisor({ resourceLedger });
-  const externalToolSupervisor = new CliSupervisor({
-    resourceLedger,
-    resourceType: 'external-tool-process',
-    handleOwnerTool: 'external-tool-supervisor',
-    forceKillTreeOnTerminate: true,
-  });
   if (!store.get('agentRulePackPath', '') && !app.isPackaged) {
     const maintenanceRulePack = path.join(app.getPath('downloads'), '交付区', 'Mazz Editor 开发军规.md');
     if (fs.existsSync(maintenanceRulePack)) store.set('agentRulePackPath', maintenanceRulePack);
@@ -2420,20 +2628,6 @@ app.whenReady().then(async () => {
     bus, windowManager: wm, resourceLedger, cliSupervisor, adapters,
     activationProvider: permissionProfileRef => doctrineRuntime.provide(permissionProfileRef),
     contextProvider: payload => contextCompiler.compileForHarness(payload),
-  });
-  const blenderFixtureNode = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_NODE || '') : '';
-  const blenderFixture = process.env.NODE_ENV === 'test' ? String(process.env.MAZZ_E2E_BLENDER_FIXTURE || '') : '';
-  const blenderScriptPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'resources', 'tools', 'blender', 'mazz_render_frame.py')
-    : path.join(app.getAppPath(), 'resources', 'tools', 'blender', 'mazz_render_frame.py');
-  const externalTools = new ExternalToolService({
-    bus,
-    adapters: [createBlenderHeadlessAdapter({
-      supervisor: externalToolSupervisor,
-      scriptPath: blenderScriptPath,
-      allowedRootsProvider: () => [store.get('workspace', '')],
-      ...(blenderFixtureNode && blenderFixture ? { executablePath: blenderFixtureNode, commandPrefix: [blenderFixture] } : {}),
-    })],
   });
   bus.handle('harness:activationStatus', async () => doctrineRuntime.status());
   bus.handle('harness:chooseRulePack', async () => {

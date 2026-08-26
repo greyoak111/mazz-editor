@@ -1,0 +1,77 @@
+{
+  "schema": "mazz.w94e-domain-event-coverage/v0",
+  "generatedAt": "2026-08-27T01:09:54.740+08:00",
+  "status": "PARTIAL",
+  "policy": {
+    "requiredOutcomes": ["success", "failed", "cancelled", "approval"],
+    "metadataOnly": true,
+    "forbiddenPayloads": ["正文", "路径", "凭据", "transcript", "token", "command"]
+  },
+  "producers": [
+    {
+      "domain": "factory",
+      "producer": "renderer/modules/factory/index.js",
+      "capture": true,
+      "outcomes": ["success", "failed", "cancelled", "approval"],
+      "paths": ["runTask finally", "approveResearch success/failure", "task stop via runTask"],
+      "missing": []
+    },
+    {
+      "domain": "library",
+      "producer": "main/library-resource-surface-service.js + main/library-acquisition-service.js",
+      "capture": true,
+      "outcomes": ["success", "failed", "cancelled", "approval"],
+      "paths": ["search/addManual/inspect/acquire/action/repair/configure", "HTTP/Torrent/Browser durable Job settlement"],
+      "missing": []
+    },
+    {
+      "domain": "player",
+      "producer": "renderer/modules/viewer/index.js",
+      "capture": true,
+      "outcomes": ["success", "failed", "cancelled"],
+      "paths": ["media open", "unsupported/decode/read failure", "viewer destroy"],
+      "missing": ["no separate human approval operation exists in current Player contract"]
+    },
+    {
+      "domain": "calc",
+      "producer": "main/capability-execution-service.js + calc adapter",
+      "capture": true,
+      "outcomes": ["success", "failed", "cancelled", "approval"],
+      "paths": ["proposal approval", "durable execution settle"],
+      "missing": []
+    },
+    {
+      "domain": "chart",
+      "producer": "main/capability-execution-service.js + chart adapter",
+      "capture": true,
+      "outcomes": ["success", "failed", "cancelled", "approval"],
+      "paths": ["proposal approval", "durable execution settle"],
+      "missing": []
+    },
+    {
+      "domain": "canvas",
+      "producer": "main/canvas-document-service.js",
+      "capture": true,
+      "outcomes": ["success", "failed", "approval"],
+      "paths": ["create/operation/undo/redo/export"],
+      "missing": ["no explicit Canvas cancel operation exists in current contract"]
+    },
+    {
+      "domain": "blender",
+      "producer": "main/capability-execution-service.js + blender adapter",
+      "capture": true,
+      "outcomes": ["success", "failed", "cancelled", "approval"],
+      "paths": ["proposal approval", "external process-tree settle"],
+      "missing": []
+    },
+    {
+      "domain": "world",
+      "producer": "main/civilization-model-service.js",
+      "capture": true,
+      "outcomes": ["success", "failed"],
+      "paths": ["simulate/filter/reconcile"],
+      "missing": ["current Civilization contract has no cancel or human approval method"]
+    }
+  ],
+  "interpretation": "Producer hooks are now wired and auditable. W94E remains PARTIAL because the Events gate requires four outcome classes for every formal domain; missing classes are recorded rather than fabricated."
+}

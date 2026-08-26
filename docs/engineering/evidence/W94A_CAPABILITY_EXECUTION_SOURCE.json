@@ -1,0 +1,30 @@
+{
+  "schema": "mazz.w94a-capability-execution-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "product": "source",
+  "capabilityId": "mazz.fixture.echo",
+  "proposalId": "proposal-sha256-50c4437218674ddfab98313fcc17e7d0ba96a7d5202231310f408c832ef3a3f0",
+  "receiptId": "receipt-4e2fcebd-9ba6-4f92-886b-d23eccec2bd3",
+  "artifactId": "artifact-sha256-21fe0e063bdd1f061d1daba6117c0a82276e8c0e157c835ddf717fb7c2017e34",
+  "contentHash": "sha256-21fe0e063bdd1f061d1daba6117c0a82276e8c0e157c835ddf717fb7c2017e34",
+  "exactReplay": true,
+  "restartReopen": true,
+  "persistedCounts": {
+    "proposals": 1,
+    "receipts": 1,
+    "artifacts": 1
+  },
+  "fileTreeInternalEvents": 0,
+  "networkCalls": 0,
+  "resources": {
+    "capabilityExecutionOwners": 0,
+    "serviceActiveCount": 0,
+    "durabilityFailureCount": 0
+  },
+  "runtimeErrors": [],
+  "stateSha256": "67738b093d811b9dada725bac5f7655a7cacd8541b0c304cac1195426ac6ab4b",
+  "rendererBundleSha256": "5516bc920c1314969f8024ec723d5d2c9555b679926ac1335c43e2c0586cec57",
+  "executableSha256": null,
+  "generatedAt": "2026-08-26T18:06:45.762Z"
+}

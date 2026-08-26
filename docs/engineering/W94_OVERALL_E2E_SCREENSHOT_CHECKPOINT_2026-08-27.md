@@ -1,0 +1,35 @@
+# W94 Overall E2E + Screenshot Checkpoint
+
+> 结论：**验证通过 / W94 总波仍保持 PARTIAL**  
+> 日期：2026-08-27  
+> 范围：W94A–W94F 已落地内容的 Source/Packaged 运行回归与桌面整体截图核验
+
+## 1. 验证矩阵
+
+| 波次 | Source | Packaged (`win-unpacked`) | 关键断言 |
+|---|---|---|---|
+| W94A Capability Execution Spine | PASS | PASS | exact replay、restart/reopen、durable proposal/receipt/artifact、资源归零 |
+| W94B Calc + Chart Artifact | PASS | PASS | typed calc `5`、deterministic SVG、single-use artifact grant、资源归零 |
+| W94C Canvas Agent | PASS | PASS | document roundtrip、revision、SVG export、single-use grant |
+| W94D Blender External Capability | PASS | PASS | Blender 5.2 fixture probe、render/inspect/export、失败/取消、外部进程归零 |
+| W94E Relation + Branch | PASS | PASS | 查询解释/拒绝重放、多父冲突 resolution、8 domain event、state-fact 边界 |
+| W94F Player Transport | PASS | PASS | 51 项无固定队列门、清理后 0、重启 `paused`、显式 resume 到 `downloading`、torrent owner 归零 |
+
+Packaged 运行均使用同一构建代际，EXE SHA-256：
+`a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9`。
+
+所有六个波次均报告 `networkCalls=0`、`runtimeErrors=[]`；运行结束后 Mazz Editor 进程数为 `0`。
+
+## 2. 桌面截图核验
+
+截图来自当前 Packaged 窗口（Windows 10 兼容捕获 helper，`mappingValid=true`、`blankSuspected=false`、`protected=false`、`captureExcluded=false`），并已逐张目视检查：
+
+- [`W94_OVERALL_PACKAGED_20260827.png`](./evidence/W94_OVERALL_PACKAGED_20260827.png)：主界面、完整侧栏、文件树、核心模块入口，布局稳定，无侧栏刷新闪动。
+- [`W94_PLAYER_PACKAGED_20260827_c.png`](./evidence/W94_PLAYER_PACKAGED_20260827_c.png)：播放器空态、播放控制条及“播放列表/媒体库/网络资源/下载”入口均可见，状态清晰。
+- [`W94_CALC_PACKAGED_20260827_b.png`](./evidence/W94_CALC_PACKAGED_20260827_b.png)：计算 REPL、隔离 Python 状态、重启内核/清屏/运行入口和输入区均可见。
+
+截图只读核验，没有导入、播放、执行或写入用户资源。
+
+## 3. 边界声明
+
+本检查点只证明已实现的 W94A–F 切片在 Source/Packaged 和当前桌面壳中通过；不把未施工内容写成完成：W94E 第二个 Mazz 实例 A/B、W94Fc–Fe、媒体资源到 W93 书籍 Job 的正式桥接、Workspace A/B 切换及其余公共入口仍按各自检查点保持 PARTIAL/OPEN。

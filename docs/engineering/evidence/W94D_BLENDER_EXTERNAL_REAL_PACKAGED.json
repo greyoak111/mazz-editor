@@ -1,0 +1,77 @@
+{
+  "schema": "mazz.w94d-blender-external-runtime/v1",
+  "mode": "packaged-real",
+  "result": "PASS",
+  "capability": {
+    "id": "mazz.blender.external",
+    "version": "1.0.0",
+    "adapterId": "mazz.blender.external-process",
+    "fixtureProbe": {
+      "state": "available",
+      "checkedAt": "2026-08-26T12:10:33.105Z",
+      "reason": "BLENDER_EXECUTABLE_RESOLVED",
+      "evidenceRef": "runtime:blender-probe"
+    }
+  },
+  "operations": [
+    {
+      "operation": "scene.render.frame/v0",
+      "proposalId": "proposal-sha256-72a5b3e31f6b23f8c3026d429d1e7a97faa59521b120b89e06893b0fd696a144",
+      "receiptId": "receipt-eaa94d4a-aab2-4393-b66b-18b8e585b788",
+      "artifactId": "artifact-sha256-50c4783cdee3f331da0f71807967888a787fd37274800457ded9edc0f518d393",
+      "contentHash": "sha256-50c4783cdee3f331da0f71807967888a787fd37274800457ded9edc0f518d393",
+      "environment": {
+        "runtime": "blender",
+        "toolVersion": "Blender 5.2.1 LTS",
+        "operation": "scene.render.frame/v0",
+        "executionPlane": "external-process",
+        "graphics": "external-tool-reported"
+      }
+    },
+    {
+      "operation": "scene.inspect/v0",
+      "proposalId": "proposal-sha256-a79a8250ab0b2e302fabcad4fa0676c9742552a3b4f95de396c8c448345cc5f5",
+      "receiptId": "receipt-31ae2a1f-6916-4b2f-9056-860218405bce",
+      "artifactId": "artifact-sha256-36015a889a562e3daee0142a84f22148d85be6158740d31fb18f82c9bb53a582",
+      "contentHash": "sha256-36015a889a562e3daee0142a84f22148d85be6158740d31fb18f82c9bb53a582",
+      "environment": {
+        "runtime": "blender",
+        "toolVersion": "Blender 5.2.1 LTS",
+        "operation": "scene.inspect/v0",
+        "executionPlane": "external-process",
+        "graphics": "external-tool-reported"
+      }
+    },
+    {
+      "operation": "scene.export.obj/v0",
+      "proposalId": "proposal-sha256-c6b7fee81dc2faab206530b7330d056549ce46b195709f492fc69811acba0257",
+      "receiptId": "receipt-72e34331-eab7-4303-944d-0946ca98f0df",
+      "artifactId": "artifact-sha256-7ac8ce1e5ce15016386d9ebba60b8e58538bdfa5eb95e3149cbd39631786497d",
+      "contentHash": "sha256-7ac8ce1e5ce15016386d9ebba60b8e58538bdfa5eb95e3149cbd39631786497d",
+      "environment": {
+        "runtime": "blender",
+        "toolVersion": "Blender 5.2.1 LTS",
+        "operation": "scene.export.obj/v0",
+        "executionPlane": "external-process",
+        "graphics": "external-tool-reported"
+      }
+    }
+  ],
+  "failure": null,
+  "cancellation": null,
+  "persistedCounts": {
+    "proposals": 4,
+    "receipts": 4,
+    "artifacts": 4,
+    "blobs": 4
+  },
+  "resources": {
+    "activeCount": 0,
+    "externalToolProcesses": 0,
+    "artifactStagingCount": 0
+  },
+  "networkCalls": 0,
+  "runtimeErrors": [],
+  "executableSha256": "7b72ef5d5ae2335b57d841d9eaeb692bd6a67b59e63799dad5fd72c3cbbde8b2",
+  "generatedAt": "2026-08-26T12:10:41.620Z"
+}

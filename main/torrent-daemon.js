@@ -17,6 +17,7 @@ Module._load = function (request, parent, isMain) {
 const path = require('path');
 const fs = require('fs');
 const { normalizeInfoHash } = require('./torrent-site-core');
+const PlayerTransportSessionStore = require('./player-transport-session-store');
 
 const MAX_INLINE_FILE_BYTES = 32 * 1024 * 1024;
 
@@ -40,6 +41,8 @@ class TorrentDaemon {
   constructor({ bus, workspace, session, resourceLedger = null, loadWebTorrent = () => import('webtorrent') }) {
     this.bus = bus;
     this.workspace = workspace; // () => 当前工作区路径
+    const initialWorkspace = typeof workspace === 'function' ? workspace() : workspace;
+    this.workspacePath = path.resolve(String(initialWorkspace || process.cwd()));
     this.session = session;
     this.resourceLedger = resourceLedger;
     this.loadWebTorrent = loadWebTorrent;
@@ -56,12 +59,22 @@ class TorrentDaemon {
     // 否则用户不加种子迁移永不触发，工作区树/媒体库扫描继续瞎（真机实锤））
     try { this.storeRoot(); } catch {}
     this.register();
+    this.sessionStore = null;
+    this.persistenceError = null;
+    try {
+      this.sessionStore = new PlayerTransportSessionStore({ workspacePath: this.workspacePath });
+      this._hydrateDurableJobs();
+    } catch (error) {
+      // Keep the shell alive, but do not reinterpret corrupt durable state as
+      // a valid empty queue. New writes fail closed through _requireSessionStore.
+      this.persistenceError = error;
+    }
   }
 
   storeRoot() {
     // 明面化（W44：旧 .download 点目录在工作区树/媒体库扫描里全隐身——用户找不到下载物实锤）。
     // 旧目录一次性合并迁移（rename 同卷零拷贝；.audcache 抽轨缓存不在此列，继续隐身）
-    const base = path.join(this.workspace(), '媒体库');
+    const base = path.join(this.workspacePath, '媒体库');
     const legacy = path.join(base, '.download');
     const dir = path.join(base, 'download');
     try {
@@ -75,6 +88,66 @@ class TorrentDaemon {
       }
     } catch {}
     return dir;
+  }
+
+  _hydrateDurableJobs() {
+    if (!this.sessionStore) return;
+    for (const persisted of this.sessionStore.list()) {
+      if (persisted.state === 'cancelled') continue;
+      let state = persisted.state;
+      // A process restart is not permission to resume network I/O. Active
+      // sessions re-enter a durable paused state and need an explicit resume.
+      if (state === 'queued' || state === 'downloading') {
+        const updated = this.sessionStore.update(persisted.infoHash, persisted.revision, { state: 'paused' });
+        state = updated.state;
+        persisted.revision = updated.revision;
+        persisted.updatedAt = updated.updatedAt;
+      }
+      this.jobs.set(persisted.infoHash, {
+        infoHash: persisted.infoHash,
+        magnet: `magnet:?xt=urn:btih:${persisted.infoHash}`,
+        title: persisted.title,
+        state,
+        error: persisted.error,
+        files: persisted.files,
+        createdAt: Date.parse(persisted.createdAt) || Date.now(),
+        updatedAt: Date.parse(persisted.updatedAt) || Date.now(),
+        pauseRequested: state === 'paused',
+        cancelled: false,
+        runPromise: null,
+        revision: persisted.revision,
+      });
+    }
+  }
+
+  _requireSessionStore() {
+    if (this.persistenceError) throw this.persistenceError;
+    if (!this.sessionStore) throw new Error('Player transport durable store is unavailable');
+    return this.sessionStore;
+  }
+
+  _createSession(job) {
+    const persisted = this._requireSessionStore().create({
+      infoHash: job.infoHash,
+      title: job.title,
+      state: job.state,
+      files: job.files || [],
+    });
+    job.revision = persisted.revision;
+    return persisted;
+  }
+
+  _persistJob(job, patch = {}) {
+    const persisted = this._requireSessionStore().update(job.infoHash, job.revision, {
+      ...patch,
+      state: patch.state || job.state,
+      title: patch.title ?? job.title,
+      error: patch.error ?? job.error,
+      files: patch.files ?? job.files ?? [],
+    });
+    job.revision = persisted.revision;
+    job.updatedAt = Date.parse(persisted.updatedAt) || Date.now();
+    return persisted;
   }
 
   async ensureClient() {
@@ -209,14 +282,19 @@ class TorrentDaemon {
       } else {
         job.state = rec?.t?.done ? 'completed' : 'downloading';
       }
+      this._persistJob(job);
       rec?.t?.once?.('done', () => {
         const current = this.jobs.get(job.infoHash);
-        if (current) { current.state = 'completed'; current.updatedAt = Date.now(); }
+        if (current) {
+          current.state = 'completed'; current.updatedAt = Date.now();
+          try { this._persistJob(current); } catch (error) { this.persistenceError = error; }
+        }
       });
       rec?.t?.once?.('error', (error) => {
         const current = this.jobs.get(job.infoHash);
         if (current && current.state !== 'completed') {
           current.state = 'failed'; current.error = error?.message || String(error); current.updatedAt = Date.now();
+          try { this._persistJob(current); } catch (persistError) { this.persistenceError = persistError; }
         }
       });
     } catch (error) {
@@ -224,6 +302,7 @@ class TorrentDaemon {
         job.state = 'failed';
         job.error = error?.message || String(error);
         job.updatedAt = Date.now();
+        try { this._persistJob(job); } catch (persistError) { this.persistenceError = persistError; }
       }
     } finally {
       job.runPromise = null;
@@ -235,12 +314,12 @@ class TorrentDaemon {
     if (!infoHash) throw new Error('magnet 缺少合法 BTIH');
     const existing = this.jobs.get(infoHash);
     if (existing) return this._jobSnapshot(existing);
-    if (this.jobs.size >= 50) throw new Error('下载队列已达 50 项上限，请先清理已完成或失败任务');
     const now = Date.now();
     const job = {
       infoHash, magnet, title: String(name || '').trim(), state: 'queued', error: '', files: [],
       createdAt: now, updatedAt: now, pauseRequested: false, cancelled: false, runPromise: null,
     };
+    this._createSession(job);
     this.jobs.set(infoHash, job);
     job.runPromise = this._runJob(job);
     return this._jobSnapshot(job);
@@ -261,7 +340,24 @@ class TorrentDaemon {
 
   register() {
     const bus = this.bus;
-    bus.handle('tor:add', async ({ magnet, name }) => this._addTorrent({ magnet, name }));
+    bus.handle('tor:add', async ({ magnet, name }) => {
+      const result = await this._addTorrent({ magnet, name });
+      const existing = this.jobs.get(result.infoHash);
+      if (!existing) {
+        const now = Date.now();
+        const job = {
+          infoHash: result.infoHash,
+          magnet: `magnet:?xt=urn:btih:${result.infoHash}`,
+          title: result.name || String(name || ''),
+          state: 'downloading', error: '', files: result.files || [],
+          createdAt: now, updatedAt: now,
+          pauseRequested: false, cancelled: false, runPromise: null,
+        };
+        this._createSession(job);
+        this.jobs.set(result.infoHash, job);
+      }
+      return result;
+    });
     bus.handle('tor:addBuffer', async ({ magnet, name }) => this._enqueue({ magnet, name }));
     bus.handle('tor:queue', async () => [...this.jobs.values()].map((job) => this._jobSnapshot(job)).sort((left, right) => right.createdAt - left.createdAt));
     bus.handle('tor:pause', async ({ infoHash }) => {
@@ -271,6 +367,7 @@ class TorrentDaemon {
       job.state = 'paused';
       job.updatedAt = Date.now();
       this.torrents.get(infoHash)?.t?.pause?.();
+      this._persistJob(job);
       return this._jobSnapshot(job);
     });
     bus.handle('tor:resume', async ({ infoHash }) => {
@@ -282,6 +379,7 @@ class TorrentDaemon {
       torrent?.resume?.();
       job.state = torrent ? (torrent.done ? 'completed' : 'downloading') : 'queued';
       job.updatedAt = Date.now();
+      this._persistJob(job);
       if (!torrent && !job.runPromise) job.runPromise = this._runJob(job);
       return this._jobSnapshot(job);
     });
@@ -292,6 +390,7 @@ class TorrentDaemon {
       job.error = '';
       job.state = 'queued';
       job.updatedAt = Date.now();
+      this._persistJob(job);
       job.runPromise = this._runJob(job);
       return this._jobSnapshot(job);
     });
@@ -335,7 +434,9 @@ class TorrentDaemon {
     bus.handle('tor:remove', async ({ infoHash, deleteFiles }) => {
       const job = this.jobs.get(infoHash);
       if (job) { job.cancelled = true; this.jobs.delete(infoHash); }
-      return this._removeTorrent(infoHash, deleteFiles);
+      const result = await this._removeTorrent(infoHash, deleteFiles);
+      this.sessionStore?.remove(infoHash, job?.revision ?? null);
+      return result;
     });
     if (process.env.NODE_ENV === 'test') {
       bus.handle('tor:runtimeProbe', async () => {
@@ -350,7 +451,13 @@ class TorrentDaemon {
     if (this.destroying) return this.destroying;
     this.destroying = (async () => {
       const records = [...this.torrents.values()];
-      for (const job of this.jobs.values()) job.cancelled = true;
+      for (const job of this.jobs.values()) {
+        job.cancelled = true;
+        if (job.state === 'queued' || job.state === 'downloading') {
+          job.state = 'paused';
+          try { this._persistJob(job); } catch (error) { this.persistenceError = error; }
+        }
+      }
       this.jobs.clear();
       this.torrents.clear();
       for (const rec of records) {

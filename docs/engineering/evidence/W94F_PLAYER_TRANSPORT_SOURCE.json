@@ -1,0 +1,22 @@
+{
+  "schema": "mazz.w94f-player-transport-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "fakeRuntime": true,
+  "fixedQueueLimit": false,
+  "queueAccepted": 51,
+  "queueAfterCleanup": 0,
+  "restart": {
+    "restoredCount": 1,
+    "restoredState": "paused",
+    "resumedState": "downloading"
+  },
+  "resources": {
+    "torrentActiveBeforeDestroy": 3,
+    "torrentActiveAfterDestroy": 0
+  },
+  "networkCalls": 0,
+  "runtimeErrors": [],
+  "executableSha256": null,
+  "generatedAt": "2026-08-26T18:09:34.859Z"
+}

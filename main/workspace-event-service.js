@@ -43,9 +43,12 @@ class WorkspaceEventService {
     }
     return this.cache;
   }
-  list({ limit = 500 } = {}) {
+  list({ limit = null } = {}) {
     const records = this.readRecords();
-    return records.slice(-Math.max(1, Math.min(Number(limit) || 500, 5000))).map(record => record.event);
+    if (limit == null || limit === '') return records.map(record => record.event);
+    const amount = Number(limit);
+    if (!Number.isFinite(amount) || amount < 1) return records.map(record => record.event);
+    return records.slice(-Math.floor(amount)).map(record => record.event);
   }
   capture(input = {}) {
     if (!this.enabled()) return { recorded: false, reason: 'DISABLED' };
@@ -60,7 +63,7 @@ class WorkspaceEventService {
     return { recorded: true, eventId: event.eventId, sequence: record.sequence };
   }
   snapshot() {
-    const rows = this.list({ limit: 5000 });
+    const rows = this.list();
     const stat = this.fs.existsSync(this.file()) ? this.fs.statSync(this.file()) : { size: 0 };
     return { enabled: this.enabled(), workspaceId: workspaceId(this.root()), events: rows, episodes: events.buildEpisodes(rows), count: rows.length, bytes: stat.size, localOnly: true, capturesKeystrokes: false, capturesSecrets: false, capturesClipboardBody: false };
   }

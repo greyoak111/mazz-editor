@@ -2,6 +2,7 @@
 import { contextKeys } from '../../core/contextkey-service.js';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { toast } from '../../shell/shell.js';
+import { executeCalcExpression, displayCalcValue } from '../../lib/capability-artifacts.js';
 
 const MODULE = 'math';
 const instances = new Map();
@@ -135,7 +136,7 @@ function createMath(container) {
   root.innerHTML = `
     <div class="math-bar">
       <select class="rb-select" id="math-backend">
-        <option value="python">Python</option><option value="js">JavaScript</option>
+        <option value="python">Python（隔离表达式）</option><option value="js">JavaScript</option>
       </select>
       <button class="rb-btn" data-a="restart" title="重启内核">${iconHtml('↻')}<span>重启内核</span></button>
       <button class="rb-btn" data-a="clear" title="清屏">清屏</button>
@@ -172,8 +173,9 @@ function createMath(container) {
   async function updateStatus() {
     if (ctl.backend === 'python') {
       if (window.mazz?.isElectron) {
-        const st = await window.mazz.invoke('py:status');
-        ctl.statusEl.textContent = st.python ? `内核: ${st.python}` : '内核: 未启动（首次执行自动拉起）';
+        const capabilities = await window.mazz.invoke('capability:list');
+        const calc = capabilities.find(row => row.capabilityId === 'mazz.calc.python-expression');
+        ctl.statusEl.textContent = calc?.availability?.state === 'available' ? '内核: 隔离 Python 表达式' : '内核: Python 3 不可用';
       } else ctl.statusEl.textContent = 'Python 内核需要桌面版';
     } else {
       ctl.statusEl.textContent = '内核: 内置 JS 沙箱';
@@ -197,7 +199,6 @@ function createMath(container) {
     if (/[^=!<>+\-*/%&|^~\s]=$/.test(code)) code = code.slice(0, -1);
     append('»', code, 'in');
     ctl.history.unshift(code);
-    if (ctl.history.length > 50) ctl.history.length = 50;
     ctl.hIdx = -1;
     ctl.inputEl.value = '';
     if (ctl.backend === 'js') {
@@ -210,9 +211,9 @@ function createMath(container) {
     append('…', '执行中…', 'pending');
     const pending = ctl.logEl.lastChild;
     try {
-      const r = await window.mazz.invoke('py:exec', { code });
+      const r = await executeCalcExpression(code);
       pending.remove();
-      append('⇐', r.output || '（无输出）', 'out');
+      append('⇐', displayCalcValue(r.result) || '（无输出）', 'out');
     } catch (e) {
       pending.remove();
       append('⇐', e.message, 'err');
@@ -223,8 +224,7 @@ function createMath(container) {
   root.querySelector('[data-a=clear]').addEventListener('click', () => { ctl.logEl.innerHTML = ''; });
   root.querySelector('[data-a=restart]').addEventListener('click', async () => {
     if (window.mazz?.isElectron) {
-      await window.mazz.invoke('py:restart');
-      toast('Python 内核已重启');
+      toast('隔离 Python 每次执行使用独立进程，无共享内核需要重启');
       updateStatus();
     }
   });
@@ -279,7 +279,7 @@ export default {
   },
   getContent(state) {
     const ctl = instances.get(state.container);
-    return ctl ? JSON.stringify({ mark: 'mazz-math-v1', backend: ctl.backend, history: ctl.history.slice(0, 50) }) : '';
+    return ctl ? JSON.stringify({ mark: 'mazz-math-v1', backend: ctl.backend, history: ctl.history }) : '';
   },
   setContent(data, state) {
     const ctl = instances.get(state.container);

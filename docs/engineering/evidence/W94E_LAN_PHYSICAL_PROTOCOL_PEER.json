@@ -1,0 +1,26 @@
+{
+  "schema": "mazz.w94e-lan-physical-protocol-peer/v0",
+  "generatedAt": "2026-08-27T00:50:13.380+08:00",
+  "result": "PASS_WITH_SCOPE",
+  "transport": {
+    "wire": "real cross-machine TCP",
+    "tls": true,
+    "pairing": "accepted",
+    "peer": "provided remote host",
+    "peerRuntime": "Python 3.12.3 stdlib protocol fixture",
+    "notSecondMazzBinary": true
+  },
+  "exchange": {
+    "filesSent": 1,
+    "filesReceived": 1,
+    "stateFactsAccepted": 1,
+    "workspaceIdentityEchoed": true,
+    "remoteFileVerified": true
+  },
+  "cleanup": {
+    "temporaryListenerClosed": true,
+    "temporaryCertificateRemoved": true,
+    "persistentServerChanges": false
+  },
+  "scope": "证明跨机器 TLS/帧/状态事实线路可用；完整第二个 Mazz 实例对第二个 Mazz 实例的 A/B 仍待具备第二端运行时后复验。"
+}

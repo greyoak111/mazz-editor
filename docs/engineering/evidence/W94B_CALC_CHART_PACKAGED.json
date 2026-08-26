@@ -1,0 +1,68 @@
+{
+  "schema": "mazz.w94b-calc-chart-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "product": "win-unpacked",
+  "capabilities": [
+    "mazz.blender.external",
+    "mazz.calc.python-expression",
+    "mazz.chart.svg"
+  ],
+  "calc": {
+    "proposalId": "proposal-sha256-2a7c9397a21abe9947ca2673a703fa09f4325088fbb90015ea511cc57600153e",
+    "receiptId": "receipt-18265604-5ffb-4dea-bfb3-8c1202a1e38b",
+    "artifactId": "artifact-sha256-a2489e86b62072094a2cbfd6b4bde3597d03ce3e3d1c5bfa4c0a9c9667b17e0a",
+    "contentHash": "sha256-a2489e86b62072094a2cbfd6b4bde3597d03ce3e3d1c5bfa4c0a9c9667b17e0a",
+    "typedResult": {
+      "schema": "mazz.calc-result/v1",
+      "valueType": "number",
+      "value": 5
+    }
+  },
+  "chart": {
+    "proposalId": "proposal-sha256-e4fce2c6e4c3ba0bdd30c70881340f5e2affa0b0079e4c76a36a3b1c45550010",
+    "receiptId": "receipt-6143f61a-cae4-4fe9-a67a-3b6d186aa0ab",
+    "artifacts": [
+      {
+        "artifactId": "artifact-sha256-df9340e175b2f149f52ddb7e93eb53fd661b2da8f0c5b0009aa199734e44a06b",
+        "contentHash": "sha256-df9340e175b2f149f52ddb7e93eb53fd661b2da8f0c5b0009aa199734e44a06b",
+        "contentSchema": "mazz.chart-spec/v1"
+      },
+      {
+        "artifactId": "artifact-sha256-867cc53df73ff25d3fdf4ac2249281adfc6ae9ee88ce44b0c55267db05475209",
+        "contentHash": "sha256-867cc53df73ff25d3fdf4ac2249281adfc6ae9ee88ce44b0c55267db05475209",
+        "contentSchema": "mazz.chart-svg/v1"
+      }
+    ],
+    "deterministicSvg": true
+  },
+  "exactReplay": true,
+  "restartReopen": true,
+  "persistedCounts": {
+    "proposals": 2,
+    "receipts": 2,
+    "artifacts": 3,
+    "blobs": 3
+  },
+  "artifactProtocol": {
+    "streamed": true,
+    "singleUse": true,
+    "grantsFinal": 0,
+    "streamsFinal": 0
+  },
+  "fileTreeInternalEvents": 0,
+  "networkCalls": 0,
+  "resources": {
+    "capabilityExecutionOwners": 0,
+    "artifactStreamOwners": 0,
+    "pythonProcessOwners": 0,
+    "serviceActiveCount": 0,
+    "durabilityFailureCount": 0,
+    "artifactStagingCount": 0
+  },
+  "runtimeErrors": [],
+  "stateSha256": "faa96d4ba0b3e24d90402a7f1502a83798fdfd4c4a7c6645c98b60f1ff42189e",
+  "rendererBundleSha256": "5516bc920c1314969f8024ec723d5d2c9555b679926ac1335c43e2c0586cec57",
+  "executableSha256": "a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9",
+  "generatedAt": "2026-08-26T18:10:54.407Z"
+}

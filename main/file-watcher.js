@@ -12,6 +12,8 @@ function shouldIgnoreWatchPath(value) {
   if (/(^|\/)\.git(?:\/|$)/i.test(normalized)) return true;
   if (/(^|\/)node_modules(?:\/|$)/i.test(normalized)) return true;
   if (/(^|\/)\.mazz\/temp(?:\/|$)/i.test(normalized)) return true;
+  if (/(^|\/)\.mazz\/capability-runtime(?:\/|$)/i.test(normalized)) return true;
+  if (/(^|\/)\.mazz\/capability-artifacts(?:\/|$)/i.test(normalized)) return true;
   return /(^|\/)书库\/\.resources(?:\/|$)/i.test(normalized);
 }
 

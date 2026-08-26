@@ -16,6 +16,33 @@ export function createDoc() {
   return { mark: 'mazz-draw-v1', frames: [createFrame()], current: 0 };
 }
 
+/** 将旧画板帧转换为 W94C 结构化 Canvas Document；不携带 data URL/运行时元素。 */
+export function legacyFrameToCanvasDocument(frame, { documentId, workspaceIdentity, title = '' } = {}) {
+  const safeToken = value => String(value ?? '').replace(/[^A-Za-z0-9._:-]+/g, '_').replace(/^_+|_+$/g, '') || '0';
+  const unique = (base, used) => { let id = base; let index = 2; while (used.has(id)) id = `${base}-${index++}`; used.add(id); return id; };
+  const layerRows = [];
+  const nodes = {};
+  const usedLayers = new Set();
+  const usedNodes = new Set();
+  for (const [layerIndex, layer] of (frame?.layers || []).entries()) {
+    const layerId = unique(`layer-legacy-${safeToken(layer.id || layerIndex)}`, usedLayers);
+    const nodeIds = [];
+    for (const stroke of layer.strokes || []) {
+      const nodeId = unique(`stroke-${safeToken(stroke.id || `${layerIndex}-${nodeIds.length}`)}`, usedNodes);
+      nodes[nodeId] = { nodeId, kind: 'path', x: 0, y: 0, width: 0, height: 0, rotation: 0, opacity: stroke.opacity ?? 1, visible: true, fill: stroke.color || '#000000', stroke: stroke.color || '#000000', strokeWidth: stroke.size || 1, text: '', points: (stroke.pts || []).map(point => ({ x: Number(point.x) || 0, y: Number(point.y) || 0 })), assetRef: null, children: [] };
+      nodeIds.push(nodeId);
+    }
+    for (const shape of layer.shapes || []) {
+      const nodeId = unique(`shape-${safeToken(shape.id || `${layerIndex}-${nodeIds.length}`)}`, usedNodes);
+      const kind = shape.kind === 'ellipse' ? 'ellipse' : (shape.kind === 'text' ? 'text' : 'rect');
+      nodes[nodeId] = { nodeId, kind, x: Number(shape.x1) || 0, y: Number(shape.y1) || 0, width: Math.abs((Number(shape.x2) || Number(shape.x1) || 0) - (Number(shape.x1) || 0)), height: Math.abs((Number(shape.y2) || Number(shape.y1) || 0) - (Number(shape.y1) || 0)), rotation: 0, opacity: shape.opacity ?? 1, visible: true, fill: shape.color || '#ffffff', stroke: shape.color || '#000000', strokeWidth: shape.lineWidth || 1, text: String(shape.text || ''), points: [], assetRef: null, children: [] };
+      nodeIds.push(nodeId);
+    }
+    layerRows.push({ layerId, name: String(layer.name || `图层 ${layerIndex + 1}`), visible: layer.visible !== false, opacity: layer.opacity ?? 1, nodeIds });
+  }
+  return { schema: 'mazz.canvas-document/v1', documentId, workspaceIdentity, revision: 1, title, width: 960, height: 540, background: '#ffffff', layers: layerRows.length ? layerRows : [{ layerId: 'layer-legacy-0', name: 'Layer 1', visible: true, opacity: 1, nodeIds: [] }], nodes, selection: [], headOperationId: null };
+}
+
 /** 点到线段最短距离 */
 export function distToSegment(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay;

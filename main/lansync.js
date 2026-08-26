@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const forge = require('node-forge');
+const { normalizeStateFact, mergeStateFacts, createStateFact } = require('./foundation/lan-state-facts');
 
 const SYNC_PORT = 47820;
 const MDNS_TYPE = 'mazz-sync';
@@ -190,6 +191,7 @@ class WsServer {
 const POSITION_KINDS = new Set(['library', 'player', 'editor']);
 const POSITION_STORE_KEY = 'sync.positions';
 const POSITION_LIMIT = 2000;
+const STATE_FACT_STORE_KEY = 'sync.stateFacts';
 
 class LanSync {
   /**
@@ -246,6 +248,31 @@ class LanSync {
   positions() {
     const src = this.store.get(POSITION_STORE_KEY, {}) || {};
     return src && typeof src === 'object' && !Array.isArray(src) ? src : {};
+  }
+
+  workspaceIdentity() {
+    try { return 'workspace:' + crypto.createHash('sha256').update(path.resolve(this.ws()).toLocaleLowerCase('en-US')).digest('hex'); }
+    catch { return ''; }
+  }
+
+  stateFacts() {
+    const rows = this.store.get(STATE_FACT_STORE_KEY, []);
+    return Array.isArray(rows) ? rows.filter(row => { try { normalizeStateFact(row, { workspaceId: this.workspaceIdentity() }); return true; } catch { return false; } }) : [];
+  }
+
+  listStateFacts() { return this.stateFacts(); }
+
+  putStateFact(input = {}) {
+    const fact = createStateFact({ ...input, workspaceId: this.workspaceIdentity() });
+    const merged = mergeStateFacts(this.stateFacts(), [fact], { workspaceId: this.workspaceIdentity() });
+    this.store.set(STATE_FACT_STORE_KEY, merged.facts);
+    return { fact, accepted: merged.accepted.length > 0, conflicts: merged.conflicts };
+  }
+
+  mergeStateFacts(incoming = []) {
+    const merged = mergeStateFacts(this.stateFacts(), incoming, { workspaceId: this.workspaceIdentity() });
+    if (merged.accepted.length) this.store.set(STATE_FACT_STORE_KEY, merged.facts);
+    return merged;
   }
 
   listPositions() {
@@ -616,7 +643,7 @@ class LanSync {
     const mine = this.scanFiles();
     // 新基线：从会话开始时的清单出发，随写入事件逐项推演（不受会话后本地修改污染）
     const baselineNext = new Map(mine.map(f => [f.path, f.hash]));
-    const result = { sent: 0, received: 0, conflicts: [], skipped: 0, positions: 0 };
+    const result = { sent: 0, received: 0, conflicts: [], skipped: 0, positions: 0, stateFacts: 0, stateFactConflicts: [] };
     let gotFilesMsg = false;
     let sentFilesMsg = false;
     let finished = false;
@@ -639,7 +666,12 @@ class LanSync {
       if (!finished) settle(onError, new Error('连接中断'));
     });
     // 开场：发送己方清单
-    try { sock.write(encodeFrame({ op: 'manifest', files: mine, positions: this.listPositions() })); } catch (e) { settle(onError, e); }
+    try {
+      sock.write(encodeFrame({ op: 'manifest', files: mine, positions: this.listPositions() }));
+      // State facts are a separate protocol track.  They never ride in a file
+      // item and contain only local evidence references.
+      sock.write(encodeFrame({ op: 'state-facts', workspaceId: this.workspaceIdentity(), facts: this.listStateFacts() }));
+    } catch (e) { settle(onError, e); }
 
     return {
       push: (msg) => {
@@ -652,6 +684,22 @@ class LanSync {
             const want = LanSync.diffWant(mine, Array.isArray(msg.files) ? msg.files : []);
             this.setProgress({ phase: 'transfer', want: want.length, total: want.length });
             sock.write(encodeFrame({ op: 'want', paths: want }));
+          } else if (msg.op === 'state-facts') {
+            // File sync may intentionally join two machines whose physical
+            // roots differ.  Their file ledger can converge, but state facts
+            // stay Workspace-identity scoped and are rejected on this track;
+            // the rejection must not abort the unrelated file session.
+            if (msg.workspaceId !== this.workspaceIdentity()) {
+              result.stateFactConflicts.push({ reason: 'workspace-mismatch', workspaceId: String(msg.workspaceId || '') });
+              sock.write(encodeFrame({ op: 'state-fact-ack', accepted: 0, conflicts: 1, rejected: true, offline: true }));
+            } else {
+              const merged = this.mergeStateFacts(msg.facts);
+              result.stateFacts += merged.accepted.length;
+              result.stateFactConflicts.push(...merged.conflicts);
+              sock.write(encodeFrame({ op: 'state-fact-ack', accepted: merged.accepted.length, conflicts: merged.conflicts.length, offline: true }));
+            }
+          } else if (msg.op === 'state-fact-ack') {
+            // Ack is informational; the durable merge already happened on the receiver.
           } else if (msg.op === 'want') {
             const items = [];
             for (const p of msg.paths) {
@@ -758,6 +806,9 @@ class LanSync {
     bus.handle('sync:positionGet', async (payload) => this.getPosition(payload));
     bus.handle('sync:positions', async () => this.listPositions());
     bus.handle('sync:positionsMerge', async ({ entries } = {}) => this.mergePositions(entries));
+    bus.handle('sync:stateFactPut', async payload => this.putStateFact(payload));
+    bus.handle('sync:stateFacts', async () => this.listStateFacts());
+    bus.handle('sync:stateFactsMerge', async ({ facts } = {}) => this.mergeStateFacts(facts));
     bus.handle('sync:tempShare', async (payload) => this.createTempShare(payload));
     bus.handle('sync:tempShareStop', async () => this.stopTempShare());
   }

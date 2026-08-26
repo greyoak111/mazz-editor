@@ -16,6 +16,17 @@ const {
 const ADAPTER_ID = 'blender.headless.v0';
 const TOOL_ID = 'org.blender.Blender';
 const OPERATION = 'scene.render.frame/v0';
+const OPERATION_SPECS = Object.freeze({
+  [OPERATION]: Object.freeze({
+    role: 'frame', type: 'image/png', extension: '.png', validator: 'png', scriptMode: '',
+  }),
+  'scene.inspect/v0': Object.freeze({
+    role: 'report', type: 'application/json', extension: '.json', validator: 'json', scriptMode: 'inspect',
+  }),
+  'scene.export.obj/v0': Object.freeze({
+    role: 'model', type: 'model/obj', extension: '.obj', validator: 'obj', scriptMode: 'export-obj',
+  }),
+});
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const PROVENANCE = Object.freeze({
   kind: 'external-capability-provider',
@@ -101,10 +112,33 @@ function validatePng(filePath, fsImpl = fs) {
   return { byteLength: stat.size, sha256: sha256File(filePath, fsImpl) };
 }
 
+function validateGenericOutput(filePath, spec, fsImpl = fs) {
+  let stat;
+  try { stat = fsImpl.statSync(filePath); } catch { fail('TOOL_OUTPUT_MISSING', 'Blender 成功退出但输出不存在'); }
+  if (!stat.isFile() || stat.size <= 0) fail('TOOL_OUTPUT_INVALID', 'Blender 输出不是有效非空文件');
+  if (spec.validator === 'json') {
+    try {
+      const value = JSON.parse(fsImpl.readFileSync(filePath, 'utf8'));
+      if (!value || typeof value !== 'object' || Array.isArray(value)) fail('TOOL_OUTPUT_TYPE_MISMATCH', 'Blender inspect 输出不是 JSON 对象');
+    } catch (error) {
+      if (error instanceof BlenderAdapterError) throw error;
+      fail('TOOL_OUTPUT_TYPE_MISMATCH', 'Blender inspect 输出不是有效 JSON');
+    }
+  } else if (spec.validator === 'obj') {
+    const prefix = fsImpl.readFileSync(filePath, { encoding: 'utf8', flag: 'r' }).slice(0, 4096);
+    if (!/^(?:#|v\s|o\s|mtllib\s)/m.test(prefix)) fail('TOOL_OUTPUT_TYPE_MISMATCH', 'Blender export 输出不是 OBJ');
+  }
+  return { byteLength: stat.size, sha256: sha256File(filePath, fsImpl) };
+}
+
+function validateOutput(filePath, spec, fsImpl = fs) {
+  return spec.validator === 'png' ? validatePng(filePath, fsImpl) : validateGenericOutput(filePath, spec, fsImpl);
+}
+
 class BlenderHeadlessRuntime {
   constructor({
     supervisor, executablePath = '', commandPrefix = [], scriptPath, fsImpl = fs,
-    allowedRootsProvider = () => [], clock = () => Date.now(),
+    allowedRootsProvider = () => [], clock = () => Date.now(), operations = [OPERATION],
   } = {}) {
     if (!supervisor) throw new Error('Blender Adapter 需要外部工具 Supervisor');
     this.supervisor = supervisor;
@@ -114,6 +148,12 @@ class BlenderHeadlessRuntime {
     this.fs = fsImpl;
     this.allowedRootsProvider = allowedRootsProvider;
     this.clock = clock;
+    const selectedOperations = Array.isArray(operations) ? operations : [OPERATION];
+    this.operations = Object.freeze(Object.fromEntries(selectedOperations.map(operation => {
+      const spec = OPERATION_SPECS[operation];
+      if (!spec) fail('TOOL_OPERATION_NOT_ALLOWED', `Blender operation 不允许: ${operation}`);
+      return [operation, spec];
+    })));
     this.active = new Map();
     this.terminal = new Map();
   }
@@ -170,12 +210,13 @@ class BlenderHeadlessRuntime {
 
   validateRequest(input) {
     const request = normalizeExternalToolRunRequest(input);
-    if (request.operation !== OPERATION) fail('TOOL_OPERATION_NOT_ALLOWED', `Blender operation 不允许: ${request.operation}`);
+    const spec = this.operations[request.operation];
+    if (!spec) fail('TOOL_OPERATION_NOT_ALLOWED', `Blender operation 不允许: ${request.operation}`);
     if (request.inputs.length !== 1 || request.inputs[0].role !== 'scene' || request.inputs[0].type !== 'application/x-blender') {
       fail('TOOL_INPUT_CONTRACT_INVALID', 'scene.render.frame/v0 只接受一个 application/x-blender scene');
     }
-    if (request.outputs.length !== 1 || request.outputs[0].role !== 'frame' || request.outputs[0].type !== 'image/png') {
-      fail('TOOL_OUTPUT_CONTRACT_INVALID', 'scene.render.frame/v0 只产生一个 image/png frame');
+    if (request.outputs.length !== 1 || request.outputs[0].role !== spec.role || request.outputs[0].type !== spec.type) {
+      fail('TOOL_OUTPUT_CONTRACT_INVALID', `${request.operation} 输出合同不匹配`);
     }
     const workdir = path.resolve(request.workdir);
     let workdirStat;
@@ -193,32 +234,51 @@ class BlenderHeadlessRuntime {
     const scenePath = resolveExistingInput(realWorkdir, request.inputs[0].path, this.fs);
     if (path.extname(scenePath).toLowerCase() !== '.blend') fail('TOOL_INPUT_TYPE_MISMATCH', 'scene 文件扩展名必须是 .blend');
     const outputPath = resolveNewOutput(realWorkdir, request.outputs[0].path, this.fs, false);
-    if (path.extname(outputPath).toLowerCase() !== '.png') fail('TOOL_OUTPUT_TYPE_MISMATCH', 'frame 输出扩展名必须是 .png');
-    return { request, workdir: realWorkdir, scenePath, outputPath };
+    if (path.extname(outputPath).toLowerCase() !== spec.extension) fail('TOOL_OUTPUT_TYPE_MISMATCH', `${request.operation} 输出扩展名不匹配`);
+    return { request, workdir: realWorkdir, scenePath, outputPath, spec };
   }
 
   async run(input) {
     const prepared = this.validateRequest(input);
-    const { request, workdir, scenePath, outputPath } = prepared;
+    const { request, workdir, scenePath, outputPath, spec } = prepared;
     if (this.active.has(request.runId) || this.terminal.has(request.runId)) fail('TOOL_RUN_ID_REUSED', `runId 已使用: ${request.runId}`);
-    const probe = await this.probe();
-    if (!probe.available) {
-      const result = this.failureResult(request.runId, probe.reason);
-      this.remember(request.runId, result.status);
-      return result;
-    }
-    if (!this.fs.existsSync(this.scriptPath)) fail('TOOL_ADAPTER_SCRIPT_MISSING', `Blender Adapter 脚本不存在: ${this.scriptPath}`);
-    resolveNewOutput(workdir, request.outputs[0].path, this.fs, true);
-    const handle = await this.supervisor.start({
-      command: probe.executablePath,
-      args: [...this.commandPrefix, '--background', scenePath, '--python', this.scriptPath, '--', outputPath],
-      cwd: workdir,
-      timeoutMs: 10 * 60 * 1000,
-      owner: `${ADAPTER_ID}:${request.runId}`,
-    });
-    const record = { handle, outputPath, cancelRequested: false, done: null };
-    this.active.set(request.runId, record);
-    record.done = this.supervisor.wait(handle).then(outcome => {
+    // Register before the version probe: cancellation may arrive while the
+    // probe is still running. The startup record lets cancel() mark the run,
+    // and run() then returns a terminal cancelled result before spawning work.
+    const startup = { handle: null, outputPath, cancelRequested: false, done: null };
+    this.active.set(request.runId, startup);
+    try {
+      const probe = await this.probe();
+      if (startup.cancelRequested) {
+        const result = normalizeExternalToolRunResult({
+          runId: request.runId, status: 'cancelled', stdout: '', stderr: '',
+          exit: { code: null, signal: '', reason: 'USER_CANCELLED' }, durationMs: 0,
+          outputs: [], provenance: { ...PROVENANCE, adapterId: ADAPTER_ID, operation: request.operation },
+        });
+        this.active.delete(request.runId);
+        this.remember(request.runId, result.status);
+        return result;
+      }
+      if (!probe.available) {
+        const result = this.failureResult(request.runId, probe.reason);
+        this.active.delete(request.runId);
+        this.remember(request.runId, result.status);
+        return result;
+      }
+      if (!this.fs.existsSync(this.scriptPath)) fail('TOOL_ADAPTER_SCRIPT_MISSING', `Blender Adapter 脚本不存在: ${this.scriptPath}`);
+      resolveNewOutput(workdir, request.outputs[0].path, this.fs, true);
+      const scriptArgs = spec.scriptMode ? [spec.scriptMode, outputPath] : [outputPath];
+      const handle = await this.supervisor.start({
+        command: probe.executablePath,
+        args: [...this.commandPrefix, '--background', scenePath, '--python', this.scriptPath, '--', ...scriptArgs],
+        cwd: workdir,
+        timeoutMs: 10 * 60 * 1000,
+        owner: `${ADAPTER_ID}:${request.runId}`,
+      });
+      startup.handle = handle;
+      const record = startup;
+      if (record.cancelRequested) await this.supervisor.terminate(handle, 'external-tool-cancel');
+      record.done = this.supervisor.wait(handle).then(outcome => {
       const cancelled = record.cancelRequested || outcome.result.error?.code === 'CLI_CANCELLED';
       let result;
       if (cancelled) {
@@ -228,7 +288,7 @@ class BlenderHeadlessRuntime {
           exit: { code: outcome.result.exitCode, signal: outcome.result.structured?.signal || '', reason: 'USER_CANCELLED' },
           durationMs: outcome.durationMs, outputs: [],
           provenance: {
-            ...PROVENANCE, adapterId: ADAPTER_ID, toolVersion: probe.version, operation: OPERATION,
+            ...PROVENANCE, adapterId: ADAPTER_ID, toolVersion: probe.version, operation: request.operation,
             partialOutputPolicy: 'retained-with-partial-suffix', partialOutputPath,
           },
         });
@@ -241,15 +301,15 @@ class BlenderHeadlessRuntime {
         });
       } else {
         try {
-          const output = validatePng(outputPath, this.fs);
+          const output = validateOutput(outputPath, spec, this.fs);
           result = normalizeExternalToolRunResult({
             runId: request.runId, status: 'succeeded', stdout: outcome.result.stdout, stderr: outcome.result.stderr,
             exit: { code: 0, signal: '', reason: '' }, durationMs: outcome.durationMs,
             outputs: [{
-              role: 'frame', id: `asset:sha256:${output.sha256}`, path: request.outputs[0].path,
-              type: 'image/png', version: `sha256:${output.sha256}`,
+              role: spec.role, id: `asset:sha256:${output.sha256}`, path: request.outputs[0].path,
+              type: spec.type, version: `sha256:${output.sha256}`,
             }],
-            provenance: { ...PROVENANCE, adapterId: ADAPTER_ID, toolVersion: probe.version, operation: OPERATION, byteLength: output.byteLength },
+            provenance: { ...PROVENANCE, adapterId: ADAPTER_ID, toolVersion: probe.version, operation: request.operation, byteLength: output.byteLength },
           });
         } catch (error) {
           const partialOutputPath = this.retainPartial(outputPath, request.runId, workdir);
@@ -261,8 +321,12 @@ class BlenderHeadlessRuntime {
       }
       this.remember(request.runId, result.status);
       return result;
-    }).finally(() => this.active.delete(request.runId));
-    return record.done;
+      }).finally(() => this.active.delete(request.runId));
+      return record.done;
+    } catch (error) {
+      if (this.active.get(request.runId) === startup) this.active.delete(request.runId);
+      throw error;
+    }
   }
 
   async cancel(runId) {
@@ -273,6 +337,9 @@ class BlenderHeadlessRuntime {
       reason: this.terminal.get(id) || 'run-not-found',
     });
     record.cancelRequested = true;
+    if (!record.handle) return normalizeExternalToolCancelResult({
+      runId: id, status: 'accepted', reason: 'cancel-requested-during-probe',
+    });
     await this.supervisor.terminate(record.handle, 'external-tool-cancel');
     return normalizeExternalToolCancelResult({ runId: id, status: 'accepted', reason: 'cancel-requested' });
   }
@@ -302,7 +369,10 @@ function createBlenderHeadlessAdapter(options = {}) {
 module.exports = {
   ADAPTER_ID,
   OPERATION,
+  OPERATION_SPECS,
   PROVENANCE,
   BlenderAdapterError,
+  BlenderHeadlessRuntime,
   createBlenderHeadlessAdapter,
+  candidatePaths,
 };

@@ -3,7 +3,8 @@ import { getStroke } from 'perfect-freehand';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { contextKeys } from '../../core/contextkey-service.js';
 import { toast, inputModal } from '../../shell/shell.js';
-import { createDoc, createLayer, createFrame, createStroke, hitAnyStroke, moveStroke, SnapshotStack } from './model.js';
+import { createDoc, createLayer, createFrame, createStroke, hitAnyStroke, moveStroke, SnapshotStack, legacyFrameToCanvasDocument } from './model.js';
+import { createCanvasAgentClient } from '../../lib/canvas-agent.js';
 import { BRUSH_TYPES, DEFAULT_BRUSHES, makeTipCanvas, colorWithAlpha, parseAbr, listCustomBrushes, saveCustomBrush } from './brushes.js';
 
 const MODULE = 'draw';
@@ -1411,6 +1412,45 @@ function createDraw(container) {
   ctl.setOnion = setOnion;
   ctl.setTool = setTool;
   ctl.clearLayer = () => { snapshot(); const l = activeLayer(); l.strokes = []; l.images = []; redraw(); renderLayers(); changed(); };
+
+  // W94C：旧画板只在显式调用时写入结构化 Canvas Document；绘制本身不触发隐式网络/文件写入。
+  ctl.canvasBinding = null;
+  ctl.toCanvasDocument = ({ documentId, workspaceIdentity, title = '' } = {}) => legacyFrameToCanvasDocument(frame(), { documentId, workspaceIdentity, title });
+  ctl.connectCanvasAgent = ({ workspacePath, documentId, workspaceIdentity, title = '', actor = { kind: 'human', ref: 'human:draw' } } = {}) => {
+    const client = createCanvasAgentClient({ bridge: window.mazz, workspacePath });
+    ctl.canvasBinding = { client, workspacePath, documentId, workspaceIdentity, title, actor, revision: 0 };
+    return Object.freeze({ documentId, workspacePath });
+  };
+  ctl.persistCanvasDocument = async () => {
+    const binding = ctl.canvasBinding;
+    if (!binding) throw new Error('Canvas agent 尚未连接');
+    if (!binding.revision) {
+      const created = await binding.client.create({ documentId: binding.documentId, title: binding.title });
+      binding.documentId = created.document.documentId;
+      binding.workspaceIdentity = created.document.workspaceIdentity;
+      binding.revision = created.document.revision;
+    }
+    const document = ctl.toCanvasDocument({ documentId: binding.documentId, workspaceIdentity: binding.workspaceIdentity, title: binding.title });
+    document.revision = binding.revision;
+    const operation = { schema: 'mazz.canvas-operation/v1', operationId: `canvas-op-${crypto.randomUUID()}`, documentId: binding.documentId, expectedRevision: binding.revision, actor: binding.actor, kind: 'replace-document', affectedIds: [], precondition: {}, payload: { document } };
+    const result = await binding.client.apply(operation);
+    binding.revision = result.document.revision;
+    return result;
+  };
+  ctl.canvasUndo = async () => {
+    const binding = ctl.canvasBinding;
+    if (!binding) throw new Error('Canvas agent 尚未连接');
+    const result = await binding.client.undo({ documentId: binding.documentId, expectedRevision: binding.revision, actor: binding.actor });
+    binding.revision = result.document.revision;
+    return result;
+  };
+  ctl.canvasRedo = async () => {
+    const binding = ctl.canvasBinding;
+    if (!binding) throw new Error('Canvas agent 尚未连接');
+    const result = await binding.client.redo({ documentId: binding.documentId, expectedRevision: binding.revision, actor: binding.actor });
+    binding.revision = result.document.revision;
+    return result;
+  };
 
   // 序列化支持（图像元素重建）
   ctl.serialize = () => JSON.stringify({ mark: 'mazz-draw-v1', frames: ctl.doc.frames, current: ctl.doc.current });

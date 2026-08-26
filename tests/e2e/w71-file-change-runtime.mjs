@@ -16,6 +16,46 @@ const targetPath = path.join(workspace, 'external-change.md');
 fs.writeFileSync(targetPath, '# 初始版本\n', 'utf8');
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+function stableResourceView(snapshot) {
+  const byType = Object.fromEntries(Object.entries(snapshot?.byType || {}).sort(([left], [right]) => left.localeCompare(right)));
+  const active = (Array.isArray(snapshot?.active) ? snapshot.active : [])
+    .map(entry => ({ key: String(entry?.key || ''), type: String(entry?.type || '') }))
+    .sort((left, right) => `${left.type}:${left.key}`.localeCompare(`${right.type}:${right.key}`));
+  return { activeCount: Number(snapshot?.activeCount), byType, active };
+}
+
+function staysWithinResourceBoundary(snapshot, baseline) {
+  const current = stableResourceView(snapshot);
+  const initial = stableResourceView(baseline);
+  if (!Number.isFinite(current.activeCount) || current.activeCount > initial.activeCount) return false;
+  if (current.active.length !== current.activeCount || initial.active.length !== initial.activeCount) return false;
+  if (![...current.active, ...initial.active].every(entry => entry.key && entry.type)) return false;
+  if (!Object.entries(current.byType).every(([type, count]) => count <= (initial.byType[type] || 0))) return false;
+  const baselineIdentities = new Set(initial.active.map(entry => `${entry.type}\u0000${entry.key}`));
+  return current.active.every(entry => baselineIdentities.has(`${entry.type}\u0000${entry.key}`));
+}
+
+async function waitForStableResourceBoundary(win, baseline) {
+  const deadline = Date.now() + 30000;
+  let stableCount = 0;
+  let signature = '';
+  let snapshot = null;
+  while (Date.now() < deadline) {
+    snapshot = await win.evaluate(() => window.mazz.invoke('resources:snapshot'));
+    const currentSignature = JSON.stringify(stableResourceView(snapshot));
+    if (staysWithinResourceBoundary(snapshot, baseline)) {
+      stableCount = currentSignature === signature ? stableCount + 1 : 1;
+      signature = currentSignature;
+    } else {
+      stableCount = 0;
+      signature = '';
+    }
+    if (stableCount >= 3) return snapshot;
+    await sleep(250);
+  }
+  throw new Error(`资源未稳定收敛于身份基线内：${baseline.activeCount}→${snapshot?.activeCount}`);
+}
+
 let app;
 try {
   app = await electron.launch({
@@ -173,10 +213,7 @@ try {
     tab.forceClose = true;
     await window.MazzShell.closeTabFlow(tab.id);
   });
-  const finalResources = await win.evaluate(() => window.mazz.invoke('resources:snapshot'));
-  if (finalResources.activeCount !== baseline.activeCount) {
-    throw new Error(`资源未回基线：${baseline.activeCount}→${finalResources.activeCount}`);
-  }
+  const finalResources = await waitForStableResourceBoundary(win, baseline);
   const evidence = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
@@ -185,7 +222,13 @@ try {
     conflict: { dirtyPreserved: true, reloadCallsBeforeDecision: conflict.reloadCalls, actions: conflict.actions },
     explicitReload,
     selfSave: { ...selfSave, diskMatched: true },
-    resources: { baseline: baseline.activeCount, final: finalResources.activeCount },
+    resources: {
+      baseline: stableResourceView(baseline),
+      final: stableResourceView(finalResources),
+      retiredCount: baseline.activeCount - finalResources.activeCount,
+      stableNoGrowth: true,
+      resourceBoundaryPassed: true,
+    },
   };
   fs.mkdirSync(path.dirname(evidencePath), { recursive: true });
   fs.writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');

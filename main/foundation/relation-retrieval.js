@@ -86,7 +86,7 @@ function normalizeQuery(input) {
   const direction = optionalString(input.direction) || 'any';
   if (!['any', 'earlier', 'later'].includes(direction)) throw new Error('direction 非法');
   const limit = Number(input.limit ?? 5);
-  if (!Number.isInteger(limit) || limit < 1 || limit > 20) throw new Error('limit 必须是 1–20');
+  if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('limit 必须是正整数');
   return deepFreeze({
     schema: RECOLLECTION_QUERY_SCHEMA,
     queryId: requiredString(input.queryId, 'queryId'),

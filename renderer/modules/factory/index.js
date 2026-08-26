@@ -1,6 +1,7 @@
 // renderer/modules/factory/index.js —— 智能创作（Mazz Factory）：AI 内容生产中枢
 // 任务队列中心（原版 PySide 思路）：创作模板 → 需求澄清 → 任务队列 → 主控台日志 → 连写快照/断点续写
 import { toast, modal, inputModal } from '../../shell/shell.js';
+import { captureWorkspaceEvent } from '../../lib/workspace-events.js';
 import { menus } from '../../core/menu-service.js';
 import { listGenres, saveCustomGenre, buildMantra, runQualityChecks, parseCsvTasks, fieldValue, buildStateSummaryPrompt, readMaxTaskProgress, renderPluginPrompt, buildEmbedBlocks, buildBlueprintPrompt, blueprintFamily, blueprintStructureOk, getSnapshotSchema, parseChapterOutlines, extractBlueprintCore, extractWritingDirective, buildConstantAnchor, extractLedgerFromSnapshot, stripMdFence, buildChapterPromptV2, writeTaskState, scanResumableTasks, mergeDeclaredContinuation, stripTokenDeclaration, buildFactoryOutputFolder, buildFactoryUnitStem, factoryExportSpec, serializeFactoryText } from './engine.js';
 import { getProviderConfig, saveProviderConfig, providerReady, chat, chatDetailed, chatStreamDetailed, extractFields, PRESETS } from './provider.js';
@@ -272,6 +273,17 @@ export class FactoryPanel {
   taskStopReason(task) {
     const reason = this.taskSignal(task)?.reason;
     return String(reason?.message || reason || '').trim();
+  }
+
+  captureDomainEvent(action, outcome, taskId = 'factory:workspace') {
+    // Keep the ledger reference opaque: task labels, output folders and AI
+    // material are deliberately excluded from the Workspace event payload.
+    return captureWorkspaceEvent({
+      sourceModule: 'factory', action,
+      subjectRefs: [`task:${String(taskId).replace(/[^A-Za-z0-9._:-]/g, '_')}`],
+      contextRefs: ['domain:factory'], outcome,
+      summary: `Factory ${action} · ${outcome}`,
+    });
   }
 
   abortTask(taskId, reason = 'task-stop') {
@@ -1244,12 +1256,14 @@ export class FactoryPanel {
       this.log(`证据报告已入库并投喂：${done.path}`);
       this.pushSnapshot();
       toast('证据报告已投喂创作链');
+      this.captureDomainEvent('approve', 'approval', 'research');
       return done;
     } catch (error) {
       this.researchStatus = `证据合成失败：${error.message || error}`;
       this.renderResearchSources();
       this.pushSnapshot();
       toast(this.researchStatus);
+      this.captureDomainEvent('approve', 'failed', 'research');
       return null;
     }
   }
@@ -3020,6 +3034,10 @@ export class FactoryPanel {
         window.MazzActivity?.publish?.({ id: `factory-${task.id}`, source: 'factory', title: `AI 写作中断：${task.label}`, detail: e.message, status: 'failed', target: { kind: 'factory', taskId: task.id, path: task.folder } });
       }
     } finally {
+      const outcome = task.status === 'failed' ? 'failed'
+        : task.status === 'cancelled' ? 'cancelled'
+          : task.status === 'done' || task.status === 'done-warn' ? 'success' : 'partial';
+      this.captureDomainEvent('execute', outcome, task.id);
       try {
         if (scheduleDispatch?.dispatchId) {
           const outcome = task.status === 'failed' ? 'failed' : ['paused', 'cancelled'].includes(task.status) ? 'cancelled' : task.status === 'done' || task.status === 'done-warn' ? 'completed' : 'released';

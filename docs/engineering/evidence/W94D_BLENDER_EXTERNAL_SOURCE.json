@@ -1,0 +1,83 @@
+{
+  "schema": "mazz.w94d-blender-external-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "capability": {
+    "id": "mazz.blender.external",
+    "version": "1.0.0",
+    "adapterId": "mazz.blender.external-process",
+    "fixtureProbe": {
+      "state": "available",
+      "checkedAt": "2026-08-26T18:08:25.445Z",
+      "reason": "BLENDER_EXECUTABLE_RESOLVED",
+      "evidenceRef": "runtime:blender-probe"
+    }
+  },
+  "operations": [
+    {
+      "operation": "scene.render.frame/v0",
+      "proposalId": "proposal-sha256-5b5ca03a011b7605f5c53f3b1939d440fd5002397ccde91502d93124581b77d8",
+      "receiptId": "receipt-ec040de2-9221-4bb6-a355-e237fbb09e43",
+      "artifactId": "artifact-sha256-0597f0d1c9ab5e973b46efbd1a304ab30cd67c192b08eda4e6268c4712bd191e",
+      "contentHash": "sha256-0597f0d1c9ab5e973b46efbd1a304ab30cd67c192b08eda4e6268c4712bd191e",
+      "environment": {
+        "runtime": "blender",
+        "toolVersion": "Blender 5.2.0 Mazz W94D Fixture",
+        "operation": "scene.render.frame/v0",
+        "executionPlane": "external-process",
+        "graphics": "external-tool-reported"
+      }
+    },
+    {
+      "operation": "scene.inspect/v0",
+      "proposalId": "proposal-sha256-427d0a839209f554aa2a18d847feb0ef6b00b971218507b11ff77ff08e3256b5",
+      "receiptId": "receipt-9830a9b8-0cbe-49a3-a62a-f59b8cb6336f",
+      "artifactId": "artifact-sha256-84737fa8ea916b3f751463217ce399f50ef2482c5eaccb9bb4a275d19311b27e",
+      "contentHash": "sha256-84737fa8ea916b3f751463217ce399f50ef2482c5eaccb9bb4a275d19311b27e",
+      "environment": {
+        "runtime": "blender",
+        "toolVersion": "Blender 5.2.0 Mazz W94D Fixture",
+        "operation": "scene.inspect/v0",
+        "executionPlane": "external-process",
+        "graphics": "external-tool-reported"
+      }
+    },
+    {
+      "operation": "scene.export.obj/v0",
+      "proposalId": "proposal-sha256-117d09c20c235ee7e5f53d902742c4fe5f298c61e02703cad2ee05613c8e153b",
+      "receiptId": "receipt-514a4e80-de97-46d7-89a5-a37b5d567a32",
+      "artifactId": "artifact-sha256-8da7f8839e530d53cde7c462606a9f66a6adc2bffde7b8e71cf5d01ab7b40ef4",
+      "contentHash": "sha256-8da7f8839e530d53cde7c462606a9f66a6adc2bffde7b8e71cf5d01ab7b40ef4",
+      "environment": {
+        "runtime": "blender",
+        "toolVersion": "Blender 5.2.0 Mazz W94D Fixture",
+        "operation": "scene.export.obj/v0",
+        "executionPlane": "external-process",
+        "graphics": "external-tool-reported"
+      }
+    }
+  ],
+  "failure": {
+    "code": "",
+    "message": "Capability execution failed"
+  },
+  "cancellation": {
+    "code": "",
+    "message": "Capability execution cancelled"
+  },
+  "persistedCounts": {
+    "proposals": 8,
+    "receipts": 8,
+    "artifacts": 6,
+    "blobs": 6
+  },
+  "resources": {
+    "activeCount": 0,
+    "externalToolProcesses": 0,
+    "artifactStagingCount": 0
+  },
+  "networkCalls": 0,
+  "runtimeErrors": [],
+  "executableSha256": null,
+  "generatedAt": "2026-08-26T18:08:28.600Z"
+}

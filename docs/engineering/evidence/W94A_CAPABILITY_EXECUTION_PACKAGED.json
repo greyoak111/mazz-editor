@@ -1,0 +1,30 @@
+{
+  "schema": "mazz.w94a-capability-execution-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "product": "win-unpacked",
+  "capabilityId": "mazz.fixture.echo",
+  "proposalId": "proposal-sha256-4d44d337cd717c9be7f43cbe65c24ee6b7fda90b7ac1532f98e2eb74de6a7d06",
+  "receiptId": "receipt-f992377d-38c4-46fb-9d99-80d21d34b57e",
+  "artifactId": "artifact-sha256-21fe0e063bdd1f061d1daba6117c0a82276e8c0e157c835ddf717fb7c2017e34",
+  "contentHash": "sha256-21fe0e063bdd1f061d1daba6117c0a82276e8c0e157c835ddf717fb7c2017e34",
+  "exactReplay": true,
+  "restartReopen": true,
+  "persistedCounts": {
+    "proposals": 1,
+    "receipts": 1,
+    "artifacts": 1
+  },
+  "fileTreeInternalEvents": 0,
+  "networkCalls": 0,
+  "resources": {
+    "capabilityExecutionOwners": 0,
+    "serviceActiveCount": 0,
+    "durabilityFailureCount": 0
+  },
+  "runtimeErrors": [],
+  "stateSha256": "a1f072c3b965b1b4e7cf45ad35f41257a10a2e5d6c507a33e190f807186ad581",
+  "rendererBundleSha256": "5516bc920c1314969f8024ec723d5d2c9555b679926ac1335c43e2c0586cec57",
+  "executableSha256": "a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9",
+  "generatedAt": "2026-08-26T18:10:19.098Z"
+}

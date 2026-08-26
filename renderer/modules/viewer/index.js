@@ -3,6 +3,7 @@
 import { contextKeys } from '../../core/contextkey-service.js';
 import { toast, inputModal } from '../../shell/shell.js';
 import { iconHtml } from '../../lib/svg-icons.js';
+import { captureWorkspaceEvent } from '../../lib/workspace-events.js';
 import { MATURITY, PRODUCT_CAPABILITIES } from '../../core/product-maturity.js';
 
 const MODULE = 'viewer';
@@ -47,6 +48,12 @@ function createViewer(container) {
     barEl: root.querySelector('.viewer-bar'),
     zoom: 1, fitMode: true, path: null, kind: null, objUrl: null, natW: 0, natH: 0,
   };
+  const capturePlayerEvent = (action, outcome) => captureWorkspaceEvent({
+    sourceModule: 'player', action,
+    subjectRefs: [`media:${ctl.kind || 'unknown'}`],
+    contextRefs: ['domain:player'], outcome,
+    summary: `Player ${action} · ${outcome}`,
+  });
   const extBtn = root.querySelector('[data-a=external]');
   const evidenceBtn = root.querySelector('[data-a=evidence]');
   extBtn.addEventListener('click', async () => {
@@ -323,12 +330,14 @@ async function enterImageEdit(ctl, img, path, ext) {
           });
           root.querySelector('.viewer-bar').appendChild(eb);
         }
+        capturePlayerEvent('open', 'success');
         return;
       }
       if (ctl.kind === 'pdf') {
         const url = await mediaUrl(path, gen);
         if (!url || ctl._destroyed || gen !== ctl._loadGen) return;
         ctl.body.innerHTML = `<embed class="viewer-pdf" src="${url}" type="application/pdf">`;
+        capturePlayerEvent('open', 'success');
         return;
       }
       if (ctl.kind === 'video' || ctl.kind === 'audio') {
@@ -341,6 +350,7 @@ async function enterImageEdit(ctl, img, path, ext) {
           if (gen !== ctl._loadGen) return;
           ctl._player.setSource(url, name, path, st.size || 0);
           if (ctl._pendingProgress) { ctl._player.applyProgress?.(ctl._pendingProgress); ctl._pendingProgress = null; }
+          capturePlayerEvent('open', 'success');
           return;
         }
         const { createPlayer } = await import('./player.js');
@@ -395,12 +405,15 @@ async function enterImageEdit(ctl, img, path, ext) {
         ctl._player = player;
         ctl._playerKind = ctl.kind; // 记录类型（切歌复用判定：同类才换源不重建）
         if (ctl._pendingProgress) { player.applyProgress?.(ctl._pendingProgress); ctl._pendingProgress = null; }
+        capturePlayerEvent('open', 'success');
         return;
       }
       showFallback(name, ext, '暂不支持预览此格式');
+      capturePlayerEvent('open', 'failed');
     } catch (e) {
       if (ctl._destroyed || gen !== ctl._loadGen) return;
       ctl.body.innerHTML = `<div class="viewer-err">读取失败：${e.message}</div>`;
+      capturePlayerEvent('open', 'failed');
     }
   };
   ctl.destroy = () => {
@@ -424,6 +437,7 @@ async function enterImageEdit(ctl, img, path, ext) {
     instances.delete(container);
     if (current === ctl) current = null;
     if (window.__activeViewerCtl === ctl) window.__activeViewerCtl = null;
+    capturePlayerEvent('close', 'cancelled');
   };
   return ctl;
 }
