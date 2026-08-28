@@ -30,7 +30,7 @@
 | Packaged Electron | [`W94F_PLAYER_TRANSPORT_PACKAGED.json`](./evidence/W94F_PLAYER_TRANSPORT_PACKAGED.json)：**PASS**，`win-unpacked` 重跑重启门，EXE SHA-256 `9b78ae44a7dd2a913334649545fa512ea836f605d8fb2e5dec33a7f75f11261c` |
 | Runtime | Source/Packaged 均 `networkCalls=0`、`runtimeErrors=[]`；运行后 `Mazz Editor` 进程数 `0` |
 | W94Fc 相邻契约 | `node --test tests/contract/player-w25.test.mjs`：**5/5 PASS**；W67 门限回归 **4/4 PASS** |
-| Regression | W94Fe 后全量与定向合同、Source/Packaged、build/dist 均通过（结果写入本波检查点） |
+| Regression | W94Fe 定向合同、Source/Packaged、build/dist 通过；当前全量 `277/279`，仅 W71 release foundation 与 W72c provenance 两个既有审计漂移失败 |
 
 ## 3. 尚未通过的项
 

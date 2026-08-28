@@ -67,7 +67,7 @@ Local Product → 可选 Public Projection / Hub
 - W63/W70/W76–W78/W81/W85 已形成地址化证据、多父 Context、认知和事件基础。
 - W83 Player/Danmaku、Feed、Companion 与 W93 Library Resource Freedom 已形成强本地垂直切片。
 - W84 已形成 `.maz` 本地 profile、加密、签名、授权和迁移内核。
-- 当前最终全量为 `276/276` 个测试文件通过，`npm run build` 与 `npm run dist:dir` 均通过；这只是 W94E 的回归证据，不是 W94 完成证据。
+- W94E 记录的历史回归基线为 `276/276`；W94Fe 后当前全量为 `277/279`，新增 W94Fe 合同本身全绿，剩余两项是既有 W71 release foundation 与 W72c provenance 审计账本漂移。`npm run build` 与 `npm run dist:dir` 仍通过；这都不是 W94 完成证据。
 
 ### 2.2 不能冒充完成的器官
 
@@ -344,7 +344,7 @@ Effective State 必须由 base + ordered changes + explicit resolutions 计算�
 - A/B Workspace、离线并发、多父关系、删除/恢复、冲突重放均不丢事实。
 - Branch 切换不会串 Calc/Chart/Canvas/World 的当前 revision。
 
-当前已验证：W94E 合同 `9/9`、LAN 合同 `12/12`（含真实 TLS TCP loopback 的冲突/重连/坏签名/中途断线/跨帧乱序路径）、Source/Packaged 查询解释/拒绝重放、多父冲突人工 resolution、`approval` outcome 合同与八 domain metadata-only producer；另有真实跨机器 TLS/帧协议端点双向 1 文件 + 1 state-fact 的 `PASS_WITH_SCOPE` 证据。W94Fe 又以两个独立 Electron Mazz 完成 Source/Packaged room 边界、host transfer/new epoch、重连与 durable replay，证据见 [`W94FE_PLAYER_ROOM_SOURCE.json`](../engineering/evidence/W94FE_PLAYER_ROOM_SOURCE.json) 与 [`W94FE_PLAYER_ROOM_PACKAGED.json`](../engineering/evidence/W94FE_PLAYER_ROOM_PACKAGED.json)。`npm test`、build/dist 和 provenance/secret/release audit 均通过。W94Fb 正式 W93 bridge 与 Workspace A/B 切换门仍未完成，故总波保持 PARTIAL。详见 [`W94E_DOMAIN_EVENT_COVERAGE.json`](../engineering/evidence/W94E_DOMAIN_EVENT_COVERAGE.json) 与 [`W94E_LAN_PHYSICAL_PROTOCOL_PEER.json`](../engineering/evidence/W94E_LAN_PHYSICAL_PROTOCOL_PEER.json)。
+当前已验证：W94E 合同 `9/9`、LAN 合同 `12/12`（含真实 TLS TCP loopback 的冲突/重连/坏签名/中途断线/跨帧乱序路径）、Source/Packaged 查询解释/拒绝重放、多父冲突人工 resolution、`approval` outcome 合同与八 domain metadata-only producer；另有真实跨机器 TLS/帧协议端点双向 1 文件 + 1 state-fact 的 `PASS_WITH_SCOPE` 证据。W94Fe 又以两个独立 Electron Mazz 完成 Source/Packaged room 边界、host transfer/new epoch、重连与 durable replay，证据见 [`W94FE_PLAYER_ROOM_SOURCE.json`](../engineering/evidence/W94FE_PLAYER_ROOM_SOURCE.json) 与 [`W94FE_PLAYER_ROOM_PACKAGED.json`](../engineering/evidence/W94FE_PLAYER_ROOM_PACKAGED.json)。W94Fe 定向合同、build/dist 通过；当前全量 `277/279`，W71 release foundation 与 W72c provenance 两个既有审计漂移仍红。W94Fb 正式 W93 bridge 与 Workspace A/B 切换门仍未完成，故总波保持 PARTIAL。详见 [`W94E_DOMAIN_EVENT_COVERAGE.json`](../engineering/evidence/W94E_DOMAIN_EVENT_COVERAGE.json) 与 [`W94E_LAN_PHYSICAL_PROTOCOL_PEER.json`](../engineering/evidence/W94E_LAN_PHYSICAL_PROTOCOL_PEER.json)。
 
 ## 11. W94F：Player Transport Convergence + Watch Room
 
