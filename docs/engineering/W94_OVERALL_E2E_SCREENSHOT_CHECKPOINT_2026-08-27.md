@@ -12,7 +12,7 @@
 | W94B Calc + Chart Artifact | PASS | PASS | typed calc `5`、deterministic SVG、single-use artifact grant、资源归零 |
 | W94C Canvas Agent | PASS | PASS | document roundtrip、revision、SVG export、single-use grant |
 | W94D Blender External Capability | PASS | PASS | Blender 5.2 fixture probe、render/inspect/export、失败/取消、外部进程归零 |
-| W94E Relation + Branch | PASS | PASS | 查询解释/拒绝重放、多父冲突 resolution、8 domain event、state-fact 边界 |
+| W94E Relation + Branch | PARTIAL（双 Mazz 定向 A/B PASS） | PARTIAL（双 Mazz 定向 A/B PASS） | 查询解释/拒绝重放、多父冲突 resolution、双 Mazz state-fact TLS；正式 outcome 缺口仍在 |
 | W94F Player Transport + Watch Room | PASS | PASS | 51 项无固定队列门、capability/Range、重启 `paused`、双 Mazz TLS room、host transfer/new epoch、durable replay |
 
 各项 Packaged 证据保留各自运行时的 `executableSha256`，不把不同次构建伪装成同一代；本次
@@ -33,6 +33,6 @@ W94Fe 最新 `win-unpacked` EXE SHA-256 为
 
 ## 3. 边界声明
 
-本检查点只证明已实现的 W94A–F 切片在 Source/Packaged 和当前桌面壳中通过；W94Fe 的第二个 Mazz
+本检查点只证明已实现的 W94A–F 切片在 Source/Packaged 和当前桌面壳中通过；W94E/W94Fe 的第二个 Mazz
 实例已在真实 TLS loopback 证据中覆盖，但真实公网 P2P/跨机器房间仍是显式 opt-in。媒体资源到
 W93 书籍 Job 的正式桥接、Workspace A/B 切换及其余公共入口仍按各自检查点保持 PARTIAL/OPEN。

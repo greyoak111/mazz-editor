@@ -21,6 +21,7 @@
     "test:w94d:runtime": "node tests/e2e/w94d-blender-runtime.mjs",
     "test:w94e:relation-branch": "node --test tests/contract/w94e-relation-branch.test.mjs",
     "test:w94e:runtime": "node tests/e2e/w94e-relation-branch-runtime.mjs",
+    "test:w94e:dual-runtime": "node tests/e2e/w94e-dual-relation-branch-runtime.mjs",
     "test:w94fe:room": "node tests/contract/w94fe-player-room-boundary.test.mjs",
     "test:w94fe:runtime": "node tests/e2e/w94fe-player-room-runtime.mjs",
     "test:w93b:library": "node tests/contract/w93b-acquisition-core.test.mjs && node tests/contract/w93b-path-promotion.test.mjs && node tests/contract/w93b-browser-acquisition-bridge.test.mjs && node tests/contract/w93b-inbox-saga.test.mjs && node tests/contract/w93b-runtime-ipc.test.mjs",

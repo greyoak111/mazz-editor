@@ -148,6 +148,7 @@ const files = [
   'tests/contract/w94c-canvas-agent.test.mjs',
   'tests/contract/w94d-blender-capability.test.mjs',
   'tests/contract/w94e-relation-branch.test.mjs',
+  'tests/contract/w94e-dual-runtime.test.mjs',
   'tests/contract/w94f-player-transport.test.mjs',
   'tests/contract/w94fd-watch-room.test.mjs',
   'tests/contract/w94fe-player-room-boundary.test.mjs',

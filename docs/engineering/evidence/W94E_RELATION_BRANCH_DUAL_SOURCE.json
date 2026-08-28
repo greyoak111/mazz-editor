@@ -1,0 +1,37 @@
+{
+  "schema": "mazz.w94e-relation-branch-dual-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "secondMazzRuntime": true,
+  "workspace": {
+    "sameIdentity": true,
+    "workspacePathExposed": false
+  },
+  "relation": {
+    "producer": "mazz-a",
+    "consumer": "mazz-b",
+    "candidateCount": 1,
+    "rejectedAfterReplay": true,
+    "humanAuthority": "human:w94e-dual"
+  },
+  "branch": {
+    "producer": "mazz-a",
+    "consumer": "mazz-b",
+    "conflictCountBeforeResolution": 1,
+    "conflictCountAfterResolution": 0,
+    "resolvedRevision": "rev:right"
+  },
+  "stateFacts": {
+    "tlsLoopback": true,
+    "fileFramesSeparate": true,
+    "acceptedOnB": 1,
+    "factId": "branch:dual-merge"
+  },
+  "resources": {
+    "aActiveCount": 3,
+    "bActiveCount": 4
+  },
+  "runtimeErrors": [],
+  "executableSha256": null,
+  "generatedAt": "2026-08-28T09:20:59.025Z"
+}
