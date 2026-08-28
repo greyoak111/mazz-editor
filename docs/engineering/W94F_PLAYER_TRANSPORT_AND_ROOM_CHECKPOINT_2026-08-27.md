@@ -1,6 +1,6 @@
 # W94F Player Transport + Watch Room 检查点（2026-08-27）
 
-> 结论：**PARTIAL / W94Fa PASS，W94Fb 重启切片 PASS，W94Fc PASS · W94Fd–Fe 未开始**
+> 结论：**PARTIAL / W94Fa PASS，W94Fb 重启切片 PASS，W94Fc PASS，W94Fd PASS · W94Fe 未开始**
 > 施工参照：[W94F Player Transport + Watch Room](./W94F_PLAYER_TRANSPORT_AND_ROOM_SPEC.md)  
 > 上位计划：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 
@@ -30,7 +30,7 @@
 | Packaged Electron | [`W94F_PLAYER_TRANSPORT_PACKAGED.json`](./evidence/W94F_PLAYER_TRANSPORT_PACKAGED.json)：**PASS**，同代 `win-unpacked` 重跑重启门，EXE SHA-256 `a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9` |
 | Runtime | Source/Packaged 均 `networkCalls=0`、`runtimeErrors=[]`；运行后 `Mazz Editor` 进程数 `0` |
 | W94Fc 相邻契约 | `node --test tests/contract/player-w25.test.mjs`：**5/5 PASS**；W67 门限回归 **4/4 PASS** |
-| Regression | 全量 `277/277`（上一检查点）；本次 Fc 定向测试、build/dist 将在推送前重跑 |
+| Regression | W94Fd 后全量 `278/278`；W94Fc/Fd 定向合同、build/dist 均通过 |
 
 ## 3. 尚未通过的项
 
@@ -40,9 +40,10 @@
   尚未闭合。因此只记“重启切片 PASS / W94Fb PARTIAL”，不把它写成整波通过。
 - W94Fc：**PASS**。旧 `tor:fileBytes` 仅保留兼容入口且已移除 32 MiB 人为门；新播放器统一走
   短命 capability + Range/流式读取。完整 Source/Packaged runtime 证据留到 W94Fe 统一补齐。
-- W94Fd：本地/LAN watch room manifest、epoch、host transfer、断线重连尚未施工。
+- W94Fd：**PASS**。独立 Watch Room manifest/event/epoch、显式配对 TLS 帧、成员权限、host
+  transfer、断线重连和 durable replay 已落地，详见 [W94Fd 检查点](./W94FD_WATCH_ROOM_CHECKPOINT_2026-08-28.md)。
 - W94Fe：本波 Source/Packaged 重启与真实双端 room 证据尚未生成。
 
-因此不能把 W94F 或 W94 总波标成 PASS；下一施工项是 W94Fd Local/LAN Watch Room，随后在
-W94Fe 统一补 Source/Packaged 与真实边界证据。真实公网 P2P、第二个 Mazz 实例和公共 Watch
+因此不能把 W94F 或 W94 总波标成 PASS；下一施工项是 W94Fe，统一补 Source/Packaged 与真实
+边界证据。真实公网 P2P、第二个 Mazz 实例和公共 Watch
 Room 仍是显式 opt-in/后置边界。

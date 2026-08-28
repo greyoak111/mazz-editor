@@ -365,6 +365,9 @@ Effective State 必须由 base + ordered changes + explicit resolutions 计算�
 - 先做本地/LAN 房间：room manifest、媒体身份、clock epoch、成员、权限、聊天/弹幕事件。
 - 不把 wall clock 当媒体真相；seek、pause、buffer、host transfer 形成可重放事件。
 - 公共房间和陌生人发现留到 Hub Publication Gate 后。
+- W94Fd 已落地独立 `watch-rooms` LAN 帧、Workspace-scoped durable room/event/epoch store、
+  显式配对 join、成员权限与 host transfer；文件帧与 W94E state-fact 帧保持分离。定向合同
+  `5/5` 与真实 TLS loopback 重连收敛通过，详见 [W94Fd 检查点](../engineering/W94FD_WATCH_ROOM_CHECKPOINT_2026-08-28.md)。
 
 ### 11.3 Final Gate
 
@@ -498,6 +501,6 @@ Final Gate 只有两种：
 
 W94 只有在 A–H 全部通过、README/总表/检查点同代、全量与构建绿、Source/Packaged 证据完整、真实 Canvas/Blender/Hub 边界诚实、无未裁决 P0/P1 时才能写 `W94 COMPLETE`。
 
-当前精确施工项分两条并行但不越权：**按 W94E 施工参照补齐跨机器真实 LAN A/B 专项证据，并对 Player/Canvas/World 仍存在的正式事件入口缺口逐入口收口；W94F 已完成 W94Fa、W94Fb 重启切片与 W94Fc capability/Range 流。媒体 Magnet 在没有 W93 Candidate/Edition/Rights Receipt 时不伪造书籍 Job；下一步是对有 Candidate 的 Player 资源做显式 W93 bridge，再施工 W94Fd room，并在 W94Fe 补齐 Source/Packaged 与真实边界证据。Library durable Job settlement 已接入，现有 producer 接线与缺口见覆盖审计。**
+当前精确施工项分两条并行但不越权：**按 W94E 施工参照补齐跨机器真实 LAN A/B 专项证据，并对 Player/Canvas/World 仍存在的正式事件入口缺口逐入口收口；W94F 已完成 W94Fa、W94Fb 重启切片、W94Fc capability/Range 流和 W94Fd Local/LAN Watch Room。媒体 Magnet 在没有 W93 Candidate/Edition/Rights Receipt 时不伪造书籍 Job；下一步是对有 Candidate 的 Player 资源做显式 W93 bridge，并在 W94Fe 补齐 Source/Packaged 与真实边界证据。Library durable Job settlement 已接入，现有 producer 接线与缺口见覆盖审计。**
 W94D 已把 Blender 三 operation、真实外部进程、Artifact lineage、失败/取消/收尸与 Source/Packaged 证据接入
 W94A/B 脊柱；W94E 已完成实现、Source/Packaged 运行、构建和全量回归，但因上述两项未完成仍保持 PARTIAL；Player、World 或 Hub 仍不因本波通过而自动获得施工授权。

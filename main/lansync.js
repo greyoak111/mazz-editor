@@ -8,6 +8,7 @@ const path = require('path');
 const os = require('os');
 const forge = require('node-forge');
 const { normalizeStateFact, mergeStateFacts, createStateFact } = require('./foundation/lan-state-facts');
+const { WatchRoomService } = require('./foundation/watch-room');
 
 const SYNC_PORT = 47820;
 const MDNS_TYPE = 'mazz-sync';
@@ -208,6 +209,11 @@ class LanSync {
     this.mdnsStop = null;
     this.state = 'idle'; // idle | hosting | syncing
     this.lastResult = null;
+    this.watchRoom = new WatchRoomService({
+      store,
+      workspace: () => this.ws(),
+      memberIdentity: () => this.identity().deviceId,
+    });
     if (bus) this.registerIpc(bus);
   }
 
@@ -643,7 +649,7 @@ class LanSync {
     const mine = this.scanFiles();
     // 新基线：从会话开始时的清单出发，随写入事件逐项推演（不受会话后本地修改污染）
     const baselineNext = new Map(mine.map(f => [f.path, f.hash]));
-    const result = { sent: 0, received: 0, conflicts: [], skipped: 0, positions: 0, stateFacts: 0, stateFactConflicts: [] };
+    const result = { sent: 0, received: 0, conflicts: [], skipped: 0, positions: 0, stateFacts: 0, stateFactConflicts: [], watchRooms: 0, watchRoomConflicts: [] };
     let gotFilesMsg = false;
     let sentFilesMsg = false;
     let finished = false;
@@ -671,6 +677,9 @@ class LanSync {
       // State facts are a separate protocol track.  They never ride in a file
       // item and contain only local evidence references.
       sock.write(encodeFrame({ op: 'state-facts', workspaceId: this.workspaceIdentity(), facts: this.listStateFacts() }));
+      // Watch Room is a separate metadata track.  It is sent only after the
+      // TLS + pairing handshake, never as a file item or state-fact payload.
+      sock.write(encodeFrame({ op: 'watch-rooms', workspaceId: this.workspaceIdentity(), rooms: this.watchRoom.exportRooms() }));
     } catch (e) { settle(onError, e); }
 
     return {
@@ -700,6 +709,13 @@ class LanSync {
             }
           } else if (msg.op === 'state-fact-ack') {
             // Ack is informational; the durable merge already happened on the receiver.
+          } else if (msg.op === 'watch-rooms') {
+            const merged = this.watchRoom.mergeRemote({ workspaceId: msg.workspaceId, rooms: msg.rooms, paired: true });
+            result.watchRooms += merged.accepted || 0;
+            result.watchRoomConflicts.push(...(merged.rejected || []));
+            try { sock.write(encodeFrame({ op: 'watch-room-ack', accepted: merged.accepted || 0, duplicates: merged.duplicates || 0, rejected: (merged.rejected || []).length })); } catch {}
+          } else if (msg.op === 'watch-room-ack') {
+            // Informational: the receiver has already persisted the room track.
           } else if (msg.op === 'want') {
             const items = [];
             for (const p of msg.paths) {
@@ -809,6 +825,18 @@ class LanSync {
     bus.handle('sync:stateFactPut', async payload => this.putStateFact(payload));
     bus.handle('sync:stateFacts', async () => this.listStateFacts());
     bus.handle('sync:stateFactsMerge', async ({ facts } = {}) => this.mergeStateFacts(facts));
+    bus.handle('sync:roomCreate', async payload => this.watchRoom.createRoom(payload));
+    bus.handle('sync:roomGet', async ({ roomId } = {}) => this.watchRoom.getRoom(roomId));
+    bus.handle('sync:roomList', async () => this.watchRoom.listRooms());
+    bus.handle('sync:roomEvents', async ({ roomId } = {}) => this.watchRoom.roomEvents(roomId));
+    bus.handle('sync:roomReplay', async ({ roomId } = {}) => this.watchRoom.replay(roomId));
+    bus.handle('sync:roomAppend', async payload => this.watchRoom.appendEvent(payload));
+    // The room service refuses unpaired joins.  Do not silently promote an
+    // arbitrary renderer invocation to an invite; the caller must carry the
+    // explicit pairing result in `paired: true`.
+    bus.handle('sync:roomJoin', async payload => this.watchRoom.joinRoom({ ...payload, paired: payload?.paired === true }));
+    bus.handle('sync:roomLeave', async payload => this.watchRoom.leaveRoom(payload));
+    bus.handle('sync:roomTransferHost', async payload => this.watchRoom.transferHost(payload));
     bus.handle('sync:tempShare', async (payload) => this.createTempShare(payload));
     bus.handle('sync:tempShareStop', async () => this.stopTempShare());
   }

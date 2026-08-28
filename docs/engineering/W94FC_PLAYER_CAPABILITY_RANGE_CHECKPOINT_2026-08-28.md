@@ -1,6 +1,6 @@
 # W94Fc Player capability + Range 检查点（2026-08-28）
 
-> 结论：**PASS（定向合同与源代码门）**；W94F 总波仍为 PARTIAL，W94Fd–Fe 未开始。
+> 结论：**PASS（定向合同与源代码门）**；W94F 总波仍为 PARTIAL，W94Fd 已通过，W94Fe 未开始。
 > 施工参照：[W94F Player Transport + Watch Room](./W94F_PLAYER_TRANSPORT_AND_ROOM_SPEC.md)
 > 上位计划：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 
@@ -30,9 +30,8 @@
 
 ## 3. 未覆盖与下一波
 
-- 本检查点未宣称 W94F 总波完成：W94Fd 的 Local/LAN Watch Room manifest、epoch、断线重连、
-  host transfer 尚未施工；W94Fe 的 Source/Packaged capability 协议证据与真实边界仍待补齐。
+- 本检查点未宣称 W94F 总波完成：W94Fd 的 Local/LAN Watch Room 已有独立检查点；W94Fe 的
+  Source/Packaged capability 协议证据与真实边界仍待补齐。
 - W94Fb 的 W93 Candidate/Edition/Rights Receipt 正式桥接和 Workspace A/B 迁移仍保持原有
   `PARTIAL` 结论，不能因 Fc 通过而伪造书籍 Acquisition Job。
-- 下一施工项：按 W94Fd 规格建立同机/显式配对 LAN room，再为 Fd/Fe 逐项补 Source/Packaged、
-  故障注入、资源账和 checkpoint。
+- 下一施工项：按 W94Fe 为 Fd/Fe 逐项补 Source/Packaged、真实边界、故障注入、资源账和 checkpoint。

@@ -1,6 +1,6 @@
 # W94F Player Transport + Watch Room 施工参照
 
-> 状态：**SPEC READY / W94F PARTIAL · W94Fc PASS · IN PROGRESS**
+> 状态：**SPEC READY / W94F PARTIAL · W94Fc PASS · W94Fd PASS · IN PROGRESS**
 > 日期：2026-08-27  
 > 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)  
 > 前置真源：[W93 Library Resource Freedom](../plans/W93_LIBRARY_RESOURCE_FREEDOM.md)、[W93F Torrent Book Transport](./W93F_TORRENT_BOOK_TRANSPORT_SPEC.md)、[W83 Danmaku Runtime](../plans/W83_DANMAKU_RUNTIME.md)  
@@ -136,6 +136,7 @@ wall clock 只用于观测，不用于推导播放位置。
 
 ### W94Fd — Local/LAN Watch Room
 
+- 当前实现与证据：[W94Fd 检查点](./W94FD_WATCH_ROOM_CHECKPOINT_2026-08-28.md)。
 - 先做同机与显式配对的 LAN room：manifest、成员、host transfer、时钟 epoch、断线重连、
   seek/pause/buffer 重放和本地聊天/弹幕引用。
 - state-fact 与文件 frame 分离；签名、Workspace identity、revision 和权限失败均 fail closed。
