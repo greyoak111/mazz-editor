@@ -1,9 +1,9 @@
 # W94G World + MazzHub Public Plane 施工参照
 
-> 状态：**SPEC READY / IMPLEMENTATION NOT STARTED**  
-> 日期：2026-08-28  
-> 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)  
-> 产品真源：[W69 MazzHub Local-first Content Network](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)  
+> 状态：**SPEC READY / IMPLEMENTATION NOT STARTED**
+> 日期：2026-08-28
+> 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
+> 产品真源：[W69 MazzHub Local-first Content Network](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)
 > 资产真源：[W84 `.maz` Production Asset Standard](../plans/W84_MAZ_PRODUCTION_ASSET_STANDARD.md)
 
 ## 0. 这份文档解决什么问题
