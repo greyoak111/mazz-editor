@@ -52,13 +52,19 @@ describe('全编码音轨封装', () => {
 });
 
 describe('种子内字幕', () => {
-  test('tor:fileBytes 通道与播放即挂', () => {
+  test('W94Fc capability 流与播放即挂', () => {
     const d = readSrc('main/torrent-daemon.js');
+    assert.ok(d.includes("bus.handle('tor:fileCapabilityUrl'"), 'capability 通道必须有');
+    assert.ok(d.includes('openFileCapability'), '主进程必须按 capability 打开文件流');
     assert.ok(d.includes("bus.handle('tor:fileBytes'"), 'tor:fileBytes 通道必须有');
     assert.ok(d.includes('for await'), '必须 asyncIterator 按需取块（小块下完即收）');
+    assert.ok(readSrc('preload/bridge.js').includes("'tor:fileCapabilityUrl'"), '桥白名单必须登记 capability 通道');
     assert.ok(readSrc('preload/bridge.js').includes("'tor:fileBytes'"), '桥白名单必须登记 tor:fileBytes');
     const src = readSrc('renderer/modules/viewer/player.js');
-    assert.ok(src.includes("invoke('tor:fileBytes'"), '播放器必须调 tor:fileBytes');
+    assert.ok(src.includes("invoke('tor:fileCapabilityUrl'"), '播放器必须调 capability 通道');
+    assert.ok(!src.includes("invoke('tor:fileBytes'"), '播放器不得通过 IPC Buffer 读取字幕');
+    assert.ok(!src.includes("invoke('tor:streamUrl'"), '播放器不得向 renderer 暴露 loopback 流地址');
+    assert.ok(!src.includes("invoke('tor:filePath'"), '播放器不得向 renderer 暴露 torrent 绝对路径');
     assert.ok(/\.(ass\|srt\|ssa)/.test(src) || src.includes('ass|srt|ssa'), '必须探种子内 .ass/.srt/.ssa');
     assert.ok(src.includes('attachSubtitle(media, { subContent'), '必须内容直挂（播放即挂）');
     assert.ok(src.includes('已挂载种子内字幕'), '挂载成功必须有明白话');

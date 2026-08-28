@@ -96,6 +96,7 @@ protocol.registerSchemesAsPrivileged([
 // W58 预览档根治：mazz-res handler 模块级引渡——隐私浏览器独立会话（persist:mazz-browser）默认不继承默认会话的
 // protocol.handle，视图会话里 mazz-res=未知协议 → load 静默流产死守 about:blank（data: URL 对照组实证管道本身无恙）
 let mazzResHandler = null;
+let torrentDaemon = null;
 
 const Store = require('./store');
 const IpcBus = require('./ipc-bus');
@@ -1813,6 +1814,32 @@ function registerChannels() {
           'Cross-Origin-Resource-Policy': 'cross-origin',
         } });
       }
+      // W94Fc：播放器媒体与字幕只拿短时 capability，不把 loopback/path
+      // 暴露给 renderer。协议层复用 WebTorrent File 的 Range 流，保持大文件
+      // 恒定内存并让 video 元素自行发起后续 seek 请求。
+      if (u.host === 'tor-cap') {
+        const token = decodeURIComponent(u.pathname.replace(/^\/+/, ''));
+        if (!torrentDaemon) return new Response('transport unavailable', { status: 503, headers: { 'Cache-Control': 'no-store' } });
+        try {
+          const opened = await torrentDaemon.openFileCapability(token, {
+            range: req.headers.get('range') || '', method: req.method,
+          });
+          if (req.method === 'HEAD') opened.stream.destroy();
+          const body = req.method === 'HEAD' ? null : Readable.toWeb(opened.stream);
+          return new Response(body, { status: opened.status, headers: {
+            ...opened.headers,
+            'Access-Control-Allow-Origin': '*',
+            'Cross-Origin-Resource-Policy': 'same-origin',
+          } });
+        } catch (error) {
+          const code = String(error?.code || '');
+          const status = code.includes('EXPIRED') ? 410
+            : code.includes('RANGE') ? 416
+              : code.includes('WORKSPACE') ? 409
+                : code.includes('INVALID') || code.includes('FORBIDDEN') ? 403 : 404;
+          return new Response(error?.message || 'transport capability unavailable', { status, headers: { 'Cache-Control': 'no-store' } });
+        }
+      }
       // P2P 流代理：mazz-res://tor/127.0.0.1:{port}/{path} → webtorrent range 流端点
       // （播放器 CSP 不用动——mazz-res 已在白名单，页面对本地 HTTP 流全走这一口）
       if (rel.startsWith('tor/')) {
@@ -2520,7 +2547,7 @@ app.whenReady().then(async () => {
   bs.hookWindow(wm.main);
   // —— P2P 边下边播守护（webtorrent 主进程实例 + 127.0.0.1 range 流端点） ——
   const TorrentDaemon = require('./torrent-daemon');
-  const torrentDaemon = new TorrentDaemon({
+  torrentDaemon = new TorrentDaemon({
     bus, workspace: () => store.get('workspace'), session: browserSess, resourceLedger,
   });
   if (process.env.NODE_ENV === 'test') globalThis.__MAZZ_E2E_TORRENT_DAEMON__ = torrentDaemon;

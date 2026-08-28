@@ -88,7 +88,7 @@ const INVOKE_CHANNELS = new Set([
   'rec:sources', 'rec:useSource', 'rec:selfFrame',
   'player:subAssets',
   'tor:add', 'tor:addBuffer', 'tor:queue', 'tor:pause', 'tor:resume', 'tor:retry',
-  'tor:stats', 'tor:list', 'tor:streamUrl', 'tor:filePath', 'tor:remove', 'tor:fileBytes',
+  'tor:stats', 'tor:list', 'tor:streamUrl', 'tor:fileCapabilityUrl', 'tor:filePath', 'tor:materialize', 'tor:remove', 'tor:fileBytes',
   'sites:list', 'sites:search', 'sites:searchPage', 'sites:searchMany', 'sites:magnet', 'sites:home',
   'sites:catalog', 'sites:health', 'sites:check', 'sites:reset',
   'mkv:tracks', 'mkv:extractFlac', 'mkv:extractTrack',

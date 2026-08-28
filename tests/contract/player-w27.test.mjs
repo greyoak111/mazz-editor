@@ -33,7 +33,8 @@ describe('页面同源化（mazz-res 一源到底）', () => {
     assert.ok(vi.includes("'mazz-res://media/' + encodeURIComponent"), 'viewer 媒体源必须走协议');
     assert.ok(!vi.includes("return 'file://' + path"), 'viewer file:// 媒体源必须退役');
     const pl = readSrc('renderer/modules/viewer/player.js');
-    assert.ok(pl.includes("'mazz-res://tor/' + encodeURI"), 'P2P 流必须走 tor/ 代理且编码');
+    assert.ok(pl.includes("invoke('tor:fileCapabilityUrl'") && pl.includes('mediaGrant.url'), 'P2P 流必须走 capability 协议句柄');
+    assert.ok(!pl.includes("'mazz-res://tor/' + encodeURI"), '旧 loopback tor/ 拼接必须退役');
     assert.ok(!pl.includes("attachAuxAudio('file://"), 'aux 音轨 file:// 必须退役');
     const mg = readSrc('renderer/modules/library/manga.js');
     assert.ok(mg.includes('mazz-res://media/'), '漫画图必须走协议');

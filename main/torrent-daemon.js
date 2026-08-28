@@ -16,10 +16,13 @@ Module._load = function (request, parent, isMain) {
 
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const { Readable } = require('stream');
 const { normalizeInfoHash } = require('./torrent-site-core');
 const PlayerTransportSessionStore = require('./player-transport-session-store');
 
-const MAX_INLINE_FILE_BYTES = 32 * 1024 * 1024;
+// Capability lifetime is a transport-security lease, not a media-size/business threshold.
+const FILE_CAPABILITY_TTL_MS = 60 * 1000;
 
 // 公共 tracker 兜底表（实证过可达）：dmhy 系 magnet 全系裸 btih（详情页 grep tr= 为 0 实锤）——
 // 纯 DHT 发现在受限网络 60s 拿不到元数据（奈叶新种实锤），注入后同种 70s 内元数据+下载全通
@@ -55,6 +58,9 @@ class TorrentDaemon {
     this.serverResourceKey = null;
     this.torrents = new Map(); // infoHash -> { t, addedAt }
     this.jobs = new Map(); // infoHash -> renderer 无关的下载状态机（关签后继续下载）
+    this.fileCapabilities = new Map(); // token -> capability record
+    this.fileCapabilityOwners = new Map(); // ownerId -> Set(token)
+    this.fileCapabilityOwnerHooks = new Map();
     // 启动即过一遍 storeRoot（内含旧 .download→download 一次性合并迁移——不能只等 tor:add，
     // 否则用户不加种子迁移永不触发，工作区树/媒体库扫描继续瞎（真机实锤））
     try { this.storeRoot(); } catch {}
@@ -216,6 +222,138 @@ class TorrentDaemon {
   }
   filesOf(t) {
     return (t.files || []).map(f => ({ path: f.path, name: f.name, length: f.length, streamUrl: this.streamUrlOf(f) }));
+  }
+
+  _findTorrentFile(infoHash, filePath) {
+    const rec = this.torrents.get(String(infoHash || '').toLowerCase());
+    if (!rec) throw Object.assign(new Error('torrent unavailable'), { code: 'PLAYER_TRANSPORT_TORRENT_UNAVAILABLE' });
+    const file = (rec.t.files || []).find(item => item.path === String(filePath || ''));
+    if (!file) throw Object.assign(new Error('torrent file unavailable'), { code: 'PLAYER_TRANSPORT_FILE_UNAVAILABLE' });
+    return { rec, file };
+  }
+
+  _invalidateFileCapabilitiesForOwner(ownerId) {
+    const tokens = this.fileCapabilityOwners.get(ownerId);
+    if (!tokens) return;
+    for (const token of tokens) this.fileCapabilities.delete(token);
+    this.fileCapabilityOwners.delete(ownerId);
+  }
+
+  _registerFileCapabilityOwner(ownerId, sender) {
+    if (!ownerId || !sender || this.fileCapabilityOwnerHooks.has(ownerId)) return;
+    const invalidate = () => this._invalidateFileCapabilitiesForOwner(ownerId);
+    this.fileCapabilityOwnerHooks.set(ownerId, { sender, invalidate });
+    sender.once?.('destroyed', invalidate);
+    sender.once?.('render-process-gone', invalidate);
+  }
+
+  invalidateFileCapabilities() {
+    for (const { sender, invalidate } of this.fileCapabilityOwnerHooks.values()) {
+      sender.removeListener?.('destroyed', invalidate);
+      sender.removeListener?.('render-process-gone', invalidate);
+    }
+    this.fileCapabilityOwnerHooks.clear();
+    this.fileCapabilityOwners.clear();
+    this.fileCapabilities.clear();
+  }
+
+  createFileCapability({ infoHash, filePath, ownerId = '' } = {}) {
+    const { file } = this._findTorrentFile(infoHash, filePath);
+    const token = `player-file-${crypto.randomBytes(24).toString('base64url')}`;
+    const record = {
+      token,
+      infoHash: String(infoHash).toLowerCase(),
+      filePath: file.path,
+      workspacePath: this.workspacePath,
+      ownerId: String(ownerId || ''),
+      expiresAt: Date.now() + FILE_CAPABILITY_TTL_MS,
+    };
+    this.fileCapabilities.set(token, record);
+    if (record.ownerId) {
+      let tokens = this.fileCapabilityOwners.get(record.ownerId);
+      if (!tokens) this.fileCapabilityOwners.set(record.ownerId, tokens = new Set());
+      tokens.add(token);
+    }
+    return {
+      capabilityRef: `capability:${token}`,
+      url: `mazz-res://tor-cap/${encodeURIComponent(token)}`,
+      infoHash: record.infoHash,
+      filePath: record.filePath,
+      length: Number(file.length || 0),
+      expiresAt: record.expiresAt,
+    };
+  }
+
+  async openFileCapability(token, { range = '', method = 'GET' } = {}) {
+    const record = this.fileCapabilities.get(String(token || ''));
+    if (!record) throw Object.assign(new Error('transport capability unavailable'), { code: 'PLAYER_TRANSPORT_CAPABILITY_INVALID' });
+    if (record.expiresAt <= Date.now()) {
+      this.fileCapabilities.delete(record.token);
+      this.fileCapabilityOwners.get(record.ownerId)?.delete(record.token);
+      throw Object.assign(new Error('transport capability expired'), { code: 'PLAYER_TRANSPORT_CAPABILITY_EXPIRED' });
+    }
+    const workspacePath = path.resolve(String(typeof this.workspace === 'function' ? this.workspace() : this.workspacePath));
+    if (workspacePath !== record.workspacePath) {
+      this.fileCapabilities.delete(record.token);
+      this.fileCapabilityOwners.get(record.ownerId)?.delete(record.token);
+      throw Object.assign(new Error('transport capability belongs to another workspace'), { code: 'PLAYER_TRANSPORT_CAPABILITY_WORKSPACE' });
+    }
+    const { file } = this._findTorrentFile(record.infoHash, record.filePath);
+    const size = Number(file.length || 0);
+    const headers = { 'Accept-Ranges': 'bytes', 'Content-Type': this._fileMime(file.path), 'Cache-Control': 'no-store' };
+    let start = 0;
+    let end = Math.max(0, size - 1);
+    let status = 200;
+    const rawRange = String(range || '').trim();
+    if (rawRange) {
+      const match = /^bytes=(\d*)-(\d*)$/.exec(rawRange);
+      if (!match || size <= 0 || (!match[1] && !match[2])) {
+        throw Object.assign(new Error('invalid byte range'), { code: 'PLAYER_TRANSPORT_RANGE_INVALID' });
+      }
+      if (match[1]) start = Number(match[1]);
+      if (match[2]) end = Number(match[2]);
+      if (!match[1]) { start = Math.max(0, size - Number(match[2])); end = size - 1; }
+      if (!match[2]) end = size - 1;
+      end = Math.min(end, size - 1);
+      if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start > end || start >= size) {
+        throw Object.assign(new Error('invalid byte range'), { code: 'PLAYER_TRANSPORT_RANGE_INVALID' });
+      }
+      status = 206;
+      headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
+    }
+    headers['Content-Length'] = String(Math.max(0, end - start + 1));
+    const stream = method === 'HEAD'
+      ? Readable.from([])
+      : typeof file.createReadStream === 'function'
+        ? file.createReadStream({ start, end })
+        : Readable.from(file);
+    return { stream, status, headers, size };
+  }
+
+  _fileMime(filePath) {
+    const ext = path.extname(String(filePath || '')).toLowerCase();
+    return ({
+      '.mp4': 'video/mp4', '.m4v': 'video/mp4', '.mov': 'video/mp4', '.mkv': 'video/x-matroska',
+      '.webm': 'video/webm', '.avi': 'video/x-msvideo', '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
+      '.flac': 'audio/flac', '.m4a': 'audio/mp4', '.aac': 'audio/aac', '.ogg': 'audio/ogg',
+      '.opus': 'audio/ogg', '.ass': 'text/x-ass; charset=utf-8', '.ssa': 'text/x-ssa; charset=utf-8',
+      '.srt': 'application/x-subrip; charset=utf-8', '.txt': 'text/plain; charset=utf-8',
+    })[ext] || 'application/octet-stream';
+  }
+
+  async materializeTorrentFile({ infoHash, filePath, destinationRelative } = {}) {
+    const { file } = this._findTorrentFile(infoHash, filePath);
+    const workspace = path.resolve(String(typeof this.workspace === 'function' ? this.workspace() : this.workspacePath));
+    const relative = String(destinationRelative || '').replace(/\\/g, '/').replace(/^\/+/, '');
+    if (!relative || relative.split('/').includes('..')) throw Object.assign(new Error('invalid destination'), { code: 'PLAYER_TRANSPORT_DESTINATION_INVALID' });
+    const destination = path.resolve(workspace, relative);
+    if (destination !== workspace && !destination.startsWith(workspace + path.sep)) throw Object.assign(new Error('invalid destination'), { code: 'PLAYER_TRANSPORT_DESTINATION_INVALID' });
+    const sourceRoot = path.resolve(this.storeRoot());
+    const source = path.resolve(sourceRoot, file.path);
+    if (source !== sourceRoot && !source.startsWith(sourceRoot + path.sep)) throw Object.assign(new Error('invalid torrent file'), { code: 'PLAYER_TRANSPORT_FILE_UNAVAILABLE' });
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.renameSync(source, destination);
+    return { path: destination, relativePath: relative };
   }
 
   async _addTorrent({ magnet, name }) {
@@ -408,6 +546,11 @@ class TorrentDaemon {
       const f = rec.t.files.find(x => x.path === filePath) || rec.t.files[0];
       return f ? this.streamUrlOf(f) : null;
     });
+    bus.handle('tor:fileCapabilityUrl', async ({ infoHash, filePath }, event) => {
+      const ownerId = String(event?.sender?.id || '');
+      if (ownerId) this._registerFileCapabilityOwner(ownerId, event.sender);
+      return this.createFileCapability({ infoHash, filePath, ownerId });
+    });
     bus.handle('tor:filePath', async ({ infoHash, filePath }) => {
       const rec = this.torrents.get(infoHash);
       if (!rec) return null;
@@ -415,18 +558,16 @@ class TorrentDaemon {
       // f.path 自带种子顶层目录（"Big Buck Bunny/xxx.en.srt"）——再拼 t.name 必双套娃（ENOENT 实锤）
       return f ? path.join(this.storeRoot(), f.path) : null;
     });
-    // 按需取文件字节（种子内字幕场景：asyncIterator 逐 piece 拉，小块下完即收，不拖全种）
+    bus.handle('tor:materialize', async ({ infoHash, filePath, destinationRelative }) => this.materializeTorrentFile({ infoHash, filePath, destinationRelative }));
+    // 兼容旧调用方的字幕字节通道。新播放器走 fileCapabilityUrl + mazz-res
+    // 流式读取，不能在 IPC 层人为设置媒体大小门槛。
     bus.handle('tor:fileBytes', async ({ infoHash, filePath }) => {
       const rec = this.torrents.get(infoHash);
       if (!rec) return null;
       const f = rec.t.files.find(x => x.path === filePath);
       if (!f) return null;
-      if (Number(f.length || 0) > MAX_INLINE_FILE_BYTES) throw new Error('种子内文件超过 32 MiB 内联读取上限，请改用流式播放或落盘路径');
       const chunks = [];
-      let total = 0;
       for await (const chunk of f) {
-        total += chunk.length;
-        if (total > MAX_INLINE_FILE_BYTES) throw new Error('种子内文件超过 32 MiB 内联读取上限');
         chunks.push(Buffer.from(chunk));
       }
       return Buffer.concat(chunks);
@@ -450,6 +591,7 @@ class TorrentDaemon {
   async destroy(reason = 'app-quit') {
     if (this.destroying) return this.destroying;
     this.destroying = (async () => {
+      this.invalidateFileCapabilities();
       const records = [...this.torrents.values()];
       for (const job of this.jobs.values()) {
         job.cancelled = true;
@@ -501,4 +643,4 @@ class TorrentDaemon {
 }
 
 module.exports = TorrentDaemon;
-module.exports.MAX_INLINE_FILE_BYTES = MAX_INLINE_FILE_BYTES;
+module.exports.FILE_CAPABILITY_TTL_MS = FILE_CAPABILITY_TTL_MS;

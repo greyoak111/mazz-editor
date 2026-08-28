@@ -1,6 +1,7 @@
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import { EventEmitter } from 'node:events';
+import { Readable } from 'node:stream';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -20,6 +21,20 @@ class FakeServer {
   close(callback) { callback?.(); }
 }
 
+class FakeFile {
+  constructor(root, name, bytes) {
+    this.path = `${root}/${name}`;
+    this.name = name;
+    this.bytes = Buffer.from(bytes);
+    this.length = this.bytes.length;
+    this.streamURL = `/0/${name}`;
+  }
+  createReadStream({ start = 0, end = this.bytes.length - 1 } = {}) {
+    return Readable.from(this.bytes.subarray(start, end + 1));
+  }
+  async *[Symbol.asyncIterator]() { yield this.bytes; }
+}
+
 class FakeTorrent extends EventEmitter {
   constructor(infoHash) {
     super();
@@ -34,7 +49,7 @@ class FakeTorrent extends EventEmitter {
     this.uploadSpeed = 0;
     this.numPeers = 0;
     this.done = false;
-    this.files = [{ path: `${this.name}/video.mp4`, name: 'video.mp4', length: 1, streamURL: '/0/video.mp4' }];
+    this.files = [new FakeFile(this.name, 'video.mp4', Buffer.from('0123456789abcdef'))];
   }
   pause() { this.paused = true; }
   resume() { this.paused = false; }
@@ -116,6 +131,40 @@ describe('W94Fa Player transport queue', () => {
         await second.destroy('w94fb-test');
       }
     } finally {
+      fs.rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  test('W94Fc 播放器文件只经短时 capability 与 Range 流读取', async () => {
+    const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'mazz-w94fc-capability-'));
+    const bus = new FakeBus();
+    const daemon = new TorrentDaemon({
+      bus, workspace: () => workspace, session: null,
+      loadWebTorrent: async () => ({ default: FakeWebTorrent }),
+    });
+    const hash = hashFor(9403);
+    try {
+      const added = await bus.invoke('tor:add', { magnet: `magnet:?xt=urn:btih:${hash}`, name: 'W94Fc capability fixture' });
+      const filePath = added.files[0].path;
+      const grant = await bus.invoke('tor:fileCapabilityUrl', { infoHash: hash, filePath });
+      assert.match(grant.url, /^mazz-res:\/\/tor-cap\/player-file-/);
+      assert.equal(grant.capabilityRef.startsWith('capability:'), true);
+      const token = decodeURIComponent(new URL(grant.url).pathname.slice(1));
+      const opened = await daemon.openFileCapability(token, { range: 'bytes=2-5' });
+      const chunks = [];
+      for await (const chunk of opened.stream) chunks.push(Buffer.from(chunk));
+      assert.equal(opened.status, 206);
+      assert.equal(opened.headers['Content-Range'], 'bytes 2-5/16');
+      assert.equal(Buffer.concat(chunks).toString(), '2345');
+
+      const sender = new EventEmitter();
+      sender.id = 9403;
+      const ownedGrant = await bus.handlers.get('tor:fileCapabilityUrl')({ infoHash: hash, filePath }, { sender, });
+      const ownedToken = decodeURIComponent(new URL(ownedGrant.url).pathname.slice(1));
+      sender.emit('destroyed');
+      await assert.rejects(() => daemon.openFileCapability(ownedToken), /unavailable/);
+    } finally {
+      await daemon.destroy('w94fc-test');
       fs.rmSync(workspace, { recursive: true, force: true });
     }
   });

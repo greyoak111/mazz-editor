@@ -58,7 +58,7 @@ await test('SSE 与 CLI JSONL 的无换行输入有硬上限', () => {
 await test('传输与资源安全预算保留，Calc 结果不再按固定条数驱逐', () => {
   assert.equal(PythonKernel.MAX_OUTPUT_CHARS, 16 * 1024 * 1024);
   assert.equal(PythonKernel.MAX_QUEUE, 64);
-  assert.equal(TorrentDaemon.MAX_INLINE_FILE_BYTES, 32 * 1024 * 1024);
+  assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'main/torrent-daemon.js'), 'utf8'), /MAX_INLINE_FILE_BYTES|32 MiB 内联读取/);
   const terminal = fs.readFileSync(path.join(ROOT, 'renderer/modules/code/terminal-view.js'), 'utf8');
   const indexer = fs.readFileSync(path.join(ROOT, 'renderer/modules/search/indexer.js'), 'utf8');
   const calc = fs.readFileSync(path.join(ROOT, 'renderer/modules/markdown/calc-block.js'), 'utf8');

@@ -9,7 +9,7 @@ const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 describe('工作区树展开媒体库', () => {
   test('迁移启动即触发（不再等 tor:add）', () => {
     const src = readSrc('main/torrent-daemon.js');
-    assert.ok(/this\.torrents = new Map\(\);[\s\S]{0,300}try \{ this\.storeRoot\(\); \} catch \{\}[\s\S]{0,80}this\.register\(\);/.test(src), '构造必须即过 storeRoot（迁移启动即触发——真机实锤闸）');
+    assert.ok(/this\.torrents = new Map\(\);[\s\S]{0,700}try \{ this\.storeRoot\(\); \} catch \{\}[\s\S]{0,180}this\.register\(\);/.test(src), '构造必须即过 storeRoot（迁移启动即触发——真机实锤闸）');
   });
 });
 

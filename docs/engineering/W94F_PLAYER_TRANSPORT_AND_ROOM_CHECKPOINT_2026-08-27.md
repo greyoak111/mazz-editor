@@ -1,6 +1,6 @@
 # W94F Player Transport + Watch Room 检查点（2026-08-27）
 
-> 结论：**PARTIAL / W94Fa PASS，W94Fb 重启切片 PASS · 其余 PARTIAL，W94Fc–Fe 未开始**  
+> 结论：**PARTIAL / W94Fa PASS，W94Fb 重启切片 PASS，W94Fc PASS · W94Fd–Fe 未开始**
 > 施工参照：[W94F Player Transport + Watch Room](./W94F_PLAYER_TRANSPORT_AND_ROOM_SPEC.md)  
 > 上位计划：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 
@@ -14,12 +14,14 @@
 - 重启时 `queued/downloading` 只水合为 `paused`，显式 `resume` 后才启动 WebTorrent；直接
   `tor:add`、`tor:addBuffer`、pause/resume/retry/remove 均同步 durable session。
 - 新增 fake-runtime 合同：`51` 个不同 BTIH 同时进入主进程队列，重启水合/显式恢复，再清理归零。
+- W94Fc 已把媒体、字幕消费和“存到媒体库”改为主进程 capability/Range/materialize 边界；
+  详见 [W94Fc 检查点](./W94FC_PLAYER_CAPABILITY_RANGE_CHECKPOINT_2026-08-28.md)。
 
 ## 2. 定向证据
 
 | Gate | 结果 |
 | --- | --- |
-| W94F 合同 | `node --test tests/contract/w94f-player-transport.test.mjs`：**2/2 PASS** |
+| W94F 合同 | `node --test tests/contract/w94f-player-transport.test.mjs`：**3/3 PASS**（含 W94Fc Range/owner 失效） |
 | 队列门 | `51` 个不同 BTIH 均入队；无固定条数业务拒绝 |
 | 幂等/控制 | 既有 W65c 合同继续覆盖同 BTIH、pause/resume/retry/remove |
 | 资源 | fake client/server/torrent 在 `destroy()` 后无活动队列；临时 Workspace 已清理 |
@@ -27,7 +29,8 @@
 | Source Electron | [`W94F_PLAYER_TRANSPORT_SOURCE.json`](./evidence/W94F_PLAYER_TRANSPORT_SOURCE.json)：**PASS**，真实 IPC 接收 51 项，重启 paused → 显式 resume，清理后 torrent owner `0` |
 | Packaged Electron | [`W94F_PLAYER_TRANSPORT_PACKAGED.json`](./evidence/W94F_PLAYER_TRANSPORT_PACKAGED.json)：**PASS**，同代 `win-unpacked` 重跑重启门，EXE SHA-256 `a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9` |
 | Runtime | Source/Packaged 均 `networkCalls=0`、`runtimeErrors=[]`；运行后 `Mazz Editor` 进程数 `0` |
-| Regression | 全量 `277/277`；`build`、`dist:dir`、provenance、secret、release、W71 census、`git diff --check` 全绿 |
+| W94Fc 相邻契约 | `node --test tests/contract/player-w25.test.mjs`：**5/5 PASS**；W67 门限回归 **4/4 PASS** |
+| Regression | 全量 `277/277`（上一检查点）；本次 Fc 定向测试、build/dist 将在推送前重跑 |
 
 ## 3. 尚未通过的项
 
@@ -35,11 +38,11 @@
   已落 Workspace durable session projection；有 Candidate 的书籍仍由 W93 Acquisition
   Service 负责，二者尚未完成“单一 W93 Job projection”的正式桥接；Workspace A/B 切换门也
   尚未闭合。因此只记“重启切片 PASS / W94Fb PARTIAL”，不把它写成整波通过。
-- W94Fc：现有 Player 仍有 `tor:fileBytes` 的内联读取路径，尚未统一为短命 capability +
-  Range/流式读取。
+- W94Fc：**PASS**。旧 `tor:fileBytes` 仅保留兼容入口且已移除 32 MiB 人为门；新播放器统一走
+  短命 capability + Range/流式读取。完整 Source/Packaged runtime 证据留到 W94Fe 统一补齐。
 - W94Fd：本地/LAN watch room manifest、epoch、host transfer、断线重连尚未施工。
 - W94Fe：本波 Source/Packaged 重启与真实双端 room 证据尚未生成。
 
-因此不能把 W94F 或 W94 总波标成 PASS；下一施工项是先冻结 PlayerTransportAdapter 的
-durable projection，再做 Source/Packaged 重启故障注入。真实公网 P2P、第二个 Mazz 实例和
-公共 Watch Room 仍是显式 opt-in/后置边界。
+因此不能把 W94F 或 W94 总波标成 PASS；下一施工项是 W94Fd Local/LAN Watch Room，随后在
+W94Fe 统一补 Source/Packaged 与真实边界证据。真实公网 P2P、第二个 Mazz 实例和公共 Watch
+Room 仍是显式 opt-in/后置边界。

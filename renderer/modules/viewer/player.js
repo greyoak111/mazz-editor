@@ -994,19 +994,21 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
       return;
     }
     const file = job.files.find(item => MEDIA_VIDEO.has(String(item.path || '').split('.').pop().toLowerCase())) || job.files[0];
-    const rawUrl = await window.mazz.invoke('tor:streamUrl', { infoHash: job.infoHash, filePath: file.path });
-    if (!rawUrl) return;
-    const streamUrl = 'mazz-res://tor/' + encodeURI(rawUrl).replace('http://', '');
-    setSource(streamUrl, job.title, streamUrl, file.length);
+    const mediaGrant = await window.mazz.invoke('tor:fileCapabilityUrl', { infoHash: job.infoHash, filePath: file.path });
+    if (!mediaGrant?.url) return;
+    setSource(mediaGrant.url, job.title, mediaGrant.url, file.length);
     const subFile = job.files.find(item => /\.(ass|srt|ssa)$/i.test(item.path || ''));
     if (subFile) {
       try {
-        const bytes = await window.mazz.invoke('tor:fileBytes', { infoHash: job.infoHash, filePath: subFile.path });
-        const u8 = bytes instanceof Uint8Array ? bytes : (bytes?.data ? new Uint8Array(bytes.data) : null);
-        if (u8?.length) {
-          await attachSubtitle(media, { subContent: new TextDecoder().decode(u8) }); subVisible = true; syncSubBtn();
+        const subtitleGrant = await window.mazz.invoke('tor:fileCapabilityUrl', { infoHash: job.infoHash, filePath: subFile.path });
+        const response = subtitleGrant?.url ? await fetch(subtitleGrant.url) : null;
+        if (response?.ok) {
+          const subContent = await response.text();
+          if (subContent) {
+            await attachSubtitle(media, { subContent }); subVisible = true; syncSubBtn();
           const { toast } = await import('../../shell/shell.js');
           toast('已挂载种子内字幕：' + (subFile.name || subFile.path.split('/').pop()));
+          }
         }
       } catch {}
     }
@@ -1015,11 +1017,12 @@ export function createPlayer(root, { url, name, ext, path, kind, fileSize = 0, o
   async function keepTorrentJob(job) {
     if (!job?.files?.length) return;
     const file = job.files.find(item => MEDIA_VIDEO.has(String(item.path || '').split('.').pop().toLowerCase())) || job.files[0];
-    const src = await window.mazz.invoke('tor:filePath', { infoHash: job.infoHash, filePath: file.path });
-    if (!src) return;
     const workspace = await window.mazz.invoke('workspace:get');
-    const dest = workspace + '/媒体库/' + src.replace(/\\/g, '/').split('/').pop();
-    await window.mazz.invoke('fs:rename', { from: src, to: dest });
+    const relative = '媒体库/' + String(file.path || '').replace(/\\/g, '/').split('/').pop();
+    const materialized = await window.mazz.invoke('tor:materialize', {
+      infoHash: job.infoHash, filePath: file.path, destinationRelative: relative,
+    });
+    const dest = materialized?.path || (workspace + '/' + relative);
     await window.mazz.invoke('tor:remove', { infoHash: job.infoHash, deleteFiles: false });
     const { toast } = await import('../../shell/shell.js');
     toast(`已存到：${dest}`, [{ label: '打开所在文件夹', fn: () => window.mazz.invoke('shell:showItemInFolder', { path: dest }).catch(() => {}) }], 12000);
