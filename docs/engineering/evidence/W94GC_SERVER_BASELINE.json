@@ -1,0 +1,41 @@
+{
+  "schema": "mazz.w94gc-server-baseline/v1",
+  "result": "BLOCKED",
+  "checkedAt": "2026-08-28T10:35:00Z",
+  "server": {
+    "address": "167.160.161.115",
+    "hostname": "racknerd-5d41eb3",
+    "userObserved": "root",
+    "osKernel": "Linux 6.8.0-31-generic",
+    "diskRoot": "144G total / 3.4G used / 133G available",
+    "listeningPorts": [22],
+    "nginxInstalled": false,
+    "activeServicesObserved": ["cron", "dbus", "getty@tty1", "ModemManager", "multipathd", "polkit", "rsyslog", "ssh", "systemd-journald", "systemd-logind", "systemd-networkd", "systemd-resolved", "systemd-timesyncd", "systemd-udevd", "udisks2", "unattended-upgrades", "upower", "user@0"]
+  },
+  "ssh": {
+    "authenticatedReadOnlyProbe": true,
+    "keyFingerprint": "SHA256:gPSHbLqka4PVkNxJeNQvrHfeTZWHiVbFXXwfiKUddtI",
+    "userSuppliedProxyRunbookPath": "archived/revoked locally; not used",
+    "activeEquivalentKeyPath": "text-node-assistant/167.160.161.115-root/id_ed25519"
+  },
+  "dns": {
+    "host": "www.mazz-hub.com",
+    "observedA": ["104.21.60.48", "172.67.191.164"],
+    "observedAAAA": ["2606:4700:3030::ac43:bfa4", "2606:4700:3037::6815:3c30"],
+    "providerEdgeObserved": true
+  },
+  "https": {
+    "url": "https://www.mazz-hub.com/",
+    "status": 521,
+    "serverHeader": "cloudflare",
+    "originHealth": "unavailable"
+  },
+  "networkWrites": 0,
+  "blockers": [
+    "no non-root deployment user or service account evidence",
+    "no HTTP/HTTPS origin listener or reverse proxy",
+    "Cloudflare 521 means the configured origin is unavailable",
+    "no TLS certificate/renewal, backup/restore, rollback or incident-drill evidence"
+  ],
+  "nextAction": "Do not enable public publication effect until the W94Gc runbook gates are explicitly authorized and evidenced."
+}

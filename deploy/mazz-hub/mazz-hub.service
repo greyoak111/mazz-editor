@@ -1,0 +1,27 @@
+[Unit]
+Description=MazzHub public projection origin
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mazzhub
+Group=mazzhub
+WorkingDirectory=/opt/mazz-hub
+Environment=NODE_ENV=production
+Environment=MAZZ_HUB_PORT=3210
+Environment=MAZZ_HUB_DATA=/var/lib/mazz-hub
+Environment=MAZZ_HUB_IDENTITY=mazz-hub:staging
+Environment=MAZZ_HUB_PUBLIC_EFFECT=0
+ExecStart=/usr/bin/node /opt/mazz-hub/server/hub-origin.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mazz-hub
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

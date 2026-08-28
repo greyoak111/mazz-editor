@@ -1,0 +1,9 @@
+{
+  "schema": "mazz.w94h-full-regression/v1",
+  "status": "PASS",
+  "expectedFiles": "285/285",
+  "failedFiles": [],
+  "codeDigest": "47604f77845d5516a0909756c4a08ce20f6d95ef05245bb7b06482064ccd460c",
+  "commands": ["node tests/run.js", "npm run build", "npm run dist:dir"],
+  "generatedAt": "2026-08-28T11:13:11.973Z"
+}

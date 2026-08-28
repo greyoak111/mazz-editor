@@ -23,6 +23,7 @@ const INVOKE_CHANNELS = new Set([
   'branch:snapshot', 'branch:create', 'branch:attachParent', 'branch:attach-parent', 'branch:setRevision', 'branch:set-revision',
   'branch:resolveConflict', 'branch:resolve-conflict', 'branch:rebuild',
   'world:snapshot', 'world:create', 'world:fork', 'world:proposeCanon', 'world:reviewProposal', 'world:mergeCanon', 'world:rebuild',
+  'hub:preparePublication', 'hub:publishPublication', 'hub:withdrawPublication', 'hub:syncPublication', 'hub:snapshot', 'hub:rebuild',
   'contextPackage:compile', 'contextPackage:list',
   'cognition:list', 'cognition:create', 'cognition:approve', 'cognition:supersede', 'cognition:summary',
   'civilization:simulate', 'civilization:filter', 'civilization:reconcile',

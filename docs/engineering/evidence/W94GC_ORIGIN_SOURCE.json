@@ -1,0 +1,18 @@
+{
+  "schema": "mazz.w94gc-origin-runtime/v1",
+  "result": "PASS",
+  "networkCalls": 0,
+  "runtimeErrors": [],
+  "lifecycle": [
+    "prepare",
+    "publish",
+    "query",
+    "withdraw",
+    "sync"
+  ],
+  "restart": {
+    "projectionCount": 1,
+    "status": "withdrawn"
+  },
+  "publicEffectDefault": "explicit-grant-only"
+}

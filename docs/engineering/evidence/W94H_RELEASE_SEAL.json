@@ -1,0 +1,39 @@
+{
+  "schema": "mazz.w94h-release-seal/v1",
+  "status": "PARTIAL/BLOCKED",
+  "completeClaim": false,
+  "publicEffectAuthorized": false,
+  "gates": {
+    "W94A": "PASS",
+    "W94B": "PASS",
+    "W94C": "PASS",
+    "W94D": "PASS",
+    "W94E": "PARTIAL",
+    "W94F": "PARTIAL",
+    "W94Ga": "PASS",
+    "W94Gb": "PASS_WITH_SCOPE",
+    "W94Gc": "PASS_WITH_SCOPE"
+  },
+  "fullRegression": {
+    "status": "PASS",
+    "expectedFiles": "285/285",
+    "failedFiles": [],
+    "generatedAt": "2026-08-28T11:13:11.973Z"
+  },
+  "evidence": {
+    "W94GA_WORLD_SOURCE": "000d593c7ec7a5fed76a61a0793e37a9f6c5459b822b7520d21ae83ee79a2259",
+    "W94GA_WORLD_PACKAGED": "01fea6aa055984c45bec23b97430e5e49ae61db643575029ebcd97f8820dc4e7",
+    "W94GB_HUB_SOURCE": "4a24bcac8fd38ff39fc0358fd99753c91bbb8e1d5600b2f0079b1c07a6b58ac0",
+    "W94GB_HUB_PACKAGED": "196a3e295fd3457c20401b2837500acedc2c58e34ab22fdfd7ab60fd638ab670",
+    "W94GC_SERVER_BASELINE": "504bf72d89eb57608810bf6015e96174963e64761319c5fd3bf1d6eac944b263",
+    "W94GC_SERVER_STAGING": "a76ac8f319c334ef1eb1f8cae22f70f76304868b37e038126730a7f03e6b6201",
+    "W94GC_SERVER_RECOVERY": "ee84e47ece9249ebf50e191b76db02e4878959d9ede9fda75b82ba99b14d9e80",
+    "W94GC_ORIGIN_SOURCE": "c9af3d2924e17379eaaf8d9b26c0b0b248772c263ed976acab9e18c00f9b729d"
+  },
+  "blockers": [
+    "W94Gc production gates remain open: apex DNS, backup/restore, monitoring and incident drill",
+    "W94E formal event coverage remains PARTIAL",
+    "W94F public P2P/cross-machine scope remains explicit opt-in"
+  ],
+  "next": "Resolve W94Gc server gates and remaining W94E/W94F scope before a human-authorized public release seal."
+}

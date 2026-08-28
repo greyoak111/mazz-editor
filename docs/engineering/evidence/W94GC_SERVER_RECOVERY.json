@@ -1,0 +1,26 @@
+{
+  "schema": "mazz.w94gc-server-recovery/v1",
+  "result": "PASS_WITH_SCOPE",
+  "host": "167.160.161.115",
+  "identity": "mazzhub",
+  "drill": {
+    "mode": "isolated-localhost-drill",
+    "originPort": 3211,
+    "publicationEffect": "explicit-grant-only (drill only)",
+    "lifecycle": ["prepare", "publish", "stop", "backup", "remove", "restore"],
+    "restoredProjectionStatus": "published",
+    "archiveStoreSha256": "a34901ab230e9f737f00d9a6f361442c8b407d1c6fd3e26d65d64a6869eeac9b",
+    "restoredStoreSha256": "a34901ab230e9f737f00d9a6f361442c8b407d1c6fd3e26d65d64a6869eeac9b",
+    "digestStable": true
+  },
+  "production": {
+    "servicePublicationEffect": "disabled-staging",
+    "publicWrites": 0,
+    "drillDataSeparateFromProduction": true
+  },
+  "runtimeErrors": [],
+  "blockers": [
+    "production backup rotation/retention and automated restore scheduling are not yet governed",
+    "cache invalidation and incident drill evidence remains limited to the isolated localhost drill"
+  ]
+}

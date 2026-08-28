@@ -1,0 +1,31 @@
+{
+  "schema": "mazz.w94gb-hub-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "publication": {
+    "publicationId": "publication:harbor-v1",
+    "prepared": true,
+    "published": true,
+    "withdrawn": true,
+    "syncedAfterWithdraw": true,
+    "publicFieldsOnly": true
+  },
+  "workspaceIsolation": {
+    "aProjections": 1,
+    "bProjections": 0,
+    "aRestoredProjections": 1,
+    "restartProjections": 1
+  },
+  "receipts": {
+    "prepared": "prepared",
+    "published": "published",
+    "withdrawn": "withdrawn"
+  },
+  "resources": {
+    "activeCount": 0
+  },
+  "networkCalls": 0,
+  "runtimeErrors": [],
+  "executableSha256": "f452fbdc65d6695c9f758619b4dba058b5de49fd7444bb2c4482bd01c1f348f2",
+  "generatedAt": "2026-08-28T11:06:58.706Z"
+}

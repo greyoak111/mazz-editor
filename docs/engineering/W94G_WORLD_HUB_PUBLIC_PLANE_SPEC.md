@@ -1,6 +1,6 @@
 # W94G World + MazzHub Public Plane 施工参照
 
-> 状态：**W94Ga PASS / W94Gb-W94Gc NOT STARTED**
+> 状态：**W94Ga PASS / W94Gb PASS_WITH_SCOPE / W94Gc PASS_WITH_SCOPE**
 > 日期：2026-08-28
 > 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 > 产品真源：[W69 MazzHub Local-first Content Network](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)
@@ -26,7 +26,7 @@ W94G 不是把本地 Workspace 直接“同步到云端”，也不是先做一�
 | W74c `promotion-ledger.js` | 可复用 human authority / revoke / projection 的审计原则 | 不把 conversation promotion ledger 冒充 Publication store |
 | W69/W83/W94F | Publication、World、Event Feed、Player transport 分层 | 不把 Comment/Danmaku/Watch Room 混成 World Canon |
 
-服务器、DNS、TLS、反向代理、生产账号和公开域名均属于后置 staging/prod 运行门；本地 fixture 通过不能替代真实服务器证据。
+服务器、DNS、TLS、反向代理、生产账号和公开域名均属于后置 staging/prod 运行门；本地 fixture 通过不能替代真实服务器证据。当前 staging origin 已部署并通过 HTTPS health/snapshot 验证，但保持 `MAZZ_HUB_PUBLIC_EFFECT=0`，不产生公网发布写入。
 
 ## 2. W94G 的冻结对象
 
@@ -162,6 +162,12 @@ W71 release foundation 与 W72c provenance ledger drift，未由本波引入。W
 
 W94Gb 先做本地 fake Hub/staging adapter，再做真实服务器；两者必须复用同一 envelope/command/receipt，而不是各写一套对象。
 
+W94Gb 已完成本地 fake Hub：`main/world-hub-publication-service.js` 只在 Workspace
+`.mazz/hub/fake-store.json` 保存 public-safe projection、manifest、receipt 和命令摘要，
+并由 `hub:preparePublication`、`hub:publishPublication`、`hub:withdrawPublication`、
+`hub:syncPublication` 窄 IPC 暴露。Source/Packaged 均完成 prepare → publish → query →
+withdraw → sync、A/B、restart；证据与检查项见 [`W94GB_PUBLICATION_HUB_CHECKPOINT_2026-08-28.md`](./W94GB_PUBLICATION_HUB_CHECKPOINT_2026-08-28.md)。
+
 ### 4.1 Adapter 只允许四个动作
 
 ```text
@@ -221,9 +227,12 @@ syncPublication      # 按 publicationId/contentRoot 重新同步公开状态
 - recovery：备份恢复、撤回、缓存失效、客户端重同步和回滚各至少一次；
 - public safety：未授权时不写公网；公开运行前人工确认全部 red gate 已关闭。
 
+当前运行证据：服务器已创建隔离 `mazzhub` 用户，origin 绑定 `127.0.0.1:3210`，nginx 反代到 HTTPS；`https://www.mazz-hub.com/healthz` 和只读 public snapshot 为 200，publish/withdraw 在 staging 明确返回 403 `HUB_PUBLIC_EFFECT_DISABLED`。ACME 证书只覆盖 `www.mazz-hub.com`；根域当前没有可用 A/AAAA 记录，因此 apex、备份恢复、日志/资源告警和 incident drill 仍未闭合。证据见 [`W94GC_SERVER_BASELINE.json`](./evidence/W94GC_SERVER_BASELINE.json) 与 [`W94GC_SERVER_STAGING.json`](./evidence/W94GC_SERVER_STAGING.json)。
+
 ## 7. W94G 完成定义
 
 W94G 只有在 W94Ga、W94Gb、W94Gc 全部通过，且 README、总计划、检查点、Source/Packaged 证据同代时，才能写 `W94G PASS`。只有 fake Hub 或本地 World 通过时，状态分别写 `W94Ga PASS` / `W94Gb PASS_WITH_SCOPE`，不能写 Hub 已上线。
 
-当前状态明确为：**W94Ga PASS；W94Gb/W94Gc 尚未开始**。下一刀是 W94Gb fake Hub 公共投影；
-真实服务器必须等公共 effect 授权和 runbook 证据齐全再碰。
+当前状态明确为：**W94Ga PASS；W94Gb PASS_WITH_SCOPE；W94Gc PASS_WITH_SCOPE**。真实 staging
+origin 已经可复核，但生产公共 effect 仍关闭；只有非 root 部署、双域 DNS、备份恢复、资源告警、
+证书续期和 incident drill 证据齐全，并完成签名密钥治理后，才能由人类另行授权开启。

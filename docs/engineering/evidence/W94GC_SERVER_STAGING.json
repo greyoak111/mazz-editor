@@ -1,0 +1,12 @@
+{
+  "schema": "mazz.w94gc-staging-runtime/v1",
+  "result": "PASS_WITH_SCOPE",
+  "base": "https://www.mazz-hub.com",
+  "networkCalls": 3,
+  "runtimeErrors": [],
+  "checks": [
+    "https-health",
+    "public-snapshot",
+    "public-effect-closed"
+  ]
+}
