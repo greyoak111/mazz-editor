@@ -485,7 +485,7 @@ Final Gate 只有两种：
 | W94D | Blender External Capability | W94A | fixture adapter | real Blender opt-in/process cleanup | **PASS** | [检查点](../engineering/W94D_BLENDER_EXTERNAL_CAPABILITY_CHECKPOINT_2026-08-26.md) |
 | W94E | Retrieval + Branch Effective State | W94A | query/merge replay | A/B Workspace/LAN conflict | **PARTIAL / IN PROGRESS** | [施工参照](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_SPEC.md) · [检查点](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_CHECKPOINT_2026-08-26.md) |
 | W94F | Player Transport + Watch Room | W94A/W93/W83 | transport identity/replay | restart/P2P opt-in/LAN | **PARTIAL / W94Fa PASS · W94Fb PASS_WITH_SCOPE · W94Fc PASS · W94Fd PASS · W94Fe PASS_WITH_SCOPE** | [W94F 检查点](../engineering/W94F_PLAYER_TRANSPORT_AND_ROOM_CHECKPOINT_2026-08-27.md) · [W94Fe 检查点](../engineering/W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md) |
-| W94G | World + Hub Public Plane | W94A/E/W69/W84 | publication/withdraw fixture | staging/prod/incident | NOT STARTED | 未创建 |
+| W94G | World + Hub Public Plane | W94A/E/W69/W84 | publication/withdraw fixture | staging/prod/incident | **SPEC READY / IMPLEMENTATION NOT STARTED** | [施工参照](../engineering/W94G_WORLD_HUB_PUBLIC_PLANE_SPEC.md) |
 | W94H | Convergence & Release Seal | W94A–G | full deterministic suite | Source/Packaged/live audits | NOT STARTED | 未创建 |
 
 ## 18. 十三卷来源冻结
