@@ -1,0 +1,30 @@
+{
+  "schema": "mazz.w94ga-world-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "world": {
+    "worldId": "world:harbor",
+    "branchCount": 2,
+    "canonVersion": "canon:176cfbb7574e21dec21358e13882f344dd73397cd46deb3763646c836e909973",
+    "proposalStatus": "merged",
+    "mergedRevision": "rev:community-1"
+  },
+  "workspaceIsolation": {
+    "aWorlds": 1,
+    "bWorlds": 0,
+    "aRestoredWorlds": 1,
+    "restartWorlds": 1
+  },
+  "branch": {
+    "effectiveFacts": 1,
+    "conflicts": 0,
+    "resolutionRequired": false
+  },
+  "resources": {
+    "activeCount": 0
+  },
+  "networkCalls": 0,
+  "runtimeErrors": [],
+  "executableSha256": null,
+  "generatedAt": "2026-08-28T10:19:06.959Z"
+}

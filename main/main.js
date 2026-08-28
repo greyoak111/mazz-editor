@@ -195,6 +195,7 @@ const { ContextRelationService } = require('./context-relation-service');
 const { WorkspaceEventService } = require('./workspace-event-service');
 const { RelationRetrievalService } = require('./relation-retrieval-service');
 const { BranchEffectiveStateService } = require('./branch-effective-state-service');
+const { WorldRuntimeService } = require('./world-runtime-service');
 const { ContextCompilerService } = require('./context-compiler-service');
 const { CognitionService } = require('./cognition-service');
 const { CivilizationModelService } = require('./civilization-model-service');
@@ -311,6 +312,7 @@ const relationRetrieval = new RelationRetrievalService({
   rootProvider: () => store.get('workspace'), eventService: workspaceEvents, contextService: contextRelations,
 });
 const branchEffectiveState = new BranchEffectiveStateService({ rootProvider: () => store.get('workspace') });
+const worldRuntime = new WorldRuntimeService({ rootProvider: () => store.get('workspace'), branchService: branchEffectiveState, eventService: workspaceEvents });
 const contextCompiler = new ContextCompilerService({ rootProvider: () => store.get('workspace'), eventService: workspaceEvents });
 const cognitionService = new CognitionService({ rootProvider: () => store.get('workspace'), evidenceService: addressableEvidence, eventService: workspaceEvents });
 const civilizationModel = new CivilizationModelService({ eventService: workspaceEvents, rootProvider: () => store.get('workspace') });
@@ -326,6 +328,7 @@ if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_PROMOTION_LEDGER__ = promotionLedger;
   globalThis.__MAZZ_E2E_RESOURCE_LEDGER__ = resourceLedger;
   globalThis.__MAZZ_E2E_LIBRARY_RESOURCE_SURFACE__ = libraryResourceSurface;
+  globalThis.__MAZZ_E2E_WORLD_RUNTIME__ = worldRuntime;
   globalThis.__MAZZ_E2E_LIBRARY_TORRENT_TRANSPORT__ = libraryTorrentTransport;
   globalThis.__MAZZ_E2E_LIBRARY_CONVERGENCE__ = libraryWorkspaceConvergence;
   globalThis.__MAZZ_E2E_CAPABILITY_EXECUTION__ = capabilityExecutionService;
@@ -641,6 +644,13 @@ function registerChannels() {
   bus.handle('branch:resolveConflict', async payload => branchEffectiveState.resolveConflict(payload));
   bus.handle('branch:resolve-conflict', async payload => branchEffectiveState.resolveConflict(payload));
   bus.handle('branch:rebuild', async () => branchEffectiveState.rebuild());
+  bus.handle('world:snapshot', async payload => worldRuntime.snapshot(payload || {}));
+  bus.handle('world:create', async payload => worldRuntime.create(payload));
+  bus.handle('world:fork', async payload => worldRuntime.fork(payload));
+  bus.handle('world:proposeCanon', async payload => worldRuntime.propose(payload));
+  bus.handle('world:reviewProposal', async payload => worldRuntime.review(payload));
+  bus.handle('world:mergeCanon', async payload => worldRuntime.merge(payload));
+  bus.handle('world:rebuild', async payload => worldRuntime.rebuild(payload || {}));
   bus.handle('contextPackage:compile', async payload => contextCompiler.compile(payload));
   bus.handle('contextPackage:list', async () => contextCompiler.list());
   bus.handle('cognition:list', async () => cognitionService.list());

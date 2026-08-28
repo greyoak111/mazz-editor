@@ -149,6 +149,7 @@ const files = [
   'tests/contract/w94d-blender-capability.test.mjs',
   'tests/contract/w94e-relation-branch.test.mjs',
   'tests/contract/w94e-dual-runtime.test.mjs',
+  'tests/contract/w94ga-world-runtime.test.mjs',
   'tests/contract/w94f-player-transport.test.mjs',
   'tests/contract/w94fb-player-library-bridge.test.mjs',
   'tests/contract/w94fd-watch-room.test.mjs',

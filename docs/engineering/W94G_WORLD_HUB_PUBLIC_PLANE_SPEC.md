@@ -1,6 +1,6 @@
 # W94G World + MazzHub Public Plane 施工参照
 
-> 状态：**SPEC READY / IMPLEMENTATION NOT STARTED**
+> 状态：**W94Ga PASS / W94Gb-W94Gc NOT STARTED**
 > 日期：2026-08-28
 > 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 > 产品真源：[W69 MazzHub Local-first Content Network](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)
@@ -145,6 +145,19 @@ W94Ga 只做本地确定性运行时，不接公网：
 
 W94Ga 退出条件：Source/Packaged 各跑一遍 create → fork → proposal → review → partial merge → restart；Root Canon、Community Branch、未采纳事实、冲突和 sourceRefs 均保持可解释。
 
+W94Ga 已完成并通过：`main/world-runtime-service.js` 持久化 `.mazz/world/store.json`，复用
+`BranchEffectiveStateService` 的 branch/revision/effective-state 语义，主进程与 preload 只暴露
+`world:*` 窄 IPC。Source/Packaged 均完成 create → fork → proposal → human review → partial
+Canon merge → Workspace A/B → close/reopen；两份证据的 `runtimeErrors=[]`、网络调用为 0、
+重启后 World/Proposal 可恢复、活动外部进程为 0：
+
+- [`W94GA_WORLD_SOURCE.json`](./evidence/W94GA_WORLD_SOURCE.json) · [`W94GA_WORLD_SOURCE.png`](./evidence/W94GA_WORLD_SOURCE.png)
+- [`W94GA_WORLD_PACKAGED.json`](./evidence/W94GA_WORLD_PACKAGED.json) · [`W94GA_WORLD_PACKAGED.png`](./evidence/W94GA_WORLD_PACKAGED.png)
+
+W94Ga 定向 contract 为 `2/2`；全量 `npm test` 为 `280/282` 个测试文件通过，剩余两项仍是既有
+W71 release foundation 与 W72c provenance ledger drift，未由本波引入。W94Ga 不产生公网写入，
+因此不能把本地 PASS 解读为 Hub 已上线。
+
 ## 4. Hub Public Projection 首个施工切片（W94Gb）
 
 W94Gb 先做本地 fake Hub/staging adapter，再做真实服务器；两者必须复用同一 envelope/command/receipt，而不是各写一套对象。
@@ -212,4 +225,5 @@ syncPublication      # 按 publicationId/contentRoot 重新同步公开状态
 
 W94G 只有在 W94Ga、W94Gb、W94Gc 全部通过，且 README、总计划、检查点、Source/Packaged 证据同代时，才能写 `W94G PASS`。只有 fake Hub 或本地 World 通过时，状态分别写 `W94Ga PASS` / `W94Gb PASS_WITH_SCOPE`，不能写 Hub 已上线。
 
-当前状态明确为：**W94G SPEC READY；W94Ga/W94Gb/W94Gc 尚未开始**。下一刀是 W94Ga 本地 World Store，完成后再进入 W94Gb fake Hub 公共投影；真实服务器必须等公共 effect 授权和 runbook 证据齐全再碰。
+当前状态明确为：**W94Ga PASS；W94Gb/W94Gc 尚未开始**。下一刀是 W94Gb fake Hub 公共投影；
+真实服务器必须等公共 effect 授权和 runbook 证据齐全再碰。

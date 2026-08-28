@@ -22,6 +22,8 @@
     "test:w94e:relation-branch": "node --test tests/contract/w94e-relation-branch.test.mjs",
     "test:w94e:runtime": "node tests/e2e/w94e-relation-branch-runtime.mjs",
     "test:w94e:dual-runtime": "node tests/e2e/w94e-dual-relation-branch-runtime.mjs",
+    "test:w94ga:world": "node --test tests/contract/w94ga-world-runtime.test.mjs",
+    "test:w94ga:runtime": "node tests/e2e/w94ga-world-runtime.mjs",
     "test:w94fb:player-library": "node tests/e2e/w94fb-player-library-runtime.mjs",
     "test:w94fe:room": "node tests/contract/w94fe-player-room-boundary.test.mjs",
     "test:w94fe:runtime": "node tests/e2e/w94fe-player-room-runtime.mjs",
