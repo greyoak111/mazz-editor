@@ -1,6 +1,6 @@
 # W94F Player Transport + Watch Room 施工参照
 
-> 状态：**SPEC READY / W94F PARTIAL · W94Fc PASS · W94Fd PASS · W94Fe PASS_WITH_SCOPE**
+> 状态：**SPEC READY / W94F PARTIAL · W94Fb PASS_WITH_SCOPE · W94Fc PASS · W94Fd PASS · W94Fe PASS_WITH_SCOPE**
 > 日期：2026-08-27  
 > 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)  
 > 前置真源：[W93 Library Resource Freedom](../plans/W93_LIBRARY_RESOURCE_FREEDOM.md)、[W93F Torrent Book Transport](./W93F_TORRENT_BOOK_TRANSPORT_SPEC.md)、[W83 Danmaku Runtime](../plans/W83_DANMAKU_RUNTIME.md)  
@@ -119,9 +119,9 @@ wall clock 只用于观测，不用于推导播放位置。
 - 先冻结 `PlayerTransportAdapter`，把现有 `tor:*` 控制映射到 Workspace-scoped durable
   session projection；兼容 UI 只消费主进程快照，内存 `jobs/torrents` 只能作运行时索引。
 - 媒体 Player 的任意 Magnet 可能没有 W93 Candidate、Edition 或 Rights Receipt，不能伪造
-  一个书库 Acquisition Job。书籍来源仍必须走 W93 `LibraryAcquisitionService`；媒体兼容轨
-  使用同一 Workspace/.resources 边界、相同 BTIH/selected-file 身份规则和 revision/CAS，
-  等待后续有 Candidate 的显式桥接，不复制第三套网络 owner。
+  一个书库 Acquisition Job。书籍来源仍必须走 W93 `LibraryAcquisitionService`；已有 Candidate
+  的 Player 请求经显式 W94Fb bridge 复用该入口，并把 W93 Job 投影到同一 Workspace/.resources
+  session；Candidate-less 媒体保持兼容轨，不复制第三套网络 owner。
 - 重启时 queued/downloading 只恢复为 durable `paused`，不自动恢复网络；显式 resume、
   pause、retry、cancel/remove 都先完成主进程 revision 更新。迁移期间不自动导入无身份旧任务；
   无法依据可验证 BTIH 重建的事实保持不可见/错误可观测，不静默丢弃。

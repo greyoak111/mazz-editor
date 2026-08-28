@@ -1,0 +1,31 @@
+{
+  "schema": "mazz.w94fb-player-library-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "product": "win-unpacked",
+  "explicitCandidateBridge": true,
+  "playerNetworkOwnerForLibraryJob": false,
+  "candidateId": "candidate-torrent-aba6110a40b2deb931c1f9e5925d9cd784686171ddc6d766cd85752ea1a9c9e2",
+  "candidateFingerprint": "candidate-sha256-6d33bb7a223c9ebeeff80c724e4c3d5cf9f57982bed1df771d161c39f3723291",
+  "jobId": "job-d5b10c75f65352f0621856abe4c7179e",
+  "finalJobState": "imported",
+  "finalSessionState": "completed",
+  "workspaceIsolation": {
+    "aSessions": 1,
+    "bSessions": 0,
+    "aRestoredSessions": 1
+  },
+  "p2pConsentRequired": true,
+  "rightsConfirmationRequired": true,
+  "publicNetworkCalls": 0,
+  "ownerFinal": {
+    "torrentActiveCount": 0,
+    "operationCount": 0,
+    "backgroundCount": 0
+  },
+  "runtimeErrors": [],
+  "evidenceScreenshot": "W94FB_PLAYER_LIBRARY_PACKAGED.png",
+  "executableSha256": "e941eee4a1dfbbdfb962ab6d5b33a407206d90a7ff5ca4ab511c067219005383",
+  "rendererBundleSha256": "36bd7fde64125134ad68a59cba39872ef8ae15bfa979938ba518676cabd1d779",
+  "generatedAt": "2026-08-28T09:41:10.268Z"
+}

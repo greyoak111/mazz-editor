@@ -20,6 +20,7 @@ const crypto = require('crypto');
 const { Readable } = require('stream');
 const { normalizeInfoHash } = require('./torrent-site-core');
 const PlayerTransportSessionStore = require('./player-transport-session-store');
+const PlayerTransportW93Bridge = require('./player-transport-w93-bridge');
 
 // Capability lifetime is a transport-security lease, not a media-size/business threshold.
 const FILE_CAPABILITY_TTL_MS = 60 * 1000;
@@ -41,7 +42,7 @@ function enrichMagnet(magnet) {
 }
 
 class TorrentDaemon {
-  constructor({ bus, workspace, session, resourceLedger = null, loadWebTorrent = () => import('webtorrent') }) {
+  constructor({ bus, workspace, session, resourceLedger = null, loadWebTorrent = () => import('webtorrent'), libraryResourceSurface = null }) {
     this.bus = bus;
     this.workspace = workspace; // () => 当前工作区路径
     const initialWorkspace = typeof workspace === 'function' ? workspace() : workspace;
@@ -49,6 +50,7 @@ class TorrentDaemon {
     this.session = session;
     this.resourceLedger = resourceLedger;
     this.loadWebTorrent = loadWebTorrent;
+    this.libraryResourceSurface = libraryResourceSurface;
     this.client = null;
     this.server = null;
     this.port = 0;
@@ -66,15 +68,40 @@ class TorrentDaemon {
     try { this.storeRoot(); } catch {}
     this.register();
     this.sessionStore = null;
+    this.w93Bridge = null;
+    this.persistenceError = null;
+    this._openSessionStore();
+  }
+
+  _openSessionStore() {
+    this.sessionStore = null;
+    this.w93Bridge = null;
     this.persistenceError = null;
     try {
       this.sessionStore = new PlayerTransportSessionStore({ workspacePath: this.workspacePath });
+      if (this.libraryResourceSurface) {
+        this.w93Bridge = new PlayerTransportW93Bridge({
+          resourceSurface: this.libraryResourceSurface,
+          sessionStore: this.sessionStore,
+          workspacePath: this.workspacePath,
+        });
+      }
       this._hydrateDurableJobs();
     } catch (error) {
       // Keep the shell alive, but do not reinterpret corrupt durable state as
       // a valid empty queue. New writes fail closed through _requireSessionStore.
       this.persistenceError = error;
     }
+  }
+
+  async switchWorkspace(nextWorkspacePath) {
+    const next = path.resolve(String(nextWorkspacePath || ''));
+    if (!next || next === this.workspacePath) return this.workspacePath;
+    await this.destroy('workspace-switch');
+    this.workspacePath = next;
+    try { this.storeRoot(); } catch {}
+    this._openSessionStore();
+    return this.workspacePath;
   }
 
   storeRoot() {
@@ -99,6 +126,10 @@ class TorrentDaemon {
   _hydrateDurableJobs() {
     if (!this.sessionStore) return;
     for (const persisted of this.sessionStore.list()) {
+      // A linked W93 book Job remains owned by LibraryAcquisitionService.
+      // Hydrating it into Player's WebTorrent runtime would create a second
+      // network owner for the same transport identity.
+      if (persisted.sourceRefs?.some(value => String(value).startsWith('job:'))) continue;
       if (persisted.state === 'cancelled') continue;
       let state = persisted.state;
       // A process restart is not permission to resume network I/O. Active
@@ -133,27 +164,49 @@ class TorrentDaemon {
   }
 
   _createSession(job) {
+    const sessionProjection = this._sessionProjection(job.infoHash, job.files);
     const persisted = this._requireSessionStore().create({
       infoHash: job.infoHash,
       title: job.title,
       state: job.state,
       files: job.files || [],
+      ...sessionProjection,
     });
     job.revision = persisted.revision;
     return persisted;
   }
 
   _persistJob(job, patch = {}) {
+    const files = patch.files ?? job.files ?? [];
+    const sessionProjection = this._sessionProjection(job.infoHash, files);
     const persisted = this._requireSessionStore().update(job.infoHash, job.revision, {
       ...patch,
       state: patch.state || job.state,
       title: patch.title ?? job.title,
       error: patch.error ?? job.error,
-      files: patch.files ?? job.files ?? [],
+      files,
+      ...sessionProjection,
     });
     job.revision = persisted.revision;
     job.updatedAt = Date.parse(persisted.updatedAt) || Date.now();
     return persisted;
+  }
+
+  _sessionProjection(infoHash, files) {
+    const list = Array.isArray(files) ? files : [];
+    if (list.length !== 1 || !list[0] || typeof list[0].path !== 'string'
+        || !Number.isSafeInteger(list[0].length) || list[0].length < 0) return {};
+    try {
+      const projection = PlayerTransportSessionStore.deriveTransportProjection({
+        infoHash,
+        selectedFile: list[0].path,
+        declaredSize: list[0].length,
+      });
+      return {
+        transportRef: projection.transportRef,
+        selectedFileRef: projection.selectedFileRef,
+      };
+    } catch { return {}; }
   }
 
   async ensureClient() {
@@ -391,6 +444,7 @@ class TorrentDaemon {
     const stats = torrent ? this.statsOf(torrent) : { progress: 0, downloaded: 0, length: 0, downSpeed: 0, upSpeed: 0, numPeers: 0, done: false };
     const state = stats.done ? 'completed' : job.state;
     if (stats.done && job.state !== 'completed') job.state = 'completed';
+    const durable = this.sessionStore?.get?.(job.infoHash);
     return {
       infoHash: job.infoHash,
       title: torrent?.name || job.title || job.infoHash.slice(0, 12),
@@ -400,6 +454,12 @@ class TorrentDaemon {
       updatedAt: job.updatedAt,
       files: torrent ? this.filesOf(torrent) : (job.files || []),
       ...stats,
+      transportRef: durable?.transportRef || 'transport:pending',
+      blobRef: durable?.blobRef || 'blob:unknown',
+      selectedFileRef: durable?.selectedFileRef || 'file:pending',
+      sourceRefs: durable?.sourceRefs || [],
+      capabilityRef: durable?.capabilityRef || 'none',
+      revision: durable?.revision || job.revision || 1,
     };
   }
 
@@ -497,6 +557,30 @@ class TorrentDaemon {
       return result;
     });
     bus.handle('tor:addBuffer', async ({ magnet, name }) => this._enqueue({ magnet, name }));
+    bus.handle('tor:bridgeLibrary', async input => {
+      if (!this.w93Bridge) throw Object.assign(new Error('W93 bridge unavailable'), { code: 'PLAYER_TRANSPORT_W93_BRIDGE_UNAVAILABLE' });
+      return this.w93Bridge.acquire(input);
+    });
+    bus.handle('tor:sessions', async () => {
+      await this.w93Bridge?.refreshLinkedSessions?.();
+      return this._requireSessionStore().list().map(session => ({
+      sessionId: session.sessionId,
+      workspaceId: session.workspaceId,
+      infoHash: session.infoHash,
+      transportRef: session.transportRef,
+      blobRef: session.blobRef,
+      selectedFileRef: session.selectedFileRef,
+      sourceRefs: session.sourceRefs,
+      capabilityRef: session.capabilityRef,
+      title: session.title,
+      state: session.state,
+      error: session.error,
+      files: session.files,
+      revision: session.revision,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      }));
+    });
     bus.handle('tor:queue', async () => [...this.jobs.values()].map((job) => this._jobSnapshot(job)).sort((left, right) => right.createdAt - left.createdAt));
     bus.handle('tor:pause', async ({ infoHash }) => {
       const job = this.jobs.get(infoHash);

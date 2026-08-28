@@ -1,6 +1,6 @@
 # W94Fe Source/Packaged + 双 Mazz Watch Room 边界检查点（2026-08-28）
 
-> 结论：**PASS_WITH_SCOPE**；Source/Packaged、第二个真实 Electron Mazz、TLS loopback、断线重连、host transfer、新 epoch、durable replay 与 ResourceLedger 检查通过。真实公网 P2P、DHT/Tracker、跨机器房间仍按 W94F 施工参照保持显式 opt-in，W94F 总波因 W94Fb 正式 W93 bridge/A-B 门仍为 PARTIAL。
+> 结论：**PASS_WITH_SCOPE**；Source/Packaged、第二个真实 Electron Mazz、TLS loopback、断线重连、host transfer、新 epoch、durable replay 与 ResourceLedger 检查通过。真实公网 P2P、DHT/Tracker、跨机器房间仍按 W94F 施工参照保持显式 opt-in；W94F 总波仍为 PARTIAL（W94Fb 已闭合，最终公共面与审计红项未收口）。
 > 施工参照：[W94F Player Transport + Watch Room](./W94F_PLAYER_TRANSPORT_AND_ROOM_SPEC.md)
 
 ## 本波定向边界

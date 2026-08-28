@@ -16,6 +16,10 @@ const SCHEMA = 'mazz.player-transport-session-store/v1';
 const SESSION_SCHEMA = 'mazz.player-transport-session/v0';
 const INFO_HASH = /^[a-f0-9]{40}$/;
 const STATES = new Set(['queued', 'downloading', 'paused', 'completed', 'failed', 'cancelled']);
+const REF = /^(?:transport|blob|file|capability|candidate|offer|job|rights):[A-Za-z0-9._:-]+$/;
+const HASH_REF = /^(?:transport|file):(?:pending|[a-f0-9]{64})$/;
+const BLOB_REF = /^(?:blob:unknown|blob:[A-Za-z0-9._:-]+)$/;
+const CAPABILITY_REF = /^(?:none|capability:[A-Za-z0-9._:-]+)$/;
 
 function codedError(code, message) {
   return Object.assign(new Error(message), { code });
@@ -27,6 +31,37 @@ function workspaceIdentity(workspacePath) {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function ref(value, label, { optional = false } = {}) {
+  if (optional && (value === undefined || value === '')) return '';
+  if (typeof value !== 'string' || !value || value !== value.trim() || !REF.test(value)) {
+    throw codedError('PLAYER_TRANSPORT_SESSION_CORRUPT', `${label} is not an opaque reference`);
+  }
+  contract.assertNoSecretString(value, label);
+  return value;
+}
+
+function deriveTransportProjection({ infoHash, selectedFile, declaredSize } = {}) {
+  const canonicalInfoHash = contract.normalizeInfoHash(infoHash, 'infoHash');
+  const canonicalSelectedFile = contract.normalizeRelativePosixPath(selectedFile, 'selectedFile');
+  if (!Number.isSafeInteger(declaredSize) || declaredSize < 0) {
+    throw codedError('PLAYER_TRANSPORT_SESSION_INVALID', 'declaredSize is not a non-negative safe integer');
+  }
+  const material = `${canonicalInfoHash}\0${canonicalSelectedFile}\0${declaredSize}`;
+  const digest = crypto.createHash('sha256').update(material, 'utf8').digest('hex');
+  const fileDigest = crypto.createHash('sha256').update(`file\0${material}`, 'utf8').digest('hex');
+  return Object.freeze({
+    infoHash: canonicalInfoHash,
+    selectedFile: canonicalSelectedFile,
+    declaredSize,
+    transportRef: `transport:${digest}`,
+    selectedFileRef: `file:${fileDigest}`,
+  });
+}
+
+function pendingProjection() {
+  return { transportRef: 'transport:pending', blobRef: 'blob:unknown', selectedFileRef: 'file:pending', capabilityRef: 'none', sourceRefs: [] };
 }
 
 function exactRecord(input) {
@@ -52,11 +87,29 @@ function exactRecord(input) {
       streamUrl: typeof file.streamUrl === 'string' ? file.streamUrl : '',
     };
   });
+  const projection = pendingProjection();
+  const transportRef = input.transportRef === undefined ? projection.transportRef : input.transportRef;
+  const blobRef = input.blobRef === undefined ? projection.blobRef : input.blobRef;
+  const selectedFileRef = input.selectedFileRef === undefined ? projection.selectedFileRef : input.selectedFileRef;
+  const capabilityRef = input.capabilityRef === undefined ? projection.capabilityRef : input.capabilityRef;
+  if (!HASH_REF.test(transportRef) || !BLOB_REF.test(blobRef)
+      || !HASH_REF.test(selectedFileRef) || !CAPABILITY_REF.test(capabilityRef)) {
+    throw codedError('PLAYER_TRANSPORT_SESSION_CORRUPT', 'Player transport session projection reference is invalid');
+  }
+  const sourceRefs = input.sourceRefs === undefined ? [] : input.sourceRefs;
+  if (!Array.isArray(sourceRefs) || sourceRefs.some(value => !REF.test(String(value || '')))) {
+    throw codedError('PLAYER_TRANSPORT_SESSION_CORRUPT', 'Player transport sourceRefs are invalid');
+  }
   return {
     schema: SESSION_SCHEMA,
     sessionId: input.sessionId,
     workspaceId: input.workspaceId,
     infoHash: input.infoHash,
+    transportRef,
+    blobRef,
+    selectedFileRef,
+    sourceRefs: sourceRefs.map(value => ref(value, 'sourceRef')),
+    capabilityRef,
     title: typeof input.title === 'string' ? input.title : '',
     state: input.state,
     error: typeof input.error === 'string' ? input.error : '',
@@ -148,7 +201,8 @@ class PlayerTransportSessionStore {
     return record ? clone(record) : null;
   }
 
-  create({ infoHash, title = '', state = 'queued', files = [] } = {}) {
+  create({ infoHash, title = '', state = 'queued', files = [], transportRef, blobRef,
+    selectedFileRef, capabilityRef, sourceRefs } = {}) {
     if (!INFO_HASH.test(String(infoHash || '')) || !STATES.has(state)) {
       throw codedError('PLAYER_TRANSPORT_SESSION_INVALID', 'Player transport session identity or state is invalid');
     }
@@ -160,6 +214,12 @@ class PlayerTransportSessionStore {
       sessionId: `player-session:${infoHash}`,
       workspaceId: this.workspaceId,
       infoHash,
+      ...pendingProjection(),
+      ...(transportRef === undefined ? {} : { transportRef }),
+      ...(blobRef === undefined ? {} : { blobRef }),
+      ...(selectedFileRef === undefined ? {} : { selectedFileRef }),
+      ...(capabilityRef === undefined ? {} : { capabilityRef }),
+      ...(sourceRefs === undefined ? {} : { sourceRefs }),
       title: String(title || ''),
       state,
       error: '',
@@ -171,6 +231,10 @@ class PlayerTransportSessionStore {
     this.sessions.set(infoHash, record);
     this._write();
     return clone(record);
+  }
+
+  setProjection(infoHash, expectedRevision, patch = {}) {
+    return this.update(infoHash, expectedRevision, patch);
   }
 
   update(infoHash, expectedRevision, patch = {}) {
@@ -212,3 +276,4 @@ module.exports.PlayerTransportSessionStore = PlayerTransportSessionStore;
 module.exports.SCHEMA = SCHEMA;
 module.exports.SESSION_SCHEMA = SESSION_SCHEMA;
 module.exports._forTests = { workspaceIdentity, exactRecord };
+module.exports.deriveTransportProjection = deriveTransportProjection;

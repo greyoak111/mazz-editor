@@ -39,5 +39,6 @@ node tests/contract/w83-danmaku-runtime.test.mjs    # 7/7
 ```
 
 本检查点不宣称 W94F 总波完成：W94Fb 的正式 W93 Candidate/Edition/Rights Receipt bridge
-与 Workspace A/B 迁移门仍未闭合；W94Fe 已以 PASS_WITH_SCOPE 完成 Source/Packaged 与第二个
-Mazz 实例的同机 TLS 边界，真实公网 P2P/跨机器房间仍须显式 opt-in。
+与 Workspace A/B 迁移门已由 [`W94F 检查点`](./W94F_PLAYER_TRANSPORT_AND_ROOM_CHECKPOINT_2026-08-27.md)
+的 Source/Packaged 证据闭合；W94Fe 已以 PASS_WITH_SCOPE 完成 Source/Packaged 与第二个 Mazz
+实例的同机 TLS 边界，真实公网 P2P/跨机器房间仍须显式 opt-in。

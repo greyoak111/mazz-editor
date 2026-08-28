@@ -662,6 +662,45 @@ class LibraryResourceSurfaceService {
     return Object.freeze({ cancelled: Boolean(controller) });
   }
 
+  // W94Fb bridge metadata: expose only the frozen Candidate/Offer facts needed
+  // by the Player projection.  Magnet/tracker/path coordinates stay inside the
+  // W93 service and the subsequent acquireTorrent call revalidates every ref.
+  async describeTorrentBridge(workspacePath, input) {
+    exactKeys(input, new Set([
+      'candidateId', 'candidateFingerprint', 'offerId', 'selectedFile', 'intentId',
+      'p2pConsent', 'rightsConfirmed',
+    ]), 'torrent bridge description');
+    if (input.p2pConsent !== true || input.rightsConfirmed !== true) {
+      throw codedError('LIBRARY_TORRENT_CONFIRMATION_REQUIRED', 'Torrent bridge requires explicit confirmations');
+    }
+    const context = await this._workspace(workspacePath);
+    const record = context.catalog.get(
+      opaqueId(input.candidateId, 'candidateId'),
+      exactString(input.candidateFingerprint, 'candidateFingerprint'),
+    );
+    if (!record || record.descriptor.providerId !== TORRENT_PROVIDER_ID) {
+      throw codedError('LIBRARY_RESOURCE_SURFACE_CANDIDATE_NOT_FOUND', 'Torrent Candidate 不存在或已变化');
+    }
+    const offerId = opaqueId(input.offerId, 'offerId');
+    const offer = record.candidate.offers.find(item => item.offerId === offerId);
+    const selectedFile = exactString(input.selectedFile, 'selectedFile');
+    if (!offer || offer.transport !== 'magnet' || offer.selectableFiles.length !== 1
+      || offer.selectableFiles[0] !== selectedFile) {
+      throw codedError('LIBRARY_ACQUISITION_SELECTION_INVALID', '所选书文件不属于冻结的 Torrent 目录');
+    }
+    return Object.freeze({
+      candidateId: record.candidate.candidateId,
+      candidateFingerprint: record.candidateFingerprint,
+      title: record.candidate.work.title,
+      editionId: offer.editionId,
+      offerId: offer.offerId,
+      infoHash: offer.infoHash,
+      selectedFile,
+      declaredSize: offer.size,
+      rightsStatus: record.candidate.rights.status,
+    });
+  }
+
   async acquireTorrent(workspacePath, input) {
     exactKeys(input, new Set([
       'candidateId', 'candidateFingerprint', 'offerId', 'selectedFile', 'intentId',

@@ -1340,6 +1340,10 @@ function registerChannels() {
       error.code = 'WORKSPACE_HANDOFF_IN_PROGRESS';
       throw error;
     }
+    // Player durable sessions are Workspace-scoped.  Rebind the transport
+    // daemon before publishing the new current Workspace so old jobs cannot
+    // leak into the next library or restart under the wrong root.
+    if (torrentDaemon?.switchWorkspace) await torrentDaemon.switchWorkspace(p);
     store.set('workspace', p);
     addressableEvidence.invalidate();
     // watcher 跟随：重挂全部监听（旧目录文件变化不再打扰）
@@ -2549,6 +2553,7 @@ app.whenReady().then(async () => {
   const TorrentDaemon = require('./torrent-daemon');
   torrentDaemon = new TorrentDaemon({
     bus, workspace: () => store.get('workspace'), session: browserSess, resourceLedger,
+    libraryResourceSurface,
   });
   if (process.env.NODE_ENV === 'test') globalThis.__MAZZ_E2E_TORRENT_DAEMON__ = torrentDaemon;
   app.on('before-quit', () => torrentDaemon.destroy().catch(e => console.warn('[torrent] quit cleanup:', e.message)));

@@ -1,6 +1,6 @@
 # W94 Unified Capability, Artifact & Public Plane / 统一能力、资产与公共运行面
 
-> 状态：**W94D PASS / W94E PARTIAL / W94F PARTIAL · IN PROGRESS**
+> 状态：**W94D PASS / W94E PARTIAL / W94F PARTIAL · W94Fb PASS_WITH_SCOPE · IN PROGRESS**
 > 版本：v0.1
 > 日期：2026-08-26
 > 代码基线：`main@0add39fce403`（W93A–G 已完成；写入本设计前无 tracked 工作树改动）
@@ -67,7 +67,7 @@ Local Product → 可选 Public Projection / Hub
 - W63/W70/W76–W78/W81/W85 已形成地址化证据、多父 Context、认知和事件基础。
 - W83 Player/Danmaku、Feed、Companion 与 W93 Library Resource Freedom 已形成强本地垂直切片。
 - W84 已形成 `.maz` 本地 profile、加密、签名、授权和迁移内核。
-- W94E 记录的历史回归基线为 `276/276`；W94Fe 后当前全量为 `277/279`，新增 W94Fe 合同本身全绿，剩余两项是既有 W71 release foundation 与 W72c provenance 审计账本漂移。`npm run build` 与 `npm run dist:dir` 仍通过；这都不是 W94 完成证据。
+- W94E 记录的历史回归基线为 `276/276`；W94Fb 新增 bridge 合同后当前全量目标为 `279/281`，新增 W94Fb 合同、Source/Packaged 运行和 build/dist 均通过，剩余两项是既有 W71 release foundation 与 W72c provenance 审计账本漂移。`npm run build` 与 `npm run dist:dir` 仍通过；这都不是 W94 完成证据。
 
 ### 2.2 不能冒充完成的器官
 
@@ -340,11 +340,14 @@ Effective State 必须由 base + ordered changes + explicit resolutions 计算�
 
 ### 10.2 Final Gate
 
+（2026-08-28 续记：W94Fb 的 Player↔W93 bridge 与 Workspace A/B 门已在 Source/Packaged
+运行中闭合；下方较早的 PARTIAL 文字仅保留历史差分，现状以 W94F 检查点及 W94Fb 证据为准。）
+
 - 同一查询可解释地回到原始 evidence/ref，不用 regex 命中冒充关系推理。
 - A/B Workspace、离线并发、多父关系、删除/恢复、冲突重放均不丢事实。
 - Branch 切换不会串 Calc/Chart/Canvas/World 的当前 revision。
 
-当前已验证：W94E 合同 `9/9`、LAN 合同 `12/12`（含真实 TLS TCP loopback 的冲突/重连/坏签名/中途断线/跨帧乱序路径）、Source/Packaged 查询解释/拒绝重放、多父冲突人工 resolution、`approval` outcome 合同与八 domain metadata-only producer；另有真实跨机器 TLS/帧协议端点双向 1 文件 + 1 state-fact 的 `PASS_WITH_SCOPE` 证据。W94Fe 又以两个独立 Electron Mazz 完成 Source/Packaged room 边界、host transfer/new epoch、重连与 durable replay，证据见 [`W94FE_PLAYER_ROOM_SOURCE.json`](../engineering/evidence/W94FE_PLAYER_ROOM_SOURCE.json) 与 [`W94FE_PLAYER_ROOM_PACKAGED.json`](../engineering/evidence/W94FE_PLAYER_ROOM_PACKAGED.json)。W94Fe 定向合同、build/dist 通过；当前全量 `277/279`，W71 release foundation 与 W72c provenance 两个既有审计漂移仍红。W94Fb 正式 W93 bridge 与 Workspace A/B 切换门仍未完成，故总波保持 PARTIAL。详见 [`W94E_DOMAIN_EVENT_COVERAGE.json`](../engineering/evidence/W94E_DOMAIN_EVENT_COVERAGE.json) 与 [`W94E_LAN_PHYSICAL_PROTOCOL_PEER.json`](../engineering/evidence/W94E_LAN_PHYSICAL_PROTOCOL_PEER.json)。
+当前已验证：W94E 合同 `9/9`、LAN 合同 `12/12`（含真实 TLS TCP loopback 的冲突/重连/坏签名/中途断线/跨帧乱序路径）、Source/Packaged 查询解释/拒绝重放、多父冲突人工 resolution、`approval` outcome 合同与八 domain metadata-only producer；另有真实跨机器 TLS/帧协议端点双向 1 文件 + 1 state-fact 的 `PASS_WITH_SCOPE` 证据。W94Fe 又以两个独立 Electron Mazz 完成 Source/Packaged room 边界、host transfer/new epoch、重连与 durable replay，W94Fb 再完成显式 W93 Candidate/Offer/Rights Receipt bridge、Workspace A/B 隔离与重启恢复，证据见 [`W94FE_PLAYER_ROOM_SOURCE.json`](../engineering/evidence/W94FE_PLAYER_ROOM_SOURCE.json)、[`W94FE_PLAYER_ROOM_PACKAGED.json`](../engineering/evidence/W94FE_PLAYER_ROOM_PACKAGED.json)、[`W94FB_PLAYER_LIBRARY_SOURCE.json`](../engineering/evidence/W94FB_PLAYER_LIBRARY_SOURCE.json) 与 [`W94FB_PLAYER_LIBRARY_PACKAGED.json`](../engineering/evidence/W94FB_PLAYER_LIBRARY_PACKAGED.json)。W94Fb 定向合同、Source/Packaged、build/dist 通过；当前全量 `279/281`，仅 W71 release foundation 与 W72c provenance 两个既有审计漂移仍红。W94F 总波保持 PARTIAL，剩余为 W94G/H 与审计红项。详见 [`W94E_DOMAIN_EVENT_COVERAGE.json`](../engineering/evidence/W94E_DOMAIN_EVENT_COVERAGE.json) 与 [`W94E_LAN_PHYSICAL_PROTOCOL_PEER.json`](../engineering/evidence/W94E_LAN_PHYSICAL_PROTOCOL_PEER.json)。
 
 ## 11. W94F：Player Transport Convergence + Watch Room
 
@@ -377,6 +380,11 @@ Effective State 必须由 base + ordered changes + explicit resolutions 计算�
 - 重启、切 Workspace、选档、暂停、恢复、删除、退出均不丢任务或串路径。
 - Player 与 Library 对相同 Blob/BTIH 不产生冲突的 transport truth。
 - 双端本地房间完成断网、重连、host transfer 和 timeline 收敛。
+
+W94Fb 已追加完成：显式 W93 Candidate/Offer/selected-file bridge 复用既有
+`LibraryResourceSurfaceService.acquireTorrent`，Player durable projection 与 Workspace A/B
+重绑定在 Source/Packaged 运行中通过；没有 Candidate 的媒体 Magnet 仍保持媒体专属，不伪造
+书籍 Acquisition Job。证据见 `W94FB_PLAYER_LIBRARY_SOURCE/PACKAGED.json`。
 
 ## 12. W94G：World + Mazz Hub Public Plane
 
@@ -476,7 +484,7 @@ Final Gate 只有两种：
 | W94C | Canvas Agent Construction | W94A/B | operation/revision replay | real Canvas Document/rollback | **PASS** | [检查点](../engineering/W94C_CANVAS_AGENT_CONSTRUCTION_CHECKPOINT_2026-08-26.md) |
 | W94D | Blender External Capability | W94A | fixture adapter | real Blender opt-in/process cleanup | **PASS** | [检查点](../engineering/W94D_BLENDER_EXTERNAL_CAPABILITY_CHECKPOINT_2026-08-26.md) |
 | W94E | Retrieval + Branch Effective State | W94A | query/merge replay | A/B Workspace/LAN conflict | **PARTIAL / IN PROGRESS** | [施工参照](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_SPEC.md) · [检查点](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_CHECKPOINT_2026-08-26.md) |
-| W94F | Player Transport + Watch Room | W94A/W93/W83 | transport identity/replay | restart/P2P opt-in/LAN | **PARTIAL / W94Fa PASS · W94Fb restart PASS · W94Fc PASS · W94Fd PASS · W94Fe PASS_WITH_SCOPE** | [W94F 检查点](../engineering/W94F_PLAYER_TRANSPORT_AND_ROOM_CHECKPOINT_2026-08-27.md) · [W94Fe 检查点](../engineering/W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md) |
+| W94F | Player Transport + Watch Room | W94A/W93/W83 | transport identity/replay | restart/P2P opt-in/LAN | **PARTIAL / W94Fa PASS · W94Fb PASS_WITH_SCOPE · W94Fc PASS · W94Fd PASS · W94Fe PASS_WITH_SCOPE** | [W94F 检查点](../engineering/W94F_PLAYER_TRANSPORT_AND_ROOM_CHECKPOINT_2026-08-27.md) · [W94Fe 检查点](../engineering/W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md) |
 | W94G | World + Hub Public Plane | W94A/E/W69/W84 | publication/withdraw fixture | staging/prod/incident | NOT STARTED | 未创建 |
 | W94H | Convergence & Release Seal | W94A–G | full deterministic suite | Source/Packaged/live audits | NOT STARTED | 未创建 |
 
@@ -502,8 +510,12 @@ Final Gate 只有两种：
 
 ## 19. Definition of Done 与下一步
 
+W94Fb bridge/A-B 已完成；后续施工不再重复创建 Player↔W93 适配，而是转向 W94G/H 与剩余
+审计红项。媒体 Magnet 若没有 W93 Candidate/Edition/Rights Receipt，继续保持不进入书库取得
+链的明确边界。
+
 W94 只有在 A–H 全部通过、README/总表/检查点同代、全量与构建绿、Source/Packaged 证据完整、真实 Canvas/Blender/Hub 边界诚实、无未裁决 P0/P1 时才能写 `W94 COMPLETE`。
 
-当前精确施工项分两条并行但不越权：**按 W94E 施工参照继续补齐跨机器真实 LAN A/B 专项证据，并对 Player/Canvas/World 仍存在的正式事件入口缺口逐入口收口；W94F 已完成 W94Fa、W94Fb 重启切片、W94Fc capability/Range 流、W94Fd Local/LAN Watch Room 和 W94Fe Source/Packaged 双 Mazz 边界。媒体 Magnet 在没有 W93 Candidate/Edition/Rights Receipt 时不伪造书籍 Job；下一步是对有 Candidate 的 Player 资源做显式 W93 bridge，并保留真实公网 P2P/跨机器房间的 opt-in 复开条件。Library durable Job settlement 已接入，现有 producer 接线与缺口见覆盖审计。**
+当前精确施工项分两条并行但不越权：**按 W94E 施工参照继续补齐跨机器真实 LAN A/B 专项证据，并对 Player/Canvas/World 仍存在的正式事件入口缺口逐入口收口；W94F 已完成 W94Fa、W94Fb W93 bridge + Workspace A/B、W94Fc capability/Range 流、W94Fd Local/LAN Watch Room 和 W94Fe Source/Packaged 双 Mazz 边界。媒体 Magnet 在没有 W93 Candidate/Edition/Rights Receipt 时不伪造书籍 Job，并保留真实公网 P2P/跨机器房间的 opt-in 复开条件。Library durable Job settlement 已接入，现有 producer 接线与缺口见覆盖审计。**
 W94D 已把 Blender 三 operation、真实外部进程、Artifact lineage、失败/取消/收尸与 Source/Packaged 证据接入
 W94A/B 脊柱；W94E 已完成实现、Source/Packaged 运行、构建和全量回归，但因上述两项未完成仍保持 PARTIAL；Player、World 或 Hub 仍不因本波通过而自动获得施工授权。

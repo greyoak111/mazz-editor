@@ -1,0 +1,31 @@
+{
+  "schema": "mazz.w94fb-player-library-runtime/v1",
+  "mode": "source",
+  "result": "PASS",
+  "product": "source",
+  "explicitCandidateBridge": true,
+  "playerNetworkOwnerForLibraryJob": false,
+  "candidateId": "candidate-torrent-e1c2e0393070d3e0f0e83cab11b7256359acefa4a275cde236336464e427fa32",
+  "candidateFingerprint": "candidate-sha256-219eb591ad90e31cef55e098f3a6ca72c11cbbd7a88e49070369456e7401c135",
+  "jobId": "job-a16f55dc5bec4039c44bd2e9d81f5b16",
+  "finalJobState": "imported",
+  "finalSessionState": "completed",
+  "workspaceIsolation": {
+    "aSessions": 1,
+    "bSessions": 0,
+    "aRestoredSessions": 1
+  },
+  "p2pConsentRequired": true,
+  "rightsConfirmationRequired": true,
+  "publicNetworkCalls": 0,
+  "ownerFinal": {
+    "torrentActiveCount": 0,
+    "operationCount": 0,
+    "backgroundCount": 0
+  },
+  "runtimeErrors": [],
+  "evidenceScreenshot": "W94FB_PLAYER_LIBRARY_SOURCE.png",
+  "executableSha256": null,
+  "rendererBundleSha256": "36bd7fde64125134ad68a59cba39872ef8ae15bfa979938ba518676cabd1d779",
+  "generatedAt": "2026-08-28T09:40:20.685Z"
+}
