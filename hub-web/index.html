@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="MazzHub 本地公共投影预览" />
+    <title>MazzHub · Local Public Plane Preview</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#discover" data-section="discover" aria-label="MazzHub 首页">
+          <span class="brand-mark">M</span>
+          <span class="brand-word">MAZZ</span>
+          <span class="brand-product">HUB</span>
+        </a>
+        <nav class="topnav" aria-label="主导航">
+          <button class="topnav-item is-active" data-section="discover">发现</button>
+          <button class="topnav-item" data-section="publications">作品</button>
+          <button class="topnav-item" data-section="worlds">Worlds</button>
+          <button class="topnav-item" data-section="charts">Charts</button>
+          <button class="topnav-item" data-section="creators">创作者</button>
+        </nav>
+        <div class="topbar-actions">
+          <label class="search-box" aria-label="搜索公共投影">
+            <span class="search-icon">⌕</span>
+            <input id="global-search" type="search" placeholder="搜索作品、World、创作者" autocomplete="off" />
+            <kbd>/</kbd>
+          </label>
+          <button class="round-button" data-action="show-toast" data-message="通知中心将在公共事件 Feed 接通后启用" aria-label="通知">◔</button>
+          <button class="profile-chip" data-action="show-toast" data-message="本地预览不连接账号">LM</button>
+        </div>
+      </header>
+
+      <div class="preview-banner">
+        <span class="status-dot"></span>
+        <strong>本地预览</strong>
+        <span>Public Effect 已关闭 · 当前页面只读取安全 fixture，不会上传、发布或修改 VPS 数据</span>
+        <button data-action="show-envelope">查看公共包络</button>
+      </div>
+
+      <div class="workspace">
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <p class="sidebar-label">公共平面</p>
+            <button class="side-item is-active" data-section="discover"><span>✦</span>发现</button>
+            <button class="side-item" data-section="publications"><span>▧</span>作品库</button>
+            <button class="side-item" data-section="worlds"><span>◎</span>World 地图</button>
+            <button class="side-item" data-section="charts"><span>▥</span>透明 Charts</button>
+            <button class="side-item" data-section="creators"><span>♧</span>创作者</button>
+          </div>
+          <div class="sidebar-section">
+            <p class="sidebar-label">你的空间</p>
+            <button class="side-item" data-section="library"><span>♡</span>收藏与历史</button>
+            <button class="side-item" data-action="show-toast" data-message="Creator Studio 会在本地 Promotion 接通后开放"><span>＋</span>Creator Studio <small>预览</small></button>
+          </div>
+          <div class="sidebar-spacer"></div>
+          <div class="sidebar-card">
+            <div class="mini-orbit"><i></i><i></i><i></i></div>
+            <strong>本地是家，Hub 是广场</strong>
+            <p>Publication 是作品身份，P2P / HTTP / LAN / NAS 是路。</p>
+            <button data-action="show-toast" data-message="W69/W94G 边界：Hub 只保存公开投影">查看边界说明 →</button>
+          </div>
+          <div class="sidebar-foot">mazz-hub preview <span>v0.1</span></div>
+        </aside>
+
+        <main id="app" class="content" tabindex="-1"></main>
+      </div>
+    </div>
+
+    <dialog id="envelope-modal" class="modal">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">PUBLIC ENVELOPE</span>
+          <h2 id="modal-title">公共包络</h2>
+        </div>
+        <button class="modal-close" data-action="close-modal" aria-label="关闭">×</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

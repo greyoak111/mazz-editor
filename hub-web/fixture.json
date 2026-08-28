@@ -1,0 +1,170 @@
+{
+  "schema": "mazz.hub-preview-fixture/v1",
+  "mode": "local-fixture",
+  "publicEffect": "disabled",
+  "featured": [
+    "publication:harbor-v1",
+    "publication:moon-letter-v2",
+    "publication:north-current-v1"
+  ],
+  "publications": [
+    {
+      "publicationId": "publication:harbor-v1",
+      "workId": "work:harbor-echo",
+      "creatorId": "creator:lin-yuan",
+      "editionType": "text",
+      "version": 1,
+      "title": "海港回声",
+      "summary": "一座潮湿旧城里的三次测量，记录人如何在退潮后重新辨认自己的方向。",
+      "visibility": "public",
+      "worldRef": "world:harbor",
+      "contentManifestRef": "manifest:sha256:harbor-v1",
+      "contentIds": ["block:harbor:001", "block:harbor:002"],
+      "licenseRef": "license:reader-share",
+      "publicationGrantRef": "grant:preview:harbor",
+      "provenance": "artifact:harbor-final",
+      "publishedAt": "2026-08-25T08:00:00Z",
+      "creator": "林渊",
+      "creatorHandle": "@linyuan",
+      "category": "城市 / 悬疑",
+      "readTime": "18 分钟",
+      "signals": {"completion": 0.78, "favorites": 1280, "discussion": 86, "derivatives": 12},
+      "accent": "#5661e9",
+      "cover": "harbor"
+    },
+    {
+      "publicationId": "publication:moon-letter-v2",
+      "workId": "work:moon-letter",
+      "creatorId": "creator:su-he",
+      "editionType": "epub",
+      "version": 2,
+      "title": "月面来信",
+      "summary": "写给还没有抵达的人：一份关于孤独、维修和远方灯火的短篇集。",
+      "visibility": "public",
+      "worldRef": "world:moon-station",
+      "contentManifestRef": "manifest:sha256:moon-letter-v2",
+      "contentIds": ["block:moon:001", "block:moon:002", "block:moon:003"],
+      "licenseRef": "license:reader-share",
+      "publicationGrantRef": "grant:preview:moon-letter",
+      "provenance": "artifact:moon-letter-proof",
+      "publishedAt": "2026-08-23T10:30:00Z",
+      "creator": "苏禾",
+      "creatorHandle": "@suhe",
+      "category": "科幻 / 书信",
+      "readTime": "32 分钟",
+      "signals": {"completion": 0.64, "favorites": 934, "discussion": 54, "derivatives": 8},
+      "accent": "#d58d58",
+      "cover": "moon"
+    },
+    {
+      "publicationId": "publication:north-current-v1",
+      "workId": "work:north-current",
+      "creatorId": "creator:zhou-lan",
+      "editionType": "video",
+      "version": 1,
+      "title": "北向洋流",
+      "summary": "一部关于迁徙、海风与家庭记忆的十二分钟影像札记。",
+      "visibility": "public",
+      "worldRef": "world:north-current",
+      "contentManifestRef": "manifest:sha256:north-current-v1",
+      "contentIds": ["segment:north:001", "segment:north:002"],
+      "licenseRef": "license:watch-share",
+      "publicationGrantRef": "grant:preview:north-current",
+      "provenance": "artifact:north-current-master",
+      "publishedAt": "2026-08-20T15:10:00Z",
+      "creator": "周岚",
+      "creatorHandle": "@zhoulan",
+      "category": "纪录 / 海洋",
+      "readTime": "12 分钟",
+      "signals": {"completion": 0.86, "favorites": 701, "discussion": 41, "derivatives": 5},
+      "accent": "#2c9a9a",
+      "cover": "north"
+    },
+    {
+      "publicationId": "publication:glass-garden-v3",
+      "workId": "work:glass-garden",
+      "creatorId": "creator:he-xu",
+      "editionType": "text",
+      "version": 3,
+      "title": "玻璃花园",
+      "summary": "一组关于植物、玻璃和城市微型气候的散文观察。",
+      "visibility": "public",
+      "worldRef": null,
+      "contentManifestRef": "manifest:sha256:glass-garden-v3",
+      "contentIds": ["block:glass:001"],
+      "licenseRef": "license:reader-share",
+      "publicationGrantRef": "grant:preview:glass-garden",
+      "provenance": "artifact:glass-garden-final",
+      "publishedAt": "2026-08-18T09:00:00Z",
+      "creator": "何叙",
+      "creatorHandle": "@hexu",
+      "category": "散文 / 植物",
+      "readTime": "11 分钟",
+      "signals": {"completion": 0.71, "favorites": 482, "discussion": 23, "derivatives": 2},
+      "accent": "#6c9a6e",
+      "cover": "glass"
+    }
+  ],
+  "worlds": [
+    {
+      "worldId": "world:harbor",
+      "title": "退潮之后",
+      "summary": "海港、测量站与一条总在改道的旧河，Root Canon 正在缓慢生长。",
+      "authority": "Root Canon",
+      "branchCount": 7,
+      "publicationCount": 14,
+      "growth": "+28%",
+      "factCount": 86,
+      "accent": "#5661e9",
+      "status": "canonical"
+    },
+    {
+      "worldId": "world:moon-station",
+      "title": "月面维修站",
+      "summary": "一座围绕月面轨道运行的社区，分支作者共享规则但保留各自时间线。",
+      "authority": "Authorized Branches",
+      "branchCount": 11,
+      "publicationCount": 22,
+      "growth": "+41%",
+      "factCount": 124,
+      "accent": "#d58d58",
+      "status": "branching"
+    },
+    {
+      "worldId": "world:north-current",
+      "title": "北向洋流",
+      "summary": "一张从家庭档案和海洋观测中长出来的开放世界地图。",
+      "authority": "Community Derivatives",
+      "branchCount": 5,
+      "publicationCount": 9,
+      "growth": "+19%",
+      "factCount": 48,
+      "accent": "#2c9a9a",
+      "status": "community"
+    }
+  ],
+  "creators": [
+    {"creatorId": "creator:lin-yuan", "name": "林渊", "handle": "@linyuan", "bio": "写城市的潮汐，也写人如何留下。", "works": 8, "followers": 3820, "accent": "#5661e9"},
+    {"creatorId": "creator:su-he", "name": "苏禾", "handle": "@suhe", "bio": "科幻书信与低重力日常。", "works": 5, "followers": 2410, "accent": "#d58d58"},
+    {"creatorId": "creator:zhou-lan", "name": "周岚", "handle": "@zhoulan", "bio": "在海风里做影像记录。", "works": 6, "followers": 1960, "accent": "#2c9a9a"},
+    {"creatorId": "creator:he-xu", "name": "何叙", "handle": "@hexu", "bio": "植物、玻璃和城市边缘。", "works": 11, "followers": 1740, "accent": "#6c9a6e"}
+  ],
+  "charts": {
+    "attention": [
+      {"label": "完读 / 完播", "value": 78, "delta": "+12%", "tone": "blue"},
+      {"label": "收藏转化", "value": 64, "delta": "+8%", "tone": "orange"},
+      {"label": "讨论增长", "value": 49, "delta": "+19%", "tone": "teal"}
+    ],
+    "creation": [
+      {"label": "World 衍生", "value": 72, "delta": "+28%", "tone": "purple"},
+      {"label": "Branch 活跃", "value": 58, "delta": "+14%", "tone": "green"},
+      {"label": "消费 → 创作", "value": 43, "delta": "+9%", "tone": "pink"}
+    ],
+    "window": "近 30 天 · 公开投影 · fixture 计算"
+  },
+  "events": [
+    {"type": "version", "label": "苏禾更新了《月面来信》", "time": "2 小时前", "ref": "publication:moon-letter-v2"},
+    {"type": "branch", "label": "月面维修站新增 2 条分支提案", "time": "昨天", "ref": "world:moon-station"},
+    {"type": "discussion", "label": "《海港回声》收到 18 条新讨论", "time": "昨天", "ref": "publication:harbor-v1"}
+  ]
+}
