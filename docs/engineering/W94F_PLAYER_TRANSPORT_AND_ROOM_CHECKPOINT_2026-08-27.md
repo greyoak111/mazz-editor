@@ -1,6 +1,6 @@
 # W94F Player Transport + Watch Room 检查点（2026-08-27）
 
-> 结论：**PARTIAL / W94Fa PASS，W94Fb 重启切片 PASS，W94Fc PASS，W94Fd PASS · W94Fe 未开始**
+> 结论：**PARTIAL / W94Fa PASS，W94Fb 重启切片 PASS，W94Fc PASS，W94Fd PASS，W94Fe PASS_WITH_SCOPE**
 > 施工参照：[W94F Player Transport + Watch Room](./W94F_PLAYER_TRANSPORT_AND_ROOM_SPEC.md)  
 > 上位计划：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 
@@ -27,10 +27,10 @@
 | 资源 | fake client/server/torrent 在 `destroy()` 后无活动队列；临时 Workspace 已清理 |
 | 隐私 | 测试只使用合成 BTIH/标题；不访问公网，不写凭据或用户正文 |
 | Source Electron | [`W94F_PLAYER_TRANSPORT_SOURCE.json`](./evidence/W94F_PLAYER_TRANSPORT_SOURCE.json)：**PASS**，真实 IPC 接收 51 项，重启 paused → 显式 resume，清理后 torrent owner `0` |
-| Packaged Electron | [`W94F_PLAYER_TRANSPORT_PACKAGED.json`](./evidence/W94F_PLAYER_TRANSPORT_PACKAGED.json)：**PASS**，同代 `win-unpacked` 重跑重启门，EXE SHA-256 `a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9` |
+| Packaged Electron | [`W94F_PLAYER_TRANSPORT_PACKAGED.json`](./evidence/W94F_PLAYER_TRANSPORT_PACKAGED.json)：**PASS**，`win-unpacked` 重跑重启门，EXE SHA-256 `9b78ae44a7dd2a913334649545fa512ea836f605d8fb2e5dec33a7f75f11261c` |
 | Runtime | Source/Packaged 均 `networkCalls=0`、`runtimeErrors=[]`；运行后 `Mazz Editor` 进程数 `0` |
 | W94Fc 相邻契约 | `node --test tests/contract/player-w25.test.mjs`：**5/5 PASS**；W67 门限回归 **4/4 PASS** |
-| Regression | W94Fd 后全量 `278/278`；W94Fc/Fd 定向合同、build/dist 均通过 |
+| Regression | W94Fe 后全量与定向合同、Source/Packaged、build/dist 均通过（结果写入本波检查点） |
 
 ## 3. 尚未通过的项
 
@@ -42,8 +42,11 @@
   短命 capability + Range/流式读取。完整 Source/Packaged runtime 证据留到 W94Fe 统一补齐。
 - W94Fd：**PASS**。独立 Watch Room manifest/event/epoch、显式配对 TLS 帧、成员权限、host
   transfer、断线重连和 durable replay 已落地，详见 [W94Fd 检查点](./W94FD_WATCH_ROOM_CHECKPOINT_2026-08-28.md)。
-- W94Fe：本波 Source/Packaged 重启与真实双端 room 证据尚未生成。
+- W94Fe：**PASS_WITH_SCOPE**。Source/Packaged 两个独立 Electron Mazz 通过真实 TLS loopback
+  完成显式配对、成员回传、断线重连、host transfer、新 epoch 控制、反向收敛和 close/reopen/replay；
+  未配对/未知字段 fault injection、三轨帧隔离、ResourceLedger 与运行错误也有证据，详见
+  [W94Fe 检查点](./W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md)。公网 P2P、DHT/Tracker、
+  跨机器房间不在默认证据范围内。
 
-因此不能把 W94F 或 W94 总波标成 PASS；下一施工项是 W94Fe，统一补 Source/Packaged 与真实
-边界证据。真实公网 P2P、第二个 Mazz 实例和公共 Watch
-Room 仍是显式 opt-in/后置边界。
+因此不能把 W94F 或 W94 总波标成 PASS：W94Fb 正式 W93 bridge 与 Workspace A/B 切换门仍未闭合。
+真实公网 P2P 和公共 Watch Room 仍是显式 opt-in/后置边界。

@@ -1,0 +1,47 @@
+{
+  "schema": "mazz.w94fe-player-room-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "secondMazzRuntime": true,
+  "explicitPairing": true,
+  "workspaceSame": true,
+  "room": {
+    "roomId": "room:8f7c0a12c1f05cd6ec6e5a65",
+    "mediaRef": "blob:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "activeMemberCount": 2,
+    "eventKinds": [
+      "play",
+      "seek",
+      "buffer",
+      "member-join",
+      "host-transfer",
+      "pause"
+    ],
+    "hostTransfer": {
+      "from": "member:fb6daaef92a3fbbd4755764fbe763973",
+      "to": "member:27d2bdac26940b919ffcf2fcf6788e0b",
+      "newEpoch": "epoch:92b04a38212e806a970be1bc"
+    },
+    "durableRoundtrip": true
+  },
+  "transport": {
+    "tlsLoopback": true,
+    "fileFramesSeparate": true,
+    "stateFactFramesSeparate": true,
+    "externalNetworkCalls": 0,
+    "reconnects": 4
+  },
+  "faultInjection": {
+    "unpairedJoinRejected": true,
+    "unknownManifestFieldRejected": true
+  },
+  "resources": {
+    "aActiveBeforeClose": 3,
+    "bActiveBeforeClose": 4,
+    "reopenedActive": 5,
+    "watchRoomOwnersAfterReopen": 0
+  },
+  "runtimeErrors": [],
+  "executableSha256": "12a427ac980e022f2bec3be31b6ddb8f72723067e771538fd16039fcd4bbb080",
+  "generatedAt": "2026-08-28T08:57:29.385Z"
+}

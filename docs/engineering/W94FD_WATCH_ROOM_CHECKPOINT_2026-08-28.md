@@ -1,6 +1,6 @@
 # W94Fd Local/LAN Watch Room 检查点（2026-08-28）
 
-> 结论：**PASS（定向合同、真实 TLS 配对与持久化重放）**；W94F 总波仍为 PARTIAL，W94Fe 的 Source/Packaged 与真实边界证据尚未完成。
+> 结论：**PASS（定向合同、真实 TLS 配对与持久化重放）**；W94Fe 的 Source/Packaged 与双 Mazz 真实边界已补齐，详见 [W94Fe 检查点](./W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md)。W94F 总波仍为 PARTIAL。
 > 施工参照：[W94F Player Transport + Watch Room](./W94F_PLAYER_TRANSPORT_AND_ROOM_SPEC.md)
 
 ## 本波落地
@@ -28,7 +28,7 @@
 | Room permission | PASS | 非 host 控制拒绝；host transfer 需当前 host 与 active target；未配对 join 拒绝 |
 | Replay / reconnect | PASS | duplicate frame 幂等；stale/unknown epoch 与 sequence 冲突拒绝；重连收敛 |
 | Transport separation | PASS | 真实 TLS 配对交换 `watch-rooms`，文件与 `state-facts` store 保持独立 |
-| Resource | PASS_WITH_SCOPE | 仅保留解释明确的 256 成员 / 10,000 事件持久化安全上限；不是业务字数/token/队列门 |
+| Resource | PASS_WITH_SCOPE | 仅保留解释明确的 256 成员 / 10,000 事件持久化安全上限；不是业务字数/token/队列门；W94Fe reopen 后无 `watch-room` owner |
 
 ## 验证命令
 
@@ -38,5 +38,6 @@ node tests/contract/lansync.test.mjs                # 12/12（含既有 W94E TLS
 node tests/contract/w83-danmaku-runtime.test.mjs    # 7/7
 ```
 
-本检查点不宣称 W94F 总波完成：W94Fb 的正式 W93 Candidate/Edition/Rights Receipt bridge、
-Workspace A/B 迁移门，以及 W94Fe Source/Packaged 全边界与第二个 Mazz 实例证据仍待后续波次。
+本检查点不宣称 W94F 总波完成：W94Fb 的正式 W93 Candidate/Edition/Rights Receipt bridge
+与 Workspace A/B 迁移门仍未闭合；W94Fe 已以 PASS_WITH_SCOPE 完成 Source/Packaged 与第二个
+Mazz 实例的同机 TLS 边界，真实公网 P2P/跨机器房间仍须显式 opt-in。

@@ -1,6 +1,6 @@
 # W94F Player Transport + Watch Room 施工参照
 
-> 状态：**SPEC READY / W94F PARTIAL · W94Fc PASS · W94Fd PASS · IN PROGRESS**
+> 状态：**SPEC READY / W94F PARTIAL · W94Fc PASS · W94Fd PASS · W94Fe PASS_WITH_SCOPE**
 > 日期：2026-08-27  
 > 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)  
 > 前置真源：[W93 Library Resource Freedom](../plans/W93_LIBRARY_RESOURCE_FREEDOM.md)、[W93F Torrent Book Transport](./W93F_TORRENT_BOOK_TRANSPORT_SPEC.md)、[W83 Danmaku Runtime](../plans/W83_DANMAKU_RUNTIME.md)  
@@ -148,6 +148,10 @@ wall clock 只用于观测，不用于推导播放位置。
   运行证据和 checkpoint。
 - 默认 fake swarm/loopback 离线；真实 P2P、第二个 Mazz 实例和跨机器房间必须显式 opt-in，
   不能用临时 Python 端点冒充第二个 Mazz。
+- 已完成：两个独立 Electron Mazz 在 Source/Packaged 均通过真实 TLS loopback 完成显式配对、
+  成员回传、断线重连、host transfer/new epoch、host-only pause、反向收敛和 close/reopen/replay；
+  未配对/未知字段拒绝、file/state-fact/watch-room 三轨隔离与 ResourceLedger 结果见
+  [W94Fe 检查点](./W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md)。
 
 ## 5. 必查矩阵
 

@@ -1,7 +1,7 @@
 # W94 Overall E2E + Screenshot Checkpoint
 
 > 结论：**验证通过 / W94 总波仍保持 PARTIAL**  
-> 日期：2026-08-27  
+> 日期：2026-08-28
 > 范围：W94A–W94F 已落地内容的 Source/Packaged 运行回归与桌面整体截图核验
 
 ## 1. 验证矩阵
@@ -13,10 +13,11 @@
 | W94C Canvas Agent | PASS | PASS | document roundtrip、revision、SVG export、single-use grant |
 | W94D Blender External Capability | PASS | PASS | Blender 5.2 fixture probe、render/inspect/export、失败/取消、外部进程归零 |
 | W94E Relation + Branch | PASS | PASS | 查询解释/拒绝重放、多父冲突 resolution、8 domain event、state-fact 边界 |
-| W94F Player Transport | PASS | PASS | 51 项无固定队列门、清理后 0、重启 `paused`、显式 resume 到 `downloading`、torrent owner 归零 |
+| W94F Player Transport + Watch Room | PASS | PASS | 51 项无固定队列门、capability/Range、重启 `paused`、双 Mazz TLS room、host transfer/new epoch、durable replay |
 
-Packaged 运行均使用同一构建代际，EXE SHA-256：
-`a13a0c9203dc2937d6947518eeff35fc8af2e87c238b2a6b06fb41eade55a8a9`。
+各项 Packaged 证据保留各自运行时的 `executableSha256`，不把不同次构建伪装成同一代；本次
+W94Fe 最新 `win-unpacked` EXE SHA-256 为
+`12a427ac980e022f2bec3be31b6ddb8f72723067e771538fd16039fcd4bbb080`，对应证据文件已固定。
 
 所有六个波次均报告 `networkCalls=0`、`runtimeErrors=[]`；运行结束后 Mazz Editor 进程数为 `0`。
 
@@ -32,4 +33,6 @@ Packaged 运行均使用同一构建代际，EXE SHA-256：
 
 ## 3. 边界声明
 
-本检查点只证明已实现的 W94A–F 切片在 Source/Packaged 和当前桌面壳中通过；不把未施工内容写成完成：W94E 第二个 Mazz 实例 A/B、W94Fc–Fe、媒体资源到 W93 书籍 Job 的正式桥接、Workspace A/B 切换及其余公共入口仍按各自检查点保持 PARTIAL/OPEN。
+本检查点只证明已实现的 W94A–F 切片在 Source/Packaged 和当前桌面壳中通过；W94Fe 的第二个 Mazz
+实例已在真实 TLS loopback 证据中覆盖，但真实公网 P2P/跨机器房间仍是显式 opt-in。媒体资源到
+W93 书籍 Job 的正式桥接、Workspace A/B 切换及其余公共入口仍按各自检查点保持 PARTIAL/OPEN。
