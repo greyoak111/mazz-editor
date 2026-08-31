@@ -8,12 +8,12 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 715,
-    "filesWithFindings": 71,
+    "totalFindings": 718,
+    "filesWithFindings": 73,
     "byRule": {
       "fixed-width-px": 196,
-      "white-space-nowrap": 142,
-      "position-absolute": 167,
+      "white-space-nowrap": 143,
+      "position-absolute": 169,
       "fixed-min-width": 92,
       "sidebar-pixel-coupling": 12,
       "fixed-left-right": 31,
@@ -145,7 +145,7 @@
       }
     ],
     "byProvisionalClass": {
-      "D": 331,
+      "D": 334,
       "A": 193,
       "B": 92,
       "E": 68,
@@ -906,28 +906,28 @@
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/draw/index.js",
-      "line": 527,
+      "line": 528,
       "sample": "bar.style.cssText = 'position:absolute;bottom:56px;left:50%;transform:translateX(-50%);display:flex;gap:8px;background:var(--bg-elev,#fff);border:1px solid var(--bd,#e0ded8);border-radius:9px;padding:6px 12px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:20;font-size:12.5px';"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/draw/index.js",
-      "line": 1131,
+      "line": 1132,
       "sample": "pop.style.cssText = 'position:fixed;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--bd,#e0ded8);border-radius:9px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:3px;min-width:130px';"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/draw/index.js",
-      "line": 1345,
+      "line": 1346,
       "sample": "<div style=\"display:flex;flex-direction:column;gap:8px;min-width:240px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/draw/index.js",
-      "line": 1450,
+      "line": 1490,
       "sample": "if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(wrap);"
     },
     {
@@ -955,35 +955,35 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/factory/index.js",
-      "line": 564,
+      "line": 576,
       "sample": "<label class=\"fc-check\" title=\"任务并发额度 1～4；默认 1 最稳\">并发 <input type=\"number\" class=\"fc-concurrency\" min=\"1\" max=\"4\" step=\"1\" value=\"${this.concurrency}\" style=\"width:46px\"> 路</label>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 1012,
+      "line": 1024,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-height:60vh;overflow:auto\">${ids.map(id => {"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 1068,
+      "line": 1080,
       "sample": "m.body.innerHTML = `<div style=\"min-width:420px;max-height:55vh;overflow:auto\">${this.styles.length ? this.styles.map(s => `"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 4021,
+      "line": 4039,
       "sample": "<div style=\"min-width:420px\">"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/factory/index.js",
-      "line": 4092,
+      "line": 4110,
       "sample": "<div style=\"min-width:460px\">"
     },
     {
@@ -1274,6 +1274,20 @@
       "sample": "<div style=\"min-width:480px;max-width:640px\">"
     },
     {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/modules/sheet/charts.js",
+      "line": 28,
+      "sample": "<img class=\"sg-chart-artifact\" alt=\"可追责图表资产\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2\" hidden>"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/modules/sheet/charts.js",
+      "line": 29,
+      "sample": "<div class=\"sg-chart-legacy\" style=\"position:absolute;inset:0\"></div>"
+    },
+    {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/sheet/index.js",
@@ -1375,7 +1389,7 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/viewer/index.js",
-      "line": 166,
+      "line": 173,
       "sample": "<div class=\"vf-progress\" style=\"display:none;width:260px\"></div>"
     },
     {
@@ -1403,7 +1417,7 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/viewer/player.js",
-      "line": 1535,
+      "line": 1538,
       "sample": "window.addEventListener('resize', applySide);"
     },
     {
@@ -1419,6 +1433,13 @@
       "file": "renderer/modules/webbridge/index.js",
       "line": 60,
       "sample": "<div style=\"min-width:400px\">"
+    },
+    {
+      "rule": "white-space-nowrap",
+      "provisionalClass": "D",
+      "file": "renderer/modules/world/index.js",
+      "line": 76,
+      "sample": ".world-root{height:100%;overflow:auto;background:var(--bg);color:var(--fg);font:14px/1.5 var(--font-ui);padding:20px}.world-shell{max-width:1320px;margin:auto}.world-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.world-head h2{margin:0}.world-head p{margin:4px 0;color:var(--fg-dim)}.world-"
     },
     {
       "rule": "fixed-min-width",

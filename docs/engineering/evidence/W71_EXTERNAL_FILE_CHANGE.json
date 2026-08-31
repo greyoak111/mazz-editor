@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T12:33:00.069Z",
+  "generatedAt": "2026-08-25T14:48:26.946Z",
   "executablePath": "D:\\output\\Mazz Editor\\release\\win-unpacked\\Mazz Editor.exe",
   "cleanReload": {
     "reloadCalls": 1,
@@ -31,7 +31,55 @@
     "diskMatched": true
   },
   "resources": {
-    "baseline": 2,
-    "final": 2
+    "baseline": {
+      "activeCount": 5,
+      "byType": {
+        "agent-cli-process": 3,
+        "browser-window": 1,
+        "file-watcher": 1
+      },
+      "active": [
+        {
+          "key": "agent-cli-process:47eead22-69f4-4287-96fe-49e5adfa6c21",
+          "type": "agent-cli-process"
+        },
+        {
+          "key": "agent-cli-process:698d7f3a-10d8-44ce-b64f-4a2c88333bfe",
+          "type": "agent-cli-process"
+        },
+        {
+          "key": "agent-cli-process:b3085526-02bb-45f4-a49e-e2d2984e7ed3",
+          "type": "agent-cli-process"
+        },
+        {
+          "key": "browser-window:1",
+          "type": "browser-window"
+        },
+        {
+          "key": "file-watcher:workspace",
+          "type": "file-watcher"
+        }
+      ]
+    },
+    "final": {
+      "activeCount": 2,
+      "byType": {
+        "browser-window": 1,
+        "file-watcher": 1
+      },
+      "active": [
+        {
+          "key": "browser-window:1",
+          "type": "browser-window"
+        },
+        {
+          "key": "file-watcher:workspace",
+          "type": "file-watcher"
+        }
+      ]
+    },
+    "retiredCount": 3,
+    "stableNoGrowth": true,
+    "resourceBoundaryPassed": true
   }
 }
