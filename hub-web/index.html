@@ -28,7 +28,7 @@
             <input id="global-search" type="search" placeholder="搜索作品、World、创作者" autocomplete="off" />
             <kbd>/</kbd>
           </label>
-          <button class="round-button" data-action="show-toast" data-message="通知中心将在公共事件 Feed 接通后启用" aria-label="通知">◔</button>
+          <button id="notification-button" class="round-button has-badge" data-section="inbox" aria-label="通知"><span>◔</span><b id="notification-count">0</b></button>
           <button class="profile-chip" data-action="show-toast" data-message="本地预览不连接账号">LM</button>
         </div>
       </header>
@@ -49,11 +49,14 @@
             <button class="side-item" data-section="worlds"><span>◎</span>World 地图</button>
             <button class="side-item" data-section="charts"><span>▥</span>透明 Charts</button>
             <button class="side-item" data-section="creators"><span>♧</span>创作者</button>
+            <button class="side-item" data-section="series"><span>⌘</span>系列与合集</button>
           </div>
           <div class="sidebar-section">
             <p class="sidebar-label">你的空间</p>
             <button class="side-item" data-section="library"><span>♡</span>收藏与历史</button>
-            <button class="side-item" data-action="show-toast" data-message="Creator Studio 会在本地 Promotion 接通后开放"><span>＋</span>Creator Studio <small>预览</small></button>
+            <button class="side-item" data-section="inbox"><span>◔</span>通知中心</button>
+            <button class="side-item" data-section="studio"><span>＋</span>Creator Studio <small>本地</small></button>
+            <button class="side-item" data-section="governance"><span>⚑</span>治理与权限</button>
           </div>
           <div class="sidebar-spacer"></div>
           <div class="sidebar-card">
@@ -62,7 +65,7 @@
             <p>Publication 是作品身份，P2P / HTTP / LAN / NAS 是路。</p>
             <button data-action="show-toast" data-message="W69/W94G 边界：Hub 只保存公开投影">查看边界说明 →</button>
           </div>
-          <div class="sidebar-foot">mazz-hub preview <span>v0.1</span></div>
+          <div class="sidebar-foot">mazz-hub local <span>v0.2</span></div>
         </aside>
 
         <main id="app" class="content" tabindex="-1"></main>

@@ -2,7 +2,7 @@
 ## Local-first Content Network / 本地优先公共内容网络
 ### World Branch Governance × Transparent AI Production Market
 
-> 状态：`DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION`
+> 状态：`LOCAL PLANE LANDED / PUBLIC EFFECT DISABLED / REMOTE WAVES OPEN`
 > 版本：v1.5
 > 登记日期：2026-08-15
 > 基础材料：维护者《MazzHub 内容生态升格纲要》，SHA-256 `089FD81DDFC5F07829199F9A7DCA6250E4AC902E1E92F4FEFDAD46EF15837195`
@@ -12,6 +12,11 @@
 > 第四增量：维护者《从内容网络、World、组织编译器到 .maz 生产资料标准》，SHA-256 `79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408`
 > 第五增量：维护者《Secure Production Assets / Expert Capability Encoding》，SHA-256 `98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0`
 > 跨波次真源：`C:\Users\Administrator\Downloads\交付区\Mazz 当前未落地全景-W71归并版.md`
+> 当前实现检查点：[`W69_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md`](../engineering/W69_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md)
+
+> 2026-08-31 实现说明：维护者已授权先完成本地部分。W94Ga 本地 World、W94Gb fake-Hub，
+> 以及 W69a–d 的本地网站切片现已落地；真实多用户公共服务、Content Fabric/P2P、公共事件、
+> 账号、远程审核和 W69j–m 市场波次仍未完成，VPS Public Effect 继续关闭。
 
 ## 0. 升格结论
 
@@ -700,10 +705,11 @@ A 证明 Content Fabric，B 证明 World Network，C 证明 Transparent AI Produ
 
 ## 12. 当前停止线
 
-本文件完成 Design Capsule 与施工拆波，不是 W69 开工许可。当前允许动作仅为：
+本地施工许可已执行到以下边界：Publication 公共包络、W94Ga World Store、W94Gb fake-Hub、
+本地发现/消费/互动/治理页面、透明 fixture Charts、Creator Studio 的本地
+`prepare → publish → sync → withdraw` 与 receipt 恢复。实现不扫描 Workspace，不上传 VPS，
+不取得公共账号或 Canon 权力。
 
-- 回写跨波次未尽全景；
-- 在 W71 之外经维护者批准后冻结 W69a Publication Contract ADR；
-- 用纸面 fixture 检查与 W72/W74c 的身份和 Promotion 边界。
-
-未经独立授权不得建设 Hub 服务、账号系统、中心数据库、P2P daemon、公共 Seed、World runtime、Organizational Compiler/Factory Runtime、Danmaku Runtime、统一 `.maz` loader、Context/Coverage Runtime、Physical Production Runtime、Production Record 公共服务、排行榜、AUTO Router、AI Challenge、软件发布/研究/动画/游戏入口、跨行业 Worker Market 或正式市场。
+下一停止线是所有外部效果：真实账号/身份、公共多用户数据库、远程评论与通知、生产审核、
+Content Fabric/P2P/公共 Seed、真实 Charts 数据与反作弊、公共 Workflow/AI Market、支付和联邦。
+这些能力必须按 W69e–m 与服务器运行门另行施工和复验；本地 PASS 不得写成 W69 全部完成。

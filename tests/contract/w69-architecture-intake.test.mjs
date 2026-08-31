@@ -1,4 +1,4 @@
-// W69 architecture intake contract: preserve the registered design without implying implementation.
+// W69 architecture contract: preserve the registered design and the current local/remote boundary.
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
 import fs from 'node:fs';
@@ -11,15 +11,15 @@ const planIndex = fs.readFileSync(path.resolve('docs/plans/README.md'), 'utf8');
 const w71Spec = fs.readFileSync(path.resolve('docs/engineering/W71_FINAL_CONVERGENCE_EXECUTION_SPEC.md'), 'utf8');
 
 describe('W69 Local-first Content Network architecture intake', () => {
-  test('source identity and non-implementation status remain explicit', () => {
+  test('source identity and local/remote implementation status remain explicit', () => {
     assert.ok(capsule.includes('089FD81DDFC5F07829199F9A7DCA6250E4AC902E1E92F4FEFDAD46EF15837195'));
     assert.ok(capsule.includes('E5DAF440261A56AAE97EF99B8453298D1D76D0205A0D9C4A90A27AA0E2A2D127'));
     assert.ok(capsule.includes('92736DB6477616CD15321BC6A9168680DADB1CACE57F7863BDD8D4A2886E4679'));
     assert.ok(capsule.includes('EF11DB0F77AFE04610A2FA55E62DE6B3703A1D50E460057AF33B27417595212E'));
     assert.ok(capsule.includes('79A1588A2971E134B6CEB1CFD02AC4D27AB4981968A0E46285DEA0EE3D039408'));
     assert.ok(capsule.includes('98EDCEBFE850836AD9ED96AC3D99F9C43BAD72BC6E5EFE22D547871CDCE450C0'));
-    assert.ok(capsule.includes('DESIGN REGISTERED / POST-W71 / NOT APPROVED FOR IMPLEMENTATION'));
-    assert.ok(planIndex.includes('W69a–W69m 已拆波，未施工'));
+    assert.ok(capsule.includes('LOCAL PLANE LANDED / PUBLIC EFFECT DISABLED / REMOTE WAVES OPEN'));
+    assert.ok(planIndex.includes('W69a–d 本地切片 LANDED'));
     assert.ok(planIndex.includes('W82a–W82h 本地受控切片全部 LANDED；W69 发布除外'));
   });
 

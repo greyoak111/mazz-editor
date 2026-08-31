@@ -48,6 +48,7 @@
     "test:w93g:library": "node tests/contract/w93g-library-convergence.test.mjs",
     "test:w93g:runtime": "node tests/e2e/w93g-library-convergence-runtime.mjs",
     "preview:hub": "node server/mazz-hub-preview.js",
+    "test:w69:local-hub": "node --test tests/contract/w69-local-hub-preview.test.mjs",
     "smoke": "node tests/e2e/smoke.js",
     "dist": "node scripts/build.js && electron-builder",
     "dist:dir": "node scripts/build.js && electron-builder --dir --win",

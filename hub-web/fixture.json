@@ -27,7 +27,17 @@
       "creator": "林渊",
       "creatorHandle": "@linyuan",
       "category": "城市 / 悬疑",
+      "tags": ["城市", "悬疑", "短篇"],
+      "seriesRef": "series:harbor-notes",
       "readTime": "18 分钟",
+      "preview": [
+        "潮位尺斜靠在第三测量点的混凝土护栏上，刻度被盐霜磨得发白。林默把今日读数写进纸本，又在旁边画了一条向北偏转的箭头。",
+        "城里人说河道从来没有移动，只是测量的人站错了地方。可连续三个月，所有基准点都在用同一种速度远离旧港。",
+        "傍晚之前，他必须决定把异常写进公开报告，还是先去找那座已经从地图上消失的测量站。"
+      ],
+      "versions": [
+        {"version": "v1", "publishedAt": "2026-08-25T08:00:00Z", "note": "首个公开文本版"}
+      ],
       "signals": {"completion": 0.78, "favorites": 1280, "discussion": 86, "derivatives": 12},
       "accent": "#5661e9",
       "cover": "harbor"
@@ -51,7 +61,18 @@
       "creator": "苏禾",
       "creatorHandle": "@suhe",
       "category": "科幻 / 书信",
+      "tags": ["科幻", "书信", "月面"],
+      "seriesRef": "series:moon-letters",
       "readTime": "32 分钟",
+      "preview": [
+        "第七封信写在背阳面的检修间。窗外没有蓝色，只有被地平线截断的一圈银光。",
+        "我们把每一次维修都记成故事，因为零件会坏，故事却能提醒后来者：这里曾经有人等过一艘没有按时抵达的船。",
+        "如果你最终看到这封信，请先去温室。最靠里的那盏灯，是我替你留下的方向。"
+      ],
+      "versions": [
+        {"version": "v1", "publishedAt": "2026-08-12T09:20:00Z", "note": "六封信初版"},
+        {"version": "v2", "publishedAt": "2026-08-23T10:30:00Z", "note": "新增背阳面检修日志"}
+      ],
       "signals": {"completion": 0.64, "favorites": 934, "discussion": 54, "derivatives": 8},
       "accent": "#d58d58",
       "cover": "moon"
@@ -75,7 +96,17 @@
       "creator": "周岚",
       "creatorHandle": "@zhoulan",
       "category": "纪录 / 海洋",
+      "tags": ["纪录", "海洋", "影像"],
+      "seriesRef": "series:north-current-fieldnotes",
       "readTime": "12 分钟",
+      "preview": [
+        "00:00 — 清晨的港池没有风，镜头沿着旧防波堤向北移动。",
+        "04:18 — 船员把家庭相册压在航海图上，指认四十年前第一次离岸的位置。",
+        "09:42 — 洋流数据与口述记忆第一次重合，画面停在一条并不存在于旧图上的航线上。"
+      ],
+      "versions": [
+        {"version": "v1", "publishedAt": "2026-08-20T15:10:00Z", "note": "12 分钟公开剪辑"}
+      ],
       "signals": {"completion": 0.86, "favorites": 701, "discussion": 41, "derivatives": 5},
       "accent": "#2c9a9a",
       "cover": "north"
@@ -99,7 +130,18 @@
       "creator": "何叙",
       "creatorHandle": "@hexu",
       "category": "散文 / 植物",
+      "tags": ["散文", "植物", "城市"],
+      "seriesRef": null,
       "readTime": "11 分钟",
+      "preview": [
+        "玻璃不会记住一株植物，但温差会。凌晨四点，叶片在窗面留下短暂的呼吸痕迹。",
+        "我沿着高架桥下的温室行走，把每一处裂缝和新芽登记成城市微型气候的注脚。"
+      ],
+      "versions": [
+        {"version": "v1", "publishedAt": "2026-07-02T08:00:00Z", "note": "观察札记"},
+        {"version": "v2", "publishedAt": "2026-07-28T08:00:00Z", "note": "补充温室章节"},
+        {"version": "v3", "publishedAt": "2026-08-18T09:00:00Z", "note": "公开修订版"}
+      ],
       "signals": {"completion": 0.71, "favorites": 482, "discussion": 23, "derivatives": 2},
       "accent": "#6c9a6e",
       "cover": "glass"
@@ -116,7 +158,14 @@
       "growth": "+28%",
       "factCount": 86,
       "accent": "#5661e9",
-      "status": "canonical"
+      "status": "canonical",
+      "branches": [
+        {"branchId": "branch:harbor-root", "title": "Root Canon", "authority": "Canonical", "head": "canon:v7"},
+        {"branchId": "branch:harbor-east", "title": "东堤测量线", "authority": "Authorized Derivative", "head": "branch:v3"}
+      ],
+      "proposals": [
+        {"proposalId": "proposal:harbor-river", "title": "旧河改道事实修订", "status": "under-review", "decision": "等待 Root Authority"}
+      ]
     },
     {
       "worldId": "world:moon-station",
@@ -128,7 +177,14 @@
       "growth": "+41%",
       "factCount": 124,
       "accent": "#d58d58",
-      "status": "branching"
+      "status": "branching",
+      "branches": [
+        {"branchId": "branch:moon-root", "title": "Root Canon", "authority": "Canonical", "head": "canon:v4"},
+        {"branchId": "branch:moon-greenhouse", "title": "温室维护线", "authority": "Community Derivative", "head": "branch:v6"}
+      ],
+      "proposals": [
+        {"proposalId": "proposal:moon-orbit", "title": "轨道周期校正", "status": "accepted", "decision": "Partial Merge · timeline only"}
+      ]
     },
     {
       "worldId": "world:north-current",
@@ -140,14 +196,34 @@
       "growth": "+19%",
       "factCount": 48,
       "accent": "#2c9a9a",
-      "status": "community"
+      "status": "community",
+      "branches": [
+        {"branchId": "branch:north-root", "title": "公开档案线", "authority": "Canonical", "head": "canon:v2"},
+        {"branchId": "branch:north-family", "title": "家庭口述线", "authority": "Community Derivative", "head": "branch:v2"}
+      ],
+      "proposals": []
     }
   ],
   "creators": [
-    {"creatorId": "creator:lin-yuan", "name": "林渊", "handle": "@linyuan", "bio": "写城市的潮汐，也写人如何留下。", "works": 8, "followers": 3820, "accent": "#5661e9"},
-    {"creatorId": "creator:su-he", "name": "苏禾", "handle": "@suhe", "bio": "科幻书信与低重力日常。", "works": 5, "followers": 2410, "accent": "#d58d58"},
-    {"creatorId": "creator:zhou-lan", "name": "周岚", "handle": "@zhoulan", "bio": "在海风里做影像记录。", "works": 6, "followers": 1960, "accent": "#2c9a9a"},
-    {"creatorId": "creator:he-xu", "name": "何叙", "handle": "@hexu", "bio": "植物、玻璃和城市边缘。", "works": 11, "followers": 1740, "accent": "#6c9a6e"}
+    {"creatorId": "creator:lin-yuan", "name": "林渊", "handle": "@linyuan", "bio": "写城市的潮汐，也写人如何留下。", "works": 8, "followers": 3820, "accent": "#5661e9", "joinedAt": "2025-11", "analytics": {"completion": "78%", "favoriteRate": "12.8%", "discussion": "+19%"}},
+    {"creatorId": "creator:su-he", "name": "苏禾", "handle": "@suhe", "bio": "科幻书信与低重力日常。", "works": 5, "followers": 2410, "accent": "#d58d58", "joinedAt": "2026-01", "analytics": {"completion": "64%", "favoriteRate": "10.4%", "discussion": "+24%"}},
+    {"creatorId": "creator:zhou-lan", "name": "周岚", "handle": "@zhoulan", "bio": "在海风里做影像记录。", "works": 6, "followers": 1960, "accent": "#2c9a9a", "joinedAt": "2025-09", "analytics": {"completion": "86%", "favoriteRate": "9.1%", "discussion": "+11%"}},
+    {"creatorId": "creator:he-xu", "name": "何叙", "handle": "@hexu", "bio": "植物、玻璃和城市边缘。", "works": 11, "followers": 1740, "accent": "#6c9a6e", "joinedAt": "2025-07", "analytics": {"completion": "71%", "favoriteRate": "8.6%", "discussion": "+7%"}}
+  ],
+  "series": [
+    {"seriesId": "series:harbor-notes", "title": "海港测量札记", "creatorId": "creator:lin-yuan", "publicationIds": ["publication:harbor-v1"], "status": "连载中"},
+    {"seriesId": "series:moon-letters", "title": "月面来信", "creatorId": "creator:su-he", "publicationIds": ["publication:moon-letter-v2"], "status": "第二版"},
+    {"seriesId": "series:north-current-fieldnotes", "title": "北向田野记录", "creatorId": "creator:zhou-lan", "publicationIds": ["publication:north-current-v1"], "status": "影像集"}
+  ],
+  "comments": [
+    {"commentId": "comment:harbor:1", "publicationId": "publication:harbor-v1", "author": "岑遥", "body": "第三测量点与旧地图的冲突很有力量。", "createdAt": "昨天", "replyTo": null},
+    {"commentId": "comment:harbor:2", "publicationId": "publication:harbor-v1", "author": "林渊", "body": "下一版会把旧河的测量基准公开出来。", "createdAt": "18 小时前", "replyTo": "comment:harbor:1"},
+    {"commentId": "comment:moon:1", "publicationId": "publication:moon-letter-v2", "author": "木卫七", "body": "温室那盏灯把整组书信串起来了。", "createdAt": "2 天前", "replyTo": null}
+  ],
+  "notifications": [
+    {"notificationId": "notification:1", "type": "update", "label": "你关注的苏禾更新了《月面来信》", "time": "2 小时前", "ref": "publication:moon-letter-v2"},
+    {"notificationId": "notification:2", "type": "reply", "label": "林渊回复了《海港回声》的讨论", "time": "昨天", "ref": "publication:harbor-v1"},
+    {"notificationId": "notification:3", "type": "world", "label": "月面维修站通过一条 Partial Merge", "time": "昨天", "ref": "world:moon-station"}
   ],
   "charts": {
     "attention": [
@@ -160,7 +236,15 @@
       {"label": "Branch 活跃", "value": 58, "delta": "+14%", "tone": "green"},
       {"label": "消费 → 创作", "value": 43, "delta": "+9%", "tone": "pink"}
     ],
-    "window": "近 30 天 · 公开投影 · fixture 计算"
+    "window": "近 30 天 · 公开投影 · fixture 计算",
+    "formula": {
+      "formulaId": "formula:discovery:v0.1",
+      "effectiveAt": "2026-08-25T00:00:00Z",
+      "attention": "0.45 × 完读/完播 + 0.30 × 收藏转化 + 0.25 × 讨论增长",
+      "creation": "0.45 × World 衍生 + 0.35 × Branch 活跃 + 0.20 × 消费→创作",
+      "decay": "14 天半衰期；版本更新不重置历史样本",
+      "antiGaming": "去除重复设备突发、异常循环播放与无来源聚合；Official 字段不参与加权"
+    }
   },
   "events": [
     {"type": "version", "label": "苏禾更新了《月面来信》", "time": "2 小时前", "ref": "publication:moon-letter-v2"},

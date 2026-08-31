@@ -1,5 +1,8 @@
 # W69 MazzHub 本地预览施工检查点（2026-08-28）
 
+> 历史检查点：本地 v0.1 首屏。后续本地闭环已由
+> [`W69_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md`](./W69_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md) 接续。
+
 ## 范围
 
 本检查点把 MazzHub 的公共平面先落成一个可在本机查看的静态预览，覆盖 W69 的产品骨架与 W94G 的公共 Publication / World / Charts 只读投影。当前不连接真实 Hub 数据，不执行发布、撤回、同步或 VPS 写入。

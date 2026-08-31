@@ -30,7 +30,7 @@ W65 已按统一 13 字段行契约、infoHash 必填、多源合并、礼貌限
 
 | 资产 | 状态 | 工作流入口 | 边界 |
 |---|---|---|---|
-| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **v1.5 Design Capsule 已冻结；W69a–W69m 已拆波，未施工** | Publication → Hub/Charts/Publish → Content Fabric/World → AI Market → Workflow Publication/Rights delivery | W71 内完全冻结；Hub 不拥有本地、生产、Workflow 或私钥真相；分发密文不等于取得使用权，不建 Overall Score 或 Universal DB |
+| [W69 MazzHub Local-first Content Network](./W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md) | **W69a–d 本地切片 LANDED；W94Ga/Gb PASS_WITH_SCOPE；Public Effect disabled** | Publication → Hub/Charts/Publish → Content Fabric/World → AI Market → Workflow Publication/Rights delivery | 本地成熟关节与 fake-Hub 已闭环；真实账号、多用户事件、P2P/公共 Seed、远程 Charts/治理与 W69j–m 仍开放；Hub 不拥有本地、生产、Workflow 或私钥真相 |
 | [W82 Organizational Compiler](./W82_ORGANIZATIONAL_COMPILER.md) | **W82a–W82h 本地受控切片全部 LANDED；W69 发布除外** | 三工程 → Goal/Constraints/Assets/Method/Budget → Organization Archaeology → Evidence-backed Plan → W73 Runtime → Product/Record → W69m | 所有切片只形成本地、可审计 specimen；W82d 只到 master manifest、无视频二进制；W73 持有运行真相，公共发布不冒充已落地 |
 | [W83 Danmaku Runtime](./W83_DANMAKU_RUNTIME.md) | **W83a–c/e LOCAL RUNTIME LANDED；W83d 公共投影随 W69 排除** | Source Adapter → Media Clock → Timeline/Scheduler → Lane/Collision/Density → Canvas/GPU | W69 只持公共 Event；W83 不接管 Player/P2P，不以 wall clock 调度；本地高密度/恢复合同与 Electron 证据已落 |
 | [W84 `.maz` Production Asset Standard](./W84_MAZ_PRODUCTION_ASSET_STANDARD.md) | **W84a–W84f 本地合同与只读产品入口 LANDED；Marketplace 排除** | Legacy census → Profile/Common Envelope → inspect-only → migrate/fork/sign → Security & Rights | Definition ≠ Runtime；License/Entitlement/Encryption/Permission 分权；不抢发 Marketplace 或公共 `.maz v1` |
