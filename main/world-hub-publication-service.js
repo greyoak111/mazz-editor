@@ -173,9 +173,11 @@ function normalizeStore(input, expectedWorkspaceId, expectedHubIdentity = 'fake-
 }
 
 class WorldHubPublicationService {
-  constructor({ rootProvider, eventService = null, fsImpl = fs, now = () => Date.now(), hubIdentity = 'fake-hub:local' } = {}) {
+  constructor({ rootProvider, eventService = null, fsImpl = fs, now = () => Date.now(), hubIdentity = 'fake-hub:local', signatureVerifier = null, allowDigestReference = true } = {}) {
     if (typeof rootProvider !== 'function') throw new TypeError('WorldHubPublicationService 需要 rootProvider');
+    if (signatureVerifier !== null && typeof signatureVerifier?.verifyPublication !== 'function') throw new TypeError('signatureVerifier 必须实现 verifyPublication');
     this.rootProvider = rootProvider; this.eventService = eventService; this.fs = fsImpl; this.now = now; this.hubIdentity = safeId(hubIdentity, 'hubIdentity');
+    this.signatureVerifier = signatureVerifier; this.allowDigestReference = allowDigestReference === true;
   }
 
   root() { return path.resolve(requiredString(this.rootProvider(), 'workspacePath')); }
@@ -221,7 +223,7 @@ class WorldHubPublicationService {
 
   _validatePackage(input, action) {
     if (!isPlainObject(input)) throw codedError('HUB_INVALID', 'publication payload 必须是对象');
-    assertKnownKeys(input, ['envelope', 'manifest', 'grant', 'expectedRevision'], 'publication payload');
+    assertKnownKeys(input, ['envelope', 'manifest', 'grant', 'signature', 'expectedRevision'], 'publication payload');
     const envelope = normalizeEnvelope(input.envelope);
     const manifest = normalizeManifest(input.manifest);
     const grant = normalizeGrant(input.grant, this.now);
@@ -233,8 +235,18 @@ class WorldHubPublicationService {
     if (grant.status !== 'active') throw codedError('HUB_GRANT_INACTIVE', 'grant 当前不可用');
     if (grant.expiresAt && Date.parse(grant.expiresAt) <= Date.now()) throw codedError('HUB_GRANT_EXPIRED', 'grant 已过期');
     if (!grant.scope.includes(ACTION_SCOPES[action])) throw codedError('HUB_SCOPE_DENIED', `grant 缺少 ${ACTION_SCOPES[action]}`);
-    if (envelope.signatureRef !== expectedSignatureRef(envelope, grant)) throw codedError('HUB_SIGNATURE_MISMATCH', 'publication signatureRef 校验失败');
-    return { envelope, manifest, grant };
+    let signatureVerified = false;
+    let signatureKeyId = '';
+    if (input.signature !== undefined) {
+      if (!this.signatureVerifier) throw codedError('HUB_SIGNATURE_UNSUPPORTED', '当前 Hub adapter 未配置非对称签名验证器');
+      const verification = this.signatureVerifier.verifyPublication({ envelope, grant, signature: input.signature });
+      if (verification?.valid !== true) throw codedError('HUB_SIGNATURE_MISMATCH', `publication Ed25519 签名校验失败: ${verification?.reason || 'UNKNOWN'}`);
+      signatureVerified = true;
+      signatureKeyId = safeRef(verification.keyId, 'signatureKeyId', ['signer:']);
+    } else {
+      if (!this.allowDigestReference || envelope.signatureRef !== expectedSignatureRef(envelope, grant)) throw codedError('HUB_SIGNATURE_MISMATCH', 'publication signatureRef 校验失败');
+    }
+    return { envelope, manifest, grant, signatureVerified, signatureKeyId };
   }
 
   _commandHash(action, envelope, manifest, grant) { return digest({ action, envelope, manifest, grant: { grantId: grant.grantId, publicationId: grant.publicationId, scope: grant.scope, authorityRef: grant.authorityRef, status: grant.status } }); }
@@ -259,7 +271,12 @@ class WorldHubPublicationService {
     const existing = current.projections.find(row => row.publicationId === packageValue.envelope.publicationId);
     const projectionDigest = digest({ envelope: packageValue.envelope, manifest: packageValue.manifest });
     if (existing && existing.projectionDigest !== projectionDigest) throw codedError('HUB_PUBLIC_CONFLICT', '同一 publicationId 的内容不可静默替换');
-    const projection = { publicationId: packageValue.envelope.publicationId, envelope: packageValue.envelope, manifest: packageValue.manifest, projectionDigest, status: existing?.status === 'withdrawn' ? 'prepared' : (existing?.status || 'prepared'), preparedAt: nowIso(this.now), updatedAt: nowIso(this.now), lastReceiptId: '' };
+    const projection = {
+      publicationId: packageValue.envelope.publicationId, envelope: packageValue.envelope, manifest: packageValue.manifest,
+      projectionDigest, status: existing?.status === 'withdrawn' ? 'prepared' : (existing?.status || 'prepared'),
+      signatureVerified: packageValue.signatureVerified, ...(packageValue.signatureKeyId ? { signatureKeyId: packageValue.signatureKeyId } : {}),
+      preparedAt: nowIso(this.now), updatedAt: nowIso(this.now), lastReceiptId: '',
+    };
     const receipt = this._receipt('prepare', packageValue, commandHash, 'prepared', projection.status, current.revision + 1);
     projection.lastReceiptId = receipt.receiptId;
     const next = this.write({ projections: [...current.projections.filter(row => row.publicationId !== projection.publicationId), projection], receipts: [...current.receipts, receipt], commands: [...current.commands, { commandHash, action: 'prepare', receiptId: receipt.receiptId, publicationId: projection.publicationId, outcome: 'prepared' }] }, input.expectedRevision == null ? current.revision : input.expectedRevision);
@@ -326,5 +343,6 @@ class WorldHubPublicationService {
 module.exports = {
   WorldHubPublicationService, HUB_STORE_SCHEMA, PUBLIC_ENVELOPE_SCHEMA, PUBLIC_MANIFEST_SCHEMA,
   PUBLIC_GRANT_SCHEMA, PUBLIC_RECEIPT_SCHEMA, HUB_SNAPSHOT_SCHEMA,
+  publicationDigest: digest,
   _forTests: { canonical, digest, normalizeManifest, normalizeEnvelope, normalizeGrant, rejectPrivate, expectedSignatureRef, unsignedEnvelope },
 };

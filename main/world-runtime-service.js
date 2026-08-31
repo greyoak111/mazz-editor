@@ -265,6 +265,31 @@ class WorldRuntimeService {
     return deepFreeze({ proposal: nextProposal, review, revision: next.revision, event });
   }
 
+  withdraw(input = {}) {
+    if (!isPlainObject(input)) throw codedError('WORLD_INVALID', 'Canon proposal withdraw payload 必须是对象');
+    assertKnownKeys(input, ['schema', 'proposalId', 'authorityRef', 'reason', 'withdrawnAt', 'expectedRevision'], 'Canon proposal withdraw payload');
+    const current = this.read();
+    this._assertExpectedRevision(current, input.expectedRevision == null ? current.revision : input.expectedRevision);
+    const proposalId = safeId(input.proposalId, 'proposalId', 'proposal:');
+    const proposal = current.proposals.find(row => row.proposalId === proposalId);
+    if (!proposal) throw codedError('WORLD_PROPOSAL_NOT_FOUND', 'Canon proposal 不存在');
+    if (!['proposed', 'under-review'].includes(proposal.status)) throw codedError('WORLD_PROPOSAL_STATE', '只有未裁决 proposal 才能 withdraw');
+    const authorityRef = safeRef(input.authorityRef, 'authorityRef', ['human:']);
+    const reason = requiredString(input.reason, 'reason');
+    const decidedAt = nowIso(input.withdrawnAt || this.now);
+    const reviewId = `review:${digest({ proposalId, action: 'withdraw', authorityRef, reason, decidedAt })}`;
+    const review = { schema: REVIEW_SCHEMA, reviewId, proposalId, action: 'withdraw', authorityRef, reason, decidedAt };
+    const nextProposal = { ...proposal, status: 'withdrawn', reviewRefs: [...proposal.reviewRefs, reviewId] };
+    const next = this.write({
+      worlds: current.worlds,
+      proposals: current.proposals.map(row => row.proposalId === proposalId ? nextProposal : row),
+      reviews: [...current.reviews, review],
+      merges: current.merges,
+    }, input.expectedRevision == null ? current.revision : input.expectedRevision);
+    const event = this._capture('canon-proposal-withdraw', [proposalId], [authorityRef], 'cancelled');
+    return deepFreeze({ proposal: nextProposal, review, revision: next.revision, event });
+  }
+
   merge(input = {}) {
     if (!isPlainObject(input)) throw codedError('WORLD_INVALID', 'Canon merge payload 必须是对象');
     assertKnownKeys(input, ['schema', 'proposalId', 'acceptedRevisions', 'authorityRef', 'reason', 'mergedAt', 'expectedRevision'], 'Canon merge payload');

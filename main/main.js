@@ -197,6 +197,8 @@ const { RelationRetrievalService } = require('./relation-retrieval-service');
 const { BranchEffectiveStateService } = require('./branch-effective-state-service');
 const { WorldRuntimeService } = require('./world-runtime-service');
 const { WorldHubPublicationService } = require('./world-hub-publication-service');
+const { PublicationSigningService } = require('./publication-signing-service');
+const { LocalPublicationBridgeService } = require('./local-publication-bridge-service');
 const { ContextCompilerService } = require('./context-compiler-service');
 const { CognitionService } = require('./cognition-service');
 const { CivilizationModelService } = require('./civilization-model-service');
@@ -314,7 +316,25 @@ const relationRetrieval = new RelationRetrievalService({
 });
 const branchEffectiveState = new BranchEffectiveStateService({ rootProvider: () => store.get('workspace') });
 const worldRuntime = new WorldRuntimeService({ rootProvider: () => store.get('workspace'), branchService: branchEffectiveState, eventService: workspaceEvents });
-const worldHubPublication = new WorldHubPublicationService({ rootProvider: () => store.get('workspace'), eventService: workspaceEvents });
+const publicationSigning = new PublicationSigningService({
+  rootProvider: () => store.get('workspace'),
+  protect: bytes => {
+    if (!safeStorage.isEncryptionAvailable()) throw Object.assign(new Error('系统安全存储不可用，拒绝创建 Publication 签名身份'), { code: 'PUBLICATION_KEY_PROTECTION_UNAVAILABLE' });
+    return safeStorage.encryptString(Buffer.from(bytes).toString('base64'));
+  },
+  unprotect: bytes => {
+    if (!safeStorage.isEncryptionAvailable()) throw Object.assign(new Error('系统安全存储不可用，拒绝解封 Publication 签名身份'), { code: 'PUBLICATION_KEY_PROTECTION_UNAVAILABLE' });
+    return Buffer.from(safeStorage.decryptString(Buffer.from(bytes)), 'base64');
+  },
+});
+const worldHubPublication = new WorldHubPublicationService({
+  rootProvider: () => store.get('workspace'), eventService: workspaceEvents,
+  signatureVerifier: publicationSigning, allowDigestReference: false,
+});
+const localPublicationBridge = new LocalPublicationBridgeService({
+  rootProvider: () => store.get('workspace'), capabilityService: capabilityExecutionService,
+  signingService: publicationSigning, hubService: worldHubPublication,
+});
 const contextCompiler = new ContextCompilerService({ rootProvider: () => store.get('workspace'), eventService: workspaceEvents });
 const cognitionService = new CognitionService({ rootProvider: () => store.get('workspace'), evidenceService: addressableEvidence, eventService: workspaceEvents });
 const civilizationModel = new CivilizationModelService({ eventService: workspaceEvents, rootProvider: () => store.get('workspace') });
@@ -332,6 +352,8 @@ if (process.env.NODE_ENV === 'test') {
   globalThis.__MAZZ_E2E_LIBRARY_RESOURCE_SURFACE__ = libraryResourceSurface;
   globalThis.__MAZZ_E2E_WORLD_RUNTIME__ = worldRuntime;
   globalThis.__MAZZ_E2E_WORLD_HUB_PUBLICATION__ = worldHubPublication;
+  globalThis.__MAZZ_E2E_PUBLICATION_SIGNING__ = publicationSigning;
+  globalThis.__MAZZ_E2E_LOCAL_PUBLICATION_BRIDGE__ = localPublicationBridge;
   globalThis.__MAZZ_E2E_LIBRARY_TORRENT_TRANSPORT__ = libraryTorrentTransport;
   globalThis.__MAZZ_E2E_LIBRARY_CONVERGENCE__ = libraryWorkspaceConvergence;
   globalThis.__MAZZ_E2E_CAPABILITY_EXECUTION__ = capabilityExecutionService;
@@ -652,6 +674,7 @@ function registerChannels() {
   bus.handle('world:fork', async payload => worldRuntime.fork(payload));
   bus.handle('world:proposeCanon', async payload => worldRuntime.propose(payload));
   bus.handle('world:reviewProposal', async payload => worldRuntime.review(payload));
+  bus.handle('world:withdrawProposal', async payload => worldRuntime.withdraw(payload));
   bus.handle('world:mergeCanon', async payload => worldRuntime.merge(payload));
   bus.handle('world:rebuild', async payload => worldRuntime.rebuild(payload || {}));
   bus.handle('hub:preparePublication', async payload => worldHubPublication.prepare(payload));
@@ -660,6 +683,11 @@ function registerChannels() {
   bus.handle('hub:syncPublication', async payload => worldHubPublication.sync(payload));
   bus.handle('hub:snapshot', async payload => worldHubPublication.snapshot(payload || {}));
   bus.handle('hub:rebuild', async payload => worldHubPublication.rebuild(payload || {}));
+  bus.handle('hub:signPublication', async payload => publicationSigning.signPublication(payload));
+  bus.handle('publicationBridge:snapshot', async () => localPublicationBridge.snapshot());
+  bus.handle('publicationBridge:prepare', async payload => localPublicationBridge.prepare(payload));
+  bus.handle('publicationBridge:publish', async payload => localPublicationBridge.publish(payload));
+  bus.handle('publicationBridge:withdraw', async payload => localPublicationBridge.withdraw(payload));
   bus.handle('contextPackage:compile', async payload => contextCompiler.compile(payload));
   bus.handle('contextPackage:list', async () => contextCompiler.list());
   bus.handle('cognition:list', async () => cognitionService.list());

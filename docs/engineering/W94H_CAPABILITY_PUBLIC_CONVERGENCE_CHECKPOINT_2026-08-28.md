@@ -2,6 +2,9 @@
 
 > 结论：**PARTIAL / BLOCKED**。本检查点完成收口审计与已授权 staging 部署，不宣称 W94 完成。
 
+> 2026-08-31 覆盖说明：本地范围已由 [`W94_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md`](./W94_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md)
+> 单独封板；本文件继续持有服务器/公共面未闭合事实，不再用旧本地缺口覆盖新证据。
+
 ## 已完成
 
 - W94Ga 本地 World Store 与 Source/Packaged restart/A-B 证据保持 PASS。
@@ -17,8 +20,8 @@
 
 - 根域 `mazz-hub.com` 当前没有可用 A/AAAA 记录，无法把 apex 与 www 作为同一证书/入口验收。
 - 已完成一次隔离恢复演练，但生产备份轮换/保留、缓存失效、回滚、资源/日志告警与 incident drill 仍未形成完整治理证据。
-- W94Gb 的 `signatureRef` 目前是确定性 digest reference，不能充当生产 Ed25519 签名；服务器 staging 公共 effect 因此保持关闭。
-- W94E formal event coverage 与 W94F public P2P/cross-machine scope 仍为 PARTIAL。
+- 客户端本地 `signatureRef` 已升级为 safeStorage-protected Ed25519 并经 Source/Packaged 验证；服务器 trust、rotation、revocation 与公共授权仍未闭合，staging effect 继续关闭。
+- W94E 本地 event coverage 已 PASS；W94F 本地已 PASS，公网 P2P/物理 cross-machine 作为显式外部 opt-in 保持开放。
 
 ## 证据
 

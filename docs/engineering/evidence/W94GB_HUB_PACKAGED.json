@@ -8,7 +8,9 @@
     "published": true,
     "withdrawn": true,
     "syncedAfterWithdraw": true,
-    "publicFieldsOnly": true
+    "publicFieldsOnly": true,
+    "ed25519Verified": true,
+    "privateKeyExposed": false
   },
   "workspaceIsolation": {
     "aProjections": 1,
@@ -26,6 +28,6 @@
   },
   "networkCalls": 0,
   "runtimeErrors": [],
-  "executableSha256": "f452fbdc65d6695c9f758619b4dba058b5de49fd7444bb2c4482bd01c1f348f2",
-  "generatedAt": "2026-08-28T11:06:58.706Z"
+  "executableSha256": "c351a2e98983bef6fbcbb88e4ff444de2030a8a8d9416ec06efc150cee445ab3",
+  "generatedAt": "2026-08-31T01:00:00.481Z"
 }

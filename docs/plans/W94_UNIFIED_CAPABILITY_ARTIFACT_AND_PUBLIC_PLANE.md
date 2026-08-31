@@ -1,6 +1,6 @@
 # W94 Unified Capability, Artifact & Public Plane / 统一能力、资产与公共运行面
 
-> 状态：**W94D PASS / W94E PARTIAL / W94F PARTIAL · W94Fb PASS_WITH_SCOPE · W94G/H PARTIAL/BLOCKED**
+> 状态：**W94 LOCAL COMPLETE（A–E、本地 F、Ga/Gb 与 H-local）/ 总 W94 PARTIAL/BLOCKED（公网 P2P、物理跨机与 Gc 生产公共面未授权）**
 > 版本：v0.1
 > 日期：2026-08-26
 > 代码基线：`main@0add39fce403`（W93A–G 已完成；写入本设计前无 tracked 工作树改动）
@@ -71,17 +71,19 @@ Local Product → 可选 Public Projection / Hub
 
 ### 2.2 不能冒充完成的器官
 
-1. `CapabilityRegistry` 尚未成为生产唯一能力目录。
+> 2026-08-31 真相覆盖：下列清单是开工时差分；W94A–E、本地 F、Ga/Gb 已按后文检查点闭合。仍开放的是跨机/公网/生产公共面，不再把已落地本地能力写回“缺失”。
+
+1. `CapabilityRegistry` 已成为 W94 计算、图表、Canvas 与 Blender 的统一执行目录；旧非 W94 模块仍按兼容边界迁移，不冒充全产品唯一目录。
 2. Factory Joint Scheduler 最终仍把执行权交回既有内容流程，没有通用 Proposal → Lease → Adapter → Receipt 链。
 3. Python Kernel 接收 raw code 并共享进程状态，不能直接授权给 Agent 或公共任务。
 4. Calc 没有耐久定义、数据版本、结果实体和可重放 Receipt。
 5. Chart 只有即时渲染/PNG，没有稳定 ChartSpec、字体主题冻结和数据血缘。
 6. Draw 是人工编辑器，不是可版本化的 Canvas Agent 施工站。
 7. W94D 已把 Blender adapter 接入产品 Capability/Artifact/Receipt 脊柱并完成真实 5.2.1 opt-in；复杂资产编排、版本矩阵和 GPU 一致性仍未完成。
-8. Relation Retrieval 仍主要是纯内核，没有产品服务、UI、解释链和全域事件覆盖。
-9. Player TorrentDaemon 与 W93 Library Torrent Transport 是两套真相；Player 任务仍是内存态并动态依赖当前 Workspace。
-10. World 的本地持久 Store、Canon 提案/审阅/合并运行时已由 W94Ga 落地；编辑器、公共投影和生产 Hub 仍缺。
-11. Hub 服务器/DNS 只完成基础准备；当前 origin、TLS、应用、身份、发布和治理均未部署。
+8. Relation Retrieval/Branch 已有主进程服务、解释链、A/B 与八域 metadata-only 事件覆盖；独立综合关系 UI 不是本地封板阻断项。
+9. Player 已持久化 Workspace session，并以显式 W93 Candidate/Offer/Rights bridge 复用书库取得；无书籍身份的媒体 Magnet 保持媒体 transport，不伪造 Library Job。
+10. World 已有本地 Store、Canon proposal/review/merge/withdraw、桌面工作台与 Source/Packaged；公共生产 Hub 仍是独立外部门。
+11. Hub 本地面已有显式 Grant、受保护 Ed25519 身份、Artifact→Publication bridge 和 fake-Hub 全生命周期；生产域名、监控、事故演练与公共 effect 仍关闭。
 
 ## 3. 范围、非目标与永久禁区
 
@@ -400,6 +402,9 @@ W94Fb 已追加完成：显式 W93 Candidate/Offer/selected-file bridge 复用�
   envelope/manifest/grant/command/receipt 语义的 fake Hub prepare/publish/query/withdraw/sync；W94Gc
   已完成隔离 staging origin、HTTPS、health/snapshot 和 disabled-public-effect 验证，但备份恢复、
   双域 DNS、告警/事故演练与生产签名治理仍未闭合，不把 staging 通过误报为公网发布。
+- 2026-08-31 本地补齐 proposal withdraw、桌面 `World 与本地发布` 工作台，以及
+  `Capability Artifact → human Grant → OS-protected Ed25519 → fake Hub prepare/publish/withdraw`
+  的 Source/Packaged 运行链；私钥不进 renderer/IPC，公共 effect 仍为 `false`。
 
 ### 12.2 Hub 最小公共面
 
@@ -488,10 +493,10 @@ Final Gate 只有两种：
 | W94B | Calc + Chart Artifact | W94A | definition/content reproducibility | Python/SVG/Packaged | **PASS** | [检查点](../engineering/W94B_CALC_CHART_ARTIFACT_CHECKPOINT_2026-08-26.md) |
 | W94C | Canvas Agent Construction | W94A/B | operation/revision replay | real Canvas Document/rollback | **PASS** | [检查点](../engineering/W94C_CANVAS_AGENT_CONSTRUCTION_CHECKPOINT_2026-08-26.md) |
 | W94D | Blender External Capability | W94A | fixture adapter | real Blender opt-in/process cleanup | **PASS** | [检查点](../engineering/W94D_BLENDER_EXTERNAL_CAPABILITY_CHECKPOINT_2026-08-26.md) |
-| W94E | Retrieval + Branch Effective State | W94A | query/merge replay | A/B Workspace/LAN conflict | **PARTIAL / IN PROGRESS** | [施工参照](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_SPEC.md) · [检查点](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_CHECKPOINT_2026-08-26.md) |
-| W94F | Player Transport + Watch Room | W94A/W93/W83 | transport identity/replay | restart/P2P opt-in/LAN | **PARTIAL / W94Fa PASS · W94Fb PASS_WITH_SCOPE · W94Fc PASS · W94Fd PASS · W94Fe PASS_WITH_SCOPE** | [W94F 检查点](../engineering/W94F_PLAYER_TRANSPORT_AND_ROOM_CHECKPOINT_2026-08-27.md) · [W94Fe 检查点](../engineering/W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md) |
-| W94G | World + Hub Public Plane | W94A/E/W69/W84 | publication/withdraw fixture | staging/prod/incident | **W94Ga PASS / W94Gb PASS_WITH_SCOPE / W94Gc PASS_WITH_SCOPE** | [施工参照](../engineering/W94G_WORLD_HUB_PUBLIC_PLANE_SPEC.md) · [W94Ga 检查点](../engineering/W94GA_WORLD_RUNTIME_CHECKPOINT_2026-08-28.md) · [W94Gb 检查点](../engineering/W94GB_PUBLICATION_HUB_CHECKPOINT_2026-08-28.md) · [W94Gc runbook](../engineering/W94GC_MAZZHUB_SERVER_RUNBOOK_2026-08-28.md) |
-| W94H | Convergence & Release Seal | W94A–G | full deterministic suite | Source/Packaged/live audits | **PARTIAL / BLOCKED** | [规格](../engineering/W94H_CAPABILITY_PUBLIC_CONVERGENCE_SPEC.md) · [检查点](../engineering/W94H_CAPABILITY_PUBLIC_CONVERGENCE_CHECKPOINT_2026-08-28.md) |
+| W94E | Retrieval + Branch Effective State | W94A | query/merge replay | A/B Workspace/LAN conflict | **LOCAL PASS** | [施工参照](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_SPEC.md) · [检查点](../engineering/W94E_RELATION_BRANCH_EFFECTIVE_STATE_CHECKPOINT_2026-08-26.md) · [八域覆盖](../engineering/evidence/W94E_DOMAIN_EVENT_COVERAGE.json) |
+| W94F | Player Transport + Watch Room | W94A/W93/W83 | transport identity/replay | restart/P2P opt-in/LAN | **LOCAL PASS / 公网 P2P 与物理跨机为外部 opt-in** | [W94F 检查点](../engineering/W94F_PLAYER_TRANSPORT_AND_ROOM_CHECKPOINT_2026-08-27.md) · [W94Fe 检查点](../engineering/W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md) |
+| W94G | World + Hub Public Plane | W94A/E/W69/W84 | publication/withdraw fixture | staging/prod/incident | **W94Ga PASS / W94Gb LOCAL PASS / W94Gc PASS_WITH_SCOPE** | [施工参照](../engineering/W94G_WORLD_HUB_PUBLIC_PLANE_SPEC.md) · [W94Ga 检查点](../engineering/W94GA_WORLD_RUNTIME_CHECKPOINT_2026-08-28.md) · [W94Gb 检查点](../engineering/W94GB_PUBLICATION_HUB_CHECKPOINT_2026-08-28.md) · [本地封板](../engineering/W94_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md) · [W94Gc runbook](../engineering/W94GC_MAZZHUB_SERVER_RUNBOOK_2026-08-28.md) |
+| W94H | Convergence & Release Seal | W94A–G | full deterministic suite | Source/Packaged/live audits | **H-local PASS / 总 Seal PARTIAL/BLOCKED** | [规格](../engineering/W94H_CAPABILITY_PUBLIC_CONVERGENCE_SPEC.md) · [本地封板](../engineering/W94_LOCAL_COMPLETE_CHECKPOINT_2026-08-31.md) · [公共面检查点](../engineering/W94H_CAPABILITY_PUBLIC_CONVERGENCE_CHECKPOINT_2026-08-28.md) |
 
 ## 18. 十三卷来源冻结
 
@@ -515,12 +520,11 @@ Final Gate 只有两种：
 
 ## 19. Definition of Done 与下一步
 
-W94Fb bridge/A-B 已完成，W94Ga 本地 World Store/Canon proposal-review-partial-merge 和 W94Gb fake Hub 公共投影也已通过；后续施工不再重复创建 Player↔W93 适配，而是转向 W94Gc 运行门、W94H 与剩余
-审计红项。媒体 Magnet 若没有 W93 Candidate/Edition/Rights Receipt，继续保持不进入书库取得
-链的明确边界。
+W94 本地范围已经封板：A–E、本地 F、Ga/Gb 与 H-local 通过；Player↔W93 不再重复造适配，媒体
+Magnet 若没有 W93 Candidate/Edition/Rights Receipt，继续保持不进入书库取得链的明确边界。
 
 W94 只有在 A–H 全部通过、README/总表/检查点同代、全量与构建绿、Source/Packaged 证据完整、真实 Canvas/Blender/Hub 边界诚实、无未裁决 P0/P1 时才能写 `W94 COMPLETE`。
 
-当前精确施工项分两条并行但不越权：**按 W94E 施工参照继续补齐跨机器真实 LAN A/B 专项证据；W94Ga 的 World、W94Gb fake Hub 与 W94Gc staging origin 已收口到 PASS_WITH_SCOPE，W94H release seal 保持 PARTIAL/BLOCKED，下一刀是备份/恢复、事件覆盖、生产签名治理与剩余审计红项。W94F 已完成 W94Fa、W94Fb W93 bridge + Workspace A/B、W94Fc capability/Range 流、W94Fd Local/LAN Watch Room 和 W94Fe Source/Packaged 双 Mazz 边界。媒体 Magnet 在没有 W93 Candidate/Edition/Rights Receipt 时不伪造书籍 Job，并保留真实公网 P2P/跨机器房间的 opt-in 复开条件。Library durable Job settlement 已接入，现有 producer 接线与缺口见覆盖审计。**
+当前只剩外部/公共面：**真实公网 P2P、物理跨机器验收，以及 W94Gc production Hub 的 DNS/TLS 同域、监控、事故演练、密钥轮换/服务器信任和人工公共 effect 授权。它们不得反向抹掉本地完成，也不得由本地完成自动授权。**
 W94D 已把 Blender 三 operation、真实外部进程、Artifact lineage、失败/取消/收尸与 Source/Packaged 证据接入
 W94A/B 脊柱；W94E 已完成实现、Source/Packaged 运行、构建和全量回归，但因上述两项未完成仍保持 PARTIAL；Player、World 或 Hub 仍不因本波通过而自动获得施工授权。

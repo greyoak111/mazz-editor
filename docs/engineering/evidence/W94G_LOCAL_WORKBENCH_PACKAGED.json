@@ -1,0 +1,29 @@
+{
+  "schema": "mazz.w94g-local-workbench-runtime/v1",
+  "mode": "packaged",
+  "result": "PASS",
+  "productSurface": {
+    "module": "world",
+    "artifactListed": true,
+    "worldCreated": true,
+    "branchForked": true,
+    "proposalWithdrawn": true,
+    "publicationPrepared": true,
+    "localProjectionPublished": true,
+    "publicationWithdrawn": true
+  },
+  "signing": {
+    "ed25519Verified": true,
+    "privateKeyExposed": false,
+    "protectedAtRest": true
+  },
+  "durability": {
+    "worldRestarted": true,
+    "publicationRestarted": true
+  },
+  "networkCalls": 0,
+  "publicEffectAuthorized": false,
+  "runtimeErrors": [],
+  "executableSha256": "c4ebe9df4bec731e06393101c852d01f9336b3f04b413bd95566e0b322fc9fbd",
+  "generatedAt": "2026-08-31T01:05:27.368Z"
+}

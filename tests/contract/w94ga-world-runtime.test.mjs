@@ -65,3 +65,27 @@ test('W94Ga World Store follows Workspace A/B identity and rejects private field
     fs.rmSync(second, { recursive: true, force: true });
   }
 });
+
+test('W94Ga human owner can withdraw an undecided Canon proposal and replay the cancelled outcome', () => {
+  const root = workspace('mazz-w94ga-withdraw-');
+  const events = [];
+  try {
+    const branchService = new BranchEffectiveStateService({ rootProvider: () => root, now: () => 0 });
+    const service = new WorldRuntimeService({ rootProvider: () => root, branchService, eventService: { capture: input => { events.push(input); return { recorded: true }; } }, now: () => 0 });
+    const created = service.create({ worldId: 'world:withdraw', name: 'Withdraw', expectedRevision: 0 });
+    service.fork({ worldId: created.world.worldId, sourceBranchId: created.world.rootBranchId, branchId: 'branch:withdraw-candidate', expectedRevision: 1 });
+    const proposed = service.propose({
+      worldId: created.world.worldId, branchId: 'branch:withdraw-candidate',
+      changes: [{ domain: 'world', artifactRef: 'artifact:withdraw-change', revision: 'rev:withdraw-change', status: 'current' }],
+      evidenceRefs: ['artifact:withdraw-evidence'], proposedBy: 'human:author', expectedRevision: 2,
+    });
+    const withdrawn = service.withdraw({ proposalId: proposed.proposal.proposalId, authorityRef: 'human:author', reason: 'candidate superseded', expectedRevision: 3 });
+    assert.equal(withdrawn.proposal.status, 'withdrawn');
+    assert.equal(withdrawn.review.action, 'withdraw');
+    assert.equal(withdrawn.event.recorded, true);
+    assert.equal(events.at(-1).outcome, 'cancelled');
+    assert.throws(() => service.review({ proposalId: proposed.proposal.proposalId, action: 'accept', authorityRef: 'human:owner', reason: 'too late', expectedRevision: 4 }), /不可 review/);
+    const reopened = new WorldRuntimeService({ rootProvider: () => root, branchService: new BranchEffectiveStateService({ rootProvider: () => root, now: () => 0 }), now: () => 0 });
+    assert.equal(reopened.snapshot().proposals[0].status, 'withdrawn');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});

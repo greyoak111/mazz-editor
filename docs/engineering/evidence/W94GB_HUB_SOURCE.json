@@ -8,7 +8,9 @@
     "published": true,
     "withdrawn": true,
     "syncedAfterWithdraw": true,
-    "publicFieldsOnly": true
+    "publicFieldsOnly": true,
+    "ed25519Verified": true,
+    "privateKeyExposed": false
   },
   "workspaceIsolation": {
     "aProjections": 1,
@@ -27,5 +29,5 @@
   "networkCalls": 0,
   "runtimeErrors": [],
   "executableSha256": null,
-  "generatedAt": "2026-08-28T11:06:06.505Z"
+  "generatedAt": "2026-08-31T00:58:22.742Z"
 }

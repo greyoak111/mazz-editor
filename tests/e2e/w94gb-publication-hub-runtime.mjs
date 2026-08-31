@@ -46,7 +46,7 @@ function fixturePackage() {
     contentManifestRef: 'manifest:harbor', contentIds: ['content:harbor-text'], licenseRef: 'license:cc-by', provenance: { producer: 'W94Gb-e2e' },
     publicationGrantRef: grant.grantId, signatureRef: 'signature:placeholder', createdAt,
   });
-  return { manifest, grant, envelope: { ...base, signatureRef: _forTests.expectedSignatureRef(base, grant) } };
+  return { manifest, grant, envelope: base };
 }
 
 const errors = [];
@@ -73,10 +73,14 @@ try {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForFunction(() => Boolean(window.mazz?.invoke && window.MazzShell));
   const invoke = (channel, payload = {}) => page.evaluate(({ channel, payload }) => window.mazz.invoke(channel, payload), { channel, payload });
-  const fixture = fixturePackage();
+  const unsignedFixture = fixturePackage();
+  const signed = await invoke('hub:signPublication', { envelope: unsignedFixture.envelope, grant: unsignedFixture.grant });
+  const fixture = { ...unsignedFixture, envelope: signed.envelope, signature: signed.signature };
 
   const prepared = await invoke('hub:preparePublication', { ...fixture, expectedRevision: 0 });
   assert.equal(prepared.projection.status, 'prepared');
+  assert.equal(prepared.projection.signatureVerified, true);
+  assert.equal(prepared.projection.signatureKeyId, signed.identity.keyId);
   const published = await invoke('hub:publishPublication', { ...fixture, expectedRevision: 1 });
   assert.equal(published.projection.status, 'published');
   const queried = await invoke('hub:syncPublication', { publicationId: fixture.envelope.publicationId, grant: fixture.grant });
@@ -112,7 +116,7 @@ try {
   assert.deepEqual(errors, []);
   report = {
     schema: 'mazz.w94gb-hub-runtime/v1', mode: MODE, result: 'PASS',
-    publication: { publicationId: fixture.envelope.publicationId, prepared: true, published: true, withdrawn: true, syncedAfterWithdraw: true, publicFieldsOnly: true },
+    publication: { publicationId: fixture.envelope.publicationId, prepared: true, published: true, withdrawn: true, syncedAfterWithdraw: true, publicFieldsOnly: true, ed25519Verified: true, privateKeyExposed: false },
     workspaceIsolation: { aProjections: 1, bProjections: 0, aRestoredProjections: 1, restartProjections: reopenedSnapshot.projections.length },
     receipts: { prepared: prepared.receipt.outcome, published: published.receipt.outcome, withdrawn: withdrawn.receipt.outcome },
     resources: { activeCount: (resources.active || []).length }, networkCalls: 0, runtimeErrors: errors,

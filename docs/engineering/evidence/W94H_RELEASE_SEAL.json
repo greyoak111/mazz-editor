@@ -1,6 +1,8 @@
 {
   "schema": "mazz.w94h-release-seal/v1",
   "status": "PARTIAL/BLOCKED",
+  "localStatus": "PASS",
+  "localCompleteClaim": true,
   "completeClaim": false,
   "publicEffectAuthorized": false,
   "gates": {
@@ -8,32 +10,35 @@
     "W94B": "PASS",
     "W94C": "PASS",
     "W94D": "PASS",
-    "W94E": "PARTIAL",
-    "W94F": "PARTIAL",
+    "W94E": "PASS",
+    "W94F": "LOCAL_PASS / EXTERNAL_SCOPE_OPEN",
     "W94Ga": "PASS",
-    "W94Gb": "PASS_WITH_SCOPE",
+    "W94Gb": "LOCAL_PASS",
     "W94Gc": "PASS_WITH_SCOPE"
   },
   "fullRegression": {
     "status": "PASS",
-    "expectedFiles": "285/285",
+    "expectedFiles": "287/287",
     "failedFiles": [],
-    "generatedAt": "2026-08-28T11:13:11.973Z"
+    "generatedAt": "2026-08-31T09:15:16.2263786+08:00"
   },
   "evidence": {
-    "W94GA_WORLD_SOURCE": "000d593c7ec7a5fed76a61a0793e37a9f6c5459b822b7520d21ae83ee79a2259",
-    "W94GA_WORLD_PACKAGED": "01fea6aa055984c45bec23b97430e5e49ae61db643575029ebcd97f8820dc4e7",
-    "W94GB_HUB_SOURCE": "4a24bcac8fd38ff39fc0358fd99753c91bbb8e1d5600b2f0079b1c07a6b58ac0",
-    "W94GB_HUB_PACKAGED": "196a3e295fd3457c20401b2837500acedc2c58e34ab22fdfd7ab60fd638ab670",
+    "W94GA_WORLD_SOURCE": "1eaa43f06894b5e597669d1f1b4c34b2394d3a80f09444dde9457bef5b9dfa16",
+    "W94GA_WORLD_PACKAGED": "b43539114af14d24518d23c5f72d0d442e054ff753bc883507ea761711f8bf79",
+    "W94GB_HUB_SOURCE": "011fb8ee7b453d263daccdfedaa2d48b345926132fa8ab7d534c4ceb7e72c7d5",
+    "W94GB_HUB_PACKAGED": "4122813509b52d4fe75d020e9fc402e9a7941caf32147131f09730b3560e5eaa",
     "W94GC_SERVER_BASELINE": "504bf72d89eb57608810bf6015e96174963e64761319c5fd3bf1d6eac944b263",
     "W94GC_SERVER_STAGING": "a76ac8f319c334ef1eb1f8cae22f70f76304868b37e038126730a7f03e6b6201",
     "W94GC_SERVER_RECOVERY": "ee84e47ece9249ebf50e191b76db02e4878959d9ede9fda75b82ba99b14d9e80",
-    "W94GC_ORIGIN_SOURCE": "c9af3d2924e17379eaaf8d9b26c0b0b248772c263ed976acab9e18c00f9b729d"
+    "W94GC_ORIGIN_SOURCE": "c9af3d2924e17379eaaf8d9b26c0b0b248772c263ed976acab9e18c00f9b729d",
+    "W94E_DOMAIN_EVENT_COVERAGE": "31b620675a7dedd9e9e2099d97ead0d4021dce7c5f0438b5bf00afb561d146cc",
+    "W94G_LOCAL_WORKBENCH_SOURCE": "8c3ba4ba860bef36131afd2251e47d41ebb3634851d98f57fa2650d2c6202248",
+    "W94G_LOCAL_WORKBENCH_PACKAGED": "cfe5a325e2dab1f461ba1a117f4a2490b16093c60d3b4406f2e4b3893702c5b1"
   },
+  "localBlockers": [],
   "blockers": [
-    "W94Gc production gates remain open: apex DNS, backup/restore, monitoring and incident drill",
-    "W94E formal event coverage remains PARTIAL",
-    "W94F public P2P/cross-machine scope remains explicit opt-in"
+    "W94Gc production gates remain open: apex DNS/TLS parity, monitoring and authorized incident/publication drill",
+    "W94F public P2P and physical cross-machine acceptance remain explicit opt-in/external scope"
   ],
-  "next": "Resolve W94Gc server gates and remaining W94E/W94F scope before a human-authorized public release seal."
+  "next": "W94 local scope is sealed. Public P2P/physical peer and production Hub gates require separate explicit authorization and evidence."
 }

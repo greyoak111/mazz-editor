@@ -151,6 +151,8 @@ const files = [
   'tests/contract/w94e-dual-runtime.test.mjs',
   'tests/contract/w94ga-world-runtime.test.mjs',
   'tests/contract/w94gb-publication-hub.test.mjs',
+  'tests/contract/w94g-local-publication-signing.test.mjs',
+  'tests/contract/w94g-local-publication-bridge.test.mjs',
   'tests/contract/w94gc-server-origin.test.mjs',
   'tests/contract/w94h-release-seal.test.mjs',
   'tests/contract/w94f-player-transport.test.mjs',

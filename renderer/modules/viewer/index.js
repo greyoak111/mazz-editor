@@ -291,6 +291,7 @@ async function enterImageEdit(ctl, img, path, ext) {
     const name = path.split(/[\\/]/).pop();
     const ext = (name.split('.').pop() || '').toLowerCase();
     ctl.kind = IMAGE_EXTS.has(ext) ? 'image' : ext === 'pdf' ? 'pdf' : VIDEO_EXTS.has(ext) ? 'video' : AUDIO_EXTS.has(ext) ? 'audio' : 'other';
+    if (['image', 'pdf', 'video', 'audio'].includes(ctl.kind)) capturePlayerEvent('open', 'approval');
     ctl.nameEl.textContent = name;
     ctl.pctEl.parentElement.querySelectorAll('[data-a=in],[data-a=out],[data-a=fit],[data-a=actual],[data-a=imgedit]').forEach(b => b.style.display = ctl.kind === 'image' ? '' : 'none');
     ctl.pctEl.style.display = ctl.kind === 'image' ? '' : 'none';

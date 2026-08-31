@@ -5,7 +5,7 @@
   "world": {
     "worldId": "world:harbor",
     "branchCount": 2,
-    "canonVersion": "canon:176cfbb7574e21dec21358e13882f344dd73397cd46deb3763646c836e909973",
+    "canonVersion": "canon:39dc193edf758fb826a6c23cbbd6c279c0b8673152d8eb92f5d78ad484b1f307",
     "proposalStatus": "merged",
     "mergedRevision": "rev:community-1"
   },
@@ -26,5 +26,5 @@
   "networkCalls": 0,
   "runtimeErrors": [],
   "executableSha256": null,
-  "generatedAt": "2026-08-28T10:19:06.959Z"
+  "generatedAt": "2026-08-31T00:57:48.631Z"
 }

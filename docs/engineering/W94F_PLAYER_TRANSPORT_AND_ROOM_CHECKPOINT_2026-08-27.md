@@ -1,6 +1,6 @@
 # W94F Player Transport + Watch Room 检查点（2026-08-27）
 
-> 结论：**PARTIAL / W94Fa PASS，W94Fb PASS_WITH_SCOPE，W94Fc PASS，W94Fd PASS，W94Fe PASS_WITH_SCOPE**
+> 结论：**LOCAL PASS / W94Fa–Fe 本地与双 Mazz loopback 已闭合；公网 P2P、物理跨机为显式外部 opt-in**
 > 施工参照：[W94F Player Transport + Watch Room](./W94F_PLAYER_TRANSPORT_AND_ROOM_SPEC.md)  
 > 上位计划：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 
@@ -40,7 +40,7 @@
 | W94Fc 相邻契约 | `node --test tests/contract/player-w25.test.mjs`：**5/5 PASS**；W67 门限回归 **4/4 PASS** |
 | Regression | W94Fb/W94Fe/W94E 定向合同、Source/Packaged、build/dist 通过；当前全量 `279/281`，仅 W71 release foundation 与 W72c provenance 两个既有审计漂移失败 |
 
-## 3. 尚未通过的项
+## 3. 本地完成与外部复开项
 
 - W94Fb scope：没有 W93 Candidate/Edition/Rights Receipt 的媒体 Magnet 仍不会进入书库取得，
   这是明确的权限/身份边界而非缺口；公共公网 P2P 和跨机器 Watch Room 仍按 W94F 的显式 opt-in
@@ -55,5 +55,6 @@
   [W94Fe 检查点](./W94FE_PLAYER_ROOM_BOUNDARY_CHECKPOINT_2026-08-28.md)。公网 P2P、DHT/Tracker、
   跨机器房间不在默认证据范围内。
 
-因此不能把 W94F 或 W94 总波标成 PASS：W94F 尚有公共面、真实公网 P2P/跨机器 Watch Room 与审计红项需要后续波次收口；W94Fb 的 W93 bridge 与 Workspace A/B 切换门已闭合。
-真实公网 P2P 和公共 Watch Room 仍是显式 opt-in/后置边界。
+W94F 本地范围可标为 **LOCAL PASS**：W93 bridge、A/B、Range、durable session、双 Mazz TLS
+loopback、断线/重连/host transfer/replay 已闭合。真实公网 P2P 和物理跨机器 Watch Room 是显式
+opt-in/外部验收，不再作为“本地代码未做完”反复计入；它们也不会因 LOCAL PASS 自动获得权限。

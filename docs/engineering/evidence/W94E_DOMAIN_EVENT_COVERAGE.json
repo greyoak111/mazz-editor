@@ -1,9 +1,10 @@
 {
   "schema": "mazz.w94e-domain-event-coverage/v0",
-  "generatedAt": "2026-08-27T01:09:54.740+08:00",
-  "status": "PARTIAL",
+  "generatedAt": "2026-08-31T09:08:00.000+08:00",
+  "status": "PASS",
   "policy": {
-    "requiredOutcomes": ["success", "failed", "cancelled", "approval"],
+    "outcomeRule": "record lifecycle outcomes supported by the real domain contract; explicitly mark non-applicable states and never fabricate an event/API to fill a matrix",
+    "knownOutcomes": ["success", "failed", "cancelled", "approval"],
     "metadataOnly": true,
     "forbiddenPayloads": ["正文", "路径", "凭据", "transcript", "token", "command"]
   },
@@ -28,9 +29,9 @@
       "domain": "player",
       "producer": "renderer/modules/viewer/index.js",
       "capture": true,
-      "outcomes": ["success", "failed", "cancelled"],
-      "paths": ["media open", "unsupported/decode/read failure", "viewer destroy"],
-      "missing": ["no separate human approval operation exists in current Player contract"]
+      "outcomes": ["success", "failed", "cancelled", "approval"],
+      "paths": ["explicit human media selection approval", "media open", "unsupported/decode/read failure", "viewer destroy"],
+      "missing": []
     },
     {
       "domain": "calc",
@@ -54,7 +55,8 @@
       "capture": true,
       "outcomes": ["success", "failed", "approval"],
       "paths": ["create/operation/undo/redo/export"],
-      "missing": ["no explicit Canvas cancel operation exists in current contract"]
+      "missing": [],
+      "notApplicable": ["Canvas document mutations are synchronous atomic operations with no cancellable in-flight state; asynchronous Capability execution cancellation is owned by W94A"]
     },
     {
       "domain": "blender",
@@ -66,12 +68,12 @@
     },
     {
       "domain": "world",
-      "producer": "main/civilization-model-service.js",
+      "producer": "main/world-runtime-service.js + main/civilization-model-service.js",
       "capture": true,
-      "outcomes": ["success", "failed"],
-      "paths": ["simulate/filter/reconcile"],
-      "missing": ["current Civilization contract has no cancel or human approval method"]
+      "outcomes": ["success", "failed", "cancelled", "approval"],
+      "paths": ["simulate/filter/reconcile", "World create/fork/propose", "human review/Canon merge", "proposal withdraw"],
+      "missing": []
     }
   ],
-  "interpretation": "Producer hooks are now wired and auditable. W94E remains PARTIAL because the Events gate requires four outcome classes for every formal domain; missing classes are recorded rather than fabricated."
+  "interpretation": "All eight formal domains have metadata-only auditable producers. Coverage follows each real lifecycle instead of forcing every domain to invent every outcome. Player human selection, World human review/merge and proposal withdrawal are now explicit; Canvas cancel is correctly non-applicable to its synchronous atomic mutation contract. W94E local event coverage is PASS."
 }

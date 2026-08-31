@@ -5,7 +5,7 @@
   "world": {
     "worldId": "world:harbor",
     "branchCount": 2,
-    "canonVersion": "canon:bab8bd7b23b8bc5fa82502f148b3ee3054c26b4ef426775cf3afc6abd961d92b",
+    "canonVersion": "canon:1d4a6c9fb338520fe1d5baa0d4e8dfab50e445af2b0eeff7168838787f3229d2",
     "proposalStatus": "merged",
     "mergedRevision": "rev:community-1"
   },
@@ -25,6 +25,6 @@
   },
   "networkCalls": 0,
   "runtimeErrors": [],
-  "executableSha256": "b9d8276bc547c55db6faf1cc3962841980f014147fe28bd0791d613a33b37db4",
-  "generatedAt": "2026-08-28T10:19:07.382Z"
+  "executableSha256": "c351a2e98983bef6fbcbb88e4ff444de2030a8a8d9416ec06efc150cee445ab3",
+  "generatedAt": "2026-08-31T00:59:26.227Z"
 }

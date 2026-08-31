@@ -1,6 +1,6 @@
 # W94H Capability / Public Convergence Release Seal 施工参照
 
-> 状态：**PARTIAL / BLOCKED**
+> 状态：**H-local PASS / 总公共 Seal PARTIAL/BLOCKED**
 > 日期：2026-08-28
 > 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 
@@ -18,10 +18,10 @@ W94H 不新增业务功能，只把 W94A–G 的合同、运行证据、资源�
 | W94B | PASS | Calc/Chart 定义、血缘、回放与构建证据 |
 | W94C | PASS | Canvas Agent construction 与回滚证据 |
 | W94D | PASS | Blender 5.2 opt-in、外部进程收尸与 Source/Packaged 证据 |
-| W94E | PARTIAL | Domain event coverage 仍缺 Player human approval、Canvas cancel、World cancel/approval 的正式覆盖 |
-| W94F | PARTIAL | P2P / 跨机器公共范围仍为显式 opt-in |
+| W94E | LOCAL PASS | 八域 producer 按真实生命周期覆盖；Player 人工选择、World approval/cancel 已补，Canvas 同步原子 mutation 的 cancel 明确不适用 |
+| W94F | LOCAL PASS / EXTERNAL OPEN | 本地 durable transport、W93 bridge、Range、双 Mazz loopback 已闭；公网 P2P / 物理跨机仍为显式 opt-in |
 | W94Ga | PASS | 本地 World Store、Branch、Proposal/Review/Merge、A/B、restart |
-| W94Gb | PASS_WITH_SCOPE | 本地 fake Hub Source/Packaged prepare→publish→withdraw→sync；签名仍是测试 digest reference，不是生产 Ed25519 |
+| W94Gb | LOCAL PASS | Artifact→human Grant→safeStorage-protected Ed25519→fake Hub prepare/publish/withdraw；桌面 Source/Packaged/restart 通过 |
 | W94Gc | PASS_WITH_SCOPE | 服务器 staging HTTPS/health/snapshot 与禁写门通过；根域 DNS、备份恢复、日志/资源告警、incident drill、生产签名治理未闭合 |
 
 ## 2. 每波必查
@@ -49,4 +49,7 @@ W94H 不新增业务功能，只把 W94A–G 的合同、运行证据、资源�
 
 ## 4. 当前复开顺序
 
-先补 W94E 正式事件覆盖与 W94F 公共权限裁决；再建立服务器 projection/receipt 备份恢复和故障演练，补齐 apex DNS 或明确只支持 `www`；随后接入生产级非对称签名、密钥轮换与验证；最后重跑全量、构建、打包和 seal。任何一项红门未闭，W94H 继续保持 `PARTIAL/BLOCKED`。
+本地 H seal 与总公共 seal 分列：本地全量/构建/打包/Source/Packaged 通过可写 `H-local PASS`，但
+`completeClaim` 仍为 false。后续只复开公网 P2P/物理跨机，以及 W94Gc production DNS/TLS、监控、
+incident drill、服务器信任/密钥轮换与人工公共 effect；任何公共红门未闭，总 W94 继续保持
+`PARTIAL/BLOCKED`。

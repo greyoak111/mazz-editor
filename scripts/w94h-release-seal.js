@@ -11,9 +11,12 @@ const root = path.resolve(__dirname, '..');
 const evidenceDir = path.join(root, 'docs', 'engineering', 'evidence');
 const convergenceInputs = [
   'package.json', 'tests/run.js', 'main/main.js', 'preload/bridge.js',
-  'main/world-runtime-service.js', 'main/world-hub-publication-service.js', 'server/hub-origin.js',
+  'main/world-runtime-service.js', 'main/world-hub-publication-service.js', 'main/publication-signing-service.js',
+  'main/local-publication-bridge-service.js', 'renderer/modules/world/index.js', 'renderer/modules/viewer/index.js', 'server/hub-origin.js',
   'tests/contract/w94gb-publication-hub.test.mjs', 'tests/contract/w94gc-server-origin.test.mjs',
+  'tests/contract/w94g-local-publication-signing.test.mjs', 'tests/contract/w94g-local-publication-bridge.test.mjs',
   'tests/contract/w94h-release-seal.test.mjs', 'tests/e2e/w94gb-publication-hub-runtime.mjs',
+  'tests/e2e/w94g-local-workbench-runtime.mjs',
   'tests/e2e/w94gc-server-origin-runtime.mjs', 'tests/e2e/w94gc-server-staging-runtime.mjs',
   'scripts/w94h-release-seal.js', 'scripts/w94gc-fixture.js', 'deploy/mazz-hub/backup-hub.sh',
   'deploy/mazz-hub/mazz-hub.service', 'deploy/mazz-hub/nginx.mazz-hub.conf',
@@ -48,27 +51,36 @@ function collect() {
   const gbPackaged = readJson('W94GB_HUB_PACKAGED.json');
   const gc = readJson('W94GC_SERVER_BASELINE.json');
   const gcStaging = readJson('W94GC_SERVER_STAGING.json');
+  const eventCoverage = readJson('W94E_DOMAIN_EVENT_COVERAGE.json');
+  const workbenchSource = readJson('W94G_LOCAL_WORKBENCH_SOURCE.json');
+  const workbenchPackaged = readJson('W94G_LOCAL_WORKBENCH_PACKAGED.json');
   const regression = readJson('W94H_FULL_REGRESSION.json');
+  const localBlockers = [];
+  if (eventCoverage?.status !== 'PASS') localBlockers.push('W94E local domain event coverage incomplete');
+  if (gaSource?.result !== 'PASS' || gaPackaged?.result !== 'PASS') localBlockers.push('W94Ga Source/Packaged evidence incomplete');
+  if (gbSource?.result !== 'PASS' || gbPackaged?.result !== 'PASS') localBlockers.push('W94Gb Source/Packaged evidence incomplete');
+  if (workbenchSource?.result !== 'PASS' || workbenchPackaged?.result !== 'PASS') localBlockers.push('W94G desktop Artifact/World/Publication workbench Source/Packaged evidence incomplete');
   const blockers = [];
-  if (gaSource?.result !== 'PASS' || gaPackaged?.result !== 'PASS') blockers.push('W94Ga Source/Packaged evidence incomplete');
-  if (gbSource?.result !== 'PASS' || gbPackaged?.result !== 'PASS') blockers.push('W94Gb Source/Packaged evidence incomplete');
   if (gcStaging?.result !== 'PASS_WITH_SCOPE') blockers.push('W94Gc staging origin evidence incomplete');
-  blockers.push('W94Gc production gates remain open: apex DNS, backup/restore, monitoring and incident drill');
-  blockers.push('W94E formal event coverage remains PARTIAL');
-  blockers.push('W94F public P2P/cross-machine scope remains explicit opt-in');
+  blockers.push('W94Gc production gates remain open: apex DNS/TLS parity, monitoring and authorized incident/publication drill');
+  blockers.push('W94F public P2P and physical cross-machine acceptance remain explicit opt-in/external scope');
   const currentDigest = convergenceDigest();
   const fullRegression = regression?.codeDigest === currentDigest
     ? { status: regression.status, expectedFiles: regression.expectedFiles, failedFiles: regression.failedFiles || [], generatedAt: regression.generatedAt }
     : { status: 'REQUIRES_RUN_AFTER_LAST_W94_CHANGE', expectedFiles: null, failedFiles: [] };
+  if (fullRegression.status !== 'PASS') localBlockers.push('W94 full regression must pass after the last W94 change');
+  const localComplete = localBlockers.length === 0;
   return {
     schema: 'mazz.w94h-release-seal/v1',
     status: blockers.length ? 'PARTIAL/BLOCKED' : 'PASS',
+    localStatus: localComplete ? 'PASS' : 'BLOCKED',
+    localCompleteClaim: localComplete,
     completeClaim: false,
     publicEffectAuthorized: false,
     gates: {
-      W94A: 'PASS', W94B: 'PASS', W94C: 'PASS', W94D: 'PASS', W94E: 'PARTIAL', W94F: 'PARTIAL',
+      W94A: 'PASS', W94B: 'PASS', W94C: 'PASS', W94D: 'PASS', W94E: eventCoverage?.status === 'PASS' ? 'PASS' : 'BLOCKED', W94F: 'LOCAL_PASS / EXTERNAL_SCOPE_OPEN',
       W94Ga: gaSource?.result === 'PASS' && gaPackaged?.result === 'PASS' ? 'PASS' : 'BLOCKED',
-      W94Gb: gbSource?.result === 'PASS' && gbPackaged?.result === 'PASS' ? 'PASS_WITH_SCOPE' : 'BLOCKED',
+      W94Gb: gbSource?.result === 'PASS' && gbPackaged?.result === 'PASS' && workbenchSource?.result === 'PASS' && workbenchPackaged?.result === 'PASS' ? 'LOCAL_PASS' : 'BLOCKED',
       W94Gc: gcStaging?.result || gc?.result || 'NOT_RUN',
     },
     fullRegression,
@@ -78,9 +90,14 @@ function collect() {
       W94GC_SERVER_BASELINE: hashFile('W94GC_SERVER_BASELINE.json'),
       W94GC_SERVER_STAGING: hashFile('W94GC_SERVER_STAGING.json'), W94GC_SERVER_RECOVERY: hashFile('W94GC_SERVER_RECOVERY.json'),
       W94GC_ORIGIN_SOURCE: hashFile('W94GC_ORIGIN_SOURCE.json'),
+      W94E_DOMAIN_EVENT_COVERAGE: hashFile('W94E_DOMAIN_EVENT_COVERAGE.json'),
+      W94G_LOCAL_WORKBENCH_SOURCE: hashFile('W94G_LOCAL_WORKBENCH_SOURCE.json'),
+      W94G_LOCAL_WORKBENCH_PACKAGED: hashFile('W94G_LOCAL_WORKBENCH_PACKAGED.json'),
     },
-    blockers,
-    next: 'Resolve W94Gc server gates and remaining W94E/W94F scope before a human-authorized public release seal.',
+    localBlockers, blockers,
+    next: localComplete
+      ? 'W94 local scope is sealed. Public P2P/physical peer and production Hub gates require separate explicit authorization and evidence.'
+      : 'Finish the listed local blockers; do not enable public effect.',
   };
 }
 

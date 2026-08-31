@@ -1,6 +1,6 @@
 # W94G World + MazzHub Public Plane 施工参照
 
-> 状态：**W94Ga PASS / W94Gb PASS_WITH_SCOPE / W94Gc PASS_WITH_SCOPE**
+> 状态：**W94Ga PASS / W94Gb LOCAL PASS / W94Gc PASS_WITH_SCOPE；公共 effect 关闭**
 > 日期：2026-08-28
 > 上位参照：[W94 Unified Capability, Artifact & Public Plane](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 > 产品真源：[W69 MazzHub Local-first Content Network](../plans/W69_MAZZHUB_LOCAL_FIRST_CONTENT_NETWORK.md)
@@ -168,6 +168,12 @@ W94Gb 已完成本地 fake Hub：`main/world-hub-publication-service.js` 只在 
 `hub:syncPublication` 窄 IPC 暴露。Source/Packaged 均完成 prepare → publish → query →
 withdraw → sync、A/B、restart；证据与检查项见 [`W94GB_PUBLICATION_HUB_CHECKPOINT_2026-08-28.md`](./W94GB_PUBLICATION_HUB_CHECKPOINT_2026-08-28.md)。
 
+2026-08-31 又补齐桌面本地生产链：`PublicationSigningService` 使用 Ed25519，私钥只经 Electron
+`safeStorage` 保护后落 `.mazz/identity`，不向 renderer/IPC 返回；`LocalPublicationBridgeService`
+从 W94A 不可变 Artifact 构造 content manifest、显式 human Grant、签名并驱动 fake Hub；
+`renderer/modules/world` 提供 World/Branch/Proposal/Review/Merge/Withdraw 与 Publication
+prepare/publish/withdraw 产品入口。Source/Packaged 都完成全生命周期与 restart，网络调用为 0。
+
 ### 4.1 Adapter 只允许四个动作
 
 ```text
@@ -233,6 +239,7 @@ syncPublication      # 按 publicationId/contentRoot 重新同步公开状态
 
 W94G 只有在 W94Ga、W94Gb、W94Gc 全部通过，且 README、总计划、检查点、Source/Packaged 证据同代时，才能写 `W94G PASS`。只有 fake Hub 或本地 World 通过时，状态分别写 `W94Ga PASS` / `W94Gb PASS_WITH_SCOPE`，不能写 Hub 已上线。
 
-当前状态明确为：**W94Ga PASS；W94Gb PASS_WITH_SCOPE；W94Gc PASS_WITH_SCOPE**。真实 staging
-origin 已经可复核，但生产公共 effect 仍关闭；只有非 root 部署、双域 DNS、备份恢复、资源告警、
-证书续期和 incident drill 证据齐全，并完成签名密钥治理后，才能由人类另行授权开启。
+当前状态明确为：**W94Ga PASS；W94Gb LOCAL PASS；W94Gc PASS_WITH_SCOPE**。真实 staging
+origin 已经可复核，但生产公共 effect 仍关闭；本机 Ed25519 证明的是受保护的客户端签名，不替代
+服务器 trust/rotation/revocation。只有 production DNS/TLS、备份恢复、资源告警、证书续期、
+incident drill 和服务器签名治理证据齐全后，才能由人类另行授权开启。

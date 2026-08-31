@@ -1,6 +1,6 @@
 # W94Gb Publication / Fake Hub 检查点（2026-08-28）
 
-> 状态：**PASS_WITH_SCOPE（本地 fake Hub；不含真实公网写入）**
+> 状态：**LOCAL PASS（本地 fake Hub + 受保护 Ed25519 + 桌面 Artifact bridge；不含真实公网写入）**
 > 上位施工参照：[`W94G_WORLD_HUB_PUBLIC_PLANE_SPEC.md`](./W94G_WORLD_HUB_PUBLIC_PLANE_SPEC.md)
 > 总计划：[`W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md`](../plans/W94_UNIFIED_CAPABILITY_ARTIFACT_AND_PUBLIC_PLANE.md)
 
@@ -26,6 +26,9 @@ W94Gb 只实现同一 `envelope/manifest/grant/command/receipt` 语义下的本�
 | contract | [`tests/contract/w94gb-publication-hub.test.mjs`](../../tests/contract/w94gb-publication-hub.test.mjs) |
 | Source E2E | [`W94GB_HUB_SOURCE.json`](./evidence/W94GB_HUB_SOURCE.json) · [`W94GB_HUB_SOURCE.png`](./evidence/W94GB_HUB_SOURCE.png) |
 | Packaged E2E | [`W94GB_HUB_PACKAGED.json`](./evidence/W94GB_HUB_PACKAGED.json) · [`W94GB_HUB_PACKAGED.png`](./evidence/W94GB_HUB_PACKAGED.png) |
+| protected signing | [`main/publication-signing-service.js`](../../main/publication-signing-service.js) · [`tests/contract/w94g-local-publication-signing.test.mjs`](../../tests/contract/w94g-local-publication-signing.test.mjs) |
+| Artifact→Publication bridge | [`main/local-publication-bridge-service.js`](../../main/local-publication-bridge-service.js) · [`renderer/modules/world/index.js`](../../renderer/modules/world/index.js) |
+| desktop Source/Packaged | [`W94G_LOCAL_WORKBENCH_SOURCE.json`](./evidence/W94G_LOCAL_WORKBENCH_SOURCE.json) · [`W94G_LOCAL_WORKBENCH_PACKAGED.json`](./evidence/W94G_LOCAL_WORKBENCH_PACKAGED.json) · [`W94G_LOCAL_WORKBENCH_PACKAGED.png`](./evidence/W94G_LOCAL_WORKBENCH_PACKAGED.png) |
 
 ## 3. 每波必查结果
 
@@ -34,7 +37,7 @@ W94Gb 只实现同一 `envelope/manifest/grant/command/receipt` 语义下的本�
 | unknown/private/path/URL 字段拒绝 | **PASS** | contract `2/2` |
 | Grant active/scope/expiry/rights identity | **PASS** | contract + E2E negative paths |
 | manifest/content IDs/contentRoot 一致 | **PASS** | contract + E2E |
-| signatureRef 与 envelope/grant 绑定 | **PASS** | contract unsigned/signature mismatch |
+| Ed25519 signature 与完整 envelope/grant 绑定 | **PASS** | OS-protected private key、tamper rejection、Source/Packaged `ed25519Verified=true` |
 | prepare → publish → query → withdraw → sync | **PASS** | Source/Packaged E2E |
 | publish/withdraw 幂等与 stale CAS | **PASS** | contract |
 | Workspace A/B 与 restart | **PASS** | A `1` → B `0` → A `1`；restart `1` |
@@ -58,6 +61,7 @@ W94Gb 定向 contract 为 `2/2`；Source/Packaged E2E、build、dist 均通过�
 
 ## 5. 结论与下一波
 
-W94Gb 可写入总计划为 **PASS_WITH_SCOPE**。它证明公共投影边界和撤回/重同步语义，
+W94Gb 本地范围可写入总计划为 **LOCAL PASS**。它证明不可变 Artifact、显式 Grant、本机受保护
+Ed25519、桌面产品入口、公共投影边界和撤回/重同步语义，
 不证明真实服务器、TLS、DNS 或生产 Hub 已经具备。下一波 W94Gc 必须先完成服务器只读基线、
 部署用户/权限、进程与 TLS/health/runbook 证据；没有这些证据不得把域名 200 或 Cloudflare 页面当真相。

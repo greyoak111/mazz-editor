@@ -28,7 +28,7 @@
 | 多父冲突/人工 resolution | PASS | Source/Packaged runtime evidence |
 | LAN state-fact 独立轨 | PASS，offline fixture + real TCP loopback；12/12 LAN assertions（含真实 TLS 中途断线 fail-closed、跨帧乱序重放） | W94E contract；`tests/contract/lansync.test.mjs` |
 | 跨机器物理 TLS/帧专项 | PASS_WITH_SCOPE，真实跨机器 TCP 与临时协议端点完成双向 1 文件 + 1 state-fact，监听/证书已清理；非第二个 Mazz 二进制 | [`W94E_LAN_PHYSICAL_PROTOCOL_PEER.json`](./evidence/W94E_LAN_PHYSICAL_PROTOCOL_PEER.json) |
-| 八域事件 producer 接线 | PARTIAL，8/8 producer 已接入同一 metadata ledger；approval outcome 合同与 Canvas 人类导出意图已补齐；剩余缺口按域/入口列出 | [`W94E_DOMAIN_EVENT_COVERAGE.json`](./evidence/W94E_DOMAIN_EVENT_COVERAGE.json) |
+| 八域事件 producer 接线 | **PASS（本地）**，8/8 producer 已接入同一 metadata ledger；按真实 domain lifecycle 覆盖 outcome，不再强迫同步原子操作伪造 cancel | [`W94E_DOMAIN_EVENT_COVERAGE.json`](./evidence/W94E_DOMAIN_EVENT_COVERAGE.json) |
 | W94A–D 回归 | PASS | W94A–D contract/runtime evidence |
 | 全量回归 | PARTIAL，278/280；2 个既有 W71/W72 审计 ledger drift | `npm test` |
 | build / packaged dist | PASS | `npm run build`、`npm run dist:dir` |
@@ -37,7 +37,7 @@
 ## 当前未宣称完成的部分
 
 1. 第二个 Mazz 实例的真实 TLS A/B 已补齐，但全量回归当前为 `278/280`；两项失败是未纳入本波的 W71 release baseline 与 W72 OSS provenance ledger drift，未改写其脏事实。
-2. 八个正式 domain 的 producer 已接入同一 helper；Workspace Event 合同现在可持久化 `approval`，Factory、Library、Calc、Chart、Blender 与 Canvas 现有审批/人类导出意图已按真实入口记录。Player 仍无独立 approval，Canvas 仍无显式 cancel，World 仍无 cancel/人工 approval；缺口已逐项写入 [`W94E_DOMAIN_EVENT_COVERAGE.json`](./evidence/W94E_DOMAIN_EVENT_COVERAGE.json)，不能以推断事件填充。
+2. 八个正式 domain 的 producer 已接入同一 helper；Workspace Event 合同可持久化 `approval`。Player 的人工选择媒体是实际批准入口，World 的 review/merge 与 proposal withdraw 分别记录 `approval/cancelled`。Canvas mutation 是同步原子操作，不存在可取消的在途状态；异步 Capability cancel 仍由 W94A 拥有。这里按真实生命周期封板，不创造伪接口或伪事件。
 
 ## 复开条件与停止线
 
