@@ -22,7 +22,7 @@ function createSearch(container) {
         <option value="all">全部类型</option>
         <option value="doc">文档 (.md/.txt)</option>
         <option value="sheet">表格 (.csv/.mazzsheet)</option>
-        <option value="mindmap">导图 (.mazzmap)</option>
+        <option value="mindmap">导图 (.mindmap)</option>
         <option value="slide">演示 (.mazzslide)</option>
         <option value="draw">画板 (.mazzdraw)</option>
         <option value="code">代码</option>

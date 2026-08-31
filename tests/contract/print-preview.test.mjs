@@ -5,7 +5,8 @@ import { describe, test, assert } from '../harness.mjs';
 const { PAGE_SIZES, normalizeMargins } = await import('../../renderer/modules/markdown/paginate.js');
 const { buildPrintDocument } = await import('../../renderer/lib/print-preview.js');
 const { buildSheetPages, usedRange } = await import('../../renderer/modules/sheet/print.js');
-const { buildSlidePages } = await import('../../renderer/modules/slide/print.js');
+const { buildSlidePages, buildSlidePagesForController } = await import('../../renderer/modules/slide/print.js');
+const { createSlideDoc, createSlide, createItem, addSlideToDoc } = await import('../../renderer/modules/slide/doc.js');
 
 describe('纸张与页边距', () => {
   test('纸张谱系完整（A3/A4/A5/A6/B4/B5/Letter/Legal/Executive/16K）', () => {
@@ -74,5 +75,31 @@ describe('演示分页', () => {
     assert.ok(pages[0].includes('要点甲'));
     assert.ok(pages[1].includes('2 / 2'));
     assert.ok(pages[1].includes('细节'));
+  });
+  test('V2 打印直接消费 doc2 Item，不读旧 slides', () => {
+    const theme = { bg: '#000', fg: '#fff', accent: '#f00', titleColor: '#fff', font: 'sans', titleSize: 30, bodySize: 16 };
+    const doc = createSlideDoc('V2 打印', 'night');
+    addSlideToDoc(doc, createSlide(null, { items: [
+      createItem('text', { text: 'V2 唯一文本', left: 10, top: 20, width: 80, height: 20 }),
+      createItem('shape', { shape: 'ellipse', left: 30, top: 50, width: 40, height: 25 }),
+    ] }));
+    const pages = buildSlidePagesForController({ isV2: true, doc2: doc, theme, slides: [{ title: 'V1 脏数据', sections: [] }] });
+    assert.equal(pages.length, 1);
+    assert.ok(pages[0].includes('V2 唯一文本'));
+    assert.ok(pages[0].includes('<ellipse'), 'V2 shape Item 必须进打印 SVG');
+    assert.ok(!pages[0].includes('V1 脏数据'), '不得读旧 slides 镜像');
+  });
+  test('V2 打印不允许文档背景值逃出 style 属性', () => {
+    const theme = { bg: '#000', fg: '#fff', font: 'sans-serif' };
+    const doc = createSlideDoc('恶意背景', 'night');
+    addSlideToDoc(doc, createSlide(null, {
+      bg: 'red" onpointerenter="window.__slidePrintPwned=1',
+      items: [createItem('text', { text: '安全页' })],
+    }));
+    const [html] = buildSlidePagesForController({ isV2: true, doc2: doc, theme, slides: [] });
+    const host = document.createElement('div');
+    host.innerHTML = html;
+    assert.equal(host.firstElementChild.hasAttribute('onpointerenter'), false);
+    assert.ok(!html.includes('window.__slidePrintPwned'));
   });
 });

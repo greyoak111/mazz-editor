@@ -8,15 +8,15 @@
     "E": "resize/sidebar/split 动态计算债"
   },
   "summary": {
-    "totalFindings": 718,
+    "totalFindings": 720,
     "filesWithFindings": 73,
     "byRule": {
       "fixed-width-px": 196,
       "white-space-nowrap": 143,
-      "position-absolute": 169,
+      "position-absolute": 170,
       "fixed-min-width": 92,
       "sidebar-pixel-coupling": 12,
-      "fixed-left-right": 31,
+      "fixed-left-right": 32,
       "width-100vw": 8,
       "resize-js-layout": 40,
       "calc-viewport-or-container": 16,
@@ -145,11 +145,11 @@
       }
     ],
     "byProvisionalClass": {
-      "D": 334,
+      "D": 335,
       "A": 193,
       "B": 92,
       "E": 68,
-      "C": 31
+      "C": 32
     }
   },
   "findings": [
@@ -892,42 +892,42 @@
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/browser/index.js",
-      "line": 1454,
+      "line": 1457,
       "sample": "// 幽灵三钩①（页签一切一炸一片实锤）：切回必显——显隐不再靠 ResizeObserver/偶发事件赏饭"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/browser/index.js",
-      "line": 1674,
+      "line": 1677,
       "sample": "m.body.innerHTML = `<div style=\"min-width:440px;max-width:620px\"><p style=\"margin:0 0 10px\">链接已复制；同一局域网内可访问，10 分钟后自动失效。</p><input class=\"rb-input\" style=\"width:100%;padding:7px 9px\" readonly value=\"${escapeAttr(share.url)}\"><div style=\"font-size:12px;color:var(--fg-dim);margin-top:8px\">到期：${new Date(share.expiresAt).to"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/draw/index.js",
-      "line": 528,
+      "line": 463,
       "sample": "bar.style.cssText = 'position:absolute;bottom:56px;left:50%;transform:translateX(-50%);display:flex;gap:8px;background:var(--bg-elev,#fff);border:1px solid var(--bd,#e0ded8);border-radius:9px;padding:6px 12px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:20;font-size:12.5px';"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/draw/index.js",
-      "line": 1132,
+      "line": 1067,
       "sample": "pop.style.cssText = 'position:fixed;z-index:9999;background:var(--bg-elev,#fff);border:1px solid var(--bd,#e0ded8);border-radius:9px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:3px;min-width:130px';"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/draw/index.js",
-      "line": 1346,
+      "line": 1281,
       "sample": "<div style=\"display:flex;flex-direction:column;gap:8px;min-width:240px\">"
     },
     {
       "rule": "resize-js-layout",
       "provisionalClass": "E",
       "file": "renderer/modules/draw/index.js",
-      "line": 1490,
+      "line": 1425,
       "sample": "if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(wrap);"
     },
     {
@@ -1291,70 +1291,70 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/sheet/index.js",
-      "line": 835,
+      "line": 839,
       "sample": "<div class=\"set-row\" id=\"vd-num-row\" style=\"display:none\"><label>最小</label><input id=\"vd-min\" class=\"rb-input\" type=\"number\" style=\"width:70px\">"
     },
     {
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/sheet/index.js",
-      "line": 836,
+      "line": 840,
       "sample": "<label>最大</label><input id=\"vd-max\" class=\"rb-input\" type=\"number\" style=\"width:70px\"></div>"
     },
     {
       "rule": "fixed-min-width",
       "provisionalClass": "B",
       "file": "renderer/modules/sheet/index.js",
-      "line": 931,
+      "line": 935,
       "sample": "`<button class=\"rb-btn\" style=\"flex-direction:row;min-width:110px;margin:2px\" data-fn=\"${n}\">${n}</button>`).join('')}"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 315,
+      "line": 316,
       "sample": "bar.style.cssText = 'position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:6px;align-items:center;background:var(--bg-elev);border:1px solid var(--border);border-radius:9px;padding:5px 10px;box-shadow:var(--shadow)';"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 636,
+      "line": 664,
       "sample": "svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/slide/index.js",
-      "line": 651,
+      "line": 679,
       "sample": "zc.style.cssText = 'position:absolute;right:12px;bottom:12px;display:flex;gap:6px;align-items:center;background:rgba(20,20,24,.6);border-radius:999px;padding:4px 12px;font-size:12px;color:#eee;backdrop-filter:blur(4px)';"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 651,
+      "line": 679,
       "sample": "zc.style.cssText = 'position:absolute;right:12px;bottom:12px;display:flex;gap:6px;align-items:center;background:rgba(20,20,24,.6);border-radius:999px;padding:4px 12px;font-size:12px;color:#eee;backdrop-filter:blur(4px)';"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 771,
+      "line": 799,
       "sample": "drag.ghost.style.cssText = `position:absolute;left:${x / DESIGN.w * 100}%;top:${y / DESIGN.h * 100}%;width:${Math.abs(p.x - drag.sx) / DESIGN.w * 100}%;height:${Math.abs(p.y - drag.sy) / DESIGN.h * 100}%;border:1.5px dashed var(--acc, #4f46e5);background:rgba(79,70,229,.12);pointer-events:none;z-index:5`;"
     },
     {
       "rule": "fixed-left-right",
       "provisionalClass": "C",
       "file": "renderer/modules/slide/index.js",
-      "line": 887,
+      "line": 916,
       "sample": "bar.style.cssText = 'position:absolute;left:12px;top:12px;display:flex;gap:5px;z-index:6;flex-wrap:wrap;max-width:70%';"
     },
     {
       "rule": "position-absolute",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/index.js",
-      "line": 887,
+      "line": 916,
       "sample": "bar.style.cssText = 'position:absolute;left:12px;top:12px;display:flex;gap:5px;z-index:6;flex-wrap:wrap;max-width:70%';"
     },
     {
@@ -1368,8 +1368,22 @@
       "rule": "fixed-width-px",
       "provisionalClass": "D",
       "file": "renderer/modules/slide/print.js",
-      "line": 12,
+      "line": 14,
       "sample": "<div style=\"width:64px;height:4px;background:${theme.accent};border-radius:2px;margin:12px 0 6px\"></div>"
+    },
+    {
+      "rule": "fixed-left-right",
+      "provisionalClass": "C",
+      "file": "renderer/modules/slide/print.js",
+      "line": 56,
+      "sample": "counter.style.cssText = 'position:absolute;right:12px;bottom:8px;font-size:11px;opacity:.55';"
+    },
+    {
+      "rule": "position-absolute",
+      "provisionalClass": "D",
+      "file": "renderer/modules/slide/print.js",
+      "line": 56,
+      "sample": "counter.style.cssText = 'position:absolute;right:12px;bottom:8px;font-size:11px;opacity:.55';"
     },
     {
       "rule": "resize-js-layout",

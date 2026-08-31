@@ -7,15 +7,16 @@ import path from 'node:path';
 const readSrc = (p) => fs.readFileSync(path.resolve(p), 'utf8');
 
 describe('解压缩服务（main/archive.js）', () => {
-  test('魔数识别五族+GBK 修复+2 并发+取消', () => {
+  test('魔数识别、流格式 fail closed、GBK 修复、2 并发与取消', () => {
     const a = readSrc('main/archive.js');
-    for (const pin of ['ZIP_MAG', 'RAR_MAG', 'SZ_MAG', 'GZ_MAG', 'ustar']) assert.ok(a.includes(pin), pin + ' 魔数必须在');
+    for (const pin of ['ZIP_MAGICS', 'RAR4_MAG', 'RAR5_MAG', 'SZ_MAG', 'GZ_MAG', 'BZ2_MAG', 'XZ_MAG', 'CAB_MAG', 'ustar']) assert.ok(a.includes(pin), pin + ' 魔数必须在');
+    assert.ok(a.includes('STREAM_METADATA_UNSUPPORTED'), '无法预检元数据的单流格式必须 fail closed');
     assert.ok(a.includes('rawNames'), 'GBK 原始名直读必须有');
     assert.ok(a.includes("TextDecoder('gbk')"), 'GBK 解码兜底必须有');
     assert.ok(a.includes('0x0800'), 'UTF-8 位 11 判定必须有');
     assert.ok(a.includes('this.running.size < 2'), '2 并发闸必须有');
     assert.ok(a.includes('job.cancelled'), '取消令牌必须有');
-    assert.ok(a.includes("require('7zip-bin')"), '7zip-bin 兜底必须有');
+    assert.ok(a.includes("require('7zip-bin-full')"), 'full 7-Zip 兜底必须有');
     assert.ok(a.includes('..'), 'zip-slip 防穿越必须有');
   });
   test('装配+kind 注册+面板页', () => {
@@ -29,6 +30,8 @@ assert.ok(
 );
     const html = readSrc('renderer/panels/archive.html');
     for (const pin of ['archiveQuery', 'archiveExtract', 'archiveCancel', 'archiveProgress', 'archiveDone', 'themeSnapshot']) assert.ok(html.includes(pin), pin + ' 必须在');
+    assert.ok(html.includes('name.textContent') && html.includes('size.textContent'), '归档条目必须经 DOM textContent 渲染');
+    assert.ok(!html.includes('`${e.name}'), '归档条目不得拼入 innerHTML');
   });
 });
 

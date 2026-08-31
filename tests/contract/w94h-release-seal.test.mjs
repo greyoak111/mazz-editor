@@ -22,6 +22,6 @@ test('W94H seals local completion separately and keeps server/public effects clo
   assert.equal(report.gates.W94Gc, 'PASS_WITH_SCOPE');
   assert.ok(report.blockers.length >= 2);
   assert.equal(report.fullRegression.status, 'PASS');
-  assert.equal(report.fullRegression.expectedFiles, '287/287');
+  assert.equal(report.fullRegression.expectedFiles, '289/289');
   assert.doesNotMatch(fs.readFileSync(path.resolve('scripts/w94h-release-seal.js'), 'utf8'), /child_process|fetch\s*\(|https?\.request|publishToHub|automaticPublication\s*:\s*true/);
 });

@@ -255,7 +255,9 @@ function evidencePass(name, value) {
       && value.ffmpegDistribution?.mode === 'DEFERRED_NOT_BUNDLED'
       && value.ffmpegDistribution?.repositoryCoreArtifactsPresent?.length === 0
       && value.packagedSpecimen?.asar?.sourceMaps === 0
-      && value.packagedSpecimen?.asar?.ffmpegCoreArtifacts?.every(item => item.present === false);
+      && value.packagedSpecimen?.asar?.ffmpegCoreArtifacts?.every(item => item.present === false)
+      && value.packagedSpecimen?.archiveRuntime?.gate === 'PASS_PACKAGED_ARCHIVE_RUNTIME'
+      && value.packagedSpecimen?.archiveRuntime?.violations?.length === 0;
   }
   if (name === 'W71_SECRET_AUDIT.json') {
     return value.gate === 'PASS_NO_CURRENT_TREE_SECRET_CANDIDATES'

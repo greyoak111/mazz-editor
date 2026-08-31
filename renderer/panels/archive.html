@@ -68,12 +68,38 @@ function renderList(r) {
   ARCH = r;
   $('#ttl').textContent = `${(r.path || '').split(/[\\/]/).pop()}（预览）`;
   $('#meta').textContent = `格式 ${r.fmt} · ${r.entries.length} 项 · 引擎 ${r.engine}`;
-  $('#list').innerHTML = r.entries.map(e =>
-    `<div class="row${e.dir ? ' d' : ''}"><span class="n">${e.dir ? '🗀 ' : ''}${e.name}</span><span class="s">${fmtSize(e.size)}${e.packed != null ? ' / ' + fmtSize(e.packed) : ''}</span></div>`).join('') || '<div class="err">空包</div>';
+  $('#meta').classList.remove('err');
+  const list = $('#list');
+  list.replaceChildren();
+  if (!r.entries.length) {
+    const empty = document.createElement('div');
+    empty.className = 'err';
+    empty.textContent = '空包';
+    list.append(empty);
+    return;
+  }
+  for (const entry of r.entries) {
+    const row = document.createElement('div');
+    row.className = `row${entry.dir ? ' d' : ''}`;
+    const name = document.createElement('span');
+    name.className = 'n';
+    name.textContent = `${entry.dir ? '🗀 ' : ''}${entry.name}`;
+    const size = document.createElement('span');
+    size.className = 's';
+    size.textContent = `${fmtSize(entry.size)}${entry.packed != null ? ' / ' + fmtSize(entry.packed) : ''}`;
+    row.append(name, size);
+    list.append(row);
+  }
 }
 
 window.mazz.on('panel:push', (p) => {
-  if (p?.type === 'archiveData') { if (p.data?.error) { $('#meta').innerHTML = `<span class="err">${p.data.error}</span>`; } else renderList(p.data); }
+  if (p?.type === 'archiveData') {
+    if (p.data?.error) {
+      $('#meta').textContent = p.data.error;
+      $('#meta').classList.add('err');
+      $('#list').replaceChildren();
+    } else renderList(p.data);
+  }
   if (p?.type === 'archiveProgress') {
     const d = p.data;
     if (!jobId || d.jobId !== jobId) return;
@@ -88,6 +114,7 @@ window.mazz.on('panel:push', (p) => {
     $('#prog').style.display = 'none';
     $('#fill').style.width = '0%';
     $('#meta').textContent = d.ok ? ('✓ ' + (d.info || '完成')) : ('✗ ' + (d.info || '失败'));
+    $('#meta').classList.toggle('err', !d.ok);
     $('#b-all').disabled = $('#b-sub').disabled = false;
   }
 });
@@ -110,11 +137,11 @@ $('#b-cancel').addEventListener('click', () => {
 (function showEmptyIfIdle() {
   const meta = document.getElementById('meta');
   const list = document.getElementById('list');
-  meta.innerHTML = '从文件树选中压缩包右键「查看压缩包内容」，或直接——';
+  meta.textContent = '从文件树选中压缩包右键「查看压缩包内容」，或直接——';
   list.innerHTML = `<div style="display:grid;place-items:center;padding:36px 10px;gap:12px">
     <div style="font-size:34px;opacity:.5">📦</div>
     <button class="btn pri" id="b-open">打开压缩包…</button>
-    <div style="font-size:11.5px;color:var(--fg-dim)">支持 zip / rar / 7z / tar / gz（JSZip 主力 + 7zip 兜底，GBK 文件名已修复）</div>
+    <div style="font-size:11.5px;color:var(--fg-dim)">支持 zip / rar / 7z / tar / cab 与单层 gz（JSZip + 完整 7-Zip；加密包、tar.gz/tgz 暂不支持）</div>
   </div>`;
   document.getElementById('b-open')?.addEventListener('click', () => {
     window.mazz.invoke('panel:action', { type: 'archiveOpenDialog' }).catch(() => {});

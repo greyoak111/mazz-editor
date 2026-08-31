@@ -22,8 +22,13 @@ Important direct runtime dependencies include:
 | WebTorrent and native helpers | MIT-family dependencies; packaged native binaries require inventory |
 | libass-wasm | Compound license set declared by the package; its `dist/js/COPYRIGHT` must remain available |
 | ffmpeg.wasm optional integration | `@ffmpeg/ffmpeg@0.12.10` wrapper (MIT) is retained; the historical `@ffmpeg/core@0.12.10`-identical GPL core is not present in the current branch or sealed installer; see `renderer/vendor/ffmpeg/NOTICE.md` and `PROVENANCE.md` |
+| 7-Zip full command-line runtime | Unmodified 7-Zip 26.02 executables/libraries are supplied by the pinned `7zip-bin-full@26.2.1`; packaging keeps only the target OS/architecture. 7-Zip is primarily LGPL-2.1-or-later with upstream BSD/unRAR terms. License text, exact source pointer, integrity and the supported-format boundary ship in `resources/licenses/7zip/`; the selected runtime also retains its adjacent upstream license/readme/history. The npm wrapper is separately MIT licensed. |
 | Monaco Editor | MIT |
 | ECharts | Apache-2.0 |
+
+## Test fixture inventory
+
+The archive contract embeds two minimal safe RAR samples from libarchive's BSD-2-Clause test corpus (`test_read_format_rar_noeof.rar.uu` and `test_read_format_rar5_stored.rar.uu`). Their source URLs and SHA-256 values are recorded beside the inline bytes in `tests/contract/archive-formal-gate.test.mjs`, and the complete retained notice is in `tests/fixtures/libarchive-NOTICE.txt`. These test-only samples are not included in the packaged application.
 
 ## Optional external capability providers
 

@@ -1,5 +1,5 @@
 // renderer/modules/search/shared-index.js —— W62c 外壳/搜索可共享的全文索引读侧
-import { SearchIndex, listTextFiles } from './indexer.js';
+import { SearchIndex, isIndexablePath, listTextFiles } from './indexer.js';
 
 export const sharedSearchIndex = new SearchIndex();
 let ready = false;
@@ -19,7 +19,7 @@ export async function ensureSharedSearchIndex({ force = false } = {}) {
 
 export async function refreshSharedIndexFile(path) {
   if (!ready || !path) return;
-  if (!/\.(md|txt|markdown|csv|tsv|mazzsheet|mazzmap|mm|opml|mazzslide|mazzdraw|js|ts|py|json|css|html|java|c|cpp|h|sh|mazzcode)$/i.test(path)) return;
+  if (!isIndexablePath(path)) return;
   await sharedSearchIndex.updateFile(path);
 }
 

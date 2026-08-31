@@ -743,9 +743,14 @@ function registerChannels() {
     return entries.filter(e => includeDot ? e.name !== '.git' : !e.name.startsWith('.'))
       .map(e => {
         // 附带时间戳（排序选单需要；stat 失败置 0 不影响主流程）
-        let mtimeMs = 0, ctimeMs = 0;
-        try { const st = fs.statSync(path.join(p, e.name)); mtimeMs = st.mtimeMs; ctimeMs = st.birthtimeMs || st.ctimeMs; } catch {}
-        return { name: e.name, isDir: e.isDirectory(), path: toSlash(path.join(p, e.name)), mtimeMs, ctimeMs };
+        let mtimeMs = 0, ctimeMs = 0, size = 0;
+        try {
+          const st = fs.statSync(path.join(p, e.name));
+          mtimeMs = st.mtimeMs;
+          ctimeMs = st.birthtimeMs || st.ctimeMs;
+          size = st.size;
+        } catch {}
+        return { name: e.name, isDir: e.isDirectory(), path: toSlash(path.join(p, e.name)), mtimeMs, ctimeMs, size };
       })
       .sort((a, b) => (b.isDir - a.isDir) || a.name.localeCompare(b.name, 'zh-CN'));
   });
@@ -2586,7 +2591,7 @@ app.whenReady().then(async () => {
   // —— 衍生面板原生子窗（W43 并行进程：收藏管理/密码管理器独立合成，与 WebContentsView 永不相见——白屏病根除） ——
   const panelWindows = new PanelWindows({ bus, win: () => wm.main, resourceLedger, visualComposition });
   visualComposition.attachPanelWindows(panelWindows);
-  // W58b 解压缩服务（魔数识别+JSZip 主力+7zip-bin 兜底+GBK 修复+打包+进度取消+2 并发）
+  // W58b 解压缩服务（魔数识别+JSZip 主力+full 7-Zip 兜底+GBK 修复+打包+进度取消+2 并发）
   try {
     const ArchiveService = require('./archive');
     const archiveService = new ArchiveService({ bus, win: () => wm.main, resourceLedger });

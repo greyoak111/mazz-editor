@@ -19,7 +19,7 @@ let current = null;
 
 // ==================== 控制器 ====================
 function createSheet(container) {
-  const wb = new Workbook();
+  let wb = new Workbook();
   const history = new History();
 
   const root = document.createElement('div');
@@ -37,7 +37,11 @@ function createSheet(container) {
   const capture = root.querySelector('.sg-capture');
 
   const ctl = {
-    container, root, wb, history,
+    container, root, history,
+    // Workbook 会在 xlsx/mazzsheet 导入时整体替换；控制器属性与下方闭包
+    // 必须指向同一个 owner，不能留下初始 Workbook 的幽灵引用。
+    get wb() { return wb; },
+    set wb(value) { wb = value; },
     grid: null,
     fInput: root.querySelector('.sg-finput'),
     gridWrap: root.querySelector('.sg-grid-wrap'),

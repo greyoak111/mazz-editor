@@ -130,7 +130,7 @@ async function launchToSite(shell, doc, adapter, status, dlg, opts = {}) {
     // 首选编辑器渲染 DOM（最标准 HTML）；无编辑器时 mini 渲染兜底
     let html = docToHtml(window.__activeMarkdownCtl) || mdToHtml(doc.text);
     const images = await collectImages(html, { workspace: ws });
-    // 图片转 base64 内联到注入脚本（File 不能跨 webview 传参，base64 重建）
+    // 图片转 base64 内联到注入脚本（File 不能跨 WebContentsView IPC 传参，base64 重建）
     for (const img of images) {
       const buf = await img.file.arrayBuffer();
       let bin = '';
@@ -143,66 +143,42 @@ async function launchToSite(shell, doc, adapter, status, dlg, opts = {}) {
   }
 
   // 等浏览器模块激活后，用投稿会话 partition 创建投稿标签
-  let brTabId = null;
+  let brCtl = null;
+  let brTab = null;
   for (let i = 0; i < 25; i++) {
-    if (brTabId) break;
+    if (brTab?.viewId) break;
     await new Promise(r => setTimeout(r, 300));
-    const brCtl = window.__activeBrowserCtl;
-    if (brCtl?.openTabRaw) {
-      brTabId = brCtl.openTabRaw(adapter.url, { partition: AUTHOR_PARTITION });
-      brTabId = brTabId?.id || brCtl.tabs?.[brCtl.tabs.length - 1]?.id;
+    const candidate = window.__activeBrowserCtl;
+    if (candidate?.openTabRaw && candidate?.execJs) {
+      brCtl = candidate;
+      brTab = brCtl.openTabRaw(adapter.url, { partition: AUTHOR_PARTITION });
     }
   }
-  if (!brTabId) { toast('浏览器未就绪，请重试'); return; }
+  if (!brCtl || !brTab?.viewId) { toast('浏览器未就绪，请重试'); return { ok: false, reason: 'browser-not-ready' }; }
 
-  // 等 webview dom-ready + 编辑器就绪后注入
-  const tryInject = async (attempt) => {
-    const view = [...document.querySelectorAll('.br-view-wrap webview')].find(v =>
-      v.closest('.br-view-wrap')?.dataset.tabId === brTabId);
-    if (!view) {
-      if (attempt < 30) setTimeout(() => tryInject(attempt + 1), 400);
-      return;
-    }
-    if (view.tagName === 'WEBVIEW') {
-      // 等 dom-ready + 编辑器就绪
-      const wait = (ms) => new Promise(r => setTimeout(r, ms));
-      let injected = false;
-      for (let i = 0; i < 30; i++) {
-        if (injected) break;
-        await wait(700);
-        try {
-          let r;
-          if (adapter.mode === 'paste-html' && pastePayload) {
-            const { buildPasteScript } = await import('./paste.js');
-            r = await view.executeJavaScript(buildPasteScript(pastePayload));
-          } else {
-            r = await view.executeJavaScript(buildInjectScript({ title: doc.title, text: doc.text, adapter }));
-          }
-          if (r?.ok) {
-            injected = true;
-            toast(`✅ 已填入「${doc.title}」（${r.via}）——请检查后自行发布`);
-            if (opts.keepOpen) return { ok: true, via: r.via, images: r.images || 0 };
-          } else if (r?.reason === 'editor-not-found') {
-            // 可能未登录或页面未就绪：继续等
-          }
-        } catch { /* 页面跳转中，下一轮再试 */ }
+  // WebContentsView 不在 renderer DOM；等待现有 Browser controller 的创建/导航队列，
+  // 再沿 ctl.execJs → bv:js → webContents.executeJavaScript 注入。
+  await Promise.resolve(brTab.viewReady).catch(() => false);
+  await Promise.resolve(brTab.navigationReady || brTab.navQueue).catch(() => false);
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  for (let i = 0; i < 30; i++) {
+    await wait(700);
+    if (!brCtl.tabs?.includes(brTab) || !brTab.host?.isConnected) break;
+    try {
+      const code = adapter.mode === 'paste-html' && pastePayload
+        ? (await import('./paste.js')).buildPasteScript(pastePayload)
+        : buildInjectScript({ title: doc.title, text: doc.text, adapter });
+      const r = await brCtl.execJs(brTab.viewId, code, { userGesture: true });
+      if (r?.ok) {
+        toast(`✅ 已填入「${doc.title}」（${r.via}）——请检查后自行发布`);
+        return { ok: true, via: r.via, images: r.images || 0, tabId: brTab.id, viewId: brTab.viewId };
       }
-      if (!injected) {
-        await window.mazz.invoke('clipboard:write', { text: doc.text }).catch(() => {});
-        toast(`未能自动填入（可能需先登录 ${adapter.name}）——Markdown 已复制，Ctrl+V 即可`);
-        if (opts.keepOpen) return { ok: false, reason: 'editor-not-found（可能需登录）' };
-      }
-    } else {
-      // iframe 预览路径（非 Electron）：同源可注入
-      try {
-        const doc2 = view.contentDocument;
-        const ta = doc2.querySelector('textarea');
-        if (ta) { ta.value = doc.text; ta.dispatchEvent(new Event('input', { bubbles: true })); }
-      } catch {}
-      toast('预览环境已尽力填入；桌面版支持完整自动注入');
-    }
-  };
-  tryInject(0);
+      // editor-not-found / 页面跳转中的 __err / 暂无客页：继续等页面就绪。
+    } catch { /* 页面跳转中，下一轮再试 */ }
+  }
+  await window.mazz.invoke('clipboard:write', { text: doc.text }).catch(() => {});
+  toast(`未能自动填入（可能需先登录 ${adapter.name}）——Markdown 已复制，Ctrl+V 即可`);
+  return { ok: false, reason: 'editor-not-found（可能需登录）', tabId: brTab.id, viewId: brTab.viewId };
 }
 
 /** 命令注册 */

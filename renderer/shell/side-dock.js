@@ -281,7 +281,7 @@ export class SideDock {
     const GROUPS = this._toolsGroups = [
       ['文件', [
         // W66：压缩包面板入坞可发现（图标 iconHtml 统一风格——「压根找不到」实锤平反）
-        { cmd: 'archive.openPanel', ico: '📦', t: '压缩包', d: '查看清单/解压缩/打包 zip（rar/7z 兜底）' },
+        { cmd: 'archive.openPanel', ico: '📦', t: '压缩包', d: '查看清单/安全解压/打包 zip（完整 7-Zip 多格式兜底）' },
       ]],
       ['识别', [
         { cmd: 'ocr.image', ico: '🔤', t: '图片文字识别', d: '截图/照片里的文字抠出来' },

@@ -1172,11 +1172,11 @@ function createBrowser(container) {
     return (r && typeof r === 'object' && r.__err) ? null : r;
   };
   ctl.getPageText = ctl.getPageSnapshot; // 旧桥兼容：返回值只增 images/adapter，不破坏调用方
-  /** 测试口：在指定（或活动）视图客页执行 JS（E2E 探查唯一通道——webview 标签已死） */
-  ctl.execJs = async (tabId, code) => {
+  /** 在指定（或活动）视图客页执行 JS（WebContentsView 唯一通道；测试与产品桥共用） */
+  ctl.execJs = async (tabId, code, { userGesture = false } = {}) => {
     const id = tabId || activeTab()?.viewId;
     if (!id || !isElectron()) return null;
-    return window.mazz.invoke('bv:js', { tabId: id, code }).catch(() => null);
+    return window.mazz.invoke('bv:js', { tabId: id, code, userGesture: userGesture === true }).catch(() => null);
   };
   /** 主页快捷动作：重命名/删除（收藏与历史，URL 归一化匹配）+ 主题/自定义主页/密码管理器 */
   async function handleHomeAction(act, url) {
@@ -1345,9 +1345,12 @@ function createBrowser(container) {
       return 'ok';
     })()`;
     try {
-      const r = await t.view.executeJavaScript(js);
+      const r = await ctl.execJs(t.viewId, js, { userGesture: true });
+      if (r && typeof r === 'object' && r.__err) throw new Error(r.__err);
+      if (r === null) throw new Error('当前网页视图不可用');
       toast(r === 'ok' ? `已填充：${match.username}` : '页面上没有找到密码输入框');
-    } catch (e) { toast('填充失败：' + (e.message || e)); }
+      return r;
+    } catch (e) { toast('填充失败：' + (e.message || e)); return null; }
   }
 
   ctl.activeTab = activeTab;

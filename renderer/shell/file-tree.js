@@ -179,7 +179,8 @@ export class FileTree {
     contextKeys.set('treePath', sel?.path || '');
     contextKeys.set('treeIsDir', !!sel?.isDir);
     // W58b：压缩包选中态（右键菜单显隐凭据——扩展名白名单，魔数在 list/extract 才动）
-    contextKeys.set('treeArchive', !!sel && !sel.isDir && /^(zip|rar|7z|tar|gz|tgz|bz2|xz|jar|apk|7zip|cab)$/i.test((sel.path.split('.').pop() || '')));
+    const selectedPath = String(sel?.path || '');
+    contextKeys.set('treeArchive', !!sel && !sel.isDir && !/(?:\.tar\.gz|\.tgz)$/i.test(selectedPath) && /^(zip|rar|7z|tar|gz|jar|apk|7zip|cab)$/i.test((selectedPath.split('.').pop() || '')));
     const treeItems = [...this.treeEl.querySelectorAll('.ft-node[role="treeitem"]')];
     treeItems.forEach(n => {
       const selected = !!sel && n.dataset.path === sel.path;

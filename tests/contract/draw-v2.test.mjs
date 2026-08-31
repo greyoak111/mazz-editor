@@ -1,9 +1,11 @@
 // tests/contract/draw-v2.test.mjs —— 笔刷引擎/ABR 校验/Ribbon 折叠/转换映射契约
 import './_setup.mjs';
 import { describe, test, assert } from '../harness.mjs';
+import JSZip from 'jszip';
 
 const { BRUSH_TYPES, DEFAULT_BRUSHES, colorWithAlpha, parseAbr } = await import('../../renderer/modules/draw/brushes.js');
-const { needsConvert, extOf } = await import('../../renderer/lib/extern-convert.js');
+const { needsConvert, extOf, drawSidecarExtension } = await import('../../renderer/lib/extern-convert.js');
+const { exportOra } = await import('../../renderer/modules/draw/ora.js');
 const { Ribbon } = await import('../../renderer/shell/ribbon.js');
 
 describe('笔刷引擎', () => {
@@ -39,6 +41,70 @@ describe('外部打开格式映射', () => {
     assert.ok(!needsConvert('docx'));
     assert.ok(!needsConvert('md'));
     assert.equal(extOf('a/b/c.mazzdraw'), 'mazzdraw');
+    assert.equal(drawSidecarExtension('ora'), 'ora', 'ORA 回写必须保留 ZIP/ORA 扩展名');
+    assert.equal(drawSidecarExtension('png'), 'png');
+  });
+
+  test('ORA 保留填充、形状、隐藏图层与正确 stack 顺序', async () => {
+    const originalCreate = document.createElement.bind(document);
+    const OriginalPath2D = globalThis.Path2D;
+    let canvasSeq = 0;
+    class FakeContext {
+      constructor(label) { this.label = label; this.ops = []; this.globalAlpha = 1; this.globalCompositeOperation = 'source-over'; this.stack = []; }
+      save() { this.stack.push([this.globalAlpha, this.globalCompositeOperation]); this.ops.push(['save']); }
+      restore() {
+        [this.globalAlpha, this.globalCompositeOperation] = this.stack.pop() || [1, 'source-over'];
+        this.ops.push(['restore']);
+      }
+      drawImage(image, ...args) { this.ops.push(['drawImage', image?.label || image?.id || 'image', ...args, this.globalAlpha]); }
+      createRadialGradient() { return { addColorStop() {} }; }
+      fillRect(...args) { this.ops.push(['fillRect', ...args, this.globalAlpha]); }
+      strokeRect(...args) { this.ops.push(['strokeRect', ...args, this.globalAlpha]); }
+      beginPath() { this.ops.push(['beginPath']); }
+      ellipse(...args) { this.ops.push(['ellipse', ...args]); }
+      moveTo(...args) { this.ops.push(['moveTo', ...args]); }
+      lineTo(...args) { this.ops.push(['lineTo', ...args]); }
+      fillText(...args) { this.ops.push(['fillText', ...args]); }
+      fill() { this.ops.push(['fill', this.globalAlpha, this.globalCompositeOperation]); }
+      stroke() { this.ops.push(['stroke', this.globalAlpha]); }
+    }
+    class FakeCanvas {
+      constructor() { this.label = `canvas-${canvasSeq++}`; this.ctx = new FakeContext(this.label); }
+      getContext() { return this.ctx; }
+      toDataURL() { return `data:image/png;base64,${Buffer.from(JSON.stringify(this.ctx.ops)).toString('base64')}`; }
+    }
+    document.createElement = tag => tag === 'canvas' ? new FakeCanvas() : originalCreate(tag);
+    globalThis.Path2D = class { moveTo() {} lineTo() {} closePath() {} };
+    try {
+      const frame = { layers: [
+        { name: '底层', visible: true, opacity: 0.4, _fillEl: { id: 'fill-patch' }, images: [], shapes: [{ kind: 'rect', x1: 1, y1: 2, x2: 11, y2: 12, color: '#f00', fill: true }], strokes: [{ brush: 'airbrush', color: '#00f', size: 8, pts: [{ x: 1, y: 1 }, { x: 12, y: 12 }] }] },
+        { name: '隐藏顶层', visible: false, opacity: 1, images: [{ _el: { id: 'hidden-image' }, x: 0, y: 0, w: 5, h: 5 }], shapes: [], strokes: [{ erase: true, size: 4, pts: [{ x: 1, y: 1 }, { x: 6, y: 6 }] }] },
+      ] };
+      const archive = await exportOra(frame, { width: 20, height: 20 });
+      const archiveBytes = new Uint8Array(archive);
+      const localHeader = new DataView(archiveBytes.buffer, archiveBytes.byteOffset, archiveBytes.byteLength);
+      const firstNameLength = localHeader.getUint16(26, true);
+      assert.equal(localHeader.getUint32(0, true), 0x04034b50, 'ORA 必须以 ZIP local header 开头');
+      assert.equal(new TextDecoder().decode(archiveBytes.subarray(30, 30 + firstNameLength)), 'mimetype', 'mimetype 必须是 ORA 首项');
+      assert.equal(localHeader.getUint16(8, true), 0, 'mimetype 必须 STORE，不得 DEFLATE');
+      const zip = await JSZip.loadAsync(archive);
+      const stack = await zip.file('stack.xml').async('string');
+      assert.ok(stack.indexOf('隐藏顶层') < stack.indexOf('底层'), 'stack.xml 必须顶层在前');
+      assert.match(stack, /name="隐藏顶层"[^>]+visibility="hidden"/);
+      const bottomOps = JSON.parse(await zip.file('data/layer0.png').async('string'));
+      assert.ok(bottomOps.some(op => op[0] === 'drawImage' && op[1] === 'fill-patch'), '填充补丁未进入 ORA 图层');
+      assert.ok(bottomOps.some(op => op[0] === 'fillRect'), '形状未进入 ORA 图层');
+      assert.ok(bottomOps.some(op => op[0] === 'drawImage' && String(op[1]).startsWith('canvas-')), '喷枪/印章笔刷必须保留点阵渲染语义');
+      const hiddenOps = JSON.parse(await zip.file('data/layer1.png').async('string'));
+      assert.ok(hiddenOps.some(op => op[0] === 'fill' && op[2] === 'destination-out'), '擦除笔画必须在当前 ORA 图层内扣除');
+      const mergedOps = JSON.parse(await zip.file('mergedimage.png').async('string'));
+      assert.equal(mergedOps.filter(op => op[0] === 'drawImage').length, 1, '隐藏图层不得进入 mergedimage');
+      assert.ok(mergedOps.some(op => op[0] === 'drawImage' && op.at(-1) === 0.4), '图层透明度应在 merged 合成时应用一次');
+    } finally {
+      document.createElement = originalCreate;
+      if (OriginalPath2D === undefined) delete globalThis.Path2D;
+      else globalThis.Path2D = OriginalPath2D;
+    }
   });
 });
 

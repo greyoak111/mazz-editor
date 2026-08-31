@@ -19,20 +19,71 @@
       {
         "path": "docs/engineering/OSS_PROVENANCE_MANUAL.json",
         "present": true,
-        "bytes": 5487,
-        "sha256": "74F036158586013590F808F2EDBD322DA7A110B937FD92712C8BBC8863BF04A3"
+        "bytes": 8428,
+        "sha256": "780A6E53A59197DBAFDBD10A0C9DD1CC2B0538C86CBA44DCE8FB7BD30E6298CD"
       },
       {
         "path": "KNOWN_LIMITATIONS.md",
         "present": true,
-        "bytes": 3350,
-        "sha256": "AC87A56195912AA41E3FD3B602413FC8D112FBE03187C12935EB90696A23BB52"
+        "bytes": 3737,
+        "sha256": "2FF42F81863F70458AC96EA0C43C040AD523DCBD69D7D5F613D2BA42D51E6042"
       },
       {
         "path": "LICENSE",
         "present": true,
         "bytes": 1081,
         "sha256": "B08007EA26AEE1D95CADBE2AB503C2D693852DCDBC74864F6EC28E9F01706230"
+      },
+      {
+        "path": "node_modules/7zip-bin-full/LICENSE.txt",
+        "present": true,
+        "bytes": 1087,
+        "sha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+        "expectedSha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+        "matchesExpected": true,
+        "role": "WRAPPER_MIT_LICENSE",
+        "packagedPath": "node_modules/7zip-bin-full/LICENSE.txt",
+        "container": "ASAR_UNPACKED"
+      },
+      {
+        "path": "node_modules/7zip-bin-full/package.json",
+        "present": true,
+        "bytes": 438,
+        "sha256": "D9106927955DE10E2163F42B055E81FD0354280AE94A30D1EB975B2A2E45E433",
+        "role": "INSTALLED_PACKAGE_METADATA"
+      },
+      {
+        "path": "node_modules/7zip-bin-full/win/x64/7z.dll",
+        "present": true,
+        "bytes": 1906688,
+        "sha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+        "expectedSha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+        "matchesExpected": true,
+        "role": "TARGET_ARCHIVE_CODEC_LIBRARY",
+        "packagedPath": "node_modules/7zip-bin-full/win/x64/7z.dll",
+        "container": "ASAR_UNPACKED"
+      },
+      {
+        "path": "node_modules/7zip-bin-full/win/x64/7z.exe",
+        "present": true,
+        "bytes": 576000,
+        "sha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+        "expectedSha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+        "matchesExpected": true,
+        "role": "TARGET_ARCHIVE_EXECUTABLE",
+        "packagedPath": "node_modules/7zip-bin-full/win/x64/7z.exe",
+        "container": "ASAR_UNPACKED"
+      },
+      {
+        "path": "node_modules/7zip-bin-full/win/x64/License.txt",
+        "present": true,
+        "bytes": 6031,
+        "sha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+        "expectedSha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+        "matchesExpected": true,
+        "role": "ADJACENT_RUNTIME_LICENSE",
+        "packagedPath": "node_modules/7zip-bin-full/win/x64/License.txt",
+        "container": "ASAR_UNPACKED"
       },
       {
         "path": "node_modules/chokidar/package.json",
@@ -106,14 +157,14 @@
       {
         "path": "package-lock.json",
         "present": true,
-        "bytes": 374792,
-        "sha256": "32678023547D9E8361B74F7C323ABFC01BF55DC0C7EDB1911A7054B31C30F945"
+        "bytes": 375138,
+        "sha256": "BEF8A566F233DA60599764BC766C5FDECCACF978AFFAE3C1EBAFCDBEDA5B7B5C"
       },
       {
         "path": "package.json",
         "present": true,
-        "bytes": 11212,
-        "sha256": "5CFA28102FF16B3072A9B804E8DBB3504CCF2445DCB6313BF390C482208D570C"
+        "bytes": 11377,
+        "sha256": "7E088509572940872EEBA1681BEC4462730B336DF0EC9F8E09B3AD83C9846673"
       },
       {
         "path": "patches/chokidar+3.6.0.patch",
@@ -218,16 +269,49 @@
         "sha256": "61D36798503E43DFFDF8719834BCF19BB98F3CB40D869D4D61EDA97C0F2823CF"
       },
       {
+        "path": "resources/licenses/7zip/COPYING.txt",
+        "present": true,
+        "bytes": 26530,
+        "sha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+        "expectedSha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+        "matchesExpected": true,
+        "role": "LGPL_2_1_LICENSE_TEXT",
+        "packagedPath": "resources/licenses/7zip/COPYING.txt",
+        "container": "ASAR"
+      },
+      {
+        "path": "resources/licenses/7zip/LICENSE.txt",
+        "present": true,
+        "bytes": 5885,
+        "sha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+        "expectedSha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+        "matchesExpected": true,
+        "role": "RUNTIME_COMPOUND_LICENSE_NOTICE",
+        "packagedPath": "resources/licenses/7zip/LICENSE.txt",
+        "container": "ASAR"
+      },
+      {
+        "path": "resources/licenses/7zip/NOTICE.md",
+        "present": true,
+        "bytes": 1980,
+        "sha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+        "expectedSha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+        "matchesExpected": true,
+        "role": "PRODUCT_RUNTIME_NOTICE",
+        "packagedPath": "resources/licenses/7zip/NOTICE.md",
+        "container": "ASAR"
+      },
+      {
         "path": "scripts/oss-provenance-ledger.js",
         "present": true,
-        "bytes": 13782,
-        "sha256": "64128D1647D1BE844BF060EB27E7F0468D4A58C421CC6A7542DCBAED74C7F6D0"
+        "bytes": 14276,
+        "sha256": "F4DE464252B6595EAD7AE3448C49E65AB77F64BC8EE0CC5B226D925F25FC3911"
       },
       {
         "path": "THIRD_PARTY_NOTICES.md",
         "present": true,
-        "bytes": 3383,
-        "sha256": "901D1F0EE220C399492933EC5ACA079C97E4512883D236E54FE9790CB247F0D3"
+        "bytes": 4356,
+        "sha256": "086772D70BA8706F3DD653FFFFE5F0058CAEF4727B569026898FC5105553BF8D"
       }
     ]
   },
@@ -3087,6 +3171,116 @@
         "modifications": [],
         "requiredEvidence": [],
         "noticeStatus": "PACKAGE_METADATA_ONLY_VERIFY_AT_RELEASE",
+        "updateStatus": "LOCKED_NOT_CHECKED_LATEST",
+        "vulnerabilityStatus": "NOT_ASSESSED_OFFLINE"
+      },
+      {
+        "location": "node_modules/7zip-bin-full",
+        "name": "7zip-bin-full",
+        "version": "26.2.1",
+        "scope": "runtime-graph-candidate",
+        "direct": true,
+        "optional": false,
+        "distributionStatus": "SHIPPED_FULL_ARCHIVE_RUNTIME",
+        "source": {
+          "resolved": "https://registry.npmmirror.com/7zip-bin-full/-/7zip-bin-full-26.2.1.tgz",
+          "integrity": "sha512-h1DE4G8WEJ3/LI4HTcuOpouP7cy9JGqYfZm5fzLhdzw8jI3wFyA9RFu5MP+ICzelKEYmWweRWApEvVWKmJIdVQ==",
+          "status": "LOCKED_ARTIFACT"
+        },
+        "license": {
+          "expression": "MIT",
+          "evidenceState": "PACKAGE_LOCK_DECLARATION",
+          "reviewState": "DECLARED_NOT_LEGALLY_REVIEWED",
+          "repository": "https://github.com/ollm/7zip-bin-full"
+        },
+        "modifications": [],
+        "requiredEvidence": [
+          {
+            "path": "node_modules/7zip-bin-full/package.json",
+            "present": true,
+            "bytes": 438,
+            "sha256": "D9106927955DE10E2163F42B055E81FD0354280AE94A30D1EB975B2A2E45E433",
+            "role": "INSTALLED_PACKAGE_METADATA"
+          },
+          {
+            "path": "node_modules/7zip-bin-full/LICENSE.txt",
+            "present": true,
+            "bytes": 1087,
+            "sha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+            "expectedSha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+            "matchesExpected": true,
+            "role": "WRAPPER_MIT_LICENSE",
+            "packagedPath": "node_modules/7zip-bin-full/LICENSE.txt",
+            "container": "ASAR_UNPACKED"
+          },
+          {
+            "path": "node_modules/7zip-bin-full/win/x64/7z.exe",
+            "present": true,
+            "bytes": 576000,
+            "sha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+            "expectedSha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+            "matchesExpected": true,
+            "role": "TARGET_ARCHIVE_EXECUTABLE",
+            "packagedPath": "node_modules/7zip-bin-full/win/x64/7z.exe",
+            "container": "ASAR_UNPACKED"
+          },
+          {
+            "path": "node_modules/7zip-bin-full/win/x64/7z.dll",
+            "present": true,
+            "bytes": 1906688,
+            "sha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+            "expectedSha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+            "matchesExpected": true,
+            "role": "TARGET_ARCHIVE_CODEC_LIBRARY",
+            "packagedPath": "node_modules/7zip-bin-full/win/x64/7z.dll",
+            "container": "ASAR_UNPACKED"
+          },
+          {
+            "path": "node_modules/7zip-bin-full/win/x64/License.txt",
+            "present": true,
+            "bytes": 6031,
+            "sha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+            "expectedSha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+            "matchesExpected": true,
+            "role": "ADJACENT_RUNTIME_LICENSE",
+            "packagedPath": "node_modules/7zip-bin-full/win/x64/License.txt",
+            "container": "ASAR_UNPACKED"
+          },
+          {
+            "path": "resources/licenses/7zip/NOTICE.md",
+            "present": true,
+            "bytes": 1980,
+            "sha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+            "expectedSha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+            "matchesExpected": true,
+            "role": "PRODUCT_RUNTIME_NOTICE",
+            "packagedPath": "resources/licenses/7zip/NOTICE.md",
+            "container": "ASAR"
+          },
+          {
+            "path": "resources/licenses/7zip/LICENSE.txt",
+            "present": true,
+            "bytes": 5885,
+            "sha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+            "expectedSha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+            "matchesExpected": true,
+            "role": "RUNTIME_COMPOUND_LICENSE_NOTICE",
+            "packagedPath": "resources/licenses/7zip/LICENSE.txt",
+            "container": "ASAR"
+          },
+          {
+            "path": "resources/licenses/7zip/COPYING.txt",
+            "present": true,
+            "bytes": 26530,
+            "sha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+            "expectedSha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+            "matchesExpected": true,
+            "role": "LGPL_2_1_LICENSE_TEXT",
+            "packagedPath": "resources/licenses/7zip/COPYING.txt",
+            "container": "ASAR"
+          }
+        ],
+        "noticeStatus": "REQUIRED_EVIDENCE_RECORDED",
         "updateStatus": "LOCKED_NOT_CHECKED_LATEST",
         "vulnerabilityStatus": "NOT_ASSESSED_OFFLINE"
       },
@@ -20373,14 +20567,14 @@
     {
       "path": "THIRD_PARTY_NOTICES.md",
       "present": true,
-      "bytes": 3383,
-      "sha256": "901D1F0EE220C399492933EC5ACA079C97E4512883D236E54FE9790CB247F0D3"
+      "bytes": 4356,
+      "sha256": "086772D70BA8706F3DD653FFFFE5F0058CAEF4727B569026898FC5105553BF8D"
     },
     {
       "path": "KNOWN_LIMITATIONS.md",
       "present": true,
-      "bytes": 3350,
-      "sha256": "AC87A56195912AA41E3FD3B602413FC8D112FBE03187C12935EB90696A23BB52"
+      "bytes": 3737,
+      "sha256": "2FF42F81863F70458AC96EA0C43C040AD523DCBD69D7D5F613D2BA42D51E6042"
     }
   ],
   "vendoredComponents": [
@@ -20546,10 +20740,10 @@
     }
   ],
   "summary": {
-    "lockedPackages": 801,
-    "runtimeGraphCandidates": 380,
+    "lockedPackages": 802,
+    "runtimeGraphCandidates": 381,
     "developmentPackages": 421,
-    "directRuntimeDependencies": 23,
+    "directRuntimeDependencies": 24,
     "packagesWithDeclaredModifications": 2,
     "manualLicenseOverridesApplied": 1,
     "missingLicense": 0,

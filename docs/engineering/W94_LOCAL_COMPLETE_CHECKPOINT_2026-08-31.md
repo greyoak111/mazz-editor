@@ -51,7 +51,7 @@ W94A immutable Capability Artifact
 | network/public effect | `networkCalls=0`、`publicEffectAuthorized=false` |
 | build/dist | `npm run build`、`npm run dist:dir` **PASS** |
 | packaged executable | SHA-256 `c4ebe9df4bec731e06393101c852d01f9336b3f04b413bd95566e0b322fc9fbd` |
-| full regression | **287/287 PASS**；以 `W94H_FULL_REGRESSION.json` 与 code digest 为准 |
+| full regression | **289/289 PASS**；以 `W94H_FULL_REGRESSION.json` 与 code digest 为准 |
 | release seal | `localStatus=PASS`、`localCompleteClaim=true`；总状态仍 `PARTIAL/BLOCKED` |
 
 ## 4. 运行与视觉证据

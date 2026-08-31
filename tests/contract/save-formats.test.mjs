@@ -65,16 +65,65 @@ describe('保存格式：exportAs 契约', () => {
     container.remove();
   });
 
-  test('slide：.pptx 合法演示包', async () => {
+  test('slide：V2 通用另存 .pptx 走对象级模型', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const state = slideModule.create(container);
     slideModule.setContent('# 年度汇报\n\n## 第一部分\n- 要点一\n\n---\n\n## 第二部分\n- 要点二\n', state);
     await tick(80);
+    assert.equal(window.__activeSlideCtl?.isV2, true, '大纲打开后应已迁移到 V2');
     const out = await slideModule.exportAs('.pptx', state);
     assert.ok(out.base64.length > 200);
     const zip = await JSZip.loadAsync(b64bytes(out.base64));
     assert.ok(await zip.file('ppt/presentation.xml'), '应为合法 pptx');
+    const firstSlide = await zip.file('ppt/slides/slide1.xml').async('text');
+    assert.ok(firstSlide.includes('年度汇报'), '另存必须导出当前 V2 内容，不得读取初始 V1 slides 镜像');
+    assert.ok(!firstSlide.includes('演示文稿标题'), '不得泄漏旧 V1 默认页');
+    container.remove();
+  });
+
+  test('slide：Ribbon 在 V2 上操作 frames/doc2/Item 而非旧 slides', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const state = slideModule.create(container);
+    slideModule.setContent('# 第一页\n- A\n---\n# 第二页\n- B\n', state);
+    slideModule.activate(container);
+    const ctl = window.__activeSlideCtl;
+    const command = (id, payload) => slideModule.contributes.commands.find(item => item.id === id)?.run(payload);
+    const frames = ctl.doc2.layouts.main.frames;
+    const legacyBefore = JSON.stringify(ctl.slides);
+    const firstSlideId = frames[0].slideId;
+    const secondSlideId = frames[1].slideId;
+    frames.splice(1, 0, { ...frames[0] }); // 同一物料重复编排：不能只靠 slideId 导航
+    ctl.renderV2All();
+    assert.equal(ctl.curSlideId, frames[0].slideId);
+    command('slide.next');
+    assert.equal(ctl.currentFrameIndex(), 1, '重复物料的第二帧也必须可到达');
+    assert.equal(ctl.curSlideId, firstSlideId);
+    command('slide.next');
+    assert.equal(ctl.currentFrameIndex(), 2, '必须能穿过重复帧继续向后');
+    assert.equal(ctl.curSlideId, secondSlideId, '下一页必须走 V2 编排帧');
+    command('slide.prev');
+    command('slide.prev');
+    assert.equal(ctl.currentFrameIndex(), 0);
+    assert.equal(ctl.curSlideId, firstSlideId, '上一页必须走 V2 编排帧');
+    const before = frames.length;
+    command('slide.add');
+    assert.equal(ctl.doc2.layouts.main.frames.length, before + 1, '新页必须追加 V2 frame');
+    assert.ok(ctl.doc2.slides[ctl.curSlideId], '新页必须落 V2 物料层');
+    command('slide.theme', { theme: 'paper' });
+    assert.equal(ctl.doc2.theme, 'paper', '主题必须固化在 V2 doc');
+    command('slide.setBackground', { color: '#123456' });
+    assert.equal(ctl.curSlide().bg, '#123456', '背景必须写当前 V2 slide');
+    command('slide.addEllipse');
+    assert.equal(ctl._addTool, 'shape');
+    assert.equal(ctl._shapePreset, 'ellipse', '椭圆 Ribbon 必须复用 V2 shape Item');
+    command('slide.addText');
+    assert.equal(ctl._addTool, 'text', '文本 Ribbon 必须激活 V2 Item 工具');
+    command('slide.canvasMode');
+    assert.equal(ctl._addTool, null, '画布按钮在 V2 仅回到对象画布');
+    assert.equal(JSON.stringify(ctl.slides), legacyBefore, 'V2 Ribbon 不得偷写旧 slides 数组');
+    slideModule.deactivate(container);
     container.remove();
   });
 

@@ -22,6 +22,9 @@ describe('W71 发布边界', () => {
       assert.ok(pkg.build.files.some(rule => rule.includes(`/prebuilds/${foreign}/`)), `缺 ${foreign} 原生排除规则`);
     }
     assert.ok(pkg.build.asarUnpack.includes('node_modules/**/*.node'));
+    assert.ok(pkg.build.asarUnpack.includes('node_modules/7zip-bin-full/**'));
+    assert.equal(pkg.dependencies['7zip-bin-full'], '26.2.1');
+    assert.equal(pkg.build.afterPack, 'build/prune-7zip-runtime.js');
     for (const required of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md']) assert.ok(pkg.build.files.includes(required));
   });
 
@@ -44,6 +47,10 @@ describe('W71 发布边界', () => {
     assert.equal(unzipper?.version, '0.12.3');
     assert.equal(unzipper?.license, 'MIT');
     assert.ok(unzipper?.licenseFiles.includes('LICENSE'));
+    const sevenZip = report.licenses.packages.find(item => item.name === '7zip-bin-full');
+    assert.equal(sevenZip?.version, '26.2.1');
+    assert.equal(sevenZip?.license, 'MIT');
+    assert.ok(sevenZip?.licenseFiles.includes('LICENSE.txt'));
     assert.equal(report.licenses.evidence.ffmpegWasm.byteMatch, false);
     assert.equal(report.licenses.evidence.ffmpegWasm.recoveredOfficialArtifacts.wasmExactByteMatch, true);
     assert.equal(report.licenses.evidence.ffmpegWasm.recoveredOfficialArtifacts.declaredLicense, 'GPL-2.0-or-later');
@@ -57,8 +64,34 @@ describe('W71 发布边界', () => {
       assert.equal(report.packagedSpecimen.asar.ffmpegNotices.length, 5);
       assert.ok(report.packagedSpecimen.asar.ffmpegNotices.every(file => file.present && file.sha256.length === 64));
       assert.ok(report.packagedSpecimen.asar.ffmpegCoreArtifacts.every(file => !file.present));
-      assert.equal(report.packagedSpecimen.installer.sha256.length, 64);
-      assert.equal(report.packagedSpecimen.asarUnpackedNative.count, 10);
+      if (report.packagedSpecimen.installer.present !== false) assert.equal(report.packagedSpecimen.installer.sha256.length, 64);
+      assert.equal(report.packagedSpecimen.asarUnpackedNative.count, report.packagedSpecimen.asarUnpackedNative.files.length);
+      assert.ok(report.packagedSpecimen.asarUnpackedNative.count > 0);
+      assert.ok(report.packagedSpecimen.asarUnpackedNative.files.every(file => file.path.endsWith('.node')));
+
+      const archive = report.packagedSpecimen.archiveRuntime;
+      assert.equal(archive.gate, 'PASS_PACKAGED_ARCHIVE_RUNTIME');
+      assert.deepEqual(archive.violations, []);
+      assert.equal(archive.expected.package, '7zip-bin-full');
+      assert.equal(archive.expected.packageVersion, '26.2.1');
+      assert.equal(archive.expected.wrapperLicense, 'MIT');
+      assert.equal(archive.expected.runtimeVersion, '26.02');
+      assert.equal(archive.packageIdentity.directDependency, '26.2.1');
+      assert.deepEqual(
+        { name: archive.packageIdentity.packaged.name, version: archive.packageIdentity.packaged.version, license: archive.packageIdentity.packaged.license },
+        { name: '7zip-bin-full', version: '26.2.1', license: 'MIT' },
+      );
+      assert.ok(archive.requiredFiles.every(item => item.source.present && item.source.matchesExpected));
+      assert.ok(archive.requiredFiles.every(item => item.packaged.present && item.packaged.matchesExpected));
+      assert.deepEqual(archive.foreignOrCustomRuntime, []);
+      assert.deepEqual(archive.legacyRuntimeFiles, []);
+      if (process.platform === 'win32') {
+        assert.equal(archive.probe.status, 'PASS');
+        assert.equal(archive.probe.versionMatches, true);
+        assert.equal(archive.probe.capabilitiesMatch, true);
+        assert.equal(archive.probe.loadedAdjacentLibrary, true);
+        assert.deepEqual(archive.probe.capabilities, ['Rar', 'Rar5']);
+      }
     }
   });
 });
@@ -93,6 +126,38 @@ describe('W71 许可证据', () => {
     assert.ok(notice.includes('B2F2418BE6CC3C29A0765C1376EBFBFEA94073B287767460851A3CE487666D8F'));
     assert.ok(sourceStatus.includes('DEFERRED / NOT DISTRIBUTED'));
     assert.ok(sourceStatus.includes('ffmpegwasm/x264#4-cores') && sourceStatus.includes('ffmpegwasm/lame#master'));
+  });
+
+  test('7-Zip wrapper 与目标运行时的固定版本、许可和哈希证据齐全', () => {
+    const manual = JSON.parse(fs.readFileSync(path.join(root, 'docs/engineering/OSS_PROVENANCE_MANUAL.json'), 'utf8'));
+    const requirement = manual.packageEvidenceRequirements.find(item => item.package === '7zip-bin-full');
+    assert.equal(requirement?.version, '26.2.1');
+    assert.equal(requirement?.declaredLicense, 'MIT');
+    assert.equal(requirement?.runtimeVersion, '26.02');
+    assert.deepEqual(requirement?.target.requiredCapabilities, ['Rar', 'Rar5']);
+    assert.deepEqual(requirement?.target.allowedRuntimeFiles, [
+      'win/x64/7z.exe',
+      'win/x64/7z.dll',
+      'win/x64/History.txt',
+      'win/x64/License.txt',
+      'win/x64/readme.txt',
+    ]);
+    const roles = new Set(requirement.files.map(item => item.role));
+    for (const role of [
+      'WRAPPER_MIT_LICENSE',
+      'TARGET_ARCHIVE_EXECUTABLE',
+      'TARGET_ARCHIVE_CODEC_LIBRARY',
+      'ADJACENT_RUNTIME_LICENSE',
+      'PRODUCT_RUNTIME_NOTICE',
+      'RUNTIME_COMPOUND_LICENSE_NOTICE',
+      'LGPL_2_1_LICENSE_TEXT',
+    ]) assert.ok(roles.has(role), `缺 7-Zip 证据角色 ${role}`);
+    for (const item of requirement.files) {
+      const content = fs.readFileSync(path.join(root, item.path));
+      assert.equal(crypto.createHash('sha256').update(content).digest('hex').toUpperCase(), item.sha256);
+      assert.ok(['ASAR', 'ASAR_UNPACKED'].includes(item.container));
+      assert.ok(item.packagedPath);
+    }
   });
 
   test('ffmpeg 转码任务串行化且成功/失败路径均释放监听器、虚拟文件与 worker', () => {

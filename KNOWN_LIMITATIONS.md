@@ -30,7 +30,8 @@ This document describes the boundary of the first sealed Windows release candida
 
 ## Preview and deferred capabilities
 
-- DMHY, Recorder, Plugins, OCR and Archive remain Preview.
+- DMHY, Recorder, Plugins and OCR remain Preview.
+- Archive is Formal only inside its sealed boundary: zip/RAR/7z/tar/CAB and ordinary single-stream gzip are preflighted and extracted through staging without overwrite. Encrypted archives, BZIP2/XZ streams without complete preflight metadata, and two-layer `tar.gz`/`tgz` are rejected explicitly; broad damaged/password/long-path and low-disk matrices remain release-environment validation work.
 - Mobile, Updater and the W62e general Feed remain Hidden. W66 Foundation has two packaged real adapters (Kimi Code and Codex); Claude Code remains conditionally deferred and must not be shown as authenticated or ready until its independent real gate passes.
 - W79 includes an internal External Tool runtime and a Blender Headless Adapter, but Blender is not bundled or installed by Mazz. The current host reports `BLENDER_NOT_INSTALLED`; real Blender rendering remains unavailable until the user independently installs Blender and the packaged real-tool activation gate passes.
 - Post-W71 work—including complete Session topology, exhaustive compatibility matrices and W63–W86 design capsules—is preserved in the complete backlog and is not part of this RC.

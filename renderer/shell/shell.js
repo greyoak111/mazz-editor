@@ -1848,8 +1848,8 @@ export class Shell {
     R('file.newSheet', { title: '新建表格', icon: '📊', group: '文件', run: () => this.openTab('sheet', { title: '未命名.mazzsheet', content: '' }) });
     R('file.newSlide', { title: '新建演示', icon: '📽', group: '文件', run: () => this.openTab('slide', { title: '未命名.mazzslide', content: '' }) });
     // ==================== W58b 解压缩：命令族 ====================
-    const ARCHIVE_EXTS = new Set(['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'jar', 'apk', '7zip', 'cab']);
-    this.isArchivePath = (p) => ARCHIVE_EXTS.has((p.split('.').pop() || '').toLowerCase());
+    const ARCHIVE_EXTS = new Set(['zip', 'rar', '7z', 'tar', 'gz', 'jar', 'apk', '7zip', 'cab']);
+    this.isArchivePath = (p) => !/(?:\.tar\.gz|\.tgz)$/i.test(String(p || '')) && ARCHIVE_EXTS.has((String(p || '').split('.').pop() || '').toLowerCase());
     // W66：ctxmenuPick 无载荷直执——解构必须带默认（undefined 炸=哑火实锤）+无目标人话提示
     const archTarget = (p) => {
       const fp = p || this.fileTree.selected?.path;
@@ -1972,10 +1972,10 @@ export class Shell {
               if (!pages.length) { toast('表格没有内容'); return; }
             } else if (mod === 'slide') {
               const ctl = window.__activeSlideCtl;
-              if (!ctl?.slides?.length) throw new Error('演示未就绪');
-              const { buildSlidePages } = await import('../modules/slide/print.js');
+              if (!ctl || (ctl.isV2 ? !ctl.doc2?.layouts?.main?.frames?.length : !ctl.slides?.length)) throw new Error('演示未就绪');
+              const { buildSlidePagesForController } = await import('../modules/slide/print.js');
               setup = ctl.printSetup || { size: 'A4', orientation: 'landscape', margins: { top: 8, right: 8, bottom: 8, left: 8 }, pageno: false };
-              pages = buildSlidePages(ctl.slides, ctl.theme);
+              pages = buildSlidePagesForController(ctl);
             } else {
               // 文档类：取编辑器渲染 HTML，本地图片内联为 data:（离屏沙盒窗读不到 file://）
               const ctl = window.__activeMarkdownCtl;
@@ -3264,7 +3264,7 @@ export class Shell {
         }
         // W66：面板空态「打开压缩包…」门——对话框选档→stash→回推清单
         if (pl.type === 'archiveOpenDialog') {
-          const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '压缩包', extensions: ['zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'jar', 'apk', '7zip', 'cab'] }] }).catch(() => null);
+          const p = await window.mazz.invoke('dialog:openFile', { filters: [{ name: '压缩包', extensions: ['zip', 'rar', '7z', 'tar', 'gz', 'jar', 'apk', '7zip', 'cab'] }] }).catch(() => null);
           const fp = Array.isArray(p) ? p[0] : p;
           if (fp) {
             this._archivePath = fp;

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": {
     "scannedFiles": 140,
-    "scannedLines": 44057
+    "scannedLines": 44252
   },
   "inventory": {
     "managedWindowFamilies": [
@@ -115,61 +115,61 @@
     {
       "rule": "browser-window-registry",
       "file": "main/main.js",
-      "line": 1405,
+      "line": 1410,
       "sample": "const callerWin = (event) => BrowserWindow.fromWebContents(event?.sender) || wm.main;"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1447,
+      "line": 1452,
       "sample": "try { target.webContents.removeListener('render-process-gone', onGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1464,
+      "line": 1469,
       "sample": "target.webContents.once('render-process-gone', onGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1477,
+      "line": 1482,
       "sample": "try { record.target.webContents.removeListener('render-process-gone', record.onTargetGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1479,
+      "line": 1484,
       "sample": "try { record.source?.removeListener('render-process-gone', record.onSourceGone); } catch {}"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1557,
+      "line": 1562,
       "sample": "target.webContents.once('render-process-gone', record.onTargetGone);"
     },
     {
       "rule": "render-gone-hook",
       "file": "main/main.js",
-      "line": 1559,
+      "line": 1564,
       "sample": "source?.once('render-process-gone', record.onSourceGone);"
     },
     {
       "rule": "browser-window-construction",
       "file": "main/main.js",
-      "line": 2095,
+      "line": 2100,
       "sample": "const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2567,
+      "line": 2572,
       "sample": "const browserSess = session.fromPartition('persist:mazz-browser');"
     },
     {
       "rule": "session-partition",
       "file": "main/main.js",
-      "line": 2661,
+      "line": 2666,
       "sample": "const authorSess = session.fromPartition('persist:mazz-author');"
     },
     {
@@ -456,7 +456,7 @@
       "evidence": [
         {
           "file": "renderer/modules/browser/index.js",
-          "line": 1445,
+          "line": 1448,
           "sample": "// pane:tabMoved 监听器拿 { container } 会令 __sync/recompose 成为空调，分屏后的原生 Surface 无法按新矩形重组）"
         },
         {
@@ -485,17 +485,17 @@
         },
         {
           "file": "main/main.js",
-          "line": 2283,
+          "line": 2288,
           "sample": "const menu = Menu.buildFromTemplate(items.map(toNative));"
         },
         {
           "file": "main/main.js",
-          "line": 2376,
+          "line": 2381,
           "sample": "Menu.buildFromTemplate(template).popup({ window: wm.main });"
         },
         {
           "file": "main/main.js",
-          "line": 2405,
+          "line": 2410,
           "sample": "Menu.setApplicationMenu(Menu.buildFromTemplate(items));"
         },
         {
@@ -533,7 +533,7 @@
       "evidence": [
         {
           "file": "main/main.js",
-          "line": 2569,
+          "line": 2574,
           "sample": "if (mazzResHandler) browserSess.protocol.handle('mazz-res', mazzResHandler);"
         }
       ]

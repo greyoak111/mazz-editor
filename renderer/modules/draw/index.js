@@ -1,82 +1,17 @@
 // renderer/modules/draw/index.js —— 画板：多笔刷引擎 + 图层 + 参考图 + 帧/洋葱皮 + 过程内录
-import { getStroke } from 'perfect-freehand';
 import { iconHtml } from '../../lib/svg-icons.js';
 import { contextKeys } from '../../core/contextkey-service.js';
 import { toast, inputModal } from '../../shell/shell.js';
 import { createDoc, createLayer, createFrame, createStroke, hitAnyStroke, moveStroke, SnapshotStack, legacyFrameToCanvasDocument } from './model.js';
 import { createCanvasAgentClient } from '../../lib/canvas-agent.js';
-import { BRUSH_TYPES, DEFAULT_BRUSHES, makeTipCanvas, colorWithAlpha, parseAbr, listCustomBrushes, saveCustomBrush } from './brushes.js';
+import { BRUSH_TYPES, DEFAULT_BRUSHES, colorWithAlpha, parseAbr, listCustomBrushes, saveCustomBrush } from './brushes.js';
+import { renderStroke, strokePath } from './stroke-render.js';
 
 const MODULE = 'draw';
 const instances = new Map();
 let current = null;
 
 const PALETTE = ['#1a1a1a', '#dc2626', '#ea580c', '#d97706', '#16a34a', '#0ea5e9', '#4f46e5', '#7c3aed', '#db2777', '#ffffff'];
-const PF_OPTS = { thinning: 0.55, smoothing: 0.5, streamline: 0.4, easing: (t) => t, last: true };
-
-/** freehand stroke 点列 → Path2D（按笔刷类型调参） */
-function strokePath(stroke) {
-  const bt = BRUSH_TYPES[stroke.brush] || BRUSH_TYPES.pen;
-  const outline = getStroke(stroke.pts.map(p => [p.x, p.y, p.p ?? 0.5]), {
-    size: stroke.size,
-    thinning: bt.thinning ?? 0.55,
-    smoothing: stroke.smoothing ?? bt.smoothing ?? 0.5,
-    streamline: stroke.streamline ?? bt.streamline ?? 0.4,
-    easing: (t) => t,
-    last: true,
-  });
-  const path = new Path2D();
-  if (!outline.length) return path;
-  path.moveTo(outline[0][0], outline[0][1]);
-  for (let i = 1; i < outline.length; i++) path.lineTo(outline[i][0], outline[i][1]);
-  path.closePath();
-  return path;
-}
-
-/** 印章类笔刷渲染（沿点列间隔盖章） */
-function drawStampStroke(ctx, stroke, tipCache) {
-  const bt = BRUSH_TYPES[stroke.brush] || {};
-  const tip = stroke._tip || (stroke._tip = stroke.tipImageEl || makeTipCanvas(bt.stamp === 'air' ? 'air' : 'soft', stroke.size, stroke.color));
-  const gap = Math.max(1.5, stroke.size * (bt.stamp === 'air' ? 0.35 : 0.22));
-  let acc = 0, prev = null;
-  ctx.globalAlpha = stroke.opacity ?? bt.opacity ?? 1;
-  for (const p of stroke.pts) {
-    if (prev) {
-      const d = Math.hypot(p.x - prev.x, p.y - prev.y);
-      let t = acc;
-      while (t < d) {
-        const k = t / d;
-        ctx.drawImage(tip, prev.x + (p.x - prev.x) * k - stroke.size / 2, prev.y + (p.y - prev.y) * k - stroke.size / 2, stroke.size, stroke.size);
-        t += gap;
-      }
-      acc = t - d;
-    }
-    prev = p;
-  }
-  ctx.globalAlpha = 1;
-}
-
-/** 统一笔画渲染入口 */
-function renderStroke(ctx, s) {
-  // 擦除笔画：destination-out 把划过区域擦透明（橡皮 v34）
-  if (s.erase) {
-    if (!s._path) s._path = strokePath(s);
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = '#000';
-    ctx.fill(s._path);
-    ctx.restore();
-    return;
-  }
-  const isStamp = (BRUSH_TYPES[s.brush]?.stamp);
-  if (isStamp || s.stampMode) { drawStampStroke(ctx, s); return; }
-  if (!s._path) s._path = strokePath(s);
-  ctx.globalAlpha = s.opacity ?? (BRUSH_TYPES[s.brush]?.opacity ?? 1);
-  ctx.fillStyle = s.color;
-  ctx.fill(s._path);
-  ctx.globalAlpha = 1;
-}
-
 function createDraw(container) {
   const root = document.createElement('div');
   root.className = 'draw-root';

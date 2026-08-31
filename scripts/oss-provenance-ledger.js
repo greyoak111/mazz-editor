@@ -120,10 +120,21 @@ function buildLedger(root = ROOT, manualRelative = DEFAULT_MANUAL) {
       }
     }
     if (override?.licenseFile) requiredEvidence.push({ ...fileEvidence(root, override.licenseFile), role: 'LICENSE_OVERRIDE_EVIDENCE' });
-    for (const item of requirement?.files || []) requiredEvidence.push({ ...fileEvidence(root, item.path), role: item.role });
+    for (const item of requirement?.files || []) {
+      requiredEvidence.push({
+        ...fileEvidence(root, item.path, item.sha256),
+        role: item.role,
+        ...(item.packagedPath ? { packagedPath: slash(item.packagedPath) } : {}),
+        ...(item.container ? { container: item.container } : {}),
+      });
+    }
     for (const record of requiredEvidence) {
       allEvidence.push(record);
       if (!record.present) blockers.push(`PACKAGE_EVIDENCE_MISSING:${key}:${record.path}`);
+      if (record.matchesExpected === false) blockers.push(`PACKAGE_EVIDENCE_HASH_MISMATCH:${key}:${record.path}`);
+    }
+    if (requirement?.declaredLicense && license !== requirement.declaredLicense) {
+      blockers.push(`PACKAGE_EVIDENCE_LICENSE_MISMATCH:${key}`);
     }
     const packageModifications = [];
     if (modification) {
@@ -148,7 +159,7 @@ function buildLedger(root = ROOT, manualRelative = DEFAULT_MANUAL) {
         expression: license,
         evidenceState: override ? override.evidenceState : 'PACKAGE_LOCK_DECLARATION',
         reviewState: 'DECLARED_NOT_LEGALLY_REVIEWED',
-        repository: override?.repository || '',
+        repository: override?.repository || requirement?.repository || '',
       },
       modifications: packageModifications,
       requiredEvidence,

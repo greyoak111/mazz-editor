@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "generatedAt": "2026-08-31T01:09:52.404Z",
+  "generatedAt": "2026-08-31T07:54:29.844Z",
   "app": {
     "name": "mazz-editor",
     "version": "0.2.0",
@@ -11,6 +11,7 @@
     "npmRebuild": false,
     "asarUnpack": [
       "node_modules/**/*.node",
+      "node_modules/7zip-bin-full/**",
       "resources/tools/blender/**"
     ],
     "files": [
@@ -52,7 +53,7 @@
         "present": true
       }
     ],
-    "lockedPackageCount": 801,
+    "lockedPackageCount": 802,
     "missingDeclaredLicense": [],
     "packages": [
       {
@@ -1134,6 +1135,16 @@
         ],
         "optional": false,
         "dev": true
+      },
+      {
+        "name": "7zip-bin-full",
+        "version": "26.2.1",
+        "license": "MIT",
+        "licenseFiles": [
+          "LICENSE.txt"
+        ],
+        "optional": false,
+        "dev": false
       },
       {
         "name": "abbrev",
@@ -8019,15 +8030,15 @@
     "provenanceLedger": {
       "present": true,
       "path": ".mazz/audit/oss-provenance-ledger.json",
-      "sha256": "AE080A355656AFACF37D0D15A381896DB6F3C26CACA8F55932BA659261AE4986",
+      "sha256": "59D9B4360A11CDEE86FBE69D5210967E6D5CA69C696ED21E58E428FCC0CE42A3",
       "schema": "mazz.oss-provenance-ledger/v0",
       "status": "PASS_REPOSITORY_PROVENANCE_BASELINE",
       "current": true,
       "summary": {
-        "lockedPackages": 801,
-        "runtimeGraphCandidates": 380,
+        "lockedPackages": 802,
+        "runtimeGraphCandidates": 381,
         "developmentPackages": 421,
-        "directRuntimeDependencies": 23,
+        "directRuntimeDependencies": 24,
         "packagesWithDeclaredModifications": 2,
         "manualLicenseOverridesApplied": 1,
         "missingLicense": 0,
@@ -8039,12 +8050,12 @@
     }
   },
   "rendererSourceMaps": {
-    "count": 211,
-    "bytes": 59955145,
+    "count": 216,
+    "bytes": 59978386,
     "files": [
       {
         "path": "renderer/dist/app.js.map",
-        "bytes": 4254169
+        "bytes": 4205712
       },
       {
         "path": "renderer/dist/chunks/abap-G2Z2H6CX.js.map",
@@ -8055,7 +8066,7 @@
         "bytes": 4920
       },
       {
-        "path": "renderer/dist/chunks/agreement-JKIULF2P.js.map",
+        "path": "renderer/dist/chunks/agreement-IAAC6ANG.js.map",
         "bytes": 13290
       },
       {
@@ -8099,6 +8110,10 @@
         "bytes": 15640
       },
       {
+        "path": "renderer/dist/chunks/chunk-3HUMTUJB.js.map",
+        "bytes": 22192
+      },
+      {
         "path": "renderer/dist/chunks/chunk-3PIXAYD7.js.map",
         "bytes": 42905
       },
@@ -8115,8 +8130,8 @@
         "bytes": 1776
       },
       {
-        "path": "renderer/dist/chunks/chunk-6F2U53TH.js.map",
-        "bytes": 1205308
+        "path": "renderer/dist/chunks/chunk-6JRUHB3I.js.map",
+        "bytes": 27708
       },
       {
         "path": "renderer/dist/chunks/chunk-7BE6BE5M.js.map",
@@ -8125,10 +8140,6 @@
       {
         "path": "renderer/dist/chunks/chunk-A2CMLOJ6.js.map",
         "bytes": 7478
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-ACOTEQ6Y.js.map",
-        "bytes": 654405
       },
       {
         "path": "renderer/dist/chunks/chunk-AY5GIH25.js.map",
@@ -8147,20 +8158,16 @@
         "bytes": 10310
       },
       {
-        "path": "renderer/dist/chunks/chunk-E5NPY3ZT.js.map",
-        "bytes": 17812
-      },
-      {
         "path": "renderer/dist/chunks/chunk-ECI2W5KO.js.map",
         "bytes": 19405
       },
       {
-        "path": "renderer/dist/chunks/chunk-GFEHDONR.js.map",
-        "bytes": 33680
+        "path": "renderer/dist/chunks/chunk-EKXIPMN5.js.map",
+        "bytes": 1205308
       },
       {
-        "path": "renderer/dist/chunks/chunk-HMFPWZEC.js.map",
-        "bytes": 13080
+        "path": "renderer/dist/chunks/chunk-GFEHDONR.js.map",
+        "bytes": 33680
       },
       {
         "path": "renderer/dist/chunks/chunk-ISCH7X5M.js.map",
@@ -8195,16 +8202,28 @@
         "bytes": 21565
       },
       {
+        "path": "renderer/dist/chunks/chunk-N4V5W7KK.js.map",
+        "bytes": 12614
+      },
+      {
         "path": "renderer/dist/chunks/chunk-NAQKA54E.js.map",
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/chunk-NHWC6XPX.js.map",
-        "bytes": 303936
+        "path": "renderer/dist/chunks/chunk-NX6APOKN.js.map",
+        "bytes": 13080
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-OKGRXHRN.js.map",
+        "bytes": 17812
       },
       {
         "path": "renderer/dist/chunks/chunk-OXGECBOR.js.map",
         "bytes": 1187
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-P2OZRGNU.js.map",
+        "bytes": 654702
       },
       {
         "path": "renderer/dist/chunks/chunk-P4EIAUOE.js.map",
@@ -8223,16 +8242,16 @@
         "bytes": 19505
       },
       {
+        "path": "renderer/dist/chunks/chunk-RJ3EIHJV.js.map",
+        "bytes": 6328
+      },
+      {
         "path": "renderer/dist/chunks/chunk-SG24SKEM.js.map",
         "bytes": 23980
       },
       {
-        "path": "renderer/dist/chunks/chunk-SQPA2LEE.js.map",
-        "bytes": 27708
-      },
-      {
-        "path": "renderer/dist/chunks/chunk-TKHLGJAK.js.map",
-        "bytes": 6328
+        "path": "renderer/dist/chunks/chunk-U6K2A6O4.js.map",
+        "bytes": 12942
       },
       {
         "path": "renderer/dist/chunks/chunk-UIYC26N6.js.map",
@@ -8255,12 +8274,12 @@
         "bytes": 87486
       },
       {
-        "path": "renderer/dist/chunks/chunk-WRABHQNA.js.map",
-        "bytes": 12942
+        "path": "renderer/dist/chunks/chunk-WGGPA2DK.js.map",
+        "bytes": 17046
       },
       {
-        "path": "renderer/dist/chunks/chunk-XM2HKWSE.js.map",
-        "bytes": 13756
+        "path": "renderer/dist/chunks/chunk-WNTQRR5W.js.map",
+        "bytes": 291402
       },
       {
         "path": "renderer/dist/chunks/chunk-XPFNG65H.js.map",
@@ -8279,8 +8298,16 @@
         "bytes": 103565
       },
       {
+        "path": "renderer/dist/chunks/chunk-YXQNZB5V.js.map",
+        "bytes": 15964
+      },
+      {
         "path": "renderer/dist/chunks/chunk-YZ6TK5UE.js.map",
         "bytes": 12758
+      },
+      {
+        "path": "renderer/dist/chunks/chunk-Z2KF2TEJ.js.map",
+        "bytes": 16948
       },
       {
         "path": "renderer/dist/chunks/clojure-ZAJ34JP7.js.map",
@@ -8331,7 +8358,7 @@
         "bytes": 14978
       },
       {
-        "path": "renderer/dist/chunks/custom-apps-5VRJXY66.js.map",
+        "path": "renderer/dist/chunks/custom-apps-L26M4HEF.js.map",
         "bytes": 8128
       },
       {
@@ -8363,7 +8390,7 @@
         "bytes": 5970
       },
       {
-        "path": "renderer/dist/chunks/docx-io-MAXQAY4T.js.map",
+        "path": "renderer/dist/chunks/docx-io-4DPAPDUR.js.map",
         "bytes": 93
       },
       {
@@ -8379,7 +8406,7 @@
         "bytes": 15364
       },
       {
-        "path": "renderer/dist/chunks/editor.main-BF4GTTKR.js.map",
+        "path": "renderer/dist/chunks/editor.main-PRBOTPHW.js.map",
         "bytes": 319188
       },
       {
@@ -8399,15 +8426,15 @@
         "bytes": 3559516
       },
       {
-        "path": "renderer/dist/chunks/extern-convert-G6VSMOXW.js.map",
-        "bytes": 15480
+        "path": "renderer/dist/chunks/extern-convert-3DXHUO2O.js.map",
+        "bytes": 20445
       },
       {
-        "path": "renderer/dist/chunks/factory-5T7KHQBA.js.map",
+        "path": "renderer/dist/chunks/factory-ZMTOS2YS.js.map",
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/ffmpeg-transcode-Z7QC4RFR.js.map",
+        "path": "renderer/dist/chunks/ffmpeg-transcode-KEYHGAN2.js.map",
         "bytes": 8784
       },
       {
@@ -8419,7 +8446,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/formats-io-Z3UJIZLW.js.map",
+        "path": "renderer/dist/chunks/formats-io-K7T7GVCB.js.map",
         "bytes": 6113
       },
       {
@@ -8447,7 +8474,7 @@
         "bytes": 8982
       },
       {
-        "path": "renderer/dist/chunks/help-4K3NZND4.js.map",
+        "path": "renderer/dist/chunks/help-4GLYORYW.js.map",
         "bytes": 93
       },
       {
@@ -8463,7 +8490,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/imgedit-X5DKHEWV.js.map",
+        "path": "renderer/dist/chunks/imgedit-W3ZP2TUY.js.map",
         "bytes": 42265
       },
       {
@@ -8547,7 +8574,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/mindmap-S33WL2BF.js.map",
+        "path": "renderer/dist/chunks/mindmap-EGM3VIFF.js.map",
         "bytes": 93
       },
       {
@@ -8583,15 +8610,15 @@
         "bytes": 6997
       },
       {
-        "path": "renderer/dist/chunks/ora-SJFZYPXZ.js.map",
-        "bytes": 5076
+        "path": "renderer/dist/chunks/ora-22BTMEAZ.js.map",
+        "bytes": 8881
       },
       {
         "path": "renderer/dist/chunks/outline-2D5B6AC2.js.map",
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/paginate-WKYHGEA2.js.map",
+        "path": "renderer/dist/chunks/paginate-OKXU3O4J.js.map",
         "bytes": 93
       },
       {
@@ -8603,7 +8630,7 @@
         "bytes": 6489
       },
       {
-        "path": "renderer/dist/chunks/paste-FMOAMRJA.js.map",
+        "path": "renderer/dist/chunks/paste-LPJ2PVVH.js.map",
         "bytes": 7758
       },
       {
@@ -8623,7 +8650,7 @@
         "bytes": 5568
       },
       {
-        "path": "renderer/dist/chunks/player-CJ3I2RQO.js.map",
+        "path": "renderer/dist/chunks/player-JGOLYKDW.js.map",
         "bytes": 375317
       },
       {
@@ -8639,7 +8666,7 @@
         "bytes": 9947
       },
       {
-        "path": "renderer/dist/chunks/pptx-FNUN6LL6.js.map",
+        "path": "renderer/dist/chunks/pptx-OS2I4PSG.js.map",
         "bytes": 93
       },
       {
@@ -8647,19 +8674,23 @@
         "bytes": 10138
       },
       {
-        "path": "renderer/dist/chunks/pptxgen.es-DANLPZ6A.js.map",
+        "path": "renderer/dist/chunks/pptx2-SHANNJYP.js.map",
+        "bytes": 93
+      },
+      {
+        "path": "renderer/dist/chunks/pptxgen.es-242MZVJQ.js.map",
         "bytes": 683045
       },
       {
-        "path": "renderer/dist/chunks/print-4BOLDGPW.js.map",
+        "path": "renderer/dist/chunks/print-D2UGM2B3.js.map",
+        "bytes": 7823
+      },
+      {
+        "path": "renderer/dist/chunks/print-FVB5AXDO.js.map",
         "bytes": 5325
       },
       {
-        "path": "renderer/dist/chunks/print-UJKFCRLQ.js.map",
-        "bytes": 3691
-      },
-      {
-        "path": "renderer/dist/chunks/print-preview-BCH4XTAV.js.map",
+        "path": "renderer/dist/chunks/print-preview-I7O3MCBI.js.map",
         "bytes": 93
       },
       {
@@ -8683,7 +8714,7 @@
         "bytes": 10174
       },
       {
-        "path": "renderer/dist/chunks/queue-F5L26OGQ.js.map",
+        "path": "renderer/dist/chunks/queue-DLF7W6LR.js.map",
         "bytes": 3828
       },
       {
@@ -8695,7 +8726,7 @@
         "bytes": 29006
       },
       {
-        "path": "renderer/dist/chunks/recorder-GPKBPEOM.js.map",
+        "path": "renderer/dist/chunks/recorder-PPT5R5IS.js.map",
         "bytes": 77377
       },
       {
@@ -8707,7 +8738,7 @@
         "bytes": 28146
       },
       {
-        "path": "renderer/dist/chunks/replace-K5PETJTT.js.map",
+        "path": "renderer/dist/chunks/replace-53I5WD7V.js.map",
         "bytes": 14890
       },
       {
@@ -8743,15 +8774,15 @@
         "bytes": 7607
       },
       {
-        "path": "renderer/dist/chunks/share-ITK24ECP.js.map",
+        "path": "renderer/dist/chunks/share-2UDUD5O4.js.map",
         "bytes": 15982
       },
       {
-        "path": "renderer/dist/chunks/shared-index-PNXICWV2.js.map",
-        "bytes": 2595
+        "path": "renderer/dist/chunks/shared-index-J5PSUJA6.js.map",
+        "bytes": 2493
       },
       {
-        "path": "renderer/dist/chunks/shell-O4ZJMQ2Z.js.map",
+        "path": "renderer/dist/chunks/shell-IOJYXL6X.js.map",
         "bytes": 93
       },
       {
@@ -8759,11 +8790,11 @@
         "bytes": 8877
       },
       {
-        "path": "renderer/dist/chunks/side-dock-455N7E2I.js.map",
-        "bytes": 47211
+        "path": "renderer/dist/chunks/side-dock-TAOTL7J3.js.map",
+        "bytes": 47245
       },
       {
-        "path": "renderer/dist/chunks/sidebar-panels-HKPVADZJ.js.map",
+        "path": "renderer/dist/chunks/sidebar-panels-3IGFO2QR.js.map",
         "bytes": 78837
       },
       {
@@ -8819,7 +8850,7 @@
         "bytes": 93
       },
       {
-        "path": "renderer/dist/chunks/theme-custom-TQM2WSRA.js.map",
+        "path": "renderer/dist/chunks/theme-custom-UNBJTU3Z.js.map",
         "bytes": 22500
       },
       {
@@ -9106,13 +9137,13 @@
   "packagedSpecimen": {
     "present": true,
     "unpacked": {
-      "count": 438,
-      "bytes": 569274038
+      "count": 448,
+      "bytes": 571883082
     },
     "asar": {
       "present": true,
-      "bytes": 262075320,
-      "entries": 9648,
+      "bytes": 262168178,
+      "entries": 9747,
       "sourceMaps": 0,
       "sourceMapBytes": 0,
       "sourceMapFiles": [],
@@ -9210,6 +9241,226 @@
           "bytes": 659968
         }
       ]
+    },
+    "archiveRuntime": {
+      "present": true,
+      "gate": "PASS_PACKAGED_ARCHIVE_RUNTIME",
+      "expected": {
+        "package": "7zip-bin-full",
+        "packageVersion": "26.2.1",
+        "wrapperLicense": "MIT",
+        "runtimeVersion": "26.02",
+        "target": {
+          "platform": "win32",
+          "arch": "x64",
+          "requiredCapabilities": [
+            "Rar",
+            "Rar5"
+          ],
+          "allowedRuntimeFiles": [
+            "win/x64/7z.exe",
+            "win/x64/7z.dll",
+            "win/x64/History.txt",
+            "win/x64/License.txt",
+            "win/x64/readme.txt"
+          ]
+        }
+      },
+      "packageIdentity": {
+        "expectedName": "7zip-bin-full",
+        "expectedVersion": "26.2.1",
+        "directDependency": "26.2.1",
+        "source": {
+          "present": true,
+          "name": "7zip-bin-full",
+          "version": "26.2.1",
+          "license": "MIT"
+        },
+        "packaged": {
+          "present": true,
+          "name": "7zip-bin-full",
+          "version": "26.2.1",
+          "license": "MIT"
+        }
+      },
+      "requiredFiles": [
+        {
+          "role": "WRAPPER_MIT_LICENSE",
+          "container": "ASAR_UNPACKED",
+          "source": {
+            "path": "node_modules/7zip-bin-full/LICENSE.txt",
+            "present": true,
+            "bytes": 1087,
+            "sha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+            "expectedSha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+            "matchesExpected": true
+          },
+          "packaged": {
+            "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/7zip-bin-full/LICENSE.txt",
+            "present": true,
+            "bytes": 1087,
+            "sha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+            "expectedSha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+            "matchesExpected": true
+          }
+        },
+        {
+          "role": "TARGET_ARCHIVE_EXECUTABLE",
+          "container": "ASAR_UNPACKED",
+          "source": {
+            "path": "node_modules/7zip-bin-full/win/x64/7z.exe",
+            "present": true,
+            "bytes": 576000,
+            "sha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+            "expectedSha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+            "matchesExpected": true
+          },
+          "packaged": {
+            "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/7zip-bin-full/win/x64/7z.exe",
+            "present": true,
+            "bytes": 576000,
+            "sha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+            "expectedSha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+            "matchesExpected": true
+          }
+        },
+        {
+          "role": "TARGET_ARCHIVE_CODEC_LIBRARY",
+          "container": "ASAR_UNPACKED",
+          "source": {
+            "path": "node_modules/7zip-bin-full/win/x64/7z.dll",
+            "present": true,
+            "bytes": 1906688,
+            "sha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+            "expectedSha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+            "matchesExpected": true
+          },
+          "packaged": {
+            "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/7zip-bin-full/win/x64/7z.dll",
+            "present": true,
+            "bytes": 1906688,
+            "sha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+            "expectedSha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+            "matchesExpected": true
+          }
+        },
+        {
+          "role": "ADJACENT_RUNTIME_LICENSE",
+          "container": "ASAR_UNPACKED",
+          "source": {
+            "path": "node_modules/7zip-bin-full/win/x64/License.txt",
+            "present": true,
+            "bytes": 6031,
+            "sha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+            "expectedSha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+            "matchesExpected": true
+          },
+          "packaged": {
+            "path": "release/win-unpacked/resources/app.asar.unpacked/node_modules/7zip-bin-full/win/x64/License.txt",
+            "present": true,
+            "bytes": 6031,
+            "sha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+            "expectedSha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+            "matchesExpected": true
+          }
+        },
+        {
+          "role": "PRODUCT_RUNTIME_NOTICE",
+          "container": "ASAR",
+          "source": {
+            "path": "resources/licenses/7zip/NOTICE.md",
+            "present": true,
+            "bytes": 1980,
+            "sha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+            "expectedSha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+            "matchesExpected": true
+          },
+          "packaged": {
+            "path": "release/win-unpacked/resources/app.asar::resources/licenses/7zip/NOTICE.md",
+            "present": true,
+            "bytes": 1980,
+            "sha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+            "expectedSha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+            "matchesExpected": true
+          }
+        },
+        {
+          "role": "RUNTIME_COMPOUND_LICENSE_NOTICE",
+          "container": "ASAR",
+          "source": {
+            "path": "resources/licenses/7zip/LICENSE.txt",
+            "present": true,
+            "bytes": 5885,
+            "sha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+            "expectedSha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+            "matchesExpected": true
+          },
+          "packaged": {
+            "path": "release/win-unpacked/resources/app.asar::resources/licenses/7zip/LICENSE.txt",
+            "present": true,
+            "bytes": 5885,
+            "sha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+            "expectedSha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+            "matchesExpected": true
+          }
+        },
+        {
+          "role": "LGPL_2_1_LICENSE_TEXT",
+          "container": "ASAR",
+          "source": {
+            "path": "resources/licenses/7zip/COPYING.txt",
+            "present": true,
+            "bytes": 26530,
+            "sha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+            "expectedSha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+            "matchesExpected": true
+          },
+          "packaged": {
+            "path": "release/win-unpacked/resources/app.asar::resources/licenses/7zip/COPYING.txt",
+            "present": true,
+            "bytes": 26530,
+            "sha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+            "expectedSha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+            "matchesExpected": true
+          }
+        }
+      ],
+      "packagedRuntimeFiles": [
+        "7x.sh",
+        "LICENSE.txt",
+        "index.js",
+        "package.json",
+        "update-binaries.js",
+        "win/x64/7z.dll",
+        "win/x64/7z.exe",
+        "win/x64/History.txt",
+        "win/x64/License.txt",
+        "win/x64/readme.txt"
+      ],
+      "foreignOrCustomRuntime": [],
+      "legacyRuntimeFiles": [],
+      "probe": {
+        "attempted": true,
+        "status": "PASS",
+        "exitCode": 0,
+        "signal": "",
+        "error": "",
+        "version": "26.02",
+        "expectedVersion": "26.02",
+        "versionMatches": true,
+        "capabilities": [
+          "Rar",
+          "Rar5"
+        ],
+        "requiredCapabilities": [
+          "Rar",
+          "Rar5"
+        ],
+        "capabilitiesMatch": true,
+        "loadedAdjacentLibrary": true
+      },
+      "asarAuditError": "",
+      "violations": []
     },
     "installer": {
       "path": "release/Mazz Editor Setup 0.2.0.exe",

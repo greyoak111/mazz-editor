@@ -76,6 +76,7 @@ function createSlide(container) {
     v2Canvas: root.querySelector('.sl-v2-canvas'),
     doc2: null,          // v2 文档（createSlideDoc 形态）
     curSlideId: null,    // 当前页 id（v2 模式）
+    _currentFrame: null, // 当前编排帧引用（同一物料可在序列中出现多次，不能只靠 slideId 定位）
     selItem: null,       // 选中 Item id（W37 画布）
     multiSel: null,      // 选框多选 Set（W37）
     get isV2() { return !!ctl.doc2; },
@@ -431,7 +432,8 @@ function createSlide(container) {
   function enterV2(doc) {
     ctl.doc2 = doc;
     ctl.themeId = doc.theme || 'ink';
-    ctl.curSlideId = doc.layouts.main.frames[0]?.slideId || null;
+    ctl._currentFrame = doc.layouts.main.frames[0] || null;
+    ctl.curSlideId = ctl._currentFrame?.slideId || null;
     ctl.outlineEl.closest('.sl-editor').style.display = 'none';
     root.querySelector('.sl-preview').style.display = 'none';
     ctl.v2.style.display = 'flex';
@@ -446,6 +448,21 @@ function createSlide(container) {
   }
 
   function curSlide() { return ctl.curSlideId ? ctl.doc2?.slides[ctl.curSlideId] : null; }
+  function currentFrameIndex() {
+    const frames = ctl.doc2?.layouts?.main?.frames || [];
+    let i = frames.indexOf(ctl._currentFrame);
+    if (i < 0 || frames[i]?.slideId !== ctl.curSlideId) i = frames.findIndex(f => f.slideId === ctl.curSlideId);
+    if (i >= 0) ctl._currentFrame = frames[i];
+    return i;
+  }
+  function selectFrameAt(index) {
+    const frames = ctl.doc2?.layouts?.main?.frames || [];
+    const fr = frames[index];
+    if (!fr) return false;
+    ctl._currentFrame = fr;
+    ctl.curSlideId = fr.slideId;
+    return true;
+  }
   function slideTitleOf(sl) {
     if (!sl) return '（空页）';
     const t = sl.items.find(i => i.type === 'text');
@@ -477,7 +494,7 @@ function createSlide(container) {
     ctl.v2Side.querySelector('[data-a=add]').addEventListener('click', () => {
       const sl = createV2Slide(null, { items: [createItem('text', { text: '新页标题', style: { size: 40, bold: true, align: 'center' }, left: 10, top: 38, width: 80, height: 16 })] });
       addSlideToDoc(doc, sl);
-      ctl.curSlideId = sl.id;
+      selectFrameAt(doc.layouts.main.frames.length - 1);
       markDirty(); renderPageList(); renderCanvasShell();
     });
     const list = ctl.v2Side.querySelector('.sl-v2-list');
@@ -493,7 +510,7 @@ function createSlide(container) {
       const sl = ctl.doc2.slides[fr.slideId];
       const tr = TRANSITIONS.find(t => t.id === (fr.transition || 'fade'));
       const el = document.createElement('div');
-      el.className = 'sl-v2-page' + (fr.slideId === ctl.curSlideId ? ' on' : '');
+      el.className = 'sl-v2-page' + (fr === ctl._currentFrame || (!ctl._currentFrame && fr.slideId === ctl.curSlideId) ? ' on' : '');
       el.draggable = true;
       el.dataset.i = i;
       el.innerHTML = `<span class="no">${i + 1}</span><span class="t" title="${slideTitleOf(sl).replace(/"/g, '&quot;')}">${slideTitleOf(sl)}</span>
@@ -514,16 +531,23 @@ function createSlide(container) {
         if (a === 'dup') {
           const cp = cloneSlide(sl);
           ctl.doc2.slides[cp.id] = cp;
-          frames.splice(i + 1, 0, createFrame(cp.id, { transition: fr.transition, nextAfter: fr.nextAfter, actions: fr.actions ? { ...fr.actions } : null }));
+          const nextFrame = createFrame(cp.id, { transition: fr.transition, nextAfter: fr.nextAfter, actions: fr.actions ? { ...fr.actions } : null });
+          frames.splice(i + 1, 0, nextFrame);
+          ctl._currentFrame = nextFrame;
           ctl.curSlideId = cp.id;
           markDirty(); renderPageList(); renderCanvasShell(); return;
         }
         if (a === 'del') {
+          const deletingCurrent = ctl._currentFrame === fr;
           frames.splice(i, 1);
           if (!frames.some(f => f.slideId === fr.slideId)) delete ctl.doc2.slides[fr.slideId]; // 物料零引用才清（帧删物料留——页库视图可见）
-          if (ctl.curSlideId === fr.slideId) ctl.curSlideId = frames[Math.max(0, i - 1)]?.slideId || null;
+          if (deletingCurrent) {
+            ctl._currentFrame = frames[Math.min(i, frames.length - 1)] || null;
+            ctl.curSlideId = ctl._currentFrame?.slideId || null;
+          }
           markDirty(); renderPageList(); renderCanvasShell(); return;
         }
+        ctl._currentFrame = fr;
         ctl.curSlideId = fr.slideId;
         renderPageList(); renderCanvasShell();
       });
@@ -562,17 +586,21 @@ function createSlide(container) {
       el.addEventListener('click', (e) => {
         const a = e.target.closest?.('[data-a]')?.dataset.a;
         const frames = ctl.doc2.layouts.main.frames;
-        if (a === 'enq') { frames.push(createFrame(sl.id)); ctl.sideView = 'sequence'; ctl.curSlideId = sl.id; markDirty(); renderPageList(); renderCanvasShell(); return; }
+        if (a === 'enq') { const fr = createFrame(sl.id); frames.push(fr); ctl._currentFrame = fr; ctl.sideView = 'sequence'; ctl.curSlideId = sl.id; markDirty(); renderPageList(); renderCanvasShell(); return; }
         if (a === 'dup') { const cp = cloneSlide(sl); ctl.doc2.slides[cp.id] = cp; markDirty(); renderPageList(); toast('已复制到页库'); return; }
         if (a === 'del') {
           ctl.doc2.layouts.main.frames = frames.filter(f => f.slideId !== sl.id);
           delete ctl.doc2.slides[sl.id];
-          if (ctl.curSlideId === sl.id) ctl.curSlideId = ctl.doc2.layouts.main.frames[0]?.slideId || null;
+          if (ctl.curSlideId === sl.id) {
+            ctl._currentFrame = ctl.doc2.layouts.main.frames[0] || null;
+            ctl.curSlideId = ctl._currentFrame?.slideId || null;
+          }
           markDirty(); renderPageList(); renderCanvasShell(); return;
         }
         // 点击物料：有帧跳首帧，无帧建帧入编排并切放映序
         const fi = frames.findIndex(f => f.slideId === sl.id);
-        if (fi < 0) { frames.push(createFrame(sl.id)); ctl.sideView = 'sequence'; }
+        if (fi < 0) { frames.push(createFrame(sl.id)); ctl._currentFrame = frames[frames.length - 1]; ctl.sideView = 'sequence'; }
+        else ctl._currentFrame = frames[fi];
         ctl.curSlideId = sl.id;
         markDirty(); renderPageList(); renderCanvasShell();
       });
@@ -588,7 +616,7 @@ function createSlide(container) {
   /** 帧属性面板（编排层核心：transition/nextAfter/disabled/帧动作——W39 放映引擎消费） */
   function renderFrameProps(box, frames) {
     if ((ctl.sideView || 'sequence') !== 'sequence') { box.style.display = 'none'; return; }
-    const fi = frames.findIndex(f => f.slideId === ctl.curSlideId);
+    const fi = currentFrameIndex();
     const fr = frames[fi];
     if (!fr) { box.style.display = 'none'; return; }
     box.style.display = '';
@@ -804,17 +832,18 @@ function createSlide(container) {
   }
   function finishGhostAdd(tool, rect) {
     const sl = curSlide();
-    if (!sl) { ctl._addTool = null; return; }
+    if (!sl) { ctl._addTool = null; ctl._shapePreset = null; return; }
     const props = {
       left: Math.max(0, Math.min(96, pxToPct(rect.x, 'x', DESIGN.w, DESIGN.h))),
       top: Math.max(0, Math.min(96, pxToPct(rect.y, 'y', DESIGN.w, DESIGN.h))),
       width: Math.max(6, pxToPct(rect.w, 'w', DESIGN.w, DESIGN.h)),
       height: Math.max(5, pxToPct(rect.h, 'h', DESIGN.w, DESIGN.h)),
     };
-    const it = createItem(tool === 'shape' ? 'shape' : tool, tool === 'text' ? { ...props, text: '双击编辑文本', style: { size: 22 } } : tool === 'shape' ? { ...props, shape: 'rect', style: { bg: 'rgba(79,70,229,.3)', stroke: 'var(--acc, #4f46e5)' } } : props);
+    const it = createItem(tool === 'shape' ? 'shape' : tool, tool === 'text' ? { ...props, text: '双击编辑文本', style: { size: 22 } } : tool === 'shape' ? { ...props, shape: ctl._shapePreset || 'rect', style: { bg: 'rgba(79,70,229,.3)', stroke: 'var(--acc, #4f46e5)' } } : props);
     sl.items.push(it);
     ctl.selItem = it.id;
     ctl._addTool = null;
+    ctl._shapePreset = null;
     markDirty(); renderCanvasShell();
     if (tool === 'text') toast('文本框已创建（双击编辑）');
   }
@@ -895,6 +924,7 @@ function createSlide(container) {
       b.style.cssText = `border:1px solid rgba(255,255,255,.18);background:${b.classList.contains('on') ? 'var(--acc,#4f46e5)' : 'rgba(20,20,24,.7)'};color:#eee;border-radius:6px;padding:3px 8px;font-size:11.5px;cursor:pointer;backdrop-filter:blur(4px)`;
       b.addEventListener('click', () => {
         ctl._addTool = ctl._addTool === b.dataset.t ? null : b.dataset.t;
+        ctl._shapePreset = ctl._addTool === 'shape' ? 'rect' : null;
         renderItemToolbar();
       });
     });
@@ -953,6 +983,8 @@ function createSlide(container) {
   ctl.exitV2 = exitV2;
   ctl.renderV2All = renderV2All;
   ctl.curSlide = curSlide;
+  ctl.currentFrameIndex = currentFrameIndex;
+  ctl.selectFrameAt = selectFrameAt;
   ctl.markDirty = markDirty;
   return ctl;
 }
@@ -1026,12 +1058,13 @@ export default {
     if (ctl.isV2) return serializeDoc(ctl.doc2); // v2 模式存 v2 文档（W36）
     return ctl.outlineEl.value;
   },
-  /** 按扩展名导出：.pptx → base64；其余回落 getContent（大纲文本） */
+  /** 按扩展名导出：.pptx → base64；V2 必须走对象级导出，其余回落 getContent */
   async exportAs(ext, state) {
     const ctl = instances.get(state.container);
     if (!ctl || ext !== '.pptx') return null;
-    const { exportPptx } = await import('./pptx.js');
-    const buf = await exportPptx(ctl.slides, ctl.theme);
+    const buf = ctl.isV2 && ctl.doc2
+      ? await exportPptxV2(ctl.doc2, ctl.themeId)
+      : await exportPptx(ctl.slides, ctl.theme);
     const bytes = new Uint8Array(buf);
     let s = '';
     for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode(...bytes.subarray(i, i + 8192));
@@ -1092,7 +1125,7 @@ export default {
     const ctl = instances.get(state.container);
     if (!ctl) return '';
     if (ctl.isV2) {
-      const i = ctl.doc2.layouts.main.frames.findIndex(f => f.slideId === ctl.curSlideId);
+      const i = ctl.currentFrameIndex();
       return `第 ${i + 1}/${ctl.doc2.layouts.main.frames.length} 页（v2）`;
     }
     return `第 ${ctl.current + 1}/${ctl.slides.length} 页`;
@@ -1135,11 +1168,34 @@ export default {
   contributes: {
     commands: [
       { id: 'slide.prev', title: '上一页', group: '演示', when: "module=='slide'",
-        run: withCtl(ctl => { if (ctl.current > 0) { ctl.current--; ctl.render(); } }) },
+        run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) {
+            const i = ctl.currentFrameIndex();
+            if (i > 0) { ctl.selectFrameAt(i - 1); ctl.renderV2All(); }
+            return;
+          }
+          if (ctl.current > 0) { ctl.current--; ctl.render(); }
+        }) },
       { id: 'slide.next', title: '下一页', group: '演示', when: "module=='slide'",
-        run: withCtl(ctl => { if (ctl.current < ctl.slides.length - 1) { ctl.current++; ctl.render(); } }) },
+        run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) {
+            const frames = ctl.doc2.layouts.main.frames;
+            const i = ctl.currentFrameIndex();
+            if (i >= 0 && i < frames.length - 1) { ctl.selectFrameAt(i + 1); ctl.renderV2All(); }
+            return;
+          }
+          if (ctl.current < ctl.slides.length - 1) { ctl.current++; ctl.render(); }
+        }) },
       { id: 'slide.add', title: '新建页面', icon: '＋', group: '演示', when: "module=='slide'",
         run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) {
+            const sl = createV2Slide(null, { items: [createItem('text', { text: '新页标题', style: { size: 40, bold: true, align: 'center' }, left: 10, top: 38, width: 80, height: 16 })] });
+            addSlideToDoc(ctl.doc2, sl);
+            ctl.selectFrameAt(ctl.doc2.layouts.main.frames.length - 1);
+            ctl.markDirty();
+            ctl.renderV2All();
+            return;
+          }
           ctl.outlineEl.value += (ctl.outlineEl.value.endsWith('\n') ? '' : '\n') + '---\n# 新页面\n- 要点\n';
           ctl.sync();
           ctl.current = ctl.slides.length - 1;
@@ -1149,6 +1205,13 @@ export default {
         run: (payload) => withCtl(ctl => {
           if (payload?.theme) {
             ctl.themeId = payload.theme;
+            if (ctl.isV2 && ctl.doc2) {
+              ctl.doc2.theme = payload.theme;
+              ctl.markDirty();
+              ctl.renderV2All();
+              toast(`主题已切换：${themeById(ctl.themeId).name}`);
+              return;
+            }
             const text = ctl.outlineEl.value.replace(/^<!--theme:\w+-->\n?/, '');
             ctl.outlineEl.value = `<!--theme:${ctl.themeId}-->\n` + text;
             ctl.render();
@@ -1157,22 +1220,50 @@ export default {
         })() },
       { id: 'slide.canvasMode', title: '画布模式', icon: '✏', group: '演示', when: "module=='slide'",
         run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) {
+            ctl._addTool = null;
+            ctl._shapePreset = null;
+            ctl._stage?.focus();
+            toast('V2 演示已在对象画布模式');
+            return;
+          }
           ctl.canvasMode = !ctl.canvasMode;
           ctl.tool = null;
           ctl.render();
           toast(ctl.canvasMode ? '画布模式：选择文本框/形状/图片后在页面上拖拽放置' : '已退出画布模式');
         }) },
       { id: 'slide.addText', title: '添加文本框', group: '演示', when: "module=='slide'",
-        run: withCtl(ctl => { ctl.canvasMode = true; ctl.tool = 'text'; ctl.render(); toast('在页面上拖拽放置文本框'); }) },
+        run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) { ctl._addTool = 'text'; ctl._shapePreset = null; ctl.renderV2All(); toast('在页面上拖拽放置文本框'); return; }
+          ctl.canvasMode = true; ctl.tool = 'text'; ctl.render(); toast('在页面上拖拽放置文本框');
+        }) },
       { id: 'slide.addRect', title: '添加矩形', group: '演示', when: "module=='slide'",
-        run: withCtl(ctl => { ctl.canvasMode = true; ctl.tool = 'rect'; ctl.render(); }) },
+        run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) { ctl._addTool = 'shape'; ctl._shapePreset = 'rect'; ctl.renderV2All(); return; }
+          ctl.canvasMode = true; ctl.tool = 'rect'; ctl.render();
+        }) },
       { id: 'slide.addEllipse', title: '添加椭圆', group: '演示', when: "module=='slide'",
-        run: withCtl(ctl => { ctl.canvasMode = true; ctl.tool = 'ellipse'; ctl.render(); }) },
+        run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) { ctl._addTool = 'shape'; ctl._shapePreset = 'ellipse'; ctl.renderV2All(); return; }
+          ctl.canvasMode = true; ctl.tool = 'ellipse'; ctl.render();
+        }) },
       { id: 'slide.addImage', title: '添加图片', group: '演示', when: "module=='slide'",
-        run: withCtl(ctl => { ctl.canvasMode = true; ctl.tool = 'image'; ctl.render(); }) },
+        run: withCtl(ctl => {
+          if (ctl.isV2 && ctl.doc2) { ctl._addTool = 'image'; ctl._shapePreset = null; ctl.renderV2All(); return; }
+          ctl.canvasMode = true; ctl.tool = 'image'; ctl.render();
+        }) },
       { id: 'slide.setBackground', title: '本页背景色', group: '演示', when: "module=='slide'",
         run: (payload) => withCtl(ctl => {
           if (payload?.color) {
+            if (ctl.isV2 && ctl.doc2) {
+              const sl = ctl.curSlide();
+              if (!sl) return;
+              sl.bg = payload.color;
+              ctl.markDirty();
+              ctl.renderV2All();
+              toast('本页背景已设置');
+              return;
+            }
             ctl.slides[ctl.current].bg = payload.color;
             ctl.syncToOutline();
             ctl.render();
@@ -1184,7 +1275,8 @@ export default {
           // v2 放映引擎（W39：编排帧序+四切换+reveal+帧动作）；v1 大纲档走老 Presenter
           if (ctl.isV2 && ctl.doc2) {
             if (!ctl.doc2.layouts.main.frames.some(f => !f.disabled)) { toast('没有可放映的帧（全禁用或空编排）'); return; }
-            const fi = ctl.doc2.layouts.main.frames.findIndex(f => f.slideId === ctl.curSlideId && !f.disabled);
+            const currentFi = ctl.currentFrameIndex();
+            const fi = ctl.doc2.layouts.main.frames[currentFi]?.disabled ? -1 : currentFi;
             new Presenter2({ ctl, startIndex: fi >= 0 ? fi : ctl.doc2.layouts.main.frames.findIndex(f => !f.disabled) });
             return;
           }
@@ -1194,7 +1286,8 @@ export default {
         run: withCtl(ctl => {
           if (ctl.isV2 && ctl.doc2) {
             if (!ctl.doc2.layouts.main.frames.some(f => !f.disabled)) { toast('没有可放映的帧（全禁用或空编排）'); return; }
-            const fi = ctl.doc2.layouts.main.frames.findIndex(f => f.slideId === ctl.curSlideId && !f.disabled);
+            const currentFi = ctl.currentFrameIndex();
+            const fi = ctl.doc2.layouts.main.frames[currentFi]?.disabled ? -1 : currentFi;
             new Presenter2({ ctl, presenterView: true, startIndex: fi >= 0 ? fi : ctl.doc2.layouts.main.frames.findIndex(f => !f.disabled) });
             return;
           }

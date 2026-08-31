@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-08-17",
+  "recordedAt": "2026-08-31",
   "rootEvidence": [
     "LICENSE",
     "NOTICE",
@@ -35,6 +35,81 @@
     }
   ],
   "packageEvidenceRequirements": [
+    {
+      "package": "7zip-bin-full",
+      "version": "26.2.1",
+      "declaredLicense": "MIT",
+      "distributionStatus": "SHIPPED_FULL_ARCHIVE_RUNTIME",
+      "repository": "https://github.com/ollm/7zip-bin-full",
+      "runtimeUpstream": "https://github.com/ip7z/7zip/tree/26.02",
+      "runtimeVersion": "26.02",
+      "target": {
+        "platform": "win32",
+        "arch": "x64",
+        "requiredCapabilities": [
+          "Rar",
+          "Rar5"
+        ],
+        "allowedRuntimeFiles": [
+          "win/x64/7z.exe",
+          "win/x64/7z.dll",
+          "win/x64/History.txt",
+          "win/x64/License.txt",
+          "win/x64/readme.txt"
+        ]
+      },
+      "files": [
+        {
+          "path": "node_modules/7zip-bin-full/LICENSE.txt",
+          "sha256": "E9F2248A07935F444C613D84E5A0239EAB7537A80CC02212F386662F0DED0E11",
+          "role": "WRAPPER_MIT_LICENSE",
+          "packagedPath": "node_modules/7zip-bin-full/LICENSE.txt",
+          "container": "ASAR_UNPACKED"
+        },
+        {
+          "path": "node_modules/7zip-bin-full/win/x64/7z.exe",
+          "sha256": "83967F1B02B43C4EFEDA302795722C809E0E81B8307DE73558D10484D5676A7D",
+          "role": "TARGET_ARCHIVE_EXECUTABLE",
+          "packagedPath": "node_modules/7zip-bin-full/win/x64/7z.exe",
+          "container": "ASAR_UNPACKED"
+        },
+        {
+          "path": "node_modules/7zip-bin-full/win/x64/7z.dll",
+          "sha256": "69FD4DF057985C40E510E2FAC182881C7F85E90AA13EC703F763A8FDB2CE61F8",
+          "role": "TARGET_ARCHIVE_CODEC_LIBRARY",
+          "packagedPath": "node_modules/7zip-bin-full/win/x64/7z.dll",
+          "container": "ASAR_UNPACKED"
+        },
+        {
+          "path": "node_modules/7zip-bin-full/win/x64/License.txt",
+          "sha256": "519AC0A4BDED9C18EA02E0AFB71F663D8C47373BD9FACD3AC96A79F51D77765D",
+          "role": "ADJACENT_RUNTIME_LICENSE",
+          "packagedPath": "node_modules/7zip-bin-full/win/x64/License.txt",
+          "container": "ASAR_UNPACKED"
+        },
+        {
+          "path": "resources/licenses/7zip/NOTICE.md",
+          "sha256": "CF6F5593B09031D3EF808FC59DEBD970454FCC3B1C7309CC8B8A7308259FDF9E",
+          "role": "PRODUCT_RUNTIME_NOTICE",
+          "packagedPath": "resources/licenses/7zip/NOTICE.md",
+          "container": "ASAR"
+        },
+        {
+          "path": "resources/licenses/7zip/LICENSE.txt",
+          "sha256": "32369594A3A9F7C643D124035120EAA6A7707E75E57C4386EF509F801447BC49",
+          "role": "RUNTIME_COMPOUND_LICENSE_NOTICE",
+          "packagedPath": "resources/licenses/7zip/LICENSE.txt",
+          "container": "ASAR"
+        },
+        {
+          "path": "resources/licenses/7zip/COPYING.txt",
+          "sha256": "DC626520DCD53A22F727AF3EE42C770E56C97A64FE3ADB063799D8AB032FE551",
+          "role": "LGPL_2_1_LICENSE_TEXT",
+          "packagedPath": "resources/licenses/7zip/COPYING.txt",
+          "container": "ASAR"
+        }
+      ]
+    },
     {
       "package": "electron",
       "version": "33.4.11",

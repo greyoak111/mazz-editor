@@ -18,9 +18,9 @@
   },
   "fullRegression": {
     "status": "PASS",
-    "expectedFiles": "287/287",
+    "expectedFiles": "289/289",
     "failedFiles": [],
-    "generatedAt": "2026-08-31T09:15:16.2263786+08:00"
+    "generatedAt": "2026-08-31T16:00:43.0128464+08:00"
   },
   "evidence": {
     "W94GA_WORLD_SOURCE": "1eaa43f06894b5e597669d1f1b4c34b2394d3a80f09444dde9457bef5b9dfa16",

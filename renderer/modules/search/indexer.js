@@ -65,18 +65,20 @@ export const TYPE_GROUPS = {
   all: null,
   doc: ['.md', '.txt', '.markdown'],
   sheet: ['.csv', '.tsv', '.mazzsheet'],
-  mindmap: ['.mazzmap', '.mm', '.opml'],
+  mindmap: ['.mindmap', '.mm', '.opml'],
   slide: ['.mazzslide'],
   draw: ['.mazzdraw'],
   code: ['.js', '.ts', '.py', '.json', '.css', '.html', '.java', '.c', '.cpp', '.h', '.sh', '.mazzcode'],
 };
 // 自创格式（导图/演示/画板均为 JSON 文本，节点文字可搜）——类型细分的前提是全入库
-const INDEXABLE = new Set(['.md', '.txt', '.markdown', '.csv', '.tsv', '.mazzsheet', '.mazzmap', '.mm', '.opml', '.mazzslide', '.mazzdraw', '.js', '.ts', '.py', '.json', '.css', '.html', '.java', '.c', '.cpp', '.h', '.sh', '.mazzcode']);
+const INDEXABLE = new Set(['.md', '.txt', '.markdown', '.csv', '.tsv', '.mazzsheet', '.mindmap', '.mm', '.opml', '.mazzslide', '.mazzdraw', '.js', '.ts', '.py', '.json', '.css', '.html', '.java', '.c', '.cpp', '.h', '.sh', '.mazzcode']);
 
 function extOf(p) {
   const m = /\.[a-z0-9]+$/i.exec(p);
   return m ? m[0].toLowerCase() : '';
 }
+
+export function isIndexablePath(path) { return INDEXABLE.has(extOf(path)); }
 
 /** 递归列出工作区可索引文本文件 */
 export async function listTextFiles() {
@@ -90,8 +92,14 @@ export async function listTextFiles() {
       if (out.length >= MAX_INDEX_FILES) break;
       if (e.isDir) {
         if (!e.name.startsWith('.') && e.name !== 'node_modules') await walk(e.path, depth + 1);
-      } else if (INDEXABLE.has(extOf(e.name))) {
-        out.push({ path: e.path, name: e.name, ext: extOf(e.name) });
+      } else if (isIndexablePath(e.name)) {
+        out.push({
+          path: e.path,
+          name: e.name,
+          ext: extOf(e.name),
+          mtimeMs: Number.isFinite(Number(e.mtimeMs)) && Number(e.mtimeMs) > 0 ? Number(e.mtimeMs) : null,
+          size: Number.isFinite(Number(e.size)) && Number(e.size) >= 0 ? Number(e.size) : null,
+        });
         if (out.length >= MAX_INDEX_FILES) return;
       }
     }
@@ -114,7 +122,7 @@ export class SearchIndex {
     this.loaded = true;
   }
 
-  /** 与磁盘对账：新文件入库、失踪文件移除；force 时全量重读 */
+  /** 与磁盘对账：新文件入库、变化文件重读、失踪文件移除；force 时全量重读 */
   async reconcile(files, { force = false } = {}) {
     if (!this.loaded) await this.load();
     const seen = new Set(files.map(f => f.path));
@@ -122,17 +130,29 @@ export class SearchIndex {
       if (!seen.has(p)) { this.mem.delete(p); await this.store.delete(p).catch(() => {}); }
     }
     for (const f of files) {
-      if (force || !this.mem.has(f.path)) await this.updateFile(f.path);
+      const cached = this.mem.get(f.path);
+      if (force || !cached || !sameSourceVersion(cached, f)) await this.updateFile(f.path, f);
     }
     return this.mem.size;
   }
 
-  async updateFile(path) {
+  async updateFile(path, source = {}) {
     let content = '';
     try { content = (await window.mazz.invoke('fs:readFile', { path })) || ''; }
     catch { return; }
+    let { mtimeMs, size } = sourceVersion(source);
+    // watcher/定点刷新只有 path；复用现有 fs:stat 补齐版本，确保下一轮
+    // reconcile 不会把刚刷新的文件再次误判为未知版本。
+    if (mtimeMs == null || size == null) {
+      const stat = await window.mazz.invoke('fs:stat', { path }).catch(() => null);
+      if (stat?.exists !== false) {
+        const resolved = sourceVersion({ mtimeMs: stat?.mtime, size: stat?.size });
+        if (mtimeMs == null) mtimeMs = resolved.mtimeMs;
+        if (size == null) size = resolved.size;
+      }
+    }
     const name = path.replace(/[\\/]/g, '/').split('/').pop();
-    const entry = { path, name, ext: extOf(name), content, updatedAt: Date.now() };
+    const entry = { path, name, ext: extOf(name), content, sourceMtimeMs: mtimeMs, sourceSize: size, updatedAt: Date.now() };
     this.mem.set(path, entry);
     await this.store.put(entry).catch(() => {});
   }
@@ -176,6 +196,24 @@ export class SearchIndex {
     }
     return { results, total };
   }
+}
+
+function sourceVersion(value = {}) {
+  const rawMtime = value.mtimeMs == null ? NaN : Number(value.mtimeMs);
+  const rawSize = value.size == null ? NaN : Number(value.size);
+  return {
+    mtimeMs: Number.isFinite(rawMtime) && rawMtime > 0 ? rawMtime : null,
+    size: Number.isFinite(rawSize) && rawSize >= 0 ? rawSize : null,
+  };
+}
+
+function sameSourceVersion(entry, file) {
+  const current = sourceVersion(file);
+  // 老索引记录没有磁盘版本；只重读一次即可迁移。元数据不可用时宁可重读，
+  // 不能以“路径还在”作为内容未变化的证据。
+  if (current.mtimeMs == null || entry.sourceMtimeMs == null) return false;
+  if (current.mtimeMs !== entry.sourceMtimeMs) return false;
+  return current.size == null || entry.sourceSize == null || current.size === entry.sourceSize;
 }
 
 /** 行文本高亮（转义 HTML 后包 <mark>） */

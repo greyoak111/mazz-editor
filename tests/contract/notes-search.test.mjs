@@ -5,7 +5,13 @@ import { describe, test, assert } from '../harness.mjs';
 // ---- mock 桥：内存文件系统 + 工作区 ----
 const WS = '/mock-ws';
 const fsStore = new Map(); // path -> content
-function writeMock(path, content) { fsStore.set(path, content); }
+const fsMeta = new Map();
+const readCounts = new Map();
+let mockRevision = 0;
+function writeMock(path, content) {
+  fsStore.set(path, content);
+  fsMeta.set(path, { mtimeMs: ++mockRevision, size: Buffer.byteLength(content) });
+}
 function mockTree() {
   // 从 fsStore 推导目录结构
   return {
@@ -18,7 +24,7 @@ function mockTree() {
         const rest = rel.slice(prefix.length);
         const seg = rest.split('/');
         if (seg.length === 1) {
-          seen.set(p, { name: seg[0], isDir: false, path: p });
+          seen.set(p, { name: seg[0], isDir: false, path: p, ...fsMeta.get(p) });
         } else {
           const dpath = WS + '/' + prefix + seg[0];
           if (!seen.has(dpath)) seen.set(dpath, { name: seg[0], isDir: true, path: dpath });
@@ -34,10 +40,16 @@ window.mazz = {
     if (channel === 'workspace:get') return WS;
     if (channel === 'fs:readFile') {
       if (!fsStore.has(payload.path)) throw new Error('ENOENT');
+      readCounts.set(payload.path, (readCounts.get(payload.path) || 0) + 1);
       return fsStore.get(payload.path);
     }
     if (channel === 'fs:writeFile') { fsStore.set(payload.path, payload.content); return true; }
     if (channel === 'fs:listDir') return mockTree().listDir(payload.path);
+    if (channel === 'fs:stat') {
+      if (!fsStore.has(payload.path)) return { exists: false };
+      const meta = fsMeta.get(payload.path);
+      return { exists: true, isDir: false, size: meta.size, mtime: meta.mtimeMs };
+    }
     return null;
   },
 };
@@ -46,7 +58,7 @@ window.MazzCommands = { execute: (id, args) => { window.__lastCmd = { id, args }
 
 const { parseMarkdown, serializeMarkdown, schema } = await import('../../renderer/modules/markdown/schema.js');
 const lib = await import('../../renderer/modules/notes/library.js');
-const { SearchIndex, createMemoryStore, highlightLine } = await import('../../renderer/modules/search/indexer.js');
+const { SearchIndex, createMemoryStore, highlightLine, isIndexablePath, listTextFiles, TYPE_GROUPS } = await import('../../renderer/modules/search/indexer.js');
 
 describe('双链内核：[[wikilink]] 解析与序列化', () => {
   test('[[target]] 与 [[target|alias]] 解析为原子节点', () => {
@@ -109,6 +121,36 @@ describe('笔记库：扫描 / 名称解析 / 反向链接', () => {
 });
 
 describe('全局搜索：索引与查询', () => {
+  test('实际 .mindmap 入库，增量对账只重读发生变化的已有文件', async () => {
+    fsStore.clear();
+    const mapPath = WS + '/结构.mindmap';
+    const docPath = WS + '/说明.md';
+    writeMock(mapPath, '{"mark":"mazz-mindmap-v1","text":"初始导图词"}');
+    writeMock(docPath, '保持不变');
+
+    assert.ok(TYPE_GROUPS.mindmap.includes('.mindmap'));
+    assert.ok(!TYPE_GROUPS.mindmap.includes('.mazzmap'));
+    assert.equal(isIndexablePath(mapPath), true);
+    assert.equal(isIndexablePath(WS + '/旧错名.mazzmap'), false);
+    const files = await listTextFiles();
+    assert.ok(files.some(file => file.path === mapPath), '产品实际使用的 .mindmap 必须进入索引清单');
+
+    const idx = new SearchIndex(createMemoryStore());
+    await idx.reconcile(files);
+    const mapReads = readCounts.get(mapPath) || 0;
+    const docReads = readCounts.get(docPath) || 0;
+    await idx.reconcile(await listTextFiles());
+    assert.equal(readCounts.get(mapPath) || 0, mapReads, '版本未变的导图不应重复读取');
+    assert.equal(readCounts.get(docPath) || 0, docReads, '版本未变的文档不应重复读取');
+
+    writeMock(mapPath, '{"mark":"mazz-mindmap-v1","text":"变化后的导图词"}');
+    await idx.reconcile(await listTextFiles());
+    assert.equal(readCounts.get(mapPath), mapReads + 1, 'mtime/size 变化的已有导图必须重读');
+    assert.equal(readCounts.get(docPath) || 0, docReads, '增量更新不得连带重读未变化文件');
+    assert.equal(idx.query('变化后的导图词', { type: 'mindmap' }).results[0]?.path, mapPath);
+    assert.equal(idx.query('初始导图词', { type: 'mindmap' }).results.length, 0, '旧内容不得残留');
+  });
+
   test('reconcile 增量 + query 分组命中 + 类型过滤', async () => {
     const store = createMemoryStore();
     const idx = new SearchIndex(store);

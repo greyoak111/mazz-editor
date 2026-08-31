@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import { spawnSync } from 'child_process';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // —— 手工 GBK zip（STORE 无压缩：名字写 GBK 裸字节+UTF-8 位 11 不置——复刻国产老压缩包） ——
 function crc32(buf) {
@@ -182,17 +185,18 @@ export async function scenes65({ app, win, human, WS, WS2, scenario }) {
     await wait(300);
   });
 
-  // ==================== 7：7z 兜底（7za 引擎） ====================
-  await scenario('7z·7za 兜底列表', async () => {
-    const seven = path.resolve('node_modules/7zip-bin/linux/x64/7za');
+  // ==================== 7：7z 兜底（随包 full 7-Zip 引擎） ====================
+  await scenario('7z·full 7-Zip 兜底列表', async () => {
+    const seven = require('7zip-bin-full').path7z;
     try { fs.chmodSync(seven, 0o755); } catch {} // 挂载丢执行位（沙箱实锤）
-    fs.writeFileSync('/tmp/z7src.txt', '7z 内容');
-    const r = spawnSync(seven, ['a', '-y', WS + '/兜底.7z', '/tmp/z7src.txt'], { timeout: 15000 });
-    human.log('7za 造包:', r.status);
+    const source = path.join(WS, 'z7src.txt');
+    fs.writeFileSync(source, '7z 内容');
+    const r = spawnSync(seven, ['a', '-y', WS + '/兜底.7z', source], { timeout: 15000 });
+    human.log('full 7-Zip 造包:', r.status);
     await human.assert(fs.existsSync(WS + '/兜底.7z'), '7z 包必须造出');
     const lst = await evaluate(async (ws) => await window.mazz.invoke('archive:list', { path: ws + '/兜底.7z' }).catch(e => ({ error: e.message })), WS);
     human.log('7z 列表:', JSON.stringify(lst?.engine), '项数', lst?.entries?.length);
-    await human.assert(lst && !lst.error && lst.engine === '7za', `7z 必须走 7za 兜底（实拿 ${JSON.stringify(lst?.engine || lst?.error)}）`);
+    await human.assert(lst && !lst.error && lst.engine === '7zip', `7z 必须走 full 7-Zip 兜底（实拿 ${JSON.stringify(lst?.engine || lst?.error)}）`);
     await human.assert(lst.entries.length >= 1, '7z 必须列出项');
   });
 
